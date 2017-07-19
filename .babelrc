@@ -1,8 +1,25 @@
 {
-  "presets": [["env", {
-    "targets": { "browsers": ">1%" },
-    "modules": false,
-    "loose": true
-  }]],
-  "plugins": ["external-helpers"]
+  "env": {
+    "test": {
+      "presets": [["env", {
+        "targets": { "node": "current" }
+      }]],
+      "plugins": []
+    },
+    "production": {
+      "presets": [["env", {
+        "targets": { "browsers": ">1%" },
+        "modules": false,
+        "loose": true
+      }]],
+      "plugins": [
+        ["transform-runtime", {
+          "helpers": false,
+          "polyfill": false,
+          "regenerator": true
+        }],
+        "external-helpers"
+      ]
+    }
+  }
 }

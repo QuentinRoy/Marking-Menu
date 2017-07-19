@@ -6,6 +6,7 @@
   "rules": {
     "comma-dangle": ["error", "never"],
     "arrow-parens": 0,
+    "no-mixed-operators": 0,
     "no-confusing-arrow": 0
   },
   "root": true

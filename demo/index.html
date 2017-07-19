@@ -20,7 +20,7 @@
   <script>
     var items = Array.from({ length: 8 }).map((_, i) => `item ${i}`);
     var mm = MarkingMenu(items, document.getElementById('main'), [250, 200]);
-    mm.setActive('item 2');
+    mm.setActiveByNearestAngle(87);
   </script>
 </body>
 
