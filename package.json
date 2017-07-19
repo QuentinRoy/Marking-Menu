@@ -3,6 +3,10 @@
   "version": "0.0.0",
   "description": "Marking Menu Implementation in JavaScript.",
   "main": "lib/marking-menu.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/QuentinRoy/Marking-Menu.git"
+  },
   "scripts": {
     "test": "NODE_ENV=test ava",
     "build": "NODE_ENV=production rollup --config build-config/rollup.config.js",
