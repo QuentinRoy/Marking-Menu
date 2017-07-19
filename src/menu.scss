@@ -1,0 +1,89 @@
+$pi: 3.14159265359;
+$item-width: 100px;
+$item-height: 20px;
+$item-font-size: 20px;
+$item-padding: 4px;
+$item-background: #f2f2f2;
+$item-color: darken($item-background, 75%);
+$active-item-background: darken($item-background, 10%);
+$active-item-color: darken($active-item-background, 75%);
+$item-radius: $item-padding * 2;
+$menu-radius: 120px;
+$center-radius: 10px;
+$line-thickness: 4px;
+$line-color: $item-background;
+$active-line-color: $active-item-background;
+$middle-color: $active-line-color;
+$first-item-angle: -90;
+
+.marking-menu {
+  position: absolute;
+}
+
+.marking-menu-item {
+  .marking-menu-label {
+    position: absolute;
+    border-radius: $item-radius;
+    background-color: $item-background;
+    padding: $item-padding;
+    width: $item-width;
+    height: $item-height;
+    overflow: hidden;
+    vertical-align: middle;
+    text-align: center;
+    text-overflow: ellipsis;
+    line-height: $item-height;
+    color: $item-color;
+    font-size: $item-font-size;
+  }
+
+  &.active {
+    .marking-menu-label {
+      background-color: $active-item-background;
+      color: $active-item-color;
+      font-weight: bolder;
+    }
+
+    .marking-menu-line {
+      background-color: $active-line-color;
+    }
+  }
+
+  .marking-menu-line {
+    position: absolute;
+    top: -$line-thickness / 2;
+    background-color: $line-color;
+    width: $menu-radius;
+    height: $line-thickness;
+    transform-origin: center left;
+  }
+
+  $item-nb: 8;
+  $inc: 360 / $item-nb;
+  @for $i from 0 through $item-nb - 1 {
+    $angle: $i * $inc;
+    $fixed-angle: $angle + $first-item-angle;
+    $rad-fixed-angle: - to-rad($fixed-angle);
+
+    &[data-item-angle='#{$angle}'] {
+      .marking-menu-label {
+        bottom: sin($rad-fixed-angle) * $menu-radius - $item-height / 2 - $item-padding;
+        left: cos($rad-fixed-angle) * $menu-radius - $item-width / 2;
+      }
+
+      .marking-menu-line {
+        transform: rotate(#{$fixed-angle}deg);
+      }
+    }
+  }
+}
+
+.marking-menu-middle {
+  position: absolute;
+  top: -$center-radius;
+  left: -$center-radius;
+  border-radius: $center-radius * 2;
+  background-color: $middle-color;
+  width: $center-radius * 2;
+  height: $center-radius * 2;
+}

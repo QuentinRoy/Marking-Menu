@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link href="../marking-menu.css" rel="stylesheet">
+  <style>
+    body, html, #main {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="main"></div>
+
+
+  <script src="../marking-menu.js"></script>
+  <script>
+    var items = Array.from({ length: 8 }).map((_, i) => `item ${i}`);
+    var mm = MarkingMenu(items, document.getElementById('main'), [250, 200]);
+    mm.setActive('item 2');
+  </script>
+</body>
+
+</html>

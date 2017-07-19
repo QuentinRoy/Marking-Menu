@@ -1,0 +1,6 @@
+.marking-menu(style={ left: `${position[0]}px`, top: `${position[1]}px` })
+  each item in itemEntries
+    .marking-menu-item(data-item-id=item.id data-item-angle=item.angle)
+      .marking-menu-line
+      .marking-menu-label=item.name
+  .marking-menu-middle
