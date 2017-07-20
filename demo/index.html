@@ -21,7 +21,10 @@
   <script src="./Rx.min.js"></script>
   <script src="../marking-menu.js"></script>
   <script>
-    var items = Array.from({ length: 8 }).map((_, i) => `item ${i}`);
+    var items = Array.from({ length: 8 })
+      .map((_, i) => ({ name: `item ${i}` }));
+    items[2].children = Array.from({ length: 4 })
+      .map((_, i) => ({ name: `item 2${i}` }))
     var main = document.getElementById('main');
     var mm = MarkingMenu(items, main);
     mm.subscribe(selection => { console.log('selection', selection) })
