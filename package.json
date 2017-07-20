@@ -2,7 +2,12 @@
   "name": "marking-menu",
   "version": "0.1.0",
   "description": "Marking Menu Implementation in JavaScript.",
-  "main": "lib/marking-menu.js",
+  "main": "marking-menu.js",
+  "files": [
+    "marking-menu.js",
+    "marking-menu.js.map",
+    "marking-menu.css"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/QuentinRoy/Marking-Menu.git"
