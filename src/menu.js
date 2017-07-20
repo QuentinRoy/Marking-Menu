@@ -8,8 +8,10 @@ import './menu.scss';
  * @param {HTMLElement} parent the parent node
  * @param {[int, int]} the center of the center of the menu
  * @param {String} [current] the current item
+ * @param {Document} [doc] the root document of the menu,
+ *                         mostly useful for testing purposes.
  */
-const createMenu = (itemList, parent, center, current) => {
+const createMenu = (itemList, parent, center, current, doc = document) => {
   // Create the model.
   const itemGap = itemList.length > 4 ? 45 : 90;
   const itemEntries = itemList.map((itemName, i) =>
@@ -22,8 +24,7 @@ const createMenu = (itemList, parent, center, current) => {
 
   // Create the DOM.
   const domStr = template({ itemEntries, center });
-  const main = document.createRange().createContextualFragment(domStr)
-    .firstChild;
+  const main = doc.createRange().createContextualFragment(domStr).firstChild;
   parent.appendChild(main);
 
   // Return an item DOM element from its id.
