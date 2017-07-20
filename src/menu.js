@@ -10,6 +10,13 @@ import './menu.scss';
  * @param {String} [current] the current item
  * @param {Document} [doc] the root document of the menu,
  *                         mostly useful for testing purposes.
+ * @return {{
+    getItemByName,
+    getNearestItemByAngle,
+    setActiveByName,
+    setActiveByNearestAngle,
+    remove
+  }}
  */
 const createMenu = (itemList, parent, center, current, doc = document) => {
   // Create the model.
