@@ -4,7 +4,9 @@
 <head>
   <link href="../marking-menu.css" rel="stylesheet">
   <style>
-    body, html, #main {
+    body,
+    html,
+    #main {
       padding: 0;
       margin: 0;
       height: 100%;
@@ -22,6 +24,7 @@
     var items = Array.from({ length: 8 }).map((_, i) => `item ${i}`);
     var main = document.getElementById('main');
     var mm = MarkingMenu(items, main);
+    mm.subscribe(selection => { console.log('selection', selection) })
   </script>
 </body>
 
