@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.1.1"></a>
+## [0.1.1](https://github.com/QuentinRoy/Marking-Menu/compare/v0.1.0...v0.1.1) (2017-07-20)
+
+
+### Bug Fixes
+
+* Fix missing distributed files. ([d1f50da](https://github.com/QuentinRoy/Marking-Menu/commit/d1f50da))
+
+
+
 <a name="0.1.0"></a>
 # 0.1.0 (2017-07-20)
 
