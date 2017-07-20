@@ -50,5 +50,5 @@ export default (items, parentDOM) => {
   action$.subscribe();
   return action$
     .filter(notif => notif.type === 'select')
-    .pluck('selection', 'name');
+    .pluck('selection');
 };
