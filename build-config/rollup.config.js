@@ -23,6 +23,10 @@ export default {
     pug(),
     babel({ exclude: 'node_modules/**' })
   ],
+  external: ['rxjs'],
+  globals: {
+    'rxjs': 'Rx'
+  },
   dest: './marking-menu.js',
   sourceMap: true
 };

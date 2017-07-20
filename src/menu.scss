@@ -14,10 +14,15 @@ $line-thickness: 4px;
 $line-color: $item-background;
 $active-line-color: $active-item-background;
 $middle-color: $active-line-color;
-$first-item-angle: -90;
+$first-item-angle: 0;
 
 .marking-menu {
   position: absolute;
+  pointer-events: none;
+
+  * {
+    pointer-events: none;
+  }
 }
 
 .marking-menu-item {

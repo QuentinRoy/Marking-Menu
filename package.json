@@ -21,6 +21,9 @@
   },
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "license": "MIT",
+  "dependencies": {
+    "rxjs": "^5.4.2"
+  },
   "devDependencies": {
     "ava": "^0.21.0",
     "babel-plugin-external-helpers": "^6.22.0",

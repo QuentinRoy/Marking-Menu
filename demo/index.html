@@ -16,11 +16,12 @@
   <div id="main"></div>
 
 
+  <script src="./Rx.min.js"></script>
   <script src="../marking-menu.js"></script>
   <script>
     var items = Array.from({ length: 8 }).map((_, i) => `item ${i}`);
-    var mm = MarkingMenu(items, document.getElementById('main'), [250, 200]);
-    mm.setActiveByNearestAngle(87);
+    var main = document.getElementById('main');
+    var mm = MarkingMenu(items, main);
   </script>
 </body>
 
