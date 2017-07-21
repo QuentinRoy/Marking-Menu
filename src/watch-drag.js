@@ -26,7 +26,7 @@ const createPEventFromMouseEvent = mouseEvt => ({
  * @param {HTMLElement} rootDOM the DOM element to observe pointer events on.
  * @return {Observable}
  */
-export const watchDrag = rootDOM => {
+const watchDrag = rootDOM => {
   // Higher order observable tracking mouse drags.
   const mouseDrag$ = Observable.fromEvent(rootDOM, 'mousedown')
     .map(downEvt =>
@@ -59,34 +59,4 @@ export const watchDrag = rootDOM => {
   return Observable.merge(touchDrag$, mouseDrag$);
 };
 
-/**
- * Add to a higher order component tracking drags rotations around
- * the start location.
- * @param {Observable} Higher order component tracking drags.
- */
-export const mapAngleToDrag = o =>
-  o.scan((acc, evt) => {
-    const position = { clientX: evt.clientX, clientY: evt.clientY };
-    const center = acc ? acc.center : position;
-    const alpha =
-      Math.atan2(evt.clientY - center.clientY, evt.clientX - center.clientX) *
-      360 /
-      (2 * Math.PI);
-    return {
-      center,
-      alpha,
-      position,
-      originalEvent: evt.originalEvent
-    };
-  }, null);
-
-/**
- * Higher order observable tracking angular drags.
- * Emits { center, alpha, position, originalEvents } where center is the drag
- * start location and alpha is the angle of the center to current drag position
- * vector.
- *
- * @param {HTMLElement} rootDOM the DOM element to observe pointer events on.
- * @return {Observable}
- */
-export const watchAngleDrag = rootDOM => watchDrag(rootDOM).map(mapAngleToDrag);
+export default watchDrag;

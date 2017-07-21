@@ -1,7 +1,7 @@
 import createEngine from './engine';
 import createMenu from './menu';
 import createModel from './model';
-import { watchAngleDrag } from './watch-drag';
+import watchDrag from './watch-drag';
 
 /**
  * Create a Marking Menu.
@@ -15,8 +15,8 @@ export default (items, parentDOM, { minSelectionDist = 50 } = {}) => {
   // Create the engine.
   const engineNotif$ = createEngine(
     model,
-    watchAngleDrag(parentDOM),
-    minSelectionDist
+    watchDrag(parentDOM),
+    minSelectionDist,
   ).share();
   // Open the menu in function of engine events.
   let menu = null;

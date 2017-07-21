@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
 import { dist } from './utils';
+import { drag$ToAngleDrag$ } from './angle-drag';
 
 /**
  * Create the marking menu controller.
@@ -8,8 +9,8 @@ import { dist } from './utils';
  * @param {Number} minSelectionDist the minimum distance from the center required to
  *                 trigger a selection.
  */
-const createEngine = (model, angleDrag$, minSelectionDist) =>
-  angleDrag$.exhaustMap(o_ => {
+const createEngine = (model, drag$, minSelectionDist) =>
+  drag$.map(o => drag$ToAngleDrag$(o)).exhaustMap(o_ => {
     const o = o_.share();
     const start$ = o.first().map(e => ({
       type: 'open',
