@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.2.0"></a>
+# [0.2.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.1.1...v0.2.0) (2017-07-21)
+
+
+### Features
+
+* Selection notification now returns the item object. ([f93aa91](https://github.com/QuentinRoy/Marking-Menu/commit/f93aa91))
+* **engine:** Introduce a minimum distance from the center to trigger a selection. ([94bea34](https://github.com/QuentinRoy/Marking-Menu/commit/94bea34))
+* **model:** Support for children of items. ([2895f30](https://github.com/QuentinRoy/Marking-Menu/commit/2895f30))
+* Support for multi-level marking menus. ([3679393](https://github.com/QuentinRoy/Marking-Menu/commit/3679393))
+
+
+### BREAKING CHANGES
+
+* Selection notifications do not directly gives the name of the selected item anymore but the corresponding model item.
+
+
+
 <a name="0.1.1"></a>
 ## [0.1.1](https://github.com/QuentinRoy/Marking-Menu/compare/v0.1.0...v0.1.1) (2017-07-20)
 
