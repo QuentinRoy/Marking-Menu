@@ -27,6 +27,7 @@
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "license": "MIT",
   "dependencies": {
+    "lodash.zip": "^4.2.0",
     "rxjs": "^5.4.2"
   },
   "devDependencies": {

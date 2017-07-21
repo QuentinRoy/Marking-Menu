@@ -3,10 +3,14 @@ import createMenu from './menu';
 import createModel from './model';
 import { watchAngleDrag } from './watch-drag';
 
-export default (items, parentDOM) => {
+export default (items, parentDOM, { minSelectionDist = 50 } = {}) => {
   const model = createModel(items);
   // Create the engine.
-  const engineNotif$ = createEngine(model, watchAngleDrag(parentDOM)).share();
+  const engineNotif$ = createEngine(
+    model,
+    watchAngleDrag(parentDOM),
+    minSelectionDist
+  ).share();
   // Open the menu in function of engine events.
   let menu = null;
   const action$ = engineNotif$
@@ -17,13 +21,13 @@ export default (items, parentDOM) => {
             case 'open': {
               const cbr = parentDOM.getBoundingClientRect();
               menu = createMenu(model, parentDOM, [
-                notif.position[0] - cbr.left,
-                notif.position[1] - cbr.top
+                notif.center[0] - cbr.left,
+                notif.center[1] - cbr.top
               ]);
               break;
             }
             case 'change': {
-              menu.setActive(notif.active.id);
+              menu.setActive((notif.active && notif.active.id) || null);
               break;
             }
             case 'select':
@@ -48,7 +52,5 @@ export default (items, parentDOM) => {
     })
     .share();
   action$.subscribe();
-  return action$
-    .filter(notif => notif.type === 'select')
-    .pluck('selection');
+  return action$.filter(notif => notif.type === 'select').pluck('selection');
 };

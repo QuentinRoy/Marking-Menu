@@ -36,3 +36,18 @@ export const logObservable = prefix => {
     }
   };
 };
+
+/**
+ * Calculate the euclidean distance between two
+ * vectors.
+ *
+ * @param {List<Number>} vector1
+ * @param {List<Number>} vector2
+ */
+export const dist = (vector1, vector2) => {
+  const sum = vector1.reduce((acc, x1i, i) => {
+    const x2i = vector2[i];
+    return acc + (x2i - x1i) ** 2;
+  }, 0);
+  return Math.sqrt(sum);
+};
