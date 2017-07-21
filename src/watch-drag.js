@@ -9,16 +9,14 @@ const createPEventFromTouchEvent = touchEvt => {
   const meanY = sumY / touchList.length;
   return {
     originalEvent: touchEvt,
-    clientX: meanX,
-    clientY: meanY
+    position: [meanX, meanY]
   };
 };
 
 // Create a custom pointer from a mouse event.
 const createPEventFromMouseEvent = mouseEvt => ({
   originalEvent: mouseEvt,
-  clientX: mouseEvt.clientX,
-  clientY: mouseEvt.clientY
+  position: [mouseEvt.clientX, mouseEvt.clientY]
 });
 
 /**

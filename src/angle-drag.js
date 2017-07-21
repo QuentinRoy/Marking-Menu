@@ -3,28 +3,22 @@ import watchDrag from './watch-drag';
 /**
  * Transform an observable tracking drags to an observable tracking angle drags.
  * @param {Observable} o Observable tracking drags.
- * @param {{clientX, clientY}} center The center of the angular drag. If undefined
- *                             the position of the first notification will be
- *                             used as center.
+ * @param {List<Number>} center The center of the angular drag. If undefined
+ *                              the position of the first notification will be
+ *                              used as center.
  */
 export const drag$ToAngleDrag$ = (o, center) =>
   o.scan(
     (acc, evt) => {
-      const position = { clientX: evt.clientX, clientY: evt.clientY };
-      const thisCenter = acc.center || position;
+      const thisCenter = acc.center || evt.position;
       const alpha =
         Math.atan2(
-          evt.clientY - thisCenter.clientY,
-          evt.clientX - thisCenter.clientX
+          evt.position[1] - thisCenter[1],
+          evt.position[0] - thisCenter[0]
         ) *
         360 /
         (2 * Math.PI);
-      return {
-        center: thisCenter,
-        alpha,
-        position,
-        originalEvent: evt.originalEvent
-      };
+      return Object.assign({ center: thisCenter, alpha }, evt);
     },
     { center }
   );

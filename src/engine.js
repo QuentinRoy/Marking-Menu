@@ -12,40 +12,20 @@ import { drag$ToAngleDrag$ } from './angle-drag';
 const createEngine = (model, drag$, minSelectionDist) =>
   drag$.map(o => drag$ToAngleDrag$(o)).exhaustMap(o_ => {
     const o = o_.share();
-    const start$ = o.first().map(e => ({
-      type: 'open',
-      center: [e.center.clientX, e.center.clientY]
-    }));
+    const start$ = o.first().map(n => Object.assign({ type: 'open' }, n));
     const moveAndChange$ = o
       .skip(1)
-      .map(e => {
-        const center = [e.center.clientX, e.center.clientY];
-        const position = [e.position.clientX, e.position.clientY];
-        const distFromCenter = dist(center, position);
+      .scan((last, n) => {
+        const distFromCenter = dist(n.center, n.position);
         const active =
-          distFromCenter < minSelectionDist ? null : model.getNearest(e.alpha);
-        return {
-          center,
-          distFromCenter,
-          active,
-          position,
-          alpha: e.alpha
-        };
-      })
-      .scan(
-        (last, current) =>
-          Object.assign(
-            {
-              type: last && last.active === current.active ? 'move' : 'change'
-            },
-            current
-          ),
-        null
-      )
+          distFromCenter < minSelectionDist ? null : model.getNearest(n.alpha);
+        const type = last && last.active === n.active ? 'move' : 'change';
+        return Object.assign({ active, type }, n);
+      }, null)
       .share();
-    const end$ = moveAndChange$.startWith({}).last().map(e => ({
-      type: e.active ? 'select' : 'cancel',
-      selection: e.active
+    const end$ = moveAndChange$.startWith({}).last().map(n => ({
+      type: n.active ? 'select' : 'cancel',
+      selection: n.active
     }));
     return Observable.merge(start$, moveAndChange$, end$);
   });
