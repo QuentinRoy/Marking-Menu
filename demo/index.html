@@ -11,23 +11,63 @@
       margin: 0;
       height: 100%;
     }
+
+    #toast-wrapper {
+      position: fixed;
+      top: 50px;
+      width: 100%;
+      text-align: center;
+    }
+
+    #toast {
+      background-color: rgba(0, 0, 0, .8);
+      color: white;
+      font-weight: bolder;
+      border-radius: 5px;
+      padding: 10px 20px;
+      opacity: 0;
+      transition: 400ms;
+    }
+
+    #toast.shown {
+      opacity: 1;
+    }
   </style>
 </head>
 
 <body>
   <div id="main"></div>
-
+  <div id="toast-wrapper">
+    <span id="toast"></span>
+  </div>
 
   <script src="./Rx.min.js"></script>
   <script src="../marking-menu.js"></script>
   <script>
-    var items = Array.from({ length: 8 })
-      .map((_, i) => ({ name: `item ${i}` }));
-    items[2].children = Array.from({ length: 4 })
-      .map((_, i) => ({ name: `item 2${i}` }))
-    var main = document.getElementById('main');
-    var mm = MarkingMenu(items, main);
-    mm.subscribe(selection => { console.log('selection', selection) })
+    // Create the toast.
+    const toast = (dom => {
+      let timeoutId = null;
+      return function (message) {
+        clearTimeout(timeoutId);
+        dom.innerHTML = message;
+        dom.classList.add('shown');
+        timeoutId = setTimeout(() => {
+          dom.classList.remove('shown');
+        }, 1000);
+      }
+    })(document.getElementById('toast'));
+
+    // Create the marking menu.
+    const mm = (function (dom) {
+      const items = Array.from({ length: 8 })
+        .map((_, i) => ({ name: `item ${i}` }));
+      items[2].children = Array.from({ length: 4 })
+        .map((_, i) => ({ name: `item 2${i}` }));
+      return MarkingMenu(items, main);
+    })(document.getElementById('main'))
+
+    // Toast the marking menu's selections.
+    mm.subscribe(selection => toast(selection.name));
   </script>
 </body>
 
