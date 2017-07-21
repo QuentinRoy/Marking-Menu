@@ -1,4 +1,4 @@
-import watchDrag from './watch-drag';
+import watchDrags from './watch-drag';
 
 /**
  * Transform an observable tracking drags to an observable tracking angle drags.
@@ -32,5 +32,5 @@ export const drag$ToAngleDrag$ = (o, center) =>
  * @param {HTMLElement} rootDOM the DOM element to observe pointer events on.
  * @return {Observable}
  */
-export const watchAngleDrag = rootDOM =>
-  watchDrag(rootDOM).map(o => drag$ToAngleDrag$(o));
+export const watchAngleDrags = rootDOM =>
+  watchDrags(rootDOM).map(o => drag$ToAngleDrag$(o));

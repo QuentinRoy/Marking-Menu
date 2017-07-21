@@ -3,20 +3,17 @@ import './menu.scss';
 
 /**
  * Create the Menu display.
- * @param {Array<String>} itemList the name of the menu items
+ * @param {ItemModel} model the model of the menu to open
  * @param {HTMLElement} parent the parent node
  * @param {[int, int]} the center of the center of the menu
  * @param {String} [current] the current item
  * @param {Document} [doc] the root document of the menu,
  *                         mostly useful for testing purposes.
- * @return {{
-    setActive,
-    remove
-  }}
+ * @return {{ setActive, remove }}
  */
 const createMenu = (model, parent, center, current, doc = document) => {
   // Create the DOM.
-  const domStr = template({ items: model.items, center });
+  const domStr = template({ items: model.children, center });
   const main = doc.createRange().createContextualFragment(domStr).firstChild;
   parent.appendChild(main);
 

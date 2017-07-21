@@ -24,24 +24,29 @@ const createPEventFromMouseEvent = mouseEvt => ({
  * @param {HTMLElement} rootDOM the DOM element to observe pointer events on.
  * @return {Observable}
  */
-const watchDrag = rootDOM => {
+const watchDrags = rootDOM => {
   // Higher order observable tracking mouse drags.
-  const mouseDrag$ = Observable.fromEvent(rootDOM, 'mousedown')
-    .map(downEvt =>
-      Observable.fromEvent(rootDOM, 'mousemove')
-        // Make sure we include the first mouse down event.
-        .startWith(downEvt)
+  const mouseDrags$ = Observable.fromEvent(rootDOM, 'mousedown')
+    .map(downEvt => {
+      // Make sure we include the first mouse down event.
+      const drag$ = Observable.of(downEvt)
+        .merge(Observable.fromEvent(rootDOM, 'mousemove'))
         .takeUntil(Observable.fromEvent(rootDOM, 'mouseup'))
-    )
+        // Publish it as a behavior so that any new subscription will
+        // get the last drag position.
+        .publishBehavior();
+      drag$.connect();
+      return drag$;
+    })
     .map(o => o.map(createPEventFromMouseEvent));
 
   // Higher order observable tracking touch drags.
-  const touchDrag$ = Observable.fromEvent(rootDOM, 'touchstart')
+  const touchDrags$ = Observable.fromEvent(rootDOM, 'touchstart')
     // Menu is supposed to have pointer-events: none so we can safely rely on
     // targetTouches.
     .filter(evt => evt.targetTouches.length === 1)
-    .map(firstEvent =>
-      Observable.fromEvent(rootDOM, 'touchmove')
+    .map(firstEvent => {
+      const drag$ = Observable.fromEvent(rootDOM, 'touchmove')
         .startWith(firstEvent)
         .takeUntil(
           Observable.merge(
@@ -50,11 +55,14 @@ const watchDrag = rootDOM => {
             Observable.fromEvent(rootDOM, 'touchstart')
           ).filter(evt => evt.targetTouches.length !== 1)
         )
-    )
+        .publishBehavior();
+      drag$.connect();
+      return drag$;
+    })
     .map(o => o.map(createPEventFromTouchEvent));
 
   // Higher order observable tracking drags.
-  return Observable.merge(touchDrag$, mouseDrag$);
+  return Observable.merge(touchDrags$, mouseDrags$);
 };
 
-export default watchDrag;
+export default watchDrags;

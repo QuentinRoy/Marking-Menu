@@ -1,22 +1,30 @@
 import createEngine from './engine';
 import createMenu from './menu';
 import createModel from './model';
-import watchDrag from './watch-drag';
+import watchDrags from './watch-drag';
 
 /**
  * Create a Marking Menu.
  *
  * @param {List<String|{name,children}>} itemList the list of items.
  * @param {HTMLElement} parent the parent node
- * @param {{selectionDist}} config
+ * @param {{selectionDist, submenuOpeningDelay}} config
  */
-export default (items, parentDOM, { minSelectionDist = 50 } = {}) => {
+export default (
+  items,
+  parentDOM,
+  config = {
+    minSelectionDist: 50,
+    minMenuSelectionDist: 120,
+    subMenuOpeningDelay: 25
+  }
+) => {
   const model = createModel(items);
   // Create the engine.
   const engineNotif$ = createEngine(
+    watchDrags(parentDOM),
     model,
-    watchDrag(parentDOM),
-    minSelectionDist,
+    config
   ).share();
   // Open the menu in function of engine events.
   let menu = null;
@@ -27,7 +35,8 @@ export default (items, parentDOM, { minSelectionDist = 50 } = {}) => {
           switch (notif.type) {
             case 'open': {
               const cbr = parentDOM.getBoundingClientRect();
-              menu = createMenu(model, parentDOM, [
+              if (menu) menu.remove();
+              menu = createMenu(notif.menu, parentDOM, [
                 notif.center[0] - cbr.left,
                 notif.center[1] - cbr.top
               ]);
