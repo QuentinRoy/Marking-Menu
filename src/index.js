@@ -3,6 +3,13 @@ import createMenu from './menu';
 import createModel from './model';
 import { watchAngleDrag } from './watch-drag';
 
+/**
+ * Create a Marking Menu.
+ *
+ * @param {List<String|{name,children}>} itemList the list of items.
+ * @param {HTMLElement} parent the parent node
+ * @param {{selectionDist}} config
+ */
 export default (items, parentDOM, { minSelectionDist = 50 } = {}) => {
   const model = createModel(items);
   // Create the engine.

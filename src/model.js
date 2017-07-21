@@ -29,7 +29,7 @@ const createModelItems = (items, idPrefix = undefined) => {
 /**
  * Create the marking menu model.
  *
- * @param {List<String|{name,children}>} itemList the list of item names.
+ * @param {List<String|{name,children}>} itemList the list of items.
  * @return {{items, get, getNearest}}
  */
 const createModel = itemList => {
