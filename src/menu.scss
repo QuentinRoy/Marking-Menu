@@ -16,6 +16,10 @@ $active-line-color: $active-item-background;
 $middle-color: $active-line-color;
 $first-item-angle: 0;
 
+// Used for later calculation
+$item-total-width: $item-width + $item-padding * 2;
+$item-total-height: $item-height + $item-padding * 2;
+
 .marking-menu {
   position: absolute;
   pointer-events: none;
@@ -58,7 +62,7 @@ $first-item-angle: 0;
     position: absolute;
     top: -$line-thickness / 2;
     background-color: $line-color;
-    width: $menu-radius;
+    width: $menu-radius + $item-radius + $line-thickness;
     height: $line-thickness;
     transform-origin: center left;
   }
@@ -72,13 +76,39 @@ $first-item-angle: 0;
 
     &[data-item-angle='#{$angle}'] {
       .marking-menu-label {
-        bottom: sin($rad-fixed-angle) * $menu-radius - $item-height / 2 - $item-padding;
-        left: cos($rad-fixed-angle) * $menu-radius - $item-width / 2;
+        $cos: cos($rad-fixed-angle);
+        $sin: sin($rad-fixed-angle);
+        bottom: $sin * $menu-radius + (min(1, max(-1, $sin * 2)) - 1) * $item-total-height / 2;
+        left: $cos * $menu-radius + (min(1, max(-1, $cos * 2)) - 1) * $item-total-width / 2;
       }
 
       .marking-menu-line {
         transform: rotate(#{$fixed-angle}deg);
       }
+    }
+  }
+
+  &[data-item-angle='45'] {
+    .marking-menu-label {
+      border-top-left-radius: 0;
+    }
+  }
+
+  &[data-item-angle='135'] {
+    .marking-menu-label {
+      border-top-right-radius: 0;
+    }
+  }
+
+  &[data-item-angle='225'] {
+    .marking-menu-label {
+      border-bottom-right-radius: 0;
+    }
+  }
+
+  &[data-item-angle='315'] {
+    .marking-menu-label {
+      border-bottom-left-radius: 0;
     }
   }
 }
