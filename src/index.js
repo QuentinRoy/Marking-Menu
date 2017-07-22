@@ -26,7 +26,10 @@ export default (
     watchDrags(parentDOM),
     model,
     config
-  );
+  ).do(({ originalEvent }) => {
+    // Prevent default on every notifications.
+    if (originalEvent) originalEvent.preventDefault();
+  });
   // Connect the engine notifications to menu opening/closing.
   const connectedEngineNotif$ = connectEngineToMenu(
     parentDOM,
