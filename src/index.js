@@ -35,7 +35,7 @@ export default (
     parentDOM,
     engineNotif$,
     createMenu
-  );
+  ).share();
   // Subscribe to start the menu operations.
   connectedEngineNotif$.subscribe();
   // Return an observable on the selections.
