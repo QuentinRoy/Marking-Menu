@@ -17,7 +17,8 @@ export default (
   config = {
     minSelectionDist: 40,
     minMenuSelectionDist: 80,
-    subMenuOpeningDelay: 25
+    subMenuOpeningDelay: 25,
+    movementsThreshold: 5
   }
 ) => {
   // Create model and engine.

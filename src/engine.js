@@ -48,7 +48,9 @@ const menuNav = (drag$, menu, config) => {
   const menuSelection$ = localNavigation$
     // Drop small movements.
     .distinctUntilChanged(
-      (prev, cur) => dist(prev.position, cur.position) > movementsThreshold
+      (prev, cur) =>
+        !movementsThreshold ||
+        dist(prev.position, cur.position) <= movementsThreshold
     )
     // Wait for a pause in the movements.
     .debounceTime(subMenuOpeningDelay)
