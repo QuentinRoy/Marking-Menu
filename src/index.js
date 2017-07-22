@@ -2,6 +2,7 @@ import createEngine from './engine';
 import createMenu from './menu';
 import createModel from './model';
 import watchDrags from './watch-drag';
+import connectEngineToMenu from './connect-engine-to-menu';
 
 /**
  * Create a Marking Menu.
@@ -19,54 +20,23 @@ export default (
     subMenuOpeningDelay: 25
   }
 ) => {
+  // Create model and engine.
   const model = createModel(items);
-  // Create the engine.
   const engineNotif$ = createEngine(
     watchDrags(parentDOM),
     model,
     config
-  ).share();
-  // Open the menu in function of engine events.
-  let menu = null;
-  const action$ = engineNotif$
-    .do({
-      next(notif) {
-        try {
-          switch (notif.type) {
-            case 'open': {
-              const cbr = parentDOM.getBoundingClientRect();
-              if (menu) menu.remove();
-              menu = createMenu(notif.menu, parentDOM, [
-                notif.center[0] - cbr.left,
-                notif.center[1] - cbr.top
-              ]);
-              break;
-            }
-            case 'change': {
-              menu.setActive((notif.active && notif.active.id) || null);
-              break;
-            }
-            case 'select':
-            case 'cancel':
-              menu.remove();
-              menu = null;
-              break;
-            case 'move':
-              break;
-            default:
-              throw new Error(`Invalid engine type: ${notif.type}`);
-          }
-        } catch (err) {
-          console.error(err);
-          throw err;
-        }
-      },
-      error(err) {
-        console.error(err);
-        throw err;
-      }
-    })
-    .share();
-  action$.subscribe();
-  return action$.filter(notif => notif.type === 'select').pluck('selection');
+  );
+  // Connect the engine notifications to menu opening/closing.
+  const connectedEngineNotif$ = connectEngineToMenu(
+    parentDOM,
+    engineNotif$,
+    createMenu
+  );
+  // Subscribe to start the menu operations.
+  connectedEngineNotif$.subscribe();
+  // Return an observable on the selections.
+  return connectedEngineNotif$
+    .filter(notif => notif.type === 'select')
+    .pluck('selection');
 };
