@@ -15,8 +15,8 @@ export default (
   items,
   parentDOM,
   config = {
-    minSelectionDist: 50,
-    minMenuSelectionDist: 120,
+    minSelectionDist: 40,
+    minMenuSelectionDist: 80,
     subMenuOpeningDelay: 25
   }
 ) => {
