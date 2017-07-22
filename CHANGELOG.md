@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.3.0"></a>
+# [0.3.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.2.0...v0.3.0) (2017-07-22)
+
+
+### Bug Fixes
+
+* Fix not working movements threshold. ([0235558](https://github.com/QuentinRoy/Marking-Menu/commit/0235558))
+* Fix the whole observables chain being subscribed twice. ([6233adc](https://github.com/QuentinRoy/Marking-Menu/commit/6233adc))
+* Prevent default drag behavior. ([8a10ae1](https://github.com/QuentinRoy/Marking-Menu/commit/8a10ae1))
+
+
+### Features
+
+* **menu:** Change menu design. ([c96cc70](https://github.com/QuentinRoy/Marking-Menu/commit/c96cc70))
+* Change menu radius. ([5ddeef0](https://github.com/QuentinRoy/Marking-Menu/commit/5ddeef0))
+
+
+
 <a name="0.2.0"></a>
 # [0.2.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.1.1...v0.2.0) (2017-07-21)
 
