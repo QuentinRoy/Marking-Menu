@@ -1,0 +1,16 @@
+type,x,y,timeStamp,device
+start,616,382,0,mouse
+move,615,382,96,mouse
+move,611,382,101,mouse
+move,607,382,112,mouse
+move,602,382,118,mouse
+move,595,382,128,mouse
+move,585,382,134,mouse
+move,573,382,144,mouse
+move,547,382,149,mouse
+move,531,382,160,mouse
+move,508,382,165,mouse
+move,486,382,176,mouse
+move,460,382,182,mouse
+move,450,382,192,mouse
+end,450,382,197,mouse
