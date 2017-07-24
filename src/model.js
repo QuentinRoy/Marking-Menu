@@ -7,9 +7,9 @@ const getAngleRange = items => (items.length > 4 ? 45 : 90);
  */
 class Item {
   /**
-   * @param {String} id
-   * @param {String} name
-   * @param {Integer} angle
+   * @param {String} [id] - The item's id. Required except for the root item.
+   * @param {String} [name] - The item's name. Required except for the root item.
+   * @param {Integer} [angle] - The item's angle. Required except for the root item.
    */
   constructor(id, name, angle) {
     this.id = id;
@@ -30,10 +30,10 @@ class Item {
 
 class MenuItem extends Item {
   /**
-   * @param {String} id
-   * @param {String} name
-   * @param {Integer} angle
-   * @param {List<ItemModel>} children
+   * @param {String} [id] - The item's id. Required except for the root item.
+   * @param {String} [name] - The item's name. Required except for the root item.
+   * @param {Integer} [angle] - The item's angle. Required except for the root item.
+   * @param {List<ItemModel>} children - The items contained in the menu.
    */
   constructor(id, name, angle, children) {
     super(id, name, angle);
@@ -50,24 +50,24 @@ class MenuItem extends Item {
   }
 
   /**
-   * @param {String} childId
-   * @return {ItemMode} the children with the id `childId`.
+   * @param {String} childId - The identifier of the child to look for.
+   * @return {Item} the children with the id `childId`.
    */
   getChildren(childId) {
     return this.children.find(child => child.id === childId);
   }
 
   /**
-   * @param {String} childId
-   * @return {ItemMode} the (first) children with the name `childName`.
+   * @param {String} childName - The name of the child to look for.
+   * @return {Item} the (first) children with the name `childName`.
    */
   getChildrenByName(childName) {
     return this.children.find(child => child.name === childName);
   }
 
   /**
-   * @param {Integer} angle
-   * @return {ItemMode} the closest children to the angle `angle`.
+   * @param {Integer} angle - An angle.
+   * @return {Item} the closest children to the angle `angle`.
    */
   getNearestChildren(angle) {
     return this.children.reduce((c1, c2) => {
@@ -105,8 +105,8 @@ const recursivelyCreateModelItems = (items, baseId = undefined) => {
 /**
  * Create the marking menu model.
  *
- * @param {List<String|{name,children}>} itemList the list of items.
- * @return {{items, get, getNearest}}
+ * @param {List<String|{name,children}>} itemList - The list of items.
+ * @return {MenuItem} - The root item of the model.
  */
 const createModel = itemList =>
   new MenuItem(null, null, null, recursivelyCreateModelItems(itemList));

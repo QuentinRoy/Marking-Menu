@@ -3,13 +3,13 @@ import './menu.scss';
 
 /**
  * Create the Menu display.
- * @param {HTMLElement} parent the parent node
- * @param {ItemModel} model the model of the menu to open
- * @param {[int, int]} the center of the center of the menu
- * @param {String} [current] the current item
- * @param {Document} [doc] the root document of the menu,
- *                         mostly useful for testing purposes.
- * @return {{ setActive, remove }}
+ * @param {HTMLElement} parent - The parent node.
+ * @param {ItemModel} model - The model of the menu to open.
+ * @param {[int, int]} center - The center of the menu.
+ * @param {String} [current] - The currently active item.
+ * @param {Document} [doc] - The root document of the menu.
+ *                           Mostly useful for testing purposes.
+ * @return {{ setActive, remove }} - The menu controls.
  */
 const createMenu = (parent, model, center, current, doc = document) => {
   // Create the DOM.

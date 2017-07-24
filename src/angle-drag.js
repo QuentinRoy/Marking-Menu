@@ -1,14 +1,14 @@
 import watchDrags from './watch-drag';
 
 /**
- * Transform an observable tracking drags to an observable tracking angle drags.
- * @param {Observable} o Observable tracking drags.
+ * @param {Observable} $drag Observable tracking drags.
  * @param {List<Number>} center The center of the angular drag. If undefined
  *                              the position of the first notification will be
  *                              used as center.
+ * @return {Observable} An observable tracking angle drags built from `o`.
  */
-export const drag$ToAngleDrag$ = (o, center) =>
-  o.scan(
+export const drag$ToAngleDrag$ = ($drag, center) =>
+  $drag.scan(
     (acc, evt) => {
       const thisCenter = acc.center || evt.position;
       const alpha =
@@ -30,7 +30,7 @@ export const drag$ToAngleDrag$ = (o, center) =>
  * vector.
  *
  * @param {HTMLElement} rootDOM the DOM element to observe pointer events on.
- * @return {Observable}
+ * @return {Observable} An observable tracking angle drags.
  */
 export const watchAngleDrags = rootDOM =>
   watchDrags(rootDOM).map(o => drag$ToAngleDrag$(o));

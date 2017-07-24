@@ -28,8 +28,8 @@ test('`dist` returns the euclidean distance between two vectors', t => {
   t.is(dist([0, 0], [0, 0]), 0);
   t.is(dist([42, 11], [42, 11]), 0);
 
-  t.is(dist([0, 0], [1, 1]), Math.sqrt(2));
-  t.is(dist([1, 1], [0, 0]), Math.sqrt(2));
+  t.is(dist([0, 0], [0, 1]), 1);
+  t.is(dist([1, 0], [0, 0]), 1);
 
   t.is(dist([5, 10], [20, 4]), Math.sqrt((5 - 20) ** 2 + (10 - 4) ** 2));
   t.is(dist([20, 4], [5, 10]), Math.sqrt((5 - 20) ** 2 + (10 - 4) ** 2));

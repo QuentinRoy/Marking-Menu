@@ -45,7 +45,7 @@
   <script src="../marking-menu.js"></script>
   <script>
     // Create the toast.
-    const toast = (dom => {
+    const toastMessage = (dom => {
       let timeoutId = null;
       return function (message) {
         clearTimeout(timeoutId);
@@ -67,7 +67,7 @@
     })(document.getElementById('main'))
 
     // Toast the marking menu's selections.
-    mm.subscribe(selection => toast(selection.name));
+    mm.subscribe(selection => toastMessage(selection.name));
   </script>
 </body>
 
