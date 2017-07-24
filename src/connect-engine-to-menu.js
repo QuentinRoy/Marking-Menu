@@ -1,9 +1,10 @@
 /**
  * Connect engine to menu opening and closing.
  *
- * @param {HTMLElement} parentDOM the element where to append the menu.
- * @param {Observable} engineNotif$ notifications of the engine.
- * @param {Function} createMenu menu factory.
+ * @param {HTMLElement} parentDOM - The element where to append the menu.
+ * @param {Observable} engineNotif$ - Notifications of the engine.
+ * @param {Function} createMenu - Menu factory.
+ * @return {Observable} `engineNotif$` with menu opening and closing side effects.
  */
 export default (parentDOM, engineNotif$, createMenu) => {
   // Open the menu in function of engine events.

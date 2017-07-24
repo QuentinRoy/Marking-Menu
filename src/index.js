@@ -7,14 +7,23 @@ import connectEngineToMenu from './connect-engine-to-menu';
 /**
  * Create a Marking Menu.
  *
- * @param {List<String|{name,children}>} itemList the list of items.
- * @param {HTMLElement} parent the parent node
- * @param {{selectionDist, submenuOpeningDelay}} config
+ * @param {List<String|{name,children}>} items - The list of items.
+ * @param {HTMLElement} parentDOM - The parent node.
+ * @param {Object} options - Configuration options for the menu.
+ * @param {number} options.minSelectionDist - The minimum distance from the center to select an
+ *                                            item.
+ * @param {number} options.minMenuSelectionDist - The minimum distance from the center to open a
+ *                                                sub-menu.
+ * @param {number} options.subMenuOpeningDelay - The dwelling delay before opening a sub-menu.
+ * @param {number} options.movementsThreshold - The minimum distance between two points to be
+ *                                              considered a significant movements and breaking
+ *                                              the sub-menu dwelling delay.
+ * @return {Observable} An observable on menu selections.
  */
 export default (
   items,
   parentDOM,
-  config = {
+  options = {
     minSelectionDist: 40,
     minMenuSelectionDist: 80,
     subMenuOpeningDelay: 25,
@@ -26,7 +35,7 @@ export default (
   const engineNotif$ = createEngine(
     watchDrags(parentDOM),
     model,
-    config
+    options
   ).do(({ originalEvent }) => {
     // Prevent default on every notifications.
     if (originalEvent) originalEvent.preventDefault();

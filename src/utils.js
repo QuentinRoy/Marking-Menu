@@ -1,23 +1,21 @@
 /**
- * Calculate the modulo of a over n (% is not exactly modulo but remainder).
- * Modulo is always positive.
- * @param {Number} a the dividend
- * @param {Number} n the divisor
- * @return {Number}
+ * @param {number} a the dividend
+ * @param {number} n the divisor
+ * @return {number} The modulo of `a` over `n` (% is not exactly modulo but remainder).
  */
 export const mod = (a, n) => (a % n + n) % n;
 
 /**
- * @param {Number} alpha a first angle (in degrees)
- * @param {Number} beta a second angle (in degrees)
- * @return {Number} The (signed) delta between the two angles (in degrees).
+ * @param {number} alpha a first angle (in degrees)
+ * @param {number} beta a second angle (in degrees)
+ * @return {number} The (signed) delta between the two angles (in degrees).
  */
 export const deltaAngle = (alpha, beta) => mod(beta - alpha + 180, 360) - 180;
 
 /**
- * Create an observer logging next, errors and complete "events".
- * Handy to debug observable.
- * @param {String} prefix a prefix to append before log messages.
+ * @param {String} [prefix] - A prefix to append before log messages.
+ * @return {Observable} An observer logging next, errors and complete "events".
+ *                      Handy to debug observable.
  */
 export const logObservable = prefix => {
   const fixedPrefix = prefix ? `${prefix} ` : '';
@@ -39,14 +37,15 @@ export const logObservable = prefix => {
 
 /**
  * Calculate the euclidean distance between two
- * vectors.
+ * points.
  *
- * @param {List<Number>} vector1
- * @param {List<Number>} vector2
+ * @param {List<number>} point1 - The first point
+ * @param {List<number>} point2 - The second point
+ * @return {number} The distance between the two points.
  */
-export const dist = (vector1, vector2) => {
-  const sum = vector1.reduce((acc, x1i, i) => {
-    const x2i = vector2[i];
+export const dist = (point1, point2) => {
+  const sum = point1.reduce((acc, x1i, i) => {
+    const x2i = point2[i];
     return acc + (x2i - x1i) ** 2;
   }, 0);
   return Math.sqrt(sum);
