@@ -3,10 +3,10 @@
  *
  * @param {HTMLElement} parentDOM - The element where to append the menu.
  * @param {Observable} engineNotif$ - Notifications of the engine.
- * @param {Function} createMenu - Menu factory.
+ * @param {Function} createLayout - Menu layout factory.
  * @return {Observable} `engineNotif$` with menu opening and closing side effects.
  */
-export default (parentDOM, engineNotif$, createMenu) => {
+export default (parentDOM, engineNotif$, createLayout) => {
   // Open the menu in function of engine events.
   let menu = null;
 
@@ -19,7 +19,7 @@ export default (parentDOM, engineNotif$, createMenu) => {
 
   const openMenu = (model, position) => {
     const cbr = parentDOM.getBoundingClientRect();
-    menu = createMenu(parentDOM, model, [
+    menu = createLayout(parentDOM, model, [
       position[0] - cbr.left,
       position[1] - cbr.top
     ]);

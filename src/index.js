@@ -1,8 +1,8 @@
 import createEngine from './engine';
-import createMenu from './menu';
+import createLayout from './layout';
 import createModel from './model';
-import watchDrags from './watch-drag';
-import connectEngineToMenu from './connect-engine-to-menu';
+import watchDrags from './drag/watch-drag';
+import connectEngineToLayout from './connect-engine-to-layout';
 
 /**
  * Create a Marking Menu.
@@ -41,10 +41,10 @@ export default (
     if (originalEvent) originalEvent.preventDefault();
   });
   // Connect the engine notifications to menu opening/closing.
-  const connectedEngineNotif$ = connectEngineToMenu(
+  const connectedEngineNotif$ = connectEngineToLayout(
     parentDOM,
     engineNotif$,
-    createMenu
+    createLayout
   ).share();
   // Subscribe to start the menu operations.
   connectedEngineNotif$.subscribe();
