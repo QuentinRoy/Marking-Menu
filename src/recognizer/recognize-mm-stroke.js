@@ -86,16 +86,16 @@ const recognizeMMStroke = (stroke, model) => {
   );
   const minSegmentSize = expectedSegmentLength / 3;
   // Get the segments of the marking menus.
-  let segments = pointsToSegments(articulationPoints);
-  // Change the representation of the segment to include its length.
-  segments = segments.map(seg => ({ points: seg, length: dist(...seg) }));
-  // Remove the segments that are too small.
-  segments = segments.filter(seg => seg.length > minSegmentSize);
-  // Change again the representation of the segment to include its length but not its
-  // its points anymore.
-  segments = segments.map(seg =>
-    Object.assign({ angle: segmentAngle(...seg.points), length: seg.length })
-  );
+  const segments = pointsToSegments(articulationPoints)
+    // Change the representation of the segment to include its length.
+    .map(seg => ({ points: seg, length: dist(...seg) }))
+    // Remove the segments that are too small.
+    .filter(seg => seg.length > minSegmentSize)
+    // Change again the representation of the segment to include its length but not its
+    // its points anymore.
+    .map(seg =>
+      Object.assign({ angle: segmentAngle(...seg.points), length: seg.length })
+    );
   return findMMItem(model, segments, maxMenuDepth);
 };
 
