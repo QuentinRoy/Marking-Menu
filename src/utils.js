@@ -1,3 +1,5 @@
+import rad2deg from 'rad2deg';
+
 /**
  * @param {number} a the dividend
  * @param {number} n the divisor
@@ -50,3 +52,43 @@ export const dist = (point1, point2) => {
   }, 0);
   return Math.sqrt(sum);
 };
+
+const ANGLE_ROUNDING = 10e-8;
+/**
+ * @param {number[]} a - The first point.
+ * @param {number[]} b - The second point, center of the angle.
+ * @param {number[]} c - The third point.
+ * @return {number} The angle abc (in degrees) rounded at the 8th decimal.
+ */
+export const angle = (a, b, c) => {
+  const lab = dist(a, b);
+  const lbc = dist(b, c);
+  const lac = dist(a, c);
+  const cos = (lab ** 2 + lbc ** 2 - lac ** 2) / (2 * lab * lbc);
+  // Due to rounding, it can happen than cos ends up being slight > 1 or slightly < -1.
+  // This fixes it.
+  const adjustedCos = Math.max(-1, Math.min(1, cos));
+  const angleABC = rad2deg(Math.acos(adjustedCos));
+  // Round the angle to avoid rounding issues.
+  return Math.round(angleABC / ANGLE_ROUNDING) * ANGLE_ROUNDING;
+};
+
+/**
+ * @callback findMaxEntryComp
+ * @param {*} item1 - A first item.
+ * @param {*} item2 - A second item.
+ * @return {number} A positive number if the second item should be ranked higher than the first,
+ *                  a negative number if it should be ranked lower and 0 if they should be ranked
+ *                  the same.
+ */
+
+/**
+ * @param {List} list - A list of items.
+ * @param {findMaxEntryComp} comp - A function to calculate a value from an item.
+ * @return {[index, item]} The found entry.
+ */
+export const findMaxEntry = (list, comp) =>
+  list.slice(0).reduce((result, item, index) => {
+    if (comp(result[1], item) > 1) return [index, item];
+    return result;
+  }, [0, list[0]]);

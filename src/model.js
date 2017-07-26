@@ -76,6 +76,32 @@ class MenuItem extends Item {
       return delta1 > delta2 ? c2 : c1;
     });
   }
+
+  /**
+   * @return {number} The maximum depth of the menu.
+   */
+  getMaxDepth() {
+    return (
+      Math.max(
+        0,
+        ...this.children
+          .filter(child => !child.isLeaf())
+          .map(child => child.getMaxDepth())
+      ) + 1
+    );
+  }
+
+  /**
+   * @return {number} The maximum breadth of the menu.
+   */
+  getMaxBreadth() {
+    return Math.max(
+      this.children.length,
+      ...this.children
+        .filter(child => !child.isLeaf())
+        .map(child => child.getMaxBreadth())
+    );
+  }
 }
 
 // Create the model item from a list of items.

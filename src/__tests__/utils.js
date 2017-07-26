@@ -1,5 +1,5 @@
 import test from 'ava';
-import { deltaAngle, mod, dist } from '../utils';
+import { deltaAngle, mod, dist, angle, findMaxEntry } from '../utils';
 
 test('`mod` returns a positive modulo', t => {
   t.is(mod(3, 10), 3);
@@ -41,5 +41,31 @@ test('`dist` returns the euclidean distance between two vectors', t => {
     Math.sqrt(
       (1 - 4) ** 2 + (2 - 5) ** 2 + (3 - 6) ** 2 + (7 - 9) ** 2 + (8 - 10) ** 2
     )
+  );
+});
+
+test('`angle` calculate an angle from three points', t => {
+  t.is(angle([5, 1], [1, 1], [1, 20]), 90, 1e-9);
+  t.is(angle([5, 1], [1, 1], [1, -20]), 90, 1e-9);
+  t.is(angle([5, 1], [1, 1], [110, 1]), 0, 1e-9);
+  t.is(angle([5, 5], [1, 5], [-10, 5]), 180, 1e-9);
+  t.is(angle([5, 5], [1, 1], [5, 1]), 45, 1e-9);
+  t.is(angle([5, 5], [1, 1], [-10, -10]), 180, 1e-9);
+});
+
+test('`findMaxEntry` return an entry with the item that raised the highest number', t => {
+  t.deepEqual(
+    findMaxEntry(
+      [{ l: 2 }, { l: 0 }, { l: 10 }, { l: 5 }],
+      (a, b) => b.l - a.l
+    ),
+    [2, { l: 10 }]
+  );
+  t.deepEqual(
+    findMaxEntry(
+      [{ l: 2 }, { l: 0 }, { l: 10 }, { l: 5 }],
+      (a, b) => a.l - b.l
+    ),
+    [1, { l: 0 }]
   );
 });

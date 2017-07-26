@@ -1,3 +1,4 @@
+import rad2deg from 'rad2deg';
 import watchDrags from './watch-drag';
 
 /**
@@ -11,13 +12,12 @@ export const drag$ToAngleDrag$ = ($drag, center) =>
   $drag.scan(
     (acc, evt) => {
       const thisCenter = acc.center || evt.position;
-      const alpha =
+      const alpha = rad2deg(
         Math.atan2(
           evt.position[1] - thisCenter[1],
           evt.position[0] - thisCenter[0]
-        ) *
-        360 /
-        (2 * Math.PI);
+        )
+      );
       return Object.assign({ center: thisCenter, alpha }, evt);
     },
     { center }
