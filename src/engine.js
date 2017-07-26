@@ -1,5 +1,5 @@
 import { dist } from './utils';
-import { drag$ToAngleDrag$ } from './angle-drag';
+import { drag$ToAngleDrag$ } from './drag/angle-drag';
 
 /**
  * @param {Observable} drag$ - The observable of a drag movement.
