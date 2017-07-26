@@ -159,12 +159,12 @@ test('`recognizeMMStroke` properly recognizes real 3 levels strokes', async t =>
     );
     t.is(selection.parent.parent.parent, model);
   };
-  // await testStroke([225, 0, 135]);
-  // await testStroke([270, 0, 90]);
-  // await testStroke([270, 45, 90]);
-  // await testStroke([270, 45, 270]);
-  // await testStroke([180, 0, 0]);
-  // await testStroke([90, 90, 90], 90);
+  await testStroke([225, 0, 135]);
+  await testStroke([270, 0, 90]);
+  await testStroke([270, 45, 90]);
+  await testStroke([270, 45, 270]);
+  await testStroke([180, 0, 0]);
+  await testStroke([90, 90, 90], 90);
   await testStroke([45, 45, 45], 45);
 });
 
