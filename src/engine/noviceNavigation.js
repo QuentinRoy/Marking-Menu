@@ -1,8 +1,8 @@
 import { dist } from '../utils';
-import { drag$ToAngleDrag$ } from '../drag';
+import { drag$ToAngleDrag$, dwelling } from '../drag';
 
 /**
- * @param {Observable} drag$ - The observable of a drag movement.
+ * @param {Observable} drag$ - An observable of drag movements.
  * @param {MenuItem} menu - The model of the menu.
  * @param {object} options - Configuration options.
  * @return {Observable} An observable on the menu navigation events.
@@ -48,24 +48,18 @@ const noviceNavigation = (drag$, menu, options) => {
   const localNavigation$ = startAndMove$.merge(end$).share();
 
   // Look for (sub)menu selection.
-  const menuSelection$ = localNavigation$
-    // Drop small movements.
-    .distinctUntilChanged(
-      (prev, cur) =>
-        !movementsThreshold ||
-        dist(prev.position, cur.position) <= movementsThreshold
-    )
+  const menuSelection$ =
     // Wait for a pause in the movements.
-    .debounceTime(subMenuOpeningDelay)
-    // No menu selections once the local navigation is done.
-    .takeUntil(localNavigation$.last())
-    // Filter pauses occurring outside of the selection area.
-    .filter(
-      n =>
-        n.active &&
-        n.distFromCenter > minMenuSelectionDist &&
-        !n.active.isLeaf()
-    );
+    dwelling(localNavigation$, subMenuOpeningDelay, movementsThreshold)
+      // No menu selections once the local navigation is done.
+      .takeUntil(localNavigation$.last())
+      // Filter dwellings occurring outside of the selection area.
+      .filter(
+        n =>
+          n.active &&
+          n.distFromCenter > minMenuSelectionDist &&
+          !n.active.isLeaf()
+      );
 
   // Higher order observable on navigation inside sub-menus.
   const subMenuNavigations$ = menuSelection$.map(n =>
