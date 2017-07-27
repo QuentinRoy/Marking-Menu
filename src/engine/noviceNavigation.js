@@ -1,5 +1,5 @@
 import { dist } from '../utils';
-import { drag$ToAngleDrag$, dwelling } from '../drag';
+import { mapAngleDrag, dwelling } from '../drag';
 
 /**
  * @param {Observable} drag$ - An observable of drag movements.
@@ -16,7 +16,7 @@ const noviceNavigation = (drag$, menu, options) => {
     menuCenter
   } = options;
   // Convert the drag observable to an angular drag observable.
-  const angleDrag$ = drag$ToAngleDrag$(drag$, menuCenter);
+  const angleDrag$ = mapAngleDrag(drag$, menuCenter);
 
   // Start observable. `
   const start$ = angleDrag$

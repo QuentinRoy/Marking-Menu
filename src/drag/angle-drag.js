@@ -8,7 +8,7 @@ import watchDrags from './linear-drag';
  *                              used as center.
  * @return {Observable} An observable tracking angle drags built from `o`.
  */
-export const drag$ToAngleDrag$ = ($drag, center) =>
+export const mapAngleDrag = ($drag, center) =>
   $drag.scan(
     (acc, evt) => {
       const thisCenter = acc.center || evt.position;
@@ -33,4 +33,4 @@ export const drag$ToAngleDrag$ = ($drag, center) =>
  * @return {Observable} An observable tracking angle drags.
  */
 export const watchAngleDrags = rootDOM =>
-  watchDrags(rootDOM).map(o => drag$ToAngleDrag$(o));
+  watchDrags(rootDOM).map(o => mapAngleDrag(o));
