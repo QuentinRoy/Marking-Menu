@@ -1,5 +1,5 @@
 import rad2deg from 'rad2deg';
-import watchDrags from './watch-drag';
+import watchDrags from './linear-drag';
 
 /**
  * @param {Observable} $drag Observable tracking drags.

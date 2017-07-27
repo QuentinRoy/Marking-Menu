@@ -1,5 +1,5 @@
-import { dist } from './utils';
-import { drag$ToAngleDrag$ } from './drag/angle-drag';
+import { dist } from '../utils';
+import { drag$ToAngleDrag$ } from '../drag';
 
 /**
  * @param {Observable} drag$ - The observable of a drag movement.
@@ -7,16 +7,18 @@ import { drag$ToAngleDrag$ } from './drag/angle-drag';
  * @param {object} options - Configuration options.
  * @return {Observable} An observable on the menu navigation events.
  */
-const menuNav = (drag$, menu, options) => {
+const noviceNavigation = (drag$, menu, options) => {
   const {
     minSelectionDist,
     minMenuSelectionDist,
     movementsThreshold,
-    subMenuOpeningDelay
+    subMenuOpeningDelay,
+    menuCenter
   } = options;
-  const angleDrag$ = drag$ToAngleDrag$(drag$);
+  // Convert the drag observable to an angular drag observable.
+  const angleDrag$ = drag$ToAngleDrag$(drag$, menuCenter);
 
-  // Start observable.
+  // Start observable. `
   const start$ = angleDrag$
     .first()
     .map(n => Object.assign({ type: 'open', menu }, n));
@@ -67,7 +69,7 @@ const menuNav = (drag$, menu, options) => {
 
   // Higher order observable on navigation inside sub-menus.
   const subMenuNavigations$ = menuSelection$.map(n =>
-    menuNav(drag$, n.active, options)
+    noviceNavigation(drag$, n.active, options)
   );
 
   // Start with local navigation but switch to the first sub-menu navigation
@@ -75,11 +77,4 @@ const menuNav = (drag$, menu, options) => {
   return subMenuNavigations$.take(1).startWith(localNavigation$).switch();
 };
 
-/**
- * @param {Observable} drags$ - A higher order observable on drag movements.
- * @param {MenuItem} menu - The model of the menu.
- * @param {object} options - Configuration options (see {@link ../index.js}).
- * @return {Observable} An observable on the marking menu events.
- */
-export default (drags$, ...navArgs) =>
-  drags$.exhaustMap(drag$ => menuNav(drag$, ...navArgs));
+export default noviceNavigation;

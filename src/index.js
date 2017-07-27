@@ -1,7 +1,7 @@
 import createEngine from './engine';
 import createLayout from './layout';
 import createModel from './model';
-import watchDrags from './drag/watch-drag';
+import { watchDrags } from './drag';
 import connectEngineToLayout from './connect-engine-to-layout';
 
 /**
