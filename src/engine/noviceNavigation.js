@@ -1,5 +1,5 @@
 import { dist } from '../utils';
-import { mapAngleDrag, dwelling } from '../drag';
+import { mapAngleDrag, dwellings } from '../move';
 
 /**
  * @param {Observable} drag$ - An observable of drag movements.
@@ -50,7 +50,7 @@ const noviceNavigation = (drag$, menu, options) => {
   // Look for (sub)menu selection.
   const menuSelection$ =
     // Wait for a pause in the movements.
-    dwelling(localNavigation$, subMenuOpeningDelay, movementsThreshold)
+    dwellings(localNavigation$, subMenuOpeningDelay, movementsThreshold)
       // No menu selections once the local navigation is done.
       .takeUntil(localNavigation$.last())
       // Filter dwellings occurring outside of the selection area.

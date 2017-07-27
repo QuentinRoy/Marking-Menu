@@ -1,4 +1,10 @@
 import noviceNavigation from './noviceNavigation';
+// import expertNavigation from './expertNavigation';
+import { dwellings } from '../move';
+
+// const navigation = (drag$, menu, options) => {
+//   dwellings()
+// };
 
 /**
  * @param {Observable} drags$ - A higher order observable on drag movements.

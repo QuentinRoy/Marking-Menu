@@ -1,4 +1,4 @@
-import { dist } from '../utils';
+import longMoves from './long-move';
 
 /**
  * @param {Observable} drag$ - An observable on drag movements.
@@ -9,15 +9,6 @@ import { dist } from '../utils';
  * @return {Observable} An observable on dwellings in the movement.
  */
 export default (drag$, delay, movementsThreshold = 0) =>
-  drag$
-    // Drop small movements.
-    .scan(
-      (prev, cur) =>
-        !movementsThreshold ||
-        dist(prev.position, cur.position) <= movementsThreshold
-          ? prev
-          : cur
-    )
-    .distinctUntilChanged()
+  longMoves(drag$, movementsThreshold)
     // Emit after a pause in the movements.
     .debounceTime(delay);
