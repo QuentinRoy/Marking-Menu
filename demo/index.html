@@ -59,10 +59,17 @@
 
     // Create the marking menu.
     const mm = (function (dom) {
-      const items = Array.from({ length: 8 })
-        .map((_, i) => ({ name: `item ${i}` }));
-      items[2].children = Array.from({ length: 4 })
-        .map((_, i) => ({ name: `item 2${i}` }));
+      const leafs = Array.from({ length: 7 })
+        .map((_, i) => ({ name: `item ${i + 1}` }));
+      const items = [
+        ...leafs.slice(0, 2),
+        {
+          name: 'others...',
+          children: Array.from({ length: 4 })
+            .map((_, i) => ({ name: `item ${i + 8}` }))
+        },
+        ...leafs.slice(2)
+      ];
       return MarkingMenu(items, main);
     })(document.getElementById('main'))
 
