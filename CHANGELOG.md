@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.4.0"></a>
+# [0.4.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.3.0...v0.4.0) (2017-07-28)
+
+
+### Features
+
+* Expert / novice navigation mode switching. ([048b439](https://github.com/QuentinRoy/Marking-Menu/commit/048b439))
+* Gesture recognizer. ([7cb9f96](https://github.com/QuentinRoy/Marking-Menu/commit/7cb9f96))
+
+
+
 <a name="0.3.0"></a>
 # [0.3.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.2.0...v0.3.0) (2017-07-22)
 
