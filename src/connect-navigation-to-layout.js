@@ -1,3 +1,5 @@
+import rafThrottle from 'raf-throttle';
+
 /**
  * Connect navigation notifications to menu opening and closing.
  *
@@ -41,16 +43,16 @@ export default (
     strokeStart = position;
   };
 
-  const noviceMove = position => {
+  const noviceMove = rafThrottle(position => {
     strokeCanvas.clear();
     strokeCanvas.drawStroke([strokeStart, position]);
     strokeCanvas.drawPoint(strokeStart);
-  };
+  });
 
-  const expertDraw = stroke => {
+  const expertDraw = rafThrottle(stroke => {
     strokeCanvas.clear();
     strokeCanvas.drawStroke(stroke);
-  };
+  });
 
   const clearStroke = () => {
     strokeCanvas.remove();

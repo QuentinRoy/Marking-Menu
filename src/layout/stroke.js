@@ -1,5 +1,3 @@
-import rafThrottle from 'raf-throttle';
-
 const devicePixelRatio = window.devicePixelRatio || 1;
 
 /**
@@ -73,7 +71,7 @@ export default (
    * @param {List<number[]>} stroke - The new stroke.
    * @return {undefined}
    */
-  const drawStroke = rafThrottle(stroke => {
+  const drawStroke = stroke => {
     ctx.save();
     ctx.fillStyle = 'none';
     ctx.lineJoin = 'round';
@@ -86,7 +84,7 @@ export default (
     });
     ctx.stroke();
     ctx.restore();
-  });
+  };
 
   /**
    * Destroy the canvas.
