@@ -110,8 +110,9 @@ export default (
       }
     },
     complete() {
-      // Make sure the menu is closed upon completion.
+      // Make sure everything is cleaned upon completion.
       if (menu) closeMenu();
+      if (strokeCanvas) clearStroke();
     }
   });
 };
