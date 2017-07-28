@@ -17,4 +17,5 @@ export default (drag$, movementsThreshold) =>
           ? prev
           : cur
     )
-    .distinctUntilChanged();
+    .distinctUntilChanged()
+    .skip(1);

@@ -1,3 +1,4 @@
+import { Observable } from 'rxjs';
 import longMoves from './long-move';
 
 /**
@@ -9,6 +10,6 @@ import longMoves from './long-move';
  * @return {Observable} An observable on dwellings in the movement.
  */
 export default (drag$, delay, movementsThreshold = 0) =>
-  longMoves(drag$, movementsThreshold)
+  Observable.merge(drag$.take(1), longMoves(drag$, movementsThreshold))
     // Emit after a pause in the movements.
     .debounceTime(delay);

@@ -1,8 +1,8 @@
-import createEngine from './engine';
+import navigation from './navigation';
 import createLayout from './layout';
 import createModel from './model';
 import { watchDrags } from './move';
-import connectEngineToLayout from './connect-engine-to-layout';
+import connectNavigationToLayout from './connect-navigation-to-layout';
 
 /**
  * Create a Marking Menu.
@@ -27,12 +27,13 @@ export default (
     minSelectionDist: 40,
     minMenuSelectionDist: 80,
     subMenuOpeningDelay: 25,
-    movementsThreshold: 5
+    movementsThreshold: 5,
+    noviceDwellingTime: 1000 / 3
   }
 ) => {
   // Create model and engine.
   const model = createModel(items);
-  const engineNotif$ = createEngine(
+  const navigation$ = navigation(
     watchDrags(parentDOM),
     model,
     options
@@ -41,15 +42,15 @@ export default (
     if (originalEvent) originalEvent.preventDefault();
   });
   // Connect the engine notifications to menu opening/closing.
-  const connectedEngineNotif$ = connectEngineToLayout(
+  const connectedNavigation$ = connectNavigationToLayout(
     parentDOM,
-    engineNotif$,
+    navigation$,
     createLayout
   ).share();
   // Subscribe to start the menu operations.
-  connectedEngineNotif$.subscribe();
+  connectedNavigation$.subscribe();
   // Return an observable on the selections.
-  return connectedEngineNotif$
-    .filter(notif => notif.type === 'select')
+  return connectedNavigation$
+    .filter(notification => notification.type === 'select')
     .pluck('selection');
 };

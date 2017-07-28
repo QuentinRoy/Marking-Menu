@@ -8,11 +8,13 @@ import recognize from '../recognizer';
 export default (drag$, model) => {
   // Observable on gesture drawing.
   const draw$ = drag$
-    .scan((acc, notification) =>
-      Object.assign(
-        { stroke: [...acc.stroke, notification.position], type: 'draw' },
-        notification
-      )
+    .scan(
+      (acc, notification) =>
+        Object.assign(
+          { stroke: [...acc.stroke, notification.position], type: 'draw' },
+          notification
+        ),
+      { stroke: [] }
     )
     .share();
   // Track the end of the drawing and attempt to recognize the gesture.

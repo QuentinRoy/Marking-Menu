@@ -1,13 +1,13 @@
 /**
- * Connect engine to menu opening and closing.
+ * Connect navigation notifications to menu opening and closing.
  *
  * @param {HTMLElement} parentDOM - The element where to append the menu.
- * @param {Observable} engineNotif$ - Notifications of the engine.
+ * @param {Observable} navigation$ - Notifications of the navigation.
  * @param {Function} createLayout - Menu layout factory.
- * @return {Observable} `engineNotif$` with menu opening and closing side effects.
+ * @return {Observable} `navigation$` with menu opening and closing side effects.
  */
-export default (parentDOM, engineNotif$, createLayout) => {
-  // Open the menu in function of engine events.
+export default (parentDOM, navigation$, createLayout) => {
+  // Open the menu in function of navigation notifications.
   let menu = null;
 
   const closeMenuIfOpened = () => {
@@ -29,26 +29,30 @@ export default (parentDOM, engineNotif$, createLayout) => {
     menu.setActive(id);
   };
 
-  return engineNotif$.do({
-    next(notif) {
-      switch (notif.type) {
+  return navigation$.do({
+    next(notification) {
+      switch (notification.type) {
         case 'open': {
           closeMenuIfOpened();
-          openMenu(notif.menu, notif.center);
+          openMenu(notification.menu, notification.center);
           break;
         }
         case 'change': {
-          setActive((notif.active && notif.active.id) || null);
+          setActive((notification.active && notification.active.id) || null);
           break;
         }
         case 'select':
         case 'cancel':
           closeMenuIfOpened();
           break;
+        case 'draw':
         case 'move':
+          // TODO: Provide a feedback.
           break;
         default:
-          throw new Error(`Invalid engine type: ${notif.type}`);
+          throw new Error(
+            `Invalid navigation notification type: ${notification.type}`
+          );
       }
     },
     complete() {
