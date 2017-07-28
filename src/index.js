@@ -18,6 +18,8 @@ import connectNavigationToLayout from './connect-navigation-to-layout';
  * @param {number} options.movementsThreshold - The minimum distance between two points to be
  *                                              considered a significant movements and breaking
  *                                              the sub-menu dwelling delay.
+ * @param {number} options.noviceDwellingTime - The dwelling time required to trigger the novice
+                                                mode (and open the menu).
  * @return {Observable} An observable on menu selections.
  */
 export default (

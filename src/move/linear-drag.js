@@ -21,7 +21,9 @@ const createPEventFromMouseEvent = mouseEvt => ({
 
 /**
  * @param {HTMLElement} rootDOM - the DOM element to observe pointer events on.
- * @return {Observable} An higher order observable that tracks drags.
+ * @return {Observable} A higher order observable that drag observables. The sub-observables are
+ *                      published as behaviors so that any new subscription immediately get the last
+ *                      position.
  */
 const watchDrags = rootDOM => {
   // Higher order observable tracking mouse drags.
