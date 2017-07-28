@@ -64,13 +64,11 @@ export default (
     (parent, menuModel, center, current) =>
       createMenuLayout(parent, menuModel, center, current, menuLayoutOptions),
     parent => createStrokeCanvas(parent, strokeCanvasOptions)
-  ).share();
-
-  // Subscribe to start the menu operations.
-  connectedNavigation$.subscribe();
+  );
 
   // Return an observable on the selections.
   return connectedNavigation$
     .filter(notification => notification.type === 'select')
-    .pluck('selection');
+    .pluck('selection')
+    .share();
 };
