@@ -3,9 +3,10 @@ import recognize from '../recognizer';
 /**
  * @param {Observable} drag$ - An observable of drag movements.
  * @param {MenuItem} model - The model of the menu.
+ * @param {List<number[]>} initStroke - Initial stroke.
  * @return {Observable} An observable on the gesture drawing and recognition.
  */
-export default (drag$, model) => {
+export default (drag$, model, initStroke = []) => {
   // Observable on gesture drawing.
   const draw$ = drag$
     .scan(
@@ -14,7 +15,7 @@ export default (drag$, model) => {
           { stroke: [...acc.stroke, notification.position], type: 'draw' },
           notification
         ),
-      { stroke: [] }
+      { stroke: initStroke }
     )
     .share();
   // Track the end of the drawing and attempt to recognize the gesture.

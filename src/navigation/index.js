@@ -13,11 +13,11 @@ const navigation = (start, drag$, model, options) => {
   );
   // Observable on confirmed expert navigation.
   const confirmedExpertNavigation$$ = longMoves(
-    drag$,
+    expertNavigation(drag$, model),
     options.movementsThreshold
   )
     .take(1)
-    .map(() => expertNavigation(drag$, model));
+    .map((e) => expertNavigation(drag$, model, e.stroke));
   // Observable on confirmed novice navigation.
   const confirmedNoviceNavigation$$ = dwellings(
     drag$,
