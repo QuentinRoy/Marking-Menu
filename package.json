@@ -29,6 +29,7 @@
   "license": "MIT",
   "dependencies": {
     "rad2deg": "^1.0.0",
+    "raf-throttle": "^2.0.3",
     "rxjs": "^5.4.2"
   },
   "devDependencies": {

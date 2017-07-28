@@ -1,5 +1,5 @@
 import navigation from './navigation';
-import createLayout from './layout';
+import { createMenuLayout, createStrokeCanvas } from './layout';
 import createModel from './model';
 import { watchDrags } from './move';
 import connectNavigationToLayout from './connect-navigation-to-layout';
@@ -25,32 +25,50 @@ import connectNavigationToLayout from './connect-navigation-to-layout';
 export default (
   items,
   parentDOM,
-  options = {
-    minSelectionDist: 40,
-    minMenuSelectionDist: 80,
-    subMenuOpeningDelay: 25,
-    movementsThreshold: 5,
-    noviceDwellingTime: 1000 / 3
-  }
+  {
+    minSelectionDist = 40,
+    minMenuSelectionDist = 80,
+    subMenuOpeningDelay = 25,
+    movementsThreshold = 5,
+    noviceDwellingTime = 1000 / 3,
+    strokeColor = 'black',
+    strokeWidth = 4,
+    strokeStartPointRadius = 8
+  } = {}
 ) => {
-  // Create model and engine.
+  // Create the display options
+  const menuLayoutOptions = {};
+  const strokeCanvasOptions = {
+    lineColor: strokeColor,
+    lineWidth: strokeWidth,
+    pointRadius: strokeStartPointRadius
+  };
+
+  // Create model and navigation observable.
   const model = createModel(items);
-  const navigation$ = navigation(
-    watchDrags(parentDOM),
-    model,
-    options
-  ).do(({ originalEvent }) => {
+  const navigation$ = navigation(watchDrags(parentDOM), model, {
+    minSelectionDist,
+    minMenuSelectionDist,
+    subMenuOpeningDelay,
+    movementsThreshold,
+    noviceDwellingTime
+  }).do(({ originalEvent }) => {
     // Prevent default on every notifications.
     if (originalEvent) originalEvent.preventDefault();
   });
+
   // Connect the engine notifications to menu opening/closing.
   const connectedNavigation$ = connectNavigationToLayout(
     parentDOM,
     navigation$,
-    createLayout
+    (parent, menuModel, center, current) =>
+      createMenuLayout(parent, menuModel, center, current, menuLayoutOptions),
+    parent => createStrokeCanvas(parent, strokeCanvasOptions)
   ).share();
+
   // Subscribe to start the menu operations.
   connectedNavigation$.subscribe();
+
   // Return an observable on the selections.
   return connectedNavigation$
     .filter(notification => notification.type === 'select')

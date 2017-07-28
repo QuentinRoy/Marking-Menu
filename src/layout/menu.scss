@@ -13,7 +13,6 @@ $center-radius: 10px;
 $line-thickness: 4px;
 $line-color: $item-background;
 $active-line-color: $active-item-background;
-$middle-color: $active-line-color;
 $first-item-angle: 0;
 
 // Used for later calculation
@@ -111,14 +110,4 @@ $item-total-height: $item-height + $item-padding * 2;
       border-bottom-left-radius: 0;
     }
   }
-}
-
-.marking-menu-middle {
-  position: absolute;
-  top: -$center-radius;
-  left: -$center-radius;
-  border-radius: $center-radius * 2;
-  background-color: $middle-color;
-  width: $center-radius * 2;
-  height: $center-radius * 2;
 }

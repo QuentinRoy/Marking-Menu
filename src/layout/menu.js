@@ -7,14 +7,22 @@ import './menu.scss';
  * @param {ItemModel} model - The model of the menu to open.
  * @param {[int, int]} center - The center of the menu.
  * @param {String} [current] - The currently active item.
- * @param {Document} [doc] - The root document of the menu.
- *                           Mostly useful for testing purposes.
+ * @param {Document} [options] - Menu options.
+ * @param {Document} [options.doc=document] - The root document of the menu.
+ *                                            Mostly useful for testing purposes.
  * @return {{ setActive, remove }} - The menu controls.
  */
-const createMenu = (parent, model, center, current, doc = document) => {
+const createMenu = (
+  parent,
+  model,
+  center,
+  current,
+  { doc = document } = {}
+) => {
   // Create the DOM.
   const domStr = template({ items: model.children, center });
   const main = doc.createRange().createContextualFragment(domStr).firstChild;
+
   parent.appendChild(main);
 
   // Clear any  active items.
@@ -46,10 +54,7 @@ const createMenu = (parent, model, center, current, doc = document) => {
   if (current) setActive(current);
 
   // Create the interface.
-  return {
-    setActive,
-    remove
-  };
+  return { setActive, remove };
 };
 
 export default createMenu;

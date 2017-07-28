@@ -4,15 +4,21 @@ import expertNavigation from './expertNavigation';
 import { longMoves, dwellings } from '../move';
 
 const navigation = (start, drag$, model, options) => {
-  // Observable expert navigation.
-  const startUp$ = expertNavigation(drag$, model);
+  // Start up observable (while neither expert or novice are confirmed).
+  const startUp$ = Observable.concat(
+    expertNavigation(drag$, model)
+      .take(1)
+      .map(n => Object.assign(n, { type: 'start' })),
+    expertNavigation(drag$, model)
+  );
+  // Observable on confirmed expert navigation.
   const confirmedExpertNavigation$$ = longMoves(
     drag$,
     options.movementsThreshold
   )
     .take(1)
     .map(() => expertNavigation(drag$, model));
-  // Observable novice navigation.
+  // Observable on confirmed novice navigation.
   const confirmedNoviceNavigation$$ = dwellings(
     drag$,
     options.noviceDwellingTime,
