@@ -13,6 +13,7 @@
     }
 
     #toast-wrapper {
+      pointer-events: none;
       position: fixed;
       top: 50px;
       width: 100%;
@@ -103,10 +104,10 @@
       <div class="double-bounce2"></div>
     </div>
   </div>
-  <div id="main"></div>
   <div id="toast-wrapper">
     <span id="toast"></span>
   </div>
+  <div id="main"></div>
 
   <script src="./Rx.min.js"></script>
   <script src="../marking-menu.js"></script>
@@ -141,7 +142,10 @@
     })(document.getElementById('main'))
 
     // Toast the marking menu's selections.
-    mm.subscribe(selection => toastMessage(selection.name));
+    mm.subscribe({
+      next(selection) { toastMessage(selection.name) },
+      error(error) { console.error(e); }
+    });
 
     // Remove the loading wheel.
     document.getElementById('loading').remove();
