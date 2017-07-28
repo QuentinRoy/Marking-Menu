@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.5.0"></a>
+# [0.5.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.4.0...v0.5.0) (2017-07-28)
+
+
+### Bug Fixes
+
+* Fix the beginning of expert strokes being lost. ([dc86b34](https://github.com/QuentinRoy/Marking-Menu/commit/dc86b34))
+* Make sure the stroke is cleared upon completion. ([c4cbc9f](https://github.com/QuentinRoy/Marking-Menu/commit/c4cbc9f))
+
+
+### Features
+
+* Draw stroke. ([89e2b27](https://github.com/QuentinRoy/Marking-Menu/commit/89e2b27))
+* Marking Menu's observable must now be subscribed to be effective. ([cd486ad](https://github.com/QuentinRoy/Marking-Menu/commit/cd486ad))
+
+
+### BREAKING CHANGES
+
+* Marking Menu's observable must now be subscribed to be effective and will be disabled once unsubscribed.
+
+
+
 <a name="0.4.0"></a>
 # [0.4.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.3.0...v0.4.0) (2017-07-28)
 
