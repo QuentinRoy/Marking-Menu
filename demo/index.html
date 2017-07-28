@@ -32,10 +32,77 @@
     #toast.shown {
       opacity: 1;
     }
+
+    .spinner {
+      width: 100px;
+      height: 100px;
+
+      position: relative;
+      margin: 100px auto;
+    }
+
+    .double-bounce1,
+    .double-bounce2 {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: #333;
+      opacity: 0.6;
+      position: absolute;
+      top: 0;
+      left: 0;
+
+      -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
+      animation: sk-bounce 2.0s infinite ease-in-out;
+    }
+
+    .double-bounce2 {
+      -webkit-animation-delay: -1.0s;
+      animation-delay: -1.0s;
+    }
+
+    @-webkit-keyframes sk-bounce {
+      0%,
+      100% {
+        -webkit-transform: scale(0.0);
+        opacity: 0;
+      }
+      50% {
+        -webkit-transform: scale(1.0);
+        opacity: .6;
+      }
+    }
+
+    @keyframes sk-bounce {
+      0%,
+      100% {
+        transform: scale(0.0);
+        -webkit-transform: scale(0.0);
+        opacity: 0;
+      }
+      50% {
+        transform: scale(1.0);
+        -webkit-transform: scale(1.0);
+        opacity: .6;
+      }
+    }
+
+    #loading {
+      align-items: center;
+      display: flex;
+      height: 100%;
+      justify-content: center;
+    }
   </style>
 </head>
 
 <body>
+  <div id="loading">
+    <div class="spinner">
+      <div class="double-bounce1"></div>
+      <div class="double-bounce2"></div>
+    </div>
+  </div>
   <div id="main"></div>
   <div id="toast-wrapper">
     <span id="toast"></span>
@@ -75,6 +142,9 @@
 
     // Toast the marking menu's selections.
     mm.subscribe(selection => toastMessage(selection.name));
+
+    // Remove the loading wheel.
+    document.getElementById('loading').remove();
   </script>
 </body>
 
