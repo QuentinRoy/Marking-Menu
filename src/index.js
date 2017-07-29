@@ -1,8 +1,7 @@
 import navigation from './navigation';
-import { createMenuLayout, createStrokeCanvas } from './layout';
+import { createMenuLayout, createStrokeCanvas, connectLayout } from './layout';
 import createModel from './model';
 import { watchDrags } from './move';
-import connectNavigationToLayout from './connect-navigation-to-layout';
 
 /**
  * Create a Marking Menu.
@@ -58,7 +57,7 @@ export default (
   });
 
   // Connect the engine notifications to menu opening/closing.
-  const connectedNavigation$ = connectNavigationToLayout(
+  const connectedNavigation$ = connectLayout(
     parentDOM,
     navigation$,
     (parent, menuModel, center, current) =>

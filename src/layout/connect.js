@@ -1,19 +1,21 @@
 import rafThrottle from 'raf-throttle';
+import MenuLayout from './menu';
+import StrokeCanvas from './stroke';
 
 /**
  * Connect navigation notifications to menu opening and closing.
  *
  * @param {HTMLElement} parentDOM - The element where to append the menu.
  * @param {Observable} navigation$ - Notifications of the navigation.
- * @param {Function} createMenuLayout - Menu layout factory.
- * @param {Function} createStrokeCanvas - Stroke canvas factory.
+ * @param {Function} [createMenuLayout] - Menu layout factory.
+ * @param {Function} [createStrokeCanvas] - Stroke canvas factory.
  * @return {Observable} `navigation$` with menu opening and closing side effects.
  */
 export default (
   parentDOM,
   navigation$,
-  createMenuLayout,
-  createStrokeCanvas
+  createMenuLayout = MenuLayout,
+  createStrokeCanvas = StrokeCanvas
 ) => {
   // Open the menu in function of navigation notifications.
   let menu = null;
@@ -115,6 +117,8 @@ export default (
       // Make sure everything is cleaned upon completion.
       if (menu) closeMenu();
       if (strokeCanvas) clearStroke();
+      // eslint-disable-next-line no-param-reassign
+      parentDOM.style.cursor = '';
     }
   });
 };

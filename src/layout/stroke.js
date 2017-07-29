@@ -15,8 +15,8 @@ export default (
   parent,
   {
     doc = document,
-    lineWidth,
-    lineColor,
+    lineWidth = 2,
+    lineColor = 'blue',
     pointRadius = 0,
     pointColor = lineColor
   }
