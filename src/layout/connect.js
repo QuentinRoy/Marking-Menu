@@ -46,14 +46,18 @@ export default (
   };
 
   const noviceMove = rafThrottle(position => {
-    strokeCanvas.clear();
-    strokeCanvas.drawStroke([strokeStart, position]);
-    strokeCanvas.drawPoint(strokeStart);
+    if (strokeCanvas) {
+      strokeCanvas.clear();
+      strokeCanvas.drawStroke([strokeStart, position]);
+      strokeCanvas.drawPoint(strokeStart);
+    }
   });
 
   const expertDraw = rafThrottle(stroke => {
-    strokeCanvas.clear();
-    strokeCanvas.drawStroke(stroke);
+    if (strokeCanvas) {
+      strokeCanvas.clear();
+      strokeCanvas.drawStroke(stroke);
+    }
   });
 
   const clearStroke = () => {
@@ -103,8 +107,16 @@ export default (
     }
   };
 
-  return navigation$.do({
-    next(notification) {
+  const cleanUp = () => {
+    // Make sure everything is cleaned upon completion.
+    if (menu) closeMenu();
+    if (strokeCanvas) clearStroke();
+    // eslint-disable-next-line no-param-reassign
+    parentDOM.style.cursor = '';
+  };
+
+  return navigation$
+    .do(notification => {
       try {
         onNotification(notification);
       } catch (e) {
@@ -112,13 +124,13 @@ export default (
         console.error(e);
         throw e;
       }
-    },
-    complete() {
-      // Make sure everything is cleaned upon completion.
-      if (menu) closeMenu();
-      if (strokeCanvas) clearStroke();
-      // eslint-disable-next-line no-param-reassign
-      parentDOM.style.cursor = '';
-    }
-  });
+    })
+    .finally(() => {
+      try {
+        cleanUp();
+      } catch (e) {
+        console.error(e);
+        throw e;
+      }
+    });
 };
