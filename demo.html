@@ -47,7 +47,7 @@
   <script src="./marking-menu.js"></script>
   <script>
     'use strict';
-    
+
     // Create an array containing the integers from start to count - start.
     function range(start, count) {
       return Array.apply(0, Array(count))
@@ -90,7 +90,7 @@
     // Toast the marking menu's selections.
     mm.subscribe({
       next(selection) { toastMessage(selection.name) },
-      error(error) { console.error(e); }
+      error(error) { console.error(error); }
     });
   </script>
 </body>
