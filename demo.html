@@ -45,32 +45,44 @@
   <script src="./demo-libs/Rx.min.js"></script>
   <script src="./marking-menu.js"></script>
   <script>
+    'use strict';
+    
+    // Create an array containing the integers from start to count - start.
+    function range(start, count) {
+      return Array.apply(0, Array(count))
+        .map(function (element, index) {
+          return index + start;
+        });
+    }
+
     // Create the toast.
-    const toastMessage = (dom => {
-      let timeoutId = null;
+    var toastMessage = (function (dom) {
+      var timeoutId = null;
       return function (message) {
         clearTimeout(timeoutId);
         dom.innerHTML = message;
         dom.classList.add('shown');
-        timeoutId = setTimeout(() => {
+        timeoutId = setTimeout(function () {
           dom.classList.remove('shown');
         }, 1000);
       }
     })(document.getElementById('toast'));
 
     // Create the marking menu.
-    const mm = (function (dom) {
-      const leafs = Array.from({ length: 7 })
-        .map((_, i) => ({ name: `item ${i + 1}` }));
-      const items = [
-        ...leafs.slice(0, 2),
-        {
-          name: 'others...',
-          children: Array.from({ length: 4 })
-            .map((_, i) => ({ name: `item ${i + 8}` }))
-        },
-        ...leafs.slice(2)
-      ];
+    var mm = (function (dom) {
+      function createItem(itemNum) {
+        return { name: 'item ' + itemNum }; 
+      }
+      // Create the submenu.
+      var submenu = {
+        name: 'others...',
+        children: range(7, 4).map(createItem)
+      }
+      // Create the items.
+      var items = range(1, 2).map(createItem).concat(
+        [submenu],
+        range(3, 5).map(createItem)
+      );
       return MarkingMenu(items, main);
     })(document.getElementById('main'))
 
