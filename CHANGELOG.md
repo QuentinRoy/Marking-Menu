@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.5.3"></a>
+## [0.5.3](https://github.com/QuentinRoy/Marking-Menu/compare/v0.5.2...v0.5.3) (2017-07-31)
+
+
+### Bug Fixes
+
+* Fix crash on tap/click. ([19b9fd3](https://github.com/QuentinRoy/Marking-Menu/commit/19b9fd3)), closes [#1](https://github.com/QuentinRoy/Marking-Menu/issues/1)
+
+
+
 <a name="0.5.2"></a>
 ## [0.5.2](https://github.com/QuentinRoy/Marking-Menu/compare/v0.5.1...v0.5.2) (2017-07-29)
 
