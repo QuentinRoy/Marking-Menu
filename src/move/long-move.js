@@ -9,6 +9,7 @@ import { dist } from '../utils';
  */
 export default (drag$, movementsThreshold) =>
   drag$
+    .filter(({ type }) => type !== 'end' && type !== 'cancel')
     // Drop small movements.
     .scan(
       (prev, cur) =>
