@@ -19,6 +19,11 @@ import { watchDrags } from './move';
  *                                              the sub-menu dwelling delay.
  * @param {number} options.noviceDwellingTime - The dwelling time required to trigger the novice
                                                 mode (and open the menu).
+ * @param {number} options.strokeColor - The color of the gesture stroke.
+ * @param {number} options.strokeWidth - The width of the gesture stroke.
+ * @param {number} options.strokeStartPointRadius - The radius of the start point of a stroke
+ *                                                  (appearing at the middle of the menu in novice
+ *                                                  mode)
  * @return {Observable} An observable on menu selections.
  */
 export default (
