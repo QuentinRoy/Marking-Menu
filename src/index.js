@@ -3,6 +3,16 @@ import { createMenuLayout, createStrokeCanvas, connectLayout } from './layout';
 import createModel from './model';
 import { watchDrags } from './move';
 
+// Clone a notification in a protected way so that the internal state cannot be corrupted.
+const exportNotification = n => ({
+  type: n.type,
+  mode: n.mode,
+  position: n.position ? n.position.slice() : undefined,
+  active: n.active,
+  selection: n.selection,
+  center: n.center ? n.center.slice() : undefined
+});
+
 /**
  * Create a Marking Menu.
  *
@@ -23,7 +33,9 @@ import { watchDrags } from './move';
  * @param {number} options.strokeWidth - The width of the gesture stroke.
  * @param {number} options.strokeStartPointRadius - The radius of the start point of a stroke
  *                                                  (appearing at the middle of the menu in novice
- *                                                  mode)
+ *                                                  mode).
+ * @param {boolean} options.notifySteps - If true, every steps of the marking menu (include move)
+ *                                        events, will be notified. Useful for logging.
  * @return {Observable} An observable on menu selections.
  */
 export default (
@@ -37,7 +49,8 @@ export default (
     noviceDwellingTime = 1000 / 3,
     strokeColor = 'black',
     strokeWidth = 4,
-    strokeStartPointRadius = 8
+    strokeStartPointRadius = 8,
+    notifySteps = false
   } = {}
 ) => {
   // Create the display options
@@ -70,7 +83,11 @@ export default (
     parent => createStrokeCanvas(parent, strokeCanvasOptions)
   );
 
-  // Return an observable on the selections.
+  // If every steps should be notified, just export connectedNavigation$.
+  if (notifySteps) {
+    return connectedNavigation$.map(exportNotification).share();
+  }
+  // Else, return an observable on the selections.
   return connectedNavigation$
     .filter(notification => notification.type === 'select')
     .pluck('selection')
