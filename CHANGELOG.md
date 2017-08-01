@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.6.0"></a>
+# [0.6.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.5.3...v0.6.0) (2017-08-01)
+
+
+### Bug Fixes
+
+* Fix duplication of the first stroke notification. ([91fc285](https://github.com/QuentinRoy/Marking-Menu/commit/91fc285))
+* Fix menu open notification(s) ([a9ace25](https://github.com/QuentinRoy/Marking-Menu/commit/a9ace25))
+* Fix navigation start argument not being properly took into account. ([b9a76eb](https://github.com/QuentinRoy/Marking-Menu/commit/b9a76eb))
+* Fix various inconsistent type of notification. ([ec46e68](https://github.com/QuentinRoy/Marking-Menu/commit/ec46e68))
+* Protect the model against mutations. ([c988723](https://github.com/QuentinRoy/Marking-Menu/commit/c988723))
+
+
+### Features
+
+* Addition of the notifySteps options. ([8529971](https://github.com/QuentinRoy/Marking-Menu/commit/8529971))
+
+
+
 <a name="0.5.3"></a>
 ## [0.5.3](https://github.com/QuentinRoy/Marking-Menu/compare/v0.5.2...v0.5.3) (2017-07-31)
 
