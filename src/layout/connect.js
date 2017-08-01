@@ -48,7 +48,7 @@ export default (
   const noviceMove = rafThrottle(position => {
     if (strokeCanvas) {
       strokeCanvas.clear();
-      strokeCanvas.drawStroke([strokeStart, position]);
+      if (position) strokeCanvas.drawStroke([strokeStart, position]);
       strokeCanvas.drawPoint(strokeStart);
     }
   });

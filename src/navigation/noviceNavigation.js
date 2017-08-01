@@ -1,3 +1,4 @@
+import { Observable } from 'rxjs';
 import { dist } from '../utils';
 import { mapAngleDrag, dwellings } from '../move';
 
@@ -18,10 +19,10 @@ const noviceNavigation = (drag$, menu, options) => {
   // Convert the drag observable to an angular drag observable.
   const angleDrag$ = mapAngleDrag(drag$, menuCenter);
 
-  // Start observable. `
-  const start$ = angleDrag$
-    .first()
-    .map(n => Object.assign({ type: 'open', menu }, n));
+  // Start observable.
+  const start$ = menuCenter
+    ? Observable.of({ type: 'open', menu, center: menuCenter })
+    : angleDrag$.first().map(n => Object.assign({ type: 'open', menu }, n));
 
   // Analyse local movements.
   const moves$ = angleDrag$.skip(1).scan((last, n) => {

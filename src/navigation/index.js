@@ -19,9 +19,13 @@ const navigation = (start, drag$, model, options) => {
   )
     .take(1)
     .map(e =>
-      expertNavigation(drag$, model, e.stroke).map(n =>
-        Object.assign(n, { mode: 'expert' })
-      )
+      expertNavigation(
+        // Drag always return the last value when observed, in this case we are not interested in
+        // it has it as already been took into account.
+        drag$.skip(1),
+        model,
+        e.stroke
+      ).map(n => Object.assign(n, { mode: 'expert' }))
     );
 
   // Observable on confirmed novice navigation.
@@ -33,7 +37,8 @@ const navigation = (start, drag$, model, options) => {
     .take(1)
     .map(() =>
       noviceNavigation(
-        drag$,
+        // Same as before, skip the first.
+        drag$.skip(1),
         model,
         Object.assign(options, { menuCenter: start.position })
       ).map(n => Object.assign(n, { mode: 'novice' }))
