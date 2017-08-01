@@ -8,14 +8,17 @@ import { mapAngleDrag, dwellings } from '../move';
  * @param {object} options - Configuration options.
  * @return {Observable} An observable on the menu navigation events.
  */
-const noviceNavigation = (drag$, menu, options) => {
-  const {
+const noviceNavigation = (
+  drag$,
+  menu,
+  {
     minSelectionDist,
     minMenuSelectionDist,
     movementsThreshold,
     subMenuOpeningDelay,
     menuCenter
-  } = options;
+  } = {}
+) => {
   // Convert the drag observable to an angular drag observable.
   const angleDrag$ = mapAngleDrag(drag$, menuCenter);
 
@@ -64,7 +67,12 @@ const noviceNavigation = (drag$, menu, options) => {
 
   // Higher order observable on navigation inside sub-menus.
   const subMenuNavigations$ = menuSelection$.map(n =>
-    noviceNavigation(drag$, n.active, options)
+    noviceNavigation(drag$, n.active, {
+      minSelectionDist,
+      minMenuSelectionDist,
+      movementsThreshold,
+      subMenuOpeningDelay
+    })
   );
 
   // Start with local navigation but switch to the first sub-menu navigation
