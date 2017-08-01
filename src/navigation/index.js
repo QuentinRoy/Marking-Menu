@@ -35,7 +35,7 @@ const navigation = (start, drag$, model, options) => {
       noviceNavigation(
         drag$,
         model,
-        Object.assign(options, { menuCenter: start.center })
+        Object.assign(options, { menuCenter: start.position })
       ).map(n => Object.assign(n, { mode: 'novice' }))
     );
 
