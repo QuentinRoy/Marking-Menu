@@ -119,12 +119,14 @@ const recursivelyCreateModelItems = (items, baseId = undefined) => {
       i * angleRange
     ];
     if (item.children) {
-      return new MenuItem(
-        ...itemArgs,
-        recursivelyCreateModelItems(item.children, stdId)
+      return Object.freeze(
+        new MenuItem(
+          ...itemArgs,
+          Object.freeze(recursivelyCreateModelItems(item.children, stdId))
+        )
       );
     }
-    return new Item(...itemArgs);
+    return Object.freeze(new Item(...itemArgs));
   });
 };
 
@@ -135,6 +137,8 @@ const recursivelyCreateModelItems = (items, baseId = undefined) => {
  * @return {MenuItem} - The root item of the model.
  */
 const createModel = itemList =>
-  new MenuItem(null, null, null, recursivelyCreateModelItems(itemList));
+  Object.freeze(
+    new MenuItem(null, null, null, recursivelyCreateModelItems(itemList))
+  );
 
 export default createModel;
