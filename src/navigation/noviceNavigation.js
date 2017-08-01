@@ -24,13 +24,13 @@ const noviceNavigation = (drag$, menu, options) => {
     .map(n => Object.assign({ type: 'open', menu }, n));
 
   // Analyse local movements.
-  const moves$ = angleDrag$.scan((last, n) => {
+  const moves$ = angleDrag$.skip(1).scan((last, n) => {
     const distFromCenter = dist(n.center, n.position);
     const active =
       distFromCenter < minSelectionDist
         ? null
         : menu.getNearestChildren(n.alpha);
-    const type = last && last.active === active ? 'move' : 'change';
+    const type = !last || last.active === active ? 'move' : 'change';
     return Object.assign({ active, type, distFromCenter }, n);
   }, null);
 
