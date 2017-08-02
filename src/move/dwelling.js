@@ -12,4 +12,7 @@ import longMoves from './long-move';
 export default (drag$, delay, movementsThreshold = 0) =>
   Observable.merge(drag$.take(1), longMoves(drag$, movementsThreshold))
     // Emit after a pause in the movements.
-    .debounceTime(delay);
+    .debounceTime(delay)
+    // Make sure we do emit the last position.
+    .withLatestFrom(drag$)
+    .map(([, last]) => last);
