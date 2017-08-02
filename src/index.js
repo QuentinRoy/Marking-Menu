@@ -10,7 +10,7 @@ const exportNotification = n => ({
   position: n.position ? n.position.slice() : undefined,
   active: n.active,
   selection: n.selection,
-  center: n.center ? n.center.slice() : undefined,
+  menuCenter: n.center ? n.center.slice() : undefined,
   timeStamp: n.timeStamp
 });
 
