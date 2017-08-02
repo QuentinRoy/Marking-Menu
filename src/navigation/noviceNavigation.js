@@ -23,8 +23,14 @@ const noviceNavigation = (
   const angleDrag$ = mapAngleDrag(drag$, menuCenter);
 
   // Start observable.
+  // prettier-ignore
   const start$ = menuCenter
-    ? Observable.of({ type: 'open', menu, center: menuCenter })
+    ? Observable.of({
+      type: 'open',
+      menu,
+      center: menuCenter,
+      timeStamp: performance ? performance.now() : Date.now()
+    })
     : angleDrag$.first().map(n => Object.assign({ type: 'open', menu }, n));
 
   // Analyse local movements.
