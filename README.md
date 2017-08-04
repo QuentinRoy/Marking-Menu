@@ -71,6 +71,8 @@ For example, if you are using `webpack` and `style-loader`, `import marking-menu
 - `parentDOM`: `HTMLElement`. The container of the menu.
 
 
+#### Example
+
 ```js
   // Create the menu with a sub-menu at the bottom.
   const items = [
@@ -95,6 +97,8 @@ For example, if you are using `webpack` and `style-loader`, `import marking-menu
     console.log(selection.name);
   })
 
-  // later, disable the menu.
-  subscription.unsubscribe();
+  setTimeout(() => {
+    // Later, disable the menu.
+    subscription.unsubscribe();
+  }, 60*1000);
 ```
