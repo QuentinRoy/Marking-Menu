@@ -1,0 +1,94 @@
+body,
+html {
+  height: 100%;
+}
+
+body {
+  font-size: calc(10px + 1vw);
+  line-height: calc(1.1em + 0.5vw);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  font-size: calc(2em + 3vw);
+  line-height: calc(1.1em + 0.5vw);
+  margin: 20vh 3em 0.5em 1em;
+}
+
+#main,
+#instructions {
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+#instructions .title {
+  color: rgb(236, 236, 236);
+}
+
+#instructions .help {
+  color: rgb(31, 31, 31);
+  bottom: 1em;
+  left: 1em;
+  padding: 1em;
+  position: absolute;
+  right: 1em;
+  text-align: center;
+  width: auto;
+}
+
+#toast-wrapper {
+  pointer-events: none;
+  position: fixed;
+  text-align: center;
+  top: 50px;
+  width: 100%;
+}
+
+#toast {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 5px;
+  color: white;
+  font-weight: bolder;
+  opacity: 0;
+  padding: 10px 20px;
+  transition: 400ms;
+}
+
+#toast.shown {
+  opacity: 1;
+}
+
+.github-corner:hover .octo-arm {
+  animation: octocat-wave 560ms ease-in-out;
+}
+
+@keyframes octocat-wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20%,
+  60% {
+    transform: rotate(-25deg);
+  }
+  40%,
+  80% {
+    transform: rotate(10deg);
+  }
+}
+
+@media (max-width: 500px) {
+  .github-corner:hover .octo-arm {
+    animation: none;
+  }
+  .github-corner .octo-arm {
+    animation: octocat-wave 560ms ease-in-out;
+  }
+}

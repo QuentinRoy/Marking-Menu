@@ -76,18 +76,18 @@ For example, if you are using `webpack` and `style-loader`, `import marking-menu
 ```js
   // Create the menu with a sub-menu at the bottom.
   const items = [
-    'item right',
+    'Item Right',
     {
-      name: 'others...',
+      name: 'Others...',
       children: [
-        'sub-item right',
-        'sub-item down',
-        'sub-item left',
-        'sub-item-top'
+        'Sub Right',
+        'Sub Down',
+        'Sub Left',
+        'Sub Top'
       ]
     },
-    'item left',
-    'item up'
+    'Item Left',
+    'Item Up'
   ];
   const mm = MarkingMenu(items, document.getElementById('main'));
 
