@@ -58,7 +58,7 @@ var MarkingMenu = require('marking-menu');
 ```
 
 Don't forget to include the CSS.
-For example, if you are using `webpack` and `style-loader`, `import marking-menu/marking-menu.css` should be enough.
+For example, if you are using `webpack` and `style-loader`, `import 'marking-menu/marking-menu.css'` should be enough.
 
 ## API
 
