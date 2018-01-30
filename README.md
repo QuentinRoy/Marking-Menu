@@ -66,7 +66,7 @@ For example, if you are using `webpack` and `style-loader`, `import 'marking-men
 
 `MarkingMenu` returns a 'hot' [`Observable`](https://github.com/tc39/proposal-observable) that emits notification of the form `{ name, angle }`. The menu is activated upon subscription of this observable, and disabled upon un-subscription.
 
-- `items`: `Array` of `string` or `{ name, children }`. The list of the menu's items. If `children` is provided, the item will be considered as a sub-menu (`children` as the same form as `items`). Currently, `MarkingMenu` supports up to 8 items per level. The first item is on the right and the followings are layed out clockwise.
+- `items`: `Array` of `string` or `{ name, children }`. The list of the menu's items. If `children` is provided, the item will be considered as a sub-menu (`children` has the same form as `items`). Currently, `MarkingMenu` supports up to 8 items per level. The first item is on the right and the followings are layed out clockwise.
 
 - `parentDOM`: `HTMLElement`. The container of the menu.
 
