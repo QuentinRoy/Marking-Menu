@@ -21,7 +21,7 @@ const navigation = (start, drag$, model, options) => {
     .map(e =>
       expertNavigation(
         // Drag always return the last value when observed, in this case we are not interested in
-        // it has it as already been took into account.
+        // it as it has already been took into account.
         drag$.skip(1),
         model,
         e.stroke
@@ -50,8 +50,8 @@ const navigation = (start, drag$, model, options) => {
     confirmedNoviceNavigation$$
   );
 
-  // Start with expert navigation but switch to the confirmed navigation as soon as it is
-  // settled.
+  // Start with startup navigation (similar to expert) but switch to the confirmed navigation
+  // as soon as it is settled.
   return confirmedNavigation$$.startWith(startUp$).switch();
 };
 
