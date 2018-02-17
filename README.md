@@ -1,5 +1,8 @@
 # Marking Menu
 
+
+
+[![NPM](https://img.shields.io/npm/v/marking-menu.svg)](https://www.npmjs.com/package/marking-menu)
 [![Build Status](https://travis-ci.org/QuentinRoy/Marking-Menu.svg?branch=master)](https://travis-ci.org/QuentinRoy/Marking-Menu)
 [![codecov](https://img.shields.io/codecov/c/github/QuentinRoy/Marking-Menu.svg)](https://codecov.io/gh/QuentinRoy/Marking-Menu)
 [![dependencies Status](https://david-dm.org/QuentinRoy/Marking-Menu/status.svg)](https://david-dm.org/QuentinRoy/Marking-Menu)

@@ -19,13 +19,16 @@ export default (drag$, model, initStroke = []) => {
     )
     .share();
   // Track the end of the drawing and attempt to recognize the gesture.
-  const end$ = draw$.startWith(null).last().map(e => {
-    if (!e) return { type: 'cancel' };
-    const selection = recognize(e.stroke, model);
-    if (selection) {
-      return Object.assign(e, { type: 'select', selection });
-    }
-    return Object.assign(e, { type: 'cancel' });
-  });
+  const end$ = draw$
+    .startWith(null)
+    .last()
+    .map(e => {
+      if (!e) return { type: 'cancel' };
+      const selection = recognize(e.stroke, model);
+      if (selection) {
+        return Object.assign(e, { type: 'select', selection });
+      }
+      return Object.assign(e, { type: 'cancel' });
+    });
   return draw$.merge(end$);
 };
