@@ -28,10 +28,12 @@
   },
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "license": "MIT",
+  "peerDependencies": {
+    "rxjs": "^5.5.6"
+  },
   "dependencies": {
     "rad2deg": "^1.0.0",
-    "raf-throttle": "^2.0.3",
-    "rxjs": "^5.5.6"
+    "raf-throttle": "^2.0.3"
   },
   "devDependencies": {
     "@commitlint/cli": "^6.1.0",
@@ -59,6 +61,7 @@
     "rollup-plugin-pug": "^0.1.6",
     "rollup-plugin-sass": "^0.5.3",
     "rollup-watch": "^4.3.1",
+    "rxjs": "^5.5.6",
     "sass-lint": "^1.12.1",
     "sinon": "^4.3.0",
     "standard-version": "^4.3.0"

@@ -6,14 +6,21 @@
   "extends": ["airbnb-base", "prettier"],
   "rules": {
     "valid-jsdoc": "error",
+    "import/no-extraneous-dependencies": [
+      "error",
+      { "peerDependencies": true }
+    ],
     "prettier/prettier": "error"
   },
   "plugins": ["prettier"],
   "overrides": [
     {
-      "files": [ "build-config/**" ],
+      "files": ["build-config/**"],
       "rules": {
-        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
+        "import/no-extraneous-dependencies": [
+          "error",
+          { "devDependencies": true, "peerDependencies": true }
+        ]
       }
     }
   ]
