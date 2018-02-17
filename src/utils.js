@@ -15,29 +15,6 @@ export const mod = (a, n) => (a % n + n) % n;
 export const deltaAngle = (alpha, beta) => mod(beta - alpha + 180, 360) - 180;
 
 /**
- * @param {String} [prefix] - A prefix to append before log messages.
- * @return {Observable} An observer logging next, errors and complete "events".
- *                      Handy to debug observable.
- */
-export const logObservable = prefix => {
-  const fixedPrefix = prefix ? `${prefix} ` : '';
-  return {
-    next(e) {
-      // eslint-disable-next-line no-console
-      console.log(`${fixedPrefix}next`, e);
-    },
-    error(e) {
-      // eslint-disable-next-line no-console
-      console.error(`${fixedPrefix}error`, e);
-    },
-    complete() {
-      // eslint-disable-next-line no-console
-      console.log(`${fixedPrefix}complete`);
-    }
-  };
-};
-
-/**
  * Calculate the euclidean distance between two
  * points.
  *
