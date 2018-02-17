@@ -68,11 +68,6 @@
     "interaction",
     "technique"
   ],
-  "config": {
-    "validate-commit-msg": {
-      "types": "conventional-commit-types"
-    }
-  },
   "ava": {
     "require": [
       "babel-register"
