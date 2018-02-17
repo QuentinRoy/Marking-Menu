@@ -24,7 +24,7 @@ export const pointsToSegments = points =>
  */
 export const walkMMModel = (model, segments, startIndex = 0) => {
   if (!model || segments.length === 0 || model.isLeaf()) return null;
-  const item = model.getNearestChildren(segments[startIndex].angle);
+  const item = model.getNearestChild(segments[startIndex].angle);
   if (startIndex + 1 >= segments.length) {
     return item;
   }

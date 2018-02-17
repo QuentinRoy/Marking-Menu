@@ -4,7 +4,7 @@ import { mapAngleDrag, dwellings } from '../move';
 
 /**
  * @param {Observable} drag$ - An observable of drag movements.
- * @param {MenuItem} menu - The model of the menu.
+ * @param {MMItem} menu - The model of the menu.
  * @param {object} options - Configuration options.
  * @return {Observable} An observable on the menu navigation events.
  */
@@ -34,9 +34,7 @@ const noviceNavigation = (
   const moves$ = angleDrag$.skip(1).scan((last, n) => {
     const distFromCenter = dist(n.center, n.position);
     const active =
-      distFromCenter < minSelectionDist
-        ? null
-        : menu.getNearestChildren(n.alpha);
+      distFromCenter < minSelectionDist ? null : menu.getNearestChild(n.alpha);
     const type = !last || last.active === active ? 'move' : 'change';
     return Object.assign({ active, type, distFromCenter }, n);
   }, null);

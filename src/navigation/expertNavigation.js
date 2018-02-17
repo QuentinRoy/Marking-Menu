@@ -2,7 +2,7 @@ import recognize from '../recognizer';
 
 /**
  * @param {Observable} drag$ - An observable of drag movements.
- * @param {MenuItem} model - The model of the menu.
+ * @param {MMItem} model - The model of the menu.
  * @param {List<number[]>} initStroke - Initial stroke.
  * @return {Observable} An observable on the gesture drawing and recognition.
  */

@@ -27,7 +27,7 @@ const createMockMMModel = (depth = 1, breadth = 8, requestedAngle, parent) => {
       getMaxBreadth: spy(() => breadth),
       isLeaf: spy(() => false)
     };
-    m.getNearestChildren = spy(childAngle =>
+    m.getNearestChild = spy(childAngle =>
       createMockMMModel(depth - 1, breadth, childAngle, m)
     );
     return m;

@@ -57,7 +57,7 @@ const navigation = (start, drag$, model, options) => {
 
 /**
  * @param {Observable} drags$ - A higher order observable on drag movements.
- * @param {MenuItem} menu - The model of the menu.
+ * @param {MMItem} menu - The model of the menu.
  * @param {object} options - Configuration options (see {@link ../index.js}).
  * @return {Observable} An observable on the marking menu events.
  */
