@@ -1,14 +1,20 @@
 {
+  "root": true,
   "env": {
     "browser": true
   },
-  "extends": "airbnb-base",
+  "extends": ["airbnb-base", "prettier"],
   "rules": {
-    "comma-dangle": ["error", "never"],
-    "arrow-parens": 0,
-    "no-mixed-operators": 0,
-    "no-confusing-arrow": 0,
-    "valid-jsdoc": "error"
+    "valid-jsdoc": "error",
+    "prettier/prettier": "error"
   },
-  "root": true
+  "plugins": ["prettier"],
+  "overrides": [
+    {
+      "files": [ "build-config/**" ],
+      "rules": {
+        "import/no-extraneous-dependencies": ["error", { "devDependencies": true }]
+      }
+    }
+  ]
 }

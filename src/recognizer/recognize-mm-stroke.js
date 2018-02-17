@@ -8,10 +8,13 @@ import strokeLength from './stroke-length';
  * @return {Segment[]} The list of segments joining the points of `points`.
  */
 export const pointsToSegments = points =>
-  points.slice(1).reduce(({ segments, last }, current) => {
-    segments.push([last, current]);
-    return { segments, last: current };
-  }, { last: points[0], segments: [] }).segments;
+  points.slice(1).reduce(
+    ({ segments, last }, current) => {
+      segments.push([last, current]);
+      return { segments, last: current };
+    },
+    { last: points[0], segments: [] }
+  ).segments;
 
 /**
  * @param {Item} model - The marking menu model.

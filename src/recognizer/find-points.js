@@ -1,19 +1,19 @@
 import { dist, angle } from '../utils';
 
 /**
-   * @param {Array.<number[]>} pointList - The list of points.
-   * @param {number} minDist - A distance.
-   * @param {object} options - Options.
-   * @param {number} [options.direction=1] - The direction of the lookup: negative values means
-   *                                         descending lookup.
-   * @param {number} [options.startIndex] - The index of the first point to investigate inside
-   *                                        pointList. If not provided, the lookup will start
-   *                                        from the start or the end of pointList depending
-   *                                        on `direction`.
-   * @param {number[]} [options.refPoint=pointList[startIndex]] - The reference point.
-   * @return {number} The index of the first point inside pointList that it at least `minDist` from
-   *                  `refPoint`.
-   */
+ * @param {Array.<number[]>} pointList - The list of points.
+ * @param {number} minDist - A distance.
+ * @param {object} options - Options.
+ * @param {number} [options.direction=1] - The direction of the lookup: negative values means
+ *                                         descending lookup.
+ * @param {number} [options.startIndex] - The index of the first point to investigate inside
+ *                                        pointList. If not provided, the lookup will start
+ *                                        from the start or the end of pointList depending
+ *                                        on `direction`.
+ * @param {number[]} [options.refPoint=pointList[startIndex]] - The reference point.
+ * @return {number} The index of the first point inside pointList that it at least `minDist` from
+ *                  `refPoint`.
+ */
 export const findNextPointFurtherThan = (
   pointList,
   minDist,

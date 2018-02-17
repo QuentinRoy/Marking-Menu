@@ -44,12 +44,15 @@ const noviceNavigation = (
   // Share this observable as it is used several times
   const startAndMove$ = start$.concat(moves$).share();
 
-  const end$ = startAndMove$.startWith({}).last().map(n =>
-    Object.assign({}, n, {
-      type: n.active && n.active.isLeaf() ? 'select' : 'cancel',
-      selection: n.active
-    })
-  );
+  const end$ = startAndMove$
+    .startWith({})
+    .last()
+    .map(n =>
+      Object.assign({}, n, {
+        type: n.active && n.active.isLeaf() ? 'select' : 'cancel',
+        selection: n.active
+      })
+    );
 
   // Fully observe the local navigation.
   const localNavigation$ = startAndMove$.merge(end$).share();
@@ -81,7 +84,10 @@ const noviceNavigation = (
 
   // Start with local navigation but switch to the first sub-menu navigation
   // (if any).
-  return subMenuNavigations$.take(1).startWith(localNavigation$).switch();
+  return subMenuNavigations$
+    .take(1)
+    .startWith(localNavigation$)
+    .switch();
 };
 
 export default noviceNavigation;

@@ -88,7 +88,10 @@ export const angle = (a, b, c) => {
  * @return {[index, item]} The found entry.
  */
 export const findMaxEntry = (list, comp) =>
-  list.slice(0).reduce((result, item, index) => {
-    if (comp(result[1], item) > 1) return [index, item];
-    return result;
-  }, [0, list[0]]);
+  list.slice(0).reduce(
+    (result, item, index) => {
+      if (comp(result[1], item) > 1) return [index, item];
+      return result;
+    },
+    [0, list[0]]
+  );
