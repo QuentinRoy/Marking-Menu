@@ -24,7 +24,7 @@
     "git-hook": "npm run lint && npm run test",
     "postrewrite": "npm run git-hook",
     "precommit": "npm run git-hook",
-    "commitmsg": "validate-commit-msg"
+    "commitmsg": "commitlint -e $GIT_PARAMS"
   },
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "license": "MIT",
@@ -34,6 +34,8 @@
     "rxjs": "^5.4.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "^6.1.0",
+    "@commitlint/config-conventional": "^6.1.0",
     "angles": "^0.2.0",
     "ava": "^0.21.0",
     "babel-plugin-external-helpers": "^6.22.0",
@@ -59,8 +61,7 @@
     "rollup-watch": "^4.3.1",
     "sass-lint": "^1.10.2",
     "sinon": "^2.4.1",
-    "standard-version": "^4.2.0",
-    "validate-commit-msg": "^2.13.1"
+    "standard-version": "^4.2.0"
   },
   "keywords": [
     "marking-menu",
