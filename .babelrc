@@ -1,23 +1,14 @@
 {
   "env": {
     "test": {
-      "presets": [["env", {
-        "targets": { "node": "current" }
-      }]],
-      "plugins": []
+      "sourceMaps": "inline",
+      "presets": [["env", { "targets": { "node": "current" } }]],
+      "plugins": ["istanbul"]
     },
     "production": {
-      "presets": [["env", {
-        "targets": { "browsers": ">1%" },
-        "modules": false,
-        "loose": true
-      }]],
+      "presets": [["env", { "targets": { "browsers": ">1%" }, "modules": false, "loose": true }]],
       "plugins": [
-        ["transform-runtime", {
-          "helpers": false,
-          "polyfill": false,
-          "regenerator": true
-        }],
+        ["transform-runtime", { "helpers": false, "polyfill": false, "regenerator": true }],
         "external-helpers"
       ]
     }

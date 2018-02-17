@@ -1,5 +1,5 @@
 import test from 'ava';
-import { deltaAngle, mod, dist, angle, findMaxEntry } from '../utils';
+import { deltaAngle, mod, dist, angle, findMaxEntry } from './utils';
 
 test('`mod` returns a positive modulo', t => {
   t.is(mod(3, 10), 3);

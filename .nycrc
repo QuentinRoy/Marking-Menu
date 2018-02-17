@@ -1,0 +1,9 @@
+{
+  "include": [
+    "src/**"
+  ],
+  "sourceMap": false,
+  "instrument": false,
+  "all": true,
+  "require": ["babel-register"]
+}

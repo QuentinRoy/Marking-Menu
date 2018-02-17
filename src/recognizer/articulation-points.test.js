@@ -1,5 +1,5 @@
 import test from 'ava';
-import getStrokeArticulationPoints from '../articulation-points';
+import getStrokeArticulationPoints from './articulation-points';
 
 test('`getStrokeArticulationPoints` works for simple strokes', t => {
   t.deepEqual(

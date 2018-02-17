@@ -1,0 +1,15 @@
+language: "node_js"
+
+node_js:
+  - "8"
+  - "lts/*"
+  - "node"
+
+install:
+  - npm install -g codecov
+  - npm install
+
+script:
+  - npm run lint
+  - npm run build
+  - npm run codecov-test && codecov
