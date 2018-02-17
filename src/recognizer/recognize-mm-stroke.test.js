@@ -9,7 +9,9 @@ import recognizeMMStroke, {
   pointsToSegments,
   divideLongestSegment,
   walkMMModel
-} from '../recognize-mm-stroke';
+} from './recognize-mm-stroke';
+
+const STROKES_PATH = path.resolve(__dirname, '__test-strokes__');
 
 const readFile = promisify(fs.readFile);
 const csvParse = promisify(csvParseCallback);
@@ -34,9 +36,7 @@ const createMockMMModel = (depth = 1, breadth = 8, requestedAngle, parent) => {
 };
 
 const readStroke = async strokeName => {
-  const data = await readFile(
-    path.resolve(__dirname, 'strokes', `${strokeName}.csv`)
-  );
+  const data = await readFile(path.resolve(STROKES_PATH, `${strokeName}.csv`));
   const lines = await csvParse(data, { columns: true });
   // Adapt the line, inverting y so that the origin is on the top instead of the bottom.
   return lines.map(row => [+row.x, 4000 - row.y]);

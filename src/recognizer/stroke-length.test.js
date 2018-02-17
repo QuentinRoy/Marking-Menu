@@ -1,5 +1,5 @@
 import test from 'ava';
-import strokeLength from '../stroke-length';
+import strokeLength from './stroke-length';
 
 test('`strokeLength` properly calculate the length of a path', t => {
   t.is(strokeLength([]), 0);

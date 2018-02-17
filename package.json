@@ -14,6 +14,7 @@
   },
   "scripts": {
     "test": "NODE_ENV=test ava",
+    "codecov-test": "NODE_ENV=test nyc ava",
     "watch-test": "npm run test -- --watch",
     "build": "NODE_ENV=production rollup --config build-config/rollup.config.js",
     "watch": "npm run build -- --watch",
@@ -36,6 +37,7 @@
     "angles": "^0.2.0",
     "ava": "^0.21.0",
     "babel-plugin-external-helpers": "^6.22.0",
+    "babel-plugin-istanbul": "^4.1.5",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.0",
     "csv-parse": "^1.2.1",
@@ -43,6 +45,7 @@
     "eslint-config-airbnb-base": "^11.3.1",
     "eslint-plugin-import": "^2.7.0",
     "husky": "^0.14.3",
+    "nyc": "^11.4.1",
     "rollup": "^0.45.2",
     "rollup-plugin-babel": "^2.7.1",
     "rollup-plugin-commonjs": "^8.0.2",
@@ -68,7 +71,6 @@
   "ava": {
     "require": [
       "babel-register"
-    ],
-    "babel": "inherit"
+    ]
   }
 }

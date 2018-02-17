@@ -2,7 +2,7 @@ import test from 'ava';
 import {
   findMiddlePointForMinAngle,
   findNextPointFurtherThan
-} from '../find-points';
+} from './find-points';
 
 test('`findMiddlePointForMaxAngle` the point maximizing the angle', t => {
   t.deepEqual(

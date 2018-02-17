@@ -1,5 +1,5 @@
 import test from 'ava';
-import createModel from '../model';
+import createModel from './model';
 
 test.todo('Create all model related tests');
 
