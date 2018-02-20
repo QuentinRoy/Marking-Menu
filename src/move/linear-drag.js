@@ -1,35 +1,12 @@
 import { Observable } from 'rxjs';
+import {
+  createPEventFromMouseEvent,
+  createPEventFromTouchEvent
+} from './pointer-events';
 
-// Create a custom pointer event from a touch event.
-const createPEventFromTouchEvent = touchEvt => {
-  const touchList = Array.from(touchEvt.targetTouches);
-  const sumX = touchList.reduce((acc, t) => acc + t.clientX, 0);
-  const sumY = touchList.reduce((acc, t) => acc + t.clientY, 0);
-  const meanX = sumX / touchList.length;
-  const meanY = sumY / touchList.length;
-  return {
-    originalEvent: touchEvt,
-    position: [meanX, meanY],
-    timeStamp: touchEvt.timeStamp
-  };
-};
-
-// Create a custom pointer from a mouse event.
-const createPEventFromMouseEvent = mouseEvt => ({
-  originalEvent: mouseEvt,
-  position: [mouseEvt.clientX, mouseEvt.clientY],
-  timeStamp: mouseEvt.timeStamp
-});
-
-/**
- * @param {HTMLElement} rootDOM - the DOM element to observe pointer events on.
- * @return {Observable} A higher order observable that drag observables. The sub-observables are
- *                      published as behaviors so that any new subscription immediately get the last
- *                      position.
- */
-const watchDrags = rootDOM => {
-  // Higher order observable tracking mouse drags.
-  const mouseDrags$ = Observable.fromEvent(rootDOM, 'mousedown')
+// Higher order observable tracking mouse drags.
+export const mouseDrags = rootDOM =>
+  Observable.fromEvent(rootDOM, 'mousedown')
     .map(downEvt => {
       // Make sure we include the first mouse down event.
       const drag$ = Observable.of(downEvt)
@@ -43,8 +20,9 @@ const watchDrags = rootDOM => {
     })
     .map(o => o.map(createPEventFromMouseEvent));
 
-  // Higher order observable tracking touch drags.
-  const touchDrags$ = Observable.fromEvent(rootDOM, 'touchstart')
+// Higher order observable tracking touch drags.
+export const touchDrags = rootDOM =>
+  Observable.fromEvent(rootDOM, 'touchstart')
     // Menu is supposed to have pointer-events: none so we can safely rely on
     // targetTouches.
     .filter(evt => evt.targetTouches.length === 1)
@@ -64,8 +42,13 @@ const watchDrags = rootDOM => {
     })
     .map(o => o.map(createPEventFromTouchEvent));
 
-  // Higher order observable tracking drags.
-  return Observable.merge(touchDrags$, mouseDrags$);
-};
+/**
+ * @param {HTMLElement} rootDOM - the DOM element to observe pointer events on.
+ * @return {Observable} A higher order observable that drag observables. The sub-observables are
+ *                      published as behaviors so that any new subscription immediately get the last
+ *                      position.
+ */
+const watchDrags = rootDOM =>
+  Observable.merge(touchDrags(rootDOM), mouseDrags(rootDOM));
 
 export default watchDrags;
