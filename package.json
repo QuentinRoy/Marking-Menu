@@ -22,7 +22,6 @@
     "release": "standard-version",
     "lint": "eslint src",
     "git-hook": "npm run lint && npm run test",
-    "postrewrite": "npm run git-hook",
     "precommit": "npm run git-hook",
     "commitmsg": "commitlint -e $GIT_PARAMS"
   },
