@@ -2,8 +2,7 @@
   "env": {
     "test": {
       "sourceMaps": "inline",
-      "presets": [["env", { "targets": { "node": "current" } }]],
-      "plugins": ["istanbul"]
+      "presets": [["env", { "targets": { "node": "current" } }]]
     },
     "production": {
       "presets": [

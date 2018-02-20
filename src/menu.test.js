@@ -1,7 +1,5 @@
-import test from 'ava';
+test('TODO: Test basic menu rendering.');
 
-test.todo('Test basic menu rendering.');
+test('TODO: Test menu with active items rendering.');
 
-test.todo('Test menu with active items rendering.');
-
-test.todo('Test active items updates.');
+test('TODO: Test active items updates.');

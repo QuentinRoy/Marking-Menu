@@ -1,5 +1,3 @@
-import test from 'ava';
-import { spy } from 'sinon';
 import fs from 'fs';
 import path from 'path';
 import csvParseCallback from 'csv-parse';
@@ -11,23 +9,23 @@ import recognizeMMStroke, {
   walkMMModel
 } from './recognize-mm-stroke';
 
-const STROKES_PATH = path.resolve(__dirname, '__test-strokes__');
+const STROKES_PATH = path.resolve(__dirname, '__fixtures__', 'strokes');
 
 const readFile = promisify(fs.readFile);
 const csvParse = promisify(csvParseCallback);
 
 const createMockMMModel = (depth = 1, breadth = 8, requestedAngle, parent) => {
   if (depth === 0) {
-    return { isLeaf: spy(() => true), requestedAngle, parent };
+    return { isLeaf: jest.fn(() => true), requestedAngle, parent };
   } else if (depth > 0) {
     const m = {
       parent,
       requestedAngle,
-      getMaxDepth: spy(() => depth),
-      getMaxBreadth: spy(() => breadth),
-      isLeaf: spy(() => false)
+      getMaxDepth: jest.fn(() => depth),
+      getMaxBreadth: jest.fn(() => breadth),
+      isLeaf: jest.fn(() => false)
     };
-    m.getNearestChild = spy(childAngle =>
+    m.getNearestChild = jest.fn(childAngle =>
       createMockMMModel(depth - 1, breadth, childAngle, m)
     );
     return m;
@@ -42,137 +40,147 @@ const readStroke = async strokeName => {
   return lines.map(row => [+row.x, 4000 - row.y]);
 };
 
-test('`pointsToSegments` returns a list of segments from a list of points', t => {
-  t.deepEqual(pointsToSegments([[0, 3], [5, 3], [10, 8], [15, 4]]), [
-    [[0, 3], [5, 3]],
-    [[5, 3], [10, 8]],
-    [[10, 8], [15, 4]]
-  ]);
-});
-
-test('`divideLongestSegment` divide by two the longest segment of a list', t => {
-  t.deepEqual(
-    divideLongestSegment([
-      { length: 10, angle: 5 },
-      { length: 30, angle: 10 },
-      { length: 20, angle: 20 }
-    ]),
-    [
-      { length: 10, angle: 5 },
-      { length: 15, angle: 10 },
-      { length: 15, angle: 10 },
-      { length: 20, angle: 20 }
-    ]
-  );
-});
-
-test('`walkMMModel` properly find an item from a segment list and a MM mode', t => {
-  {
-    const menu = createMockMMModel(1);
-    const selection = walkMMModel(menu, [{ angle: 90 }]);
-    t.is(selection.requestedAngle, 90);
-    t.is(selection.parent, menu);
-  }
-  {
-    const menu = createMockMMModel(2);
-    const selection = walkMMModel(menu, [{ angle: 90 }, { angle: 180 }]);
-    t.is(selection.requestedAngle, 180);
-    t.is(selection.parent.requestedAngle, 90);
-    t.is(selection.parent.parent, menu);
-  }
-  {
-    const menu = createMockMMModel(3);
-    const selection = walkMMModel(menu, [
-      { angle: 90 },
-      { angle: 0 },
-      { angle: 180 }
+describe('pointsToSegments', () => {
+  it('returns a list of segments from a list of points', () => {
+    expect(pointsToSegments([[0, 3], [5, 3], [10, 8], [15, 4]])).toEqual([
+      [[0, 3], [5, 3]],
+      [[5, 3], [10, 8]],
+      [[10, 8], [15, 4]]
     ]);
-    t.is(selection.requestedAngle, 180);
-    t.is(selection.parent.requestedAngle, 0);
-    t.is(selection.parent.parent.requestedAngle, 90);
-    t.is(selection.parent.parent.parent, menu);
-  }
-  {
-    const menu = createMockMMModel(1);
-    t.is(walkMMModel(menu, []), null);
-  }
-  {
-    const menu = createMockMMModel(1);
-    t.is(walkMMModel(menu, [{ angle: 200 }, { angle: 0 }]), null);
-  }
-  {
-    const menu = createMockMMModel(2);
-    t.is(
-      walkMMModel(menu, [{ angle: 200 }, { angle: 5 }, { angle: 10 }]),
-      null
-    );
-  }
+  });
 });
 
-test.todo('`findMMItem`');
+describe('divideLongestSegment', () => {
+  it('divides by two the longest segment of a list', () => {
+    expect(
+      divideLongestSegment([
+        { length: 10, angle: 5 },
+        { length: 30, angle: 10 },
+        { length: 20, angle: 20 }
+      ])
+    ).toEqual([
+      { length: 10, angle: 5 },
+      { length: 15, angle: 10 },
+      { length: 15, angle: 10 },
+      { length: 20, angle: 20 }
+    ]);
+  });
+});
 
-test('`recognizeMMStroke` properly recognizes real 1 level strokes', async t => {
-  const precision = 15;
-  const testStroke = async strokeAngle => {
+describe('walkMMModel', () => {
+  it('finds an item from a segment list and a MM mode', () => {
+    {
+      const menu = createMockMMModel(1);
+      const selection = walkMMModel(menu, [{ angle: 90 }]);
+      expect(selection.requestedAngle).toBe(90);
+      expect(selection.parent).toBe(menu);
+    }
+    {
+      const menu = createMockMMModel(2);
+      const selection = walkMMModel(menu, [{ angle: 90 }, { angle: 180 }]);
+      expect(selection.requestedAngle).toBe(180);
+      expect(selection.parent.requestedAngle).toBe(90);
+      expect(selection.parent.parent).toBe(menu);
+    }
+    {
+      const menu = createMockMMModel(3);
+      const selection = walkMMModel(menu, [
+        { angle: 90 },
+        { angle: 0 },
+        { angle: 180 }
+      ]);
+      expect(selection.requestedAngle).toBe(180);
+      expect(selection.parent.requestedAngle).toBe(0);
+      expect(selection.parent.parent.requestedAngle).toBe(90);
+      expect(selection.parent.parent.parent).toBe(menu);
+    }
+    {
+      const menu = createMockMMModel(1);
+      expect(walkMMModel(menu, [])).toBe(null);
+    }
+    {
+      const menu = createMockMMModel(1);
+      expect(walkMMModel(menu, [{ angle: 200 }, { angle: 0 }])).toBe(null);
+    }
+    {
+      const menu = createMockMMModel(2);
+      expect(
+        walkMMModel(menu, [{ angle: 200 }, { angle: 5 }, { angle: 10 }])
+      ).toBe(null);
+    }
+  });
+});
+
+test('TODO: findMMItem');
+
+describe('recognizeMMStroke', () => {
+  it('recognizes real 1 level strokes', async () => {
+    const precision = 15;
+    const testStroke = async strokeAngle => {
+      // Read the stroke.
+      const stroke = await readStroke(strokeAngle);
+      // Create the model
+      const model = createMockMMModel(1);
+      // Apply the recognizer.
+      const selection = recognizeMMStroke(stroke, model);
+      // Make sure the angle is close to the expected stroke angle (mock model dynamically)
+      expect(
+        angles.distance(selection.requestedAngle, strokeAngle) < precision
+      ).toBe(true);
+    };
+    await testStroke(0);
+    await testStroke(45);
+    await testStroke(90);
+    await testStroke(135);
+    await testStroke(180);
+    await testStroke(225);
+    await testStroke(270);
+    await testStroke(315);
+  });
+
+  it('recognizes real 3 levels strokes', async () => {
+    const precision = 15;
+    const testStroke = async (
+      strokeAngles,
+      strokeName = strokeAngles.join('-')
+    ) => {
+      // Read the stroke.
+      const stroke = await readStroke(strokeName);
+      // Create the model
+      const model = createMockMMModel(3);
+      // Apply the recognizer.
+      const selection = recognizeMMStroke(stroke, model);
+      // Make sure the angle is close to the expected stroke angle (mock model dynamically).
+      expect(
+        angles.distance(selection.requestedAngle, strokeAngles[2]) < precision
+      ).toBe(true);
+      expect(
+        angles.distance(selection.parent.requestedAngle, strokeAngles[1]) <
+          precision
+      ).toBe(true);
+      expect(
+        angles.distance(
+          selection.parent.parent.requestedAngle,
+          strokeAngles[0]
+        ) < precision
+      ).toBe(true);
+      expect(selection.parent.parent.parent).toBe(model);
+    };
+    await testStroke([225, 0, 135]);
+    await testStroke([270, 0, 90]);
+    await testStroke([270, 45, 90]);
+    await testStroke([270, 45, 270]);
+    await testStroke([180, 0, 0]);
+    await testStroke([90, 90, 90], 90);
+    await testStroke([45, 45, 45], 45);
+  });
+
+  it('returns null if the stroke does not correspond to an item', async () => {
     // Read the stroke.
-    const stroke = await readStroke(strokeAngle);
+    const stroke = await readStroke([225, 0, 135].join('-'));
     // Create the model
     const model = createMockMMModel(1);
     // Apply the recognizer.
-    const selection = recognizeMMStroke(stroke, model);
-    // Make sure the angle is close to the expected stroke angle (mock model dynamically)
-    t.true(angles.distance(selection.requestedAngle, strokeAngle) < precision);
-  };
-  await testStroke(0);
-  await testStroke(45);
-  await testStroke(90);
-  await testStroke(135);
-  await testStroke(180);
-  await testStroke(225);
-  await testStroke(270);
-  await testStroke(315);
-});
-
-test('`recognizeMMStroke` properly recognizes real 3 levels strokes', async t => {
-  const precision = 15;
-  const testStroke = async (
-    strokeAngles,
-    strokeName = strokeAngles.join('-')
-  ) => {
-    // Read the stroke.
-    const stroke = await readStroke(strokeName);
-    // Create the model
-    const model = createMockMMModel(3);
-    // Apply the recognizer.
-    const selection = recognizeMMStroke(stroke, model);
-    // Make sure the angle is close to the expected stroke angle (mock model dynamically).
-    t.true(
-      angles.distance(selection.requestedAngle, strokeAngles[2]) < precision
-    );
-    t.true(
-      angles.distance(selection.parent.requestedAngle, strokeAngles[1]) <
-        precision
-    );
-    t.true(
-      angles.distance(selection.parent.parent.requestedAngle, strokeAngles[0]) <
-        precision
-    );
-    t.is(selection.parent.parent.parent, model);
-  };
-  await testStroke([225, 0, 135]);
-  await testStroke([270, 0, 90]);
-  await testStroke([270, 45, 90]);
-  await testStroke([270, 45, 270]);
-  await testStroke([180, 0, 0]);
-  await testStroke([90, 90, 90], 90);
-  await testStroke([45, 45, 45], 45);
-});
-
-test('`recognizeMMStroke` returns null if the stroke does not correspond to an item', async t => {
-  // Read the stroke.
-  const stroke = await readStroke([225, 0, 135].join('-'));
-  // Create the model
-  const model = createMockMMModel(1);
-  // Apply the recognizer.
-  t.is(recognizeMMStroke(stroke, model), null);
+    expect(recognizeMMStroke(stroke, model)).toBe(null);
+  });
 });
