@@ -33,7 +33,7 @@ export default {
   },
   plugins: [
     resolve(),
-    commonjs(),
+    pug(),
     sass({
       output: true,
       options: {
@@ -42,8 +42,8 @@ export default {
         functions: sassTrigo
       }
     }),
-    pug(),
-    babel({ exclude: 'node_modules/**' })
+    babel({ exclude: 'node_modules/**' }),
+    commonjs()
   ],
   external: ['rxjs']
 };
