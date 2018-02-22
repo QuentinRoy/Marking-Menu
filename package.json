@@ -51,8 +51,10 @@
     "eslint-plugin-prettier": "^2.6.0",
     "husky": "^0.14.3",
     "jest": "^22.4.0",
+    "jest-transform-pug": "^0.1.0",
     "node-sass": "^4.7.2",
     "prettier": "^1.10.2",
+    "pug-jest": "^1.0.1",
     "rollup": "^0.56.1",
     "rollup-plugin-babel": "^3.0.3",
     "rollup-plugin-commonjs": "^8.3.0",
@@ -73,6 +75,13 @@
   "jest": {
     "collectCoverageFrom": [
       "src/**/*.js"
-    ]
+    ],
+    "transform": {
+      "^.+\\.jsx?$": "babel-jest",
+      "\\.(pug)$": "jest-transform-pug"
+    },
+    "moduleNameMapper": {
+      "\\.(css|styl|less|sass|scss)$": "<rootDir>/build-config/style-stub.js"
+    }
   }
 }

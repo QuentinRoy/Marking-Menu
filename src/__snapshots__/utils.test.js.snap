@@ -1,0 +1,60 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`strToHTML  parses a string as a DOM Element 1`] = `
+Array [
+  <ul
+    style="position: absolute;"
+  >
+    
+          
+    <li>
+      That thing
+    </li>
+    
+          
+    <li>
+      That other thing
+    </li>
+    
+        
+  </ul>,
+  <svg
+    height="100"
+    viewBox="0 0 3 2"
+    width="150"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    
+          
+    <rect
+      fill="#008d46"
+      height="2"
+      width="1"
+      x="0"
+    />
+    
+          
+    <rect
+      fill="#ffffff"
+      height="2"
+      width="1"
+      x="1"
+    />
+    
+          
+    <rect
+      fill="#d2232c"
+      height="2"
+      width="1"
+      x="2"
+    />
+    
+        
+  </svg>,
+  <div
+    class="that-thing"
+  >
+    I exist too
+  </div>,
+]
+`;
