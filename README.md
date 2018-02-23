@@ -1,5 +1,7 @@
 # Marking Menu
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/QuentinRoy/Marking-Menu.svg)](https://greenkeeper.io/)
+
 
 
 [![NPM](https://img.shields.io/npm/v/marking-menu.svg)](https://www.npmjs.com/package/marking-menu)
