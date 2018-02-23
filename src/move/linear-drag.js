@@ -37,6 +37,7 @@ export const touchDrags = rootDOM =>
           ).filter(evt => evt.targetTouches.length !== 1)
         )
         .publishBehavior();
+      // FIXME: the line below retains the subscription until next touch end.
       drag$.connect();
       return drag$;
     })
