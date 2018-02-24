@@ -35,8 +35,7 @@ export default {
     resolve(),
     commonjs(),
     sass({
-      // output: true is broken, c.f. differui/rollup-plugin-sass#42
-      output: './marking-menu.css',
+      output: true,
       options: {
         // FIXME: SourceMap not working, c.f. differui/rollup-plugin-sass#37
         sourceMap: true,
