@@ -74,6 +74,24 @@ export const findMaxEntry = (list, comp) =>
   );
 
 /**
+ * Converts the coordinates of a point in polar coordinates (angle in degrees).
+ *
+ * @param  {number[]} point - A point.
+ * @param  {number[]} [pole=[0, 0]] - The pole of a polar coordinate
+ *                                    system
+ * @return {{azymuth, radius}} The angle coordinate of the point in the polar
+ *                             coordinate system in degrees.
+ */
+export const toPolar = ([px, py], [cx, cy] = [0, 0]) => {
+  const x = px - cx;
+  const y = py - cy;
+  return {
+    azymuth: rad2deg(Math.atan2(y, x)),
+    radius: Math.sqrt(x * x + y * y)
+  };
+};
+
+/**
  * @param  {string} str - A valid html fragment that could be contained in a
  *                      <div>.
  * @param  {Document} [doc=document] - The document to use.
