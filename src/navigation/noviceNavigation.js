@@ -36,7 +36,7 @@ const noviceNavigation = (
     const active =
       distFromCenter < minSelectionDist ? null : menu.getNearestChild(n.alpha);
     const type = !last || last.active === active ? 'move' : 'change';
-    return Object.assign({ active, type, distFromCenter }, n);
+    return { active, type, distFromCenter, ...n };
   }, null);
 
   // Share this observable as it is used several times
@@ -45,12 +45,11 @@ const noviceNavigation = (
   const end$ = startAndMove$
     .startWith({})
     .last()
-    .map(n =>
-      Object.assign({}, n, {
-        type: n.active && n.active.isLeaf() ? 'select' : 'cancel',
-        selection: n.active
-      })
-    );
+    .map(n => ({
+      ...n,
+      type: n.active && n.active.isLeaf() ? 'select' : 'cancel',
+      selection: n.active
+    }));
 
   // Fully observe the local navigation.
   const localNavigation$ = startAndMove$.merge(end$).share();

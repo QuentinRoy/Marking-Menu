@@ -96,9 +96,7 @@ const recognizeMMStroke = (stroke, model) => {
     .filter(seg => seg.length > minSegmentSize)
     // Change again the representation of the segment to include its length but not its
     // its points anymore.
-    .map(seg =>
-      Object.assign({ angle: segmentAngle(...seg.points), length: seg.length })
-    );
+    .map(seg => ({ angle: segmentAngle(...seg.points), length: seg.length }));
   return findMMItem(model, segments, maxMenuDepth);
 };
 

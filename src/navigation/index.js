@@ -8,9 +8,9 @@ const navigation = (start, drag$, model, options) => {
   const startUp$ = Observable.merge(
     expertNavigation(drag$, model)
       .take(1)
-      .map(n => Object.assign(n, { type: 'start' })),
+      .map(n => ({ ...n, type: 'start' })),
     expertNavigation(drag$, model).skip(1)
-  ).map(n => Object.assign(n, { mode: 'startup' }));
+  ).map(n => ({ ...n, mode: 'startup' }));
 
   // Observable on confirmed expert navigation.
   const confirmedExpertNavigation$$ = longMoves(
@@ -25,7 +25,7 @@ const navigation = (start, drag$, model, options) => {
         drag$.skip(1),
         model,
         e.stroke
-      ).map(n => Object.assign(n, { mode: 'expert' }))
+      ).map(n => ({ ...n, mode: 'expert' }))
     );
 
   // Observable on confirmed novice navigation.
@@ -40,8 +40,8 @@ const navigation = (start, drag$, model, options) => {
         // Same as before, skip the first.
         drag$.skip(1),
         model,
-        Object.assign(options, { menuCenter: start.position })
-      ).map(n => Object.assign(n, { mode: 'novice' }))
+        { ...options, menuCenter: start.position }
+      ).map(n => ({ ...n, mode: 'novice' }))
     );
 
   // Observable on expert or novice navigation once confirmed.
