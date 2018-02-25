@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
-import noviceNavigation from './noviceNavigation';
-import expertNavigation from './expertNavigation';
+import noviceNavigation from './novice-navigation';
+import expertNavigation from './expert-navigation';
 import { longMoves, dwellings } from '../move';
 
 const navigation = (start, drag$, model, options) => {
