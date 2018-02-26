@@ -1,4 +1,12 @@
-import { deltaAngle, mod, dist, angle, findMaxEntry, strToHTML } from './utils';
+import {
+  deltaAngle,
+  mod,
+  dist,
+  angle,
+  findMaxEntry,
+  strToHTML,
+  toPolar
+} from './utils';
 
 describe('mod', () => {
   it(' returns a positive modulo', () => {
@@ -81,6 +89,21 @@ describe('findMaxEntry', () => {
         (a, b) => a.l - b.l
       )
     ).toEqual([1, { l: 0 }]);
+  });
+});
+
+describe('toPolar', () => {
+  it(' calculates the coordinates of a point in a polar system', () => {
+    expect(toPolar([10, 0], [0, 0])).toEqual({ azymuth: 0, radius: 10 });
+    expect(toPolar([10, 0])).toEqual({ azymuth: 0, radius: 10 });
+    expect(toPolar([10, 5], [5, 5])).toEqual({ azymuth: 0, radius: 5 });
+    expect(toPolar([-10, -20], [-10, -20])).toEqual({ azymuth: 0, radius: 0 });
+    expect(toPolar([10, 15], [0, 5])).toEqual({
+      azymuth: 45,
+      radius: Math.sqrt(10 * 10 + 10 * 10)
+    });
+    expect(toPolar([-10, 0])).toEqual({ azymuth: 180, radius: 10 });
+    expect(toPolar([0, -20])).toEqual({ azymuth: -90, radius: 20 });
   });
 });
 
