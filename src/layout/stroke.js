@@ -1,5 +1,3 @@
-const devicePixelRatio = window.devicePixelRatio || 1;
-
 /**
  * @param {HTMLElement} parent - The parent node.
  * @param {Document} options - Options.
@@ -9,6 +7,8 @@ const devicePixelRatio = window.devicePixelRatio || 1;
  * @param {number} [options.startPointRadius=0] - The radius of the start point.
  * @param {number} [options.startPointColor=options.lineColor] - CSS representation of the start
  *                                                               point color.
+ * @param {number} [options.ptSize=1 / devicePixelRatio] - The size of the canvas points
+ *                                                         (px).
  * @return {{ clear, setStroke, remove }} The canvas methods.
  */
 export default (
@@ -18,14 +18,15 @@ export default (
     lineWidth = 2,
     lineColor = 'blue',
     pointRadius = 0,
-    pointColor = lineColor
+    pointColor = lineColor,
+    ptSize = window.devicePixelRatio ? 1 / window.devicePixelRatio : 1
   }
 ) => {
   // Create the canvas.
   const { width, height } = parent.getBoundingClientRect();
   const canvas = doc.createElement('canvas');
-  canvas.width = width * devicePixelRatio;
-  canvas.height = height * devicePixelRatio;
+  canvas.width = width / ptSize;
+  canvas.height = height / ptSize;
   Object.assign(canvas.style, {
     position: 'absolute',
     left: 0,
@@ -39,7 +40,7 @@ export default (
   // Get the canvas' context and set it up
   const ctx = canvas.getContext('2d');
   // Scale to the device pixel ratio.
-  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.scale(1 / ptSize, 1 / ptSize);
 
   /**
    * @param {number[]} point - Position of the point to draw.

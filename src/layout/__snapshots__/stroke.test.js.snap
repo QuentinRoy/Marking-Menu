@@ -1,0 +1,177 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`stroke can be removed 1`] = `<div />`;
+
+exports[`stroke can draw points 1`] = `
+Array [
+  Object {
+    "args": Array [],
+    "method": "save",
+  },
+  Object {
+    "args": Array [],
+    "method": "beginPath",
+  },
+  Object {
+    "args": Array [
+      110,
+      12,
+    ],
+    "method": "moveTo",
+  },
+  Object {
+    "args": Array [
+      10,
+      12,
+      100,
+      0,
+      360,
+    ],
+    "method": "arc",
+  },
+  Object {
+    "args": Array [],
+    "method": "fill",
+  },
+  Object {
+    "args": Array [],
+    "method": "restore",
+  },
+  Object {
+    "args": Array [],
+    "method": "save",
+  },
+  Object {
+    "args": Array [],
+    "method": "beginPath",
+  },
+  Object {
+    "args": Array [
+      105.2,
+      0,
+    ],
+    "method": "moveTo",
+  },
+  Object {
+    "args": Array [
+      5.2,
+      0,
+      100,
+      0,
+      360,
+    ],
+    "method": "arc",
+  },
+  Object {
+    "args": Array [],
+    "method": "fill",
+  },
+  Object {
+    "args": Array [],
+    "method": "restore",
+  },
+]
+`;
+
+exports[`stroke can draw strokes 1`] = `
+Array [
+  Object {
+    "args": Array [],
+    "method": "save",
+  },
+  Object {
+    "args": Array [],
+    "method": "beginPath",
+  },
+  Object {
+    "args": Array [
+      3,
+      2,
+    ],
+    "method": "moveTo",
+  },
+  Object {
+    "args": Array [
+      2,
+      4,
+    ],
+    "method": "lineTo",
+  },
+  Object {
+    "args": Array [
+      5,
+      1,
+    ],
+    "method": "lineTo",
+  },
+  Object {
+    "args": Array [
+      9,
+      0,
+    ],
+    "method": "lineTo",
+  },
+  Object {
+    "args": Array [],
+    "method": "stroke",
+  },
+  Object {
+    "args": Array [],
+    "method": "restore",
+  },
+  Object {
+    "args": Array [],
+    "method": "save",
+  },
+  Object {
+    "args": Array [],
+    "method": "beginPath",
+  },
+  Object {
+    "args": Array [
+      10,
+      0,
+    ],
+    "method": "moveTo",
+  },
+  Object {
+    "args": Array [
+      0,
+      0,
+    ],
+    "method": "lineTo",
+  },
+  Object {
+    "args": Array [
+      1,
+      1,
+    ],
+    "method": "lineTo",
+  },
+  Object {
+    "args": Array [
+      1,
+      0,
+    ],
+    "method": "lineTo",
+  },
+  Object {
+    "args": Array [],
+    "method": "stroke",
+  },
+  Object {
+    "args": Array [],
+    "method": "restore",
+  },
+]
+`;
+
+exports[`stroke creates its DOM and set up the canvas scale 1`] = `
+<div>
+  <canvas
+    height="240"
+    style="position: absolute; left: 0px; top: 0px; width: 50px; height: 60px; pointer-events: none;"
+    width="200"
+  />
+</div>
+`;

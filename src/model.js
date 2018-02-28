@@ -3,32 +3,9 @@ import { deltaAngle } from './utils';
 const getAngleRange = items => (items.length > 4 ? 45 : 90);
 
 /**
- * Represents an item (leaf) of the Marking Menu.
+ * Represents an item of the Marking Menu.
  */
-class Item {
-  /**
-   * @param {String} [id] - The item's id. Required except for the root item.
-   * @param {String} [name] - The item's name. Required except for the root item.
-   * @param {Integer} [angle] - The item's angle. Required except for the root item.
-   */
-  constructor(id, name, angle) {
-    this.id = id;
-    this.name = name;
-    this.angle = angle;
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  isLeaf() {
-    return true;
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  isRoot() {
-    return false;
-  }
-}
-
-class MenuItem extends Item {
+export class MMItem {
   /**
    * @param {String} [id] - The item's id. Required except for the root item.
    * @param {String} [name] - The item's name. Required except for the root item.
@@ -36,24 +13,21 @@ class MenuItem extends Item {
    * @param {List<ItemModel>} children - The items contained in the menu.
    */
   constructor(id, name, angle, children) {
-    super(id, name, angle);
+    this.id = id;
+    this.name = name;
+    this.angle = angle;
     this.children = children;
   }
 
-  isRoot() {
-    return !this.id;
-  }
-
-  // eslint-disable-next-line class-methods-use-this
   isLeaf() {
-    return false;
+    return !this.children || this.children.length === 0;
   }
 
   /**
    * @param {String} childId - The identifier of the child to look for.
    * @return {Item} the children with the id `childId`.
    */
-  getChildren(childId) {
+  getChild(childId) {
     return this.children.find(child => child.id === childId);
   }
 
@@ -62,14 +36,14 @@ class MenuItem extends Item {
    * @return {Item} the (first) children with the name `childName`.
    */
   getChildrenByName(childName) {
-    return this.children.find(child => child.name === childName);
+    return this.children.filter(child => child.name === childName);
   }
 
   /**
    * @param {Integer} angle - An angle.
    * @return {Item} the closest children to the angle `angle`.
    */
-  getNearestChildren(angle) {
+  getNearestChild(angle) {
     return this.children.reduce((c1, c2) => {
       const delta1 = Math.abs(deltaAngle(c1.angle, angle));
       const delta2 = Math.abs(deltaAngle(c2.angle, angle));
@@ -81,26 +55,21 @@ class MenuItem extends Item {
    * @return {number} The maximum depth of the menu.
    */
   getMaxDepth() {
-    return (
-      Math.max(
-        0,
-        ...this.children
-          .filter(child => !child.isLeaf())
-          .map(child => child.getMaxDepth())
-      ) + 1
-    );
+    return this.isLeaf()
+      ? 0
+      : Math.max(0, ...this.children.map(child => child.getMaxDepth())) + 1;
   }
 
   /**
    * @return {number} The maximum breadth of the menu.
    */
   getMaxBreadth() {
-    return Math.max(
-      this.children.length,
-      ...this.children
-        .filter(child => !child.isLeaf())
-        .map(child => child.getMaxBreadth())
-    );
+    return this.isLeaf()
+      ? 0
+      : Math.max(
+          this.children.length,
+          ...this.children.map(child => child.getMaxBreadth())
+        );
   }
 }
 
@@ -120,13 +89,13 @@ const recursivelyCreateModelItems = (items, baseId = undefined) => {
     ];
     if (item.children) {
       return Object.freeze(
-        new MenuItem(
+        new MMItem(
           ...itemArgs,
           Object.freeze(recursivelyCreateModelItems(item.children, stdId))
         )
       );
     }
-    return Object.freeze(new Item(...itemArgs));
+    return Object.freeze(new MMItem(...itemArgs));
   });
 };
 
@@ -134,11 +103,11 @@ const recursivelyCreateModelItems = (items, baseId = undefined) => {
  * Create the marking menu model.
  *
  * @param {List<String|{name,children}>} itemList - The list of items.
- * @return {MenuItem} - The root item of the model.
+ * @return {MMItem} - The root item of the model.
  */
 const createModel = itemList =>
   Object.freeze(
-    new MenuItem(null, null, null, recursivelyCreateModelItems(itemList))
+    new MMItem(null, null, null, recursivelyCreateModelItems(itemList))
   );
 
 export default createModel;

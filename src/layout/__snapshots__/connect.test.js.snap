@@ -1,0 +1,487 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`connect cleans-up and throws on unknown event type 1`] = `
+<div
+  style=""
+/>
+`;
+
+exports[`connect cleans-up on error 1`] = `
+<div
+  style=""
+/>
+`;
+
+exports[`connect draws expert strokes on draw notifications 1`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos1\\"]"
+  />
+</div>
+`;
+
+exports[`connect draws expert strokes on draw notifications 2`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="\\"stroke1\\""
+  />
+</div>
+`;
+
+exports[`connect draws expert strokes on draw notifications 3`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="\\"stroke2\\""
+  />
+</div>
+`;
+
+exports[`connect draws expert strokes on draw notifications 4`] = `
+<div
+  style=""
+/>
+`;
+
+exports[`connect draws expert strokes on draw notifications 5`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos2\\"]"
+  />
+</div>
+`;
+
+exports[`connect draws expert strokes on draw notifications 6`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="\\"stroke3\\""
+  />
+</div>
+`;
+
+exports[`connect draws expert strokes on draw notifications 7`] = `
+<div
+  style=""
+/>
+`;
+
+exports[`connect draws expert strokes on draw notifications 8`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos3\\"]"
+  />
+</div>
+`;
+
+exports[`connect draws expert strokes on draw notifications 9`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos3\\"]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 1`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos1\\"]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 2`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="\\"stroke1\\""
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 3`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="undefined"
+    data-center="[9,18]"
+    data-model="\\"menu1\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[10,20]]"
+    data-stroke="[[10,20],[100,200]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 4`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="undefined"
+    data-center="[9,18]"
+    data-model="\\"menu1\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[10,20]]"
+    data-stroke="[[10,20],[1000,2000]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 5`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="\\"active-item-1\\""
+    data-center="[9,18]"
+    data-model="\\"menu1\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[10,20]]"
+    data-stroke="[[10,20],[1000,2000]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 6`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="\\"active-item-1\\""
+    data-center="[9,18]"
+    data-model="\\"menu1\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[10,20]]"
+    data-stroke="[[10,20],[500,700]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 7`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="\\"active-item-1\\""
+    data-center="[9,18]"
+    data-model="\\"menu1\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[10,20]]"
+    data-stroke="[[10,20],[100,200]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 8`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="null"
+    data-center="[9,18]"
+    data-model="\\"menu1\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[10,20]]"
+    data-stroke="[[10,20],[100,200]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 9`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="\\"active-item-2\\""
+    data-center="[9,18]"
+    data-model="\\"menu1\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[10,20]]"
+    data-stroke="[[10,20],[100,200]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 10`] = `
+<div
+  style=""
+/>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 11`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos2\\"]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 12`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="\\"stroke2\\""
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 13`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="undefined"
+    data-center="[29,38]"
+    data-model="\\"menu2\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[30,40]]"
+    data-stroke="[[30,40],[300,800]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 14`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="undefined"
+    data-center="[29,38]"
+    data-model="\\"menu2\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[30,40]]"
+    data-stroke="[[30,40],[200,900]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 15`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="\\"active-item-3\\""
+    data-center="[29,38]"
+    data-model="\\"menu2\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[30,40]]"
+    data-stroke="[[30,40],[200,900]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 16`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="undefined"
+    data-center="[59,68]"
+    data-model="\\"menu3\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[60,70]]"
+    data-stroke="[[60,70],[300,800]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 17`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="\\"active-item-4\\""
+    data-center="[59,68]"
+    data-model="\\"menu3\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[60,70]]"
+    data-stroke="[[60,70],[300,800]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 18`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="\\"active-item-4\\""
+    data-center="[59,68]"
+    data-model="\\"menu3\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[60,70]]"
+    data-stroke="[[60,70],[700,100]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 19`] = `
+<div
+  style=""
+/>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 20`] = `
+<div
+  style="cursor: crosshair;"
+>
+  <div
+    class="stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos3\\"]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 21`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="undefined"
+    data-center="[89,28]"
+    data-model="\\"menu4\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[90,30]]"
+    data-stroke="[[90,30],[102,201]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 22`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="undefined"
+    data-center="[89,28]"
+    data-model="\\"menu4\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[90,30]]"
+    data-stroke="[[90,30],[500,0]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 23`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="\\"active-item-5\\""
+    data-center="[89,28]"
+    data-model="\\"menu4\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[90,30]]"
+    data-stroke="[[90,30],[500,0]]"
+  />
+</div>
+`;
+
+exports[`connect opens the menu, draws novice stroke, and updates the menu 24`] = `
+<div
+  style="cursor: none;"
+>
+  <div
+    class="menu"
+    data-active="\\"active-item-5\\""
+    data-center="[89,28]"
+    data-model="\\"menu4\\""
+  />
+  <div
+    class="stroke-canvas"
+    data-points="[[90,30]]"
+    data-stroke="[[90,30],[500,0]]"
+  />
+</div>
+`;

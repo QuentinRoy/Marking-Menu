@@ -1,4 +1,5 @@
 import template from './menu.pug';
+import { strToHTML } from '../utils';
 import './menu.scss';
 
 /**
@@ -20,9 +21,7 @@ const createMenu = (
   { doc = document } = {}
 ) => {
   // Create the DOM.
-  const domStr = template({ items: model.children, center });
-  const main = doc.createRange().createContextualFragment(domStr).firstChild;
-
+  const main = strToHTML(template({ items: model.children, center }), doc)[0];
   parent.appendChild(main);
 
   // Clear any  active items.
