@@ -48,8 +48,9 @@ export const touchDrags = rootDOM =>
  * @return {Observable} A higher order observable that drag observables. The sub-observables are
  *                      published as behaviors so that any new subscription immediately get the last
  *                      position.
+ * @param {function[]} [dragObsFactories] - factory to use to observe drags.
  */
-const watchDrags = rootDOM =>
-  Observable.merge(touchDrags(rootDOM), mouseDrags(rootDOM));
+const watchDrags = (rootDOM, dragObsFactories = [touchDrags, mouseDrags]) =>
+  Observable.merge(...dragObsFactories.map(f => f(rootDOM)));
 
 export default watchDrags;
