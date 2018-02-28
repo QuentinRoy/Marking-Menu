@@ -1,6 +1,6 @@
 import { marbles } from 'rxjs-marbles';
 import { Observable } from 'rxjs';
-import { mouseDrags, touchDrags } from './linear-drag';
+import watchDrags, { mouseDrags, touchDrags } from './linear-drag';
 import {
   createPEventFromTouchEvent,
   createPEventFromMouseEvent
@@ -158,5 +158,29 @@ describe('touchDrags', () => {
         (_, d) => Observable.empty().merge(d)
       )
     ).toBeObservable(i);
+  }));
+});
+
+describe('watchDrags', () => {
+  it('calls the provided factories with root dom', () => {
+    const factories = [
+      jest.fn(() => Observable.of('a')),
+      jest.fn(() => Observable.of('b')),
+      jest.fn(() => Observable.of('c'))
+    ];
+    watchDrags('mock-dom', factories.slice());
+    factories.forEach(f => {
+      expect(f.mock.calls).toEqual([['mock-dom']]);
+    });
+  });
+
+  // prettier-ignore
+  it('merges the observables returned by the factories', marbles(m => {
+    const d1$ = m.hot(      '--a---b---c--d-e|');
+    const d2$ = m.hot(      'f--g--h--|');
+    const expected$ = m.hot('f-ag--(bh)c--d-e|');
+    m.expect(
+      watchDrags('mock-dom', [() => d1$, () => d2$])
+    ).toBeObservable(expected$);
   }));
 });
