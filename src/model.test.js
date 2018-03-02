@@ -50,7 +50,7 @@ describe('MMItem', () => {
     expect(mi.getNearestChild(300)).toBe(children[3]);
   });
 
-  test('getMaxDepth returns the maximum depth of the item hierarchy', () => {
+  it('getMaxDepth returns the maximum depth of the item hierarchy', () => {
     expect(new MMItem('id', 'name', 0).getMaxDepth()).toBe(0);
 
     const m = new MMItem('id', 'n', 0, [
@@ -70,7 +70,7 @@ describe('MMItem', () => {
     expect(m.getMaxDepth()).toBe(3);
   });
 
-  test('getMaxBreadth returns the maximum breadth of the item hierarchy', () => {
+  it('getMaxBreadth returns the maximum breadth of the item hierarchy', () => {
     expect(new MMItem('id', 'name', 0).getMaxBreadth()).toBe(0);
 
     const m = new MMItem('id', 'n', 0, [
