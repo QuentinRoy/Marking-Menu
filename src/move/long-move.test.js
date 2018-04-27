@@ -1,4 +1,3 @@
-import 'rxjs'; // This is necessary for operators to be included.
 import { marbles } from 'rxjs-marbles';
 import { dist } from '../utils';
 import longMove from './long-move';

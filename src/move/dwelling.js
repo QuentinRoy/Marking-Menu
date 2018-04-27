@@ -1,4 +1,11 @@
-import { Observable } from 'rxjs';
+import { merge } from 'rxjs';
+import {
+  debounceTime,
+  takeUntil,
+  first,
+  withLatestFrom,
+  last
+} from 'rxjs/operators';
 import longMoves from './long-move';
 
 /**
@@ -12,11 +19,12 @@ import longMoves from './long-move';
  * @return {Observable} An observable on dwellings in the movement.
  */
 export default (drag$, delay, movementsThreshold = 0, scheduler) =>
-  Observable.merge(drag$.first(), longMoves(drag$, movementsThreshold))
+  merge(drag$.pipe(first()), longMoves(drag$, movementsThreshold)).pipe(
     // Emit when no long movements happend for delay time.
-    .debounceTime(delay, scheduler)
+    debounceTime(delay, scheduler),
     // debounceTime emits the last item when the source observable completes.
     // We don't want that here so we only take until drag is done.
-    .takeUntil(drag$.last())
+    takeUntil(drag$.pipe(last())),
     // Make sure we do emit the last position.
-    .withLatestFrom(drag$, (_, last) => last);
+    withLatestFrom(drag$, (_, last_) => last_)
+  );

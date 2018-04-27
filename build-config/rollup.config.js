@@ -24,7 +24,8 @@ export default {
   output: {
     name: 'MarkingMenu',
     globals: {
-      rxjs: 'Rx'
+      rxjs: 'rxjs',
+      'rxjs/operators': 'rxjs.operators'
     },
     sourcemap: true,
     file: './marking-menu.js',
@@ -45,5 +46,5 @@ export default {
     babel({ exclude: 'node_modules/**' }),
     commonjs()
   ],
-  external: ['rxjs']
+  external: ['rxjs', 'rxjs/operators']
 };

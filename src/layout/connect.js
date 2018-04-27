@@ -1,3 +1,4 @@
+import { finalize, tap } from 'rxjs/operators';
 import rafThrottle from 'raf-throttle';
 
 /**
@@ -115,8 +116,8 @@ export default (
     parentDOM.style.cursor = '';
   };
 
-  return navigation$
-    .do({
+  return navigation$.pipe(
+    tap({
       next(notification) {
         try {
           onNotification(notification);
@@ -129,13 +130,14 @@ export default (
         log.error(e);
         throw e;
       }
-    })
-    .finally(() => {
+    }),
+    finalize(() => {
       try {
         cleanUp();
       } catch (e) {
         log.error(e);
         throw e;
       }
-    });
+    })
+  );
 };

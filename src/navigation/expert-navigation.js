@@ -1,3 +1,5 @@
+import { merge } from 'rxjs';
+import { scan, share, startWith, last, map } from 'rxjs/operators';
 import recognize from '../recognizer';
 
 /**
@@ -8,27 +10,29 @@ import recognize from '../recognizer';
  */
 export default (drag$, model, initStroke = []) => {
   // Observable on gesture drawing.
-  const draw$ = drag$
-    .scan(
+  const draw$ = drag$.pipe(
+    scan(
       (acc, notification) => ({
         stroke: [...acc.stroke, notification.position],
         type: 'draw',
         ...notification
       }),
       { stroke: initStroke }
-    )
-    .share();
+    ),
+    share()
+  );
   // Track the end of the drawing and attempt to recognize the gesture.
-  const end$ = draw$
-    .startWith(null)
-    .last()
-    .map(e => {
+  const end$ = draw$.pipe(
+    startWith(null),
+    last(),
+    map(e => {
       if (!e) return { type: 'cancel' };
       const selection = recognize(e.stroke, model);
       if (selection) {
         return { ...e, type: 'select', selection };
       }
       return { ...e, type: 'cancel' };
-    });
-  return draw$.merge(end$);
+    })
+  );
+  return merge(draw$, end$);
 };

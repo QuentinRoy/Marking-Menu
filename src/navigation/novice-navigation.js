@@ -1,38 +1,50 @@
-import { Observable } from 'rxjs';
+import { merge } from 'rxjs';
+import {
+  scan,
+  startWith,
+  share,
+  last,
+  map,
+  filter,
+  switchAll,
+  take
+} from 'rxjs/operators';
 import { toPolar } from '../utils';
 import { dwellings } from '../move';
 
 export const noviceMoves = (drag$, menu, { menuCenter, minSelectionDist }) => {
   // Analyse local movements.
-  const moves$ = drag$
-    .scan(
-      (last, n) => {
+  const moves$ = drag$.pipe(
+    scan(
+      (last_, n) => {
         const { azymuth, radius } = toPolar(n.position, menuCenter);
         const active =
           radius < minSelectionDist ? null : menu.getNearestChild(azymuth);
-        const type = last.active === active ? 'move' : 'change';
+        const type = last_.active === active ? 'move' : 'change';
         return { active, type, azymuth, radius, ...n };
       },
       { active: null }
-    )
-    .startWith({
+    ),
+    startWith({
       type: 'open',
       menu,
       center: menuCenter,
       timeStamp: performance ? performance.now() : Date.now()
-    })
-    .share();
+    }),
+    share()
+  );
 
-  const end$ = moves$
-    .startWith({})
-    .last()
-    .map(n => ({
+  const end$ = moves$.pipe(
+    startWith({}),
+    last(),
+    map(n => ({
       ...n,
       type: n.active && n.active.isLeaf() ? 'select' : 'cancel',
       selection: n.active
-    }));
+    }))
+  );
 
-  return Observable.merge(moves$, end$).share();
+  return merge(moves$, end$).pipe(share());
 };
 
 export const menuSelection = (
@@ -40,15 +52,16 @@ export const menuSelection = (
   { subMenuOpeningDelay, movementsThreshold, minMenuSelectionDist }
 ) =>
   // Wait for a pause in the movements.
-  dwellings(move$, subMenuOpeningDelay, movementsThreshold)
+  dwellings(move$, subMenuOpeningDelay, movementsThreshold).pipe(
     // Filter dwellings occurring outside of the selection area.
-    .filter(
+    filter(
       n => n.active && n.radius > minMenuSelectionDist && !n.active.isLeaf()
-    );
+    )
+  );
 
 export const subMenuNavigation = (menuSelection$, drag$, subNav, navOptions) =>
-  menuSelection$.map(n =>
-    subNav(drag$, n.active, { menuCenter: n.position, ...navOptions })
+  menuSelection$.pipe(
+    map(n => subNav(drag$, n.active, { menuCenter: n.position, ...navOptions }))
   );
 
 /**
@@ -75,7 +88,7 @@ const noviceNavigation = (
   const move$ = noviceMoves_(drag$, menu, {
     menuCenter,
     minSelectionDist
-  }).share();
+  }).pipe(share());
 
   // Look for (sub)menu selection.
   const menuSelection$ = menuSelection_(move$, {
@@ -102,10 +115,7 @@ const noviceNavigation = (
 
   // Start with local navigation but switch to the first sub-menu navigation
   // (if any).
-  return subMenuNavigation$
-    .take(1)
-    .startWith(move$)
-    .switch();
+  return subMenuNavigation$.pipe(take(1), startWith(move$), switchAll());
 };
 
 export default noviceNavigation;

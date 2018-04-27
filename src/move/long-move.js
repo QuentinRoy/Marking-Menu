@@ -1,3 +1,4 @@
+import { scan, filter, map } from 'rxjs/operators';
 import { dist } from '../utils';
 
 /**
@@ -8,8 +9,8 @@ import { dist } from '../utils';
  * @return {Observable} An observable only emitting on long enough movements.
  */
 export default (drag$, movementsThreshold = 0) =>
-  drag$
-    .scan(([prev], cur) => {
+  drag$.pipe(
+    scan(([prev], cur) => {
       // Initial value.
       if (prev == null) return [cur, false];
 
@@ -25,6 +26,7 @@ export default (drag$, movementsThreshold = 0) =>
 
       // Otherwise, emit the new event.
       return [cur, true];
-    }, [])
-    .filter(([, pass]) => pass)
-    .map(x => x[0]);
+    }, []),
+    filter(([, pass]) => pass),
+    map(x => x[0])
+  );

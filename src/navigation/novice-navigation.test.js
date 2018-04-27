@@ -1,4 +1,4 @@
-import 'rxjs';
+import { share } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
 import noviceNavigation, {
   noviceMoves,
@@ -269,7 +269,7 @@ test('noviceNavigation', marbles(m => {
   expect(mockMenuSelection.mock.calls).toEqual([
     [
       // share() is unfortunate, but expect will not work without it.
-      move$.share(),
+      move$.pipe(share()),
       {
         subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
         movementsThreshold: 'mock-movementsThreshold',

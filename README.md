@@ -27,7 +27,7 @@ The authors of this library may not be held responsible for any patent infringem
 ### Browser with CDN
 
 You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.io/rxjs/) and `marking-menu`:
-- https://unpkg.com/@reactivex/rxjs@5.4.2/dist/global/Rx.min.js (for `rxjs` 5.4.2 which is the currently recommended version),
+- https://unpkg.com/rxjs@6.0.0/bundles/rxjs.umd.js,
 - https://unpkg.com/marking-menu (latest script),
 - https://unpkg.com/marking-menu/marking-menu.css (latest stylesheet)
 
@@ -36,7 +36,7 @@ You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.i
 <html>
 <head>
   <link href="https://unpkg.com/marking-menu/marking-menu.css" rel="stylesheet">
-  <script src="https://unpkg.com/@reactivex/rxjs@5.4.2/dist/global/Rx.min.js" defer></script>
+  <script src="https://unpkg.com/rxjs@6.0.0/bundles/rxjs.umd.js" defer></script>
   <script src="https://unpkg.com/marking-menu" defer></script>
   <script defer>
     // Your stuff.

@@ -1,4 +1,4 @@
-import 'rxjs';
+import { map } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
 import main, { exportNotification } from './main';
 import navigation from './navigation';
@@ -78,7 +78,7 @@ describe('main', () => {
         e: Notif('e', 'mock-type-4', { selection: 'mock-selection-e' })
       };
       mockNavObs$ = m.hot('--a--b-c--de-|');
-      connectedObs$ = mockNavObs$.map(n => ({ ...n, connected: true }));
+      connectedObs$ = mockNavObs$.pipe(map(n => ({ ...n, connected: true })));
       navigation.mockImplementation(() => mockNavObs$);
       connectLayout.mockImplementation(() => connectedObs$);
       callMain = (opts = {}) =>

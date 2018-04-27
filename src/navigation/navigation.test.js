@@ -1,4 +1,5 @@
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
+import { publishBehavior, scan, map } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
 import navigation, {
   confirmedExpertNavigationHOO,
@@ -34,18 +35,18 @@ describe('confirmedExpertNavigationHOO', () => {
       F: { stroke: 'abcdef', model: 'mock-model', mode: 'expert' }
     };
     // Drag is a behavior and in this case it matters.
-    const drag$ = m.hot(    '--a-b--c--d-e---f--|').publishBehavior();
+    const drag$ = m.hot(    '--a-b--c--d-e---f--|').pipe(publishBehavior());
     const long$ = m.hot(    '-------c----e------|', values);
     const sub$ = m.cold(           '---D-E---F--|', values);
     const expected$ = m.hot('-------(X|)'         , { X: sub$ });
     drag$.connect();
 
     expertNavigation.mockImplementation(
-      (obs$, model, init) => obs$.scan(
+      (obs$, model, init) => obs$.pipe(scan(
         (prev, n) => ({ stroke: prev.stroke + n, model }),
         { stroke: init || '' }
       )
-    );
+    ));
     longMoves.mockImplementation(() => long$);
 
     m
@@ -80,14 +81,14 @@ describe('confirmedNoviceNavigationHOO', () => {
       F: createNotif('f')
     };
     // Drag is a behavior and in this case it matters.
-    const drag$ = m.hot(     '-a-b---c-d---e--f--|').publishBehavior();
+    const drag$ = m.hot(     '-a-b---c-d---e--f--|').pipe(publishBehavior());
     const dwellings$ = m.hot('------b-----d------|');
     const sub$ = m.cold(           '-C-D---E--F--|', values);
     const expected$ = m.hot( '------(X|)'          , { X: sub$ });
     drag$.connect();
 
     noviceNavigation.mockImplementation(
-      (obs$, model, options) => obs$.map(n => ({ name: n, model, options }))
+      (obs$, model, options) => obs$.pipe(map(n => ({ name: n, model, options })))
     );
     dwellings.mockImplementation(() => dwellings$);
 
@@ -116,7 +117,7 @@ describe('startup', () => {
   // prettier-ignore
   it('emits expert-like notifications', marbles(m => {
     expertNavigation.mockImplementation(obs$ =>
-      obs$.map(n => ({ name: n, type: 'mock-type' }))
+      obs$.pipe(map(n => ({ name: n, type: 'mock-type' })))
     );
     const values = {
       A: { name: 'a', mode: 'startup', type: 'start' },
@@ -136,9 +137,9 @@ describe('navigationFromDrag', () => {
   let callNavigationFromDrag;
 
   beforeEach(() => {
-    mockConfirmedExpertNavigationHOO = jest.fn(() => Observable.of());
-    mockConfirmedNoviceNavigationHOO = jest.fn(() => Observable.of());
-    mockStartup = jest.fn(() => Observable.of());
+    mockConfirmedExpertNavigationHOO = jest.fn(() => of());
+    mockConfirmedNoviceNavigationHOO = jest.fn(() => of());
+    mockStartup = jest.fn(() => of());
     callNavigationFromDrag = () =>
       navigationFromDrag(
         'mock-drag$',
@@ -233,10 +234,10 @@ describe('navigation', () => {
       m: { name: 'm', start: 'l', menu: 'mock-menu', options: 'mock-options' }
     };
     const subs = {
-      A: m.hot('-z---u----a--^----b-c-|').publishBehavior(),
-      E: m.hot('----e--------^----eee-ee-e|').publishBehavior(),
-      J: m.hot('--------i----^-------------j----k|').publishBehavior(),
-      P: m.hot(          ' l-^-------------------------m-|').publishBehavior()
+      A: m.hot('-z---u----a--^----b-c-|').pipe(publishBehavior()),
+      E: m.hot('----e--------^----eee-ee-e|').pipe(publishBehavior()),
+      J: m.hot('--------i----^-------------j----k|').pipe(publishBehavior()),
+      P: m.hot(          ' l-^-------------------------m-|').pipe(publishBehavior())
     };
     const drags$ = m.hot(   'A----E-------J-------P-|', subs);
     const expected$ = m.hot('a----b-c-----ij----k-l----m-|', transformedValues);
@@ -244,7 +245,7 @@ describe('navigation', () => {
     Object.values(subs).forEach(sub => sub.connect());
 
     const mockNavFromDrag = jest.fn((obs, start, menu, options) =>
-      obs.map(name => ({ name, start, menu, options }))
+      obs.pipe(map(name => ({ name, start, menu, options })))
     );
 
     m

@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+import { of } from 'rxjs';
 import { marbles } from 'rxjs-marbles';
 import connect from './connect';
 
@@ -81,7 +81,7 @@ beforeEach(() => {
 
 describe('connect', () => {
   it('draws expert strokes on draw notifications', done => {
-    const src = Observable.of(
+    const src = of(
       { type: 'start', position: 'pos1' },
       { type: 'draw', stroke: 'stroke1' },
       { type: 'draw', stroke: 'stroke2' },
@@ -106,7 +106,7 @@ describe('connect', () => {
 
   it('opens the menu, draws novice stroke, and updates the menu', done => {
     parentElement.getBoundingClientRect = jest.fn(() => ({ left: 1, top: 2 }));
-    const src = Observable.of(
+    const src = of(
       { type: 'start', position: 'pos1' },
       { type: 'draw', stroke: 'stroke1' },
       { type: 'open', menu: 'menu1', center: [10, 20], position: [100, 200] },

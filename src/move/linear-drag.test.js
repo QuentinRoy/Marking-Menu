@@ -1,17 +1,29 @@
+import { fromEvent, merge, empty, of } from 'rxjs';
+import { takeUntil, withLatestFrom } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles';
-import { Observable } from 'rxjs';
 import watchDrags, { mouseDrags, touchDrags } from './linear-drag';
 import {
   createPEventFromTouchEvent,
   createPEventFromMouseEvent
 } from './pointer-events';
 
+const toPromise = obs =>
+  new Promise((resolve, reject) => {
+    obs.subscribe({
+      complete: resolve,
+      error: reject
+    });
+  });
+
 jest.mock('./pointer-events', () => ({
-  createPEventFromTouchEvent: jest.fn(),
-  createPEventFromMouseEvent: jest.fn()
+  createPEventFromTouchEvent: jest.fn(() => {}),
+  createPEventFromMouseEvent: jest.fn(() => {})
 }));
 
-Observable.fromEvent = jest.fn();
+jest.mock('rxjs', () => ({
+  ...require.requireActual('rxjs'),
+  fromEvent: jest.fn(() => {})
+}));
 
 beforeEach(() => {
   createPEventFromTouchEvent.mockImplementation(x => x);
@@ -23,7 +35,7 @@ afterEach(() => {
 });
 
 const mockFromEvent = observables => {
-  Observable.fromEvent.mockImplementation((_, evt) => observables[evt]);
+  fromEvent.mockImplementation((_, evt) => observables[evt]);
 };
 
 // prettier-ignore
@@ -49,7 +61,7 @@ describe('mouseDrags', () => {
     m.expect(mouseup).toHaveSubscriptions([moveUpSub1, moveUpSub2]);
   }));
 
-  it('calls Observable.fromEvent with the provided node', marbles(async m => {
+  it('calls fromEvent with the provided node', marbles(async m => {
     const mousedown = m.hot('^----a--------------j----------');
     const mousemove = m.hot('^-b-c-----d-e--f-g------k---l--');
     const mouseup   = m.hot('^-h----------i------------m----');
@@ -57,9 +69,9 @@ describe('mouseDrags', () => {
 
     mockFromEvent({ mousedown, mousemove, mouseup });
 
-    await mouseDrags('root-node').takeUntil(end).toPromise();
+    await toPromise(mouseDrags('root-node').pipe(takeUntil(end)));
     expect(
-      Observable.fromEvent.mock.calls.every(call => call[0] === 'root-node')
+      fromEvent.mock.calls.every(call => call[0] === 'root-node')
     ).toBe(true);
   }));
 
@@ -76,11 +88,11 @@ describe('mouseDrags', () => {
 
     mockFromEvent({ mousedown: down, mousemove: move, mouseup: up });
     m.expect(
-      i.withLatestFrom(
+      i.pipe(withLatestFrom(
         mouseDrags('root-node'),
-        (_, d) => Observable.empty().merge(d)
+        (_, d) => merge(empty(), d)
       )
-    ).toBeObservable(i);
+    )).toBeObservable(i);
   }));
 });
 
@@ -120,7 +132,7 @@ describe('touchDrags', () => {
   }));
 
   // prettier-ignore
-  it('calls Observable.fromEvent with the provided node', marbles(async m => {
+  it('calls fromEvent with the provided node', marbles(async m => {
     createPEventFromTouchEvent.mockImplementation(x => x.name);
     const touchstart  = m.hot('^b-----a-----a---c-', v);
     const touchmove   = m.hot('^-m-m-i-m-i-i-m-m-i', v);
@@ -130,9 +142,9 @@ describe('touchDrags', () => {
 
     mockFromEvent({ touchstart, touchmove, touchend, touchcancel });
 
-    await touchDrags('root-node').takeUntil(end).toPromise();
+    await toPromise(touchDrags('root-node').pipe(takeUntil(end)));
     expect(
-      Observable.fromEvent.mock.calls.every(call => call[0] === 'root-node')
+      fromEvent.mock.calls.every(call => call[0] === 'root-node')
     ).toBe(true);
   }));
 
@@ -153,20 +165,20 @@ describe('touchDrags', () => {
     mockFromEvent({ touchstart, touchmove, touchend, touchcancel });
 
     m.expect(
-      i.withLatestFrom(
+      i.pipe(withLatestFrom(
         touchDrags('root-node'),
-        (_, d) => Observable.empty().merge(d)
+        (_, d) => merge(empty(), d)
       )
-    ).toBeObservable(i);
+    )).toBeObservable(i);
   }));
 });
 
 describe('watchDrags', () => {
   it('calls the provided factories with root dom', () => {
     const factories = [
-      jest.fn(() => Observable.of('a')),
-      jest.fn(() => Observable.of('b')),
-      jest.fn(() => Observable.of('c'))
+      jest.fn(() => of('a')),
+      jest.fn(() => of('b')),
+      jest.fn(() => of('c'))
     ];
     watchDrags('mock-dom', factories.slice());
     factories.forEach(f => {

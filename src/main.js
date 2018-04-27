@@ -1,3 +1,4 @@
+import { tap, map, share, filter, pluck } from 'rxjs/operators';
 import navigation from './navigation';
 import { createMenuLayout, createStrokeCanvas, connectLayout } from './layout';
 import createModel from './model';
@@ -80,10 +81,12 @@ export default (
     subMenuOpeningDelay,
     movementsThreshold,
     noviceDwellingTime
-  }).do(({ originalEvent }) => {
-    // Prevent default on every notifications.
-    if (originalEvent) originalEvent.preventDefault();
-  });
+  }).pipe(
+    tap(({ originalEvent }) => {
+      // Prevent default on every notifications.
+      if (originalEvent) originalEvent.preventDefault();
+    })
+  );
 
   // Connect the engine notifications to menu opening/closing.
   const connectedNavigation$ = connectLayout(
@@ -97,11 +100,12 @@ export default (
 
   // If every steps should be notified, just export connectedNavigation$.
   if (notifySteps) {
-    return connectedNavigation$.map(exportNotification).share();
+    return connectedNavigation$.pipe(map(exportNotification), share());
   }
   // Else, return an observable on the selections.
-  return connectedNavigation$
-    .filter(notification => notification.type === 'select')
-    .pluck('selection')
-    .share();
+  return connectedNavigation$.pipe(
+    filter(notification => notification.type === 'select'),
+    pluck('selection'),
+    share()
+  );
 };

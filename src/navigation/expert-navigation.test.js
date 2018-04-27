@@ -1,4 +1,3 @@
-import 'rxjs'; // Required for some operators to be patched.
 import { marbles } from 'rxjs-marbles';
 import expertNavigation from './expert-navigation';
 import recognize from '../recognizer';
