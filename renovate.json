@@ -1,0 +1,34 @@
+{
+  "extends": [
+    "schedule:weekends",
+    "config:js-lib",
+    ":automergeMinor",
+    ":automergeBranchPush",
+    ":semanticCommits",
+    ":rebaseStalePrs",
+    ":semanticCommitScopeDisabled"
+  ],
+  "packageRules": [
+    {
+      "packagePatterns": [
+        "eslint",
+        "husky",
+        "sass-lint",
+        "prettier",
+        "cross-env",
+        "commitlint",
+        "standard-version"
+      ],
+      "groupName": "ci"
+    },
+    {
+      "packagePatterns": ["rollup", "babel"],
+      "groupName": "build"
+    },
+    {
+      "packagePatterns": ["jest"],
+      "packageNames": ["rxjs-marbles"],
+      "groupName": "test"
+    }
+  ]
+}
