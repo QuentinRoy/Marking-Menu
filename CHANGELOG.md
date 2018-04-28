@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.8.0-alpha.0"></a>
+# [0.8.0-alpha.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.7.1...v0.8.0-alpha.0) (2018-04-28)
+
+
+### Bug Fixes
+
+* fix broken css build due to differui/rollup-plugin-sass[#42](https://github.com/QuentinRoy/Marking-Menu/issues/42) ([dbc7e56](https://github.com/QuentinRoy/Marking-Menu/commit/dbc7e56))
+* make sure dwelling does not emit the last events on completion ([149e26b](https://github.com/QuentinRoy/Marking-Menu/commit/149e26b))
+* update to rxjs6 ([2691aa5](https://github.com/QuentinRoy/Marking-Menu/commit/2691aa5))
+
+
+### Features
+
+* support for custom logger ([7f79831](https://github.com/QuentinRoy/Marking-Menu/commit/7f79831))
+
+
+
 <a name="0.7.1"></a>
 ## [0.7.1](https://github.com/QuentinRoy/Marking-Menu/compare/v0.7.0...v0.7.1) (2017-08-02)
 
