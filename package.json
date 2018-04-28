@@ -28,7 +28,7 @@
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "license": "MIT",
   "peerDependencies": {
-    "rxjs": "^5.5.6"
+    "rxjs": "^6.0.0"
   },
   "dependencies": {
     "rad2deg": "^1.0.0",
