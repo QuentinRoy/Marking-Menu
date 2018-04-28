@@ -5,8 +5,6 @@
 [![codecov](https://img.shields.io/codecov/c/github/QuentinRoy/Marking-Menu.svg)](https://codecov.io/gh/QuentinRoy/Marking-Menu)
 [![dependencies Status](https://david-dm.org/QuentinRoy/Marking-Menu/status.svg)](https://david-dm.org/QuentinRoy/Marking-Menu)
 [![devDependencies Status](https://david-dm.org/QuentinRoy/Marking-Menu/dev-status.svg)](https://david-dm.org/QuentinRoy/Marking-Menu?type=dev)
-[![Greenkeeper badge](https://badges.greenkeeper.io/QuentinRoy/Marking-Menu.svg)](https://greenkeeper.io/)
-
 
 This library is an implementation of Gordon Kurtenbach's infamous Marking Menus in JavaScript [[1](https://doi.org/10.1145/120782.120797), [2](http://doi.acm.org/10.1145/169059.169426), [3](http://doi.acm.org/10.1145/191666.191759)].
 
