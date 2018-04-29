@@ -59,7 +59,7 @@
     "pug-jest": "1.0.1",
     "rollup": "0.58.2",
     "rollup-plugin-babel": "3.0.4",
-    "rollup-plugin-commonjs": "9.1.0",
+    "rollup-plugin-commonjs": "9.1.1",
     "rollup-plugin-node-resolve": "3.3.0",
     "rollup-plugin-pug": "0.1.6",
     "rollup-plugin-sass": "0.6.1",
