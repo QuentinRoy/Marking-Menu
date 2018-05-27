@@ -1,6 +1,8 @@
-import { marbles } from 'rxjs-marbles';
+import { configure } from 'rxjs-marbles/jest';
 import dwelling from './dwelling';
 import longMove from './long-move';
+
+const { marbles } = configure({ run: false });
 
 jest.mock('./long-move');
 
