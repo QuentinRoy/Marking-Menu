@@ -100,7 +100,10 @@ export default (
 
   // If every steps should be notified, just export connectedNavigation$.
   if (notifySteps) {
-    return connectedNavigation$.pipe(map(exportNotification), share());
+    return connectedNavigation$.pipe(
+      map(exportNotification),
+      share()
+    );
   }
   // Else, return an observable on the selections.
   return connectedNavigation$.pipe(

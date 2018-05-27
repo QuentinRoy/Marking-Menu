@@ -115,7 +115,11 @@ const noviceNavigation = (
 
   // Start with local navigation but switch to the first sub-menu navigation
   // (if any).
-  return subMenuNavigation$.pipe(take(1), startWith(move$), switchAll());
+  return subMenuNavigation$.pipe(
+    take(1),
+    startWith(move$),
+    switchAll()
+  );
 };
 
 export default noviceNavigation;

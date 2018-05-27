@@ -5,7 +5,7 @@ import rad2deg from 'rad2deg';
  * @param {number} n the divisor
  * @return {number} The modulo of `a` over `n` (% is not exactly modulo but remainder).
  */
-export const mod = (a, n) => (a % n + n) % n;
+export const mod = (a, n) => ((a % n) + n) % n;
 
 /**
  * @param {number} alpha a first angle (in degrees)

@@ -90,7 +90,10 @@ export const navigationFromDrag = (
 
   // Start with startup navigation (similar to expert) but switch to the
   // confirmed navigation as soon as it is settled.
-  return confirmedNavigation$$.pipe(startWith(startUp$), switchAll());
+  return confirmedNavigation$$.pipe(
+    startWith(startUp$),
+    switchAll()
+  );
 };
 
 /**
