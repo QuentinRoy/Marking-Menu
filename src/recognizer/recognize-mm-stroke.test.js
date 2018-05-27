@@ -111,8 +111,6 @@ describe('walkMMModel', () => {
   });
 });
 
-test('TODO: findMMItem');
-
 describe('recognizeMMStroke', () => {
   it('recognizes real 1 level strokes', async () => {
     const precision = 15;
