@@ -92,7 +92,12 @@ describe('connect', () => {
       { type: 'start', position: 'pos3' }
     );
 
-    const out = connect(parentElement, src, MenuLayout, StrokeCanvas);
+    const out = connect(
+      parentElement,
+      src,
+      MenuLayout,
+      StrokeCanvas
+    );
     out.subscribe({
       next() {
         expect(parentElement).toMatchSnapshot();
@@ -134,7 +139,12 @@ describe('connect', () => {
       { type: 'change', active: { id: 'active-item-5' } }
     );
 
-    const out = connect(parentElement, src, MenuLayout, StrokeCanvas);
+    const out = connect(
+      parentElement,
+      src,
+      MenuLayout,
+      StrokeCanvas
+    );
     out.subscribe({
       next() {
         expect(parentElement).toMatchSnapshot();
