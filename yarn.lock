@@ -5033,9 +5033,9 @@ rx-lite@^3.1.2:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/rx-lite/-/rx-lite-3.1.2.tgz#19ce502ca572665f3b647b10939f97fd1615f102"
 
-rxjs-marbles@4.2.1:
-  version "4.2.1"
-  resolved "https://registry.yarnpkg.com/rxjs-marbles/-/rxjs-marbles-4.2.1.tgz#446968349589a9e64d85de2269e3645e6b5a596f"
+rxjs-marbles@4.3.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/rxjs-marbles/-/rxjs-marbles-4.3.0.tgz#18343705ec0e048200b56ded9c06950cafe25b8e"
   dependencies:
     "@types/lodash" "^4.0.0"
     lodash "^4.0.0"
