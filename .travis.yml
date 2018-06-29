@@ -4,18 +4,10 @@ node_js:
 - 9
 - 10
 install:
-- yarn global add codecov greenkeeper-lockfile@1
+- yarn global add codecov
 - yarn install
 script:
 - yarn lint
 - yarn build
 - yarn copy-demo-files
 - yarn codecov-test && codecov
-
-before_script: greenkeeper-lockfile-update
-# Only the node version 8 job will upload the lockfile
-after_script: greenkeeper-lockfile-upload
-
-env:
-  global:
-    secure: ftMPq1zACN4T0RB37GQASgT71cBgOKuoKcinyZDp1bHktzK3jVA4TE1dwWyG0rC+soQ6D2cP3Tf+mgF/DqSiH2P3uv9SS+9kcnCgBhJoe5pxGGsupHXF/rC1v0540iar1paY1Mwac39MPMwP23VKnna9XYCQsgKJZzjZymHC4i+Uj8m7IUaF8eJlKfppmyeyV4uM/CXpdj02OP7zgGU015hhpeI049PBogW7dfJmDvfpSmkKALViqGypjD1sba76drmMPMAVPE+/sOOseXkdPecd61yJCSYbzcGjDi0P0qo6uovOwuUZBr11irzCG36S25WVdI89zIQD4JhUNKsLJaEZC2w1uoVJNWdiub3Uob/2MXvhi/Lhbsi52yAwxUvhhb5LQf80VXA2CzGaHfNAUMGuZR9or4ieIt+dQQAwgzeQ/euRMBxQ0MLeTBxz6qz3+LZ6EVAZv7v8tlVUzCMM1CUFEKX01V1bwMtBumvz/5L3efsgTxSTjEh76OvrsDEI36fr6fQYlkPKVJDD/LudaHJSSbWRhgrsriY+pICFASUjqtMZVH259hgxfWHb5nNFmajtfn0yubn2LeMOX+kzCJ5jVxWNAhGkkw3fMj0uVCGZoJHj7kB7hy6yB9KAtqjf14rHby4rlJqOQJWVcdQkX0zhBwt+Qd4hA+QmpvJOaBY=
