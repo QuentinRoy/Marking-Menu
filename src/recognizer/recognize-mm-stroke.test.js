@@ -17,7 +17,8 @@ const csvParse = promisify(csvParseCallback);
 const createMockMMModel = (depth = 1, breadth = 8, requestedAngle, parent) => {
   if (depth === 0) {
     return { isLeaf: jest.fn(() => true), requestedAngle, parent };
-  } else if (depth > 0) {
+  }
+  if (depth > 0) {
     const m = {
       parent,
       requestedAngle,
