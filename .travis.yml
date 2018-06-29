@@ -4,12 +4,13 @@ node_js:
 - 9
 - 10
 install:
-- npm install -g codecov greenkeeper-lockfile@1
-- npm install
+- yarn global add codecov greenkeeper-lockfile@1
+- yarn install
 script:
-- npm run lint
-- npm run build
-- npm run codecov-test && codecov
+- yarn lint
+- yarn build
+- yarn copy-demo-files
+- yarn codecov-test && codecov
 
 before_script: greenkeeper-lockfile-update
 # Only the node version 8 job will upload the lockfile
