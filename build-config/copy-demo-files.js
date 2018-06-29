@@ -1,57 +1,48 @@
 const fs = require('fs');
-const { resolve, basename, join } = require('path');
+const path = require('path');
+const { promisify } = require('util');
+
+const copyFile = promisify(fs.copyFile);
 
 const TARGET_DIR = '../demo/vendors';
 const FILES_TO_COPY = [
   '../marking-menu.js',
-  '../marking-menu.css',
   '../marking-menu.js.map',
+  '../marking-menu.css',
   '../node_modules/rxjs/bundles/rxjs.umd.js'
 ];
 
-// Function adapted from https://stackoverflow.com/a/14387791/2212031
-const copyFile = (source, target, cb) => {
-  let cbCalled = false;
-
-  const done = err => {
-    if (!cbCalled) {
-      cb(err);
-      cbCalled = true;
-    }
-  };
-
-  const rd = fs.createReadStream(source);
-  rd.on('error', err => {
-    done(err);
-  });
-  const wr = fs.createWriteStream(target);
-  wr.on('error', err => {
-    done(err);
-  });
-  wr.on('close', () => {
-    done();
-  });
-  rd.pipe(wr);
-};
-
-// Create the demo/vendor directory if it does not exits.
-if (!fs.existsSync(resolve(__dirname, TARGET_DIR))) {
-  fs.mkdirSync(resolve(__dirname, TARGET_DIR));
+// Create the target directory if it does not exits.
+if (!fs.existsSync(path.resolve(__dirname, TARGET_DIR))) {
+  fs.mkdirSync(path.resolve(__dirname, TARGET_DIR));
 }
 
-FILES_TO_COPY.forEach(filePath =>
-  copyFile(
-    resolve(__dirname, filePath),
-    resolve(__dirname, TARGET_DIR, basename(filePath)),
-    err => {
-      if (err) {
-        // eslint-disable-next-line no-console
-        console.error(err);
-        process.exit(1);
-      } else {
-        // eslint-disable-next-line no-console
-        console.log(`${filePath} → ${join(TARGET_DIR, basename(filePath))}`);
-      }
+// Copy all files.
+Promise.all(
+  FILES_TO_COPY.map(async filePath => {
+    try {
+      await copyFile(
+        path.resolve(__dirname, filePath),
+        path.resolve(__dirname, TARGET_DIR, path.basename(filePath))
+      );
+      // eslint-disable-next-line no-console
+      console.log(
+        `\u2713 ${filePath} → ${path.join(TARGET_DIR, path.basename(filePath))}`
+      );
+      return true;
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('\u2717', error.message);
+      return false;
     }
-  )
+  })
+).then(
+  results => {
+    if (results.some(success => !success)) process.exit(1);
+  },
+  err => {
+    // eslint-disable-next-line no-console
+    console.error(err);
+    process.exit(1);
+  }
 );
