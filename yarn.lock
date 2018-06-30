@@ -5051,9 +5051,9 @@ rollup-plugin-pug@0.1.6:
     pug-runtime "^2.0.3"
     rollup-pluginutils "^2.0.1"
 
-rollup-plugin-sass@0.8.0:
-  version "0.8.0"
-  resolved "https://registry.yarnpkg.com/rollup-plugin-sass/-/rollup-plugin-sass-0.8.0.tgz#0527b8a39179c076272feb670ed67a409aed229a"
+rollup-plugin-sass@0.8.1:
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/rollup-plugin-sass/-/rollup-plugin-sass-0.8.1.tgz#55ef5da69a3ef434d190c30877003f10eca88866"
   dependencies:
     babel-runtime "^6.23.0"
     fs-extra "^0.30.0"
@@ -5084,9 +5084,9 @@ rollup-watch@4.3.1:
     require-relative "0.8.7"
     rollup-pluginutils "^2.0.1"
 
-rollup@0.61.2:
-  version "0.61.2"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.61.2.tgz#30a953736964683a5b8ea952b137a393d84e6302"
+rollup@0.62.0:
+  version "0.62.0"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.62.0.tgz#4ca8b3c9582195dc9341ff8a1375f58319b95bfc"
   dependencies:
     "@types/estree" "0.0.39"
     "@types/node" "*"
