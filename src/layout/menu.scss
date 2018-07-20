@@ -71,7 +71,7 @@ $item-total-height: $item-height + $item-padding * 2;
   @for $i from 0 through $item-nb - 1 {
     $angle: $i * $inc;
     $fixed-angle: $angle + $first-item-angle;
-    $rad-fixed-angle: - to-rad($fixed-angle);
+    $rad-fixed-angle: -(to-rad($fixed-angle));
 
     &[data-item-angle='#{$angle}'] {
       .marking-menu-label {
