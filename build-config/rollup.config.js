@@ -3,6 +3,7 @@ import commonjs from 'rollup-plugin-commonjs';
 import pug from 'rollup-plugin-pug';
 import babel from 'rollup-plugin-babel';
 import sass from 'rollup-plugin-sass';
+import nodeSass from 'node-sass';
 import sassTrigo from './sass-trigo';
 import { version } from '../package.json';
 
@@ -40,8 +41,11 @@ export default {
       options: {
         // FIXME: SourceMap not working, c.f. differui/rollup-plugin-sass#37
         sourceMap: true,
-        functions: sassTrigo
-      }
+        functions: sassTrigo(nodeSass)
+      },
+      // We need to specify the node-sass runtime we are using with the
+      // functions or they will fail.
+      runtime: nodeSass
     }),
     babel({ exclude: 'node_modules/**' }),
     commonjs()
