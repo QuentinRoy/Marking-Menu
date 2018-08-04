@@ -58,7 +58,7 @@
     "prettier": "1.14.0",
     "pug": "2.0.3",
     "pug-jest": "1.0.1",
-    "rollup": "0.63.4",
+    "rollup": "0.63.5",
     "rollup-plugin-babel": "3.0.7",
     "rollup-plugin-commonjs": "9.1.4",
     "rollup-plugin-node-resolve": "3.3.0",
