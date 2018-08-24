@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.9.0-beta.0"></a>
+# [0.9.0-beta.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.8.2...v0.9.0-beta.0) (2018-08-24)
+
+
+### Bug Fixes
+
+* fix strokeColor option ([#26](https://github.com/QuentinRoy/Marking-Menu/issues/26)) ([62360ad](https://github.com/QuentinRoy/Marking-Menu/commit/62360ad))
+
+
+### Features
+
+* feedback on gestures upon selection ([750ecbe](https://github.com/QuentinRoy/Marking-Menu/commit/750ecbe)), closes [#2](https://github.com/QuentinRoy/Marking-Menu/issues/2)
+* lower stroke shows pas movements under a menu ([b204857](https://github.com/QuentinRoy/Marking-Menu/commit/b204857))
+
+
+
 <a name="0.8.2"></a>
 ## [0.8.2](https://github.com/QuentinRoy/Marking-Menu/compare/v0.8.1...v0.8.2) (2018-06-29)
 
