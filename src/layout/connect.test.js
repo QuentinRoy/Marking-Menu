@@ -7,6 +7,7 @@ jest.mock('raf-throttle', () => jest.fn(f => f));
 // Mock values.
 let UpperStrokeCanvas;
 let LowerStrokeCanvas;
+let GestureFeedback;
 let strokeCanvasInstances;
 let MenuLayout;
 let menuLayoutInstances;
@@ -53,6 +54,21 @@ beforeEach(() => {
     });
   UpperStrokeCanvas = createStrokeCanvasFactory('upper');
   LowerStrokeCanvas = createStrokeCanvasFactory('lower');
+
+  GestureFeedback = jest.fn(parent => {
+    let divs = [];
+    const show = stroke => {
+      const div = document.createElement('div');
+      div.className = `mock-gesture-feedback`;
+      parent.appendChild(div);
+      div.dataset.stroke = JSON.stringify(stroke);
+    };
+    const remove = () => {
+      divs.forEach(d => d.remove());
+      divs = [];
+    };
+    return { show, remove };
+  });
 
   menuLayoutInstances = [];
   MenuLayout = jest.fn((parent, model, center, active) => {
@@ -102,7 +118,8 @@ describe('connect', () => {
       src,
       MenuLayout,
       UpperStrokeCanvas,
-      LowerStrokeCanvas
+      LowerStrokeCanvas,
+      GestureFeedback
     );
     out.subscribe({
       next() {
@@ -150,7 +167,8 @@ describe('connect', () => {
       src,
       MenuLayout,
       UpperStrokeCanvas,
-      LowerStrokeCanvas
+      LowerStrokeCanvas,
+      GestureFeedback
     );
     out.subscribe({
       next() {
@@ -184,6 +202,7 @@ describe('connect', () => {
         MenuLayout,
         UpperStrokeCanvas,
         LowerStrokeCanvas,
+        GestureFeedback,
         log
       )
     ).toBeObservable(exp);
@@ -214,6 +233,7 @@ describe('connect', () => {
         MenuLayout,
         UpperStrokeCanvas,
         LowerStrokeCanvas,
+        GestureFeedback,
         log
       )
     ).toBeObservable(exp);

@@ -1,6 +1,11 @@
 import { tap, map, share, filter, pluck } from 'rxjs/operators';
 import navigation from './navigation';
-import { createMenuLayout, createStrokeCanvas, connectLayout } from './layout';
+import {
+  createMenuLayout,
+  createStrokeCanvas,
+  connectLayout,
+  createGestureFeedback
+} from './layout';
 import createModel from './model';
 import { watchDrags } from './move';
 
@@ -30,16 +35,23 @@ export const exportNotification = n => ({
  *                                                considered a significant movements and breaking
  *                                                the sub-menu dwelling delay.
  * @param {number} [options.noviceDwellingTime] - The dwelling time required to trigger the novice
-                                                  mode (and open the menu).
+ *                                                mode (and open the menu).
  * @param {number} [options.strokeColor] - The color of the gesture stroke.
  * @param {number} [options.strokeWidth] - The width of the gesture stroke.
  * @param {number} [options.strokeStartPointRadius] - The radius of the start point of the stroke
  *                                                    (appearing at the middle of the menu in novice
  *                                                    mode).
  * @param {number} [options.lowerStrokeColor] - The color of the lower stroke. The lower stroke is
- * the stroke drawn below the menu. It keeps track of the previous movements.
+ *                                              the stroke drawn below the menu. It keeps track of
+ *                                              the previous movements.
  * @param {number} [options.lowerStrokeWidth] - The width of the lower stroke.
- * @param {number} [options.lowerStrokeStartPointRadius] - The radius of the start point of the stroke.
+ * @param {number} [options.lowerStrokeStartPointRadius] - The radius of the start point of the
+ *                                                         stroke.
+ * @param {number} [options.gestureFeedbackStrokeWidth] - The width of the stroke of the gesture
+ *                                                        feedback.
+ * @param {number} [options.gestureFeedbackStrokeColor] - The color of the stroke of the gesture
+ *                                                        feedback.
+ * @param {number} [options.gestureFeedbackDuration] - The duration of the gesture feedback.
  * @param {boolean} [options.notifySteps] - If true, every steps of the marking menu (include move)
  *                                          events, will be notified. Useful for logging.
  * @param {{error, info, warn, debug}} [options.log] - Override the default logger to use.
@@ -60,6 +72,9 @@ export default (
     lowerStrokeColor = '#777',
     lowerStrokeWidth = strokeWidth,
     lowerStrokeStartPointRadius = lowerStrokeWidth,
+    gestureFeedbackDuration = 1000,
+    gestureFeedbackStrokeWidth = strokeWidth,
+    gestureFeedbackStrokeColor = strokeColor,
     notifySteps = false,
     log = {
       // eslint-disable-next-line no-console
@@ -83,6 +98,11 @@ export default (
     lineColor: lowerStrokeColor,
     lineWidth: lowerStrokeWidth,
     pointRadius: lowerStrokeStartPointRadius
+  };
+  const gestureFeedbackOptions = {
+    duration: gestureFeedbackDuration,
+    lineColor: gestureFeedbackStrokeColor,
+    lineWidth: gestureFeedbackStrokeWidth
   };
 
   // Create model and navigation observable.
@@ -108,6 +128,7 @@ export default (
       createMenuLayout(parent, menuModel, center, current, menuLayoutOptions),
     parent => createStrokeCanvas(parent, strokeCanvasOptions),
     parent => createStrokeCanvas(parent, lowerStrokeCanvasOptions),
+    parent => createGestureFeedback(parent, gestureFeedbackOptions),
     log
   );
 

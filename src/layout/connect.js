@@ -13,6 +13,7 @@ import rafThrottle from 'raf-throttle';
  * @param {Function} createLowerStrokeCanvas - Lower stroke canvas factory. The
  * lower stroke is stroke drawn below the menu. It keeps track of the previous
  * movements.
+ * @param {Function} createGestureFeedback - Create gesture feedback.
  * @param {{error}} log - Logger.
  * @return {Observable} `navigation$` with menu opening and closing side effects.
  */
@@ -22,6 +23,7 @@ export default (
   createMenuLayout,
   createUpperStrokeCanvas,
   createLowerStrokeCanvas,
+  createGestureFeedback,
   log
 ) => {
   // The menu object.
@@ -34,6 +36,8 @@ export default (
   let lowerStroke = null;
   // The points of the upper stroke.
   let upperStroke = null;
+
+  const gestureFeedback = createGestureFeedback(parentDOM);
 
   const closeMenu = () => {
     menu.remove();
@@ -99,6 +103,22 @@ export default (
     lowerStroke = null;
   };
 
+  const showGestureFeedback = () => {
+    gestureFeedback.show(
+      lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke
+    );
+  };
+
+  const cleanUp = () => {
+    // Make sure everything is cleaned upon completion.
+    if (menu) closeMenu();
+    if (upperStrokeCanvas) clearUpperStroke();
+    if (lowerStrokeCanvas) clearLowerStroke();
+    gestureFeedback.remove();
+    // eslint-disable-next-line no-param-reassign
+    parentDOM.style.cursor = '';
+  };
+
   const onNotification = notification => {
     switch (notification.type) {
       case 'open': {
@@ -120,6 +140,7 @@ export default (
         // eslint-disable-next-line no-param-reassign
         parentDOM.style.cursor = '';
         if (menu) closeMenu();
+        showGestureFeedback();
         clearUpperStroke();
         clearLowerStroke();
         break;
@@ -139,15 +160,6 @@ export default (
           `Invalid navigation notification type: ${notification.type}`
         );
     }
-  };
-
-  const cleanUp = () => {
-    // Make sure everything is cleaned upon completion.
-    if (menu) closeMenu();
-    if (upperStrokeCanvas) clearUpperStroke();
-    if (lowerStrokeCanvas) clearLowerStroke();
-    // eslint-disable-next-line no-param-reassign
-    parentDOM.style.cursor = '';
   };
 
   return navigation$.pipe(

@@ -51,13 +51,22 @@ exports[`connect draws expert strokes on draw notifications 3`] = `
 exports[`connect draws expert strokes on draw notifications 4`] = `
 <div
   style=""
-/>
+>
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="\\"stroke2\\""
+  />
+</div>
 `;
 
 exports[`connect draws expert strokes on draw notifications 5`] = `
 <div
   style="cursor: crosshair;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="\\"stroke2\\""
+  />
   <div
     class="upper-stroke-canvas"
     data-points="[]"
@@ -71,6 +80,10 @@ exports[`connect draws expert strokes on draw notifications 6`] = `
   style="cursor: crosshair;"
 >
   <div
+    class="mock-gesture-feedback"
+    data-stroke="\\"stroke2\\""
+  />
+  <div
     class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="\\"stroke3\\""
@@ -81,13 +94,30 @@ exports[`connect draws expert strokes on draw notifications 6`] = `
 exports[`connect draws expert strokes on draw notifications 7`] = `
 <div
   style=""
-/>
+>
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="\\"stroke2\\""
+  />
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="\\"stroke3\\""
+  />
+</div>
 `;
 
 exports[`connect draws expert strokes on draw notifications 8`] = `
 <div
   style="cursor: crosshair;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="\\"stroke2\\""
+  />
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="\\"stroke3\\""
+  />
   <div
     class="upper-stroke-canvas"
     data-points="[]"
@@ -100,6 +130,14 @@ exports[`connect draws expert strokes on draw notifications 9`] = `
 <div
   style="cursor: crosshair;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="\\"stroke2\\""
+  />
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="\\"stroke3\\""
+  />
   <div
     class="upper-stroke-canvas"
     data-points="[]"
@@ -296,13 +334,22 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 9`] =
 exports[`connect opens the menu, draws novice stroke, and updates the menu 10`] = `
 <div
   style=""
-/>
+>
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+</div>
 `;
 
 exports[`connect opens the menu, draws novice stroke, and updates the menu 11`] = `
 <div
   style="cursor: crosshair;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
   <div
     class="upper-stroke-canvas"
     data-points="[]"
@@ -316,6 +363,10 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 12`] 
   style="cursor: crosshair;"
 >
   <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
     class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="[[1,1],[0,0]]"
@@ -327,6 +378,10 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 13`] 
 <div
   style="cursor: none;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
   <div
     class="lower-stroke-canvas"
     data-points="[]"
@@ -351,6 +406,10 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 14`] 
   style="cursor: none;"
 >
   <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
     class="lower-stroke-canvas"
     data-points="[]"
     data-stroke="[[1,1],[0,0]]"
@@ -373,6 +432,10 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 15`] 
 <div
   style="cursor: none;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
   <div
     class="lower-stroke-canvas"
     data-points="[]"
@@ -397,6 +460,10 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 16`] 
   style="cursor: none;"
 >
   <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
     class="lower-stroke-canvas"
     data-points="[]"
     data-stroke="[[1,1],[0,0],[30,40],[200,900]]"
@@ -419,6 +486,10 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 17`] 
 <div
   style="cursor: none;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
   <div
     class="lower-stroke-canvas"
     data-points="[]"
@@ -443,6 +514,10 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 18`] 
   style="cursor: none;"
 >
   <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
     class="lower-stroke-canvas"
     data-points="[]"
     data-stroke="[[1,1],[0,0],[30,40],[200,900]]"
@@ -464,13 +539,30 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 18`] 
 exports[`connect opens the menu, draws novice stroke, and updates the menu 19`] = `
 <div
   style=""
-/>
+>
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[1,1],[0,0],[30,40],[200,900],[60,70],[700,100]]"
+  />
+</div>
 `;
 
 exports[`connect opens the menu, draws novice stroke, and updates the menu 20`] = `
 <div
   style="cursor: crosshair;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[1,1],[0,0],[30,40],[200,900],[60,70],[700,100]]"
+  />
   <div
     class="upper-stroke-canvas"
     data-points="[]"
@@ -483,6 +575,14 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 21`] 
 <div
   style="cursor: none;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[1,1],[0,0],[30,40],[200,900],[60,70],[700,100]]"
+  />
   <div
     class="lower-stroke-canvas"
     data-points="[]"
@@ -507,6 +607,14 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 22`] 
   style="cursor: none;"
 >
   <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[1,1],[0,0],[30,40],[200,900],[60,70],[700,100]]"
+  />
+  <div
     class="lower-stroke-canvas"
     data-points="[]"
     data-stroke="[\\"pos3\\"]"
@@ -530,6 +638,14 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 23`] 
   style="cursor: none;"
 >
   <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[1,1],[0,0],[30,40],[200,900],[60,70],[700,100]]"
+  />
+  <div
     class="lower-stroke-canvas"
     data-points="[]"
     data-stroke="[\\"pos3\\"]"
@@ -552,6 +668,14 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 24`] 
 <div
   style="cursor: none;"
 >
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[0,0],[1,1],[10,20],[100,200]]"
+  />
+  <div
+    class="mock-gesture-feedback"
+    data-stroke="[[1,1],[0,0],[30,40],[200,900],[60,70],[700,100]]"
+  />
   <div
     class="lower-stroke-canvas"
     data-points="[]"
