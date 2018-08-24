@@ -7,7 +7,12 @@ import rafThrottle from 'raf-throttle';
  * @param {HTMLElement} parentDOM - The element where to append the menu.
  * @param {Observable} navigation$ - Notifications of the navigation.
  * @param {Function} createMenuLayout - Menu layout factory.
- * @param {Function} createStrokeCanvas - Stroke canvas factory.
+ * @param {Function} createUpperStrokeCanvas - Upper stroke canvas factory. The
+ * upper stroke show the user interaction on the current menu, and the movements
+ * in expert mode.
+ * @param {Function} createLowerStrokeCanvas - Lower stroke canvas factory. The
+ * lower stroke is stroke drawn below the menu. It keeps track of the previous
+ * movements.
  * @param {{error}} log - Logger.
  * @return {Observable} `navigation$` with menu opening and closing side effects.
  */
@@ -15,13 +20,20 @@ export default (
   parentDOM,
   navigation$,
   createMenuLayout,
-  createStrokeCanvas,
+  createUpperStrokeCanvas,
+  createLowerStrokeCanvas,
   log
 ) => {
-  // Open the menu in function of navigation notifications.
+  // The menu object.
   let menu = null;
-  let strokeCanvas = null;
-  let strokeStart = null;
+  // A stroke drawn on top of the menu.
+  let upperStrokeCanvas = null;
+  // A stroke drawn below the menu.
+  let lowerStrokeCanvas = null;
+  // The points of the lower strokes.
+  let lowerStroke = null;
+  // The points of the upper stroke.
+  let upperStroke = null;
 
   const closeMenu = () => {
     menu.remove();
@@ -40,31 +52,51 @@ export default (
     menu.setActive(id);
   };
 
-  const startStroke = position => {
-    strokeCanvas = createStrokeCanvas(parentDOM);
-    strokeCanvas.drawStroke([position]);
-    strokeStart = position;
+  const startUpperStroke = position => {
+    upperStrokeCanvas = createUpperStrokeCanvas(parentDOM);
+    upperStroke = [position];
+    upperStrokeCanvas.drawStroke(upperStroke);
   };
 
   const noviceMove = rafThrottle(position => {
-    if (strokeCanvas) {
-      strokeCanvas.clear();
-      if (position) strokeCanvas.drawStroke([strokeStart, position]);
-      strokeCanvas.drawPoint(strokeStart);
+    if (upperStrokeCanvas) {
+      upperStrokeCanvas.clear();
+      if (position) {
+        upperStroke = [upperStroke[0], position];
+        upperStrokeCanvas.drawStroke(upperStroke);
+      }
+      upperStrokeCanvas.drawPoint(upperStroke[0]);
     }
   });
 
   const expertDraw = rafThrottle(stroke => {
-    if (strokeCanvas) {
-      strokeCanvas.clear();
-      strokeCanvas.drawStroke(stroke);
+    // FIXME: Not very efficient.
+    if (upperStrokeCanvas) {
+      upperStrokeCanvas.clear();
+      upperStroke = stroke.slice();
+      upperStrokeCanvas.drawStroke(upperStroke);
     }
   });
 
-  const clearStroke = () => {
-    strokeCanvas.remove();
-    strokeCanvas = null;
-    strokeStart = null;
+  const clearUpperStroke = () => {
+    upperStrokeCanvas.remove();
+    upperStrokeCanvas = null;
+    upperStroke = null;
+  };
+
+  const swapUpperStroke = () => {
+    lowerStroke = lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke;
+    clearUpperStroke();
+    lowerStrokeCanvas = lowerStrokeCanvas || createLowerStrokeCanvas(parentDOM);
+    lowerStrokeCanvas.drawStroke(lowerStroke);
+  };
+
+  const clearLowerStroke = () => {
+    if (lowerStrokeCanvas) {
+      lowerStrokeCanvas.remove();
+      lowerStrokeCanvas = null;
+    }
+    lowerStroke = null;
   };
 
   const onNotification = notification => {
@@ -73,9 +105,9 @@ export default (
         // eslint-disable-next-line no-param-reassign
         parentDOM.style.cursor = 'none';
         if (menu) closeMenu();
-        clearStroke();
+        swapUpperStroke();
         openMenu(notification.menu, notification.center);
-        startStroke(notification.center);
+        startUpperStroke(notification.center);
         noviceMove(notification.position);
         break;
       }
@@ -88,12 +120,13 @@ export default (
         // eslint-disable-next-line no-param-reassign
         parentDOM.style.cursor = '';
         if (menu) closeMenu();
-        clearStroke();
+        clearUpperStroke();
+        clearLowerStroke();
         break;
       case 'start':
         // eslint-disable-next-line no-param-reassign
         parentDOM.style.cursor = 'crosshair';
-        startStroke(notification.position);
+        startUpperStroke(notification.position);
         break;
       case 'draw':
         expertDraw(notification.stroke);
@@ -111,7 +144,8 @@ export default (
   const cleanUp = () => {
     // Make sure everything is cleaned upon completion.
     if (menu) closeMenu();
-    if (strokeCanvas) clearStroke();
+    if (upperStrokeCanvas) clearUpperStroke();
+    if (lowerStrokeCanvas) clearLowerStroke();
     // eslint-disable-next-line no-param-reassign
     parentDOM.style.cursor = '';
   };

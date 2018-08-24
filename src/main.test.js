@@ -148,7 +148,10 @@ describe('main', () => {
     expect(connectLayout.mock.calls[0][0]).toBe('mock-parentDOM');
     m.expect(connectLayout.mock.calls[0][1]).toBeObservable(mockNavObs$);
     m.expect(connectedObs$).toHaveSubscriptions(connectedSub);
-    expect(connectLayout.mock.calls[0][4]).toBe('mock-log');
+    expect(connectLayout.mock.calls[0][2]).toBeInstanceOf(Function);
+    expect(connectLayout.mock.calls[0][3]).toBeInstanceOf(Function);
+    expect(connectLayout.mock.calls[0][4]).toBeInstanceOf(Function);
+    expect(connectLayout.mock.calls[0][5]).toBe('mock-log');
   }));
 
   it('properly binds MenuLayout and StrokeCanvas when it connects the layout', () => {

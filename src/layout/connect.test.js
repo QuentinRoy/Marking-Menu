@@ -5,7 +5,8 @@ import connect from './connect';
 jest.mock('raf-throttle', () => jest.fn(f => f));
 
 // Mock values.
-let StrokeCanvas;
+let UpperStrokeCanvas;
+let LowerStrokeCanvas;
 let strokeCanvasInstances;
 let MenuLayout;
 let menuLayoutInstances;
@@ -16,38 +17,42 @@ beforeEach(() => {
   parentElement = document.createElement('div');
 
   strokeCanvasInstances = [];
-  StrokeCanvas = jest.fn(parent => {
-    const div = document.createElement('div');
-    div.className = 'stroke-canvas';
-    parent.appendChild(div);
+  const createStrokeCanvasFactory = name =>
+    jest.fn(parent => {
+      const div = document.createElement('div');
+      div.className = `${name}-stroke-canvas`;
+      parent.appendChild(div);
 
-    // Set up the strokes properties as data attributes.
-    div.dataset.points = JSON.stringify([]);
-    div.dataset.stroke = null;
+      // Set up the strokes properties as data attributes.
+      div.dataset.points = JSON.stringify([]);
+      div.dataset.stroke = null;
 
-    const self = {
-      mock: { div, parent, removed: false },
-      drawStroke: jest.fn(stroke => {
-        div.dataset.stroke = JSON.stringify(stroke);
-      }),
-      drawPoint: jest.fn(p => {
-        div.dataset.points = JSON.stringify([
-          ...JSON.parse(div.dataset.points),
-          p
-        ]);
-      }),
-      clear: jest.fn(() => {
-        div.dataset.stroke = null;
-        div.dataset.points = JSON.stringify([]);
-      }),
-      remove: jest.fn(() => {
-        div.remove();
-        self.mock.removed = true;
-      })
-    };
-    strokeCanvasInstances.push(self);
-    return self;
-  });
+      const self = {
+        name,
+        mock: { div, parent, removed: false },
+        drawStroke: jest.fn(stroke => {
+          div.dataset.stroke = JSON.stringify(stroke);
+        }),
+        drawPoint: jest.fn(p => {
+          div.dataset.points = JSON.stringify([
+            ...JSON.parse(div.dataset.points),
+            p
+          ]);
+        }),
+        clear: jest.fn(() => {
+          div.dataset.stroke = null;
+          div.dataset.points = JSON.stringify([]);
+        }),
+        remove: jest.fn(() => {
+          div.remove();
+          self.mock.removed = true;
+        })
+      };
+      strokeCanvasInstances.push(self);
+      return self;
+    });
+  UpperStrokeCanvas = createStrokeCanvasFactory('upper');
+  LowerStrokeCanvas = createStrokeCanvasFactory('lower');
 
   menuLayoutInstances = [];
   MenuLayout = jest.fn((parent, model, center, active) => {
@@ -96,7 +101,8 @@ describe('connect', () => {
       parentElement,
       src,
       MenuLayout,
-      StrokeCanvas
+      UpperStrokeCanvas,
+      LowerStrokeCanvas
     );
     out.subscribe({
       next() {
@@ -113,7 +119,7 @@ describe('connect', () => {
     parentElement.getBoundingClientRect = jest.fn(() => ({ left: 1, top: 2 }));
     const src = of(
       { type: 'start', position: 'pos1' },
-      { type: 'draw', stroke: 'stroke1' },
+      { type: 'draw', stroke: [[0, 0], [1, 1]] },
       { type: 'open', menu: 'menu1', center: [10, 20], position: [100, 200] },
       { type: 'move', position: [1000, 2000] },
       { type: 'change', active: { id: 'active-item-1' } },
@@ -124,7 +130,7 @@ describe('connect', () => {
       { type: 'select' },
 
       { type: 'start', position: 'pos2' },
-      { type: 'draw', stroke: 'stroke2' },
+      { type: 'draw', stroke: [[1, 1], [0, 0]] },
       { type: 'open', menu: 'menu2', center: [30, 40], position: [300, 800] },
       { type: 'move', position: [200, 900] },
       { type: 'change', active: { id: 'active-item-3' } },
@@ -143,7 +149,8 @@ describe('connect', () => {
       parentElement,
       src,
       MenuLayout,
-      StrokeCanvas
+      UpperStrokeCanvas,
+      LowerStrokeCanvas
     );
     out.subscribe({
       next() {
@@ -170,9 +177,16 @@ describe('connect', () => {
     const error = new Error('Test Error');
     const obs = m.hot('---s--o--#', values, error);
     const exp = m.hot('---s--o--#', values, error);
-    m
-      .expect(connect(parentElement, obs, MenuLayout, StrokeCanvas, log))
-      .toBeObservable(exp);
+    m.expect(
+      connect(
+        parentElement,
+        obs,
+        MenuLayout,
+        UpperStrokeCanvas,
+        LowerStrokeCanvas,
+        log
+      )
+    ).toBeObservable(exp);
     m.flush();
     expect(parentElement).toMatchSnapshot();
     expect(log.error.mock.calls).toEqual([[error]]);
@@ -193,9 +207,16 @@ describe('connect', () => {
     const error = new Error('Invalid navigation notification type: unknown');
     const obs = m.hot('---s--o--x-', values);
     const exp = m.hot('---s--o--#', values, error);
-    m
-      .expect(connect(parentElement, obs, MenuLayout, StrokeCanvas, log))
-      .toBeObservable(exp);
+    m.expect(
+      connect(
+        parentElement,
+        obs,
+        MenuLayout,
+        UpperStrokeCanvas,
+        LowerStrokeCanvas,
+        log
+      )
+    ).toBeObservable(exp);
     m.flush();
     expect(parentElement).toMatchSnapshot();
     expect(log.error.mock.calls).toEqual([[error]]);
