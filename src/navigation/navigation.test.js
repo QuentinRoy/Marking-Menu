@@ -8,7 +8,7 @@ import navigation, {
   navigationFromDrag
 } from './navigation';
 import expertNavigation from './expert-navigation';
-import { longMoves, dwellings } from '../move';
+import { longMoves, dwellings, draw } from '../move';
 import noviceNavigation from './novice-navigation';
 
 jest.mock('./expert-navigation');
@@ -38,6 +38,7 @@ describe('confirmedExpertNavigationHOO', () => {
     const drag$ = m.hot(    '--a-b--c--d-e---f--|').pipe(publishBehavior());
     const long$ = m.hot(    '-------c----e------|', values);
     const sub$ = m.cold(           '---D-E---F--|', values);
+    const etnsh$ = m.hot(   '-------------------|');
     const expected$ = m.hot('-------(X|)'         , { X: sub$ });
     drag$.connect();
 
@@ -48,10 +49,13 @@ describe('confirmedExpertNavigationHOO', () => {
       )
     ));
     longMoves.mockImplementation(() => long$);
+    draw.mockImplementation(() => drag$);
+    const mockExpertToNoviceSwitchHOO = jest.fn(() => etnsh$);
 
     m
       .expect(confirmedExpertNavigationHOO(drag$, 'mock-model', {
-        movementsThreshold: 'mock-threshold'
+        movementsThreshold: 'mock-threshold',
+        expertToNoviceSwitchHOO: mockExpertToNoviceSwitchHOO
       }))
       .toBeObservable(expected$);
     m.flush();
