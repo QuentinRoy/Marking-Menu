@@ -10,9 +10,20 @@ describe('MMItem', () => {
 
   it('isLeaf checks if the item has children', () => {
     expect(new MMItem('a', 'name', 10).isLeaf()).toBe(true);
-    expect(new MMItem('b', 'name', 10, []).isLeaf()).toBe(true);
+    expect(new MMItem('b', 'name', 10, { children: [] }).isLeaf()).toBe(true);
     expect(
-      new MMItem('c', 'name', 10, [new MMItem('sub', 'child', 5)]).isLeaf()
+      new MMItem('c', 'name', 10, {
+        children: [new MMItem('sub', 'child', 5)]
+      }).isLeaf()
+    ).toBe(false);
+  });
+
+  it('isRoot checks if the item has a parent', () => {
+    expect(new MMItem('id', 'name', 0).isRoot()).toBe(true);
+    expect(
+      new MMItem('id', 'name', 0, {
+        parent: new MMItem('parentId', 'parentName', 0)
+      }).isRoot()
     ).toBe(false);
   });
 
@@ -22,7 +33,7 @@ describe('MMItem', () => {
       new MMItem('sub2', 'child2', 90),
       new MMItem('sub2', 'child2', 100) // This should not be allowed
     ];
-    const mi = new MMItem('a', 'name', 10, children);
+    const mi = new MMItem('a', 'name', 10, { children });
     expect(mi.getChild('sub1')).toBe(children[0]);
     expect(mi.getChild('sub2')).toBe(children[1]);
   });
@@ -31,9 +42,9 @@ describe('MMItem', () => {
     const children = [
       new MMItem('sub1', 'child1', 180),
       new MMItem('sub2', 'child2', 90),
-      new MMItem('sub2', 'child2', 120) // Odd, but why not.
+      new MMItem('sub2', 'child2', 120) // Weird, but why not.
     ];
-    const mi = new MMItem('a', 'name', 10, children);
+    const mi = new MMItem('a', 'name', 10, { children });
     expect(mi.getChildrenByName('child2')).toEqual(children.slice(1));
   });
 
@@ -44,7 +55,7 @@ describe('MMItem', () => {
       new MMItem('sub3', 'child3', 45),
       new MMItem('sub4', 'child3', 0)
     ];
-    const mi = new MMItem('a', 'name', 10, children);
+    const mi = new MMItem('a', 'name', 10, { children });
     expect(mi.getNearestChild(45)).toBe(children[2]);
     expect(mi.getNearestChild(220)).toBe(children[0]);
     expect(mi.getNearestChild(300)).toBe(children[3]);
@@ -52,40 +63,55 @@ describe('MMItem', () => {
 
   it('getMaxDepth returns the maximum depth of the item hierarchy', () => {
     expect(new MMItem('id', 'name', 0).getMaxDepth()).toBe(0);
-
-    const m = new MMItem('id', 'n', 0, [
-      new MMItem('sub1', 'child1', 180, [
-        new MMItem('subsub1', 'subchild1', 180),
-        new MMItem('subsub2', 'subchild2', 90),
-        new MMItem('subsub3', 'subchild3', 45),
-        new MMItem('subsub4', 'subchild4', 0, [
-          new MMItem('subsubsub1', 'subsubchild1', 0),
-          new MMItem('subsubsub2', 'subsubchild2', 0)
-        ])
-      ]),
-      new MMItem('sub2', 'child2', 90),
-      new MMItem('sub3', 'child3', 45, [new MMItem('subsub5', 'subchild5', 0)]),
-      new MMItem('sub4', 'child3', 0)
-    ]);
+    const m = new MMItem('id', 'n', 0, {
+      children: [
+        new MMItem('sub1', 'child1', 180, {
+          children: [
+            new MMItem('subsub1', 'subchild1', 180),
+            new MMItem('subsub2', 'subchild2', 90),
+            new MMItem('subsub3', 'subchild3', 45),
+            new MMItem('subsub4', 'subchild4', 0, {
+              children: [
+                new MMItem('subsubsub1', 'subsubchild1', 0),
+                new MMItem('subsubsub2', 'subsubchild2', 0)
+              ]
+            })
+          ]
+        }),
+        new MMItem('sub2', 'child2', 90),
+        new MMItem('sub3', 'child3', 45, {
+          children: [new MMItem('subsub5', 'subchild5', 0)]
+        }),
+        new MMItem('sub4', 'child3', 0)
+      ]
+    });
     expect(m.getMaxDepth()).toBe(3);
   });
 
   it('getMaxBreadth returns the maximum breadth of the item hierarchy', () => {
     expect(new MMItem('id', 'name', 0).getMaxBreadth()).toBe(0);
-
-    const m = new MMItem('id', 'n', 0, [
-      new MMItem('sub1', 'child1', 180, [
-        new MMItem('subsub1', 'subchild1', 180),
-        new MMItem('subsub2', 'subchild2', 90),
-        new MMItem('subsub3', 'subchild3', 45),
-        new MMItem('subsub4', 'subchild4', 0, [
-          new MMItem('subsubsub1', 'subsubchild1', 0),
-          new MMItem('subsubsub2', 'subsubchild2', 0)
-        ])
-      ]),
-      new MMItem('sub2', 'child2', 90),
-      new MMItem('sub3', 'child3', 45, [new MMItem('subsub5', 'subchild5', 0)])
-    ]);
+    const m = new MMItem('id', 'n', 0, {
+      children: [
+        new MMItem('sub1', 'child1', 180, {
+          children: [
+            new MMItem('subsub1', 'subchild1', 180),
+            new MMItem('subsub2', 'subchild2', 90),
+            new MMItem('subsub3', 'subchild3', 45),
+            new MMItem('subsub4', 'subchild4', 0, {
+              children: [
+                new MMItem('subsubsub1', 'subsubchild1', 0),
+                new MMItem('subsubsub2', 'subsubchild2', 0)
+              ]
+            })
+          ]
+        }),
+        new MMItem('sub2', 'child2', 90),
+        new MMItem('sub3', 'child3', 45, {
+          children: [new MMItem('subsub5', 'subchild5', 0)]
+        }),
+        new MMItem('sub4', 'child3', 0)
+      ]
+    });
     expect(m.getMaxBreadth()).toBe(4);
   });
 });
@@ -147,6 +173,12 @@ describe('createModel', () => {
       180,
       225
     ]);
+
+    // Check that the parents are properly set up
+    expect(m.children.every(c => c.parent === m)).toBe(true);
+    expect(m.children[1].children.every(c => c.parent === m.children[1])).toBe(
+      true
+    );
 
     // Check that the custom-id has been properly set.
     expect(m.children[1].children[1].id).toBe('custom-id');
