@@ -77,6 +77,7 @@ export default (
     ctx.fillStyle = 'none';
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = lineWidth;
     ctx.beginPath();
     stroke.forEach((point, i) => {
