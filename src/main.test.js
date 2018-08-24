@@ -92,6 +92,7 @@ describe('main', () => {
           strokeWidth: 'mock-strokeWidth',
           strokeStartPointRadius: 'mock-strokeStartPointRadius',
           notifySteps: true,
+          gestureFeedbackDuration: 'mock-gestureFeedbackDuration',
           log: 'mock-log',
           ...opts
         });
@@ -151,7 +152,8 @@ describe('main', () => {
     expect(connectLayout.mock.calls[0][2]).toBeInstanceOf(Function);
     expect(connectLayout.mock.calls[0][3]).toBeInstanceOf(Function);
     expect(connectLayout.mock.calls[0][4]).toBeInstanceOf(Function);
-    expect(connectLayout.mock.calls[0][5]).toBe('mock-log');
+    expect(connectLayout.mock.calls[0][5]).toBeInstanceOf(Function);
+    expect(connectLayout.mock.calls[0][6]).toBe('mock-log');
   }));
 
   it('properly binds MenuLayout and StrokeCanvas when it connects the layout', () => {
