@@ -1,4 +1,4 @@
-import { race, of, merge } from 'rxjs';
+import { race, of } from 'rxjs';
 import {
   take,
   map,
@@ -55,25 +55,29 @@ export const expertToNoviceSwitchHOO = (drag$, model, initStroke, options) =>
     })
   );
 
-export const confirmedExpertNavigationHOO = (drag$, model, options) =>
+export const confirmedExpertNavigationHOO = (
+  drag$,
+  model,
+  {
+    expertToNoviceSwitchHOO: expertToNoviceSwitchHOO_ = expertToNoviceSwitchHOO,
+    ...options
+  } = {}
+) =>
   longMoves(draw(drag$, { type: 'draw' }), options.movementsThreshold).pipe(
     take(1),
-    map(e =>
-      expertNavigation(
+    map(e => {
+      const expertNav$ = expertNavigation(
         // Drag always return the last value when observed, in this case we are
         // not interested in it as it has already been took into account.
         drag$.pipe(skip(1)),
         model,
         e.stroke
-      ).pipe(map(n => ({ ...n, mode: 'expert' })))
-    ),
-    map(nav$ =>
-      merge(
-        of(nav$),
-        expertToNoviceSwitchHOO(drag$, model, nav$.stroke, options)
-      )
-    ),
-    switchAll()
+      ).pipe(map(n => ({ ...n, mode: 'expert' })));
+      return expertToNoviceSwitchHOO_(drag$, model, e.stroke, options).pipe(
+        startWith(expertNav$),
+        switchAll()
+      );
+    })
   );
 
 export const startup = (drag$, model) =>
