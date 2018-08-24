@@ -3,7 +3,12 @@ import { marbles } from 'rxjs-marbles/jest';
 import main, { exportNotification } from './main';
 import navigation from './navigation';
 import createModel from './model';
-import { createMenuLayout, createStrokeCanvas, connectLayout } from './layout';
+import {
+  createMenuLayout,
+  createStrokeCanvas,
+  createGestureFeedback,
+  connectLayout
+} from './layout';
 import { watchDrags } from './move';
 
 jest.mock('./navigation');
@@ -91,8 +96,13 @@ describe('main', () => {
           strokeColor: 'mock-strokeColor',
           strokeWidth: 'mock-strokeWidth',
           strokeStartPointRadius: 'mock-strokeStartPointRadius',
-          notifySteps: true,
+          lowerStrokeColor: 'mock-lowerStrokeColor',
+          lowerStrokeWidth: 'mock-lowerStrokeWidth',
+          lowerStrokeStartPointRadius: 'mock-lowerStrokeStartPointRadius',
           gestureFeedbackDuration: 'mock-gestureFeedbackDuration',
+          gestureFeedbackStrokeWidth: 'mock-gestureFeedbackStrokeWidth',
+          gestureFeedbackStrokeColor: 'mock-gestureFeedbackStrokeColor',
+          notifySteps: true,
           log: 'mock-log',
           ...opts
         });
@@ -156,7 +166,7 @@ describe('main', () => {
     expect(connectLayout.mock.calls[0][6]).toBe('mock-log');
   }));
 
-  it('properly binds MenuLayout and StrokeCanvas when it connects the layout', () => {
+  it('properly binds MenuLayout when it connects the layout', () => {
     callMain();
     // Make sure it properly binds connectLayout and stroke canvas.
     connectLayout.mock.calls[0][2](
@@ -174,6 +184,10 @@ describe('main', () => {
         {}
       ]
     ]);
+  });
+
+  it('properly binds UpperStrokeCanvas when it connects the layout', () => {
+    callMain();
     connectLayout.mock.calls[0][3]('mock-parent-3');
     expect(createStrokeCanvas.mock.calls).toEqual([
       [
@@ -182,6 +196,36 @@ describe('main', () => {
           lineColor: 'mock-strokeColor',
           lineWidth: 'mock-strokeWidth',
           pointRadius: 'mock-strokeStartPointRadius'
+        }
+      ]
+    ]);
+  });
+
+  it('properly binds LowerStrokeCanvas when it connects the layout', () => {
+    callMain();
+    connectLayout.mock.calls[0][4]('mock-parent-4');
+    expect(createStrokeCanvas.mock.calls).toEqual([
+      [
+        'mock-parent-4',
+        {
+          lineColor: 'mock-lowerStrokeColor',
+          lineWidth: 'mock-lowerStrokeWidth',
+          pointRadius: 'mock-lowerStrokeStartPointRadius'
+        }
+      ]
+    ]);
+  });
+
+  it('properly binds GestureFeedback when it connects the layout', () => {
+    callMain();
+    connectLayout.mock.calls[0][5]('mock-parent-5');
+    expect(createGestureFeedback.mock.calls).toEqual([
+      [
+        'mock-parent-5',
+        {
+          duration: 'mock-gestureFeedbackDuration',
+          lineColor: 'mock-gestureFeedbackStrokeColor',
+          lineWidth: 'mock-gestureFeedbackStrokeWidth'
         }
       ]
     ]);
