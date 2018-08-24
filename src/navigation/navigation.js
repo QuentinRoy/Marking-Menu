@@ -44,7 +44,7 @@ export const expertToNoviceSwitchHOO = (drag$, model, initStroke, options) =>
         maxDepth: -1,
         requireMenu: true
       });
-      if (menu.isRoot()) {
+      if (!menu || menu.isRoot()) {
         return of({ ...evt, type: 'cancel' });
       }
       // Start a novice navigation from there.
