@@ -36,6 +36,10 @@ export const exportNotification = n => ({
  * @param {number} [options.strokeStartPointRadius] - The radius of the start point of the stroke
  *                                                    (appearing at the middle of the menu in novice
  *                                                    mode).
+ * @param {number} [options.lowerStrokeColor] - The color of the lower stroke. The lower stroke is
+ * the stroke drawn below the menu. It keeps track of the previous movements.
+ * @param {number} [options.lowerStrokeWidth] - The width of the lower stroke.
+ * @param {number} [options.lowerStrokeStartPointRadius] - The radius of the start point of the stroke.
  * @param {boolean} [options.notifySteps] - If true, every steps of the marking menu (include move)
  *                                          events, will be notified. Useful for logging.
  * @param {{error, info, warn, debug}} [options.log] - Override the default logger to use.
@@ -53,6 +57,9 @@ export default (
     strokeColor = '#000',
     strokeWidth = 4,
     strokeStartPointRadius = 8,
+    lowerStrokeColor = '#777',
+    lowerStrokeWidth = strokeWidth,
+    lowerStrokeStartPointRadius = lowerStrokeWidth,
     notifySteps = false,
     log = {
       // eslint-disable-next-line no-console
@@ -72,6 +79,11 @@ export default (
     lineWidth: strokeWidth,
     pointRadius: strokeStartPointRadius
   };
+  const lowerStrokeCanvasOptions = {
+    lineColor: lowerStrokeColor,
+    lineWidth: lowerStrokeWidth,
+    pointRadius: lowerStrokeStartPointRadius
+  };
 
   // Create model and navigation observable.
   const model = createModel(items);
@@ -88,13 +100,14 @@ export default (
     })
   );
 
-  // Connect the engine notifications to menu opening/closing.
+  // Connect the engine's notifications to menu opening/closing.
   const connectedNavigation$ = connectLayout(
     parentDOM,
     navigation$,
     (parent, menuModel, center, current) =>
       createMenuLayout(parent, menuModel, center, current, menuLayoutOptions),
     parent => createStrokeCanvas(parent, strokeCanvasOptions),
+    parent => createStrokeCanvas(parent, lowerStrokeCanvasOptions),
     log
   );
 

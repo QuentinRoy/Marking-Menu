@@ -17,7 +17,7 @@ exports[`connect draws expert strokes on draw notifications 1`] = `
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="[\\"pos1\\"]"
   />
@@ -29,7 +29,7 @@ exports[`connect draws expert strokes on draw notifications 2`] = `
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="\\"stroke1\\""
   />
@@ -41,7 +41,7 @@ exports[`connect draws expert strokes on draw notifications 3`] = `
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="\\"stroke2\\""
   />
@@ -59,7 +59,7 @@ exports[`connect draws expert strokes on draw notifications 5`] = `
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="[\\"pos2\\"]"
   />
@@ -71,7 +71,7 @@ exports[`connect draws expert strokes on draw notifications 6`] = `
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="\\"stroke3\\""
   />
@@ -89,7 +89,7 @@ exports[`connect draws expert strokes on draw notifications 8`] = `
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="[\\"pos3\\"]"
   />
@@ -101,7 +101,7 @@ exports[`connect draws expert strokes on draw notifications 9`] = `
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="[\\"pos3\\"]"
   />
@@ -113,7 +113,7 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 1`] =
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="[\\"pos1\\"]"
   />
@@ -125,9 +125,9 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 2`] =
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
-    data-stroke="\\"stroke1\\""
+    data-stroke="[[0,0],[1,1]]"
   />
 </div>
 `;
@@ -137,13 +137,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 3`] =
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[0,0],[1,1]]"
+  />
+  <div
     class="menu"
     data-active="undefined"
     data-center="[9,18]"
     data-model="\\"menu1\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[10,20]]"
     data-stroke="[[10,20],[100,200]]"
   />
@@ -155,13 +160,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 4`] =
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[0,0],[1,1]]"
+  />
+  <div
     class="menu"
     data-active="undefined"
     data-center="[9,18]"
     data-model="\\"menu1\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[10,20]]"
     data-stroke="[[10,20],[1000,2000]]"
   />
@@ -173,13 +183,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 5`] =
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[0,0],[1,1]]"
+  />
+  <div
     class="menu"
     data-active="\\"active-item-1\\""
     data-center="[9,18]"
     data-model="\\"menu1\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[10,20]]"
     data-stroke="[[10,20],[1000,2000]]"
   />
@@ -191,13 +206,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 6`] =
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[0,0],[1,1]]"
+  />
+  <div
     class="menu"
     data-active="\\"active-item-1\\""
     data-center="[9,18]"
     data-model="\\"menu1\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[10,20]]"
     data-stroke="[[10,20],[500,700]]"
   />
@@ -209,13 +229,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 7`] =
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[0,0],[1,1]]"
+  />
+  <div
     class="menu"
     data-active="\\"active-item-1\\""
     data-center="[9,18]"
     data-model="\\"menu1\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[10,20]]"
     data-stroke="[[10,20],[100,200]]"
   />
@@ -227,13 +252,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 8`] =
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[0,0],[1,1]]"
+  />
+  <div
     class="menu"
     data-active="null"
     data-center="[9,18]"
     data-model="\\"menu1\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[10,20]]"
     data-stroke="[[10,20],[100,200]]"
   />
@@ -245,13 +275,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 9`] =
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[0,0],[1,1]]"
+  />
+  <div
     class="menu"
     data-active="\\"active-item-2\\""
     data-center="[9,18]"
     data-model="\\"menu1\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[10,20]]"
     data-stroke="[[10,20],[100,200]]"
   />
@@ -269,7 +304,7 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 11`] 
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="[\\"pos2\\"]"
   />
@@ -281,9 +316,9 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 12`] 
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
-    data-stroke="\\"stroke2\\""
+    data-stroke="[[1,1],[0,0]]"
   />
 </div>
 `;
@@ -293,13 +328,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 13`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[1,1],[0,0]]"
+  />
+  <div
     class="menu"
     data-active="undefined"
     data-center="[29,38]"
     data-model="\\"menu2\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[30,40]]"
     data-stroke="[[30,40],[300,800]]"
   />
@@ -311,13 +351,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 14`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[1,1],[0,0]]"
+  />
+  <div
     class="menu"
     data-active="undefined"
     data-center="[29,38]"
     data-model="\\"menu2\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[30,40]]"
     data-stroke="[[30,40],[200,900]]"
   />
@@ -329,13 +374,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 15`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[1,1],[0,0]]"
+  />
+  <div
     class="menu"
     data-active="\\"active-item-3\\""
     data-center="[29,38]"
     data-model="\\"menu2\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[30,40]]"
     data-stroke="[[30,40],[200,900]]"
   />
@@ -347,13 +397,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 16`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[1,1],[0,0],[30,40],[200,900]]"
+  />
+  <div
     class="menu"
     data-active="undefined"
     data-center="[59,68]"
     data-model="\\"menu3\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[60,70]]"
     data-stroke="[[60,70],[300,800]]"
   />
@@ -365,13 +420,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 17`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[1,1],[0,0],[30,40],[200,900]]"
+  />
+  <div
     class="menu"
     data-active="\\"active-item-4\\""
     data-center="[59,68]"
     data-model="\\"menu3\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[60,70]]"
     data-stroke="[[60,70],[300,800]]"
   />
@@ -383,13 +443,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 18`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[[1,1],[0,0],[30,40],[200,900]]"
+  />
+  <div
     class="menu"
     data-active="\\"active-item-4\\""
     data-center="[59,68]"
     data-model="\\"menu3\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[60,70]]"
     data-stroke="[[60,70],[700,100]]"
   />
@@ -407,7 +472,7 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 20`] 
   style="cursor: crosshair;"
 >
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[]"
     data-stroke="[\\"pos3\\"]"
   />
@@ -419,13 +484,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 21`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos3\\"]"
+  />
+  <div
     class="menu"
     data-active="undefined"
     data-center="[89,28]"
     data-model="\\"menu4\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[90,30]]"
     data-stroke="[[90,30],[102,201]]"
   />
@@ -437,13 +507,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 22`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos3\\"]"
+  />
+  <div
     class="menu"
     data-active="undefined"
     data-center="[89,28]"
     data-model="\\"menu4\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[90,30]]"
     data-stroke="[[90,30],[500,0]]"
   />
@@ -455,13 +530,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 23`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos3\\"]"
+  />
+  <div
     class="menu"
     data-active="\\"active-item-5\\""
     data-center="[89,28]"
     data-model="\\"menu4\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[90,30]]"
     data-stroke="[[90,30],[500,0]]"
   />
@@ -473,13 +553,18 @@ exports[`connect opens the menu, draws novice stroke, and updates the menu 24`] 
   style="cursor: none;"
 >
   <div
+    class="lower-stroke-canvas"
+    data-points="[]"
+    data-stroke="[\\"pos3\\"]"
+  />
+  <div
     class="menu"
     data-active="\\"active-item-5\\""
     data-center="[89,28]"
     data-model="\\"menu4\\""
   />
   <div
-    class="stroke-canvas"
+    class="upper-stroke-canvas"
     data-points="[[90,30]]"
     data-stroke="[[90,30],[500,0]]"
   />
