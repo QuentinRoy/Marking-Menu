@@ -33,7 +33,7 @@ export const exportNotification = n => ({
                                                   mode (and open the menu).
  * @param {number} [options.strokeColor] - The color of the gesture stroke.
  * @param {number} [options.strokeWidth] - The width of the gesture stroke.
- * @param {number} [options.strokeStartPointRadius] - The radius of the start point of a stroke
+ * @param {number} [options.strokeStartPointRadius] - The radius of the start point of the stroke
  *                                                    (appearing at the middle of the menu in novice
  *                                                    mode).
  * @param {boolean} [options.notifySteps] - If true, every steps of the marking menu (include move)
@@ -50,7 +50,7 @@ export default (
     subMenuOpeningDelay = 25,
     movementsThreshold = 5,
     noviceDwellingTime = 1000 / 3,
-    strokeColor = 'black',
+    strokeColor = '#000',
     strokeWidth = 4,
     strokeStartPointRadius = 8,
     notifySteps = false,
