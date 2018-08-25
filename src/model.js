@@ -32,8 +32,8 @@ export class MMItem {
   }
 
   /**
-   * @param {String} childName - The name of the child to look for.
-   * @return {Item} the (first) children with the name `childName`.
+   * @param {String} childName - The name of the children to look for.
+   * @return {Item} the children with the name `childName`.
    */
   getChildrenByName(childName) {
     return this.children.filter(child => child.name === childName);
