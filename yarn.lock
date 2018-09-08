@@ -5252,7 +5252,13 @@ rxjs-marbles@4.3.1:
     "@types/lodash" "^4.0.0"
     lodash "^4.17.5"
 
-rxjs@6.3.1, rxjs@^6.1.0:
+rxjs@6.3.2:
+  version "6.3.2"
+  resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.3.2.tgz#6a688b16c4e6e980e62ea805ec30648e1c60907f"
+  dependencies:
+    tslib "^1.9.0"
+
+rxjs@^6.1.0:
   version "6.3.1"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-6.3.1.tgz#878a1a8c64b8a5da11dcf74b5033fe944cdafb84"
   dependencies:
