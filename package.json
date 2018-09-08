@@ -36,8 +36,8 @@
     "raf-throttle": "^2.0.3"
   },
   "devDependencies": {
-    "@commitlint/cli": "7.1.1",
-    "@commitlint/config-conventional": "7.1.1",
+    "@commitlint/cli": "7.1.2",
+    "@commitlint/config-conventional": "7.1.2",
     "angles": "0.2.4",
     "babel-core": "6.26.3",
     "babel-plugin-external-helpers": "6.22.0",
