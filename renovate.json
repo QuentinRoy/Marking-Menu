@@ -6,7 +6,8 @@
     ":automergeBranchPush",
     ":semanticCommits",
     ":rebaseStalePrs",
-    ":semanticCommitScopeDisabled"
+    ":semanticCommitScopeDisabled",
+    ":preserveSemverRanges"
   ],
   "packageRules": [
     {
