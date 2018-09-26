@@ -1,7 +1,5 @@
 {
   "extends": [
-    "schedule:weekends",
-    "config:js-lib",
     ":automergeMinor",
     ":automergeBranchPush",
     ":semanticCommits",
