@@ -2,22 +2,17 @@
   "env": {
     "test": {
       "sourceMaps": "inline",
-      "presets": [["env", { "targets": { "node": "current" } }]]
+      "presets": [["@babel/preset-env", { "targets": { "node": "current" } }]]
     },
     "production": {
       "presets": [
         [
-          "env",
+          "@babel/preset-env",
           { "targets": { "browsers": ">1%" }, "modules": false, "loose": true }
         ]
       ],
       "plugins": [
-        "external-helpers",
-        "transform-object-rest-spread",
-        [
-          "transform-runtime",
-          { "helpers": false, "polyfill": false, "regenerator": true }
-        ]
+        ["@babel/transform-runtime", { "helpers": false, "regenerator": true }]
       ]
     }
   }
