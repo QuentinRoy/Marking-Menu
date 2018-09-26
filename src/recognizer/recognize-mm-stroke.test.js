@@ -24,11 +24,11 @@ const createMockMMModel = (depth = 1, breadth = 8, requestedAngle, parent) => {
       requestedAngle,
       getMaxDepth: jest.fn(() => depth),
       getMaxBreadth: jest.fn(() => breadth),
-      isLeaf: jest.fn(() => false)
+      isLeaf: jest.fn(() => false),
+      getNearestChild: jest.fn(childAngle =>
+        createMockMMModel(depth - 1, breadth, childAngle, m)
+      )
     };
-    m.getNearestChild = jest.fn(childAngle =>
-      createMockMMModel(depth - 1, breadth, childAngle, m)
-    );
     return m;
   }
   throw new Error(`Invalid depth: ${depth}`);
@@ -181,5 +181,37 @@ describe('recognizeMMStroke', () => {
     const model = createMockMMModel(1);
     // Apply the recognizer.
     expect(recognizeMMStroke(stroke, model)).toBe(null);
+  });
+
+  it('returns null if the stroke does not correspond to a leaf and requireLeaf is true (default)', async () => {
+    // Read the stroke.
+    const stroke = await readStroke([225, 0, 135].join('-'));
+    // Create the model
+    const model = createMockMMModel(5);
+    // Apply the recognizer.
+    expect(recognizeMMStroke(stroke, model, { maxDepth: 3 })).toBe(null);
+  });
+
+  it('always returns a menu if requireMenu is true', async () => {
+    // Read the stroke.
+    const stroke = await readStroke([225, 0, 135].join('-'));
+    // Create the model
+    const model = createMockMMModel(3);
+    // Apply the recognizer.
+    expect(
+      recognizeMMStroke(stroke, model, {
+        maxDepth: 3,
+        requireMenu: true
+      }).isLeaf()
+    ).toBe(false);
+  });
+
+  it('throws if both requireMenu and requireLeaf are true', async () => {
+    expect(() => {
+      recognizeMMStroke('stroke', createMockMMModel(), {
+        requireMenu: true,
+        requireLeaf: true
+      });
+    }).toThrow('The result cannot be both a leaf and a menu');
   });
 });
