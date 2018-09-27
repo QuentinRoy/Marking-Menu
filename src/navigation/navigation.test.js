@@ -24,17 +24,14 @@ describe('confirmedExpertNavigationHOO', () => {
   // prettier-ignore
   it('emits expert navigation observables once they are confirmed', marbles(m => {
     const values = {
-      a: { stroke: 'a', model: 'mock-model' },
-      b: { stroke: 'ab', model: 'mock-model' },
       c: { stroke: 'abc', model: 'mock-model' },
-      d: { stroke: 'abcd', model: 'mock-model' },
       e: { stroke: 'abcde', model: 'mock-model'  },
-      f: { stroke: 'abcdef', model: 'mock-model' },
       D: { stroke: 'abcd', model: 'mock-model', mode: 'expert' },
       E: { stroke: 'abcde', model: 'mock-model', mode: 'expert' },
       F: { stroke: 'abcdef', model: 'mock-model', mode: 'expert' }
     };
-    // Drag is a behavior and in this case it matters.
+    // Drag is a behavior and in this case it matters. Note that values is not
+    // passed, it emits raw events.
     const drag$ = m.hot(    '--a-b--c--d-e---f--|').pipe(publishBehavior());
     const long$ = m.hot(    '-------c----e------|', values);
     const sub$ = m.cold(           '---D-E---F--|', values);
@@ -61,6 +58,45 @@ describe('confirmedExpertNavigationHOO', () => {
     m.flush();
     expect(longMoves.mock.calls[0][1]).toEqual('mock-threshold');
     expect(longMoves).toHaveBeenCalledTimes(1);
+  }));
+
+  // prettier-ignore
+  it('switches to novice switch navigation if it emits', marbles(m => {
+    const values = {
+      c: { stroke: 'abc', model: 'mock-model' },
+      e: { stroke: 'abcde', model: 'mock-model'  },
+      D: { stroke: 'abcd', model: 'mock-model', mode: 'expert' },
+      E: { stroke: 'abcde', model: 'mock-model', mode: 'expert' },
+      F: { model: 'sub-mock-model', mode: 'novice' }
+    };
+    // Drag is a behavior and in this case it matters. Note that values is not
+    // passed, it emits raw events.
+    const drag$ = m.hot(    '--a-b--c--d-e-----f--|').pipe(publishBehavior());
+    const long$ = m.hot(    '-------c----e--------|', values);
+    // const expert$ = m.cold(        '---D-E-----F--|', values);
+    const noviceSwitch$ = m.cold(           '----F-|', values);
+    const sub$ = m.cold(           '---D-E------F-|', values);
+    const etnsh$ = m.hot(   '---------------X-|', { X: noviceSwitch$ });
+    const expected$ = m.hot('-------(X|)'         , { X: sub$ });
+    drag$.connect();
+
+    // Mock Expert navigation concats all event labels in the stroke.
+    expertNavigation.mockImplementation(
+      (obs$, model, init) => obs$.pipe(scan(
+        (prev, n) => ({ stroke: prev.stroke + n, model  }),
+        { stroke: init || '' }
+      )
+    ));
+    longMoves.mockImplementation(() => long$);
+    draw.mockImplementation(() => drag$);
+    const mockExpertToNoviceSwitchHOO = jest.fn(() => etnsh$);
+
+    m
+      .expect(confirmedExpertNavigationHOO(drag$, 'mock-model', {
+        movementsThreshold: 'mock-threshold',
+        expertToNoviceSwitchHOO: mockExpertToNoviceSwitchHOO
+      }))
+      .toBeObservable(expected$);
   }));
 });
 
