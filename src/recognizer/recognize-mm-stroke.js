@@ -62,24 +62,42 @@ export const findMMItem = (model, segments, maxDepth = model.getMaxDepth()) => {
   if (!segments.length) return null;
   // While we haven't found a leaf item, divide the longest segment and walk the model.
   let currentSegments = segments;
+  let currentItem = null;
   while (currentSegments.length <= maxDepth) {
-    const item = walkMMModel(model, currentSegments);
-    if (item && item.isLeaf()) return item;
+    currentItem = walkMMModel(model, currentSegments);
+    if (currentItem && currentItem.isLeaf()) return currentItem;
     currentSegments = divideLongestSegment(currentSegments);
   }
-  return null;
+  return currentItem;
 };
 
 /**
  * @param {List.<number[]>} stroke - A list of points.
  * @param {Item} model - The marking menu model.
+ * @param {object} [options] - Additional options.
+ * @param {number} [maxDepth] - The maximum menu depth to walk. If negative,
+ * start from the maximum depth of the model.
+ * @param {boolean} [requireMenu=false] - Look for a menu item. This
+ * works best with a negative value for maxDepth.
+ * @param {boolean} [requireLeaf=!requireMenu] - Look for a leaf.
  * @return {Item} The item recognized by the stroke.
  */
-const recognizeMMStroke = (stroke, model) => {
-  const maxMenuDepth = model.getMaxDepth();
+const recognizeMMStroke = (
+  stroke,
+  model,
+  {
+    maxDepth: maxDepth_ = model.getMaxDepth(),
+    requireMenu = false,
+    requireLeaf = !requireMenu
+  } = {}
+) => {
+  if (requireLeaf && requireMenu) {
+    throw new Error('The result cannot be both a leaf and a menu');
+  }
+  const maxDepth = maxDepth_ < 0 ? model.getMaxDepth() + maxDepth_ : maxDepth_;
   const maxMenuBreadth = model.getMaxBreadth();
   const length = strokeLength(stroke);
-  const expectedSegmentLength = length / maxMenuDepth;
+  const expectedSegmentLength = length / maxDepth;
   const sensitivity = 0.75;
   const angleThreshold = 360 / maxMenuBreadth / 2 / sensitivity;
   const articulationPoints = getStrokeArticulationPoints(
@@ -97,7 +115,14 @@ const recognizeMMStroke = (stroke, model) => {
     // Change again the representation of the segment to include its length but not its
     // its points anymore.
     .map(seg => ({ angle: segmentAngle(...seg.points), length: seg.length }));
-  return findMMItem(model, segments, maxMenuDepth);
+  const item = findMMItem(model, segments, maxDepth);
+  if (requireLeaf) {
+    return item && item.isLeaf() ? item : null;
+  }
+  if (requireMenu) {
+    return item && item.isLeaf() ? item.parent : item;
+  }
+  return item;
 };
 
 export default recognizeMMStroke;

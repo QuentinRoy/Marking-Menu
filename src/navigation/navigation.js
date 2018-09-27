@@ -1,4 +1,4 @@
-import { race } from 'rxjs';
+import { race, of } from 'rxjs';
 import {
   take,
   map,
@@ -10,37 +10,74 @@ import {
 } from 'rxjs/operators';
 import noviceNavigation from './novice-navigation';
 import expertNavigation from './expert-navigation';
-import { longMoves, dwellings } from '../move';
-
-export const confirmedExpertNavigationHOO = (
-  drag$,
-  model,
-  { movementsThreshold }
-) =>
-  longMoves(expertNavigation(drag$, model), movementsThreshold).pipe(
-    take(1),
-    map(e =>
-      expertNavigation(
-        // Drag always return the last value when observed, in this case we are
-        // not interested in it as it has already been took into account.
-        drag$.pipe(skip(1)),
-        model,
-        e.stroke
-      ).pipe(map(n => ({ ...n, mode: 'expert' })))
-    )
-  );
+import { longMoves, dwellings, draw } from '../move';
+import recognize from '../recognizer';
 
 export const confirmedNoviceNavigationHOO = (drag$, start, model, options) =>
   dwellings(drag$, options.noviceDwellingTime, options.movementsThreshold).pipe(
     take(1),
     map(() =>
-      noviceNavigation(
-        // Same as before, skip the first.
+      (start != null ? of(start) : drag$).pipe(
+        take(1),
+        mergeMap(start_ =>
+          noviceNavigation(
+            // Same as before, skip the first.
+            drag$.pipe(skip(1)),
+            model,
+            { ...options, menuCenter: start_.position }
+          ).pipe(map(n => ({ ...n, mode: 'novice' })))
+        )
+      )
+    )
+  );
+
+export const expertToNoviceSwitchHOO = (drag$, model, initStroke, options) =>
+  dwellings(
+    draw(drag$, { initStroke }),
+    options.noviceDwellingTime,
+    options.movementsThreshold
+  ).pipe(
+    take(1),
+    map(evt => {
+      // Look for the furthest menu (not leaf).
+      const menu = recognize(evt.stroke, model, {
+        maxDepth: -1,
+        requireMenu: true
+      });
+      if (!menu || menu.isRoot()) {
+        return of({ ...evt, type: 'cancel' });
+      }
+      // Start a novice navigation from there.
+      return noviceNavigation(drag$.pipe(skip(1)), menu, {
+        ...options,
+        menuCenter: evt.position
+      });
+    })
+  );
+
+export const confirmedExpertNavigationHOO = (
+  drag$,
+  model,
+  {
+    expertToNoviceSwitchHOO: expertToNoviceSwitchHOO_ = expertToNoviceSwitchHOO,
+    ...options
+  } = {}
+) =>
+  longMoves(draw(drag$, { type: 'draw' }), options.movementsThreshold).pipe(
+    take(1),
+    map(e => {
+      const expertNav$ = expertNavigation(
+        // Drag always return the last value when observed, in this case we are
+        // not interested in it as it has already been took into account.
         drag$.pipe(skip(1)),
         model,
-        { ...options, menuCenter: start.position }
-      ).pipe(map(n => ({ ...n, mode: 'novice' })))
-    )
+        e.stroke
+      ).pipe(map(n => ({ ...n, mode: 'expert' })));
+      return expertToNoviceSwitchHOO_(drag$, model, e.stroke, options).pipe(
+        startWith(expertNav$),
+        switchAll()
+      );
+    })
   );
 
 export const startup = (drag$, model) =>

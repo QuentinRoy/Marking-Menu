@@ -7,20 +7,27 @@ const getAngleRange = items => (items.length > 4 ? 45 : 90);
  */
 export class MMItem {
   /**
-   * @param {String} [id] - The item's id. Required except for the root item.
-   * @param {String} [name] - The item's name. Required except for the root item.
-   * @param {Integer} [angle] - The item's angle. Required except for the root item.
-   * @param {List<ItemModel>} children - The items contained in the menu.
+   * @param {String} id - The item's id. Required except for the root item.
+   * @param {String} name - The item's name. Required except for the root item.
+   * @param {Integer} angle - The item's angle. Required except for the root item.
+   * @param {object} [options] - Some additional options.
+   * @param {ItemModel} [options.parent] - The parent menu of the item.
+   * @param {List<ItemModel>} [options.children] - The children of the item menu.
    */
-  constructor(id, name, angle, children) {
+  constructor(id, name, angle, { parent, children } = {}) {
     this.id = id;
     this.name = name;
     this.angle = angle;
     this.children = children;
+    this.parent = parent;
   }
 
   isLeaf() {
     return !this.children || this.children.length === 0;
+  }
+
+  isRoot() {
+    return !this.parent;
   }
 
   /**
@@ -74,29 +81,37 @@ export class MMItem {
 }
 
 // Create the model item from a list of items.
-const recursivelyCreateModelItems = (items, baseId = undefined) => {
+const recursivelyCreateModelItems = (
+  items,
+  baseId = undefined,
+  parent = undefined
+) => {
   // Calculate the angle range for each items.
   const angleRange = getAngleRange(items);
-  // Create the list of model items.
-  return items.map((item, i) => {
-    // Standard item id.
-    const stdId = baseId ? [baseId, i].join('-') : i.toString();
-    // Create the item.
-    const itemArgs = [
-      item.id == null ? stdId : item.id,
-      typeof item === 'string' ? item : item.name,
-      i * angleRange
-    ];
-    if (item.children) {
-      return Object.freeze(
-        new MMItem(
-          ...itemArgs,
-          Object.freeze(recursivelyCreateModelItems(item.children, stdId))
-        )
+  // Create the list of model items (frozen).
+  return Object.freeze(
+    items.map((item, i) => {
+      // Standard item id.
+      const stdId = baseId ? [baseId, i].join('-') : i.toString();
+      // Create the item.
+      const mmItem = new MMItem(
+        item.id == null ? stdId : item.id,
+        typeof item === 'string' ? item : item.name,
+        i * angleRange,
+        { parent }
       );
-    }
-    return Object.freeze(new MMItem(...itemArgs));
-  });
+      // Add its children if any.
+      if (item.children) {
+        mmItem.children = recursivelyCreateModelItems(
+          item.children,
+          stdId,
+          mmItem
+        );
+      }
+      // Return it frozen.
+      return Object.freeze(mmItem);
+    })
+  );
 };
 
 /**
@@ -105,9 +120,10 @@ const recursivelyCreateModelItems = (items, baseId = undefined) => {
  * @param {List<String|{name,children}>} itemList - The list of items.
  * @return {MMItem} - The root item of the model.
  */
-const createModel = itemList =>
-  Object.freeze(
-    new MMItem(null, null, null, recursivelyCreateModelItems(itemList))
-  );
+const createModel = itemList => {
+  const menu = new MMItem(null, null, null);
+  menu.children = recursivelyCreateModelItems(itemList, undefined, menu);
+  return Object.freeze(menu);
+};
 
 export default createModel;
