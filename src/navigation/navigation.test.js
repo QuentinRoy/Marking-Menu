@@ -4,16 +4,19 @@ import { marbles } from 'rxjs-marbles/jest';
 import navigation, {
   confirmedExpertNavigationHOO,
   confirmedNoviceNavigationHOO,
+  expertToNoviceSwitchHOO,
   startup,
   navigationFromDrag
 } from './navigation';
 import expertNavigation from './expert-navigation';
 import { longMoves, dwellings, draw } from '../move';
 import noviceNavigation from './novice-navigation';
+import recognize from '../recognizer';
 
 jest.mock('./expert-navigation');
 jest.mock('./novice-navigation');
 jest.mock('../move');
+jest.mock('../recognizer');
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -150,6 +153,95 @@ describe('confirmedNoviceNavigationHOO', () => {
     expect(dwellings.mock.calls).toEqual([
       [drag$, 'mock-dwelling', 'mock-move-threshold']
     ]);
+  }));
+});
+
+describe('expertToNoviceSwitchHOO', () => {
+  // prettier-ignore
+  it('return noviceNavigation on dwell', marbles(m => {
+    const values = {
+      b: { stroke: 'mock-stroke', position: 'mock-position' }
+    };
+    const recognizedMenu = { isRoot: () => false };
+    const options = {
+      opt: 'mock-opt',
+      noviceDwellingTime: 'mock-dwelling',
+      movementsThreshold: 'mock-move-threshold'
+    };
+
+    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior());
+    const dwell$ = m.hot(   '------b-----d------|', values);
+    const novice$ = m.cold(       'G---HI|)', values);
+    const expected$ = m.hot('------(X|)', { X: novice$ });
+
+    dwellings.mockImplementation(() => dwell$);
+    recognize.mockImplementation(() => recognizedMenu);
+    noviceNavigation.mockImplementation(() => novice$);
+    draw.mockImplementation(() => 'mock-draw')
+
+    m.expect(
+      expertToNoviceSwitchHOO(drag$, 'mock-model', 'mock-stroke', options)
+    ).toBeObservable(expected$);
+
+    m.flush();
+
+    expect(draw.mock.calls).toEqual([[drag$, { initStroke: 'mock-stroke' }]])
+    expect(dwellings.mock.calls).toEqual([[
+      'mock-draw',
+      'mock-dwelling',
+      'mock-move-threshold'
+    ]]);
+    expect(noviceNavigation).toHaveBeenCalledTimes(1);
+    expect(noviceNavigation.mock.calls[0].slice(1)).toEqual([
+      recognizedMenu,
+      {...options, menuCenter: 'mock-position'}
+    ])
+  }));
+
+  // prettier-ignore
+  it('cancels if no menu is recognized', marbles(m => {
+    const values = {
+      b: { stroke: 'mock-stroke' },
+      B: { stroke: 'mock-stroke', type: 'cancel' }
+    };
+
+    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior());
+    const dwell$ = m.hot(   '------b-----d------|', values);
+    const sub$ = m.cold(          '(B|)', values);
+    const expected$ = m.hot('------(X|)', { X: sub$ });
+
+    dwellings.mockImplementation(() => dwell$);
+    recognize.mockImplementation(() => null);
+
+    m.expect(
+      expertToNoviceSwitchHOO(drag$, 'mock-model', 'mock-stroke', {
+        noviceDwellingTime: 'mock-dwelling',
+        movementsThreshold: 'mock-move-threshold'
+      })
+    ).toBeObservable(expected$);
+  }));
+
+  // prettier-ignore
+  it('cancels if the recognized item is the root', marbles(m => {
+    const values = {
+      b: { stroke: 'mock-stroke' },
+      B: { stroke: 'mock-stroke', type: 'cancel' }
+    };
+
+    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior());
+    const dwell$ = m.hot(   '------b-----d------|', values);
+    const sub$ = m.cold(          '(B|)', values);
+    const expected$ = m.hot('------(X|)', { X: sub$ });
+
+    dwellings.mockImplementation(() => dwell$);
+    recognize.mockImplementation(() => ({ isRoot: () => true }));
+
+    m.expect(
+      expertToNoviceSwitchHOO(drag$, 'mock-model', 'mock-stroke', {
+        noviceDwellingTime: 'mock-dwelling',
+        movementsThreshold: 'mock-move-threshold'
+      })
+    ).toBeObservable(expected$);
   }));
 });
 
