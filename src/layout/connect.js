@@ -103,9 +103,10 @@ export default (
     lowerStroke = null;
   };
 
-  const showGestureFeedback = () => {
+  const showGestureFeedback = isCanceled => {
     gestureFeedback.show(
-      lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke
+      lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke,
+      isCanceled
     );
   };
 
@@ -140,7 +141,7 @@ export default (
         // eslint-disable-next-line no-param-reassign
         parentDOM.style.cursor = '';
         if (menu) closeMenu();
-        showGestureFeedback();
+        showGestureFeedback(notification.type === 'cancel');
         clearUpperStroke();
         clearLowerStroke();
         break;

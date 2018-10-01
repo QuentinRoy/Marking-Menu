@@ -102,6 +102,8 @@ describe('main', () => {
           gestureFeedbackDuration: 'mock-gestureFeedbackDuration',
           gestureFeedbackStrokeWidth: 'mock-gestureFeedbackStrokeWidth',
           gestureFeedbackStrokeColor: 'mock-gestureFeedbackStrokeColor',
+          gestureFeedbackCanceledStrokeColor:
+            'mock-gestureFeedbackCanceledStrokeColor',
           notifySteps: true,
           log: 'mock-log',
           ...opts
@@ -224,8 +226,13 @@ describe('main', () => {
         'mock-parent-5',
         {
           duration: 'mock-gestureFeedbackDuration',
-          lineColor: 'mock-gestureFeedbackStrokeColor',
-          lineWidth: 'mock-gestureFeedbackStrokeWidth'
+          strokeOptions: {
+            lineColor: 'mock-gestureFeedbackStrokeColor',
+            lineWidth: 'mock-gestureFeedbackStrokeWidth'
+          },
+          canceledStrokeOptions: {
+            lineColor: 'mock-gestureFeedbackCanceledStrokeColor'
+          }
         }
       ]
     ]);
