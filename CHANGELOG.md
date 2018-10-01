@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.9.0"></a>
+# [0.9.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.9.0-beta.1...v0.9.0) (2018-10-01)
+
+
+### Features
+
+* different feedback on cancel ([#41](https://github.com/QuentinRoy/Marking-Menu/issues/41)) ([81de0fb](https://github.com/QuentinRoy/Marking-Menu/commit/81de0fb)), closes [#32](https://github.com/QuentinRoy/Marking-Menu/issues/32)
+* expert to novice transition ([#34](https://github.com/QuentinRoy/Marking-Menu/issues/34)) ([51b3619](https://github.com/QuentinRoy/Marking-Menu/commit/51b3619))
+
+
+
 <a name="0.9.0-beta.1"></a>
 # [0.9.0-beta.1](https://github.com/QuentinRoy/Marking-Menu/compare/v0.9.0-beta.0...v0.9.0-beta.1) (2018-09-26)
 

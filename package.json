@@ -1,6 +1,6 @@
 {
   "name": "marking-menu",
-  "version": "0.9.0-beta.1",
+  "version": "0.9.0",
   "description": "Marking Menu Implementation in JavaScript.",
   "main": "marking-menu.js",
   "files": [
