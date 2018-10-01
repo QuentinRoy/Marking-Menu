@@ -51,6 +51,9 @@ export const exportNotification = n => ({
  *                                                        feedback.
  * @param {number} [options.gestureFeedbackStrokeColor] - The color of the stroke of the gesture
  *                                                        feedback.
+ * @param {number} [options.gestureFeedbackCanceledStrokeColor] - The color of the stroke of the
+ *                                                        gesture feedback when the selection is
+ *                                                        canceled.
  * @param {number} [options.gestureFeedbackDuration] - The duration of the gesture feedback.
  * @param {boolean} [options.notifySteps] - If true, every steps of the marking menu (include move)
  *                                          events, will be notified. Useful for logging.
@@ -74,6 +77,7 @@ export default (
     lowerStrokeStartPointRadius = lowerStrokeWidth,
     gestureFeedbackDuration = 1000,
     gestureFeedbackStrokeWidth = strokeWidth,
+    gestureFeedbackCanceledStrokeColor = '#DE6C52',
     gestureFeedbackStrokeColor = strokeColor,
     notifySteps = false,
     log = {
@@ -101,8 +105,13 @@ export default (
   };
   const gestureFeedbackOptions = {
     duration: gestureFeedbackDuration,
-    lineColor: gestureFeedbackStrokeColor,
-    lineWidth: gestureFeedbackStrokeWidth
+    strokeOptions: {
+      lineColor: gestureFeedbackStrokeColor,
+      lineWidth: gestureFeedbackStrokeWidth
+    },
+    canceledStrokeOptions: {
+      lineColor: gestureFeedbackCanceledStrokeColor
+    }
   };
 
   // Create model and navigation observable.

@@ -1,10 +1,16 @@
 import createStrokeCanvas from './stroke';
 
-export default (parentDOM, { duration, ...strokeOptions }) => {
+export default (
+  parentDOM,
+  { duration, strokeOptions = {}, canceledStrokeOptions = {} }
+) => {
   let strokeTimeoutEntries = [];
 
-  const show = stroke => {
-    const canvas = createStrokeCanvas(parentDOM, strokeOptions);
+  const show = (stroke, isCanceled = false) => {
+    const canvas = createStrokeCanvas(parentDOM, {
+      ...strokeOptions,
+      ...(isCanceled ? canceledStrokeOptions : {})
+    });
     canvas.drawStroke(stroke);
     const timeoutEntry = {
       canvas,

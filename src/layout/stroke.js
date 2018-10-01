@@ -2,8 +2,8 @@
  * @param {HTMLElement} parent - The parent node.
  * @param {Document} options - Options.
  * @param {Document} [options.doc=document] - The root document. Mostly useful for testing purposes.
- * @param {number} options.lineWidth - The width of the stroke.
- * @param {string} options.lineColor - CSS representation of the stroke color.
+ * @param {number} [options.lineWidth=2] - The width of the stroke.
+ * @param {string} [options.lineColor='black'] - CSS representation of the stroke color.
  * @param {number} [options.startPointRadius=0] - The radius of the start point.
  * @param {number} [options.startPointColor=options.lineColor] - CSS representation of the start
  *                                                               point color.
@@ -16,7 +16,7 @@ export default (
   {
     doc = document,
     lineWidth = 2,
-    lineColor = 'blue',
+    lineColor = 'black',
     pointRadius = 0,
     pointColor = lineColor,
     ptSize = window.devicePixelRatio ? 1 / window.devicePixelRatio : 1

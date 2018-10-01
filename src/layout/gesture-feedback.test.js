@@ -26,25 +26,46 @@ describe('createGestureFeedback#draw', () => {
     // Create the stroke canvas and show a stroke for 50ms.
     gs = createGestureFeedback('mock-div', {
       duration: 50,
-      strokeArg1: 'foo',
-      strokeArg2: 'bar'
+      strokeOptions: {
+        strokeArg1: 'arg1',
+        strokeArg2: 'arg2'
+      },
+      canceledStrokeOptions: {
+        strokeArg1: 'canceledArg1',
+        canceledStrokeArg3: 'canceledArg3'
+      }
     });
-    gs.show('mock-stroke');
   });
 
   it('draw a stroke', () => {
+    gs.show('mock-stroke');
     // Expect the stroke canvas to have been properly created.
     expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
     expect(createStrokeCanvas).toHaveBeenCalledWith('mock-div', {
-      strokeArg1: 'foo',
-      strokeArg2: 'bar'
+      strokeArg1: 'arg1',
+      strokeArg2: 'arg2'
     });
     const sc = createStrokeCanvas.mock.results[0].value;
     expect(sc.drawStroke).toHaveBeenCalledTimes(1);
     expect(sc.drawStroke).toHaveBeenCalledWith('mock-stroke');
   });
 
+  it('draw a canceled stroke', () => {
+    gs.show('mock-canceled-stroke', true);
+    // Expect the stroke canvas to have been properly created.
+    expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
+    expect(createStrokeCanvas).toHaveBeenCalledWith('mock-div', {
+      strokeArg1: 'canceledArg1',
+      strokeArg2: 'arg2',
+      canceledStrokeArg3: 'canceledArg3'
+    });
+    const sc = createStrokeCanvas.mock.results[0].value;
+    expect(sc.drawStroke).toHaveBeenCalledTimes(1);
+    expect(sc.drawStroke).toHaveBeenCalledWith('mock-canceled-stroke');
+  });
+
   it('removes the stroke after the given duration', () => {
+    gs.show('mock-stroke');
     const sc = createStrokeCanvas.mock.results[0].value;
     // Expect the stroke canvas not to have been removed yet.
     expect(sc.remove).not.toHaveBeenCalled();
