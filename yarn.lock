@@ -772,11 +772,6 @@
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.39.tgz#e177e699ee1b8c22d23174caaa7422644389509f"
   integrity sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==
 
-"@types/lodash@^4.0.0":
-  version "4.14.108"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.108.tgz#02656af3add2e5b3174f830862c47421c00ef817"
-  integrity sha512-WD2vUOKfBBVHxWUV9iMR9RMfpuf8HquxWeAq2yqGVL7Nc4JW2+sQama0pREMqzNI3Tutj0PyxYUJwuoxxvX+xA==
-
 "@types/node@*":
   version "10.0.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.0.0.tgz#c40f8e07dce607d3ef25a626b93a6a7cdcf97881"
@@ -2857,6 +2852,11 @@ fast-diff@^1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/fast-diff/-/fast-diff-1.1.2.tgz#4b62c42b8e03de3f848460b639079920695d0154"
   integrity sha512-KaJUt+M9t1qaIteSvjc6P3RbMdXsNhK61GRftR6SNxqmhthcd9MGIi4T+o0jD8LUSpSnSKXE20nLtJ3fOHxQig==
+
+fast-equals@^1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/fast-equals/-/fast-equals-1.6.1.tgz#66cc5a0922ea747599f41aedf44a76ec2908adc0"
+  integrity sha512-xlmDRa03F8QpqTpfeH1l/exTKMg5zhyDh34bfc3pBR/JLQkaIzayXC7hvsXsyv/Och1At//+ubJp+Jy1nfmMvA==
 
 fast-json-stable-stringify@^2.0.0:
   version "2.0.0"
@@ -6461,13 +6461,12 @@ rx-lite@^3.1.2:
   resolved "https://registry.yarnpkg.com/rx-lite/-/rx-lite-3.1.2.tgz#19ce502ca572665f3b647b10939f97fd1615f102"
   integrity sha1-Gc5QLKVyZl87ZHsQk5+X/RYV8QI=
 
-rxjs-marbles@^4.3.1:
-  version "4.3.1"
-  resolved "https://registry.yarnpkg.com/rxjs-marbles/-/rxjs-marbles-4.3.1.tgz#b20156be06106003c0164fe75a9cab871fdf9fc4"
-  integrity sha512-ZstjS6vTF+9kbNV3ENj7Uah7k5g7hs0DFHs+4vdxelphccqK6/v6rNH0MVzps2alYOs1Wqap/qfzT05UmwP3nw==
+rxjs-marbles@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/rxjs-marbles/-/rxjs-marbles-5.0.0.tgz#b46b4d6ed8ff62da9b5da6df1bcb423df56c72f4"
+  integrity sha512-Twr69tKSxC4ObE/afKJtSPuw+hVE5Paul8KlHhVsnOpqnSHiOd9Ff94RUx+fsCXYsnEILrf4qLsXpHlYzG4a9Q==
   dependencies:
-    "@types/lodash" "^4.0.0"
-    lodash "^4.17.5"
+    fast-equals "^1.6.1"
 
 rxjs@^6.1.0:
   version "6.3.1"
