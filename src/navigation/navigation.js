@@ -82,11 +82,10 @@ export const confirmedExpertNavigationHOO = (
 
 export const startup = (drag$, model) =>
   expertNavigation(drag$, model).pipe(
-    map(
-      (n, i) =>
-        i === 0
-          ? { ...n, type: 'start', mode: 'startup' }
-          : { ...n, mode: 'startup' }
+    map((n, i) =>
+      i === 0
+        ? { ...n, type: 'start', mode: 'startup' }
+        : { ...n, mode: 'startup' }
     )
   );
 
