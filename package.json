@@ -57,7 +57,7 @@
     "jest-transform-pug": "^0.1.0",
     "node-sass": "^4.9.3",
     "prettier": "^1.14.3",
-    "pug": "^2.0.3",
+    "pug": "^3.0.0",
     "pug-jest": "^1.0.1",
     "rollup": "^1.0.0",
     "rollup-plugin-babel": "^4.0.3",
