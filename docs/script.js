@@ -5,12 +5,7 @@ const items = [
   'Item Right',
   {
     name: 'Others...',
-    children: [
-      'Sub Right',
-      'Sub Down',
-      'Sub Left',
-      'Sub Top'
-    ]
+    children: ['Sub Right', 'Sub Down', 'Sub Left', 'Sub Top']
   },
   'Item Left',
   'Item Up'

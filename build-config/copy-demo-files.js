@@ -4,7 +4,7 @@ const { promisify } = require('util');
 
 const copyFile = promisify(fs.copyFile);
 
-const TARGET_DIR = '../demo/vendors';
+const TARGET_DIR = '../docs/vendors';
 const FILES_TO_COPY = [
   '../marking-menu.js',
   '../marking-menu.js.map',

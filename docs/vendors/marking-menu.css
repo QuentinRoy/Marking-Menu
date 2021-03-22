@@ -1,0 +1,104 @@
+.marking-menu {
+  position: absolute;
+  pointer-events: none; }
+  .marking-menu * {
+    pointer-events: none; }
+
+.marking-menu-item .marking-menu-label {
+  position: absolute;
+  border-radius: 8px;
+  background-color: #f2f2f2;
+  padding: 4px;
+  width: 100px;
+  height: 20px;
+  overflow: hidden;
+  vertical-align: middle;
+  text-align: center;
+  text-overflow: ellipsis;
+  line-height: 20px;
+  color: #333333;
+  font-size: 20px; }
+
+.marking-menu-item.active .marking-menu-label {
+  background-color: #d9d9d9;
+  color: #191919;
+  font-weight: bolder; }
+
+.marking-menu-item.active .marking-menu-line {
+  background-color: #d9d9d9; }
+
+.marking-menu-item .marking-menu-line {
+  position: absolute;
+  top: -2px;
+  background-color: #f2f2f2;
+  width: 92px;
+  height: 4px;
+  transform-origin: center left; }
+
+.marking-menu-item[data-item-angle='0'] .marking-menu-label {
+  bottom: -14px;
+  left: 80px; }
+
+.marking-menu-item[data-item-angle='0'] .marking-menu-line {
+  transform: rotate(0deg); }
+
+.marking-menu-item[data-item-angle='45'] .marking-menu-label {
+  bottom: -84.56854px;
+  left: 56.56854px; }
+
+.marking-menu-item[data-item-angle='45'] .marking-menu-line {
+  transform: rotate(45deg); }
+
+.marking-menu-item[data-item-angle='90'] .marking-menu-label {
+  bottom: -108px;
+  left: -54px; }
+
+.marking-menu-item[data-item-angle='90'] .marking-menu-line {
+  transform: rotate(90deg); }
+
+.marking-menu-item[data-item-angle='135'] .marking-menu-label {
+  bottom: -84.56854px;
+  left: -164.56854px; }
+
+.marking-menu-item[data-item-angle='135'] .marking-menu-line {
+  transform: rotate(135deg); }
+
+.marking-menu-item[data-item-angle='180'] .marking-menu-label {
+  bottom: -14px;
+  left: -188px; }
+
+.marking-menu-item[data-item-angle='180'] .marking-menu-line {
+  transform: rotate(180deg); }
+
+.marking-menu-item[data-item-angle='225'] .marking-menu-label {
+  bottom: 56.56854px;
+  left: -164.56854px; }
+
+.marking-menu-item[data-item-angle='225'] .marking-menu-line {
+  transform: rotate(225deg); }
+
+.marking-menu-item[data-item-angle='270'] .marking-menu-label {
+  bottom: 80px;
+  left: -54px; }
+
+.marking-menu-item[data-item-angle='270'] .marking-menu-line {
+  transform: rotate(270deg); }
+
+.marking-menu-item[data-item-angle='315'] .marking-menu-label {
+  bottom: 56.56854px;
+  left: 56.56854px; }
+
+.marking-menu-item[data-item-angle='315'] .marking-menu-line {
+  transform: rotate(315deg); }
+
+.marking-menu-item[data-item-angle='45'] .marking-menu-label {
+  border-top-left-radius: 0; }
+
+.marking-menu-item[data-item-angle='135'] .marking-menu-label {
+  border-top-right-radius: 0; }
+
+.marking-menu-item[data-item-angle='225'] .marking-menu-label {
+  border-bottom-right-radius: 0; }
+
+.marking-menu-item[data-item-angle='315'] .marking-menu-label {
+  border-bottom-left-radius: 0; }
