@@ -1,7 +1,10 @@
 'use strict';
 
+let mainElt = document.getElementById('main');
+let toastElement = document.getElementById('toast');
+
 // Create the menu with a sub-menu at the bottom.
-const items = [
+let items = [
   'Item Right',
   {
     name: 'Others...',
@@ -10,23 +13,20 @@ const items = [
   'Item Left',
   'Item Up'
 ];
-const mm = MarkingMenu(items, document.getElementById('main'));
+let mm = MarkingMenu(items, document.getElementById('main'));
 
-// Create the toast to display selections.
-var toastMessage = (function(dom) {
-  var timeoutId = null;
-  return function(message) {
-    clearTimeout(timeoutId);
-    dom.innerHTML = message;
-    dom.classList.add('shown');
-    timeoutId = setTimeout(function() {
-      dom.classList.remove('shown');
-    }, 1000);
-  };
-})(document.getElementById('toast'));
+let toastTimeoutId = null;
+function toastMessage(message) {
+  clearTimeout(toastTimeoutId);
+  toastElement.innerHTML = message;
+  toastElement.classList.add('shown');
+  toastTimeoutId = setTimeout(() => {
+    toastElement.classList.remove('shown');
+  }, 1000);
+}
 
 // Toast the marking menu's selections.
-mm.subscribe({
+let subscription = mm.subscribe({
   next(selection) {
     toastMessage(selection.name);
   },
