@@ -64,7 +64,7 @@
     "rxjs-marbles": "^7.0.1",
     "sass-lint": "^1.12.1",
     "serve": "^13.0.0",
-    "standard-version": "^7.0.0"
+    "standard-version": "^8.0.1"
   },
   "keywords": [
     "marking-menu",
