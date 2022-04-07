@@ -29,12 +29,10 @@
   },
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "license": "MIT",
-  "peerDependencies": {
-    "rxjs": "^6.0.0"
-  },
   "dependencies": {
     "rad2deg": "^1.0.0",
-    "raf-throttle": "^2.0.3"
+    "raf-throttle": "^2.0.3",
+    "rxjs": "^7.5.5"
   },
   "devDependencies": {
     "@babel/core": "^7.1.0",
@@ -63,7 +61,6 @@
     "rollup-plugin-pug": "^1.0.0",
     "rollup-plugin-sass": "^1.0.0",
     "rollup-watch": "^4.3.1",
-    "rxjs": "^7.5.5",
     "rxjs-marbles": "^7.0.1",
     "sass-lint": "^1.12.1",
     "serve": "^13.0.0",
@@ -73,5 +70,8 @@
     "marking-menu",
     "interaction",
     "technique"
-  ]
+  ],
+  "peerDependencies": {
+    "rxjs": "^7.5.5"
+  }
 }
