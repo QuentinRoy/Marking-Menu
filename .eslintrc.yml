@@ -10,9 +10,6 @@ rules:
   import/no-extraneous-dependencies:
     - error
     - peerDependencies: true
-  prettier/prettier: error
-plugins:
-  - prettier
 overrides:
   - files:
       - build-config/**
