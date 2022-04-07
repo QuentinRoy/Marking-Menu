@@ -21,7 +21,7 @@ jest.mock('./pointer-events', () => ({
 }));
 
 jest.mock('rxjs', () => ({
-  ...require.requireActual('rxjs'),
+  ...jest.requireActual('rxjs'),
   fromEvent: jest.fn(() => {}),
 }));
 

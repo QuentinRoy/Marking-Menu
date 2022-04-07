@@ -1,5 +1,5 @@
-import { share } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
+import { Observable } from 'rxjs';
 import noviceNavigation, {
   noviceMoves,
   menuSelection,
@@ -36,6 +36,22 @@ const EndNotif = (type, position, active = null) => ({
   ...toPolar(position),
   position,
   selection: active,
+});
+
+// Hacky, but without this spyOn performance do not work.
+beforeAll(() => {
+  Object.defineProperty(performance, 'now', {
+    value: performance.now,
+    configurable: true,
+    writable: true,
+  });
+});
+afterAll(() => {
+  Object.defineProperty(performance, 'now', {
+    value: performance.now,
+    configurable: false,
+    writable: false,
+  });
 });
 
 beforeEach(() => {
@@ -217,27 +233,27 @@ test('subMenuNavigation', marbles(m => {
   ]);
 }));
 
-// prettier-ignore
-test('noviceNavigation', marbles(m => {
-  const move$     = m.hot('a-b--c---d-e-|');
-  const moveSub   =       '^---!'
-  const subs = {
-    f: m.cold(                 '-ij---k|'),
-    // g and h below are not supposed to be used.
-    g: m.cold(                   '-o-o-o-o-o-o-o-o|'),
-    h: m.cold(                          'ooo|')
-  };
-  const fSub =            '----^------!'
-  const subNavs$  = m.hot('----f--g------h|', subs);
-  const subNavsSub =      '^---!'
-  const expected$ = m.hot('a-b--ij---k|');
+test(
+  'noviceNavigation',
+  marbles((m) => {
+    const move$ = m.hot('a-b--c---d-e-|');
+    const moveSub = '^---!';
+    const subs = {
+      f: m.cold('-ij---k|'),
+      // g and h below are not supposed to be used.
+      g: m.cold('-o-o-o-o-o-o-o-o|'),
+      h: m.cold('ooo|'),
+    };
+    const fSub = '----^------!';
+    const subNavs$ = m.hot('----f--g------h|', subs);
+    const subNavsSub = '^---!';
+    const expected$ = m.hot('a-b--ij---k|');
 
-  const mockNoviceMoves = jest.fn(() => move$);
-  const mockMenuSelection = jest.fn(() => 'mockMenuSelection');
-  const mockSubMenuNavigation = jest.fn(() => subNavs$);
+    const mockNoviceMoves = jest.fn(() => move$);
+    const mockMenuSelection = jest.fn(() => 'mockMenuSelection');
+    const mockSubMenuNavigation = jest.fn(() => subNavs$);
 
-  m
-    .expect(
+    m.expect(
       noviceNavigation('mockDrags', 'mockMenu', {
         minSelectionDist: 'mock-minSelectionDist',
         minMenuSelectionDist: 'mock-minMenuSelectionDist',
@@ -246,51 +262,55 @@ test('noviceNavigation', marbles(m => {
         menuCenter: 'mock-menuCenter',
         noviceMoves: mockNoviceMoves,
         menuSelection: mockMenuSelection,
-        subMenuNavigation: mockSubMenuNavigation
+        subMenuNavigation: mockSubMenuNavigation,
       })
-    )
-    .toBeObservable(expected$);
-  m.expect(move$).toHaveSubscriptions(moveSub);
-  m.expect(subNavs$).toHaveSubscriptions(subNavsSub);
-  m.expect(subs.f).toHaveSubscriptions(fSub);
-  m.expect(subs.g).toHaveSubscriptions([]);
-  m.expect(subs.h).toHaveSubscriptions([]);
-  m.flush();
-  expect(mockNoviceMoves.mock.calls).toEqual([
-    [
-      'mockDrags',
-      'mockMenu',
-      {
-        menuCenter: 'mock-menuCenter',
-        minSelectionDist: 'mock-minSelectionDist'
-      }
-    ]
-  ]);
-  expect(mockMenuSelection.mock.calls).toEqual([
-    [
-      // share() is unfortunate, but expect will not work without it.
-      move$.pipe(share()),
-      {
-        subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
-        movementsThreshold: 'mock-movementsThreshold',
-        minMenuSelectionDist: 'mock-minMenuSelectionDist'
-      }
-    ]
-  ]);
-  expect(mockSubMenuNavigation.mock.calls).toEqual([
-    [
-      'mockMenuSelection',
-      'mockDrags',
-      noviceNavigation,
-      {
-        minSelectionDist: 'mock-minSelectionDist',
-        minMenuSelectionDist: 'mock-minMenuSelectionDist',
-        movementsThreshold: 'mock-movementsThreshold',
-        subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
-        noviceMoves: mockNoviceMoves,
-        menuSelection: mockMenuSelection,
-        subMenuNavigation: mockSubMenuNavigation
-      }
-    ]
-  ]);
-}));
+    ).toBeObservable(expected$);
+    m.expect(move$).toHaveSubscriptions(moveSub);
+    m.expect(subNavs$).toHaveSubscriptions(subNavsSub);
+    m.expect(subs.f).toHaveSubscriptions(fSub);
+    m.expect(subs.g).toHaveSubscriptions([]);
+    m.expect(subs.h).toHaveSubscriptions([]);
+    m.flush();
+    expect(mockNoviceMoves.mock.calls).toEqual([
+      [
+        'mockDrags',
+        'mockMenu',
+        {
+          menuCenter: 'mock-menuCenter',
+          minSelectionDist: 'mock-minSelectionDist',
+        },
+      ],
+    ]);
+    {
+      const [[moveArg$, ...argRest], ...otherCalls] =
+        mockMenuSelection.mock.calls;
+      // It is difficult to at this point to check that moveArg$ did emit the
+      // values in move. It might be possible, but I did not bother.
+      expect(moveArg$).toBeInstanceOf(Observable);
+      expect(argRest).toEqual([
+        {
+          subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
+          movementsThreshold: 'mock-movementsThreshold',
+          minMenuSelectionDist: 'mock-minMenuSelectionDist',
+        },
+      ]);
+      expect(otherCalls.length).toBe(0);
+    }
+    expect(mockSubMenuNavigation.mock.calls).toEqual([
+      [
+        'mockMenuSelection',
+        'mockDrags',
+        noviceNavigation,
+        {
+          minSelectionDist: 'mock-minSelectionDist',
+          minMenuSelectionDist: 'mock-minMenuSelectionDist',
+          movementsThreshold: 'mock-movementsThreshold',
+          subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
+          noviceMoves: mockNoviceMoves,
+          menuSelection: mockMenuSelection,
+          subMenuNavigation: mockSubMenuNavigation,
+        },
+      ],
+    ]);
+  })
+);

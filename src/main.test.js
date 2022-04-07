@@ -239,16 +239,41 @@ describe('main', () => {
   });
 
   // prettier-ignore
-  it('can notify every steps', marbles(m => {
-    const expectedValues = {
-      A: { type: 'mock-type-1', active: 'a' },
-      B: { type: 'select', active: 'b', selection: 'mock-selection-b' },
-      C: { type: 'mock-type-2', active: 'c' }
-    };
-    connectedObs$ = m.hot(  '--a-b--c-|', mockNavNotifs);
-    const expected$ = m.hot('--A-B--C-|', expectedValues);
-    m.expect(callMain()).toBeObservable(expected$);
-  }));
+  it('can notify every steps', marbles((m) => {
+      const expectedValues = {
+        A: {
+          type: 'mock-type-1',
+          active: 'a',
+          menuCenter: undefined,
+          mode: undefined,
+          position: undefined,
+          selection: undefined,
+          timeStamp: undefined,
+        },
+        B: {
+          type: 'select',
+          active: 'b',
+          selection: 'mock-selection-b',
+          menuCenter: undefined,
+          mode: undefined,
+          position: undefined,
+          timeStamp: undefined,
+        },
+        C: {
+          type: 'mock-type-2',
+          active: 'c',
+          menuCenter: undefined,
+          mode: undefined,
+          position: undefined,
+          selection: undefined,
+          timeStamp: undefined,
+        },
+      };
+      connectedObs$ = m.hot('--a-b--c-|', mockNavNotifs);
+      const expected$ = m.hot('--A-B--C-|', expectedValues);
+      m.expect(callMain()).toBeObservable(expected$);
+    })
+  );
 
   // prettier-ignore
   it('can notify selections only', marbles(m => {
