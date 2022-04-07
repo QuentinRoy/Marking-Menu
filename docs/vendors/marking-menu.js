@@ -7,1476 +7,1336 @@
  *
  * Marking Menus may be patented independently from this software.
  *
- * Date: Thu, 07 Apr 2022 19:41:33 GMT
+ * Date: Thu, 07 Apr 2022 21:29:51 GMT
  */
 
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('rxjs/operators'), require('rxjs')) :
-  typeof define === 'function' && define.amd ? define(['rxjs/operators', 'rxjs'], factory) :
-  (global = global || self, global.MarkingMenu = factory(global.rxjs.operators, global.rxjs));
+    typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('rxjs/operators'), require('rxjs')) :
+    typeof define === 'function' && define.amd ? define(['rxjs/operators', 'rxjs'], factory) :
+    (global = global || self, global.MarkingMenu = factory(global.rxjs.operators, global.rxjs));
 }(this, (function (operators, rxjs) { 'use strict';
 
-  function _extends() {
-    _extends = Object.assign || function (target) {
-      for (var i = 1; i < arguments.length; i++) {
-        var source = arguments[i];
-
-        for (var key in source) {
-          if (Object.prototype.hasOwnProperty.call(source, key)) {
-            target[key] = source[key];
-          }
-        }
-      }
-
-      return target;
+    var source = function (angleInRadians) {
+        // angleInDegree = angleInRadians * (180 / Math.PI)  
+        return angleInRadians * 57.29577951308232
     };
 
-    return _extends.apply(this, arguments);
-  }
+    /**
+     * @param {number} a the dividend
+     * @param {number} n the divisor
+     * @return {number} The modulo of `a` over `n` (% is not exactly modulo but remainder).
+     */
 
-  function _objectWithoutPropertiesLoose(source, excluded) {
-    if (source == null) return {};
-    var target = {};
-    var sourceKeys = Object.keys(source);
-    var key, i;
+    const mod = (a, n) => (a % n + n) % n;
+    /**
+     * @param {number} alpha a first angle (in degrees)
+     * @param {number} beta a second angle (in degrees)
+     * @return {number} The (signed) delta between the two angles (in degrees).
+     */
 
-    for (i = 0; i < sourceKeys.length; i++) {
-      key = sourceKeys[i];
-      if (excluded.indexOf(key) >= 0) continue;
-      target[key] = source[key];
-    }
+    const deltaAngle = (alpha, beta) => mod(beta - alpha + 180, 360) - 180;
+    /**
+     * Calculate the euclidean distance between two
+     * points.
+     *
+     * @param {List<number>} point1 - The first point
+     * @param {List<number>} point2 - The second point
+     * @return {number} The distance between the two points.
+     */
 
-    return target;
-  }
+    const dist = (point1, point2) => {
+      const sum = point1.reduce((acc, x1i, i) => {
+        const x2i = point2[i];
+        return acc + (x2i - x1i) ** 2;
+      }, 0);
+      return Math.sqrt(sum);
+    };
+    const ANGLE_ROUNDING = 10e-8;
+    /**
+     * @param {number[]} a - The first point.
+     * @param {number[]} b - The second point, center of the angle.
+     * @param {number[]} c - The third point.
+     * @return {number} The angle abc (in degrees) rounded at the 8th decimal.
+     */
 
-  var source = function (angleInRadians) {
-      // angleInDegree = angleInRadians * (180 / Math.PI)  
-      return angleInRadians * 57.29577951308232
-  };
+    const angle = (a, b, c) => {
+      const lab = dist(a, b);
+      const lbc = dist(b, c);
+      const lac = dist(a, c);
+      const cos = (lab ** 2 + lbc ** 2 - lac ** 2) / (2 * lab * lbc); // Due to rounding, it can happen than cos ends up being slight > 1 or slightly < -1.
+      // This fixes it.
 
-  /**
-   * @param {number} a the dividend
-   * @param {number} n the divisor
-   * @return {number} The modulo of `a` over `n` (% is not exactly modulo but remainder).
-   */
+      const adjustedCos = Math.max(-1, Math.min(1, cos));
+      const angleABC = source(Math.acos(adjustedCos)); // Round the angle to avoid rounding issues.
 
-  var mod = function mod(a, n) {
-    return (a % n + n) % n;
-  };
-  /**
-   * @param {number} alpha a first angle (in degrees)
-   * @param {number} beta a second angle (in degrees)
-   * @return {number} The (signed) delta between the two angles (in degrees).
-   */
+      return Math.round(angleABC / ANGLE_ROUNDING) * ANGLE_ROUNDING;
+    };
+    /**
+     * @callback findMaxEntryComp
+     * @param {*} item1 - A first item.
+     * @param {*} item2 - A second item.
+     * @return {number} A positive number if the second item should be ranked higher than the first,
+     *                  a negative number if it should be ranked lower and 0 if they should be ranked
+     *                  the same.
+     */
 
-  var deltaAngle = function deltaAngle(alpha, beta) {
-    return mod(beta - alpha + 180, 360) - 180;
-  };
-  /**
-   * Calculate the euclidean distance between two
-   * points.
-   *
-   * @param {List<number>} point1 - The first point
-   * @param {List<number>} point2 - The second point
-   * @return {number} The distance between the two points.
-   */
+    /**
+     * @param {List} list - A list of items.
+     * @param {findMaxEntryComp} comp - A function to calculate a value from an item.
+     * @return {[index, item]} The found entry.
+     */
 
-  var dist = function dist(point1, point2) {
-    var sum = point1.reduce(function (acc, x1i, i) {
-      var x2i = point2[i];
-      return acc + Math.pow(x2i - x1i, 2);
-    }, 0);
-    return Math.sqrt(sum);
-  };
-  var ANGLE_ROUNDING = 10e-8;
-  /**
-   * @param {number[]} a - The first point.
-   * @param {number[]} b - The second point, center of the angle.
-   * @param {number[]} c - The third point.
-   * @return {number} The angle abc (in degrees) rounded at the 8th decimal.
-   */
-
-  var angle = function angle(a, b, c) {
-    var lab = dist(a, b);
-    var lbc = dist(b, c);
-    var lac = dist(a, c);
-    var cos = (Math.pow(lab, 2) + Math.pow(lbc, 2) - Math.pow(lac, 2)) / (2 * lab * lbc); // Due to rounding, it can happen than cos ends up being slight > 1 or slightly < -1.
-    // This fixes it.
-
-    var adjustedCos = Math.max(-1, Math.min(1, cos));
-    var angleABC = source(Math.acos(adjustedCos)); // Round the angle to avoid rounding issues.
-
-    return Math.round(angleABC / ANGLE_ROUNDING) * ANGLE_ROUNDING;
-  };
-  /**
-   * @callback findMaxEntryComp
-   * @param {*} item1 - A first item.
-   * @param {*} item2 - A second item.
-   * @return {number} A positive number if the second item should be ranked higher than the first,
-   *                  a negative number if it should be ranked lower and 0 if they should be ranked
-   *                  the same.
-   */
-
-  /**
-   * @param {List} list - A list of items.
-   * @param {findMaxEntryComp} comp - A function to calculate a value from an item.
-   * @return {[index, item]} The found entry.
-   */
-
-  var findMaxEntry = function findMaxEntry(list, comp) {
-    return list.slice(0).reduce(function (result, item, index) {
+    const findMaxEntry = (list, comp) => list.slice(0).reduce((result, item, index) => {
       if (comp(result[1], item) > 1) return [index, item];
       return result;
     }, [0, list[0]]);
-  };
-  /**
-   * Converts the coordinates of a point in polar coordinates (angle in degrees).
-   *
-   * @param  {number[]} point - A point.
-   * @param  {number[]} [pole=[0, 0]] - The pole of a polar coordinate
-   *                                    system
-   * @return {{azymuth, radius}} The angle coordinate of the point in the polar
-   *                             coordinate system in degrees.
-   */
+    /**
+     * Converts the coordinates of a point in polar coordinates (angle in degrees).
+     *
+     * @param  {number[]} point - A point.
+     * @param  {number[]} [pole=[0, 0]] - The pole of a polar coordinate
+     *                                    system
+     * @return {{azymuth, radius}} The angle coordinate of the point in the polar
+     *                             coordinate system in degrees.
+     */
 
-  var toPolar = function toPolar(_ref, _temp) {
-    var px = _ref[0],
-        py = _ref[1];
-
-    var _ref2 = _temp === void 0 ? [0, 0] : _temp,
-        cx = _ref2[0],
-        cy = _ref2[1];
-
-    var x = px - cx;
-    var y = py - cy;
-    return {
-      azymuth: source(Math.atan2(y, x)),
-      radius: Math.sqrt(x * x + y * y)
+    const toPolar = function (_ref, _temp) {
+      let [px, py] = _ref;
+      let [cx, cy] = _temp === void 0 ? [0, 0] : _temp;
+      const x = px - cx;
+      const y = py - cy;
+      return {
+        azymuth: source(Math.atan2(y, x)),
+        radius: Math.sqrt(x * x + y * y)
+      };
     };
-  };
 
-  // Create a custom pointer event from a touch event.
-  var createPEventFromTouchEvent = function createPEventFromTouchEvent(touchEvt) {
-    var touchList = Array.from(touchEvt.targetTouches);
-    var sumX = touchList.reduce(function (acc, t) {
-      return acc + t.clientX;
-    }, 0);
-    var sumY = touchList.reduce(function (acc, t) {
-      return acc + t.clientY;
-    }, 0);
-    var meanX = sumX / touchList.length;
-    var meanY = sumY / touchList.length;
-    return {
-      originalEvent: touchEvt,
-      position: [meanX, meanY],
-      timeStamp: touchEvt.timeStamp
-    };
-  }; // Create a custom pointer from a mouse event.
+    // Create a custom pointer event from a touch event.
+    const createPEventFromTouchEvent = touchEvt => {
+      const touchList = Array.from(touchEvt.targetTouches);
+      const sumX = touchList.reduce((acc, t) => acc + t.clientX, 0);
+      const sumY = touchList.reduce((acc, t) => acc + t.clientY, 0);
+      const meanX = sumX / touchList.length;
+      const meanY = sumY / touchList.length;
+      return {
+        originalEvent: touchEvt,
+        position: [meanX, meanY],
+        timeStamp: touchEvt.timeStamp
+      };
+    }; // Create a custom pointer from a mouse event.
 
-  var createPEventFromMouseEvent = function createPEventFromMouseEvent(mouseEvt) {
-    return {
+    const createPEventFromMouseEvent = mouseEvt => ({
       originalEvent: mouseEvt,
       position: [mouseEvt.clientX, mouseEvt.clientY],
       timeStamp: mouseEvt.timeStamp
-    };
-  };
+    });
 
-  var mouseDrags = function mouseDrags(rootDOM) {
-    return rxjs.fromEvent(rootDOM, 'mousedown').pipe(operators.map(function (downEvt) {
+    const mouseDrags = rootDOM => rxjs.fromEvent(rootDOM, 'mousedown').pipe(operators.map(downEvt => {
       // Make sure we include the first mouse down event.
-      var drag$ = rxjs.merge(rxjs.of(downEvt), rxjs.fromEvent(rootDOM, 'mousemove')).pipe(operators.takeUntil(rxjs.fromEvent(rootDOM, 'mouseup')), // Publish it as a behavior so that any new subscription will
+      const drag$ = rxjs.merge(rxjs.of(downEvt), rxjs.fromEvent(rootDOM, 'mousemove')).pipe(operators.takeUntil(rxjs.fromEvent(rootDOM, 'mouseup')), // Publish it as a behavior so that any new subscription will
       // get the last drag position.
       operators.publishBehavior());
       drag$.connect();
       return drag$;
-    }), operators.map(function (o) {
-      return o.pipe(operators.map(function () {
-        return createPEventFromMouseEvent.apply(void 0, arguments);
-      }));
-    }));
-  }; // Higher order observable tracking touch drags.
+    }), operators.map(o => o.pipe(operators.map(function () {
+      return createPEventFromMouseEvent(...arguments);
+    })))); // Higher order observable tracking touch drags.
 
-  var touchDrags = function touchDrags(rootDOM) {
-    return rxjs.fromEvent(rootDOM, 'touchstart').pipe( // Menu is supposed to have pointer-events: none so we can safely rely on
+    const touchDrags = rootDOM => rxjs.fromEvent(rootDOM, 'touchstart').pipe( // Menu is supposed to have pointer-events: none so we can safely rely on
     // targetTouches.
-    operators.filter(function (evt) {
-      return evt.targetTouches.length === 1;
-    }), operators.map(function (firstEvent) {
-      var drag$ = rxjs.fromEvent(rootDOM, 'touchmove').pipe(operators.startWith(firstEvent), operators.takeUntil(rxjs.merge(rxjs.fromEvent(rootDOM, 'touchend'), rxjs.fromEvent(rootDOM, 'touchcancel'), rxjs.fromEvent(rootDOM, 'touchstart')).pipe(operators.filter(function (evt) {
-        return evt.targetTouches.length !== 1;
-      }))), operators.publishBehavior()); // FIXME: the line below retains the subscription until next touch end.
+    operators.filter(evt => evt.targetTouches.length === 1), operators.map(firstEvent => {
+      const drag$ = rxjs.fromEvent(rootDOM, 'touchmove').pipe(operators.startWith(firstEvent), operators.takeUntil(rxjs.merge(rxjs.fromEvent(rootDOM, 'touchend'), rxjs.fromEvent(rootDOM, 'touchcancel'), rxjs.fromEvent(rootDOM, 'touchstart')).pipe(operators.filter(evt => evt.targetTouches.length !== 1))), operators.publishBehavior()); // FIXME: the line below retains the subscription until next touch end.
 
       drag$.connect();
       return drag$;
-    }), operators.map(function (o) {
-      return o.pipe(operators.map(createPEventFromTouchEvent));
-    }));
-  };
-  /**
-   * @param {HTMLElement} rootDOM - the DOM element to observe pointer events on.
-   * @return {Observable} A higher order observable that drag observables. The sub-observables are
-   *                      published as behaviors so that any new subscription immediately get the last
-   *                      position.
-   * @param {function[]} [dragObsFactories] - factory to use to observe drags.
-   */
+    }), operators.map(o => o.pipe(operators.map(createPEventFromTouchEvent))));
+    /**
+     * @param {HTMLElement} rootDOM - the DOM element to observe pointer events on.
+     * @return {Observable} A higher order observable that drag observables. The sub-observables are
+     *                      published as behaviors so that any new subscription immediately get the last
+     *                      position.
+     * @param {function[]} [dragObsFactories] - factory to use to observe drags.
+     */
 
-  var watchDrags = function watchDrags(rootDOM, dragObsFactories) {
-    if (dragObsFactories === void 0) {
-      dragObsFactories = [touchDrags, mouseDrags];
-    }
+    const watchDrags = function (rootDOM, dragObsFactories) {
+      if (dragObsFactories === void 0) {
+        dragObsFactories = [touchDrags, mouseDrags];
+      }
 
-    return rxjs.merge.apply(void 0, dragObsFactories.map(function (f) {
-      return f(rootDOM);
-    }));
-  };
-
-  /**
-   * Filter out small movements out of a drag observable.
-   * @param {Observable} drag$ - An observable on drag movements.
-   * @param {number} movementsThreshold - The threshold below which movements are considered
-   *                                      static.
-   * @return {Observable} An observable only emitting on long enough movements.
-   */
-
-  var longMoves = (function (drag$, movementsThreshold) {
-    if (movementsThreshold === void 0) {
-      movementsThreshold = 0;
-    }
-
-    return drag$.pipe(operators.scan(function (_ref, cur) {
-      var prev = _ref[0];
-      // Initial value.
-      if (prev == null) return [cur, false]; // End of drag can never be a long move. Such events aren't supposed to be
-      // emitted by drag observable though.
-
-      if (cur.type === 'end' || cur.type === 'cancel') return [cur, false]; // If the distance is still below the threshold, re-emit the previous
-      // event. It will be filtered-out later, but will come back again as
-      // prev on the next scan call.
-
-      if (dist(prev.position, cur.position) < movementsThreshold) return [prev, false]; // Otherwise, emit the new event.
-
-      return [cur, true];
-    }, []), operators.filter(function (_ref2) {
-      var pass = _ref2[1];
-      return pass;
-    }), operators.map(function (x) {
-      return x[0];
-    }));
-  });
-
-  /**
-   * @param {Observable} drag$ - An observable on drag movements.
-   * @param {number} delay - The time (in ms) to wait before considering an absence of movements
-   *                         as a dwell.
-   * @param {number} [movementsThreshold=0] - The threshold below which movements are considered
-   *                                          static.
-   * @param {Scheduler} [scheduler] - The scheduler to use for managing the timers that handle the timeout
-   * for each value
-   * @return {Observable} An observable on dwellings in the movement.
-   */
-
-  var dwellings = (function (drag$, delay, movementsThreshold, scheduler) {
-    if (movementsThreshold === void 0) {
-      movementsThreshold = 0;
-    }
-
-    if (scheduler === void 0) {
-      scheduler = undefined;
-    }
-
-    return rxjs.merge(drag$.pipe(operators.first()), longMoves(drag$, movementsThreshold)).pipe( // Emit when no long movements happend for delay time.
-    operators.debounceTime(delay, scheduler), // debounceTime emits the last item when the source observable completes.
-    // We don't want that here so we only take until drag is done.
-    operators.takeUntil(drag$.pipe(operators.last())), // Make sure we do emit the last position.
-    operators.withLatestFrom(drag$, function (_, last_) {
-      return last_;
-    }));
-  });
-
-  /**
-   * Augment a drag$ observable so that events also include the stroke.
-   * @param {Observable} drag$ - An observable of drag movements.
-   * @param {List<number[]>} initStroke - Initial stroke.
-   * @return {Observable} An observable on the gesture drawing.
-   */
-
-  var draw = (function (drag$, _ref) {
-    var _ref$initStroke = _ref.initStroke,
-        initStroke = _ref$initStroke === void 0 ? [] : _ref$initStroke,
-        _ref$type = _ref.type,
-        type = _ref$type === void 0 ? undefined : _ref$type;
-    var typeOpts = type === undefined ? {} : {
-      type: type
+      return rxjs.merge(...dragObsFactories.map(f => f(rootDOM)));
     };
-    return drag$.pipe(operators.scan(function (acc, notification) {
-      return _extends({
-        stroke: [].concat(acc.stroke, [notification.position])
-      }, typeOpts, {}, notification);
-    }, {
-      stroke: initStroke
-    }));
-  });
 
-  var noviceMoves = function noviceMoves(drag$, menu, _ref) {
-    var menuCenter = _ref.menuCenter,
-        minSelectionDist = _ref.minSelectionDist;
-    // Analyse local movements.
-    var moves$ = drag$.pipe(operators.scan(function (last_, n) {
-      var _toPolar = toPolar(n.position, menuCenter),
-          azymuth = _toPolar.azymuth,
-          radius = _toPolar.radius;
+    /**
+     * Filter out small movements out of a drag observable.
+     * @param {Observable} drag$ - An observable on drag movements.
+     * @param {number} movementsThreshold - The threshold below which movements are considered
+     *                                      static.
+     * @return {Observable} An observable only emitting on long enough movements.
+     */
 
-      var active = radius < minSelectionDist ? null : menu.getNearestChild(azymuth);
-      var type = last_.active === active ? 'move' : 'change';
-      return _extends({
-        active: active,
-        type: type,
-        azymuth: azymuth,
-        radius: radius
-      }, n);
-    }, {
-      active: null
-    }), operators.startWith({
-      type: 'open',
-      menu: menu,
-      center: menuCenter,
-      timeStamp: performance ? performance.now() : Date.now()
-    }), operators.share());
-    var end$ = moves$.pipe(operators.startWith({}), operators.last(), operators.map(function (n) {
-      return _extends({}, n, {
+    var longMoves = (function (drag$, movementsThreshold) {
+      if (movementsThreshold === void 0) {
+        movementsThreshold = 0;
+      }
+
+      return drag$.pipe(operators.scan((_ref, cur) => {
+        let [prev] = _ref;
+        // Initial value.
+        if (prev == null) return [cur, false]; // End of drag can never be a long move. Such events aren't supposed to be
+        // emitted by drag observable though.
+
+        if (cur.type === 'end' || cur.type === 'cancel') return [cur, false]; // If the distance is still below the threshold, re-emit the previous
+        // event. It will be filtered-out later, but will come back again as
+        // prev on the next scan call.
+
+        if (dist(prev.position, cur.position) < movementsThreshold) return [prev, false]; // Otherwise, emit the new event.
+
+        return [cur, true];
+      }, []), operators.filter((_ref2) => {
+        let [, pass] = _ref2;
+        return pass;
+      }), operators.map(x => x[0]));
+    });
+
+    /**
+     * @param {Observable} drag$ - An observable on drag movements.
+     * @param {number} delay - The time (in ms) to wait before considering an absence of movements
+     *                         as a dwell.
+     * @param {number} [movementsThreshold=0] - The threshold below which movements are considered
+     *                                          static.
+     * @param {Scheduler} [scheduler] - The scheduler to use for managing the timers that handle the timeout
+     * for each value
+     * @return {Observable} An observable on dwellings in the movement.
+     */
+
+    var dwellings = (function (drag$, delay, movementsThreshold, scheduler) {
+      if (movementsThreshold === void 0) {
+        movementsThreshold = 0;
+      }
+
+      if (scheduler === void 0) {
+        scheduler = undefined;
+      }
+
+      return rxjs.merge(drag$.pipe(operators.first()), longMoves(drag$, movementsThreshold)).pipe( // Emit when no long movements happend for delay time.
+      operators.debounceTime(delay, scheduler), // debounceTime emits the last item when the source observable completes.
+      // We don't want that here so we only take until drag is done.
+      operators.takeUntil(drag$.pipe(operators.last())), // Make sure we do emit the last position.
+      operators.withLatestFrom(drag$, (_, last_) => last_));
+    });
+
+    /**
+     * Augment a drag$ observable so that events also include the stroke.
+     * @param {Observable} drag$ - An observable of drag movements.
+     * @param {List<number[]>} initStroke - Initial stroke.
+     * @return {Observable} An observable on the gesture drawing.
+     */
+
+    var draw = ((drag$, _ref) => {
+      let {
+        initStroke = [],
+        type = undefined
+      } = _ref;
+      const typeOpts = type === undefined ? {} : {
+        type
+      };
+      return drag$.pipe(operators.scan((acc, notification) => ({
+        stroke: [...acc.stroke, notification.position],
+        ...typeOpts,
+        ...notification
+      }), {
+        stroke: initStroke
+      }));
+    });
+
+    const noviceMoves = (drag$, menu, _ref) => {
+      let {
+        menuCenter,
+        minSelectionDist
+      } = _ref;
+      // Analyse local movements.
+      const moves$ = drag$.pipe(operators.scan((last_, n) => {
+        const {
+          azymuth,
+          radius
+        } = toPolar(n.position, menuCenter);
+        const active = radius < minSelectionDist ? null : menu.getNearestChild(azymuth);
+        const type = last_.active === active ? 'move' : 'change';
+        return {
+          active,
+          type,
+          azymuth,
+          radius,
+          ...n
+        };
+      }, {
+        active: null
+      }), operators.startWith({
+        type: 'open',
+        menu,
+        center: menuCenter,
+        timeStamp: performance ? performance.now() : Date.now()
+      }), operators.share());
+      const end$ = moves$.pipe(operators.startWith({}), operators.last(), operators.map(n => ({ ...n,
         type: n.active && n.active.isLeaf() ? 'select' : 'cancel',
         selection: n.active
-      });
-    }));
-    return rxjs.merge(moves$, end$).pipe(operators.share());
-  };
-  var menuSelection = function menuSelection(move$, _ref2) {
-    var subMenuOpeningDelay = _ref2.subMenuOpeningDelay,
-        movementsThreshold = _ref2.movementsThreshold,
-        minMenuSelectionDist = _ref2.minMenuSelectionDist;
-    return (// Wait for a pause in the movements.
-      dwellings(move$, subMenuOpeningDelay, movementsThreshold).pipe( // Filter dwellings occurring outside of the selection area.
-      operators.filter(function (n) {
-        return n.active && n.radius > minMenuSelectionDist && !n.active.isLeaf();
-      }))
-    );
-  };
-  var subMenuNavigation = function subMenuNavigation(menuSelection$, drag$, subNav, navOptions) {
-    return menuSelection$.pipe(operators.map(function (n) {
-      return subNav(drag$, n.active, _extends({
-        menuCenter: n.position
-      }, navOptions));
-    }));
-  };
-  /**
-   * @param {Observable} drag$ - An observable of drag movements.
-   * @param {MMItem} menu - The model of the menu.
-   * @param {object} options - Configuration options.
-   * @return {Observable} An observable on the menu navigation events.
-   */
-
-  var noviceNavigation = function noviceNavigation(drag$, menu, _ref3) {
-    var minSelectionDist = _ref3.minSelectionDist,
-        minMenuSelectionDist = _ref3.minMenuSelectionDist,
-        movementsThreshold = _ref3.movementsThreshold,
-        subMenuOpeningDelay = _ref3.subMenuOpeningDelay,
-        menuCenter = _ref3.menuCenter,
-        _ref3$noviceMoves = _ref3.noviceMoves,
-        noviceMoves_ = _ref3$noviceMoves === void 0 ? noviceMoves : _ref3$noviceMoves,
-        _ref3$menuSelection = _ref3.menuSelection,
-        menuSelection_ = _ref3$menuSelection === void 0 ? menuSelection : _ref3$menuSelection,
-        _ref3$subMenuNavigati = _ref3.subMenuNavigation,
-        subMenuNavigation_ = _ref3$subMenuNavigati === void 0 ? subMenuNavigation : _ref3$subMenuNavigati;
-    // Observe the local navigation.
-    var move$ = noviceMoves_(drag$, menu, {
-      menuCenter: menuCenter,
-      minSelectionDist: minSelectionDist
-    }).pipe(operators.share()); // Look for (sub)menu selection.
-
-    var menuSelection$ = menuSelection_(move$, {
-      subMenuOpeningDelay: subMenuOpeningDelay,
-      movementsThreshold: movementsThreshold,
-      minMenuSelectionDist: minMenuSelectionDist
-    }); // Higher order observable on navigation inside sub-menus.
-
-    var subMenuNavigation$ = subMenuNavigation_(menuSelection$, drag$, noviceNavigation, {
-      minSelectionDist: minSelectionDist,
-      minMenuSelectionDist: minMenuSelectionDist,
-      movementsThreshold: movementsThreshold,
-      subMenuOpeningDelay: subMenuOpeningDelay,
-      noviceMoves: noviceMoves_,
-      menuSelection: menuSelection_,
-      subMenuNavigation: subMenuNavigation_
-    }); // Start with local navigation but switch to the first sub-menu navigation
-    // (if any).
-
-    return subMenuNavigation$.pipe(operators.take(1), operators.startWith(move$), operators.switchAll());
-  };
-
-  /**
-   * @param {Array.<number[]>} pointList - The list of points.
-   * @param {number} minDist - A distance.
-   * @param {object} options - Options.
-   * @param {number} [options.direction=1] - The direction of the lookup: negative values means
-   *                                         descending lookup.
-   * @param {number} [options.startIndex] - The index of the first point to investigate inside
-   *                                        pointList. If not provided, the lookup will start
-   *                                        from the start or the end of pointList depending
-   *                                        on `direction`.
-   * @param {number[]} [options.refPoint=pointList[startIndex]] - The reference point.
-   * @return {number} The index of the first point inside pointList that it at least `minDist` from
-   *                  `refPoint`.
-   */
-
-  var findNextPointFurtherThan = function findNextPointFurtherThan(pointList, minDist, _temp) {
-    var _ref = _temp === void 0 ? {} : _temp,
-        _ref$direction = _ref.direction,
-        direction = _ref$direction === void 0 ? 1 : _ref$direction,
-        _ref$startIndex = _ref.startIndex,
-        startIndex = _ref$startIndex === void 0 ? direction > 0 ? 0 : pointList.length - 1 : _ref$startIndex,
-        _ref$refPoint = _ref.refPoint,
-        refPoint = _ref$refPoint === void 0 ? pointList[startIndex] : _ref$refPoint;
-
-    var step = direction / Math.abs(direction);
-    var n = pointList.length;
-
-    for (var i = startIndex; i < n && i >= 0; i += step) {
-      if (dist(refPoint, pointList[i]) >= minDist) {
-        return i;
-      }
-    }
-
-    return -1;
-  };
-  /**
-   * @param {number[]} pointA - The point a.
-   * @param {number[]} pointC - The point b.
-   * @param {List.<number[]>} pointList - A list of points.
-   * @param {number[]} options - Options.
-   * @param {number} [options.startIndex=0] - The index of the first point to investigate inside
-   *                                          pointList.
-   * @param {number} [options.endIndex=pointList.length - 1] - The index of the first point to
-   *                                                           investigate inside pointList.
-   * @return {{index, angle}} The index of the point b of pointList that maximizes the angle abc and
-   *                          the angle abc.
-   */
-
-  var findMiddlePointForMinAngle = function findMiddlePointForMinAngle(pointA, pointC, pointList, _temp2) {
-    var _ref2 = _temp2 === void 0 ? {} : _temp2,
-        _ref2$startIndex = _ref2.startIndex,
-        startIndex = _ref2$startIndex === void 0 ? 0 : _ref2$startIndex,
-        _ref2$endIndex = _ref2.endIndex,
-        endIndex = _ref2$endIndex === void 0 ? pointList.length - 1 : _ref2$endIndex;
-
-    var minAngle = Infinity;
-    var maxAngleIndex = -1;
-
-    for (var i = startIndex; i <= endIndex; i += 1) {
-      var thisAngle = angle(pointA, pointList[i], pointC);
-
-      if (thisAngle < minAngle) {
-        minAngle = thisAngle;
-        maxAngleIndex = i;
-      }
-    }
-
-    return {
-      index: maxAngleIndex,
-      angle: minAngle
+      })));
+      return rxjs.merge(moves$, end$).pipe(operators.share());
     };
-  };
+    const menuSelection = (move$, _ref2) => {
+      let {
+        subMenuOpeningDelay,
+        movementsThreshold,
+        minMenuSelectionDist
+      } = _ref2;
+      return (// Wait for a pause in the movements.
+        dwellings(move$, subMenuOpeningDelay, movementsThreshold).pipe( // Filter dwellings occurring outside of the selection area.
+        operators.filter(n => n.active && n.radius > minMenuSelectionDist && !n.active.isLeaf()))
+      );
+    };
+    const subMenuNavigation = (menuSelection$, drag$, subNav, navOptions) => menuSelection$.pipe(operators.map(n => subNav(drag$, n.active, {
+      menuCenter: n.position,
+      ...navOptions
+    })));
+    /**
+     * @param {Observable} drag$ - An observable of drag movements.
+     * @param {MMItem} menu - The model of the menu.
+     * @param {object} options - Configuration options.
+     * @return {Observable} An observable on the menu navigation events.
+     */
 
-  /**
-   * @typedef {number[]} Point
-   */
+    const noviceNavigation = (drag$, menu, _ref3) => {
+      let {
+        minSelectionDist,
+        minMenuSelectionDist,
+        movementsThreshold,
+        subMenuOpeningDelay,
+        menuCenter,
+        noviceMoves: noviceMoves_ = noviceMoves,
+        menuSelection: menuSelection_ = menuSelection,
+        subMenuNavigation: subMenuNavigation_ = subMenuNavigation
+      } = _ref3;
+      // Observe the local navigation.
+      const move$ = noviceMoves_(drag$, menu, {
+        menuCenter,
+        minSelectionDist
+      }).pipe(operators.share()); // Look for (sub)menu selection.
 
-  /**
-   * A segment.
-   * @typedef {Point[2]} Segment
-   */
+      const menuSelection$ = menuSelection_(move$, {
+        subMenuOpeningDelay,
+        movementsThreshold,
+        minMenuSelectionDist
+      }); // Higher order observable on navigation inside sub-menus.
 
-  /**
-   * @param {Point[]} stroke - The points of a stroke.
-   * @param {number} expectedSegmentLength - The expected length of a segment
-   *                                         (usually strokeLength / maxMenuDepth).
-   * @param {number} angleThreshold - The min angle threshold in a point required for it to be
-   *                                  considered an articulation points.
-   * @return {Point[]} The list of articulation points.
-   */
+      const subMenuNavigation$ = subMenuNavigation_(menuSelection$, drag$, noviceNavigation, {
+        minSelectionDist,
+        minMenuSelectionDist,
+        movementsThreshold,
+        subMenuOpeningDelay,
+        noviceMoves: noviceMoves_,
+        menuSelection: menuSelection_,
+        subMenuNavigation: subMenuNavigation_
+      }); // Start with local navigation but switch to the first sub-menu navigation
+      // (if any).
 
-  var getStrokeArticulationPoints = function getStrokeArticulationPoints(stroke, expectedSegmentLength, angleThreshold) {
-    var n = stroke.length;
-    if (n === 0) return [];
-    var w = expectedSegmentLength * 0.3; // Add the first point of the stroke.
+      return subMenuNavigation$.pipe(operators.take(1), operators.startWith(move$), operators.switchAll());
+    };
 
-    var articulationPoints = [stroke[0]];
-    var ai = 0;
-    var a = stroke[ai];
+    /**
+     * @param {Array.<number[]>} pointList - The list of points.
+     * @param {number} minDist - A distance.
+     * @param {object} options - Options.
+     * @param {number} [options.direction=1] - The direction of the lookup: negative values means
+     *                                         descending lookup.
+     * @param {number} [options.startIndex] - The index of the first point to investigate inside
+     *                                        pointList. If not provided, the lookup will start
+     *                                        from the start or the end of pointList depending
+     *                                        on `direction`.
+     * @param {number[]} [options.refPoint=pointList[startIndex]] - The reference point.
+     * @return {number} The index of the first point inside pointList that it at least `minDist` from
+     *                  `refPoint`.
+     */
 
-    while (ai < n) {
-      var ci = findNextPointFurtherThan(stroke, w, {
-        startIndex: ai + 2,
-        refPoint: a
-      });
-      if (ci < 0) break;
-      var c = stroke[ci];
-      var labi = findNextPointFurtherThan(stroke, w / 8, {
-        startIndex: ai + 1,
-        refPoint: a
-      });
-      var lbci = findNextPointFurtherThan(stroke, w / 8, {
-        startIndex: ci - 1,
-        refPoint: c,
-        direction: -1
-      });
+    const findNextPointFurtherThan = function (pointList, minDist, _temp) {
+      let {
+        direction = 1,
+        startIndex = direction > 0 ? 0 : pointList.length - 1,
+        refPoint = pointList[startIndex]
+      } = _temp === void 0 ? {} : _temp;
+      const step = direction / Math.abs(direction);
+      const n = pointList.length;
 
-      var _findMiddlePointForMi = findMiddlePointForMinAngle(a, stroke[ci], stroke, {
-        startIndex: labi,
-        endIndex: lbci
-      }),
-          bi = _findMiddlePointForMi.index,
-          angleABC = _findMiddlePointForMi.angle;
-
-      if (bi > 0 && Math.abs(180 - angleABC) > angleThreshold) {
-        var b = stroke[bi];
-        articulationPoints.push(b);
-        a = b;
-        ai = bi;
-      } else {
-        ai += 1;
-        a = stroke[ai];
+      for (let i = startIndex; i < n && i >= 0; i += step) {
+        if (dist(refPoint, pointList[i]) >= minDist) {
+          return i;
+        }
       }
-    } // Add the last point of the stroke.
+
+      return -1;
+    };
+    /**
+     * @param {number[]} pointA - The point a.
+     * @param {number[]} pointC - The point b.
+     * @param {List.<number[]>} pointList - A list of points.
+     * @param {number[]} options - Options.
+     * @param {number} [options.startIndex=0] - The index of the first point to investigate inside
+     *                                          pointList.
+     * @param {number} [options.endIndex=pointList.length - 1] - The index of the first point to
+     *                                                           investigate inside pointList.
+     * @return {{index, angle}} The index of the point b of pointList that maximizes the angle abc and
+     *                          the angle abc.
+     */
+
+    const findMiddlePointForMinAngle = function (pointA, pointC, pointList, _temp2) {
+      let {
+        startIndex = 0,
+        endIndex = pointList.length - 1
+      } = _temp2 === void 0 ? {} : _temp2;
+      let minAngle = Infinity;
+      let maxAngleIndex = -1;
+
+      for (let i = startIndex; i <= endIndex; i += 1) {
+        const thisAngle = angle(pointA, pointList[i], pointC);
+
+        if (thisAngle < minAngle) {
+          minAngle = thisAngle;
+          maxAngleIndex = i;
+        }
+      }
+
+      return {
+        index: maxAngleIndex,
+        angle: minAngle
+      };
+    };
+
+    /**
+     * @typedef {number[]} Point
+     */
+
+    /**
+     * A segment.
+     * @typedef {Point[2]} Segment
+     */
+
+    /**
+     * @param {Point[]} stroke - The points of a stroke.
+     * @param {number} expectedSegmentLength - The expected length of a segment
+     *                                         (usually strokeLength / maxMenuDepth).
+     * @param {number} angleThreshold - The min angle threshold in a point required for it to be
+     *                                  considered an articulation points.
+     * @return {Point[]} The list of articulation points.
+     */
+
+    const getStrokeArticulationPoints = (stroke, expectedSegmentLength, angleThreshold) => {
+      const n = stroke.length;
+      if (n === 0) return [];
+      const w = expectedSegmentLength * 0.3; // Add the first point of the stroke.
+
+      const articulationPoints = [stroke[0]];
+      let ai = 0;
+      let a = stroke[ai];
+
+      while (ai < n) {
+        const ci = findNextPointFurtherThan(stroke, w, {
+          startIndex: ai + 2,
+          refPoint: a
+        });
+        if (ci < 0) break;
+        const c = stroke[ci];
+        const labi = findNextPointFurtherThan(stroke, w / 8, {
+          startIndex: ai + 1,
+          refPoint: a
+        });
+        const lbci = findNextPointFurtherThan(stroke, w / 8, {
+          startIndex: ci - 1,
+          refPoint: c,
+          direction: -1
+        });
+        const {
+          index: bi,
+          angle: angleABC
+        } = findMiddlePointForMinAngle(a, stroke[ci], stroke, {
+          startIndex: labi,
+          endIndex: lbci
+        });
+
+        if (bi > 0 && Math.abs(180 - angleABC) > angleThreshold) {
+          const b = stroke[bi];
+          articulationPoints.push(b);
+          a = b;
+          ai = bi;
+        } else {
+          ai += 1;
+          a = stroke[ai];
+        }
+      } // Add the last point of the stroke.
 
 
-    articulationPoints.push(stroke[stroke.length - 1]);
-    return articulationPoints;
-  };
+      articulationPoints.push(stroke[stroke.length - 1]);
+      return articulationPoints;
+    };
 
-  /**
-   * @param {List<List<number>>} stroke - A stroke.
-   * @return {number} The length of the stroke `stroke`.
-   */
+    /**
+     * @param {List<List<number>>} stroke - A stroke.
+     * @return {number} The length of the stroke `stroke`.
+     */
 
-  var strokeLength = (function (stroke) {
-    return stroke.reduce(function (res, current) {
-      var prev = res.prev || current;
+    var strokeLength = (stroke => stroke.reduce((res, current) => {
+      const prev = res.prev || current;
       return {
         prev: current,
         length: res.length + dist(prev, current)
       };
     }, {
       length: 0
-    }).length;
-  });
+    }).length);
 
-  /**
-   * @param {Point[]} points - A list of points.
-   * @return {Segment[]} The list of segments joining the points of `points`.
-   */
+    /**
+     * @param {Point[]} points - A list of points.
+     * @return {Segment[]} The list of segments joining the points of `points`.
+     */
 
-  var pointsToSegments = function pointsToSegments(points) {
-    return points.slice(1).reduce(function (_ref, current) {
-      var segments = _ref.segments,
-          last = _ref.last;
+    const pointsToSegments = points => points.slice(1).reduce((_ref, current) => {
+      let {
+        segments,
+        last
+      } = _ref;
       segments.push([last, current]);
       return {
-        segments: segments,
+        segments,
         last: current
       };
     }, {
       last: points[0],
       segments: []
     }).segments;
-  };
-  /**
-   * @param {Item} model - The marking menu model.
-   * @param {{ angle }[]} segments - A list of segments to walk the model.
-   * @param {number} [startIndex=0] - The start index in the angle list.
-   * @return {Item} The corresponding item found by walking the model.
-   */
+    /**
+     * @param {Item} model - The marking menu model.
+     * @param {{ angle }[]} segments - A list of segments to walk the model.
+     * @param {number} [startIndex=0] - The start index in the angle list.
+     * @return {Item} The corresponding item found by walking the model.
+     */
 
-  var walkMMModel = function walkMMModel(model, segments, startIndex) {
-    if (startIndex === void 0) {
-      startIndex = 0;
-    }
-
-    if (!model || segments.length === 0 || model.isLeaf()) return null;
-    var item = model.getNearestChild(segments[startIndex].angle);
-
-    if (startIndex + 1 >= segments.length) {
-      return item;
-    }
-
-    return walkMMModel(item, segments, startIndex + 1);
-  };
-  var segmentAngle = function segmentAngle(a, b) {
-    return source(Math.atan2(b[1] - a[1], b[0] - a[0]));
-  };
-  /**
-   * @param {{angle, length}[]} segments - A list of segments.
-   * @return {{angle, length}[]} A new list of segments with the longest segments divided in two.
-   */
-
-  var divideLongestSegment = function divideLongestSegment(segments) {
-    var _findMaxEntry = findMaxEntry(segments, function (s1, s2) {
-      return s2.length - s1.length;
-    }),
-        longestI = _findMaxEntry[0],
-        longest = _findMaxEntry[1];
-
-    return [].concat(segments.slice(0, longestI), [{
-      length: longest.length / 2,
-      angle: longest.angle
-    }, {
-      length: longest.length / 2,
-      angle: longest.angle
-    }], segments.slice(longestI + 1));
-  };
-  /**
-   * @param {Item} model - The marking menu model.
-   * @param {{length, angle}[]} segments - A list of segments.
-   * @param {number} [maxDepth=model.getMaxDepth()] - The maximum depth of the item.
-   * @return {Item} The selected item.
-   */
-
-  var findMMItem = function findMMItem(model, segments, maxDepth) {
-    if (maxDepth === void 0) {
-      maxDepth = model.getMaxDepth();
-    }
-
-    // If there is not segments, there is no selection to find.
-    if (!segments.length) return null; // While we haven't found a leaf item, divide the longest segment and walk the model.
-
-    var currentSegments = segments;
-    var currentItem = null;
-
-    while (currentSegments.length <= maxDepth) {
-      currentItem = walkMMModel(model, currentSegments);
-      if (currentItem && currentItem.isLeaf()) return currentItem;
-      currentSegments = divideLongestSegment(currentSegments);
-    }
-
-    return currentItem;
-  };
-  /**
-   * @param {List.<number[]>} stroke - A list of points.
-   * @param {Item} model - The marking menu model.
-   * @param {object} [options] - Additional options.
-   * @param {number} [maxDepth] - The maximum menu depth to walk. If negative,
-   * start from the maximum depth of the model.
-   * @param {boolean} [requireMenu=false] - Look for a menu item. This
-   * works best with a negative value for maxDepth.
-   * @param {boolean} [requireLeaf=!requireMenu] - Look for a leaf.
-   * @return {Item} The item recognized by the stroke.
-   */
-
-  var recognizeMMStroke = function recognizeMMStroke(stroke, model, _temp) {
-    var _ref2 = _temp === void 0 ? {} : _temp,
-        _ref2$maxDepth = _ref2.maxDepth,
-        maxDepth_ = _ref2$maxDepth === void 0 ? model.getMaxDepth() : _ref2$maxDepth,
-        _ref2$requireMenu = _ref2.requireMenu,
-        requireMenu = _ref2$requireMenu === void 0 ? false : _ref2$requireMenu,
-        _ref2$requireLeaf = _ref2.requireLeaf,
-        requireLeaf = _ref2$requireLeaf === void 0 ? !requireMenu : _ref2$requireLeaf;
-
-    if (requireLeaf && requireMenu) {
-      throw new Error('The result cannot be both a leaf and a menu');
-    }
-
-    var maxDepth = maxDepth_ < 0 ? model.getMaxDepth() + maxDepth_ : maxDepth_;
-    var maxMenuBreadth = model.getMaxBreadth();
-    var length = strokeLength(stroke);
-    var expectedSegmentLength = length / maxDepth;
-    var sensitivity = 0.75;
-    var angleThreshold = 360 / maxMenuBreadth / 2 / sensitivity;
-    var articulationPoints = getStrokeArticulationPoints(stroke, expectedSegmentLength, angleThreshold);
-    var minSegmentSize = expectedSegmentLength / 3; // Get the segments of the marking menus.
-
-    var segments = pointsToSegments(articulationPoints) // Change the representation of the segment to include its length.
-    .map(function (seg) {
-      return {
-        points: seg,
-        length: dist.apply(void 0, seg)
-      };
-    }) // Remove the segments that are too small.
-    .filter(function (seg) {
-      return seg.length > minSegmentSize;
-    }) // Change again the representation of the segment to include its length but not its
-    // its points anymore.
-    .map(function (seg) {
-      return {
-        angle: segmentAngle.apply(void 0, seg.points),
-        length: seg.length
-      };
-    });
-    var item = findMMItem(model, segments, maxDepth);
-
-    if (requireLeaf) {
-      return item && item.isLeaf() ? item : null;
-    }
-
-    if (requireMenu) {
-      return item && item.isLeaf() ? item.parent : item;
-    }
-
-    return item;
-  };
-
-  /**
-   * @param {Observable} drag$ - An observable of drag movements.
-   * @param {MMItem} model - The model of the menu.
-   * @param {List<number[]>} initStroke - Initial stroke.
-   * @return {Observable} An observable on the gesture drawing and recognition.
-   */
-
-  var expertNavigation = (function (drag$, model, initStroke) {
-    if (initStroke === void 0) {
-      initStroke = [];
-    }
-
-    // Observable on gesture drawing.
-    var draw$ = draw(drag$, {
-      initStroke: initStroke,
-      type: 'draw'
-    }).pipe(operators.share()); // Track the end of the drawing and attempt to recognize the gesture.
-
-    var end$ = draw$.pipe(operators.startWith(null), operators.last(), operators.map(function (e) {
-      if (!e) return {
-        type: 'cancel'
-      };
-      var selection = recognizeMMStroke(e.stroke, model);
-
-      if (selection) {
-        return _extends({}, e, {
-          type: 'select',
-          selection: selection
-        });
+    const walkMMModel = function (model, segments, startIndex) {
+      if (startIndex === void 0) {
+        startIndex = 0;
       }
 
-      return _extends({}, e, {
-        type: 'cancel'
-      });
-    }));
-    return rxjs.merge(draw$, end$);
-  });
+      if (!model || segments.length === 0 || model.isLeaf()) return null;
+      const item = model.getNearestChild(segments[startIndex].angle);
 
-  var confirmedNoviceNavigationHOO = function confirmedNoviceNavigationHOO(drag$, start, model, options) {
-    return dwellings(drag$, options.noviceDwellingTime, options.movementsThreshold).pipe(operators.take(1), operators.map(function () {
-      return (start != null ? rxjs.of(start) : drag$).pipe(operators.take(1), operators.mergeMap(function (start_) {
-        return noviceNavigation( // Same as before, skip the first.
-        drag$.pipe(operators.skip(1)), model, _extends({}, options, {
-          menuCenter: start_.position
-        })).pipe(operators.map(function (n) {
-          return _extends({}, n, {
-            mode: 'novice'
-          });
-        }));
+      if (startIndex + 1 >= segments.length) {
+        return item;
+      }
+
+      return walkMMModel(item, segments, startIndex + 1);
+    };
+    const segmentAngle = (a, b) => source(Math.atan2(b[1] - a[1], b[0] - a[0]));
+    /**
+     * @param {{angle, length}[]} segments - A list of segments.
+     * @return {{angle, length}[]} A new list of segments with the longest segments divided in two.
+     */
+
+    const divideLongestSegment = segments => {
+      const [longestI, longest] = findMaxEntry(segments, (s1, s2) => s2.length - s1.length);
+      return [...segments.slice(0, longestI), {
+        length: longest.length / 2,
+        angle: longest.angle
+      }, {
+        length: longest.length / 2,
+        angle: longest.angle
+      }, ...segments.slice(longestI + 1)];
+    };
+    /**
+     * @param {Item} model - The marking menu model.
+     * @param {{length, angle}[]} segments - A list of segments.
+     * @param {number} [maxDepth=model.getMaxDepth()] - The maximum depth of the item.
+     * @return {Item} The selected item.
+     */
+
+    const findMMItem = function (model, segments, maxDepth) {
+      if (maxDepth === void 0) {
+        maxDepth = model.getMaxDepth();
+      }
+
+      // If there is not segments, there is no selection to find.
+      if (!segments.length) return null; // While we haven't found a leaf item, divide the longest segment and walk the model.
+
+      let currentSegments = segments;
+      let currentItem = null;
+
+      while (currentSegments.length <= maxDepth) {
+        currentItem = walkMMModel(model, currentSegments);
+        if (currentItem && currentItem.isLeaf()) return currentItem;
+        currentSegments = divideLongestSegment(currentSegments);
+      }
+
+      return currentItem;
+    };
+    /**
+     * @param {List.<number[]>} stroke - A list of points.
+     * @param {Item} model - The marking menu model.
+     * @param {object} [options] - Additional options.
+     * @param {number} [maxDepth] - The maximum menu depth to walk. If negative,
+     * start from the maximum depth of the model.
+     * @param {boolean} [requireMenu=false] - Look for a menu item. This
+     * works best with a negative value for maxDepth.
+     * @param {boolean} [requireLeaf=!requireMenu] - Look for a leaf.
+     * @return {Item} The item recognized by the stroke.
+     */
+
+    const recognizeMMStroke = function (stroke, model, _temp) {
+      let {
+        maxDepth: maxDepth_ = model.getMaxDepth(),
+        requireMenu = false,
+        requireLeaf = !requireMenu
+      } = _temp === void 0 ? {} : _temp;
+
+      if (requireLeaf && requireMenu) {
+        throw new Error('The result cannot be both a leaf and a menu');
+      }
+
+      const maxDepth = maxDepth_ < 0 ? model.getMaxDepth() + maxDepth_ : maxDepth_;
+      const maxMenuBreadth = model.getMaxBreadth();
+      const length = strokeLength(stroke);
+      const expectedSegmentLength = length / maxDepth;
+      const sensitivity = 0.75;
+      const angleThreshold = 360 / maxMenuBreadth / 2 / sensitivity;
+      const articulationPoints = getStrokeArticulationPoints(stroke, expectedSegmentLength, angleThreshold);
+      const minSegmentSize = expectedSegmentLength / 3; // Get the segments of the marking menus.
+
+      const segments = pointsToSegments(articulationPoints) // Change the representation of the segment to include its length.
+      .map(seg => ({
+        points: seg,
+        length: dist(...seg)
+      })) // Remove the segments that are too small.
+      .filter(seg => seg.length > minSegmentSize) // Change again the representation of the segment to include its length but not its
+      // its points anymore.
+      .map(seg => ({
+        angle: segmentAngle(...seg.points),
+        length: seg.length
       }));
-    }));
-  };
-  var expertToNoviceSwitchHOO = function expertToNoviceSwitchHOO(drag$, model, initStroke, options) {
-    return dwellings(draw(drag$, {
-      initStroke: initStroke
-    }), options.noviceDwellingTime, options.movementsThreshold).pipe(operators.take(1), operators.map(function (evt) {
+      const item = findMMItem(model, segments, maxDepth);
+
+      if (requireLeaf) {
+        return item && item.isLeaf() ? item : null;
+      }
+
+      if (requireMenu) {
+        return item && item.isLeaf() ? item.parent : item;
+      }
+
+      return item;
+    };
+
+    /**
+     * @param {Observable} drag$ - An observable of drag movements.
+     * @param {MMItem} model - The model of the menu.
+     * @param {List<number[]>} initStroke - Initial stroke.
+     * @return {Observable} An observable on the gesture drawing and recognition.
+     */
+
+    var expertNavigation = (function (drag$, model, initStroke) {
+      if (initStroke === void 0) {
+        initStroke = [];
+      }
+
+      // Observable on gesture drawing.
+      const draw$ = draw(drag$, {
+        initStroke,
+        type: 'draw'
+      }).pipe(operators.share()); // Track the end of the drawing and attempt to recognize the gesture.
+
+      const end$ = draw$.pipe(operators.startWith(null), operators.last(), operators.map(e => {
+        if (!e) return {
+          type: 'cancel'
+        };
+        const selection = recognizeMMStroke(e.stroke, model);
+
+        if (selection) {
+          return { ...e,
+            type: 'select',
+            selection
+          };
+        }
+
+        return { ...e,
+          type: 'cancel'
+        };
+      }));
+      return rxjs.merge(draw$, end$);
+    });
+
+    const confirmedNoviceNavigationHOO = (drag$, start, model, options) => dwellings(drag$, options.noviceDwellingTime, options.movementsThreshold).pipe(operators.take(1), operators.map(() => (start != null ? rxjs.of(start) : drag$).pipe(operators.take(1), operators.mergeMap(start_ => noviceNavigation( // Same as before, skip the first.
+    drag$.pipe(operators.skip(1)), model, { ...options,
+      menuCenter: start_.position
+    }).pipe(operators.map(n => ({ ...n,
+      mode: 'novice'
+    })))))));
+    const expertToNoviceSwitchHOO = (drag$, model, initStroke, options) => dwellings(draw(drag$, {
+      initStroke
+    }), options.noviceDwellingTime, options.movementsThreshold).pipe(operators.take(1), operators.map(evt => {
       // Look for the furthest menu (not leaf).
-      var menu = recognizeMMStroke(evt.stroke, model, {
+      const menu = recognizeMMStroke(evt.stroke, model, {
         maxDepth: -1,
         requireMenu: true
       });
 
       if (!menu || menu.isRoot()) {
-        return rxjs.of(_extends({}, evt, {
+        return rxjs.of({ ...evt,
           type: 'cancel'
-        }));
+        });
       } // Start a novice navigation from there.
 
 
-      return noviceNavigation(drag$.pipe(operators.skip(1)), menu, _extends({}, options, {
+      return noviceNavigation(drag$.pipe(operators.skip(1)), menu, { ...options,
         menuCenter: evt.position
-      }));
+      });
     }));
-  };
-  var confirmedExpertNavigationHOO = function confirmedExpertNavigationHOO(drag$, model, _temp) {
-    var _ref = _temp === void 0 ? {} : _temp,
-        _ref$expertToNoviceSw = _ref.expertToNoviceSwitchHOO,
-        expertToNoviceSwitchHOO_ = _ref$expertToNoviceSw === void 0 ? expertToNoviceSwitchHOO : _ref$expertToNoviceSw,
-        options = _objectWithoutPropertiesLoose(_ref, ["expertToNoviceSwitchHOO"]);
-
-    return longMoves(draw(drag$, {
-      type: 'draw'
-    }), options.movementsThreshold).pipe(operators.take(1), operators.map(function (e) {
-      var expertNav$ = expertNavigation( // Drag always return the last value when observed, in this case we are
-      // not interested in it as it has already been took into account.
-      drag$.pipe(operators.skip(1)), model, e.stroke).pipe(operators.map(function (n) {
-        return _extends({}, n, {
+    const confirmedExpertNavigationHOO = function (drag$, model, _temp) {
+      let {
+        expertToNoviceSwitchHOO: expertToNoviceSwitchHOO_ = expertToNoviceSwitchHOO,
+        ...options
+      } = _temp === void 0 ? {} : _temp;
+      return longMoves(draw(drag$, {
+        type: 'draw'
+      }), options.movementsThreshold).pipe(operators.take(1), operators.map(e => {
+        const expertNav$ = expertNavigation( // Drag always return the last value when observed, in this case we are
+        // not interested in it as it has already been took into account.
+        drag$.pipe(operators.skip(1)), model, e.stroke).pipe(operators.map(n => ({ ...n,
           mode: 'expert'
-        });
+        })));
+        return expertToNoviceSwitchHOO_(drag$, model, e.stroke, options).pipe(operators.startWith(expertNav$), operators.switchAll());
       }));
-      return expertToNoviceSwitchHOO_(drag$, model, e.stroke, options).pipe(operators.startWith(expertNav$), operators.switchAll());
+    };
+    const startup = (drag$, model) => expertNavigation(drag$, model).pipe(operators.map((n, i) => i === 0 ? { ...n,
+      type: 'start',
+      mode: 'startup'
+    } : { ...n,
+      mode: 'startup'
     }));
-  };
-  var startup = function startup(drag$, model) {
-    return expertNavigation(drag$, model).pipe(operators.map(function (n, i) {
-      return i === 0 ? _extends({}, n, {
-        type: 'start',
-        mode: 'startup'
-      }) : _extends({}, n, {
-        mode: 'startup'
-      });
-    }));
-  };
-  var navigationFromDrag = function navigationFromDrag(drag$, start, model, options, _temp2) {
-    var _ref2 = _temp2 === void 0 ? {} : _temp2,
-        _ref2$confirmedExpert = _ref2.confirmedExpertNavigationHOO,
-        confirmedExpertNavigationHOO_ = _ref2$confirmedExpert === void 0 ? confirmedExpertNavigationHOO : _ref2$confirmedExpert,
-        _ref2$confirmedNovice = _ref2.confirmedNoviceNavigationHOO,
-        confirmedNoviceNavigationHOO_ = _ref2$confirmedNovice === void 0 ? confirmedNoviceNavigationHOO : _ref2$confirmedNovice,
-        _ref2$startup = _ref2.startup,
-        startup_ = _ref2$startup === void 0 ? startup : _ref2$startup;
+    const navigationFromDrag = function (drag$, start, model, options, _temp2) {
+      let {
+        confirmedExpertNavigationHOO: confirmedExpertNavigationHOO_ = confirmedExpertNavigationHOO,
+        confirmedNoviceNavigationHOO: confirmedNoviceNavigationHOO_ = confirmedNoviceNavigationHOO,
+        startup: startup_ = startup
+      } = _temp2 === void 0 ? {} : _temp2;
+      // Start up observable (while neither expert or novice are confirmed).
+      const startUp$ = startup_(drag$, model); // Observable on confirmed expert navigation.
 
-    // Start up observable (while neither expert or novice are confirmed).
-    var startUp$ = startup_(drag$, model); // Observable on confirmed expert navigation.
+      const confirmedExpertNavigation$$ = confirmedExpertNavigationHOO_(drag$, model, options); // Observable on confirmed novice navigation.
 
-    var confirmedExpertNavigation$$ = confirmedExpertNavigationHOO_(drag$, model, options); // Observable on confirmed novice navigation.
+      const confirmedNoviceNavigation$$ = confirmedNoviceNavigationHOO_(drag$, start, model, options); // Observable on expert or novice navigation once confirmed.
 
-    var confirmedNoviceNavigation$$ = confirmedNoviceNavigationHOO_(drag$, start, model, options); // Observable on expert or novice navigation once confirmed.
+      const confirmedNavigation$$ = rxjs.race(confirmedExpertNavigation$$, confirmedNoviceNavigation$$); // Start with startup navigation (similar to expert) but switch to the
+      // confirmed navigation as soon as it is settled.
 
-    var confirmedNavigation$$ = rxjs.race(confirmedExpertNavigation$$, confirmedNoviceNavigation$$); // Start with startup navigation (similar to expert) but switch to the
-    // confirmed navigation as soon as it is settled.
+      return confirmedNavigation$$.pipe(operators.startWith(startUp$), operators.switchAll());
+    };
+    /**
+     * @param {Observable} drags$ - A higher order observable on drag movements.
+     * @param {MMItem} menu - The model of the menu.
+     * @param {object} options - Configuration options (see {@link ../index.js}).
+     * @param {function} [navigationFromDrag_] - function to convert a drags higher
+     *                                         order observable to a navigation
+     *                                         observable.
+     * @return {Observable} An observable on the marking menu events.
+     */
 
-    return confirmedNavigation$$.pipe(operators.startWith(startUp$), operators.switchAll());
-  };
-  /**
-   * @param {Observable} drags$ - A higher order observable on drag movements.
-   * @param {MMItem} menu - The model of the menu.
-   * @param {object} options - Configuration options (see {@link ../index.js}).
-   * @param {function} [navigationFromDrag_] - function to convert a drags higher
-   *                                         order observable to a navigation
-   *                                         observable.
-   * @return {Observable} An observable on the marking menu events.
-   */
-
-  var navigation = (function (drags$, menu, options, navigationFromDrag_) {
-    if (navigationFromDrag_ === void 0) {
-      navigationFromDrag_ = navigationFromDrag;
-    }
-
-    return drags$.pipe(operators.exhaustMap(function (drag$) {
-      return drag$.pipe(operators.take(1), operators.mergeMap(function (start) {
-        return navigationFromDrag_(drag$, start, menu, options);
-      }));
-    }));
-  });
-
-  var template = function template(_ref, doc) {
-    var items = _ref.items,
-        center = _ref.center;
-    var main = doc.createElement('div');
-    main.className = 'marking-menu';
-    main.style.left = center[0] + "px";
-    main.style.top = center[1] + "px";
-
-    for (var i = 0; i < items.length; i += 1) {
-      var item = items[i];
-      var elt = doc.createElement('div');
-      elt.className = 'marking-menu-item';
-      elt.dataset.itemId = item.id;
-      elt.dataset.itemAngle = item.angle;
-      elt.innerHTML += '<div class="marking-menu-line"></div>';
-      elt.innerHTML += "<div class=\"marking-menu-label\">" + item.name + "</div>";
-      main.appendChild(elt);
-    }
-
-    return main;
-  };
-  /**
-   * Create the Menu display.
-   * @param {HTMLElement} parent - The parent node.
-   * @param {ItemModel} model - The model of the menu to open.
-   * @param {[int, int]} center - The center of the menu.
-   * @param {String} [current] - The currently active item.
-   * @param {Document} [options] - Menu options.
-   * @param {Document} [options.doc=document] - The root document of the menu.
-   *                                            Mostly useful for testing purposes.
-   * @return {{ setActive, remove }} - The menu controls.
-   */
-
-
-  var createMenu = function createMenu(parent, model, center, current, _temp) {
-    var _ref2 = _temp === void 0 ? {} : _temp,
-        _ref2$doc = _ref2.doc,
-        doc = _ref2$doc === void 0 ? document : _ref2$doc;
-
-    // Create the DOM.
-    var main = template({
-      items: model.children,
-      center: center
-    }, doc);
-    parent.appendChild(main); // Clear any  active items.
-
-    var clearActiveItems = function clearActiveItems() {
-      Array.from(main.querySelectorAll('.active')).forEach(function (itemDom) {
-        return itemDom.classList.remove('active');
-      });
-    }; // Return an item DOM element from its id.
-
-
-    var getItemDom = function getItemDom(itemId) {
-      return main.querySelector(".marking-menu-item[data-item-id=\"" + itemId + "\"]");
-    }; // Mark an item as active.
-
-
-    var setActive = function setActive(itemId) {
-      // Clear any  active items.
-      clearActiveItems(); // Set the active class.
-
-      if (itemId || itemId === 0) {
-        getItemDom(itemId).classList.add('active');
+    var navigation = (function (drags$, menu, options, navigationFromDrag_) {
+      if (navigationFromDrag_ === void 0) {
+        navigationFromDrag_ = navigationFromDrag;
       }
-    }; // Function to remove the menu.
 
-
-    var remove = function remove() {
-      return parent.removeChild(main);
-    }; // Initialize the menu.
-
-
-    if (current) setActive(current); // Create the interface.
-
-    return {
-      setActive: setActive,
-      remove: remove
-    };
-  };
-
-  /**
-   * @param {HTMLElement} parent - The parent node.
-   * @param {Document} options - Options.
-   * @param {Document} [options.doc=document] - The root document. Mostly useful for testing purposes.
-   * @param {number} [options.lineWidth=2] - The width of the stroke.
-   * @param {string} [options.lineColor='black'] - CSS representation of the stroke color.
-   * @param {number} [options.startPointRadius=0] - The radius of the start point.
-   * @param {number} [options.startPointColor=options.lineColor] - CSS representation of the start
-   *                                                               point color.
-   * @param {number} [options.ptSize=1 / devicePixelRatio] - The size of the canvas points
-   *                                                         (px).
-   * @return {{ clear, setStroke, remove }} The canvas methods.
-   */
-  var createStrokeCanvas = (function (parent, _ref) {
-    var _ref$doc = _ref.doc,
-        doc = _ref$doc === void 0 ? document : _ref$doc,
-        _ref$lineWidth = _ref.lineWidth,
-        lineWidth = _ref$lineWidth === void 0 ? 2 : _ref$lineWidth,
-        _ref$lineColor = _ref.lineColor,
-        lineColor = _ref$lineColor === void 0 ? 'black' : _ref$lineColor,
-        _ref$pointRadius = _ref.pointRadius,
-        pointRadius = _ref$pointRadius === void 0 ? 0 : _ref$pointRadius,
-        _ref$pointColor = _ref.pointColor,
-        pointColor = _ref$pointColor === void 0 ? lineColor : _ref$pointColor,
-        _ref$ptSize = _ref.ptSize,
-        ptSize = _ref$ptSize === void 0 ? window.devicePixelRatio ? 1 / window.devicePixelRatio : 1 : _ref$ptSize;
-
-    // Create the canvas.
-    var _parent$getBoundingCl = parent.getBoundingClientRect(),
-        width = _parent$getBoundingCl.width,
-        height = _parent$getBoundingCl.height;
-
-    var canvas = doc.createElement('canvas');
-    canvas.width = width / ptSize;
-    canvas.height = height / ptSize;
-    Object.assign(canvas.style, {
-      position: 'absolute',
-      left: 0,
-      top: 0,
-      width: width + "px",
-      height: height + "px",
-      'pointer-events': 'none'
+      return drags$.pipe(operators.exhaustMap(drag$ => drag$.pipe(operators.take(1), operators.mergeMap(start => navigationFromDrag_(drag$, start, menu, options)))));
     });
-    parent.appendChild(canvas); // Get the canvas' context and set it up
 
-    var ctx = canvas.getContext('2d'); // Scale to the device pixel ratio.
+    const template = (_ref, doc) => {
+      let {
+        items,
+        center
+      } = _ref;
+      const main = doc.createElement('div');
+      main.className = 'marking-menu';
+      main.style.left = `${center[0]}px`;
+      main.style.top = `${center[1]}px`;
 
-    ctx.scale(1 / ptSize, 1 / ptSize);
-    /**
-     * @param {number[]} point - Position of the point to draw.
-     * @return {undefined}
-     */
+      for (let i = 0; i < items.length; i += 1) {
+        const item = items[i];
+        const elt = doc.createElement('div');
+        elt.className = 'marking-menu-item';
+        elt.dataset.itemId = item.id;
+        elt.dataset.itemAngle = item.angle;
+        elt.innerHTML += '<div class="marking-menu-line"></div>';
+        elt.innerHTML += `<div class="marking-menu-label">${item.name}</div>`;
+        main.appendChild(elt);
+      }
 
-    var drawPoint = function drawPoint(_ref2) {
-      var x = _ref2[0],
-          y = _ref2[1];
-      ctx.save();
-      ctx.strokeStyle = 'none';
-      ctx.fillStyle = pointColor;
-      ctx.beginPath();
-      ctx.moveTo(x + pointRadius, y);
-      ctx.arc(x, y, pointRadius, 0, 360);
-      ctx.fill();
-      ctx.restore();
+      return main;
     };
     /**
-     * Clear the canvas.
-     *
-     * @return {undefined}
-     */
-
-
-    var clear = function clear() {
-      ctx.clearRect(0, 0, width, height);
-    };
-    /**
-     * Draw the stroke.
-     *
-     * @param {List<number[]>} stroke - The new stroke.
-     * @return {undefined}
+     * Create the Menu display.
+     * @param {HTMLElement} parent - The parent node.
+     * @param {ItemModel} model - The model of the menu to open.
+     * @param {[int, int]} center - The center of the menu.
+     * @param {String} [current] - The currently active item.
+     * @param {Document} [options] - Menu options.
+     * @param {Document} [options.doc=document] - The root document of the menu.
+     *                                            Mostly useful for testing purposes.
+     * @return {{ setActive, remove }} - The menu controls.
      */
 
 
-    var drawStroke = function drawStroke(stroke) {
-      ctx.save();
-      ctx.fillStyle = 'none';
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = lineColor;
-      ctx.lineWidth = lineWidth;
-      ctx.beginPath();
-      stroke.forEach(function (point, i) {
-        if (i === 0) ctx.moveTo.apply(ctx, point);else ctx.lineTo.apply(ctx, point);
-      });
-      ctx.stroke();
-      ctx.restore();
-    };
-    /**
-     * Destroy the canvas.
-     * @return {undefined}
-     */
+    const createMenu = function (parent, model, center, current, _temp) {
+      let {
+        doc = document
+      } = _temp === void 0 ? {} : _temp;
+      // Create the DOM.
+      const main = template({
+        items: model.children,
+        center
+      }, doc);
+      parent.appendChild(main); // Clear any  active items.
+
+      const clearActiveItems = () => {
+        Array.from(main.querySelectorAll('.active')).forEach(itemDom => itemDom.classList.remove('active'));
+      }; // Return an item DOM element from its id.
 
 
-    var remove = function remove() {
-      canvas.remove();
-    };
+      const getItemDom = itemId => main.querySelector(`.marking-menu-item[data-item-id="${itemId}"]`); // Mark an item as active.
 
-    return {
-      clear: clear,
-      drawStroke: drawStroke,
-      drawPoint: drawPoint,
-      remove: remove
-    };
-  });
 
-  function unwrapExports (x) {
-  	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
-  }
+      const setActive = itemId => {
+        // Clear any  active items.
+        clearActiveItems(); // Set the active class.
 
-  function createCommonjsModule(fn, module) {
-  	return module = { exports: {} }, fn(module, module.exports), module.exports;
-  }
+        if (itemId || itemId === 0) {
+          getItemDom(itemId).classList.add('active');
+        }
+      }; // Function to remove the menu.
 
-  var rafThrottle_1 = createCommonjsModule(function (module, exports) {
 
-  Object.defineProperty(exports, "__esModule", {
-    value: true
-  });
-  var rafThrottle = function rafThrottle(callback) {
-    var requestId = void 0;
+      const remove = () => parent.removeChild(main); // Initialize the menu.
 
-    var later = function later(context, args) {
-      return function () {
-        requestId = null;
-        callback.apply(context, args);
+
+      if (current) setActive(current); // Create the interface.
+
+      return {
+        setActive,
+        remove
       };
     };
 
-    var throttled = function throttled() {
-      if (requestId === null || requestId === undefined) {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-          args[_key] = arguments[_key];
+    /**
+     * @param {HTMLElement} parent - The parent node.
+     * @param {Document} options - Options.
+     * @param {Document} [options.doc=document] - The root document. Mostly useful for testing purposes.
+     * @param {number} [options.lineWidth=2] - The width of the stroke.
+     * @param {string} [options.lineColor='black'] - CSS representation of the stroke color.
+     * @param {number} [options.startPointRadius=0] - The radius of the start point.
+     * @param {number} [options.startPointColor=options.lineColor] - CSS representation of the start
+     *                                                               point color.
+     * @param {number} [options.ptSize=1 / devicePixelRatio] - The size of the canvas points
+     *                                                         (px).
+     * @return {{ clear, setStroke, remove }} The canvas methods.
+     */
+    var createStrokeCanvas = ((parent, _ref) => {
+      let {
+        doc = document,
+        lineWidth = 2,
+        lineColor = 'black',
+        pointRadius = 0,
+        pointColor = lineColor,
+        ptSize = window.devicePixelRatio ? 1 / window.devicePixelRatio : 1
+      } = _ref;
+      // Create the canvas.
+      const {
+        width,
+        height
+      } = parent.getBoundingClientRect();
+      const canvas = doc.createElement('canvas');
+      canvas.width = width / ptSize;
+      canvas.height = height / ptSize;
+      Object.assign(canvas.style, {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        width: `${width}px`,
+        height: `${height}px`,
+        'pointer-events': 'none'
+      });
+      parent.appendChild(canvas); // Get the canvas' context and set it up
+
+      const ctx = canvas.getContext('2d'); // Scale to the device pixel ratio.
+
+      ctx.scale(1 / ptSize, 1 / ptSize);
+      /**
+       * @param {number[]} point - Position of the point to draw.
+       * @return {undefined}
+       */
+
+      const drawPoint = (_ref2) => {
+        let [x, y] = _ref2;
+        ctx.save();
+        ctx.strokeStyle = 'none';
+        ctx.fillStyle = pointColor;
+        ctx.beginPath();
+        ctx.moveTo(x + pointRadius, y);
+        ctx.arc(x, y, pointRadius, 0, 360);
+        ctx.fill();
+        ctx.restore();
+      };
+      /**
+       * Clear the canvas.
+       *
+       * @return {undefined}
+       */
+
+
+      const clear = () => {
+        ctx.clearRect(0, 0, width, height);
+      };
+      /**
+       * Draw the stroke.
+       *
+       * @param {List<number[]>} stroke - The new stroke.
+       * @return {undefined}
+       */
+
+
+      const drawStroke = stroke => {
+        ctx.save();
+        ctx.fillStyle = 'none';
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = lineWidth;
+        ctx.beginPath();
+        stroke.forEach((point, i) => {
+          if (i === 0) ctx.moveTo(...point);else ctx.lineTo(...point);
+        });
+        ctx.stroke();
+        ctx.restore();
+      };
+      /**
+       * Destroy the canvas.
+       * @return {undefined}
+       */
+
+
+      const remove = () => {
+        canvas.remove();
+      };
+
+      return {
+        clear,
+        drawStroke,
+        drawPoint,
+        remove
+      };
+    });
+
+    function unwrapExports (x) {
+    	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+    }
+
+    function createCommonjsModule(fn, module) {
+    	return module = { exports: {} }, fn(module, module.exports), module.exports;
+    }
+
+    var rafThrottle_1 = createCommonjsModule(function (module, exports) {
+
+    Object.defineProperty(exports, "__esModule", {
+      value: true
+    });
+    var rafThrottle = function rafThrottle(callback) {
+      var requestId = void 0;
+
+      var later = function later(context, args) {
+        return function () {
+          requestId = null;
+          callback.apply(context, args);
+        };
+      };
+
+      var throttled = function throttled() {
+        if (requestId === null || requestId === undefined) {
+          for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+          }
+
+          requestId = requestAnimationFrame(later(this, args));
         }
+      };
 
-        requestId = requestAnimationFrame(later(this, args));
-      }
+      throttled.cancel = function () {
+        return cancelAnimationFrame(requestId);
+      };
+
+      return throttled;
     };
 
-    throttled.cancel = function () {
-      return cancelAnimationFrame(requestId);
-    };
+    exports.default = rafThrottle;
+    });
 
-    return throttled;
-  };
+    var rafThrottle = unwrapExports(rafThrottle_1);
 
-  exports.default = rafThrottle;
-  });
+    /**
+     * Connect navigation notifications to menu opening and closing.
+     *
+     * @param {HTMLElement} parentDOM - The element where to append the menu.
+     * @param {Observable} navigation$ - Notifications of the navigation.
+     * @param {Function} createMenuLayout - Menu layout factory.
+     * @param {Function} createUpperStrokeCanvas - Upper stroke canvas factory. The
+     * upper stroke show the user interaction on the current menu, and the movements
+     * in expert mode.
+     * @param {Function} createLowerStrokeCanvas - Lower stroke canvas factory. The
+     * lower stroke is stroke drawn below the menu. It keeps track of the previous
+     * movements.
+     * @param {Function} createGestureFeedback - Create gesture feedback.
+     * @param {{error}} log - Logger.
+     * @return {Observable} `navigation$` with menu opening and closing side effects.
+     */
 
-  var rafThrottle = unwrapExports(rafThrottle_1);
+    var connectLayout = ((parentDOM, navigation$, createMenuLayout, createUpperStrokeCanvas, createLowerStrokeCanvas, createGestureFeedback, log) => {
+      // The menu object.
+      let menu = null; // A stroke drawn on top of the menu.
 
-  /**
-   * Connect navigation notifications to menu opening and closing.
-   *
-   * @param {HTMLElement} parentDOM - The element where to append the menu.
-   * @param {Observable} navigation$ - Notifications of the navigation.
-   * @param {Function} createMenuLayout - Menu layout factory.
-   * @param {Function} createUpperStrokeCanvas - Upper stroke canvas factory. The
-   * upper stroke show the user interaction on the current menu, and the movements
-   * in expert mode.
-   * @param {Function} createLowerStrokeCanvas - Lower stroke canvas factory. The
-   * lower stroke is stroke drawn below the menu. It keeps track of the previous
-   * movements.
-   * @param {Function} createGestureFeedback - Create gesture feedback.
-   * @param {{error}} log - Logger.
-   * @return {Observable} `navigation$` with menu opening and closing side effects.
-   */
+      let upperStrokeCanvas = null; // A stroke drawn below the menu.
 
-  var connectLayout = (function (parentDOM, navigation$, createMenuLayout, createUpperStrokeCanvas, createLowerStrokeCanvas, createGestureFeedback, log) {
-    // The menu object.
-    var menu = null; // A stroke drawn on top of the menu.
+      let lowerStrokeCanvas = null; // The points of the lower strokes.
 
-    var upperStrokeCanvas = null; // A stroke drawn below the menu.
+      let lowerStroke = null; // The points of the upper stroke.
 
-    var lowerStrokeCanvas = null; // The points of the lower strokes.
+      let upperStroke = null;
+      const gestureFeedback = createGestureFeedback(parentDOM);
 
-    var lowerStroke = null; // The points of the upper stroke.
+      const closeMenu = () => {
+        menu.remove();
+        menu = null;
+      };
 
-    var upperStroke = null;
-    var gestureFeedback = createGestureFeedback(parentDOM);
+      const openMenu = (model, position) => {
+        const cbr = parentDOM.getBoundingClientRect();
+        menu = createMenuLayout(parentDOM, model, [position[0] - cbr.left, position[1] - cbr.top]);
+      };
 
-    var closeMenu = function closeMenu() {
-      menu.remove();
-      menu = null;
-    };
+      const setActive = id => {
+        menu.setActive(id);
+      };
 
-    var openMenu = function openMenu(model, position) {
-      var cbr = parentDOM.getBoundingClientRect();
-      menu = createMenuLayout(parentDOM, model, [position[0] - cbr.left, position[1] - cbr.top]);
-    };
+      const startUpperStroke = position => {
+        upperStrokeCanvas = createUpperStrokeCanvas(parentDOM);
+        upperStroke = [position];
+        upperStrokeCanvas.drawStroke(upperStroke);
+      };
 
-    var setActive = function setActive(id) {
-      menu.setActive(id);
-    };
+      const noviceMove = rafThrottle(position => {
+        if (upperStrokeCanvas) {
+          upperStrokeCanvas.clear();
 
-    var startUpperStroke = function startUpperStroke(position) {
-      upperStrokeCanvas = createUpperStrokeCanvas(parentDOM);
-      upperStroke = [position];
-      upperStrokeCanvas.drawStroke(upperStroke);
-    };
+          if (position) {
+            upperStroke = [upperStroke[0], position];
+            upperStrokeCanvas.drawStroke(upperStroke);
+          }
 
-    var noviceMove = rafThrottle(function (position) {
-      if (upperStrokeCanvas) {
-        upperStrokeCanvas.clear();
-
-        if (position) {
-          upperStroke = [upperStroke[0], position];
+          upperStrokeCanvas.drawPoint(upperStroke[0]);
+        }
+      });
+      const expertDraw = rafThrottle(stroke => {
+        // FIXME: Not very efficient.
+        if (upperStrokeCanvas) {
+          upperStrokeCanvas.clear();
+          upperStroke = stroke.slice();
           upperStrokeCanvas.drawStroke(upperStroke);
         }
+      });
 
-        upperStrokeCanvas.drawPoint(upperStroke[0]);
-      }
-    });
-    var expertDraw = rafThrottle(function (stroke) {
-      // FIXME: Not very efficient.
-      if (upperStrokeCanvas) {
-        upperStrokeCanvas.clear();
-        upperStroke = stroke.slice();
-        upperStrokeCanvas.drawStroke(upperStroke);
-      }
-    });
+      const clearUpperStroke = () => {
+        upperStrokeCanvas.remove();
+        upperStrokeCanvas = null;
+        upperStroke = null;
+      };
 
-    var clearUpperStroke = function clearUpperStroke() {
-      upperStrokeCanvas.remove();
-      upperStrokeCanvas = null;
-      upperStroke = null;
-    };
+      const swapUpperStroke = () => {
+        lowerStroke = lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke;
+        clearUpperStroke();
+        lowerStrokeCanvas = lowerStrokeCanvas || createLowerStrokeCanvas(parentDOM);
+        lowerStrokeCanvas.drawStroke(lowerStroke);
+      };
 
-    var swapUpperStroke = function swapUpperStroke() {
-      lowerStroke = lowerStroke ? [].concat(lowerStroke, upperStroke) : upperStroke;
-      clearUpperStroke();
-      lowerStrokeCanvas = lowerStrokeCanvas || createLowerStrokeCanvas(parentDOM);
-      lowerStrokeCanvas.drawStroke(lowerStroke);
-    };
+      const clearLowerStroke = () => {
+        if (lowerStrokeCanvas) {
+          lowerStrokeCanvas.remove();
+          lowerStrokeCanvas = null;
+        }
 
-    var clearLowerStroke = function clearLowerStroke() {
-      if (lowerStrokeCanvas) {
-        lowerStrokeCanvas.remove();
-        lowerStrokeCanvas = null;
-      }
+        lowerStroke = null;
+      };
 
-      lowerStroke = null;
-    };
+      const showGestureFeedback = isCanceled => {
+        gestureFeedback.show(lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke, isCanceled);
+      };
 
-    var showGestureFeedback = function showGestureFeedback(isCanceled) {
-      gestureFeedback.show(lowerStroke ? [].concat(lowerStroke, upperStroke) : upperStroke, isCanceled);
-    };
+      const cleanUp = () => {
+        // Make sure everything is cleaned upon completion.
+        if (menu) closeMenu();
+        if (upperStrokeCanvas) clearUpperStroke();
+        if (lowerStrokeCanvas) clearLowerStroke();
+        gestureFeedback.remove(); // eslint-disable-next-line no-param-reassign
 
-    var cleanUp = function cleanUp() {
-      // Make sure everything is cleaned upon completion.
-      if (menu) closeMenu();
-      if (upperStrokeCanvas) clearUpperStroke();
-      if (lowerStrokeCanvas) clearLowerStroke();
-      gestureFeedback.remove(); // eslint-disable-next-line no-param-reassign
+        parentDOM.style.cursor = '';
+      };
 
-      parentDOM.style.cursor = '';
-    };
+      const onNotification = notification => {
+        switch (notification.type) {
+          case 'open':
+            {
+              // eslint-disable-next-line no-param-reassign
+              parentDOM.style.cursor = 'none';
+              if (menu) closeMenu();
+              swapUpperStroke();
+              openMenu(notification.menu, notification.center);
+              startUpperStroke(notification.center);
+              noviceMove(notification.position);
+              break;
+            }
 
-    var onNotification = function onNotification(notification) {
-      switch (notification.type) {
-        case 'open':
-          {
+          case 'change':
+            {
+              setActive(notification.active && notification.active.id || null);
+              break;
+            }
+
+          case 'select':
+          case 'cancel':
             // eslint-disable-next-line no-param-reassign
-            parentDOM.style.cursor = 'none';
+            parentDOM.style.cursor = '';
             if (menu) closeMenu();
-            swapUpperStroke();
-            openMenu(notification.menu, notification.center);
-            startUpperStroke(notification.center);
+            showGestureFeedback(notification.type === 'cancel');
+            clearUpperStroke();
+            clearLowerStroke();
+            break;
+
+          case 'start':
+            // eslint-disable-next-line no-param-reassign
+            parentDOM.style.cursor = 'crosshair';
+            startUpperStroke(notification.position);
+            break;
+
+          case 'draw':
+            expertDraw(notification.stroke);
+            break;
+
+          case 'move':
             noviceMove(notification.position);
             break;
+
+          default:
+            throw new Error(`Invalid navigation notification type: ${notification.type}`);
+        }
+      };
+
+      return navigation$.pipe(operators.tap({
+        next(notification) {
+          try {
+            onNotification(notification);
+          } catch (e) {
+            log.error(e);
+            throw e;
           }
+        },
 
-        case 'change':
-          {
-            setActive(notification.active && notification.active.id || null);
-            break;
-          }
+        error(e) {
+          log.error(e);
+          throw e;
+        }
 
-        case 'select':
-        case 'cancel':
-          // eslint-disable-next-line no-param-reassign
-          parentDOM.style.cursor = '';
-          if (menu) closeMenu();
-          showGestureFeedback(notification.type === 'cancel');
-          clearUpperStroke();
-          clearLowerStroke();
-          break;
-
-        case 'start':
-          // eslint-disable-next-line no-param-reassign
-          parentDOM.style.cursor = 'crosshair';
-          startUpperStroke(notification.position);
-          break;
-
-        case 'draw':
-          expertDraw(notification.stroke);
-          break;
-
-        case 'move':
-          noviceMove(notification.position);
-          break;
-
-        default:
-          throw new Error("Invalid navigation notification type: " + notification.type);
-      }
-    };
-
-    return navigation$.pipe(operators.tap({
-      next: function next(notification) {
+      }), operators.finalize(() => {
         try {
-          onNotification(notification);
+          cleanUp();
         } catch (e) {
           log.error(e);
           throw e;
         }
-      },
-      error: function error(e) {
-        log.error(e);
-        throw e;
-      }
-    }), operators.finalize(function () {
-      try {
-        cleanUp();
-      } catch (e) {
-        log.error(e);
-        throw e;
-      }
-    }));
-  });
+      }));
+    });
 
-  var createGestureFeedback = (function (parentDOM, _ref) {
-    var duration = _ref.duration,
-        _ref$strokeOptions = _ref.strokeOptions,
-        strokeOptions = _ref$strokeOptions === void 0 ? {} : _ref$strokeOptions,
-        _ref$canceledStrokeOp = _ref.canceledStrokeOptions,
-        canceledStrokeOptions = _ref$canceledStrokeOp === void 0 ? {} : _ref$canceledStrokeOp;
-    var strokeTimeoutEntries = [];
+    var createGestureFeedback = ((parentDOM, _ref) => {
+      let {
+        duration,
+        strokeOptions = {},
+        canceledStrokeOptions = {}
+      } = _ref;
+      let strokeTimeoutEntries = [];
 
-    var show = function show(stroke, isCanceled) {
-      if (isCanceled === void 0) {
-        isCanceled = false;
-      }
+      const show = function (stroke, isCanceled) {
+        if (isCanceled === void 0) {
+          isCanceled = false;
+        }
 
-      var canvas = createStrokeCanvas(parentDOM, _extends({}, strokeOptions, {}, isCanceled ? canceledStrokeOptions : {}));
-      canvas.drawStroke(stroke);
-      var timeoutEntry = {
-        canvas: canvas,
-        timeout: setTimeout(function () {
-          // Remove the entry from the strokeTimeoutEntries.
-          strokeTimeoutEntries = strokeTimeoutEntries.filter(function (x) {
-            return x !== timeoutEntry;
-          }); // Clear the stroke canvas.
+        const canvas = createStrokeCanvas(parentDOM, { ...strokeOptions,
+          ...(isCanceled ? canceledStrokeOptions : {})
+        });
+        canvas.drawStroke(stroke);
+        const timeoutEntry = {
+          canvas,
+          timeout: setTimeout(() => {
+            // Remove the entry from the strokeTimeoutEntries.
+            strokeTimeoutEntries = strokeTimeoutEntries.filter(x => x !== timeoutEntry); // Clear the stroke canvas.
 
-          canvas.remove();
-        }, duration)
+            canvas.remove();
+          }, duration)
+        };
+        strokeTimeoutEntries.push(timeoutEntry);
       };
-      strokeTimeoutEntries.push(timeoutEntry);
+
+      const remove = () => {
+        strokeTimeoutEntries.forEach((_ref2) => {
+          let {
+            timeout,
+            canvas
+          } = _ref2;
+          clearTimeout(timeout);
+          canvas.remove();
+        });
+        strokeTimeoutEntries = [];
+      };
+
+      return {
+        show,
+        remove
+      };
+    });
+
+    const getAngleRange = items => items.length > 4 ? 45 : 90;
+    /**
+     * Represents an item of the Marking Menu.
+     */
+
+
+    class MMItem {
+      /**
+       * @param {String} id - The item's id. Required except for the root item.
+       * @param {String} name - The item's name. Required except for the root item.
+       * @param {Integer} angle - The item's angle. Required except for the root item.
+       * @param {object} [options] - Some additional options.
+       * @param {ItemModel} [options.parent] - The parent menu of the item.
+       * @param {List<ItemModel>} [options.children] - The children of the item menu.
+       */
+      constructor(id, name, angle, _temp) {
+        let {
+          parent,
+          children
+        } = _temp === void 0 ? {} : _temp;
+        this.id = id;
+        this.name = name;
+        this.angle = angle;
+        this.children = children;
+        this.parent = parent;
+      }
+
+      isLeaf() {
+        return !this.children || this.children.length === 0;
+      }
+
+      isRoot() {
+        return !this.parent;
+      }
+      /**
+       * @param {String} childId - The identifier of the child to look for.
+       * @return {Item} the children with the id `childId`.
+       */
+
+
+      getChild(childId) {
+        return this.children.find(child => child.id === childId);
+      }
+      /**
+       * @param {String} childName - The name of the children to look for.
+       * @return {Item} the children with the name `childName`.
+       */
+
+
+      getChildrenByName(childName) {
+        return this.children.filter(child => child.name === childName);
+      }
+      /**
+       * @param {Integer} angle - An angle.
+       * @return {Item} the closest children to the angle `angle`.
+       */
+
+
+      getNearestChild(angle) {
+        return this.children.reduce((c1, c2) => {
+          const delta1 = Math.abs(deltaAngle(c1.angle, angle));
+          const delta2 = Math.abs(deltaAngle(c2.angle, angle));
+          return delta1 > delta2 ? c2 : c1;
+        });
+      }
+      /**
+       * @return {number} The maximum depth of the menu.
+       */
+
+
+      getMaxDepth() {
+        return this.isLeaf() ? 0 : Math.max(0, ...this.children.map(child => child.getMaxDepth())) + 1;
+      }
+      /**
+       * @return {number} The maximum breadth of the menu.
+       */
+
+
+      getMaxBreadth() {
+        return this.isLeaf() ? 0 : Math.max(this.children.length, ...this.children.map(child => child.getMaxBreadth()));
+      }
+
+    } // Create the model item from a list of items.
+
+    const recursivelyCreateModelItems = function (items, baseId, parent) {
+      if (baseId === void 0) {
+        baseId = undefined;
+      }
+
+      if (parent === void 0) {
+        parent = undefined;
+      }
+
+      // Calculate the angle range for each items.
+      const angleRange = getAngleRange(items); // Create the list of model items (frozen).
+
+      return Object.freeze(items.map((item, i) => {
+        // Standard item id.
+        const stdId = baseId ? [baseId, i].join('-') : i.toString(); // Create the item.
+
+        const mmItem = new MMItem(item.id == null ? stdId : item.id, typeof item === 'string' ? item : item.name, i * angleRange, {
+          parent
+        }); // Add its children if any.
+
+        if (item.children) {
+          mmItem.children = recursivelyCreateModelItems(item.children, stdId, mmItem);
+        } // Return it frozen.
+
+
+        return Object.freeze(mmItem);
+      }));
+    };
+    /**
+     * Create the marking menu model.
+     *
+     * @param {List<String|{name,children}>} itemList - The list of items.
+     * @return {MMItem} - The root item of the model.
+     */
+
+
+    const createModel = itemList => {
+      const menu = new MMItem(null, null, null);
+      menu.children = recursivelyCreateModelItems(itemList, undefined, menu);
+      return Object.freeze(menu);
     };
 
-    var remove = function remove() {
-      strokeTimeoutEntries.forEach(function (_ref2) {
-        var timeout = _ref2.timeout,
-            canvas = _ref2.canvas;
-        clearTimeout(timeout);
-        canvas.remove();
-      });
-      strokeTimeoutEntries = [];
-    };
-
-    return {
-      show: show,
-      remove: remove
-    };
-  });
-
-  var getAngleRange = function getAngleRange(items) {
-    return items.length > 4 ? 45 : 90;
-  };
-  /**
-   * Represents an item of the Marking Menu.
-   */
-
-
-  var MMItem =
-  /*#__PURE__*/
-  function () {
-    /**
-     * @param {String} id - The item's id. Required except for the root item.
-     * @param {String} name - The item's name. Required except for the root item.
-     * @param {Integer} angle - The item's angle. Required except for the root item.
-     * @param {object} [options] - Some additional options.
-     * @param {ItemModel} [options.parent] - The parent menu of the item.
-     * @param {List<ItemModel>} [options.children] - The children of the item menu.
-     */
-    function MMItem(id, name, angle, _temp) {
-      var _ref = _temp === void 0 ? {} : _temp,
-          parent = _ref.parent,
-          children = _ref.children;
-
-      this.id = id;
-      this.name = name;
-      this.angle = angle;
-      this.children = children;
-      this.parent = parent;
-    }
-
-    var _proto = MMItem.prototype;
-
-    _proto.isLeaf = function isLeaf() {
-      return !this.children || this.children.length === 0;
-    };
-
-    _proto.isRoot = function isRoot() {
-      return !this.parent;
-    }
-    /**
-     * @param {String} childId - The identifier of the child to look for.
-     * @return {Item} the children with the id `childId`.
-     */
-    ;
-
-    _proto.getChild = function getChild(childId) {
-      return this.children.find(function (child) {
-        return child.id === childId;
-      });
-    }
-    /**
-     * @param {String} childName - The name of the children to look for.
-     * @return {Item} the children with the name `childName`.
-     */
-    ;
-
-    _proto.getChildrenByName = function getChildrenByName(childName) {
-      return this.children.filter(function (child) {
-        return child.name === childName;
-      });
-    }
-    /**
-     * @param {Integer} angle - An angle.
-     * @return {Item} the closest children to the angle `angle`.
-     */
-    ;
-
-    _proto.getNearestChild = function getNearestChild(angle) {
-      return this.children.reduce(function (c1, c2) {
-        var delta1 = Math.abs(deltaAngle(c1.angle, angle));
-        var delta2 = Math.abs(deltaAngle(c2.angle, angle));
-        return delta1 > delta2 ? c2 : c1;
-      });
-    }
-    /**
-     * @return {number} The maximum depth of the menu.
-     */
-    ;
-
-    _proto.getMaxDepth = function getMaxDepth() {
-      return this.isLeaf() ? 0 : Math.max.apply(Math, [0].concat(this.children.map(function (child) {
-        return child.getMaxDepth();
-      }))) + 1;
-    }
-    /**
-     * @return {number} The maximum breadth of the menu.
-     */
-    ;
-
-    _proto.getMaxBreadth = function getMaxBreadth() {
-      return this.isLeaf() ? 0 : Math.max.apply(Math, [this.children.length].concat(this.children.map(function (child) {
-        return child.getMaxBreadth();
-      })));
-    };
-
-    return MMItem;
-  }(); // Create the model item from a list of items.
-
-  var recursivelyCreateModelItems = function recursivelyCreateModelItems(items, baseId, parent) {
-    if (baseId === void 0) {
-      baseId = undefined;
-    }
-
-    if (parent === void 0) {
-      parent = undefined;
-    }
-
-    // Calculate the angle range for each items.
-    var angleRange = getAngleRange(items); // Create the list of model items (frozen).
-
-    return Object.freeze(items.map(function (item, i) {
-      // Standard item id.
-      var stdId = baseId ? [baseId, i].join('-') : i.toString(); // Create the item.
-
-      var mmItem = new MMItem(item.id == null ? stdId : item.id, typeof item === 'string' ? item : item.name, i * angleRange, {
-        parent: parent
-      }); // Add its children if any.
-
-      if (item.children) {
-        mmItem.children = recursivelyCreateModelItems(item.children, stdId, mmItem);
-      } // Return it frozen.
-
-
-      return Object.freeze(mmItem);
-    }));
-  };
-  /**
-   * Create the marking menu model.
-   *
-   * @param {List<String|{name,children}>} itemList - The list of items.
-   * @return {MMItem} - The root item of the model.
-   */
-
-
-  var createModel = function createModel(itemList) {
-    var menu = new MMItem(null, null, null);
-    menu.children = recursivelyCreateModelItems(itemList, undefined, menu);
-    return Object.freeze(menu);
-  };
-
-  var exportNotification = function exportNotification(n) {
-    return {
+    const exportNotification = n => ({
       type: n.type,
       mode: n.mode,
       position: n.position ? n.position.slice() : undefined,
@@ -1484,151 +1344,127 @@
       selection: n.selection,
       menuCenter: n.center ? n.center.slice() : undefined,
       timeStamp: n.timeStamp
-    };
-  };
-  /**
-   * Create a Marking Menu.
-   *
-   * @param {List<String|{name,children}>} items - The list of items.
-   * @param {HTMLElement} parentDOM - The parent node.
-   * @param {Object} [options] - Configuration options for the menu.
-   * @param {number} [options.minSelectionDist] - The minimum distance from the center to select an
-   *                                              item.
-   * @param {number} [options.minMenuSelectionDist] - The minimum distance from the center to open a
-   *                                                  sub-menu.
-   * @param {number} [options.subMenuOpeningDelay] - The dwelling delay before opening a sub-menu.
-   * @param {number} [options.movementsThreshold] - The minimum distance between two points to be
-   *                                                considered a significant movements and breaking
-   *                                                the sub-menu dwelling delay.
-   * @param {number} [options.noviceDwellingTime] - The dwelling time required to trigger the novice
-   *                                                mode (and open the menu).
-   * @param {number} [options.strokeColor] - The color of the gesture stroke.
-   * @param {number} [options.strokeWidth] - The width of the gesture stroke.
-   * @param {number} [options.strokeStartPointRadius] - The radius of the start point of the stroke
-   *                                                    (appearing at the middle of the menu in novice
-   *                                                    mode).
-   * @param {number} [options.lowerStrokeColor] - The color of the lower stroke. The lower stroke is
-   *                                              the stroke drawn below the menu. It keeps track of
-   *                                              the previous movements.
-   * @param {number} [options.lowerStrokeWidth] - The width of the lower stroke.
-   * @param {number} [options.lowerStrokeStartPointRadius] - The radius of the start point of the
-   *                                                         stroke.
-   * @param {number} [options.gestureFeedbackStrokeWidth] - The width of the stroke of the gesture
-   *                                                        feedback.
-   * @param {number} [options.gestureFeedbackStrokeColor] - The color of the stroke of the gesture
-   *                                                        feedback.
-   * @param {number} [options.gestureFeedbackCanceledStrokeColor] - The color of the stroke of the
-   *                                                        gesture feedback when the selection is
-   *                                                        canceled.
-   * @param {number} [options.gestureFeedbackDuration] - The duration of the gesture feedback.
-   * @param {boolean} [options.notifySteps] - If true, every steps of the marking menu (include move)
-   *                                          events, will be notified. Useful for logging.
-   * @param {{error, info, warn, debug}} [options.log] - Override the default logger to use.
-   * @return {Observable} An observable on menu selections.
-   */
+    });
+    /**
+     * Create a Marking Menu.
+     *
+     * @param {List<String|{name,children}>} items - The list of items.
+     * @param {HTMLElement} parentDOM - The parent node.
+     * @param {Object} [options] - Configuration options for the menu.
+     * @param {number} [options.minSelectionDist] - The minimum distance from the center to select an
+     *                                              item.
+     * @param {number} [options.minMenuSelectionDist] - The minimum distance from the center to open a
+     *                                                  sub-menu.
+     * @param {number} [options.subMenuOpeningDelay] - The dwelling delay before opening a sub-menu.
+     * @param {number} [options.movementsThreshold] - The minimum distance between two points to be
+     *                                                considered a significant movements and breaking
+     *                                                the sub-menu dwelling delay.
+     * @param {number} [options.noviceDwellingTime] - The dwelling time required to trigger the novice
+     *                                                mode (and open the menu).
+     * @param {number} [options.strokeColor] - The color of the gesture stroke.
+     * @param {number} [options.strokeWidth] - The width of the gesture stroke.
+     * @param {number} [options.strokeStartPointRadius] - The radius of the start point of the stroke
+     *                                                    (appearing at the middle of the menu in novice
+     *                                                    mode).
+     * @param {number} [options.lowerStrokeColor] - The color of the lower stroke. The lower stroke is
+     *                                              the stroke drawn below the menu. It keeps track of
+     *                                              the previous movements.
+     * @param {number} [options.lowerStrokeWidth] - The width of the lower stroke.
+     * @param {number} [options.lowerStrokeStartPointRadius] - The radius of the start point of the
+     *                                                         stroke.
+     * @param {number} [options.gestureFeedbackStrokeWidth] - The width of the stroke of the gesture
+     *                                                        feedback.
+     * @param {number} [options.gestureFeedbackStrokeColor] - The color of the stroke of the gesture
+     *                                                        feedback.
+     * @param {number} [options.gestureFeedbackCanceledStrokeColor] - The color of the stroke of the
+     *                                                        gesture feedback when the selection is
+     *                                                        canceled.
+     * @param {number} [options.gestureFeedbackDuration] - The duration of the gesture feedback.
+     * @param {boolean} [options.notifySteps] - If true, every steps of the marking menu (include move)
+     *                                          events, will be notified. Useful for logging.
+     * @param {{error, info, warn, debug}} [options.log] - Override the default logger to use.
+     * @return {Observable} An observable on menu selections.
+     */
 
-  var MarkingMenu = (function (items, parentDOM, _temp) {
-    var _ref = _temp === void 0 ? {} : _temp,
-        _ref$minSelectionDist = _ref.minSelectionDist,
-        minSelectionDist = _ref$minSelectionDist === void 0 ? 40 : _ref$minSelectionDist,
-        _ref$minMenuSelection = _ref.minMenuSelectionDist,
-        minMenuSelectionDist = _ref$minMenuSelection === void 0 ? 80 : _ref$minMenuSelection,
-        _ref$subMenuOpeningDe = _ref.subMenuOpeningDelay,
-        subMenuOpeningDelay = _ref$subMenuOpeningDe === void 0 ? 25 : _ref$subMenuOpeningDe,
-        _ref$movementsThresho = _ref.movementsThreshold,
-        movementsThreshold = _ref$movementsThresho === void 0 ? 5 : _ref$movementsThresho,
-        _ref$noviceDwellingTi = _ref.noviceDwellingTime,
-        noviceDwellingTime = _ref$noviceDwellingTi === void 0 ? 1000 / 3 : _ref$noviceDwellingTi,
-        _ref$strokeColor = _ref.strokeColor,
-        strokeColor = _ref$strokeColor === void 0 ? '#000' : _ref$strokeColor,
-        _ref$strokeWidth = _ref.strokeWidth,
-        strokeWidth = _ref$strokeWidth === void 0 ? 4 : _ref$strokeWidth,
-        _ref$strokeStartPoint = _ref.strokeStartPointRadius,
-        strokeStartPointRadius = _ref$strokeStartPoint === void 0 ? 8 : _ref$strokeStartPoint,
-        _ref$lowerStrokeColor = _ref.lowerStrokeColor,
-        lowerStrokeColor = _ref$lowerStrokeColor === void 0 ? '#777' : _ref$lowerStrokeColor,
-        _ref$lowerStrokeWidth = _ref.lowerStrokeWidth,
-        lowerStrokeWidth = _ref$lowerStrokeWidth === void 0 ? strokeWidth : _ref$lowerStrokeWidth,
-        _ref$lowerStrokeStart = _ref.lowerStrokeStartPointRadius,
-        lowerStrokeStartPointRadius = _ref$lowerStrokeStart === void 0 ? lowerStrokeWidth : _ref$lowerStrokeStart,
-        _ref$gestureFeedbackD = _ref.gestureFeedbackDuration,
-        gestureFeedbackDuration = _ref$gestureFeedbackD === void 0 ? 1000 : _ref$gestureFeedbackD,
-        _ref$gestureFeedbackS = _ref.gestureFeedbackStrokeWidth,
-        gestureFeedbackStrokeWidth = _ref$gestureFeedbackS === void 0 ? strokeWidth : _ref$gestureFeedbackS,
-        _ref$gestureFeedbackC = _ref.gestureFeedbackCanceledStrokeColor,
-        gestureFeedbackCanceledStrokeColor = _ref$gestureFeedbackC === void 0 ? '#DE6C52' : _ref$gestureFeedbackC,
-        _ref$gestureFeedbackS2 = _ref.gestureFeedbackStrokeColor,
-        gestureFeedbackStrokeColor = _ref$gestureFeedbackS2 === void 0 ? strokeColor : _ref$gestureFeedbackS2,
-        _ref$notifySteps = _ref.notifySteps,
-        notifySteps = _ref$notifySteps === void 0 ? false : _ref$notifySteps,
-        _ref$log = _ref.log,
-        log = _ref$log === void 0 ? {
-      // eslint-disable-next-line no-console
-      error: console.error && console.error.bind(console),
-      // eslint-disable-next-line no-console
-      info: console.info && console.info.bind(console),
-      // eslint-disable-next-line no-console
-      warn: console.warn && console.warn.bind(console),
-      debug: function debug() {}
-    } : _ref$log;
+    var MarkingMenu = (function (items, parentDOM, _temp) {
+      let {
+        minSelectionDist = 40,
+        minMenuSelectionDist = 80,
+        subMenuOpeningDelay = 25,
+        movementsThreshold = 5,
+        noviceDwellingTime = 1000 / 3,
+        strokeColor = '#000',
+        strokeWidth = 4,
+        strokeStartPointRadius = 8,
+        lowerStrokeColor = '#777',
+        lowerStrokeWidth = strokeWidth,
+        lowerStrokeStartPointRadius = lowerStrokeWidth,
+        gestureFeedbackDuration = 1000,
+        gestureFeedbackStrokeWidth = strokeWidth,
+        gestureFeedbackCanceledStrokeColor = '#DE6C52',
+        gestureFeedbackStrokeColor = strokeColor,
+        notifySteps = false,
+        log = {
+          // eslint-disable-next-line no-console
+          error: console.error && console.error.bind(console),
+          // eslint-disable-next-line no-console
+          info: console.info && console.info.bind(console),
+          // eslint-disable-next-line no-console
+          warn: console.warn && console.warn.bind(console),
 
-    // Create the display options
-    var menuLayoutOptions = {};
-    var strokeCanvasOptions = {
-      lineColor: strokeColor,
-      lineWidth: strokeWidth,
-      pointRadius: strokeStartPointRadius
-    };
-    var lowerStrokeCanvasOptions = {
-      lineColor: lowerStrokeColor,
-      lineWidth: lowerStrokeWidth,
-      pointRadius: lowerStrokeStartPointRadius
-    };
-    var gestureFeedbackOptions = {
-      duration: gestureFeedbackDuration,
-      strokeOptions: {
-        lineColor: gestureFeedbackStrokeColor,
-        lineWidth: gestureFeedbackStrokeWidth
-      },
-      canceledStrokeOptions: {
-        lineColor: gestureFeedbackCanceledStrokeColor
-      }
-    }; // Create model and navigation observable.
+          debug() {}
 
-    var model = createModel(items);
-    var navigation$ = navigation(watchDrags(parentDOM), model, {
-      minSelectionDist: minSelectionDist,
-      minMenuSelectionDist: minMenuSelectionDist,
-      subMenuOpeningDelay: subMenuOpeningDelay,
-      movementsThreshold: movementsThreshold,
-      noviceDwellingTime: noviceDwellingTime
-    }).pipe(operators.tap(function (_ref2) {
-      var originalEvent = _ref2.originalEvent;
-      // Prevent default on every notifications.
-      if (originalEvent) originalEvent.preventDefault();
-    })); // Connect the engine's notifications to menu opening/closing.
+        }
+      } = _temp === void 0 ? {} : _temp;
+      // Create the display options
+      const menuLayoutOptions = {};
+      const strokeCanvasOptions = {
+        lineColor: strokeColor,
+        lineWidth: strokeWidth,
+        pointRadius: strokeStartPointRadius
+      };
+      const lowerStrokeCanvasOptions = {
+        lineColor: lowerStrokeColor,
+        lineWidth: lowerStrokeWidth,
+        pointRadius: lowerStrokeStartPointRadius
+      };
+      const gestureFeedbackOptions = {
+        duration: gestureFeedbackDuration,
+        strokeOptions: {
+          lineColor: gestureFeedbackStrokeColor,
+          lineWidth: gestureFeedbackStrokeWidth
+        },
+        canceledStrokeOptions: {
+          lineColor: gestureFeedbackCanceledStrokeColor
+        }
+      }; // Create model and navigation observable.
 
-    var connectedNavigation$ = connectLayout(parentDOM, navigation$, function (parent, menuModel, center, current) {
-      return createMenu(parent, menuModel, center, current, menuLayoutOptions);
-    }, function (parent) {
-      return createStrokeCanvas(parent, strokeCanvasOptions);
-    }, function (parent) {
-      return createStrokeCanvas(parent, lowerStrokeCanvasOptions);
-    }, function (parent) {
-      return createGestureFeedback(parent, gestureFeedbackOptions);
-    }, log); // If every steps should be notified, just export connectedNavigation$.
+      const model = createModel(items);
+      const navigation$ = navigation(watchDrags(parentDOM), model, {
+        minSelectionDist,
+        minMenuSelectionDist,
+        subMenuOpeningDelay,
+        movementsThreshold,
+        noviceDwellingTime
+      }).pipe(operators.tap((_ref) => {
+        let {
+          originalEvent
+        } = _ref;
+        // Prevent default on every notifications.
+        if (originalEvent) originalEvent.preventDefault();
+      })); // Connect the engine's notifications to menu opening/closing.
 
-    if (notifySteps) {
-      return connectedNavigation$.pipe(operators.map(exportNotification), operators.share());
-    } // Else, return an observable on the selections.
+      const connectedNavigation$ = connectLayout(parentDOM, navigation$, (parent, menuModel, center, current) => createMenu(parent, menuModel, center, current, menuLayoutOptions), parent => createStrokeCanvas(parent, strokeCanvasOptions), parent => createStrokeCanvas(parent, lowerStrokeCanvasOptions), parent => createGestureFeedback(parent, gestureFeedbackOptions), log); // If every steps should be notified, just export connectedNavigation$.
+
+      if (notifySteps) {
+        return connectedNavigation$.pipe(operators.map(exportNotification), operators.share());
+      } // Else, return an observable on the selections.
 
 
-    return connectedNavigation$.pipe(operators.filter(function (notification) {
-      return notification.type === 'select';
-    }), operators.pluck('selection'), operators.share());
-  });
+      return connectedNavigation$.pipe(operators.filter(notification => notification.type === 'select'), operators.pluck('selection'), operators.share());
+    });
 
-  return MarkingMenu;
+    return MarkingMenu;
 
 })));
 //# sourceMappingURL=marking-menu.js.map
