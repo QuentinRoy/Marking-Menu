@@ -9,7 +9,7 @@ const FILES_TO_COPY = [
   '../marking-menu.js',
   '../marking-menu.js.map',
   '../marking-menu.css',
-  '../node_modules/rxjs/bundles/rxjs.umd.js'
+  '../node_modules/rxjs/dist/bundles/rxjs.umd.js',
 ];
 
 // Create the target directory if it does not exits.
@@ -19,7 +19,7 @@ if (!fs.existsSync(path.resolve(__dirname, TARGET_DIR))) {
 
 // Copy all files.
 Promise.all(
-  FILES_TO_COPY.map(async filePath => {
+  FILES_TO_COPY.map(async (filePath) => {
     try {
       await copyFile(
         path.resolve(__dirname, filePath),
@@ -37,10 +37,10 @@ Promise.all(
     }
   })
 ).then(
-  results => {
-    if (results.some(success => !success)) process.exit(1);
+  (results) => {
+    if (results.some((success) => !success)) process.exit(1);
   },
-  err => {
+  (err) => {
     // eslint-disable-next-line no-console
     console.error(err);
     process.exit(1);
