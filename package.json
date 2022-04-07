@@ -30,7 +30,7 @@
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "license": "MIT",
   "peerDependencies": {
-    "rxjs": "^6.0.0"
+    "rxjs": "^7.0.0"
   },
   "dependencies": {
     "rad2deg": "^1.0.0",
