@@ -5,7 +5,7 @@ import {
   angle,
   findMaxEntry,
   strToHTML,
-  toPolar
+  toPolar,
 } from './utils';
 
 describe('mod', () => {
@@ -100,7 +100,7 @@ describe('toPolar', () => {
     expect(toPolar([-10, -20], [-10, -20])).toEqual({ azymuth: 0, radius: 0 });
     expect(toPolar([10, 15], [0, 5])).toEqual({
       azymuth: 45,
-      radius: Math.sqrt(10 * 10 + 10 * 10)
+      radius: Math.sqrt(10 * 10 + 10 * 10),
     });
     expect(toPolar([-10, 0])).toEqual({ azymuth: 180, radius: 10 });
     expect(toPolar([0, -20])).toEqual({ azymuth: -90, radius: 20 });

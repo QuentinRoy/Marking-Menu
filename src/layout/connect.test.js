@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 import { marbles } from 'rxjs-marbles';
 import connect from './connect';
 
-jest.mock('raf-throttle', () => jest.fn(f => f));
+jest.mock('raf-throttle', () => jest.fn((f) => f));
 
 // Mock values.
 let UpperStrokeCanvas;
@@ -18,8 +18,8 @@ beforeEach(() => {
   parentElement = document.createElement('div');
 
   strokeCanvasInstances = [];
-  const createStrokeCanvasFactory = name =>
-    jest.fn(parent => {
+  const createStrokeCanvasFactory = (name) =>
+    jest.fn((parent) => {
       const div = document.createElement('div');
       div.className = `${name}-stroke-canvas`;
       parent.appendChild(div);
@@ -31,13 +31,13 @@ beforeEach(() => {
       const self = {
         name,
         mock: { div, parent, removed: false },
-        drawStroke: jest.fn(stroke => {
+        drawStroke: jest.fn((stroke) => {
           div.dataset.stroke = JSON.stringify(stroke);
         }),
-        drawPoint: jest.fn(p => {
+        drawPoint: jest.fn((p) => {
           div.dataset.points = JSON.stringify([
             ...JSON.parse(div.dataset.points),
-            p
+            p,
           ]);
         }),
         clear: jest.fn(() => {
@@ -47,7 +47,7 @@ beforeEach(() => {
         remove: jest.fn(() => {
           div.remove();
           self.mock.removed = true;
-        })
+        }),
       };
       strokeCanvasInstances.push(self);
       return self;
@@ -55,16 +55,16 @@ beforeEach(() => {
   UpperStrokeCanvas = createStrokeCanvasFactory('upper');
   LowerStrokeCanvas = createStrokeCanvasFactory('lower');
 
-  GestureFeedback = jest.fn(parent => {
+  GestureFeedback = jest.fn((parent) => {
     let divs = [];
-    const show = stroke => {
+    const show = (stroke) => {
       const div = document.createElement('div');
       div.className = `mock-gesture-feedback`;
       parent.appendChild(div);
       div.dataset.stroke = JSON.stringify(stroke);
     };
     const remove = () => {
-      divs.forEach(d => d.remove());
+      divs.forEach((d) => d.remove());
       divs = [];
     };
     return { show, remove };
@@ -83,25 +83,25 @@ beforeEach(() => {
 
     const self = {
       mock: { div, parent, removed: false, active: null },
-      setActive: jest.fn(newActive => {
+      setActive: jest.fn((newActive) => {
         div.dataset.active = JSON.stringify(newActive);
       }),
       remove: jest.fn(() => {
         div.remove();
         self.mock.removed = true;
-      })
+      }),
     };
     menuLayoutInstances.push(self);
     return self;
   });
 
   log = {
-    error: jest.fn()
+    error: jest.fn(),
   };
 });
 
 describe('connect', () => {
-  it('draws expert strokes on draw notifications', done => {
+  it('draws expert strokes on draw notifications', (done) => {
     const src = of(
       { type: 'start', position: 'pos1' },
       { type: 'draw', stroke: 'stroke1' },
@@ -128,15 +128,21 @@ describe('connect', () => {
       complete() {
         expect(parentElement).toMatchSnapshot();
         done();
-      }
+      },
     });
   });
 
-  it('opens the menu, draws novice stroke, and updates the menu', done => {
+  it('opens the menu, draws novice stroke, and updates the menu', (done) => {
     parentElement.getBoundingClientRect = jest.fn(() => ({ left: 1, top: 2 }));
     const src = of(
       { type: 'start', position: 'pos1' },
-      { type: 'draw', stroke: [[0, 0], [1, 1]] },
+      {
+        type: 'draw',
+        stroke: [
+          [0, 0],
+          [1, 1],
+        ],
+      },
       { type: 'open', menu: 'menu1', center: [10, 20], position: [100, 200] },
       { type: 'move', position: [1000, 2000] },
       { type: 'change', active: { id: 'active-item-1' } },
@@ -147,7 +153,13 @@ describe('connect', () => {
       { type: 'select' },
 
       { type: 'start', position: 'pos2' },
-      { type: 'draw', stroke: [[1, 1], [0, 0]] },
+      {
+        type: 'draw',
+        stroke: [
+          [1, 1],
+          [0, 0],
+        ],
+      },
       { type: 'open', menu: 'menu2', center: [30, 40], position: [300, 800] },
       { type: 'move', position: [200, 900] },
       { type: 'change', active: { id: 'active-item-3' } },
@@ -177,7 +189,7 @@ describe('connect', () => {
       complete() {
         expect(parentElement).toMatchSnapshot();
         done();
-      }
+      },
     });
   });
 

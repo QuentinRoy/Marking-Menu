@@ -3,7 +3,7 @@ import { marbles } from 'rxjs-marbles/jest';
 import noviceNavigation, {
   noviceMoves,
   menuSelection,
-  subMenuNavigation
+  subMenuNavigation,
 } from './novice-navigation';
 import { toPolar } from '../utils';
 import { dwellings } from '../move';
@@ -20,14 +20,14 @@ const OpenNotif = ({
   type = 'open',
   menu = 'mockMenu',
   center = 'mockMenuCenter',
-  timeStamp = 'mockTime'
+  timeStamp = 'mockTime',
 } = {}) => ({ type, menu, center, timeStamp });
 
 const MNotif = (type, position, active = null) => ({
   type,
   active,
   ...toPolar(position),
-  position
+  position,
 });
 
 const EndNotif = (type, position, active = null) => ({
@@ -35,7 +35,7 @@ const EndNotif = (type, position, active = null) => ({
   type,
   ...toPolar(position),
   position,
-  selection: active
+  selection: active,
 });
 
 beforeEach(() => {

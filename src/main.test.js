@@ -7,7 +7,7 @@ import {
   createMenuLayout,
   createStrokeCanvas,
   createGestureFeedback,
-  connectLayout
+  connectLayout,
 } from './layout';
 import { watchDrags } from './move';
 
@@ -27,7 +27,7 @@ describe('exportNotification', () => {
         active: 'active',
         foo: 'foo',
         selection: 'selection',
-        timeStamp: 'timeStamp'
+        timeStamp: 'timeStamp',
       })
     ).toEqual({
       type: 'type',
@@ -35,16 +35,16 @@ describe('exportNotification', () => {
       position: ['pos'],
       active: 'active',
       selection: 'selection',
-      timeStamp: 'timeStamp'
+      timeStamp: 'timeStamp',
     });
   });
   it('translate center to menuCenter', () => {
     expect(
       exportNotification({
-        center: ['mock-center']
+        center: ['mock-center'],
       })
     ).toEqual({
-      menuCenter: ['mock-center']
+      menuCenter: ['mock-center'],
     });
   });
   it('copies rather than exposes center', () => {
@@ -68,11 +68,11 @@ describe('main', () => {
     type,
     notifMockProp: 'notif-mock-prop-val',
     originalEvent: { preventDefault: jest.fn() },
-    ...props
+    ...props,
   });
 
   beforeEach(
-    marbles(m => {
+    marbles((m) => {
       createModel.mockImplementation(() => 'mock-model');
       watchDrags.mockImplementation(() => 'mock-drags');
       mockNavNotifs = {
@@ -80,10 +80,10 @@ describe('main', () => {
         b: Notif('b', 'select', { selection: 'mock-selection-b' }),
         c: Notif('c', 'mock-type-2', { originalEvent: null }),
         d: Notif('d', 'select', { selection: 'mock-selection-d' }),
-        e: Notif('e', 'mock-type-4', { selection: 'mock-selection-e' })
+        e: Notif('e', 'mock-type-4', { selection: 'mock-selection-e' }),
       };
       mockNavObs$ = m.hot('--a--b-c--de-|');
-      connectedObs$ = mockNavObs$.pipe(map(n => ({ ...n, connected: true })));
+      connectedObs$ = mockNavObs$.pipe(map((n) => ({ ...n, connected: true })));
       navigation.mockImplementation(() => mockNavObs$);
       connectLayout.mockImplementation(() => connectedObs$);
       callMain = (opts = {}) =>
@@ -106,7 +106,7 @@ describe('main', () => {
             'mock-gestureFeedbackCanceledStrokeColor',
           notifySteps: true,
           log: 'mock-log',
-          ...opts
+          ...opts,
         });
     })
   );
@@ -134,14 +134,14 @@ describe('main', () => {
           minMenuSelectionDist: 'mock-minMenuSelectionDist',
           subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
           movementsThreshold: 'mock-movementsThreshold',
-          noviceDwellingTime: 'mock-noviceDwellingTime'
-        }
-      ]
+          noviceDwellingTime: 'mock-noviceDwellingTime',
+        },
+      ],
     ]);
   });
 
   it("properly prevents default from navigation's notifications", () => {
-    callMain().subscribe(n => {
+    callMain().subscribe((n) => {
       // c does not have original event to make sure it does not fail
       // without it.
       if (n.active !== 'c') {
@@ -183,8 +183,8 @@ describe('main', () => {
         'mock-menuModel-2',
         'mock-center-2',
         'mock-current-2',
-        {}
-      ]
+        {},
+      ],
     ]);
   });
 
@@ -197,9 +197,9 @@ describe('main', () => {
         {
           lineColor: 'mock-strokeColor',
           lineWidth: 'mock-strokeWidth',
-          pointRadius: 'mock-strokeStartPointRadius'
-        }
-      ]
+          pointRadius: 'mock-strokeStartPointRadius',
+        },
+      ],
     ]);
   });
 
@@ -212,9 +212,9 @@ describe('main', () => {
         {
           lineColor: 'mock-lowerStrokeColor',
           lineWidth: 'mock-lowerStrokeWidth',
-          pointRadius: 'mock-lowerStrokeStartPointRadius'
-        }
-      ]
+          pointRadius: 'mock-lowerStrokeStartPointRadius',
+        },
+      ],
     ]);
   });
 
@@ -228,13 +228,13 @@ describe('main', () => {
           duration: 'mock-gestureFeedbackDuration',
           strokeOptions: {
             lineColor: 'mock-gestureFeedbackStrokeColor',
-            lineWidth: 'mock-gestureFeedbackStrokeWidth'
+            lineWidth: 'mock-gestureFeedbackStrokeWidth',
           },
           canceledStrokeOptions: {
-            lineColor: 'mock-gestureFeedbackCanceledStrokeColor'
-          }
-        }
-      ]
+            lineColor: 'mock-gestureFeedbackCanceledStrokeColor',
+          },
+        },
+      ],
     ]);
   });
 

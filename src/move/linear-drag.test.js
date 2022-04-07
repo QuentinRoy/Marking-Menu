@@ -4,37 +4,37 @@ import { marbles } from 'rxjs-marbles';
 import watchDrags, { mouseDrags, touchDrags } from './linear-drag';
 import {
   createPEventFromTouchEvent,
-  createPEventFromMouseEvent
+  createPEventFromMouseEvent,
 } from './pointer-events';
 
-const toPromise = obs =>
+const toPromise = (obs) =>
   new Promise((resolve, reject) => {
     obs.subscribe({
       complete: resolve,
-      error: reject
+      error: reject,
     });
   });
 
 jest.mock('./pointer-events', () => ({
   createPEventFromTouchEvent: jest.fn(() => {}),
-  createPEventFromMouseEvent: jest.fn(() => {})
+  createPEventFromMouseEvent: jest.fn(() => {}),
 }));
 
 jest.mock('rxjs', () => ({
   ...require.requireActual('rxjs'),
-  fromEvent: jest.fn(() => {})
+  fromEvent: jest.fn(() => {}),
 }));
 
 beforeEach(() => {
-  createPEventFromTouchEvent.mockImplementation(x => x);
-  createPEventFromMouseEvent.mockImplementation(x => x);
+  createPEventFromTouchEvent.mockImplementation((x) => x);
+  createPEventFromMouseEvent.mockImplementation((x) => x);
 });
 
 afterEach(() => {
   jest.resetAllMocks();
 });
 
-const mockFromEvent = observables => {
+const mockFromEvent = (observables) => {
   fromEvent.mockImplementation((_, evt) => observables[evt]);
 };
 
@@ -105,7 +105,7 @@ describe('touchDrags', () => {
       b: { targetTouches: { length: 2 }, name: 'b' },
       c: { targetTouches: { length: 3 }, name: 'c' },
       m: { targetTouches: { length: 1 }, name: 'm' },
-      i: { targetTouches: { length: 1 }, name: 'i' }
+      i: { targetTouches: { length: 1 }, name: 'i' },
     };
   });
 
@@ -178,10 +178,10 @@ describe('watchDrags', () => {
     const factories = [
       jest.fn(() => of('a')),
       jest.fn(() => of('b')),
-      jest.fn(() => of('c'))
+      jest.fn(() => of('c')),
     ];
     watchDrags('mock-dom', factories.slice());
-    factories.forEach(f => {
+    factories.forEach((f) => {
       expect(f.mock.calls).toEqual([['mock-dom']]);
     });
   });

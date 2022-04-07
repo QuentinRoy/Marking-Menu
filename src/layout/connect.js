@@ -48,21 +48,21 @@ export default (
     const cbr = parentDOM.getBoundingClientRect();
     menu = createMenuLayout(parentDOM, model, [
       position[0] - cbr.left,
-      position[1] - cbr.top
+      position[1] - cbr.top,
     ]);
   };
 
-  const setActive = id => {
+  const setActive = (id) => {
     menu.setActive(id);
   };
 
-  const startUpperStroke = position => {
+  const startUpperStroke = (position) => {
     upperStrokeCanvas = createUpperStrokeCanvas(parentDOM);
     upperStroke = [position];
     upperStrokeCanvas.drawStroke(upperStroke);
   };
 
-  const noviceMove = rafThrottle(position => {
+  const noviceMove = rafThrottle((position) => {
     if (upperStrokeCanvas) {
       upperStrokeCanvas.clear();
       if (position) {
@@ -73,7 +73,7 @@ export default (
     }
   });
 
-  const expertDraw = rafThrottle(stroke => {
+  const expertDraw = rafThrottle((stroke) => {
     // FIXME: Not very efficient.
     if (upperStrokeCanvas) {
       upperStrokeCanvas.clear();
@@ -103,7 +103,7 @@ export default (
     lowerStroke = null;
   };
 
-  const showGestureFeedback = isCanceled => {
+  const showGestureFeedback = (isCanceled) => {
     gestureFeedback.show(
       lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke,
       isCanceled
@@ -120,7 +120,7 @@ export default (
     parentDOM.style.cursor = '';
   };
 
-  const onNotification = notification => {
+  const onNotification = (notification) => {
     switch (notification.type) {
       case 'open': {
         // eslint-disable-next-line no-param-reassign
@@ -176,7 +176,7 @@ export default (
       error(e) {
         log.error(e);
         throw e;
-      }
+      },
     }),
     finalize(() => {
       try {

@@ -1,1 +1,3 @@
-export { default } from './main';
+import MarkingMenu from './main';
+
+export default MarkingMenu;

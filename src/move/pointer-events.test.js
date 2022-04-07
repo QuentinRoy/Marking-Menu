@@ -1,6 +1,6 @@
 import {
   createPEventFromMouseEvent,
-  createPEventFromTouchEvent
+  createPEventFromTouchEvent,
 } from './pointer-events';
 
 describe('createPEventFromMouseEvent', () => {
@@ -8,12 +8,12 @@ describe('createPEventFromMouseEvent', () => {
     const mouseEvt = {
       clientX: 10,
       clientY: 20,
-      timeStamp: 1980
+      timeStamp: 1980,
     };
     expect(createPEventFromMouseEvent(mouseEvt)).toEqual({
       position: [10, 20],
       timeStamp: 1980,
-      originalEvent: mouseEvt
+      originalEvent: mouseEvt,
     });
     expect(createPEventFromMouseEvent(mouseEvt).originalEvent).toBe(mouseEvt);
   });
@@ -28,14 +28,14 @@ describe('createPEventFromTouchEvent', () => {
         0: { clientX: 23, clientY: 12 },
         1: { clientX: 0, clientY: 2 },
         2: { clientX: 10, clientY: 4 },
-        length: 3
+        length: 3,
       },
-      timeStamp: 1990
+      timeStamp: 1990,
     };
     expect(createPEventFromTouchEvent(touchEvent)).toEqual({
       position: [11, 6],
       timeStamp: 1990,
-      originalEvent: touchEvent
+      originalEvent: touchEvent,
     });
     expect(createPEventFromTouchEvent(touchEvent).originalEvent).toBe(
       touchEvent

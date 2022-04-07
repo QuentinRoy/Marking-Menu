@@ -4,17 +4,17 @@ import {
   takeUntil,
   publishBehavior,
   filter,
-  startWith
+  startWith,
 } from 'rxjs/operators';
 import {
   createPEventFromMouseEvent,
-  createPEventFromTouchEvent
+  createPEventFromTouchEvent,
 } from './pointer-events';
 
 // Higher order observable tracking mouse drags.
-export const mouseDrags = rootDOM =>
+export const mouseDrags = (rootDOM) =>
   fromEvent(rootDOM, 'mousedown').pipe(
-    map(downEvt => {
+    map((downEvt) => {
       // Make sure we include the first mouse down event.
       const drag$ = merge(of(downEvt), fromEvent(rootDOM, 'mousemove')).pipe(
         takeUntil(fromEvent(rootDOM, 'mouseup')),
@@ -25,16 +25,16 @@ export const mouseDrags = rootDOM =>
       drag$.connect();
       return drag$;
     }),
-    map(o => o.pipe(map((...args) => createPEventFromMouseEvent(...args))))
+    map((o) => o.pipe(map((...args) => createPEventFromMouseEvent(...args))))
   );
 
 // Higher order observable tracking touch drags.
-export const touchDrags = rootDOM =>
+export const touchDrags = (rootDOM) =>
   fromEvent(rootDOM, 'touchstart').pipe(
     // Menu is supposed to have pointer-events: none so we can safely rely on
     // targetTouches.
-    filter(evt => evt.targetTouches.length === 1),
-    map(firstEvent => {
+    filter((evt) => evt.targetTouches.length === 1),
+    map((firstEvent) => {
       const drag$ = fromEvent(rootDOM, 'touchmove').pipe(
         startWith(firstEvent),
         takeUntil(
@@ -42,7 +42,7 @@ export const touchDrags = rootDOM =>
             fromEvent(rootDOM, 'touchend'),
             fromEvent(rootDOM, 'touchcancel'),
             fromEvent(rootDOM, 'touchstart')
-          ).pipe(filter(evt => evt.targetTouches.length !== 1))
+          ).pipe(filter((evt) => evt.targetTouches.length !== 1))
         ),
         publishBehavior()
       );
@@ -50,7 +50,7 @@ export const touchDrags = rootDOM =>
       drag$.connect();
       return drag$;
     }),
-    map(o => o.pipe(map(createPEventFromTouchEvent)))
+    map((o) => o.pipe(map(createPEventFromTouchEvent)))
   );
 
 /**
@@ -61,6 +61,6 @@ export const touchDrags = rootDOM =>
  * @param {function[]} [dragObsFactories] - factory to use to observe drags.
  */
 const watchDrags = (rootDOM, dragObsFactories = [touchDrags, mouseDrags]) =>
-  merge(...dragObsFactories.map(f => f(rootDOM)));
+  merge(...dragObsFactories.map((f) => f(rootDOM)));
 
 export default watchDrags;

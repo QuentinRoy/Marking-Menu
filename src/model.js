@@ -1,6 +1,6 @@
 import { deltaAngle } from './utils';
 
-const getAngleRange = items => (items.length > 4 ? 45 : 90);
+const getAngleRange = (items) => (items.length > 4 ? 45 : 90);
 
 /**
  * Represents an item of the Marking Menu.
@@ -35,7 +35,7 @@ export class MMItem {
    * @return {Item} the children with the id `childId`.
    */
   getChild(childId) {
-    return this.children.find(child => child.id === childId);
+    return this.children.find((child) => child.id === childId);
   }
 
   /**
@@ -43,7 +43,7 @@ export class MMItem {
    * @return {Item} the children with the name `childName`.
    */
   getChildrenByName(childName) {
-    return this.children.filter(child => child.name === childName);
+    return this.children.filter((child) => child.name === childName);
   }
 
   /**
@@ -64,7 +64,7 @@ export class MMItem {
   getMaxDepth() {
     return this.isLeaf()
       ? 0
-      : Math.max(0, ...this.children.map(child => child.getMaxDepth())) + 1;
+      : Math.max(0, ...this.children.map((child) => child.getMaxDepth())) + 1;
   }
 
   /**
@@ -75,7 +75,7 @@ export class MMItem {
       ? 0
       : Math.max(
           this.children.length,
-          ...this.children.map(child => child.getMaxBreadth())
+          ...this.children.map((child) => child.getMaxBreadth())
         );
   }
 }
@@ -120,7 +120,7 @@ const recursivelyCreateModelItems = (
  * @param {List<String|{name,children}>} itemList - The list of items.
  * @return {MMItem} - The root item of the model.
  */
-const createModel = itemList => {
+const createModel = (itemList) => {
   const menu = new MMItem(null, null, null);
   menu.children = recursivelyCreateModelItems(itemList, undefined, menu);
   return Object.freeze(menu);

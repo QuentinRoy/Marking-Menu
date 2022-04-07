@@ -6,7 +6,7 @@ import navigation, {
   confirmedNoviceNavigationHOO,
   expertToNoviceSwitchHOO,
   startup,
-  navigationFromDrag
+  navigationFromDrag,
 } from './navigation';
 import expertNavigation from './expert-navigation';
 import { longMoves, dwellings, draw } from '../move';
@@ -281,7 +281,7 @@ describe('navigationFromDrag', () => {
         {
           confirmedExpertNavigationHOO: mockConfirmedExpertNavigationHOO,
           confirmedNoviceNavigationHOO: mockConfirmedNoviceNavigationHOO,
-          startup: mockStartup
+          startup: mockStartup,
         }
       );
   });
@@ -290,10 +290,10 @@ describe('navigationFromDrag', () => {
     callNavigationFromDrag();
     expect(mockStartup.mock.calls).toEqual([['mock-drag$', 'mock-model']]);
     expect(mockConfirmedExpertNavigationHOO.mock.calls).toEqual([
-      ['mock-drag$', 'mock-model', 'mock-options']
+      ['mock-drag$', 'mock-model', 'mock-options'],
     ]);
     expect(mockConfirmedNoviceNavigationHOO.mock.calls).toEqual([
-      ['mock-drag$', 'mock-start', 'mock-model', 'mock-options']
+      ['mock-drag$', 'mock-start', 'mock-model', 'mock-options'],
     ]);
   });
 

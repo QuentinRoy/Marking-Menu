@@ -19,9 +19,9 @@ overrides:
       - src/**/*.test.js
     rules:
       import/no-extraneous-dependencies:
-      - error
-      - devDependencies: true
-        peerDependencies: true
+        - error
+        - devDependencies: true
+          peerDependencies: true
   - files:
       - src/**/*.test.js
     env:

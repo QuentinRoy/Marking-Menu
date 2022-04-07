@@ -4,20 +4,20 @@ import {
   createMenuLayout,
   createStrokeCanvas,
   connectLayout,
-  createGestureFeedback
+  createGestureFeedback,
 } from './layout';
 import createModel from './model';
 import { watchDrags } from './move';
 
 // Clone a notification in a protected way so that the internal state cannot be corrupted.
-export const exportNotification = n => ({
+export const exportNotification = (n) => ({
   type: n.type,
   mode: n.mode,
   position: n.position ? n.position.slice() : undefined,
   active: n.active,
   selection: n.selection,
   menuCenter: n.center ? n.center.slice() : undefined,
-  timeStamp: n.timeStamp
+  timeStamp: n.timeStamp,
 });
 
 /**
@@ -87,8 +87,8 @@ export default (
       info: console.info && console.info.bind(console),
       // eslint-disable-next-line no-console
       warn: console.warn && console.warn.bind(console),
-      debug() {}
-    }
+      debug() {},
+    },
   } = {}
 ) => {
   // Create the display options
@@ -96,22 +96,22 @@ export default (
   const strokeCanvasOptions = {
     lineColor: strokeColor,
     lineWidth: strokeWidth,
-    pointRadius: strokeStartPointRadius
+    pointRadius: strokeStartPointRadius,
   };
   const lowerStrokeCanvasOptions = {
     lineColor: lowerStrokeColor,
     lineWidth: lowerStrokeWidth,
-    pointRadius: lowerStrokeStartPointRadius
+    pointRadius: lowerStrokeStartPointRadius,
   };
   const gestureFeedbackOptions = {
     duration: gestureFeedbackDuration,
     strokeOptions: {
       lineColor: gestureFeedbackStrokeColor,
-      lineWidth: gestureFeedbackStrokeWidth
+      lineWidth: gestureFeedbackStrokeWidth,
     },
     canceledStrokeOptions: {
-      lineColor: gestureFeedbackCanceledStrokeColor
-    }
+      lineColor: gestureFeedbackCanceledStrokeColor,
+    },
   };
 
   // Create model and navigation observable.
@@ -121,7 +121,7 @@ export default (
     minMenuSelectionDist,
     subMenuOpeningDelay,
     movementsThreshold,
-    noviceDwellingTime
+    noviceDwellingTime,
   }).pipe(
     tap(({ originalEvent }) => {
       // Prevent default on every notifications.
@@ -135,22 +135,19 @@ export default (
     navigation$,
     (parent, menuModel, center, current) =>
       createMenuLayout(parent, menuModel, center, current, menuLayoutOptions),
-    parent => createStrokeCanvas(parent, strokeCanvasOptions),
-    parent => createStrokeCanvas(parent, lowerStrokeCanvasOptions),
-    parent => createGestureFeedback(parent, gestureFeedbackOptions),
+    (parent) => createStrokeCanvas(parent, strokeCanvasOptions),
+    (parent) => createStrokeCanvas(parent, lowerStrokeCanvasOptions),
+    (parent) => createGestureFeedback(parent, gestureFeedbackOptions),
     log
   );
 
   // If every steps should be notified, just export connectedNavigation$.
   if (notifySteps) {
-    return connectedNavigation$.pipe(
-      map(exportNotification),
-      share()
-    );
+    return connectedNavigation$.pipe(map(exportNotification), share());
   }
   // Else, return an observable on the selections.
   return connectedNavigation$.pipe(
-    filter(notification => notification.type === 'select'),
+    filter((notification) => notification.type === 'select'),
     pluck('selection'),
     share()
   );

@@ -7,7 +7,7 @@ import strokeLength from './stroke-length';
  * @param {Point[]} points - A list of points.
  * @return {Segment[]} The list of segments joining the points of `points`.
  */
-export const pointsToSegments = points =>
+export const pointsToSegments = (points) =>
   points.slice(1).reduce(
     ({ segments, last }, current) => {
       segments.push([last, current]);
@@ -38,7 +38,7 @@ export const segmentAngle = (a, b) =>
  * @param {{angle, length}[]} segments - A list of segments.
  * @return {{angle, length}[]} A new list of segments with the longest segments divided in two.
  */
-export const divideLongestSegment = segments => {
+export const divideLongestSegment = (segments) => {
   const [longestI, longest] = findMaxEntry(
     segments,
     (s1, s2) => s2.length - s1.length
@@ -47,7 +47,7 @@ export const divideLongestSegment = segments => {
     ...segments.slice(0, longestI),
     { length: longest.length / 2, angle: longest.angle },
     { length: longest.length / 2, angle: longest.angle },
-    ...segments.slice(longestI + 1)
+    ...segments.slice(longestI + 1),
   ];
 };
 
@@ -88,7 +88,7 @@ const recognizeMMStroke = (
   {
     maxDepth: maxDepth_ = model.getMaxDepth(),
     requireMenu = false,
-    requireLeaf = !requireMenu
+    requireLeaf = !requireMenu,
   } = {}
 ) => {
   if (requireLeaf && requireMenu) {
@@ -109,12 +109,12 @@ const recognizeMMStroke = (
   // Get the segments of the marking menus.
   const segments = pointsToSegments(articulationPoints)
     // Change the representation of the segment to include its length.
-    .map(seg => ({ points: seg, length: dist(...seg) }))
+    .map((seg) => ({ points: seg, length: dist(...seg) }))
     // Remove the segments that are too small.
-    .filter(seg => seg.length > minSegmentSize)
+    .filter((seg) => seg.length > minSegmentSize)
     // Change again the representation of the segment to include its length but not its
     // its points anymore.
-    .map(seg => ({ angle: segmentAngle(...seg.points), length: seg.length }));
+    .map((seg) => ({ angle: segmentAngle(...seg.points), length: seg.length }));
   const item = findMMItem(model, segments, maxDepth);
   if (requireLeaf) {
     return item && item.isLeaf() ? item : null;

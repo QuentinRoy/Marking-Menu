@@ -14,7 +14,7 @@ describe('longMove', () => {
     b: { position: 10, type: 'move' },
     x: { position: 50, type: 'move' },
     y: { position: 20, type: 'move' },
-    e: { position: 50, type: 'end' }
+    e: { position: 50, type: 'end' },
   };
 
   // prettier-ignore

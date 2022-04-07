@@ -4,8 +4,8 @@ const createModel = (itemNb = 0) => ({
   children: Array.from({ length: itemNb }).map((_, i) => ({
     name: `item-${i}-name`,
     angle: i * 10,
-    id: `item-${i}-id`
-  }))
+    id: `item-${i}-id`,
+  })),
 });
 
 describe('createMenu', () => {

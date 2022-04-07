@@ -6,8 +6,8 @@ const createMockContext = () =>
   new Proxy(
     {
       mock: {
-        methodCalls: []
-      }
+        methodCalls: [],
+      },
     },
     {
       get(target, name) {
@@ -16,10 +16,10 @@ const createMockContext = () =>
           : (...args) => {
               target.mock.methodCalls.push({
                 method: name,
-                args
+                args,
               });
             };
-      }
+      },
     }
   );
 
@@ -46,7 +46,7 @@ describe('stroke', () => {
       pointRadius: 100,
       pointColor: 'mockPointColor',
       lineWidth: 7,
-      lineColor: 'mockLineColor'
+      lineColor: 'mockLineColor',
     });
     mockContext = div.querySelector('canvas').getContext();
   });
@@ -58,7 +58,7 @@ describe('stroke', () => {
   it('creates its DOM and set up the canvas scale', () => {
     expect(div).toMatchSnapshot();
     expect(div.querySelector('canvas').getContext().mock.methodCalls).toEqual([
-      { method: 'scale', args: [4, 4] }
+      { method: 'scale', args: [4, 4] },
     ]);
   });
 
@@ -80,8 +80,18 @@ describe('stroke', () => {
     // Clear the method calls.
     mockContext.mock.methodCalls = [];
 
-    strokeCanvas.drawStroke([[3, 2], [2, 4], [5, 1], [9, 0]]);
-    strokeCanvas.drawStroke([[10, 0], [0, 0], [1, 1], [1, 0]]);
+    strokeCanvas.drawStroke([
+      [3, 2],
+      [2, 4],
+      [5, 1],
+      [9, 0],
+    ]);
+    strokeCanvas.drawStroke([
+      [10, 0],
+      [0, 0],
+      [1, 1],
+      [1, 0],
+    ]);
     expect(mockContext.mock.methodCalls).toMatchSnapshot();
   });
 

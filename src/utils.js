@@ -87,7 +87,7 @@ export const toPolar = ([px, py], [cx, cy] = [0, 0]) => {
   const y = py - cy;
   return {
     azymuth: rad2deg(Math.atan2(y, x)),
-    radius: Math.sqrt(x * x + y * y)
+    radius: Math.sqrt(x * x + y * y),
   };
 };
 

@@ -5,7 +5,7 @@ jest.mock('./stroke');
 
 createStrokeCanvas.mockImplementation(() => ({
   drawStroke: jest.fn(),
-  remove: jest.fn()
+  remove: jest.fn(),
 }));
 
 jest.useFakeTimers();
@@ -28,12 +28,12 @@ describe('createGestureFeedback#draw', () => {
       duration: 50,
       strokeOptions: {
         strokeArg1: 'arg1',
-        strokeArg2: 'arg2'
+        strokeArg2: 'arg2',
       },
       canceledStrokeOptions: {
         strokeArg1: 'canceledArg1',
-        canceledStrokeArg3: 'canceledArg3'
-      }
+        canceledStrokeArg3: 'canceledArg3',
+      },
     });
   });
 
@@ -43,7 +43,7 @@ describe('createGestureFeedback#draw', () => {
     expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
     expect(createStrokeCanvas).toHaveBeenCalledWith('mock-div', {
       strokeArg1: 'arg1',
-      strokeArg2: 'arg2'
+      strokeArg2: 'arg2',
     });
     const sc = createStrokeCanvas.mock.results[0].value;
     expect(sc.drawStroke).toHaveBeenCalledTimes(1);
@@ -57,7 +57,7 @@ describe('createGestureFeedback#draw', () => {
     expect(createStrokeCanvas).toHaveBeenCalledWith('mock-div', {
       strokeArg1: 'canceledArg1',
       strokeArg2: 'arg2',
-      canceledStrokeArg3: 'canceledArg3'
+      canceledStrokeArg3: 'canceledArg3',
     });
     const sc = createStrokeCanvas.mock.results[0].value;
     expect(sc.drawStroke).toHaveBeenCalledTimes(1);
@@ -84,7 +84,7 @@ describe('createGestureFeedback#remove', () => {
     gs = createGestureFeedback('mock-div', {
       duration: 5000,
       strokeArg1: 'foo',
-      strokeArg2: 'bar'
+      strokeArg2: 'bar',
     });
     gs.show('mock-stroke-1');
     gs.show('mock-stroke-2');

@@ -28,5 +28,5 @@ export default (drag$, movementsThreshold = 0) =>
       return [cur, true];
     }, []),
     filter(([, pass]) => pass),
-    map(x => x[0])
+    map((x) => x[0])
   );

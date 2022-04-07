@@ -1,1 +1,3 @@
-export { default } from './recognize-mm-stroke';
+import recognizeMMStroke from './recognize-mm-stroke';
+
+export default recognizeMMStroke;

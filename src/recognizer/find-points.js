@@ -20,7 +20,7 @@ export const findNextPointFurtherThan = (
   {
     direction = 1,
     startIndex = direction > 0 ? 0 : pointList.length - 1,
-    refPoint = pointList[startIndex]
+    refPoint = pointList[startIndex],
   } = {}
 ) => {
   const step = direction / Math.abs(direction);

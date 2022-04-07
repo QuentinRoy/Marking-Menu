@@ -6,7 +6,7 @@ import { promisify } from 'util';
 import recognizeMMStroke, {
   pointsToSegments,
   divideLongestSegment,
-  walkMMModel
+  walkMMModel,
 } from './recognize-mm-stroke';
 
 const STROKES_PATH = path.resolve(__dirname, '__fixtures__', 'strokes');
@@ -14,7 +14,12 @@ const STROKES_PATH = path.resolve(__dirname, '__fixtures__', 'strokes');
 const readFile = promisify(fs.readFile);
 const csvParse = promisify(csvParseCallback);
 
-const createMockMMModel = (depth = 1, breadth = 8, requestedAngle, parent) => {
+const createMockMMModel = (
+  depth = 1,
+  breadth = 8,
+  requestedAngle = undefined,
+  parent = undefined
+) => {
   if (depth === 0) {
     return { isLeaf: jest.fn(() => true), requestedAngle, parent };
   }
@@ -25,28 +30,44 @@ const createMockMMModel = (depth = 1, breadth = 8, requestedAngle, parent) => {
       getMaxDepth: jest.fn(() => depth),
       getMaxBreadth: jest.fn(() => breadth),
       isLeaf: jest.fn(() => false),
-      getNearestChild: jest.fn(childAngle =>
+      getNearestChild: jest.fn((childAngle) =>
         createMockMMModel(depth - 1, breadth, childAngle, m)
-      )
+      ),
     };
     return m;
   }
   throw new Error(`Invalid depth: ${depth}`);
 };
 
-const readStroke = async strokeName => {
+const readStroke = async (strokeName) => {
   const data = await readFile(path.resolve(STROKES_PATH, `${strokeName}.csv`));
   const lines = await csvParse(data, { columns: true });
   // Adapt the line, inverting y so that the origin is on the top instead of the bottom.
-  return lines.map(row => [+row.x, 4000 - row.y]);
+  return lines.map((row) => [+row.x, 4000 - row.y]);
 };
 
 describe('pointsToSegments', () => {
   it('returns a list of segments from a list of points', () => {
-    expect(pointsToSegments([[0, 3], [5, 3], [10, 8], [15, 4]])).toEqual([
-      [[0, 3], [5, 3]],
-      [[5, 3], [10, 8]],
-      [[10, 8], [15, 4]]
+    expect(
+      pointsToSegments([
+        [0, 3],
+        [5, 3],
+        [10, 8],
+        [15, 4],
+      ])
+    ).toEqual([
+      [
+        [0, 3],
+        [5, 3],
+      ],
+      [
+        [5, 3],
+        [10, 8],
+      ],
+      [
+        [10, 8],
+        [15, 4],
+      ],
     ]);
   });
 });
@@ -57,13 +78,13 @@ describe('divideLongestSegment', () => {
       divideLongestSegment([
         { length: 10, angle: 5 },
         { length: 30, angle: 10 },
-        { length: 20, angle: 20 }
+        { length: 20, angle: 20 },
       ])
     ).toEqual([
       { length: 10, angle: 5 },
       { length: 15, angle: 10 },
       { length: 15, angle: 10 },
-      { length: 20, angle: 20 }
+      { length: 20, angle: 20 },
     ]);
   });
 });
@@ -88,7 +109,7 @@ describe('walkMMModel', () => {
       const selection = walkMMModel(menu, [
         { angle: 90 },
         { angle: 0 },
-        { angle: 180 }
+        { angle: 180 },
       ]);
       expect(selection.requestedAngle).toBe(180);
       expect(selection.parent.requestedAngle).toBe(0);
@@ -115,7 +136,7 @@ describe('walkMMModel', () => {
 describe('recognizeMMStroke', () => {
   it('recognizes real 1 level strokes', async () => {
     const precision = 15;
-    const testStroke = async strokeAngle => {
+    const testStroke = async (strokeAngle) => {
       // Read the stroke.
       const stroke = await readStroke(strokeAngle);
       // Create the model
@@ -201,7 +222,7 @@ describe('recognizeMMStroke', () => {
     expect(
       recognizeMMStroke(stroke, model, {
         maxDepth: 3,
-        requireMenu: true
+        requireMenu: true,
       }).isLeaf()
     ).toBe(false);
   });
@@ -210,7 +231,7 @@ describe('recognizeMMStroke', () => {
     expect(() => {
       recognizeMMStroke('stroke', createMockMMModel(), {
         requireMenu: true,
-        requireLeaf: true
+        requireLeaf: true,
       });
     }).toThrow('The result cannot be both a leaf and a menu');
   });

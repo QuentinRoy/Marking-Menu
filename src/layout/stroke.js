@@ -19,7 +19,7 @@ export default (
     lineColor = 'black',
     pointRadius = 0,
     pointColor = lineColor,
-    ptSize = window.devicePixelRatio ? 1 / window.devicePixelRatio : 1
+    ptSize = window.devicePixelRatio ? 1 / window.devicePixelRatio : 1,
   }
 ) => {
   // Create the canvas.
@@ -33,7 +33,7 @@ export default (
     top: 0,
     width: `${width}px`,
     height: `${height}px`,
-    'pointer-events': 'none'
+    'pointer-events': 'none',
   });
   parent.appendChild(canvas);
 
@@ -72,7 +72,7 @@ export default (
    * @param {List<number[]>} stroke - The new stroke.
    * @return {undefined}
    */
-  const drawStroke = stroke => {
+  const drawStroke = (stroke) => {
     ctx.save();
     ctx.fillStyle = 'none';
     ctx.lineJoin = 'round';

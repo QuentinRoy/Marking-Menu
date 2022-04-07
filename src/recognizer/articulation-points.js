@@ -1,6 +1,6 @@
 import {
   findNextPointFurtherThan,
-  findMiddlePointForMinAngle
+  findMiddlePointForMinAngle,
 } from './find-points';
 
 /**
@@ -37,18 +37,18 @@ const getStrokeArticulationPoints = (
   while (ai < n) {
     const ci = findNextPointFurtherThan(stroke, w, {
       startIndex: ai + 2,
-      refPoint: a
+      refPoint: a,
     });
     if (ci < 0) break;
     const c = stroke[ci];
     const labi = findNextPointFurtherThan(stroke, w / 8, {
       startIndex: ai + 1,
-      refPoint: a
+      refPoint: a,
     });
     const lbci = findNextPointFurtherThan(stroke, w / 8, {
       startIndex: ci - 1,
       refPoint: c,
-      direction: -1
+      direction: -1,
     });
     const { index: bi, angle: angleABC } = findMiddlePointForMinAngle(
       a,
@@ -56,7 +56,7 @@ const getStrokeArticulationPoints = (
       stroke,
       {
         startIndex: labi,
-        endIndex: lbci
+        endIndex: lbci,
       }
     );
     if (bi > 0 && Math.abs(180 - angleABC) > angleThreshold) {

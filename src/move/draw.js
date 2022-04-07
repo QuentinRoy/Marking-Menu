@@ -13,7 +13,7 @@ export default (drag$, { initStroke = [], type = undefined }) => {
       (acc, notification) => ({
         stroke: [...acc.stroke, notification.position],
         ...typeOpts,
-        ...notification
+        ...notification,
       }),
       { stroke: initStroke }
     )

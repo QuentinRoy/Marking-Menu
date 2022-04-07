@@ -9,7 +9,7 @@ export default (
   const show = (stroke, isCanceled = false) => {
     const canvas = createStrokeCanvas(parentDOM, {
       ...strokeOptions,
-      ...(isCanceled ? canceledStrokeOptions : {})
+      ...(isCanceled ? canceledStrokeOptions : {}),
     });
     canvas.drawStroke(stroke);
     const timeoutEntry = {
@@ -17,11 +17,11 @@ export default (
       timeout: setTimeout(() => {
         // Remove the entry from the strokeTimeoutEntries.
         strokeTimeoutEntries = strokeTimeoutEntries.filter(
-          x => x !== timeoutEntry
+          (x) => x !== timeoutEntry
         );
         // Clear the stroke canvas.
         canvas.remove();
-      }, duration)
+      }, duration),
     };
     strokeTimeoutEntries.push(timeoutEntry);
   };

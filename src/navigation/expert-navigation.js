@@ -17,7 +17,7 @@ export default (drag$, model, initStroke = []) => {
   const end$ = draw$.pipe(
     startWith(null),
     last(),
-    map(e => {
+    map((e) => {
       if (!e) return { type: 'cancel' };
       const selection = recognize(e.stroke, model);
       if (selection) {

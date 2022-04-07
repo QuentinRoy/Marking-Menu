@@ -26,17 +26,17 @@ const createMenu = (
 
   // Clear any  active items.
   const clearActiveItems = () => {
-    Array.from(main.querySelectorAll('.active')).forEach(itemDom =>
+    Array.from(main.querySelectorAll('.active')).forEach((itemDom) =>
       itemDom.classList.remove('active')
     );
   };
 
   // Return an item DOM element from its id.
-  const getItemDom = itemId =>
+  const getItemDom = (itemId) =>
     main.querySelector(`.marking-menu-item[data-item-id="${itemId}"]`);
 
   // Mark an item as active.
-  const setActive = itemId => {
+  const setActive = (itemId) => {
     // Clear any  active items.
     clearActiveItems();
 

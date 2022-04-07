@@ -4,7 +4,7 @@ import {
   takeUntil,
   first,
   withLatestFrom,
-  last
+  last,
 } from 'rxjs/operators';
 import longMoves from './long-move';
 
@@ -18,7 +18,7 @@ import longMoves from './long-move';
  * for each value
  * @return {Observable} An observable on dwellings in the movement.
  */
-export default (drag$, delay, movementsThreshold = 0, scheduler) =>
+export default (drag$, delay, movementsThreshold = 0, scheduler = undefined) =>
   merge(drag$.pipe(first()), longMoves(drag$, movementsThreshold)).pipe(
     // Emit when no long movements happend for delay time.
     debounceTime(delay, scheduler),
