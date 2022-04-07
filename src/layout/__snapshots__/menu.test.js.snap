@@ -4,7 +4,7 @@ exports[`createMenu can be removed 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="left:30px;top:50px;"
+    style="left: 30px; top: 50px;"
   >
     <div
       class="marking-menu-item"
@@ -72,7 +72,7 @@ exports[`createMenu renders 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="left:30px;top:50px;"
+    style="left: 30px; top: 50px;"
   >
     <div
       class="marking-menu-item"
@@ -166,7 +166,7 @@ exports[`createMenu renders without active element 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="left:30px;top:50px;"
+    style="left: 30px; top: 50px;"
   >
     <div
       class="marking-menu-item"
@@ -232,7 +232,7 @@ exports[`createMenu update the active element 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="left:30px;top:50px;"
+    style="left: 30px; top: 50px;"
   >
     <div
       class="marking-menu-item"
@@ -298,7 +298,7 @@ exports[`createMenu update the active element 2`] = `
 <div>
   <div
     class="marking-menu"
-    style="left:30px;top:50px;"
+    style="left: 30px; top: 50px;"
   >
     <div
       class="marking-menu-item"

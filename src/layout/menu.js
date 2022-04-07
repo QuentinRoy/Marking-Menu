@@ -1,6 +1,22 @@
-import template from './menu.pug';
-import { strToHTML } from '../utils';
 import './menu.scss';
+
+const template = ({ items, center }, doc) => {
+  const main = doc.createElement('div');
+  main.className = 'marking-menu';
+  main.style.left = `${center[0]}px`;
+  main.style.top = `${center[1]}px`;
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i];
+    const elt = doc.createElement('div');
+    elt.className = 'marking-menu-item';
+    elt.dataset.itemId = item.id;
+    elt.dataset.itemAngle = item.angle;
+    elt.innerHTML += '<div class="marking-menu-line"></div>';
+    elt.innerHTML += `<div class="marking-menu-label">${item.name}</div>`;
+    main.appendChild(elt);
+  }
+  return main;
+};
 
 /**
  * Create the Menu display.
@@ -21,7 +37,7 @@ const createMenu = (
   { doc = document } = {}
 ) => {
   // Create the DOM.
-  const main = strToHTML(template({ items: model.children, center }), doc)[0];
+  const main = template({ items: model.children, center }, doc);
   parent.appendChild(main);
 
   // Clear any  active items.

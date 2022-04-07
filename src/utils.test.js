@@ -1,12 +1,4 @@
-import {
-  deltaAngle,
-  mod,
-  dist,
-  angle,
-  findMaxEntry,
-  strToHTML,
-  toPolar,
-} from './utils';
+import { deltaAngle, mod, dist, angle, findMaxEntry, toPolar } from './utils';
 
 describe('mod', () => {
   it(' returns a positive modulo', () => {
@@ -104,36 +96,5 @@ describe('toPolar', () => {
     });
     expect(toPolar([-10, 0])).toEqual({ azymuth: 180, radius: 10 });
     expect(toPolar([0, -20])).toEqual({ azymuth: -90, radius: 20 });
-  });
-});
-
-describe('strToHTML', () => {
-  it(' parses a string as a DOM Element', () => {
-    const collection = strToHTML(
-      `
-        <ul style="position: absolute;">
-          <li>That thing</li>
-          <li>That other thing</li>
-        </ul>
-
-        <svg xmlns="http://www.w3.org/2000/svg"
-        width="150" height="100" viewBox="0 0 3 2">
-          <rect width="1" height="2" x="0" fill="#008d46" />
-          <rect width="1" height="2" x="1" fill="#ffffff" />
-          <rect width="1" height="2" x="2" fill="#d2232c" />
-        </svg>
-
-        <div class="that-thing">I exist too</div>
-      `,
-      document
-    );
-    expect(collection[0].tagName).toBe('UL');
-    expect(collection[1].tagName).toBe('svg');
-    expect(collection[2].tagName).toBe('DIV');
-    expect(
-      // This needs to be converted to an array as snapshoting an HTMLCollection
-      // makes Jest go crazy.
-      Array.from(collection)
-    ).toMatchSnapshot();
   });
 });

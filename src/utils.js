@@ -90,18 +90,3 @@ export const toPolar = ([px, py], [cx, cy] = [0, 0]) => {
     radius: Math.sqrt(x * x + y * y),
   };
 };
-
-/**
- * @param  {string} str - A valid html fragment that could be contained in a
- *                      <div>.
- * @param  {Document} [doc=document] - The document to use.
- * @return {HTMLCollection} - The html fragment parsed as an HTML collection.
- *
- * Warning: any content that cannot be directly contained in a div, e.g. <td />
- * will fail.
- */
-export const strToHTML = (str, doc = document) => {
-  const div = doc.createElement('div');
-  div.innerHTML = str;
-  return div.children;
-};

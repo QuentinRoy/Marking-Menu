@@ -5811,11 +5811,6 @@ jest-snapshot@^27.5.1:
     pretty-format "^27.5.1"
     semver "^7.3.2"
 
-jest-transform-pug@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/jest-transform-pug/-/jest-transform-pug-0.1.0.tgz#d40330b1a0762dd860be9e6e45c2e95b9fb03784"
-  integrity sha512-4c4GQX/C2CJqLDs1iaVCDDnRrGLEVkVTRO05KIFKQClVpuA9fqTUwW3lHSINDdvyG9DnEtV6uUS9tCMNc0lR9A==
-
 jest-util@^24.9.0:
   version "24.9.0"
   resolved "https://registry.yarnpkg.com/jest-util/-/jest-util-24.9.0.tgz#7396814e48536d2e85a37de3e4c431d7cb140162"
