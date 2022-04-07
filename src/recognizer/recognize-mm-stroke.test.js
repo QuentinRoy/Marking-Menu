@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import csvParseCallback from 'csv-parse';
+import { parse as csvParseCallback } from 'csv-parse';
 import angles from 'angles';
 import { promisify } from 'util';
 import recognizeMMStroke, {
