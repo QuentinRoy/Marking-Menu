@@ -1,6 +1,5 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
-import pug from 'rollup-plugin-pug';
 import babel from '@rollup/plugin-babel';
 import sass from 'rollup-plugin-sass';
 import nodeSass from 'node-sass';
@@ -35,7 +34,6 @@ export default {
   },
   plugins: [
     resolve(),
-    pug(),
     sass({
       output: true,
       options: {
