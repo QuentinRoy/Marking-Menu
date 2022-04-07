@@ -11,9 +11,7 @@
           { "targets": { "browsers": ">1%" }, "modules": false, "loose": true }
         ]
       ],
-      "plugins": [
-        ["@babel/transform-runtime", { "helpers": false, "regenerator": true }]
-      ]
+      "plugins": [["@babel/transform-runtime"]]
     }
   }
 }

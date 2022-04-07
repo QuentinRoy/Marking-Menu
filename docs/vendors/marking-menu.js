@@ -7,14 +7,14 @@
  *
  * Marking Menus may be patented independently from this software.
  *
- * Date: Thu, 07 Apr 2022 21:29:51 GMT
+ * Date: Thu, 07 Apr 2022 21:40:46 GMT
  */
 
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('rxjs/operators'), require('rxjs')) :
     typeof define === 'function' && define.amd ? define(['rxjs/operators', 'rxjs'], factory) :
-    (global = global || self, global.MarkingMenu = factory(global.rxjs.operators, global.rxjs));
-}(this, (function (operators, rxjs) { 'use strict';
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.MarkingMenu = factory(global.rxjs.operators, global.rxjs));
+})(this, (function (operators, rxjs) { 'use strict';
 
     var source = function (angleInRadians) {
         // angleInDegree = angleInRadians * (180 / Math.PI)  
@@ -1466,5 +1466,5 @@
 
     return MarkingMenu;
 
-})));
+}));
 //# sourceMappingURL=marking-menu.js.map
