@@ -1,4 +1,12 @@
-import { deltaAngle, mod, dist, angle, findMaxEntry, toPolar } from './utils';
+import {
+  deltaAngle,
+  mod,
+  dist,
+  angle,
+  findMaxEntry,
+  toPolar,
+  radiansToDegrees,
+} from './utils';
 
 describe('mod', () => {
   it(' returns a positive modulo', () => {
@@ -7,6 +15,16 @@ describe('mod', () => {
     expect(mod(13, 10)).toBe(3);
     expect(mod(-13, 10)).toBe(7);
   });
+});
+
+describe('radianToDegrees', () => {
+  const pi = 3.141592653589793;
+  expect(radiansToDegrees(pi)).toEqual(180);
+  expect(radiansToDegrees(0)).toEqual(0);
+  expect(radiansToDegrees(2 * pi)).toEqual(360);
+  expect(radiansToDegrees(pi / 2)).toEqual(90);
+  expect(radiansToDegrees(pi / 4)).toEqual(45);
+  expect(radiansToDegrees(4 * pi)).toEqual(720);
 });
 
 describe('deltaAngle', () => {

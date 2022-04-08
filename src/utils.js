@@ -1,11 +1,15 @@
-import rad2deg from 'rad2deg';
-
 /**
  * @param {number} a the dividend
  * @param {number} n the divisor
  * @return {number} The modulo of `a` over `n` (% is not exactly modulo but remainder).
  */
 export const mod = (a, n) => ((a % n) + n) % n;
+
+/**
+ * @param {number} radians an angle in radians
+ * @return {number} The angle in degrees.
+ */
+export const radiansToDegrees = (radians) => radians * (180 / Math.PI);
 
 /**
  * @param {number} alpha a first angle (in degrees)
@@ -45,7 +49,7 @@ export const angle = (a, b, c) => {
   // Due to rounding, it can happen than cos ends up being slight > 1 or slightly < -1.
   // This fixes it.
   const adjustedCos = Math.max(-1, Math.min(1, cos));
-  const angleABC = rad2deg(Math.acos(adjustedCos));
+  const angleABC = radiansToDegrees(Math.acos(adjustedCos));
   // Round the angle to avoid rounding issues.
   return Math.round(angleABC / ANGLE_ROUNDING) * ANGLE_ROUNDING;
 };
@@ -86,7 +90,7 @@ export const toPolar = ([px, py], [cx, cy] = [0, 0]) => {
   const x = px - cx;
   const y = py - cy;
   return {
-    azymuth: rad2deg(Math.atan2(y, x)),
+    azymuth: radiansToDegrees(Math.atan2(y, x)),
     radius: Math.sqrt(x * x + y * y),
   };
 };

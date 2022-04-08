@@ -1,6 +1,5 @@
-import rad2deg from 'rad2deg';
 import getStrokeArticulationPoints from './articulation-points';
-import { dist, findMaxEntry } from '../utils';
+import { dist, findMaxEntry, radiansToDegrees } from '../utils';
 import strokeLength from './stroke-length';
 
 /**
@@ -32,7 +31,7 @@ export const walkMMModel = (model, segments, startIndex = 0) => {
 };
 
 export const segmentAngle = (a, b) =>
-  rad2deg(Math.atan2(b[1] - a[1], b[0] - a[0]));
+  radiansToDegrees(Math.atan2(b[1] - a[1], b[0] - a[0]));
 
 /**
  * @param {{angle, length}[]} segments - A list of segments.
