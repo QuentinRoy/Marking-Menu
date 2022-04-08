@@ -56,7 +56,6 @@
     "node-sass": "^7.0.1",
     "pinst": "^3.0.0",
     "prettier": "^2.6.2",
-    "pug-jest": "^1.0.1",
     "rollup": "^2.0.0",
     "rollup-plugin-sass": "^1.0.0",
     "rxjs-marbles": "^7.0.1",
