@@ -24,7 +24,7 @@ The authors of this library may not be held responsible for any patent infringem
 
 You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.io/rxjs/) and `marking-menu`:
 
-- https://unpkg.com/rxjs@6.0.0/bundles/rxjs.umd.js,
+- https://unpkg.com/rxjs@7/dist/bundles/rxjs.umd.js,
 - https://unpkg.com/marking-menu (latest script),
 - https://unpkg.com/marking-menu/marking-menu.css (latest stylesheet)
 
@@ -37,7 +37,7 @@ You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.i
       rel="stylesheet"
     />
     <script
-      src="https://unpkg.com/rxjs@6.0.0/bundles/rxjs.umd.js"
+      src="https://unpkg.com/rxjs@7/dist/bundles/rxjs.umd.js"
       defer
     ></script>
     <script src="https://unpkg.com/marking-menu" defer></script>
