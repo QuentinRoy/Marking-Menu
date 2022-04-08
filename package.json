@@ -22,10 +22,10 @@
     "prepare": "yarn build && yarn copy-demo-files",
     "release": "standard-version",
     "lint": "eslint src",
-    "git-hook": "yarn lint && yarn test",
-    "precommit": "yarn git-hook",
-    "commitmsg": "commitlint -e $GIT_PARAMS",
-    "serve": "serve docs"
+    "serve": "serve docs",
+    "postinstall": "husky install",
+    "prepack": "pinst --disable",
+    "postpack": "pinst --enable"
   },
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "license": "MIT",
@@ -55,6 +55,7 @@
     "husky": "^7.0.0",
     "jest": "^27.5.1",
     "node-sass": "^7.0.1",
+    "pinst": "^3.0.0",
     "prettier": "^2.6.2",
     "pug-jest": "^1.0.1",
     "rollup": "^2.0.0",
