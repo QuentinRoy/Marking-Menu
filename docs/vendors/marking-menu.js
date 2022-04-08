@@ -1,5 +1,5 @@
 /*!
- * Marking Menu Javascript Library v0.9.0
+ * Marking Menu Javascript Library v0.10.0
  * https://github.com/QuentinRoy/Marking-Menu
  *
  * Released under the MIT license.
@@ -7,7 +7,7 @@
  *
  * Marking Menus may be patented independently from this software.
  *
- * Date: Fri, 08 Apr 2022 15:57:23 GMT
+ * Date: Fri, 08 Apr 2022 16:09:29 GMT
  */
 
 (function (global, factory) {
