@@ -5,8 +5,7 @@
   "main": "marking-menu.js",
   "files": [
     "marking-menu.js",
-    "marking-menu.js.map",
-    "marking-menu.css"
+    "marking-menu.js.map"
   ],
   "repository": {
     "type": "git",
