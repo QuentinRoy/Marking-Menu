@@ -3,8 +3,6 @@
 [![NPM](https://img.shields.io/npm/v/marking-menu.svg)](https://www.npmjs.com/package/marking-menu)
 [![Build Status](https://travis-ci.org/QuentinRoy/Marking-Menu.svg?branch=master)](https://travis-ci.org/QuentinRoy/Marking-Menu)
 [![codecov](https://img.shields.io/codecov/c/github/QuentinRoy/Marking-Menu.svg)](https://codecov.io/gh/QuentinRoy/Marking-Menu)
-[![dependencies Status](https://david-dm.org/QuentinRoy/Marking-Menu/status.svg)](https://david-dm.org/QuentinRoy/Marking-Menu)
-[![devDependencies Status](https://david-dm.org/QuentinRoy/Marking-Menu/dev-status.svg)](https://david-dm.org/QuentinRoy/Marking-Menu?type=dev)
 
 This library is an implementation of Gordon Kurtenbach's infamous Marking Menus in JavaScript [[1](https://doi.org/10.1145/120782.120797), [2](http://doi.acm.org/10.1145/169059.169426), [3](http://doi.acm.org/10.1145/191666.191759)].
 
@@ -12,7 +10,7 @@ This library is an implementation of Gordon Kurtenbach's infamous Marking Menus 
 
 ## License
 
-This *codebase* is licensed under the MIT license.
+This _codebase_ is licensed under the MIT license.
 **However**, Marking Menus are concerned by several patents (none of them owned by the author of this library). **Make sure you have the rights to include this library in a commercial application before doing so.**
 The authors of this library may not be held responsible for any patent infringement following the use of this codebase.
 
@@ -25,6 +23,7 @@ The authors of this library may not be held responsible for any patent infringem
 ### Browser with CDN
 
 You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.io/rxjs/) and `marking-menu`:
+
 - https://unpkg.com/rxjs@6.0.0/bundles/rxjs.umd.js,
 - https://unpkg.com/marking-menu (latest script),
 - https://unpkg.com/marking-menu/marking-menu.css (latest stylesheet)
@@ -32,16 +31,21 @@ You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.i
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <link href="https://unpkg.com/marking-menu/marking-menu.css" rel="stylesheet">
-  <script src="https://unpkg.com/rxjs@6.0.0/bundles/rxjs.umd.js" defer></script>
-  <script src="https://unpkg.com/marking-menu" defer></script>
-  <script defer>
-    // Your stuff.
-  </script>
-</head>
-<body>
-</body>
+  <head>
+    <link
+      href="https://unpkg.com/marking-menu/marking-menu.css"
+      rel="stylesheet"
+    />
+    <script
+      src="https://unpkg.com/rxjs@6.0.0/bundles/rxjs.umd.js"
+      defer
+    ></script>
+    <script src="https://unpkg.com/marking-menu" defer></script>
+    <script defer>
+      // Your stuff.
+    </script>
+  </head>
+  <body></body>
 </html>
 ```
 
@@ -76,35 +80,29 @@ For example, if you are using `webpack` and `style-loader`, `import 'marking-men
 
 - `parentDOM`: `HTMLElement`. The container of the menu.
 
-
 #### Example
 
 ```js
-  // Create the menu with a sub-menu at the bottom.
-  const items = [
-    'Item Right',
-    {
-      name: 'Others...',
-      children: [
-        'Sub Right',
-        'Sub Down',
-        'Sub Left',
-        'Sub Top'
-      ]
-    },
-    'Item Left',
-    'Item Up'
-  ];
-  const mm = MarkingMenu(items, document.getElementById('main'));
+// Create the menu with a sub-menu at the bottom.
+const items = [
+  'Item Right',
+  {
+    name: 'Others...',
+    children: ['Sub Right', 'Sub Down', 'Sub Left', 'Sub Top'],
+  },
+  'Item Left',
+  'Item Up',
+];
+const mm = MarkingMenu(items, document.getElementById('main'));
 
-  // Subscribe (and activates) the menu.
-  const subscription = mm.subscribe((selection) => {
-    // Do something.
-    console.log(selection.name);
-  })
+// Subscribe (and activates) the menu.
+const subscription = mm.subscribe((selection) => {
+  // Do something.
+  console.log(selection.name);
+});
 
-  setTimeout(() => {
-    // Later, disable the menu.
-    subscription.unsubscribe();
-  }, 60*1000);
+setTimeout(() => {
+  // Later, disable the menu.
+  subscription.unsubscribe();
+}, 60 * 1000);
 ```
