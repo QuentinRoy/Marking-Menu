@@ -1,0 +1,103 @@
+.marking-menu {
+  --item-width: 120px;
+  --item-height: 20px;
+  --item-font-size: 20px;
+  --item-padding: 4px;
+  --item-background: #f2f2f2;
+  --item-color: #333333;
+  --active-item-background: #d9d9d9;
+  --active-item-color: #000;
+  --item-radius: calc(var(--item-padding) * 2);
+  --menu-radius: 80px;
+  --center-radius: 10px;
+  --line-thickness: 4px;
+  --line-color: var(--item-background);
+  --active-line-color: var(--active-item-background);
+
+  /* The two following variables must be set from JS. */
+  --center-x: 0px;
+  --center-y: 0px;
+
+  position: absolute;
+  top: var(--center-y);
+  left: var(--center-x);
+  pointer-events: none;
+  /* Using transform to make .marking-menu a stacking context and confine
+     z-ordered children in the document's z-stack. */
+  transform: translate(0px, 0px);
+}
+
+.marking-menu-item {
+  /* The three following variables must be set from JS for each item. */
+  --angle: 0deg;
+  --cosine: 1;
+  --sine: 0;
+
+  --item-box-width: calc(var(--item-width) + var(--item-padding) * 2);
+  --item-box-height: calc(var(--item-height) + var(--item-padding) * 2);
+
+  position: absolute;
+  z-index: 0;
+}
+
+.marking-menu-item .marking-menu-label {
+  position: absolute;
+  bottom: calc(
+    var(--sine) * var(--menu-radius) + (min(1, max(-1, var(--sine) * 2)) - 1) *
+      var(--item-box-height) / 2
+  );
+  left: calc(
+    var(--cosine) * var(--menu-radius) +
+      (min(1, max(-1, var(--cosine) * 2)) - 1) * var(--item-box-width) / 2
+  );
+  border-radius: var(--item-radius);
+  background-color: var(--item-background);
+  padding: var(--item-padding);
+  width: var(--item-width);
+  height: var(--item-height);
+  overflow: hidden;
+  vertical-align: middle;
+  text-align: center;
+  text-overflow: ellipsis;
+  line-height: var(--item-height);
+  color: var(--item-color);
+  font-size: var(--item-font-size);
+}
+
+.marking-menu-item .marking-menu-line {
+  position: absolute;
+  top: calc(var(--line-thickness) / -2);
+  background-color: var(--line-color);
+  width: calc(var(--menu-radius) + var(--item-radius) + var(--line-thickness));
+  height: var(--line-thickness);
+  transform-origin: center left;
+  transform: rotate(var(--angle));
+}
+
+.marking-menu-item.active {
+  z-index: 1;
+}
+
+.marking-menu-item.active .marking-menu-label {
+  background-color: var(--active-item-background);
+  color: var(--active-item-color);
+  font-weight: bolder;
+}
+
+.marking-menu-item.active .marking-menu-line {
+  background-color: var(--active-line-color);
+}
+
+/* Corner items should have hard corner where the line departs. */
+.marking-menu-item.bottom-right-item .marking-menu-label {
+  border-top-left-radius: 0;
+}
+.marking-menu-item.bottom-left-item .marking-menu-label {
+  border-top-right-radius: 0;
+}
+.marking-menu-item.top-left-item .marking-menu-label {
+  border-bottom-right-radius: 0;
+}
+.marking-menu-item.top-right-item .marking-menu-label {
+  border-bottom-left-radius: 0;
+}

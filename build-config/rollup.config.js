@@ -1,9 +1,7 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import babel from '@rollup/plugin-babel';
-import sass from 'rollup-plugin-sass';
-import nodeSass from 'node-sass';
-import sassTrigo from './sass-trigo';
+import postcss from 'rollup-plugin-postcss';
 import { version } from '../package.json';
 
 const banner = `/*!
@@ -34,17 +32,7 @@ export default {
   },
   plugins: [
     resolve(),
-    sass({
-      output: true,
-      options: {
-        // FIXME: SourceMap not working, c.f. differui/rollup-plugin-sass#37
-        sourceMap: true,
-        functions: sassTrigo(nodeSass),
-      },
-      // We need to specify the node-sass runtime we are using with the
-      // functions or they will fail.
-      runtime: nodeSass,
-    }),
+    postcss(),
     babel({ exclude: 'node_modules/**', babelHelpers: 'runtime' }),
     commonjs(),
   ],

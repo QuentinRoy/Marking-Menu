@@ -8,7 +8,6 @@ const TARGET_DIR = '../docs/vendors';
 const FILES_TO_COPY = [
   '../marking-menu.js',
   '../marking-menu.js.map',
-  '../marking-menu.css',
   '../node_modules/rxjs/dist/bundles/rxjs.umd.js',
 ];
 

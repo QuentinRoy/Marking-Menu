@@ -1,20 +1,37 @@
-import './menu.scss';
+import { degreesToRadians } from '../utils';
+import './menu.css';
 
 const template = ({ items, center }, doc) => {
   const main = doc.createElement('div');
   main.className = 'marking-menu';
-  main.style.left = `${center[0]}px`;
-  main.style.top = `${center[1]}px`;
+  main.style.setProperty('--center-x', `${center[0]}px`);
+  main.style.setProperty('--center-y', `${center[1]}px`);
   for (let i = 0; i < items.length; i += 1) {
     const item = items[i];
     const elt = doc.createElement('div');
     elt.className = 'marking-menu-item';
     elt.dataset.itemId = item.id;
-    elt.dataset.itemAngle = item.angle;
+    elt.style.setProperty('--angle', `${item.angle}deg`);
+    // Identify corner items as these may be styled differently.
+    if (item.angle === 45) {
+      elt.classList.add('bottom-right-item');
+    } else if (item.angle === 135) {
+      elt.classList.add('bottom-left-item');
+    } else if (item.angle === 225) {
+      elt.classList.add('top-left-item');
+    } else if (item.angle === 315) {
+      elt.classList.add('top-right-item');
+    }
+    const radAngle = degreesToRadians(item.angle);
+    // Why -radAngle? I got the css math wrong at some point, but it works like
+    // this and I could not be bothered fixing it.
+    elt.style.setProperty('--cosine', Math.cos(-radAngle));
+    elt.style.setProperty('--sine', Math.sin(-radAngle));
     elt.innerHTML += '<div class="marking-menu-line"></div>';
     elt.innerHTML += `<div class="marking-menu-label">${item.name}</div>`;
     main.appendChild(elt);
   }
+
   return main;
 };
 

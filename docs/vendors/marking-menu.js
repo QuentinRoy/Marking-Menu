@@ -7,7 +7,7 @@
  *
  * Marking Menus may be patented independently from this software.
  *
- * Date: Fri, 08 Apr 2022 08:35:31 GMT
+ * Date: Fri, 08 Apr 2022 15:31:23 GMT
  */
 
 (function (global, factory) {
@@ -28,6 +28,12 @@
    */
 
   const radiansToDegrees = radians => radians * (180 / Math.PI);
+  /**
+   * @param {number} degrees an angle in degrees
+   * @return {number} The angle in radians.
+   */
+
+  const degreesToRadians = degrees => degrees * (Math.PI / 180);
   /**
    * @param {number} alpha a first angle (in degrees)
    * @param {number} beta a second angle (in degrees)
@@ -752,6 +758,36 @@
     return drags$.pipe(operators.exhaustMap(drag$ => drag$.pipe(operators.take(1), operators.mergeMap(start => navigationFromDrag_(drag$, start, menu, options)))));
   });
 
+  function styleInject(css, ref) {
+    if ( ref === void 0 ) ref = {};
+    var insertAt = ref.insertAt;
+
+    if (!css || typeof document === 'undefined') { return; }
+
+    var head = document.head || document.getElementsByTagName('head')[0];
+    var style = document.createElement('style');
+    style.type = 'text/css';
+
+    if (insertAt === 'top') {
+      if (head.firstChild) {
+        head.insertBefore(style, head.firstChild);
+      } else {
+        head.appendChild(style);
+      }
+    } else {
+      head.appendChild(style);
+    }
+
+    if (style.styleSheet) {
+      style.styleSheet.cssText = css;
+    } else {
+      style.appendChild(document.createTextNode(css));
+    }
+  }
+
+  var css_248z = ".marking-menu {\n  --item-width: 120px;\n  --item-height: 20px;\n  --item-font-size: 20px;\n  --item-padding: 4px;\n  --item-background: #f2f2f2;\n  --item-color: #333333;\n  --active-item-background: #d9d9d9;\n  --active-item-color: #000;\n  --item-radius: calc(var(--item-padding) * 2);\n  --menu-radius: 80px;\n  --center-radius: 10px;\n  --line-thickness: 4px;\n  --line-color: var(--item-background);\n  --active-line-color: var(--active-item-background);\n\n  /* The two following variables must be set from JS. */\n  --center-x: 0px;\n  --center-y: 0px;\n\n  position: absolute;\n  top: var(--center-y);\n  left: var(--center-x);\n  pointer-events: none;\n  /* Using transform to make .marking-menu a stacking context and confine\n     z-ordered children in the document's z-stack. */\n  transform: translate(0px, 0px);\n}\n\n.marking-menu-item {\n  /* The three following variables must be set from JS for each item. */\n  --angle: 0deg;\n  --cosine: 1;\n  --sine: 0;\n\n  --item-box-width: calc(var(--item-width) + var(--item-padding) * 2);\n  --item-box-height: calc(var(--item-height) + var(--item-padding) * 2);\n\n  position: absolute;\n  z-index: 0;\n}\n\n.marking-menu-item .marking-menu-label {\n  position: absolute;\n  bottom: calc(\n    var(--sine) * var(--menu-radius) + (min(1, max(-1, var(--sine) * 2)) - 1) *\n      var(--item-box-height) / 2\n  );\n  left: calc(\n    var(--cosine) * var(--menu-radius) +\n      (min(1, max(-1, var(--cosine) * 2)) - 1) * var(--item-box-width) / 2\n  );\n  border-radius: var(--item-radius);\n  background-color: var(--item-background);\n  padding: var(--item-padding);\n  width: var(--item-width);\n  height: var(--item-height);\n  overflow: hidden;\n  vertical-align: middle;\n  text-align: center;\n  text-overflow: ellipsis;\n  line-height: var(--item-height);\n  color: var(--item-color);\n  font-size: var(--item-font-size);\n}\n\n.marking-menu-item .marking-menu-line {\n  position: absolute;\n  top: calc(var(--line-thickness) / -2);\n  background-color: var(--line-color);\n  width: calc(var(--menu-radius) + var(--item-radius) + var(--line-thickness));\n  height: var(--line-thickness);\n  transform-origin: center left;\n  transform: rotate(var(--angle));\n}\n\n.marking-menu-item.active {\n  z-index: 1;\n}\n\n.marking-menu-item.active .marking-menu-label {\n  background-color: var(--active-item-background);\n  color: var(--active-item-color);\n  font-weight: bolder;\n}\n\n.marking-menu-item.active .marking-menu-line {\n  background-color: var(--active-line-color);\n}\n\n/* Corner items should have hard corner where the line departs. */\n.marking-menu-item.bottom-right-item .marking-menu-label {\n  border-top-left-radius: 0;\n}\n.marking-menu-item.bottom-left-item .marking-menu-label {\n  border-top-right-radius: 0;\n}\n.marking-menu-item.top-left-item .marking-menu-label {\n  border-bottom-right-radius: 0;\n}\n.marking-menu-item.top-right-item .marking-menu-label {\n  border-bottom-left-radius: 0;\n}\n";
+  styleInject(css_248z);
+
   const template = (_ref, doc) => {
     let {
       items,
@@ -759,15 +795,31 @@
     } = _ref;
     const main = doc.createElement('div');
     main.className = 'marking-menu';
-    main.style.left = `${center[0]}px`;
-    main.style.top = `${center[1]}px`;
+    main.style.setProperty('--center-x', `${center[0]}px`);
+    main.style.setProperty('--center-y', `${center[1]}px`);
 
     for (let i = 0; i < items.length; i += 1) {
       const item = items[i];
       const elt = doc.createElement('div');
       elt.className = 'marking-menu-item';
       elt.dataset.itemId = item.id;
-      elt.dataset.itemAngle = item.angle;
+      elt.style.setProperty('--angle', `${item.angle}deg`); // Identify corner items as these may be styled differently.
+
+      if (item.angle === 45) {
+        elt.classList.add('bottom-right-item');
+      } else if (item.angle === 135) {
+        elt.classList.add('bottom-left-item');
+      } else if (item.angle === 225) {
+        elt.classList.add('top-left-item');
+      } else if (item.angle === 315) {
+        elt.classList.add('top-right-item');
+      }
+
+      const radAngle = degreesToRadians(item.angle); // Why -radAngle? I got the css math wrong at some point, but it works like
+      // this and I could not be bothered fixing it.
+
+      elt.style.setProperty('--cosine', Math.cos(-radAngle));
+      elt.style.setProperty('--sine', Math.sin(-radAngle));
       elt.innerHTML += '<div class="marking-menu-line"></div>';
       elt.innerHTML += `<div class="marking-menu-label">${item.name}</div>`;
       main.appendChild(elt);

@@ -12,6 +12,12 @@ export const mod = (a, n) => ((a % n) + n) % n;
 export const radiansToDegrees = (radians) => radians * (180 / Math.PI);
 
 /**
+ * @param {number} degrees an angle in degrees
+ * @return {number} The angle in radians.
+ */
+export const degreesToRadians = (degrees) => degrees * (Math.PI / 180);
+
+/**
  * @param {number} alpha a first angle (in degrees)
  * @param {number} beta a second angle (in degrees)
  * @return {number} The (signed) delta between the two angles (in degrees).

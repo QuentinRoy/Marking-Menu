@@ -6,6 +6,7 @@ import {
   findMaxEntry,
   toPolar,
   radiansToDegrees,
+  degreesToRadians,
 } from './utils';
 
 describe('mod', () => {
@@ -25,6 +26,18 @@ describe('radianToDegrees', () => {
   expect(radiansToDegrees(pi / 2)).toEqual(90);
   expect(radiansToDegrees(pi / 4)).toEqual(45);
   expect(radiansToDegrees(4 * pi)).toEqual(720);
+  expect(radiansToDegrees(-pi / 2)).toEqual(-90);
+});
+
+describe('radianToDegrees', () => {
+  const pi = 3.141592653589793;
+  expect(degreesToRadians(180)).toEqual(pi);
+  expect(degreesToRadians(0)).toEqual(0);
+  expect(degreesToRadians(360)).toEqual(2 * pi);
+  expect(degreesToRadians(90)).toEqual(pi / 2);
+  expect(degreesToRadians(45)).toEqual(pi / 4);
+  expect(degreesToRadians(720)).toEqual(4 * pi);
+  expect(degreesToRadians(-90)).toEqual(-pi / 2);
 });
 
 describe('deltaAngle', () => {

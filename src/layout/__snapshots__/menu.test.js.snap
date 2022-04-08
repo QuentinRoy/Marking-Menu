@@ -4,12 +4,12 @@ exports[`createMenu can be removed 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="left: 30px; top: 50px;"
+    style="--center-x: 30px; --center-y: 50px;"
   >
     <div
       class="marking-menu-item"
-      data-item-angle="0"
       data-item-id="item-0-id"
+      style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
         class="marking-menu-line"
@@ -22,8 +22,8 @@ exports[`createMenu can be removed 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="10"
       data-item-id="item-1-id"
+      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
         class="marking-menu-line"
@@ -36,8 +36,8 @@ exports[`createMenu can be removed 1`] = `
     </div>
     <div
       class="marking-menu-item active"
-      data-item-angle="20"
       data-item-id="item-2-id"
+      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
         class="marking-menu-line"
@@ -50,8 +50,8 @@ exports[`createMenu can be removed 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="30"
       data-item-id="item-3-id"
+      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
         class="marking-menu-line"
@@ -72,12 +72,12 @@ exports[`createMenu renders 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="left: 30px; top: 50px;"
+    style="--center-x: 30px; --center-y: 50px;"
   >
     <div
       class="marking-menu-item"
-      data-item-angle="0"
       data-item-id="item-0-id"
+      style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
         class="marking-menu-line"
@@ -90,8 +90,8 @@ exports[`createMenu renders 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="10"
       data-item-id="item-1-id"
+      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
         class="marking-menu-line"
@@ -104,8 +104,8 @@ exports[`createMenu renders 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="20"
       data-item-id="item-2-id"
+      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
         class="marking-menu-line"
@@ -118,8 +118,8 @@ exports[`createMenu renders 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="30"
       data-item-id="item-3-id"
+      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
         class="marking-menu-line"
@@ -132,8 +132,8 @@ exports[`createMenu renders 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="40"
       data-item-id="item-4-id"
+      style="--angle: 40deg; --cosine: 0.766044443118978; --sine: -0.6427876096865393;"
     >
       <div
         class="marking-menu-line"
@@ -146,8 +146,8 @@ exports[`createMenu renders 1`] = `
     </div>
     <div
       class="marking-menu-item active"
-      data-item-angle="50"
       data-item-id="item-5-id"
+      style="--angle: 50deg; --cosine: 0.6427876096865394; --sine: -0.766044443118978;"
     >
       <div
         class="marking-menu-line"
@@ -166,12 +166,12 @@ exports[`createMenu renders without active element 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="left: 30px; top: 50px;"
+    style="--center-x: 30px; --center-y: 50px;"
   >
     <div
       class="marking-menu-item"
-      data-item-angle="0"
       data-item-id="item-0-id"
+      style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
         class="marking-menu-line"
@@ -184,8 +184,8 @@ exports[`createMenu renders without active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="10"
       data-item-id="item-1-id"
+      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
         class="marking-menu-line"
@@ -198,8 +198,8 @@ exports[`createMenu renders without active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="20"
       data-item-id="item-2-id"
+      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
         class="marking-menu-line"
@@ -212,8 +212,8 @@ exports[`createMenu renders without active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="30"
       data-item-id="item-3-id"
+      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
         class="marking-menu-line"
@@ -232,12 +232,12 @@ exports[`createMenu update the active element 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="left: 30px; top: 50px;"
+    style="--center-x: 30px; --center-y: 50px;"
   >
     <div
       class="marking-menu-item"
-      data-item-angle="0"
       data-item-id="item-0-id"
+      style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
         class="marking-menu-line"
@@ -250,8 +250,8 @@ exports[`createMenu update the active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="10"
       data-item-id="item-1-id"
+      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
         class="marking-menu-line"
@@ -264,8 +264,8 @@ exports[`createMenu update the active element 1`] = `
     </div>
     <div
       class="marking-menu-item active"
-      data-item-angle="20"
       data-item-id="item-2-id"
+      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
         class="marking-menu-line"
@@ -278,8 +278,8 @@ exports[`createMenu update the active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="30"
       data-item-id="item-3-id"
+      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
         class="marking-menu-line"
@@ -298,12 +298,12 @@ exports[`createMenu update the active element 2`] = `
 <div>
   <div
     class="marking-menu"
-    style="left: 30px; top: 50px;"
+    style="--center-x: 30px; --center-y: 50px;"
   >
     <div
       class="marking-menu-item"
-      data-item-angle="0"
       data-item-id="item-0-id"
+      style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
         class="marking-menu-line"
@@ -316,8 +316,8 @@ exports[`createMenu update the active element 2`] = `
     </div>
     <div
       class="marking-menu-item active"
-      data-item-angle="10"
       data-item-id="item-1-id"
+      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
         class="marking-menu-line"
@@ -330,8 +330,8 @@ exports[`createMenu update the active element 2`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="20"
       data-item-id="item-2-id"
+      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
         class="marking-menu-line"
@@ -344,8 +344,8 @@ exports[`createMenu update the active element 2`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-angle="30"
       data-item-id="item-3-id"
+      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
         class="marking-menu-line"

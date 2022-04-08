@@ -5,13 +5,17 @@ let toastElement = document.getElementById('toast');
 
 // Create the menu with a sub-menu at the bottom.
 let items = [
-  'Item Right',
+  'Right',
+  'Down-Right',
   {
     name: 'Others...',
-    children: ['Sub Right', 'Sub Down', 'Sub Left', 'Sub Top']
+    children: ['Sub Right', 'Sub Down', 'Sub Left', 'Sub Up'],
   },
-  'Item Left',
-  'Item Up'
+  'Down-Left',
+  'Left',
+  'Up-Left',
+  'Up',
+  'Up-Right',
 ];
 let mm = MarkingMenu(items, document.getElementById('main'));
 
@@ -32,5 +36,5 @@ let subscription = mm.subscribe({
   },
   error(error) {
     console.error(error);
-  }
+  },
 });

@@ -26,17 +26,12 @@ The authors and contributors of this library may not be held responsible for any
 You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.io/rxjs/) and `marking-menu`:
 
 - https://unpkg.com/rxjs@7/dist/bundles/rxjs.umd.js,
-- https://unpkg.com/marking-menu (latest script),
-- https://unpkg.com/marking-menu/marking-menu.css (latest stylesheet)
+- https://unpkg.com/marking-menu,
 
 ```html
 <!DOCTYPE html>
 <html>
   <head>
-    <link
-      href="https://unpkg.com/marking-menu/marking-menu.css"
-      rel="stylesheet"
-    />
     <script
       src="https://unpkg.com/rxjs@7/dist/bundles/rxjs.umd.js"
       defer
@@ -50,7 +45,7 @@ You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.i
 </html>
 ```
 
-### ES modules or CommonJS with NPM (`webpack` and others)
+### ES modules or CommonJS
 
 ```sh
 npm install -S marking-menu
@@ -67,9 +62,6 @@ or (CommonJS)
 ```js
 var MarkingMenu = require('marking-menu');
 ```
-
-Don't forget to include the CSS.
-For example, if you are using `webpack` and `style-loader`, `import 'marking-menu/marking-menu.css'` should be enough.
 
 ## API
 
