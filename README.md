@@ -6,7 +6,7 @@
 
 This library is an implementation of Gordon Kurtenbach's infamous Marking Menus in JavaScript [[1](https://doi.org/10.1145/120782.120797), [2](http://doi.acm.org/10.1145/169059.169426), [3](http://doi.acm.org/10.1145/191666.191759)].
 
-[Have a look at the **demo**](quentinroy.github.io/marking-menu/).
+[Have a look at the **demo**](https://quentinroy.github.io/Marking-Menu/).
 
 ## License
 
