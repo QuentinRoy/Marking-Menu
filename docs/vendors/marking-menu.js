@@ -7,7 +7,7 @@
  *
  * Marking Menus may be patented independently from this software.
  *
- * Date: Fri, 08 Apr 2022 15:53:10 GMT
+ * Date: Fri, 08 Apr 2022 15:57:23 GMT
  */
 
 (function (global, factory) {
@@ -1432,7 +1432,7 @@
     let {
       minSelectionDist = 40,
       minMenuSelectionDist = 80,
-      subMenuOpeningDelay = 25,
+      subMenuOpeningDelay = 100,
       movementsThreshold = 5,
       noviceDwellingTime = 1000 / 3,
       strokeColor = '#000',

@@ -66,7 +66,7 @@ export default (
   {
     minSelectionDist = 40,
     minMenuSelectionDist = 80,
-    subMenuOpeningDelay = 25,
+    subMenuOpeningDelay = 100,
     movementsThreshold = 5,
     noviceDwellingTime = 1000 / 3,
     strokeColor = '#000',
