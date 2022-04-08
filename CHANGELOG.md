@@ -1,6 +1,27 @@
-# Change Log
+# Changelog
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+## [0.10.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.9.0...v0.10.0) (2022-04-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* CSS is now bundled with JS and does not have to be imported separately.
+* rxjs 6 is not supported anymore
+
+### Features
+
+* increase submenu opening delay ([64c2656](https://github.com/QuentinRoy/Marking-Menu/commit/64c2656a5836deae4823d8214faf48192ffc5073))
+* upgrade jest and rxjs ([41c386f](https://github.com/QuentinRoy/Marking-Menu/commit/41c386fdc11b7e023c1fa44487e79396aa9f3381))
+
+
+### Bug Fixes
+
+* fix rxjs peer dep version ([4c57509](https://github.com/QuentinRoy/Marking-Menu/commit/4c57509e20f6b5595e24b094ef0dfb473cf17c5a))
+
+
+* remove scss, use css variables and bundle css with js export ([cec3474](https://github.com/QuentinRoy/Marking-Menu/commit/cec34747e2c175d28e4d3230503c59c80238d7ba))
 
 <a name="0.9.0"></a>
 # [0.9.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.9.0-beta.1...v0.9.0) (2018-10-01)
