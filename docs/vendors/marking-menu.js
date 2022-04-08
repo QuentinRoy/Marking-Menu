@@ -7,7 +7,7 @@
  *
  * Marking Menus may be patented independently from this software.
  *
- * Date: Fri, 08 Apr 2022 08:27:16 GMT
+ * Date: Fri, 08 Apr 2022 08:35:31 GMT
  */
 
 (function (global, factory) {
@@ -937,39 +937,40 @@
     };
   });
 
-  var rafThrottle$1 = {};
+  var rafSchd = function rafSchd(fn) {
+    var lastArgs = [];
+    var frameId = null;
 
-  Object.defineProperty(rafThrottle$1, "__esModule", {
-    value: true
-  });
-  var rafThrottle = function rafThrottle(callback) {
-    var requestId = void 0;
-
-    var later = function later(context, args) {
-      return function () {
-        requestId = null;
-        callback.apply(context, args);
-      };
-    };
-
-    var throttled = function throttled() {
-      if (requestId === null || requestId === undefined) {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-          args[_key] = arguments[_key];
-        }
-
-        requestId = requestAnimationFrame(later(this, args));
+    var wrapperFn = function wrapperFn() {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
       }
+
+      lastArgs = args;
+
+      if (frameId) {
+        return;
+      }
+
+      frameId = requestAnimationFrame(function () {
+        frameId = null;
+        fn.apply(void 0, lastArgs);
+      });
     };
 
-    throttled.cancel = function () {
-      return cancelAnimationFrame(requestId);
+    wrapperFn.cancel = function () {
+      if (!frameId) {
+        return;
+      }
+
+      cancelAnimationFrame(frameId);
+      frameId = null;
     };
 
-    return throttled;
+    return wrapperFn;
   };
 
-  var _default = rafThrottle$1.default = rafThrottle;
+  var rafThrottle = rafSchd;
 
   /**
    * Connect navigation notifications to menu opening and closing.
@@ -1021,7 +1022,7 @@
       upperStrokeCanvas.drawStroke(upperStroke);
     };
 
-    const noviceMove = _default(position => {
+    const noviceMove = rafThrottle(position => {
       if (upperStrokeCanvas) {
         upperStrokeCanvas.clear();
 
@@ -1033,7 +1034,7 @@
         upperStrokeCanvas.drawPoint(upperStroke[0]);
       }
     });
-    const expertDraw = _default(stroke => {
+    const expertDraw = rafThrottle(stroke => {
       // FIXME: Not very efficient.
       if (upperStrokeCanvas) {
         upperStrokeCanvas.clear();

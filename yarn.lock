@@ -7931,7 +7931,7 @@ __metadata:
     pinst: ^3.0.0
     prettier: ^2.6.2
     pug-jest: ^1.0.1
-    raf-throttle: ^2.0.3
+    raf-schd: ^4.0.3
     rollup: ^2.0.0
     rollup-plugin-sass: ^1.0.0
     rxjs: ^7.5.5
@@ -9473,10 +9473,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"raf-throttle@npm:^2.0.3":
-  version: 2.0.3
-  resolution: "raf-throttle@npm:2.0.3"
-  checksum: 8c6f348543646d1f9e7590b0d8cd91df47104c8239045b437cf0b6d4ef13bc0daf7a25f3512b5b46f2ba47b9e6d93382af81ec5c6b637339d5c6330661a97890
+"raf-schd@npm:^4.0.3":
+  version: 4.0.3
+  resolution: "raf-schd@npm:4.0.3"
+  checksum: 45514041c5ad31fa96aef3bb3c572a843b92da2f2cd1cb4a47c9ad58e48761d3a4126e18daa32b2bfa0bc2551a42d8f324a0e40e536cb656969929602b4e8b58
   languageName: node
   linkType: hard
 

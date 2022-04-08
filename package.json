@@ -30,7 +30,7 @@
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "license": "MIT",
   "dependencies": {
-    "raf-throttle": "^2.0.3",
+    "raf-schd": "^4.0.3",
     "rxjs": "^7.5.5"
   },
   "devDependencies": {

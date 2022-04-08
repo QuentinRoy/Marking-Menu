@@ -1,5 +1,5 @@
 import { finalize, tap } from 'rxjs/operators';
-import rafThrottle from 'raf-throttle';
+import rafThrottle from 'raf-schd';
 
 /**
  * Connect navigation notifications to menu opening and closing.

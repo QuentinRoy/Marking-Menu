@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 import { marbles } from 'rxjs-marbles';
 import connect from './connect';
 
-jest.mock('raf-throttle', () => jest.fn((f) => f));
+jest.mock('raf-schd', () => jest.fn((f) => f));
 
 // Mock values.
 let UpperStrokeCanvas;
