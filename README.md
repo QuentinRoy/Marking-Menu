@@ -6,13 +6,14 @@
 
 This library is an implementation of Gordon Kurtenbach's infamous Marking Menus in JavaScript [[1](https://doi.org/10.1145/120782.120797), [2](http://doi.acm.org/10.1145/169059.169426), [3](http://doi.acm.org/10.1145/191666.191759)].
 
-[Have a look at the **demo**](https://quentinroy.fr/misc/marking-menu).
+[Have a look at the **demo**](quentinroy.github.io/marking-menu/).
 
 ## License
 
 This _codebase_ is licensed under the MIT license.
-**However**, Marking Menus are concerned by several patents (none of them owned by the author of this library). **Make sure you have the rights to include this library in a commercial application before doing so.**
-The authors of this library may not be held responsible for any patent infringement following the use of this codebase.
+**However**, Marking Menus are concerned by several patents, none of which are owned by the author of this library.
+Make sure you have the rights to include this library in your application before doing so.
+The authors and contributors of this library may not be held responsible for any patent infringement following the use of this codebase.
 
 ## Dependencies
 
