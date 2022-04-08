@@ -32,7 +32,7 @@ export default {
   },
   plugins: [
     resolve(),
-    postcss(),
+    postcss({ minimize: true }),
     babel({ exclude: 'node_modules/**', babelHelpers: 'runtime' }),
     commonjs(),
   ],
