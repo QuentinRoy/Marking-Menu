@@ -4,6 +4,15 @@
     <meta name="viewport" content="width=device-width, user-scalable=no" />
     <title>Marking Menu Demonstration</title>
     <link rel="stylesheet" href="./style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "marking-menu": "./marking-menu.mjs",
+          "rxjs": "https://esm.sh/rxjs@7.5.5",
+          "rxjs/operators": "https://esm.sh/rxjs@7.5.5/operators"
+        }
+      }
+    </script>
   </head>
 
   <body>
@@ -61,8 +70,6 @@
       </svg>
     </a>
 
-    <script src="./vendors/rxjs.umd.js"></script>
-    <script src="./vendors/marking-menu.js"></script>
-    <script src="./script.js"></script>
+    <script type="module" src="./script.js"></script>
   </body>
 </html>
