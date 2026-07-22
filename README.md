@@ -44,6 +44,21 @@ You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.i
 </html>
 ```
 
+Or, as a native ES module via [esm.sh](https://esm.sh), which auto-resolves `marking-menu`'s own `rxjs` dependency:
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="module">
+      import MarkingMenu from 'https://esm.sh/marking-menu';
+      // Your stuff.
+    </script>
+  </head>
+  <body></body>
+</html>
+```
+
 ### ES modules or CommonJS
 
 ```sh
