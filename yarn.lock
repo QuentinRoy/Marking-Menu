@@ -2394,10 +2394,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"angles@npm:^0.2.4":
-  version: 0.2.4
-  resolution: "angles@npm:0.2.4"
-  checksum: e5dff1e415cf744aff7e2518dc85d280ad0596b1a53754fbf7e0b12554fa3c7d9b3b86d1ec01288601ef06e4c13e1b0777e2f4e44ef1e6ecabd7816b0c4bf7af
+"angles@npm:^0.5.0":
+  version: 0.5.1
+  resolution: "angles@npm:0.5.1"
+  checksum: e9aedc763f23d4f5e8c2716e38540dbd52d1d1b4a1fdab63da9ea711e11c1ae1ffc125e14d244da46714e85e7c842bdb52489d06cb2ca65c32865e9df2310b0c
   languageName: node
   linkType: hard
 
@@ -6416,7 +6416,7 @@ __metadata:
     "@rollup/plugin-babel": ^5.3.1
     "@rollup/plugin-commonjs": ^21.0.3
     "@rollup/plugin-node-resolve": ^13.1.3
-    angles: ^0.2.4
+    angles: ^0.5.0
     babel-jest: ^27.5.1
     cross-env: ^7.0.3
     csv-parse: ^5.0.4
