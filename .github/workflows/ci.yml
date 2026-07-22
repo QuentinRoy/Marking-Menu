@@ -23,7 +23,7 @@ jobs:
           node-version-file: .nvmrc
       - run: corepack enable
       - name: Restore Yarn cache
-        uses: actions/cache@5a3ec84effc545d5c0f5364835c64ef22e024cca # v4.2.3
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
           path: |
             .yarn/cache
