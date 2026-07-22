@@ -26,6 +26,15 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: corepack enable
+      - name: Restore Yarn cache
+        uses: actions/cache@5a3ec84effc545d5c0f5364835c64ef22e024cca # v4.2.3
+        with:
+          path: |
+            .yarn/cache
+            node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
       - run: yarn install --immutable
       - run: yarn build
       - run: yarn copy-demo-files
