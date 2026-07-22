@@ -19,17 +19,25 @@ const banner = `/*!
 
 export default {
   input: 'src/index.js',
-  output: {
-    name: 'MarkingMenu',
-    globals: {
-      rxjs: 'rxjs',
-      'rxjs/operators': 'rxjs.operators',
+  output: [
+    {
+      name: 'MarkingMenu',
+      globals: {
+        rxjs: 'rxjs',
+        'rxjs/operators': 'rxjs.operators',
+      },
+      sourcemap: true,
+      file: './marking-menu.js',
+      banner,
+      format: 'umd',
     },
-    sourcemap: true,
-    file: './marking-menu.js',
-    banner,
-    format: 'umd',
-  },
+    {
+      sourcemap: true,
+      file: './marking-menu.mjs',
+      banner,
+      format: 'es',
+    },
+  ],
   plugins: [
     resolve(),
     postcss({ minimize: true }),

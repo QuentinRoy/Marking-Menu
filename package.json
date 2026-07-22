@@ -3,9 +3,19 @@
   "version": "0.10.0",
   "description": "Marking Menu Implementation in JavaScript.",
   "main": "marking-menu.js",
+  "module": "marking-menu.mjs",
+  "exports": {
+    ".": {
+      "import": "./marking-menu.mjs",
+      "require": "./marking-menu.js",
+      "default": "./marking-menu.js"
+    }
+  },
   "files": [
     "marking-menu.js",
-    "marking-menu.js.map"
+    "marking-menu.js.map",
+    "marking-menu.mjs",
+    "marking-menu.mjs.map"
   ],
   "repository": {
     "type": "git",
