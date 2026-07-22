@@ -29,7 +29,7 @@ export const noviceMoves = (drag$, menu, { menuCenter, minSelectionDist }) => {
       type: 'open',
       menu,
       center: menuCenter,
-      timeStamp: performance ? performance.now() : Date.now(),
+      timeStamp: new Event('marking-menu-open').timeStamp,
     }),
     share()
   );
