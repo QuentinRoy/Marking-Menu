@@ -1,4 +1,5 @@
 module.exports = {
+  roots: ['<rootDir>/src'],
   collectCoverageFrom: ['src/**/*.js'],
   testEnvironment: 'jsdom',
   transform: {
