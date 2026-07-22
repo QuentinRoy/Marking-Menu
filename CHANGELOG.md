@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.10.1](https://github.com/QuentinRoy/Marking-Menu/compare/v0.10.0...v0.10.1) (2026-07-22)
+
+
+### Features
+
+* migrate GitHub Pages deployment to Actions and ESM demo ([#113](https://github.com/QuentinRoy/Marking-Menu/issues/113)) ([f0a870d](https://github.com/QuentinRoy/Marking-Menu/commit/f0a870d596f05c8ca6722fe68326f07860037708))
+* publish native ESM build alongside UMD ([#112](https://github.com/QuentinRoy/Marking-Menu/issues/112)) ([3723cf4](https://github.com/QuentinRoy/Marking-Menu/commit/3723cf4a7988ed6966ea58af336ae99c4d3df9ba))
+
+
+### Bug Fixes
+
+* scope Jest tests to source ([#115](https://github.com/QuentinRoy/Marking-Menu/issues/115)) ([f0d9c95](https://github.com/QuentinRoy/Marking-Menu/commit/f0d9c95501b9a8a0e340eee93a4a68e1ad4855dc))
+* use event timestamp for open notifications ([#110](https://github.com/QuentinRoy/Marking-Menu/issues/110)) ([f553c5a](https://github.com/QuentinRoy/Marking-Menu/commit/f553c5a6aa902dca35f8c7f683bf07c67ed339e2))
+
 ## [0.10.0](https://github.com/QuentinRoy/Marking-Menu/compare/v0.9.0...v0.10.0) (2022-04-08)
 
 
