@@ -4,17 +4,8 @@ const { promisify } = require('util');
 
 const copyFile = promisify(fs.copyFile);
 
-const TARGET_DIR = '../docs/vendors';
-const FILES_TO_COPY = [
-  '../marking-menu.js',
-  '../marking-menu.js.map',
-  '../node_modules/rxjs/dist/bundles/rxjs.umd.js',
-];
-
-// Create the target directory if it does not exits.
-if (!fs.existsSync(path.resolve(__dirname, TARGET_DIR))) {
-  fs.mkdirSync(path.resolve(__dirname, TARGET_DIR));
-}
+const TARGET_DIR = '../demo';
+const FILES_TO_COPY = ['../marking-menu.mjs', '../marking-menu.mjs.map'];
 
 // Copy all files.
 Promise.all(

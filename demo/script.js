@@ -1,4 +1,4 @@
-'use strict';
+import MarkingMenu from 'marking-menu';
 
 let mainElt = document.getElementById('main');
 let toastElement = document.getElementById('toast');
