@@ -38,24 +38,10 @@ const EndNotif = (type, position, active = null) => ({
   selection: active,
 });
 
-// Hacky, but without this spyOn performance do not work.
-beforeAll(() => {
-  Object.defineProperty(performance, 'now', {
-    value: performance.now,
-    configurable: true,
-    writable: true,
-  });
-});
-afterAll(() => {
-  Object.defineProperty(performance, 'now', {
-    value: performance.now,
-    configurable: false,
-    writable: false,
-  });
-});
-
 beforeEach(() => {
-  jest.spyOn(performance, 'now').mockImplementationOnce(() => 'mockTime');
+  jest.spyOn(global, 'Event').mockImplementation(() => ({
+    timeStamp: 'mockTime',
+  }));
   toPolar.mockImplementation(([radius, azymuth]) => ({ azymuth, radius }));
 });
 
