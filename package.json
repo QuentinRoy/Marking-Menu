@@ -13,7 +13,6 @@
   },
   "scripts": {
     "test": "cross-env NODE_ENV=test jest",
-    "codecov-test": "yarn test --coverage",
     "watch-test": "yarn test --watch",
     "build": "cross-env NODE_ENV=production rollup --config build-config/rollup.config.js",
     "copy-demo-files": "node ./build-config/copy-demo-files",
