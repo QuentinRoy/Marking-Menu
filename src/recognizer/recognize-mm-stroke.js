@@ -67,12 +67,17 @@ export const divideLongestSegment = (segments) => {
  Find the item selected by a list of segments, dividing the longest segment and walking the
  model until a leaf is found or `maxDepth` is reached.
 
- @param {Item} model - The marking menu model.
- @param {{length, angle}[]} segments - A list of segments.
- @param {number} [maxDepth=model.getMaxDepth()] - The maximum depth of the item.
+ @param {object} options - Configuration options.
+ @param {Item} options.model - The marking menu model.
+ @param {{length, angle}[]} options.segments - A list of segments.
+ @param {number} [options.maxDepth=model.getMaxDepth()] - The maximum depth of the item.
  @returns {Item} The selected item.
  */
-export const findMMItem = (model, segments, maxDepth = model.getMaxDepth()) => {
+export const findMMItem = ({
+  model,
+  segments,
+  maxDepth = model.getMaxDepth(),
+} = {}) => {
   // If there is not segments, there is no selection to find.
   if (segments.length === 0) {
     return null;
@@ -140,7 +145,7 @@ export default function recognizeMMStroke(
     // Change again the representation of the segment to include its length but not its
     // its points anymore.
     .map((seg) => ({ angle: segmentAngle(...seg.points), length: seg.length }));
-  const item = findMMItem(model, segments, maxDepth);
+  const item = findMMItem({ model, segments, maxDepth });
   if (requireLeaf) {
     return item && item.isLeaf() ? item : null;
   }
