@@ -22,12 +22,13 @@ export const pointsToSegments = (points) => {
 /**
  Walk the marking menu model along a list of segments.
 
- @param {Item} model - The marking menu model.
- @param {{ angle }[]} segments - A list of segments to walk the model.
- @param {number} [startIndex=0] - The start index in the angle list.
+ @param {object} options - Configuration options.
+ @param {Item} options.model - The marking menu model.
+ @param {{ angle }[]} options.segments - A list of segments to walk the model.
+ @param {number} [options.startIndex=0] - The start index in the angle list.
  @returns {Item} The corresponding item found by walking the model.
  */
-export const walkMMModel = (model, segments, startIndex = 0) => {
+export const walkMMModel = ({ model, segments, startIndex = 0 } = {}) => {
   if (!model || segments.length === 0 || model.isLeaf()) {
     return null;
   }
@@ -37,7 +38,7 @@ export const walkMMModel = (model, segments, startIndex = 0) => {
     return item;
   }
 
-  return walkMMModel(item, segments, startIndex + 1);
+  return walkMMModel({ model: item, segments, startIndex: startIndex + 1 });
 };
 
 export const segmentAngle = (a, b) =>
@@ -81,7 +82,7 @@ export const findMMItem = (model, segments, maxDepth = model.getMaxDepth()) => {
   let currentSegments = segments;
   let currentItem = null;
   while (currentSegments.length <= maxDepth) {
-    currentItem = walkMMModel(model, currentSegments);
+    currentItem = walkMMModel({ model, segments: currentSegments });
     if (currentItem && currentItem.isLeaf()) {
       return currentItem;
     }
