@@ -7,7 +7,7 @@ const importMapDependencies = new Set([
   'rxjs/operators',
 ]);
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   base: './',
   build: {
     emptyOutDir: true,
@@ -15,6 +15,13 @@ export default defineConfig({
   },
   plugins: [
     {
+      // Only externalize for the production build: the demo's import map
+      // (see demo/index.html) is what resolves these specifiers in the
+      // browser, but it can only do so for URLs the dev server leaves
+      // untouched, which is not the case for module specifiers. So instead,
+      // during dev, resolve `marking-menu` straight to the source so Vite can
+      // serve and transform it like any other import.
+      apply: 'build',
       enforce: 'pre',
       name: 'externalize-import-map-dependencies',
       resolveId(source) {
@@ -26,5 +33,9 @@ export default defineConfig({
     },
   ],
   publicDir: resolve(import.meta.dirname, 'dist'),
+  resolve:
+    command === 'serve'
+      ? { alias: { 'marking-menu': resolve(import.meta.dirname, 'src/index.js') } }
+      : undefined,
   root: resolve(import.meta.dirname, 'demo'),
-});
+}));
