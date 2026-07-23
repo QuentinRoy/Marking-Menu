@@ -6,6 +6,7 @@ module.exports = {
     '^.+\\.jsx?$': 'babel-jest',
   },
   moduleNameMapper: {
-    '\\.(css|styl|less|sass|scss)$': '<rootDir>/build-config/style-stub.js',
+    '\\.(css|styl|less|sass|scss)(\\?inline)?$':
+      '<rootDir>/build-config/style-stub.js',
   },
 };

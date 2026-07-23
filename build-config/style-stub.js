@@ -1,3 +1,3 @@
-// Used by jest to stub style files. Does not return anything.
+// Used by Jest to stub style files imported as strings.
 
-module.exports = {};
+module.exports = '';
