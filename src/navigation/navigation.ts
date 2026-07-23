@@ -1,4 +1,4 @@
-import { race, of } from 'rxjs';
+import { race, of, type Observable } from 'rxjs';
 import {
   take,
   map,
@@ -10,10 +10,30 @@ import {
 } from 'rxjs/operators';
 import { longMoves, dwellings, draw } from '../move/index.js';
 import recognize from '../recognizer/index.js';
+import type { MarkingMenuModelItem, Point } from '../types.js';
 import noviceNavigation from './novice-navigation.js';
-import expertNavigation from './expert-navigation.js';
+import expertNavigation, { type NavigationDrag } from './expert-navigation.js';
 
-export const confirmedNoviceNavigationHOO = (drag$, start, model, options) =>
+/**
+ Configuration options threaded through the navigation.
+ */
+export type NavigationOptions = {
+  minSelectionDist: number;
+  minMenuSelectionDist: number;
+  movementsThreshold: number;
+  submenuOpeningDelay: number;
+  noviceDwellingTime: number;
+};
+
+// `HOO` (higher order observable) is an established suffix of this module's
+// public API, imported as-is by the tests; keep it despite strictCamelCase.
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const confirmedNoviceNavigationHOO = <D extends NavigationDrag>(
+  drag$: Observable<D>,
+  start: D | null | undefined,
+  model: MarkingMenuModelItem,
+  options: NavigationOptions,
+) =>
   dwellings(drag$, {
     delay: options.noviceDwellingTime,
     movementsThreshold: options.movementsThreshold,
@@ -34,7 +54,13 @@ export const confirmedNoviceNavigationHOO = (drag$, start, model, options) =>
     ),
   );
 
-export const expertToNoviceSwitchHOO = (drag$, model, initStroke, options) =>
+// eslint-disable-next-line @typescript-eslint/naming-convention -- see above
+export const expertToNoviceSwitchHOO = <D extends NavigationDrag>(
+  drag$: Observable<D>,
+  model: MarkingMenuModelItem,
+  initStroke: Point[],
+  options: NavigationOptions,
+) =>
   dwellings(draw(drag$, { initStroke }), {
     delay: options.noviceDwellingTime,
     movementsThreshold: options.movementsThreshold,
@@ -58,13 +84,16 @@ export const expertToNoviceSwitchHOO = (drag$, model, initStroke, options) =>
     }),
   );
 
-export const confirmedExpertNavigationHOO = (
-  drag$,
-  model,
+// eslint-disable-next-line @typescript-eslint/naming-convention -- see above
+export const confirmedExpertNavigationHOO = <D extends NavigationDrag>(
+  drag$: Observable<D>,
+  model: MarkingMenuModelItem,
   {
     expertToNoviceSwitchHOO: expertToNoviceSwitchHOO_ = expertToNoviceSwitchHOO,
     ...options
-  } = {},
+  }: NavigationOptions & {
+    expertToNoviceSwitchHOO?: typeof expertToNoviceSwitchHOO;
+  },
 ) =>
   longMoves(draw(drag$, { type: 'draw' }), options.movementsThreshold).pipe(
     take(1),
@@ -85,7 +114,10 @@ export const confirmedExpertNavigationHOO = (
     }),
   );
 
-export const startup = (drag$, model) =>
+export const startup = <D extends NavigationDrag>(
+  drag$: Observable<D>,
+  model: MarkingMenuModelItem,
+) =>
   expertNavigation(drag$, model).pipe(
     map((n, i) =>
       i === 0
@@ -94,17 +126,21 @@ export const startup = (drag$, model) =>
     ),
   );
 
-export const navigationFromDrag = (
-  drag$,
-  start,
-  model,
-  options,
+export const navigationFromDrag = <D extends NavigationDrag>(
+  drag$: Observable<D>,
+  start: D | null | undefined,
+  model: MarkingMenuModelItem,
+  options: NavigationOptions,
   {
     confirmedExpertNavigationHOO:
       confirmedExpertNavigationHOO_ = confirmedExpertNavigationHOO,
     confirmedNoviceNavigationHOO:
       confirmedNoviceNavigationHOO_ = confirmedNoviceNavigationHOO,
     startup: startup_ = startup,
+  }: {
+    confirmedExpertNavigationHOO?: typeof confirmedExpertNavigationHOO;
+    confirmedNoviceNavigationHOO?: typeof confirmedNoviceNavigationHOO;
+    startup?: typeof startup;
   } = {},
 ) => {
   // Start up observable (while neither expert or novice are confirmed).
@@ -139,18 +175,20 @@ export const navigationFromDrag = (
 /**
  Navigate the menu from a higher order observable of drags.
 
- @param {Observable} drags$ - A higher order observable on drag movements.
- @param {MMItem} menu - The model of the menu.
- @param {object} options - Configuration options (see {@link ../index.js}).
- @param {(drag$: Observable, start: object, model: MMItem, options: object) => Observable}
- [options.navigationFromDrag=navigationFromDrag] - Function to convert a drags higher order
- observable to a navigation observable.
- @returns {Observable} An observable on the marking menu events.
+ @param drags$ - A higher order observable on drag movements.
+ @param menu - The model of the menu.
+ @param options - Configuration options (see {@link ../index.js}).
+ @param options.navigationFromDrag - Function to convert a drag observable to a
+ navigation observable.
+ @returns An observable on the marking menu events.
  */
-export default function navigation(
-  drags$,
-  menu,
-  { navigationFromDrag: navigationFromDrag_ = navigationFromDrag, ...options },
+export default function navigation<D extends NavigationDrag>(
+  drags$: Observable<Observable<D>>,
+  menu: MarkingMenuModelItem,
+  {
+    navigationFromDrag: navigationFromDrag_ = navigationFromDrag,
+    ...options
+  }: NavigationOptions & { navigationFromDrag?: typeof navigationFromDrag },
 ) {
   return drags$.pipe(
     exhaustMap((drag$) =>
