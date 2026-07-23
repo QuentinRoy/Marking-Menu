@@ -112,8 +112,12 @@ describe('findNextPointFurtherThan', () => {
           [0, 5],
           [0, 6],
         ],
-        5,
-        { startIndex: 0, refPoint: [0, 0], direction: 1 },
+        {
+          minDist: 5,
+          startIndex: 0,
+          refPoint: [0, 0],
+          direction: 1,
+        },
       ),
     ).toBe(7);
 
@@ -130,8 +134,12 @@ describe('findNextPointFurtherThan', () => {
           [0, 5],
           [0, 6],
         ],
-        5,
-        { startIndex: 0, refPoint: [0, 0], direction: 1 },
+        {
+          minDist: 5,
+          startIndex: 0,
+          refPoint: [0, 0],
+          direction: 1,
+        },
       ),
     ).toBe(0);
 
@@ -145,13 +153,21 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 7],
         ],
-        10,
-        { startIndex: 0, refPoint: [0, 0], direction: 1 },
+        {
+          minDist: 10,
+          startIndex: 0,
+          refPoint: [0, 0],
+          direction: 1,
+        },
       ),
     ).toBe(-1);
 
     expect(
-      findNextPointFurtherThan([], 0, 0, { refPoint: [0, 0], direction: 1 }),
+      findNextPointFurtherThan([], {
+        minDist: 0,
+        refPoint: [0, 0],
+        direction: 1,
+      }),
     ).toBe(-1);
 
     expect(
@@ -167,8 +183,12 @@ describe('findNextPointFurtherThan', () => {
           [0, 5],
           [0, 6],
         ],
-        5,
-        { startIndex: 1, refPoint: [0, 0], direction: 1 },
+        {
+          minDist: 5,
+          startIndex: 1,
+          refPoint: [0, 0],
+          direction: 1,
+        },
       ),
     ).toBe(7);
 
@@ -183,8 +203,11 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 6],
         ],
-        5,
-        { startIndex: 1, direction: 1 },
+        {
+          minDist: 5,
+          startIndex: 1,
+          direction: 1,
+        },
       ),
     ).toBe(5);
 
@@ -199,8 +222,11 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 6],
         ],
-        5,
-        { startIndex: 1, refPoint: [0, 0] },
+        {
+          minDist: 5,
+          startIndex: 1,
+          refPoint: [0, 0],
+        },
       ),
     ).toBe(5);
 
@@ -214,8 +240,11 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 7],
         ],
-        5,
-        { direction: 1, refPoint: [2, 2] },
+        {
+          minDist: 5,
+          direction: 1,
+          refPoint: [2, 2],
+        },
       ),
     ).toBe(5);
 
@@ -229,11 +258,11 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 7],
         ],
-        5,
+        { minDist: 5 },
       ),
     ).toBe(4);
 
-    expect(findNextPointFurtherThan([], 0)).toBe(-1);
+    expect(findNextPointFurtherThan([], { minDist: 0 })).toBe(-1);
 
     expect(
       findNextPointFurtherThan(
@@ -245,8 +274,12 @@ describe('findNextPointFurtherThan', () => {
           [2, 2],
           [0, 4],
         ],
-        5,
-        { startIndex: 4, refPoint: [0, 0], direction: -1 },
+        {
+          minDist: 5,
+          startIndex: 4,
+          refPoint: [0, 0],
+          direction: -1,
+        },
       ),
     ).toBe(1);
 
@@ -261,8 +294,7 @@ describe('findNextPointFurtherThan', () => {
           [1, 1],
           [0, 0],
         ],
-        2,
-        { direction: -1 },
+        { minDist: 2, direction: -1 },
       ),
     ).toBe(4);
   });

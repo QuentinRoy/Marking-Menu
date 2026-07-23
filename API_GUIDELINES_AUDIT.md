@@ -218,7 +218,7 @@ Two same-type positional points + a third positional list before the options. Ex
 findMiddlePointForMinAngle({ pointA, pointC, pointList, startIndex, endIndex })
 ```
 
-### 2.3 `findNextPointFurtherThan(pointList, minDist, { … })` — `src/recognizer/find-points.js:20` ⬜
+### 2.3 `findNextPointFurtherThan(pointList, minDist, { … })` — `src/recognizer/find-points.js:20` ✅
 
 Positional `minDist` between list and options. Borderline; primary-positional + options could be `findNextPointFurtherThan(pointList, { minDist, ... })`.
 
