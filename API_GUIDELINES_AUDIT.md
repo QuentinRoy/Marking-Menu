@@ -19,7 +19,15 @@ prioritized (or waived) explicitly.
 - **File:** `src/layout/connect.js:21`
 - **Current:**
   ```js
-  connectLayout(parentDOM, navigation$, createMenuLayout, createUpperStrokeCanvas, createLowerStrokeCanvas, createGestureFeedback, log)
+  connectLayout(
+    parentDOM,
+    navigation$,
+    createMenuLayout,
+    createUpperStrokeCanvas,
+    createLowerStrokeCanvas,
+    createGestureFeedback,
+    log,
+  );
   ```
 - **Violation:** 7 positional parameters, including 4 same-type factory
   functions whose order must be memorized, plus a trailing `log` dependency.
@@ -33,7 +41,7 @@ prioritized (or waived) explicitly.
     createLowerStrokeCanvas,
     createGestureFeedback,
     log,
-  })
+  });
   ```
 - **Call sites to update:** `src/main.js` (the `connectLayout(...)` call), `src/layout/connect.test.js`.
 
@@ -42,7 +50,7 @@ prioritized (or waived) explicitly.
 - **File:** `src/model.js:19`
 - **Current:**
   ```js
-  new MMItem(id, label, angle, { parent, children })
+  new MMItem(id, label, angle, { parent, children });
   ```
 - **Violation:** three positional params of which two are `string` (`id`,
   `label`) — order must be memorized; this is a domain constructor likely to
@@ -50,7 +58,7 @@ prioritized (or waived) explicitly.
   (`updateRubric(rubricId, { patch })`).
 - **Target:**
   ```js
-  new MMItem({ id, label, angle, parent, children })
+  new MMItem({ id, label, angle, parent, children });
   ```
 - **Call sites to update:** `src/model.js` (`recursivelyCreateModelItems`, `createModel`), `src/model.test.js`.
 
@@ -59,7 +67,7 @@ prioritized (or waived) explicitly.
 - **File:** `src/move/dwelling.js:23`
 - **Current:**
   ```js
-  dwellings(drag$, delay, movementsThreshold = 0, scheduler = undefined)
+  dwellings(drag$, delay, (movementsThreshold = 0), (scheduler = undefined));
   ```
 - **Violation:** `delay` and `movementsThreshold` are two same-type positional
   numbers; a fourth positional optional arg (`scheduler`) forces callers to
@@ -75,7 +83,7 @@ prioritized (or waived) explicitly.
 - **File:** `src/recognizer/recognize-mm-stroke.js:30`
 - **Current:**
   ```js
-  walkMMModel(model, segments, startIndex = 0)
+  walkMMModel(model, segments, (startIndex = 0));
   ```
 - **Violation:** exported helper with a positional optional `startIndex` —
   call sites cannot pass `startIndex` without the rest, and recursion
@@ -93,7 +101,7 @@ prioritized (or waived) explicitly.
 - **File:** `src/recognizer/recognize-mm-stroke.js:74`
 - **Current:**
   ```js
-  findMMItem(model, segments, maxDepth = model.getMaxDepth())
+  findMMItem(model, segments, (maxDepth = model.getMaxDepth()));
   ```
 - **Violation:** same family as `walkMMModel`; positional optional `maxDepth`.
 - **Target:**
@@ -108,13 +116,16 @@ prioritized (or waived) explicitly.
 - **File:** `src/recognizer/articulation-points.js:25`
 - **Current:**
   ```js
-  getStrokeArticulationPoints(stroke, expectedSegmentLength, angleThreshold)
+  getStrokeArticulationPoints(stroke, expectedSegmentLength, angleThreshold);
   ```
 - **Violation:** two same-type positional numbers whose order must be
   memorized.
 - **Target (primary positional + options object):**
   ```js
-  getStrokeArticulationPoints(stroke, { expectedSegmentLength, angleThreshold })
+  getStrokeArticulationPoints(stroke, {
+    expectedSegmentLength,
+    angleThreshold,
+  });
   ```
 - **Call sites to update:** `src/recognizer/recognize-mm-stroke.js`, `src/recognizer/articulation-points.test.js`.
 
@@ -123,7 +134,14 @@ prioritized (or waived) explicitly.
 - **File:** `src/layout/stroke.js:17`
 - **Current:**
   ```js
-  createStrokeCanvas(parent, { doc, lineWidth, lineColor, pointRadius, pointColor, ptSize })
+  createStrokeCanvas(parent, {
+    doc,
+    lineWidth,
+    lineColor,
+    pointRadius,
+    pointColor,
+    ptSize,
+  });
   ```
 - **Violation:** the sibling factory `createMenuLayout` (`src/layout/menu.js`)
   already takes a single fully-named config object including `parent`. The two
@@ -132,7 +150,15 @@ prioritized (or waived) explicitly.
   the same style."
 - **Target:**
   ```js
-  createStrokeCanvas({ parent, doc, lineWidth, lineColor, pointRadius, pointColor, ptSize })
+  createStrokeCanvas({
+    parent,
+    doc,
+    lineWidth,
+    lineColor,
+    pointRadius,
+    pointColor,
+    ptSize,
+  });
   ```
 - **Call sites to update:** `src/main.js` (×2), `src/layout/gesture-feedback.js`, `src/layout/stroke.test.js`.
 
@@ -141,13 +167,22 @@ prioritized (or waived) explicitly.
 - **File:** `src/layout/gesture-feedback.js:3`
 - **Current:**
   ```js
-  createGestureFeedback(parentDOM, { duration, strokeOptions, canceledStrokeOptions })
+  createGestureFeedback(parentDOM, {
+    duration,
+    strokeOptions,
+    canceledStrokeOptions,
+  });
   ```
 - **Violation:** same as 1.7 — should match the fully-named style of
   `createMenuLayout`.
 - **Target:**
   ```js
-  createGestureFeedback({ parent, duration, strokeOptions, canceledStrokeOptions })
+  createGestureFeedback({
+    parent,
+    duration,
+    strokeOptions,
+    canceledStrokeOptions,
+  });
   ```
 - **Call sites to update:** `src/main.js`, `src/layout/gesture-feedback.test.js`.
 
@@ -156,7 +191,7 @@ prioritized (or waived) explicitly.
 - **File:** `src/layout/gesture-feedback.js:9`
 - **Current:**
   ```js
-  show(stroke, isCanceled = false)
+  show(stroke, (isCanceled = false));
   // call site: gestureFeedback.show(stroke, isCanceled)
   ```
 - **Violation:** positional boolean — explicitly called out in the guidelines
@@ -172,13 +207,13 @@ prioritized (or waived) explicitly.
 - **File:** `src/move/linear-drag.js:65`
 - **Current:**
   ```js
-  watchDrags(rootDOM, dragObsFactories = [touchDrags, mouseDrags])
+  watchDrags(rootDOM, (dragObsFactories = [touchDrags, mouseDrags]));
   ```
 - **Violation:** positional optional second arg of a different type family;
   per guidelines this is "primary positional + options object" territory.
 - **Target:**
   ```js
-  watchDrags(rootDOM, { dragObsFactories = [touchDrags, mouseDrags] } = {})
+  watchDrags(rootDOM, ({ dragObsFactories = [touchDrags, mouseDrags] } = {}));
   ```
 - **Call sites to update:** `src/main.js`, `src/move/linear-drag.test.js`.
 
@@ -187,8 +222,15 @@ prioritized (or waived) explicitly.
 - **File:** `src/navigation/navigation.js:148` and `:95`
 - **Current:**
   ```js
-  navigation(drags$, menu, options, navigationFromDrag_ = navigationFromDrag)
-  navigationFromDrag(drag$, start, model, options, { confirmedExpertNavigationHOO, confirmedNoviceNavigationHOO, startup } = {})
+  navigation(drags$, menu, options, (navigationFromDrag_ = navigationFromDrag));
+  navigationFromDrag(
+    drag$,
+    start,
+    model,
+    options,
+    ({ confirmedExpertNavigationHOO, confirmedNoviceNavigationHOO, startup } =
+      {}),
+  );
   ```
 - **Violation:** `navigation` takes a 4th positional dependency override; it
   should live inside the options object like the other HOO overrides
@@ -197,7 +239,10 @@ prioritized (or waived) explicitly.
   the override object style should be matched.
 - **Target:**
   ```js
-  navigation(drags$, menu, { navigationFromDrag: navigationFromDrag_ = navigationFromDrag, ...options })
+  navigation(drags$, menu, {
+    navigationFromDrag: (navigationFromDrag_ = navigationFromDrag),
+    ...options,
+  });
   ```
 - **Call sites to update:** `src/main.js`, `src/navigation/navigation.test.js`.
 
@@ -214,8 +259,9 @@ Same-type positional pair of points. Called only as `segmentAngle(...seg.points)
 ### 2.2 `findMiddlePointForMinAngle(pointA, pointC, pointList, { … })` — `src/recognizer/find-points.js:54` ✅
 
 Two same-type positional points + a third positional list before the options. Exported from the module (used in tests). Target:
+
 ```js
-findMiddlePointForMinAngle({ pointA, pointC, pointList, startIndex, endIndex })
+findMiddlePointForMinAngle({ pointA, pointC, pointList, startIndex, endIndex });
 ```
 
 ### 2.3 `findNextPointFurtherThan(pointList, minDist, { … })` — `src/recognizer/find-points.js:20` ✅

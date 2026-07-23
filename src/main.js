@@ -115,7 +115,7 @@ export default function createMarkingMenu({
 
   // Create model and navigation observable.
   const model = createModel(items);
-  const navigation$ = navigation(watchDrags(parent, {}), model, {
+  const navigation$ = navigation(watchDrags(parent), model, {
     minSelectionDist,
     minMenuSelectionDist,
     submenuOpeningDelay,
