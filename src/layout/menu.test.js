@@ -2,7 +2,7 @@ import createMenu from './menu.js';
 
 const createModel = (itemNb = 0) => ({
   children: Array.from({ length: itemNb }, (_, i) => ({
-    name: `item-${i}-name`,
+    label: `item-${i}-name`,
     angle: i * 10,
     id: `item-${i}-id`,
   })),
