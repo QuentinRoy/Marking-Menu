@@ -1,12 +1,22 @@
-import createGestureFeedback from './gesture-feedback.js';
-import createStrokeCanvas from './stroke.js';
+import type { Point } from '../types.js';
+import createGestureFeedback, {
+  type GestureFeedback,
+} from './gesture-feedback.js';
+import createStrokeCanvas, { type StrokeCanvas } from './stroke.js';
 
 vi.mock('./stroke');
 
-createStrokeCanvas.mockImplementation(() => ({
-  drawStroke: vi.fn(),
-  remove: vi.fn(),
-}));
+type GestureFeedbackOptions = Parameters<typeof createGestureFeedback>[0];
+
+const mockCreateStrokeCanvas = vi.mocked(createStrokeCanvas);
+
+mockCreateStrokeCanvas.mockImplementation(
+  () =>
+    ({
+      drawStroke: vi.fn(),
+      remove: vi.fn(),
+    }) as unknown as StrokeCanvas,
+);
 
 vi.useFakeTimers();
 
@@ -17,13 +27,16 @@ afterEach(() => {
 describe('createGestureFeedback', () => {
   it('creates a gesture feedback instance', () => {
     expect(() =>
-      createGestureFeedback({ parent: 'div', duration: 50 }),
+      createGestureFeedback({
+        parent: 'div',
+        duration: 50,
+      } as unknown as GestureFeedbackOptions),
     ).not.toThrow();
   });
 });
 
 describe('createGestureFeedback#draw', () => {
-  let gs;
+  let gs: GestureFeedback;
   beforeEach(() => {
     // Create the stroke canvas and show a stroke for 50ms.
     gs = createGestureFeedback({
@@ -37,11 +50,11 @@ describe('createGestureFeedback#draw', () => {
         strokeArg1: 'canceledArg1',
         canceledStrokeArg3: 'canceledArg3',
       },
-    });
+    } as unknown as GestureFeedbackOptions);
   });
 
   it('draw a stroke', () => {
-    gs.show('mock-stroke');
+    gs.show('mock-stroke' as unknown as readonly Point[]);
     // Expect the stroke canvas to have been properly created.
     expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
     expect(createStrokeCanvas).toHaveBeenCalledWith({
@@ -49,13 +62,15 @@ describe('createGestureFeedback#draw', () => {
       strokeArg1: 'arg1',
       strokeArg2: 'arg2',
     });
-    const sc = createStrokeCanvas.mock.results[0].value;
+    const sc = mockCreateStrokeCanvas.mock.results[0]?.value as StrokeCanvas;
     expect(sc.drawStroke).toHaveBeenCalledTimes(1);
     expect(sc.drawStroke).toHaveBeenCalledWith('mock-stroke');
   });
 
   it('draw a canceled stroke', () => {
-    gs.show('mock-canceled-stroke', { canceled: true });
+    gs.show('mock-canceled-stroke' as unknown as readonly Point[], {
+      canceled: true,
+    });
     // Expect the stroke canvas to have been properly created.
     expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
     expect(createStrokeCanvas).toHaveBeenCalledWith({
@@ -64,14 +79,14 @@ describe('createGestureFeedback#draw', () => {
       strokeArg2: 'arg2',
       canceledStrokeArg3: 'canceledArg3',
     });
-    const sc = createStrokeCanvas.mock.results[0].value;
+    const sc = mockCreateStrokeCanvas.mock.results[0]?.value as StrokeCanvas;
     expect(sc.drawStroke).toHaveBeenCalledTimes(1);
     expect(sc.drawStroke).toHaveBeenCalledWith('mock-canceled-stroke');
   });
 
   it('removes the stroke after the given duration', () => {
-    gs.show('mock-stroke');
-    const sc = createStrokeCanvas.mock.results[0].value;
+    gs.show('mock-stroke' as unknown as readonly Point[]);
+    const sc = mockCreateStrokeCanvas.mock.results[0]?.value as StrokeCanvas;
     // Expect the stroke canvas not to have been removed yet.
     expect(sc.remove).not.toHaveBeenCalled();
     // Advance the time by 50ms (the callback duration).
@@ -82,7 +97,7 @@ describe('createGestureFeedback#draw', () => {
 });
 
 describe('createGestureFeedback#remove', () => {
-  let gs;
+  let gs: GestureFeedback;
 
   it('immediately clear any feedbacks', () => {
     // Create the stroke canvas and show a stroke for 50ms.
@@ -91,17 +106,23 @@ describe('createGestureFeedback#remove', () => {
       duration: 5000,
       strokeArg1: 'foo',
       strokeArg2: 'bar',
-    });
-    gs.show('mock-stroke-1');
-    gs.show('mock-stroke-2');
-    gs.show('mock-stroke-3');
+    } as unknown as GestureFeedbackOptions);
+    gs.show('mock-stroke-1' as unknown as readonly Point[]);
+    gs.show('mock-stroke-2' as unknown as readonly Point[]);
+    gs.show('mock-stroke-3' as unknown as readonly Point[]);
 
     // Sanity check (already tested).
     expect(createStrokeCanvas).toHaveBeenCalledTimes(3);
 
-    const remove1 = createStrokeCanvas.mock.results[0].value.remove;
-    const remove2 = createStrokeCanvas.mock.results[1].value.remove;
-    const remove3 = createStrokeCanvas.mock.results[2].value.remove;
+    const remove1 = (
+      mockCreateStrokeCanvas.mock.results[0]?.value as StrokeCanvas
+    ).remove;
+    const remove2 = (
+      mockCreateStrokeCanvas.mock.results[1]?.value as StrokeCanvas
+    ).remove;
+    const remove3 = (
+      mockCreateStrokeCanvas.mock.results[2]?.value as StrokeCanvas
+    ).remove;
 
     // Make sure that no canvas have been removed yet.
     expect(remove1).not.toHaveBeenCalled();

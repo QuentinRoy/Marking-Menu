@@ -1,6 +1,6 @@
-import createMenu from './menu.js';
+import createMenu, { type MenuLayoutModel } from './menu.js';
 
-const createModel = (itemNb = 0) => ({
+const createModel = (itemNb = 0): MenuLayoutModel => ({
   children: Array.from({ length: itemNb }, (_, i) => ({
     label: `item-${i}-name`,
     angle: i * 10,
@@ -47,11 +47,19 @@ describe('createMenu', () => {
       doc: document,
     });
     const items = div.querySelectorAll('.marking-menu-item');
-    expect(items[0].classList.contains('bottom-right-item')).toBe(true);
-    expect(items[1].classList.contains('bottom-left-item')).toBe(true);
-    expect(items[2].classList.contains('top-left-item')).toBe(true);
-    expect(items[3].classList.contains('top-right-item')).toBe(true);
-    expect(items[4].className).toBe('marking-menu-item');
+    expect((items[0] as Element).classList.contains('bottom-right-item')).toBe(
+      true,
+    );
+    expect((items[1] as Element).classList.contains('bottom-left-item')).toBe(
+      true,
+    );
+    expect((items[2] as Element).classList.contains('top-left-item')).toBe(
+      true,
+    );
+    expect((items[3] as Element).classList.contains('top-right-item')).toBe(
+      true,
+    );
+    expect((items[4] as Element).className).toBe('marking-menu-item');
   });
 
   it('update the active element', () => {
