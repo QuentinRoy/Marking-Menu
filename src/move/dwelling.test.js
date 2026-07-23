@@ -4,10 +4,10 @@ import longMove from './long-move';
 
 const { marbles } = configure({ run: false });
 
-jest.mock('./long-move');
+vi.mock('./long-move');
 
 afterEach(() => {
-  jest.resetAllMocks();
+  vi.resetAllMocks();
 });
 
 describe('dwelling', () => {

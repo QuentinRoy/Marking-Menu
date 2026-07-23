@@ -29,7 +29,7 @@ describe('stroke', () => {
   let mockContext;
 
   beforeEach(() => {
-    document.createElement = jest.fn((t, ...args) => {
+    document.createElement = vi.fn((t, ...args) => {
       const elt = docCreateElement.call(document, t, ...args);
       if (t === 'canvas') {
         const context = createMockContext();

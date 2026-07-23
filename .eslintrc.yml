@@ -26,5 +26,19 @@ overrides:
           peerDependencies: true
   - files:
       - src/**/*.test.js
+    extends:
+      - plugin:@vitest/legacy-recommended
     env:
-      jest: true
+      '@vitest/env': true
+    rules:
+      # rxjs-marbles' `m.expect(...)` is this suite's assertion entry point
+      # alongside the ambient `expect`; the rule can't infer that statically.
+      '@vitest/expect-expect':
+        - error
+        - assertFunctionNames: ['expect', 'm.expect']
+      # describe() is called with an imported function reference in some
+      # files (Vitest supports this the same way Jest does); the rule can't
+      # resolve the import to confirm it's a function.
+      '@vitest/valid-title':
+        - error
+        - allowArguments: true

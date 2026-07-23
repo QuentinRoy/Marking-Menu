@@ -1,22 +1,22 @@
 import createGestureFeedback from './gesture-feedback';
 import createStrokeCanvas from './stroke';
 
-jest.mock('./stroke');
+vi.mock('./stroke');
 
 createStrokeCanvas.mockImplementation(() => ({
-  drawStroke: jest.fn(),
-  remove: jest.fn(),
+  drawStroke: vi.fn(),
+  remove: vi.fn(),
 }));
 
-jest.useFakeTimers();
+vi.useFakeTimers();
 
 afterEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
 });
 
 describe('createGestureFeedback', () => {
   it('creates a gesture feedback instance', () => {
-    createGestureFeedback('div', { duration: 50 });
+    expect(() => createGestureFeedback('div', { duration: 50 })).not.toThrow();
   });
 });
 
@@ -70,7 +70,7 @@ describe('createGestureFeedback#draw', () => {
     // Expect the stroke canvas not to have been removed yet.
     expect(sc.remove).not.toHaveBeenCalled();
     // Advance the time by 50ms (the callback duration).
-    jest.advanceTimersByTime(50);
+    vi.advanceTimersByTime(50);
     // Expect the stroke canvas to have been removed now.
     expect(sc.remove).toHaveBeenCalled();
   });
@@ -109,7 +109,7 @@ describe('createGestureFeedback#remove', () => {
     expect(remove3).toHaveBeenCalledTimes(1);
 
     // Make sure that we don't remove these several times.
-    jest.runAllTimers();
+    vi.runAllTimers();
     expect(remove1).toHaveBeenCalledTimes(1);
     expect(remove2).toHaveBeenCalledTimes(1);
     expect(remove3).toHaveBeenCalledTimes(1);

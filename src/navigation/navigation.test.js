@@ -13,14 +13,14 @@ import { longMoves, dwellings, draw } from '../move';
 import noviceNavigation from './novice-navigation';
 import recognize from '../recognizer';
 
-jest.mock('./expert-navigation');
-jest.mock('./novice-navigation');
-jest.mock('../move');
-jest.mock('../recognizer');
+vi.mock('./expert-navigation');
+vi.mock('./novice-navigation');
+vi.mock('../move');
+vi.mock('../recognizer');
 
 afterEach(() => {
-  jest.restoreAllMocks();
-  jest.resetAllMocks();
+  vi.restoreAllMocks();
+  vi.resetAllMocks();
 });
 
 describe('confirmedExpertNavigationHOO', () => {
@@ -50,7 +50,7 @@ describe('confirmedExpertNavigationHOO', () => {
     ));
     longMoves.mockImplementation(() => long$);
     draw.mockImplementation(() => drag$);
-    const mockExpertToNoviceSwitchHOO = jest.fn(() => etnsh$);
+    const mockExpertToNoviceSwitchHOO = vi.fn(() => etnsh$);
 
     m
       .expect(confirmedExpertNavigationHOO(drag$, 'mock-model', {
@@ -92,7 +92,7 @@ describe('confirmedExpertNavigationHOO', () => {
     ));
     longMoves.mockImplementation(() => long$);
     draw.mockImplementation(() => drag$);
-    const mockExpertToNoviceSwitchHOO = jest.fn(() => etnsh$);
+    const mockExpertToNoviceSwitchHOO = vi.fn(() => etnsh$);
 
     m
       .expect(confirmedExpertNavigationHOO(drag$, 'mock-model', {
@@ -269,9 +269,9 @@ describe('navigationFromDrag', () => {
   let callNavigationFromDrag;
 
   beforeEach(() => {
-    mockConfirmedExpertNavigationHOO = jest.fn(() => of());
-    mockConfirmedNoviceNavigationHOO = jest.fn(() => of());
-    mockStartup = jest.fn(() => of());
+    mockConfirmedExpertNavigationHOO = vi.fn(() => of());
+    mockConfirmedNoviceNavigationHOO = vi.fn(() => of());
+    mockStartup = vi.fn(() => of());
     callNavigationFromDrag = () =>
       navigationFromDrag(
         'mock-drag$',
@@ -376,7 +376,7 @@ describe('navigation', () => {
 
     Object.values(subs).forEach(sub => sub.connect());
 
-    const mockNavFromDrag = jest.fn((obs, start, menu, options) =>
+    const mockNavFromDrag = vi.fn((obs, start, menu, options) =>
       obs.pipe(map(name => ({ name, start, menu, options })))
     );
 

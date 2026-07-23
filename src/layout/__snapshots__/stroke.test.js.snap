@@ -1,9 +1,9 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`stroke can be cleared 1`] = `
-Array [
-  Object {
-    "args": Array [
+exports[`stroke > can be cleared 1`] = `
+[
+  {
+    "args": [
       0,
       0,
       50,
@@ -14,27 +14,27 @@ Array [
 ]
 `;
 
-exports[`stroke can be removed 1`] = `<div />`;
+exports[`stroke > can be removed 1`] = `<div />`;
 
-exports[`stroke can draw points 1`] = `
-Array [
-  Object {
-    "args": Array [],
+exports[`stroke > can draw points 1`] = `
+[
+  {
+    "args": [],
     "method": "save",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "beginPath",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       110,
       12,
     ],
     "method": "moveTo",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       10,
       12,
       100,
@@ -43,31 +43,31 @@ Array [
     ],
     "method": "arc",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "fill",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "restore",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "save",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "beginPath",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       105.2,
       0,
     ],
     "method": "moveTo",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       5.2,
       0,
       100,
@@ -76,111 +76,111 @@ Array [
     ],
     "method": "arc",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "fill",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "restore",
   },
 ]
 `;
 
-exports[`stroke can draw strokes 1`] = `
-Array [
-  Object {
-    "args": Array [],
+exports[`stroke > can draw strokes 1`] = `
+[
+  {
+    "args": [],
     "method": "save",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "beginPath",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       3,
       2,
     ],
     "method": "moveTo",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       2,
       4,
     ],
     "method": "lineTo",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       5,
       1,
     ],
     "method": "lineTo",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       9,
       0,
     ],
     "method": "lineTo",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "stroke",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "restore",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "save",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "beginPath",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       10,
       0,
     ],
     "method": "moveTo",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       0,
       0,
     ],
     "method": "lineTo",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       1,
       1,
     ],
     "method": "lineTo",
   },
-  Object {
-    "args": Array [
+  {
+    "args": [
       1,
       0,
     ],
     "method": "lineTo",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "stroke",
   },
-  Object {
-    "args": Array [],
+  {
+    "args": [],
     "method": "restore",
   },
 ]
 `;
 
-exports[`stroke creates its DOM and set up the canvas scale 1`] = `
+exports[`stroke > creates its DOM and set up the canvas scale 1`] = `
 <div>
   <canvas
     height="240"

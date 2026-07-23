@@ -2,10 +2,10 @@ import { marbles } from 'rxjs-marbles';
 import expertNavigation from './expert-navigation';
 import recognize from '../recognizer';
 
-jest.mock('../recognizer');
+vi.mock('../recognizer');
 
 afterEach(() => {
-  jest.resetAllMocks();
+  vi.resetAllMocks();
 });
 
 describe('expertNavigation', () => {
