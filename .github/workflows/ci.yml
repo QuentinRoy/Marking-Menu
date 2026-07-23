@@ -35,5 +35,4 @@ jobs:
       - run: yarn install --immutable
       - run: yarn lint
       - run: yarn test
-      - run: yarn build
-      - run: yarn demo:prepare
+      - run: yarn build-demo

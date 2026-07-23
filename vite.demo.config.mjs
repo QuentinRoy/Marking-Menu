@@ -8,6 +8,11 @@ const importMapDependencies = new Set([
 ]);
 
 export default defineConfig({
+  base: './',
+  build: {
+    emptyOutDir: true,
+    outDir: resolve(import.meta.dirname, 'demo-dist'),
+  },
   plugins: [
     {
       enforce: 'pre',
@@ -20,6 +25,6 @@ export default defineConfig({
       },
     },
   ],
-  publicDir: resolve(import.meta.dirname, '../dist'),
-  root: resolve(import.meta.dirname, '../demo'),
+  publicDir: resolve(import.meta.dirname, 'dist'),
+  root: resolve(import.meta.dirname, 'demo'),
 });
