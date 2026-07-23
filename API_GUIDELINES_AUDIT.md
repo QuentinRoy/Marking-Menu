@@ -232,9 +232,11 @@ Positional optional `baseId`/`parent`. Internal recursion only; candidate for `(
 
 **Waived:** private, short, conventional closures scoped to one `connectLayout` invocation. The `showGestureFeedback` boolean concern is no longer applicable; it now accepts `{ canceled }` after item 1.9.
 
-### 2.6 `utils.js` helpers — `mod`, `dist`, `angle`, `deltaAngle`, `toPolar`, `findMaxEntry` ⬜
+### 2.6 `utils.js` helpers — `mod`, `dist`, `angle`, `deltaAngle`, `toPolar`, `findMaxEntry` ✅
 
 `angle(a, b, c)` (three same-type points) and `findMaxEntry(list, comp)` are the least self-evident, but these are conventional math/collection helpers — the guidelines explicitly allow "small conventional helpers … when the order is widely understood". Likely waive; confirm.
+
+**Waived:** small, conventional, documented math/collection helpers covered by tests and not exposed through the package entry point.
 
 ---
 
