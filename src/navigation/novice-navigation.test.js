@@ -198,7 +198,10 @@ test('menuSelection', marbles(m => {
     .toBeObservable(expected$);
   m.flush();
   expect(dwellings.mock.calls).toEqual([
-    ['mockMove', 'mockDelay', 'mockThreshold']
+    ['mockMove', {
+      delay: 'mockDelay',
+      movementsThreshold: 'mockThreshold'
+    }]
   ])
 }));
 
