@@ -123,7 +123,7 @@ describe('main', () => {
   });
   it('properly creates the drags observable', () => {
     callMain();
-    expect(watchDrags.mock.calls).toEqual([['mock-parent']]);
+    expect(watchDrags.mock.calls).toEqual([['mock-parent', {}]]);
   });
   it('properly creates the navigation observable', () => {
     callMain();

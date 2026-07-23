@@ -176,7 +176,7 @@ describe('watchDrags', () => {
       vi.fn(() => of('b')),
       vi.fn(() => of('c')),
     ];
-    watchDrags('mock-dom', [...factories]);
+    watchDrags('mock-dom', { dragObsFactories: [...factories] });
     for (const f of factories) {
       expect(f.mock.calls).toEqual([['mock-dom']]);
     }
@@ -188,7 +188,9 @@ describe('watchDrags', () => {
     const d2$ = m.hot(      'f--g--h--|');
     const expected$ = m.hot('f-ag--(bh)c--d-e|');
     m.expect(
-      watchDrags('mock-dom', [() => d1$, () => d2$])
+      watchDrags('mock-dom', {
+        dragObsFactories: [() => d1$, () => d2$],
+      }),
     ).toBeObservable(expected$);
   }));
 });

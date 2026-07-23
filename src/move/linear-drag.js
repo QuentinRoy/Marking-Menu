@@ -56,15 +56,15 @@ export const touchDrags = (rootDOM) =>
  Observe drags (mouse and touch) on a DOM element.
 
  @param {HTMLElement} rootDOM - the DOM element to observe pointer events on.
- @param {Array<(rootDOM: HTMLElement) => Observable>} [dragObsFactories] - factory to use to
- observe drags.
+ @param {object} [options] - Configuration options.
+ @param {Array<(rootDOM: HTMLElement) => Observable>} [options.dragObsFactories=[touchDrags, mouseDrags]] - factories to use to observe drags.
  @returns {Observable} A higher order observable that drag observables. The sub-observables are
  published as behaviors so that any new subscription immediately get the last
  position.
  */
 export default function watchDrags(
   rootDOM,
-  dragObsFactories = [touchDrags, mouseDrags],
+  { dragObsFactories = [touchDrags, mouseDrags] } = {},
 ) {
   return merge(...dragObsFactories.map((f) => f(rootDOM)));
 }
