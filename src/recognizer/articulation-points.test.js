@@ -1,6 +1,15 @@
 import getStrokeArticulationPoints from './articulation-points.js';
 
 describe(getStrokeArticulationPoints, () => {
+  it('returns an empty list for an empty stroke', () => {
+    expect(
+      getStrokeArticulationPoints([], {
+        expectedSegmentLength: 4,
+        angleThreshold: 20,
+      }),
+    ).toEqual([]);
+  });
+
   it('works for simple strokes', () => {
     expect(
       getStrokeArticulationPoints(
@@ -13,8 +22,10 @@ describe(getStrokeArticulationPoints, () => {
           [5, 2],
           [5, 3],
         ],
-        8 / 2, // Expected length is usually strokeLength / menuBreadth.
-        20,
+        {
+          expectedSegmentLength: 8 / 2, // Expected length is usually strokeLength / menuBreadth.
+          angleThreshold: 20,
+        },
       ),
     ).toEqual([
       [0, 0],
@@ -32,8 +43,10 @@ describe(getStrokeArticulationPoints, () => {
           [5, -2],
           [5, -3],
         ],
-        11 / 2,
-        30,
+        {
+          expectedSegmentLength: 11 / 2,
+          angleThreshold: 30,
+        },
       ),
     ).toEqual([
       [0, 3],
@@ -51,8 +64,10 @@ describe(getStrokeArticulationPoints, () => {
           [8, 6],
           [10, 8],
         ],
-        (5 + Math.hypot(5, 5)) / 2,
-        30,
+        {
+          expectedSegmentLength: (5 + Math.hypot(5, 5)) / 2,
+          angleThreshold: 30,
+        },
       ),
     ).toEqual([
       [0, 3],
@@ -79,8 +94,10 @@ describe(getStrokeArticulationPoints, () => {
           [3, 5],
           [3, 8],
         ],
-        (5 + Math.hypot(5, 5) + 4) / 3,
-        30,
+        {
+          expectedSegmentLength: (5 + Math.hypot(5, 5) + 4) / 3,
+          angleThreshold: 30,
+        },
       ),
     ).toEqual([
       [3, 6],

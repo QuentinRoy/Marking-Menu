@@ -151,7 +151,10 @@ describe('confirmedNoviceNavigationHOO', () => {
       .toBeObservable(expected$);
     m.flush();
     expect(dwellings.mock.calls).toEqual([
-      [drag$, 'mock-dwelling', 'mock-move-threshold']
+      [drag$, {
+        delay: 'mock-dwelling',
+        movementsThreshold: 'mock-move-threshold'
+      }]
     ]);
   }));
 });
@@ -188,8 +191,10 @@ describe('expertToNoviceSwitchHOO', () => {
     expect(draw.mock.calls).toEqual([[drag$, { initStroke: 'mock-stroke' }]])
     expect(dwellings.mock.calls).toEqual([[
       'mock-draw',
-      'mock-dwelling',
-      'mock-move-threshold'
+      {
+        delay: 'mock-dwelling',
+        movementsThreshold: 'mock-move-threshold'
+      }
     ]]);
     expect(noviceNavigation).toHaveBeenCalledTimes(1);
     expect(noviceNavigation.mock.calls[0].slice(1)).toEqual([
@@ -355,15 +360,18 @@ describe('navigationFromDrag', () => {
 // prettier-ignore
 describe('navigation', () => {
   it('forward drag observables to navigationFromDrag from a drag higher order observable', marbles(m => {
+    const navigationOptions = {
+      custom: 'mock-options',
+    };
     const transformedValues = {
-      a: { name: 'a', start: 'a', menu: 'mock-menu', options: 'mock-options' },
-      b: { name: 'b', start: 'a', menu: 'mock-menu', options: 'mock-options' },
-      c: { name: 'c', start: 'a', menu: 'mock-menu', options: 'mock-options' },
-      i: { name: 'i', start: 'i', menu: 'mock-menu', options: 'mock-options' },
-      j: { name: 'j', start: 'i', menu: 'mock-menu', options: 'mock-options' },
-      k: { name: 'k', start: 'i', menu: 'mock-menu', options: 'mock-options' },
-      l: { name: 'l', start: 'l', menu: 'mock-menu', options: 'mock-options' },
-      m: { name: 'm', start: 'l', menu: 'mock-menu', options: 'mock-options' }
+      a: { name: 'a', start: 'a', menu: 'mock-menu', options: navigationOptions },
+      b: { name: 'b', start: 'a', menu: 'mock-menu', options: navigationOptions },
+      c: { name: 'c', start: 'a', menu: 'mock-menu', options: navigationOptions },
+      i: { name: 'i', start: 'i', menu: 'mock-menu', options: navigationOptions },
+      j: { name: 'j', start: 'i', menu: 'mock-menu', options: navigationOptions },
+      k: { name: 'k', start: 'i', menu: 'mock-menu', options: navigationOptions },
+      l: { name: 'l', start: 'l', menu: 'mock-menu', options: navigationOptions },
+      m: { name: 'm', start: 'l', menu: 'mock-menu', options: navigationOptions }
     };
     const subs = {
       A: m.hot('-z---u----a--^----b-c-|').pipe(publishBehavior()),
@@ -381,7 +389,12 @@ describe('navigation', () => {
     );
 
     m
-      .expect(navigation(drags$, 'mock-menu', 'mock-options', mockNavFromDrag))
+      .expect(
+        navigation(drags$, 'mock-menu', {
+          ...navigationOptions,
+          navigationFromDrag: mockNavFromDrag,
+        }),
+      )
       .toBeObservable(expected$);
   }));
 });

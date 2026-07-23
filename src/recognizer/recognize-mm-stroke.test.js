@@ -6,6 +6,7 @@ import angles from 'angles';
 import recognizeMMStroke, {
   pointsToSegments,
   divideLongestSegment,
+  findMMItem,
   walkMMModel,
 } from './recognize-mm-stroke.js';
 
@@ -99,14 +100,17 @@ describe('walkMMModel', () => {
   it('finds an item from a segment list and a MM mode', () => {
     {
       const menu = createMockMMModel(1);
-      const selection = walkMMModel(menu, [{ angle: 90 }]);
+      const selection = walkMMModel({ model: menu, segments: [{ angle: 90 }] });
       expect(selection.requestedAngle).toBe(90);
       expect(selection.parent).toBe(menu);
     }
 
     {
       const menu = createMockMMModel(2);
-      const selection = walkMMModel(menu, [{ angle: 90 }, { angle: 180 }]);
+      const selection = walkMMModel({
+        model: menu,
+        segments: [{ angle: 90 }, { angle: 180 }],
+      });
       expect(selection.requestedAngle).toBe(180);
       expect(selection.parent.requestedAngle).toBe(90);
       expect(selection.parent.parent).toBe(menu);
@@ -114,11 +118,10 @@ describe('walkMMModel', () => {
 
     {
       const menu = createMockMMModel(3);
-      const selection = walkMMModel(menu, [
-        { angle: 90 },
-        { angle: 0 },
-        { angle: 180 },
-      ]);
+      const selection = walkMMModel({
+        model: menu,
+        segments: [{ angle: 90 }, { angle: 0 }, { angle: 180 }],
+      });
       expect(selection.requestedAngle).toBe(180);
       expect(selection.parent.requestedAngle).toBe(0);
       expect(selection.parent.parent.requestedAngle).toBe(90);
@@ -127,20 +130,67 @@ describe('walkMMModel', () => {
 
     {
       const menu = createMockMMModel(1);
-      expect(walkMMModel(menu, [])).toBe(null);
+      expect(walkMMModel({ model: menu, segments: [] })).toBe(null);
     }
 
     {
       const menu = createMockMMModel(1);
-      expect(walkMMModel(menu, [{ angle: 200 }, { angle: 0 }])).toBe(null);
+      expect(
+        walkMMModel({ model: menu, segments: [{ angle: 200 }, { angle: 0 }] }),
+      ).toBe(null);
     }
 
     {
       const menu = createMockMMModel(2);
       expect(
-        walkMMModel(menu, [{ angle: 200 }, { angle: 5 }, { angle: 10 }]),
+        walkMMModel({
+          model: menu,
+          segments: [{ angle: 200 }, { angle: 5 }, { angle: 10 }],
+        }),
       ).toBe(null);
     }
+  });
+
+  it('starts walking at the configured segment index', () => {
+    const menu = createMockMMModel(1);
+    const selection = walkMMModel({
+      model: menu,
+      segments: [{ angle: 0 }, { angle: 90 }],
+      startIndex: 1,
+    });
+
+    expect(selection.requestedAngle).toBe(90);
+    expect(selection.parent).toBe(menu);
+  });
+});
+
+describe('findMMItem', () => {
+  it('finds an item using the model depth by default', () => {
+    const menu = createMockMMModel(2);
+    const selection = findMMItem({
+      model: menu,
+      segments: [
+        { angle: 90, length: 10 },
+        { angle: 180, length: 10 },
+      ],
+    });
+
+    expect(selection.requestedAngle).toBe(180);
+    expect(selection.parent.requestedAngle).toBe(90);
+    expect(selection.parent.parent).toBe(menu);
+    expect(menu.getMaxDepth).toHaveBeenCalledOnce();
+  });
+
+  it('uses the configured maximum depth', () => {
+    const menu = createMockMMModel(2);
+    const selection = findMMItem({
+      model: menu,
+      segments: [{ angle: 90, length: 10 }],
+      maxDepth: 1,
+    });
+
+    expect(selection.requestedAngle).toBe(90);
+    expect(selection.parent).toBe(menu);
   });
 });
 
@@ -238,6 +288,25 @@ describe('recognizeMMStroke', () => {
         requireMenu: true,
       }).isLeaf(),
     ).toBe(false);
+  });
+
+  it('treats a negative maxDepth as relative to the model maximum depth', async () => {
+    // Read the stroke.
+    const stroke = await readStroke('90');
+    // Create the model
+    const model = createMockMMModel(3);
+    // Apply the recognizer with a max depth of 3 - 1 = 2.
+    const selection = recognizeMMStroke(stroke, model, {
+      maxDepth: -1,
+      requireMenu: true,
+    });
+    // The selection is the depth 2 menu: it is returned as is by requireMenu.
+    expect(selection.isLeaf()).toBe(false);
+    expect(angles.distance(selection.requestedAngle, 90) < 15).toBe(true);
+    expect(angles.distance(selection.parent.requestedAngle, 90) < 15).toBe(
+      true,
+    );
+    expect(selection.parent.parent).toBe(model);
   });
 
   it('throws if both requireMenu and requireLeaf are true', async () => {

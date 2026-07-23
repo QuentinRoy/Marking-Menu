@@ -1,15 +1,18 @@
 import createStrokeCanvas from './stroke.js';
 
-export default function createGestureFeedback(
-  parentDOM,
-  { duration, strokeOptions = {}, canceledStrokeOptions = {} },
-) {
+export default function createGestureFeedback({
+  parent: parentDOM,
+  duration,
+  strokeOptions = {},
+  canceledStrokeOptions = {},
+}) {
   let strokeTimeoutEntries = [];
 
-  const show = (stroke, isCanceled = false) => {
-    const canvas = createStrokeCanvas(parentDOM, {
+  const show = (stroke, { canceled = false } = {}) => {
+    const canvas = createStrokeCanvas({
+      parent: parentDOM,
       ...strokeOptions,
-      ...(isCanceled && canceledStrokeOptions),
+      ...(canceled && canceledStrokeOptions),
     });
     canvas.drawStroke(stroke);
     const timeoutEntry = {

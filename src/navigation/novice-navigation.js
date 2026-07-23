@@ -52,7 +52,10 @@ export const menuSelection = (
   { submenuOpeningDelay, movementsThreshold, minMenuSelectionDist },
 ) =>
   // Wait for a pause in the movements.
-  dwellings(move$, submenuOpeningDelay, movementsThreshold).pipe(
+  dwellings(move$, {
+    delay: submenuOpeningDelay,
+    movementsThreshold,
+  }).pipe(
     // Filter dwellings occurring outside of the selection area.
     filter(
       (n) => n.active && n.radius > minMenuSelectionDist && !n.active.isLeaf(),

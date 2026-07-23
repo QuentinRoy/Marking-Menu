@@ -22,12 +22,13 @@ export const pointsToSegments = (points) => {
 /**
  Walk the marking menu model along a list of segments.
 
- @param {Item} model - The marking menu model.
- @param {{ angle }[]} segments - A list of segments to walk the model.
- @param {number} [startIndex=0] - The start index in the angle list.
+ @param {object} options - Configuration options.
+ @param {Item} options.model - The marking menu model.
+ @param {{ angle }[]} options.segments - A list of segments to walk the model.
+ @param {number} [options.startIndex=0] - The start index in the angle list.
  @returns {Item} The corresponding item found by walking the model.
  */
-export const walkMMModel = (model, segments, startIndex = 0) => {
+export const walkMMModel = ({ model, segments, startIndex = 0 } = {}) => {
   if (!model || segments.length === 0 || model.isLeaf()) {
     return null;
   }
@@ -37,7 +38,7 @@ export const walkMMModel = (model, segments, startIndex = 0) => {
     return item;
   }
 
-  return walkMMModel(item, segments, startIndex + 1);
+  return walkMMModel({ model: item, segments, startIndex: startIndex + 1 });
 };
 
 export const segmentAngle = (a, b) =>
@@ -66,12 +67,17 @@ export const divideLongestSegment = (segments) => {
  Find the item selected by a list of segments, dividing the longest segment and walking the
  model until a leaf is found or `maxDepth` is reached.
 
- @param {Item} model - The marking menu model.
- @param {{length, angle}[]} segments - A list of segments.
- @param {number} [maxDepth=model.getMaxDepth()] - The maximum depth of the item.
+ @param {object} options - Configuration options.
+ @param {Item} options.model - The marking menu model.
+ @param {{length, angle}[]} options.segments - A list of segments.
+ @param {number} [options.maxDepth=model.getMaxDepth()] - The maximum depth of the item.
  @returns {Item} The selected item.
  */
-export const findMMItem = (model, segments, maxDepth = model.getMaxDepth()) => {
+export const findMMItem = ({
+  model,
+  segments,
+  maxDepth = model.getMaxDepth(),
+} = {}) => {
   // If there is not segments, there is no selection to find.
   if (segments.length === 0) {
     return null;
@@ -81,7 +87,7 @@ export const findMMItem = (model, segments, maxDepth = model.getMaxDepth()) => {
   let currentSegments = segments;
   let currentItem = null;
   while (currentSegments.length <= maxDepth) {
-    currentItem = walkMMModel(model, currentSegments);
+    currentItem = walkMMModel({ model, segments: currentSegments });
     if (currentItem && currentItem.isLeaf()) {
       return currentItem;
     }
@@ -124,11 +130,10 @@ export default function recognizeMMStroke(
   const expectedSegmentLength = length / maxDepth;
   const sensitivity = 0.75;
   const angleThreshold = 360 / maxMenuBreadth / 2 / sensitivity;
-  const articulationPoints = getStrokeArticulationPoints(
-    stroke,
+  const articulationPoints = getStrokeArticulationPoints(stroke, {
     expectedSegmentLength,
     angleThreshold,
-  );
+  });
   const minSegmentSize = expectedSegmentLength / 3;
   // Get the segments of the marking menus.
   const segments = pointsToSegments(articulationPoints)
@@ -139,7 +144,7 @@ export default function recognizeMMStroke(
     // Change again the representation of the segment to include its length but not its
     // its points anymore.
     .map((seg) => ({ angle: segmentAngle(...seg.points), length: seg.length }));
-  const item = findMMItem(model, segments, maxDepth);
+  const item = findMMItem({ model, segments, maxDepth });
   if (requireLeaf) {
     return item && item.isLeaf() ? item : null;
   }

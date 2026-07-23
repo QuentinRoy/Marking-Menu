@@ -3,25 +3,22 @@ import {
   findNextPointFurtherThan,
 } from './find-points.js';
 
-describe('findMiddlePointForMaxAngle', () => {
-  it('finds the point maximizing the angle', () => {
+describe('findMiddlePointForMinAngle', () => {
+  it('finds the candidate point that minimizes the angle', () => {
     expect(
       findMiddlePointForMinAngle(
-        [0, 0],
-        [5, 5],
         [
           [5, 2],
           [5, 0],
           [0, 3],
           [3, 0],
         ],
+        { from: [0, 0], to: [5, 5] },
       ),
     ).toEqual({ index: 1, angle: 90 });
 
     expect(
       findMiddlePointForMinAngle(
-        [-5, 0],
-        [1, 0],
         [
           [0, 0],
           [-1, 0],
@@ -30,13 +27,12 @@ describe('findMiddlePointForMaxAngle', () => {
           [4, 0],
           [0, 0],
         ],
+        { from: [-5, 0], to: [1, 0] },
       ),
     ).toEqual({ index: 4, angle: 0 });
 
     expect(
       findMiddlePointForMinAngle(
-        [0, 0],
-        [5, 5],
         [
           [5, 2],
           [0, 3],
@@ -44,13 +40,12 @@ describe('findMiddlePointForMaxAngle', () => {
           [3, 0],
           [0, 10],
         ],
+        { from: [0, 0], to: [5, 5] },
       ),
     ).toEqual({ index: 4, angle: 45 });
 
     expect(
       findMiddlePointForMinAngle(
-        [-5, 0],
-        [1, 0],
         [
           [6, 0],
           [-1, 0],
@@ -59,14 +54,12 @@ describe('findMiddlePointForMaxAngle', () => {
           [4, 0],
           [5, 0],
         ],
-        { startIndex: 1 },
+        { from: [-5, 0], to: [1, 0], startIndex: 1 },
       ),
     ).toEqual({ index: 4, angle: 0 });
 
     expect(
       findMiddlePointForMinAngle(
-        [0, 0],
-        [5, 5],
         [
           [5, 2],
           [0, 3],
@@ -74,14 +67,12 @@ describe('findMiddlePointForMaxAngle', () => {
           [3, 0],
           [0, 10],
         ],
-        { endIndex: 3 },
+        { from: [0, 0], to: [5, 5], endIndex: 3 },
       ),
     ).toEqual({ index: 2, angle: 90 });
 
     expect(
       findMiddlePointForMinAngle(
-        [0, 0],
-        [5, 5],
         [
           [0, 5],
           [5, 2],
@@ -90,7 +81,7 @@ describe('findMiddlePointForMaxAngle', () => {
           [3, 0],
           [0, 10],
         ],
-        { startIndex: 1, endIndex: 3 },
+        { from: [0, 0], to: [5, 5], startIndex: 1, endIndex: 3 },
       ),
     ).toEqual({ index: 3, angle: 90 });
   });
@@ -111,8 +102,12 @@ describe('findNextPointFurtherThan', () => {
           [0, 5],
           [0, 6],
         ],
-        5,
-        { startIndex: 0, refPoint: [0, 0], direction: 1 },
+        {
+          minDist: 5,
+          startIndex: 0,
+          refPoint: [0, 0],
+          direction: 1,
+        },
       ),
     ).toBe(7);
 
@@ -129,8 +124,12 @@ describe('findNextPointFurtherThan', () => {
           [0, 5],
           [0, 6],
         ],
-        5,
-        { startIndex: 0, refPoint: [0, 0], direction: 1 },
+        {
+          minDist: 5,
+          startIndex: 0,
+          refPoint: [0, 0],
+          direction: 1,
+        },
       ),
     ).toBe(0);
 
@@ -144,13 +143,21 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 7],
         ],
-        10,
-        { startIndex: 0, refPoint: [0, 0], direction: 1 },
+        {
+          minDist: 10,
+          startIndex: 0,
+          refPoint: [0, 0],
+          direction: 1,
+        },
       ),
     ).toBe(-1);
 
     expect(
-      findNextPointFurtherThan([], 0, 0, { refPoint: [0, 0], direction: 1 }),
+      findNextPointFurtherThan([], {
+        minDist: 0,
+        refPoint: [0, 0],
+        direction: 1,
+      }),
     ).toBe(-1);
 
     expect(
@@ -166,8 +173,12 @@ describe('findNextPointFurtherThan', () => {
           [0, 5],
           [0, 6],
         ],
-        5,
-        { startIndex: 1, refPoint: [0, 0], direction: 1 },
+        {
+          minDist: 5,
+          startIndex: 1,
+          refPoint: [0, 0],
+          direction: 1,
+        },
       ),
     ).toBe(7);
 
@@ -182,8 +193,11 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 6],
         ],
-        5,
-        { startIndex: 1, direction: 1 },
+        {
+          minDist: 5,
+          startIndex: 1,
+          direction: 1,
+        },
       ),
     ).toBe(5);
 
@@ -198,8 +212,11 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 6],
         ],
-        5,
-        { startIndex: 1, refPoint: [0, 0] },
+        {
+          minDist: 5,
+          startIndex: 1,
+          refPoint: [0, 0],
+        },
       ),
     ).toBe(5);
 
@@ -213,8 +230,11 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 7],
         ],
-        5,
-        { direction: 1, refPoint: [2, 2] },
+        {
+          minDist: 5,
+          direction: 1,
+          refPoint: [2, 2],
+        },
       ),
     ).toBe(5);
 
@@ -228,11 +248,11 @@ describe('findNextPointFurtherThan', () => {
           [1, 6],
           [2, 7],
         ],
-        5,
+        { minDist: 5 },
       ),
     ).toBe(4);
 
-    expect(findNextPointFurtherThan([], 0)).toBe(-1);
+    expect(findNextPointFurtherThan([], { minDist: 0 })).toBe(-1);
 
     expect(
       findNextPointFurtherThan(
@@ -244,8 +264,12 @@ describe('findNextPointFurtherThan', () => {
           [2, 2],
           [0, 4],
         ],
-        5,
-        { startIndex: 4, refPoint: [0, 0], direction: -1 },
+        {
+          minDist: 5,
+          startIndex: 4,
+          refPoint: [0, 0],
+          direction: -1,
+        },
       ),
     ).toBe(1);
 
@@ -260,8 +284,7 @@ describe('findNextPointFurtherThan', () => {
           [1, 1],
           [0, 0],
         ],
-        2,
-        { direction: -1 },
+        { minDist: 2, direction: -1 },
       ),
     ).toBe(4);
   });

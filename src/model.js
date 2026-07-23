@@ -9,16 +9,16 @@ export class MMItem {
   /**
    Create a menu item.
 
-   @param {string} id - The item's id. Required except for the root item.
-   @param {string} name - The item's name. Required except for the root item.
-   @param {Integer} angle - The item's angle. Required except for the root item.
-   @param {object} [options] - Some additional options.
-   @param {ItemModel} [options.parent] - The parent menu of the item.
-   @param {List<ItemModel>} [options.children] - The children of the item menu.
+   @param {object} config - The item configuration.
+   @param {string} config.id - The item's id. Required except for the root item.
+   @param {string} config.label - The item's label. Required except for the root item.
+   @param {Integer} config.angle - The item's angle. Required except for the root item.
+   @param {ItemModel} [config.parent] - The parent menu of the item.
+   @param {List<ItemModel>} [config.children] - The children of the item menu.
    */
-  constructor(id, name, angle, { parent, children } = {}) {
+  constructor({ id, label, angle, parent, children } = {}) {
     this.id = id;
-    this.name = name;
+    this.label = label;
     this.angle = angle;
     this.children = children;
     this.parent = parent;
@@ -43,13 +43,13 @@ export class MMItem {
   }
 
   /**
-   Retrieve every direct child matching a given name.
+   Retrieve every direct child matching a given label.
 
-   @param {string} childName - The name of the children to look for.
-   @returns {Item} the children with the name `childName`.
+   @param {string} childLabel - The label of the children to look for.
+   @returns {Item} the children with the label `childLabel`.
    */
-  getChildrenByName(childName) {
-    return this.children.filter((child) => child.name === childName);
+  getChildrenByLabel(childLabel) {
+    return this.children.filter((child) => child.label === childLabel);
   }
 
   /**
@@ -99,12 +99,20 @@ export class MMItem {
   }
 }
 
-// Create the model item from a list of items.
-const recursivelyCreateModelItems = (
+/**
+ Build the frozen model-item tree for one item list.
+
+ @param {object} options - The recursive model item options.
+ @param {List<{label, children}>} options.items - The list of items.
+ @param {string} [options.baseId] - The parent item's generated id.
+ @param {MMItem} [options.parent] - The parent model item.
+ @returns {List<MMItem>} The frozen list of model items.
+ */
+const recursivelyCreateModelItems = ({
   items,
   baseId = undefined,
   parent = undefined,
-) => {
+}) => {
   // Calculate the angle range for each items.
   const angleRange = getAngleRange(items);
   // Create the list of model items (frozen).
@@ -113,19 +121,19 @@ const recursivelyCreateModelItems = (
       // Standard item id.
       const stdId = baseId ? [baseId, i].join('-') : i.toString();
       // Create the item.
-      const mmItem = new MMItem(
-        item.id ?? stdId,
-        typeof item === 'string' ? item : item.name,
-        i * angleRange,
-        { parent },
-      );
+      const mmItem = new MMItem({
+        id: item.id ?? stdId,
+        label: item.label,
+        angle: i * angleRange,
+        parent,
+      });
       // Add its children if any.
       if (item.children) {
-        mmItem.children = recursivelyCreateModelItems(
-          item.children,
-          stdId,
-          mmItem,
-        );
+        mmItem.children = recursivelyCreateModelItems({
+          items: item.children,
+          baseId: stdId,
+          parent: mmItem,
+        });
       }
 
       // Return it frozen.
@@ -137,11 +145,14 @@ const recursivelyCreateModelItems = (
 /**
  Create the marking menu model.
  
- @param {List<string | {name, children}>} itemList - The list of items.
+ @param {List<{label, children}>} itemList - The list of items.
  @returns {MMItem} - The root item of the model.
  */
 export default function createModel(itemList) {
-  const menu = new MMItem(null, null, null);
-  menu.children = recursivelyCreateModelItems(itemList, undefined, menu);
+  const menu = new MMItem({ id: null, label: null, angle: null });
+  menu.children = recursivelyCreateModelItems({
+    items: itemList,
+    parent: menu,
+  });
   return Object.freeze(menu);
 }

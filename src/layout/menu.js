@@ -36,7 +36,7 @@ const template = ({ items, center }, doc) => {
     elt.style.setProperty('--cosine', Math.cos(-radAngle));
     elt.style.setProperty('--sine', Math.sin(-radAngle));
     elt.innerHTML += '<div class="marking-menu-line"></div>';
-    elt.innerHTML += `<div class="marking-menu-label">${item.name}</div>`;
+    elt.innerHTML += `<div class="marking-menu-label">${item.label}</div>`;
     main.append(elt);
   }
 

@@ -16,16 +16,16 @@ import {
  Find the articulation points of a stroke.
 
  @param {Point[]} stroke - The points of a stroke.
- @param {number} expectedSegmentLength - The expected length of a segment
+ @param {object} options - Configuration options.
+ @param {number} options.expectedSegmentLength - The expected length of a segment
  (usually strokeLength / maxMenuDepth).
- @param {number} angleThreshold - The min angle threshold in a point required for it to be
+ @param {number} options.angleThreshold - The min angle threshold in a point required for it to be
  considered an articulation points.
  @returns {Point[]} The list of articulation points.
  */
 export default function getStrokeArticulationPoints(
   stroke,
-  expectedSegmentLength,
-  angleThreshold,
+  { expectedSegmentLength, angleThreshold },
 ) {
   const n = stroke.length;
   if (n === 0) {
@@ -40,7 +40,8 @@ export default function getStrokeArticulationPoints(
   let ai = 0;
   let a = stroke[ai];
   while (ai < n) {
-    const ci = findNextPointFurtherThan(stroke, w, {
+    const ci = findNextPointFurtherThan(stroke, {
+      minDist: w,
       startIndex: ai + 2,
       refPoint: a,
     });
@@ -49,24 +50,23 @@ export default function getStrokeArticulationPoints(
     }
 
     const c = stroke[ci];
-    const labi = findNextPointFurtherThan(stroke, w / 8, {
+    const labi = findNextPointFurtherThan(stroke, {
+      minDist: w / 8,
       startIndex: ai + 1,
       refPoint: a,
     });
-    const lbci = findNextPointFurtherThan(stroke, w / 8, {
+    const lbci = findNextPointFurtherThan(stroke, {
+      minDist: w / 8,
       startIndex: ci - 1,
       refPoint: c,
       direction: -1,
     });
-    const { index: bi, angle: angleABC } = findMiddlePointForMinAngle(
-      a,
-      stroke[ci],
-      stroke,
-      {
-        startIndex: labi,
-        endIndex: lbci,
-      },
-    );
+    const { index: bi, angle: angleABC } = findMiddlePointForMinAngle(stroke, {
+      from: a,
+      to: stroke[ci],
+      startIndex: labi,
+      endIndex: lbci,
+    });
     if (bi > 0 && Math.abs(180 - angleABC) > angleThreshold) {
       const b = stroke[bi];
       articulationPoints.push(b);

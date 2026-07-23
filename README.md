@@ -90,33 +90,38 @@ var MarkingMenu = require('marking-menu');
 
 ## API
 
-### `MarkingMenu(items, parentDOM): Observable`
+### `MarkingMenu({ items, parent, ...options }): Observable`
 
-`MarkingMenu` returns a 'hot' [`Observable`](https://github.com/tc39/proposal-observable) that emits notification of the form `{ name, angle }`. The menu is activated upon subscription of this observable, and disabled upon un-subscription.
+`MarkingMenu` returns a 'hot' [`Observable`](https://github.com/tc39/proposal-observable) that emits the selected menu items. The menu is activated upon subscription of this observable, and disabled upon un-subscription.
 
-- `items`: `Array` of `string` or `{ name, children }`. The list of the menu's items. If `children` is provided, the item will be considered as a sub-menu (`children` has the same form as `items`). Currently, `MarkingMenu` supports up to 8 items per level. The first item is on the right and the followings are layed out clockwise.
+- `items`: `Array` of `{ label, children? }`. The list of the menu's items. If `children` is provided, the item will be considered as a sub-menu (`children` has the same form as `items`). Currently, `MarkingMenu` supports up to 8 items per level. The first item is on the right and the followings are layed out clockwise.
 
-- `parentDOM`: `HTMLElement`. The container of the menu.
+- `parent`: `HTMLElement`. The container of the menu.
 
 #### Example
 
 ```js
 // Create the menu with a sub-menu at the bottom.
 const items = [
-  'Item Right',
+  { label: 'Item Right' },
   {
-    name: 'Others...',
-    children: ['Sub Right', 'Sub Down', 'Sub Left', 'Sub Top'],
+    label: 'Others...',
+    children: [
+      { label: 'Sub Right' },
+      { label: 'Sub Down' },
+      { label: 'Sub Left' },
+      { label: 'Sub Top' },
+    ],
   },
-  'Item Left',
-  'Item Up',
+  { label: 'Item Left' },
+  { label: 'Item Up' },
 ];
-const mm = MarkingMenu(items, document.getElementById('main'));
+const mm = MarkingMenu({ items, parent: document.getElementById('main') });
 
 // Subscribe (and activates) the menu.
 const subscription = mm.subscribe((selection) => {
   // Do something.
-  console.log(selection.name);
+  console.log(selection.label);
 });
 
 setTimeout(() => {

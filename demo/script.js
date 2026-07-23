@@ -4,19 +4,24 @@ const toastElement = document.querySelector('#toast');
 
 // Create the menu with a sub-menu at the bottom.
 const items = [
-  'Right',
-  'Down-Right',
+  { label: 'Right' },
+  { label: 'Down-Right' },
   {
-    name: 'Others...',
-    children: ['Sub Right', 'Sub Down', 'Sub Left', 'Sub Up'],
+    label: 'Others...',
+    children: [
+      { label: 'Sub Right' },
+      { label: 'Sub Down' },
+      { label: 'Sub Left' },
+      { label: 'Sub Up' },
+    ],
   },
-  'Down-Left',
-  'Left',
-  'Up-Left',
-  'Up',
-  'Up-Right',
+  { label: 'Down-Left' },
+  { label: 'Left' },
+  { label: 'Up-Left' },
+  { label: 'Up' },
+  { label: 'Up-Right' },
 ];
-const mm = MarkingMenu(items, document.querySelector('#main'));
+const mm = MarkingMenu({ items, parent: document.querySelector('#main') });
 
 let toastTimeoutId = null;
 function toastMessage(message) {
@@ -31,7 +36,7 @@ function toastMessage(message) {
 // Toast the marking menu's selections.
 mm.subscribe({
   next(selection) {
-    toastMessage(selection.name);
+    toastMessage(selection.label);
   },
   error(error) {
     console.error(error);

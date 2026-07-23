@@ -16,7 +16,9 @@ afterEach(() => {
 
 describe('createGestureFeedback', () => {
   it('creates a gesture feedback instance', () => {
-    expect(() => createGestureFeedback('div', { duration: 50 })).not.toThrow();
+    expect(() =>
+      createGestureFeedback({ parent: 'div', duration: 50 }),
+    ).not.toThrow();
   });
 });
 
@@ -24,7 +26,8 @@ describe('createGestureFeedback#draw', () => {
   let gs;
   beforeEach(() => {
     // Create the stroke canvas and show a stroke for 50ms.
-    gs = createGestureFeedback('mock-div', {
+    gs = createGestureFeedback({
+      parent: 'mock-div',
       duration: 50,
       strokeOptions: {
         strokeArg1: 'arg1',
@@ -41,7 +44,8 @@ describe('createGestureFeedback#draw', () => {
     gs.show('mock-stroke');
     // Expect the stroke canvas to have been properly created.
     expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
-    expect(createStrokeCanvas).toHaveBeenCalledWith('mock-div', {
+    expect(createStrokeCanvas).toHaveBeenCalledWith({
+      parent: 'mock-div',
       strokeArg1: 'arg1',
       strokeArg2: 'arg2',
     });
@@ -51,10 +55,11 @@ describe('createGestureFeedback#draw', () => {
   });
 
   it('draw a canceled stroke', () => {
-    gs.show('mock-canceled-stroke', true);
+    gs.show('mock-canceled-stroke', { canceled: true });
     // Expect the stroke canvas to have been properly created.
     expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
-    expect(createStrokeCanvas).toHaveBeenCalledWith('mock-div', {
+    expect(createStrokeCanvas).toHaveBeenCalledWith({
+      parent: 'mock-div',
       strokeArg1: 'canceledArg1',
       strokeArg2: 'arg2',
       canceledStrokeArg3: 'canceledArg3',
@@ -81,7 +86,8 @@ describe('createGestureFeedback#remove', () => {
 
   it('immediately clear any feedbacks', () => {
     // Create the stroke canvas and show a stroke for 50ms.
-    gs = createGestureFeedback('mock-div', {
+    gs = createGestureFeedback({
+      parent: 'mock-div',
       duration: 5000,
       strokeArg1: 'foo',
       strokeArg2: 'bar',
