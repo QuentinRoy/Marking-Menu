@@ -16,16 +16,16 @@ import {
  Find the articulation points of a stroke.
 
  @param {Point[]} stroke - The points of a stroke.
- @param {number} expectedSegmentLength - The expected length of a segment
+ @param {object} options - Configuration options.
+ @param {number} options.expectedSegmentLength - The expected length of a segment
  (usually strokeLength / maxMenuDepth).
- @param {number} angleThreshold - The min angle threshold in a point required for it to be
+ @param {number} options.angleThreshold - The min angle threshold in a point required for it to be
  considered an articulation points.
  @returns {Point[]} The list of articulation points.
  */
 export default function getStrokeArticulationPoints(
   stroke,
-  expectedSegmentLength,
-  angleThreshold,
+  { expectedSegmentLength, angleThreshold },
 ) {
   const n = stroke.length;
   if (n === 0) {
