@@ -211,7 +211,7 @@ Same-type positional pair of points. Called only as `segmentAngle(...seg.points)
 
 **Waived:** small conventional helper with one unambiguous local call; the spread matches the segment point representation directly, and it is not exposed through the package entry point.
 
-### 2.2 `findMiddlePointForMinAngle(pointA, pointC, pointList, { … })` — `src/recognizer/find-points.js:54` ⬜
+### 2.2 `findMiddlePointForMinAngle(pointA, pointC, pointList, { … })` — `src/recognizer/find-points.js:54` ✅
 
 Two same-type positional points + a third positional list before the options. Exported from the module (used in tests). Target:
 ```js

@@ -58,15 +58,13 @@ export default function getStrokeArticulationPoints(
       refPoint: c,
       direction: -1,
     });
-    const { index: bi, angle: angleABC } = findMiddlePointForMinAngle(
-      a,
-      stroke[ci],
-      stroke,
-      {
-        startIndex: labi,
-        endIndex: lbci,
-      },
-    );
+    const { index: bi, angle: angleABC } = findMiddlePointForMinAngle({
+      pointA: a,
+      pointC: stroke[ci],
+      pointList: stroke,
+      startIndex: labi,
+      endIndex: lbci,
+    });
     if (bi > 0 && Math.abs(180 - angleABC) > angleThreshold) {
       const b = stroke[bi];
       articulationPoints.push(b);
