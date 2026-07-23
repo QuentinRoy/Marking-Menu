@@ -1,8 +1,8 @@
 /**
  Create a stroke canvas.
 
- @param {HTMLElement} parent - The parent node.
  @param {object} options - Configuration options.
+ @param {HTMLElement} options.parent - The parent node.
  @param {Document} [options.doc=document] - The root document. Mostly useful for testing purposes.
  @param {number} [options.lineWidth=2] - The width of the stroke, in pixels.
  @param {string} [options.lineColor='black'] - CSS representation of the stroke color.
@@ -14,17 +14,15 @@
  (px).
  @returns {{ clear, drawStroke, drawPoint, remove }} The canvas methods.
  */
-export default function createStrokeCanvas(
+export default function createStrokeCanvas({
   parent,
-  {
-    doc = document,
-    lineWidth = 2,
-    lineColor = 'black',
-    pointRadius = 0,
-    pointColor = lineColor,
-    ptSize = window.devicePixelRatio ? 1 / window.devicePixelRatio : 1,
-  },
-) {
+  doc = document,
+  lineWidth = 2,
+  lineColor = 'black',
+  pointRadius = 0,
+  pointColor = lineColor,
+  ptSize = window.devicePixelRatio ? 1 / window.devicePixelRatio : 1,
+}) {
   // Create the canvas.
   const { width, height } = parent.getBoundingClientRect();
   const canvas = doc.createElement('canvas');

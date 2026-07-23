@@ -143,9 +143,9 @@ export default function createMarkingMenu({
         ...menuLayoutOptions,
       }),
     createUpperStrokeCanvas: (canvasParent) =>
-      createStrokeCanvas(canvasParent, strokeCanvasOptions),
+      createStrokeCanvas({ parent: canvasParent, ...strokeCanvasOptions }),
     createLowerStrokeCanvas: (canvasParent) =>
-      createStrokeCanvas(canvasParent, lowerStrokeCanvasOptions),
+      createStrokeCanvas({ parent: canvasParent, ...lowerStrokeCanvasOptions }),
     createGestureFeedback: (feedbackParent) =>
       createGestureFeedback(feedbackParent, gestureFeedbackOptions),
     log,
