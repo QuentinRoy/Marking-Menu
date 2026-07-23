@@ -3,26 +3,23 @@ import {
   findNextPointFurtherThan,
 } from './find-points.js';
 
-describe('findMiddlePointForMaxAngle', () => {
-  it('finds the point maximizing the angle', () => {
+describe('findMiddlePointForMinAngle', () => {
+  it('finds the candidate point that minimizes the angle', () => {
     expect(
-      findMiddlePointForMinAngle({
-        pointA: [0, 0],
-        pointC: [5, 5],
-        pointList: [
+      findMiddlePointForMinAngle(
+        [
           [5, 2],
           [5, 0],
           [0, 3],
           [3, 0],
         ],
-      }),
+        { from: [0, 0], to: [5, 5] },
+      ),
     ).toEqual({ index: 1, angle: 90 });
 
     expect(
-      findMiddlePointForMinAngle({
-        pointA: [-5, 0],
-        pointC: [1, 0],
-        pointList: [
+      findMiddlePointForMinAngle(
+        [
           [0, 0],
           [-1, 0],
           [-4, 1],
@@ -30,28 +27,26 @@ describe('findMiddlePointForMaxAngle', () => {
           [4, 0],
           [0, 0],
         ],
-      }),
+        { from: [-5, 0], to: [1, 0] },
+      ),
     ).toEqual({ index: 4, angle: 0 });
 
     expect(
-      findMiddlePointForMinAngle({
-        pointA: [0, 0],
-        pointC: [5, 5],
-        pointList: [
+      findMiddlePointForMinAngle(
+        [
           [5, 2],
           [0, 3],
           [0, 5],
           [3, 0],
           [0, 10],
         ],
-      }),
+        { from: [0, 0], to: [5, 5] },
+      ),
     ).toEqual({ index: 4, angle: 45 });
 
     expect(
-      findMiddlePointForMinAngle({
-        pointA: [-5, 0],
-        pointC: [1, 0],
-        pointList: [
+      findMiddlePointForMinAngle(
+        [
           [6, 0],
           [-1, 0],
           [-4, 1],
@@ -59,30 +54,26 @@ describe('findMiddlePointForMaxAngle', () => {
           [4, 0],
           [5, 0],
         ],
-        startIndex: 1,
-      }),
+        { from: [-5, 0], to: [1, 0], startIndex: 1 },
+      ),
     ).toEqual({ index: 4, angle: 0 });
 
     expect(
-      findMiddlePointForMinAngle({
-        pointA: [0, 0],
-        pointC: [5, 5],
-        pointList: [
+      findMiddlePointForMinAngle(
+        [
           [5, 2],
           [0, 3],
           [0, 5],
           [3, 0],
           [0, 10],
         ],
-        endIndex: 3,
-      }),
+        { from: [0, 0], to: [5, 5], endIndex: 3 },
+      ),
     ).toEqual({ index: 2, angle: 90 });
 
     expect(
-      findMiddlePointForMinAngle({
-        pointA: [0, 0],
-        pointC: [5, 5],
-        pointList: [
+      findMiddlePointForMinAngle(
+        [
           [0, 5],
           [5, 2],
           [0, 3],
@@ -90,9 +81,8 @@ describe('findMiddlePointForMaxAngle', () => {
           [3, 0],
           [0, 10],
         ],
-        startIndex: 1,
-        endIndex: 3,
-      }),
+        { from: [0, 0], to: [5, 5], startIndex: 1, endIndex: 3 },
+      ),
     ).toEqual({ index: 3, angle: 90 });
   });
 });

@@ -258,10 +258,10 @@ Same-type positional pair of points. Called only as `segmentAngle(...seg.points)
 
 ### 2.2 `findMiddlePointForMinAngle(pointA, pointC, pointList, { … })` — `src/recognizer/find-points.js:54` ✅
 
-Two same-type positional points + a third positional list before the options. Exported from the module (used in tests). Target:
+Two same-type positional points + a third positional list before the options. Exported from the module (used in tests). Final shape uses the candidate list as the primary positional argument and semantic endpoint names:
 
 ```js
-findMiddlePointForMinAngle({ pointA, pointC, pointList, startIndex, endIndex });
+findMiddlePointForMinAngle(pointList, { from, to, startIndex, endIndex });
 ```
 
 ### 2.3 `findNextPointFurtherThan(pointList, minDist, { … })` — `src/recognizer/find-points.js:20` ✅
