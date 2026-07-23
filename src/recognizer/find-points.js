@@ -40,32 +40,33 @@ export const findNextPointFurtherThan = (
 /**
  Find the point of `pointList` that, as the middle point b, minimizes the angle abc.
 
- @param {number[]} pointA - The first point of the angle.
- @param {number[]} pointC - The last point of the angle.
- @param {List.<number[]>} pointList - A list of points.
- @param {object} lookupOptions - The lookup's configuration.
- @param {number} [lookupOptions.startIndex=0] - The index of the first point to investigate inside
+ @param {object} options - The lookup's configuration.
+ @param {number[]} options.pointA - The first point of the angle.
+ @param {number[]} options.pointC - The last point of the angle.
+ @param {number[][]} options.pointList - A list of points.
+ @param {number} [options.startIndex=0] - The index of the first point to investigate inside
  pointList.
- @param {number} [lookupOptions.endIndex=pointList.length - 1] - The index of the first point to
+ @param {number} [options.endIndex=pointList.length - 1] - The index of the last point to
  investigate inside pointList.
- @returns {{index, angle}} The index of the point b of pointList that maximizes the angle abc and
+ @returns {{index, angle}} The index of the point b of pointList that minimizes the angle abc and
  the angle abc.
  */
-export const findMiddlePointForMinAngle = (
+export const findMiddlePointForMinAngle = ({
   pointA,
   pointC,
   pointList,
-  { startIndex = 0, endIndex = pointList.length - 1 } = {},
-) => {
+  startIndex = 0,
+  endIndex = pointList.length - 1,
+}) => {
   let minAngle = Infinity;
-  let maxAngleIndex = -1;
+  let minAngleIndex = -1;
   for (let i = startIndex; i <= endIndex; i += 1) {
     const thisAngle = angle(pointA, pointList[i], pointC);
     if (thisAngle < minAngle) {
       minAngle = thisAngle;
-      maxAngleIndex = i;
+      minAngleIndex = i;
     }
   }
 
-  return { index: maxAngleIndex, angle: minAngle };
+  return { index: minAngleIndex, angle: minAngle };
 };
