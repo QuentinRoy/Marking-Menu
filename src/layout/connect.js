@@ -4,29 +4,31 @@ import rafThrottle from 'raf-schd';
 /**
  Connect navigation notifications to menu opening and closing.
  
- @param {HTMLElement} parentDOM - The element where to append the menu.
- @param {Observable} navigation$ - Notifications of the navigation.
- @param {(parentDOM: HTMLElement, model: object, position: number[]) => object} createMenuLayout -
+ @param {object} options - Connection options.
+ @param {HTMLElement} options.parent - The element where to append the menu.
+ @param {Observable} options.navigation$ - Notifications of the navigation.
+ @param {(parentDOM: HTMLElement, model: object, position: number[]) => object} options.createMenuLayout -
  Menu layout factory.
- @param {(parentDOM: HTMLElement) => object} createUpperStrokeCanvas - Upper stroke canvas
- factory. The upper stroke show the user interaction on the current menu, and the movements
- in expert mode.
- @param {(parentDOM: HTMLElement) => object} createLowerStrokeCanvas - Lower stroke canvas
- factory. The lower stroke is stroke drawn below the menu. It keeps track of the previous
- movements.
- @param {(parentDOM: HTMLElement) => object} createGestureFeedback - Gesture feedback factory.
- @param {{error}} log - Logger.
+ @param {(parentDOM: HTMLElement) => object} options.createUpperStrokeCanvas - Upper stroke
+ canvas factory. The upper stroke show the user interaction on the current menu, and the
+ movements in expert mode.
+ @param {(parentDOM: HTMLElement) => object} options.createLowerStrokeCanvas - Lower stroke
+ canvas factory. The lower stroke is stroke drawn below the menu. It keeps track of the
+ previous movements.
+ @param {(parentDOM: HTMLElement) => object} options.createGestureFeedback - Gesture feedback
+ factory.
+ @param {{error}} options.log - Logger.
  @returns {Observable} `navigation$` with menu opening and closing side effects.
  */
-export default function connectLayout(
-  parentDOM,
+export default function connectLayout({
+  parent: parentDOM,
   navigation$,
   createMenuLayout,
   createUpperStrokeCanvas,
   createLowerStrokeCanvas,
   createGestureFeedback,
   log,
-) {
+}) {
   // The menu object.
   let menu = null;
   // A stroke drawn on top of the menu.

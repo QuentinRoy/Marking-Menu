@@ -162,20 +162,21 @@ describe('main', () => {
     const connectedSub =  '^---------!';
     callMain().subscribe();
     expect(connectLayout).toHaveBeenCalledTimes(1);
-    expect(connectLayout.mock.calls[0][0]).toBe('mock-parent');
-    m.expect(connectLayout.mock.calls[0][1]).toBeObservable(mockNavObs$);
+    const options = connectLayout.mock.calls[0][0];
+    expect(options.parent).toBe('mock-parent');
+    m.expect(options.navigation$).toBeObservable(mockNavObs$);
     m.expect(connectedObs$).toHaveSubscriptions(connectedSub);
-    expect(connectLayout.mock.calls[0][2]).toBeInstanceOf(Function);
-    expect(connectLayout.mock.calls[0][3]).toBeInstanceOf(Function);
-    expect(connectLayout.mock.calls[0][4]).toBeInstanceOf(Function);
-    expect(connectLayout.mock.calls[0][5]).toBeInstanceOf(Function);
-    expect(connectLayout.mock.calls[0][6]).toBe('mock-log');
+    expect(options.createMenuLayout).toBeInstanceOf(Function);
+    expect(options.createUpperStrokeCanvas).toBeInstanceOf(Function);
+    expect(options.createLowerStrokeCanvas).toBeInstanceOf(Function);
+    expect(options.createGestureFeedback).toBeInstanceOf(Function);
+    expect(options.log).toBe('mock-log');
   }));
 
   it('properly binds MenuLayout when it connects the layout', () => {
     callMain();
     // Make sure it properly binds connectLayout and stroke canvas.
-    connectLayout.mock.calls[0][2](
+    connectLayout.mock.calls[0][0].createMenuLayout(
       'mock-parent-2',
       'mock-menuModel-2',
       'mock-center-2',
@@ -195,7 +196,7 @@ describe('main', () => {
 
   it('properly binds UpperStrokeCanvas when it connects the layout', () => {
     callMain();
-    connectLayout.mock.calls[0][3]('mock-parent-3');
+    connectLayout.mock.calls[0][0].createUpperStrokeCanvas('mock-parent-3');
     expect(createStrokeCanvas.mock.calls).toEqual([
       [
         'mock-parent-3',
@@ -210,7 +211,7 @@ describe('main', () => {
 
   it('properly binds LowerStrokeCanvas when it connects the layout', () => {
     callMain();
-    connectLayout.mock.calls[0][4]('mock-parent-4');
+    connectLayout.mock.calls[0][0].createLowerStrokeCanvas('mock-parent-4');
     expect(createStrokeCanvas.mock.calls).toEqual([
       [
         'mock-parent-4',
@@ -225,7 +226,7 @@ describe('main', () => {
 
   it('properly binds GestureFeedback when it connects the layout', () => {
     callMain();
-    connectLayout.mock.calls[0][5]('mock-parent-5');
+    connectLayout.mock.calls[0][0].createGestureFeedback('mock-parent-5');
     expect(createGestureFeedback.mock.calls).toEqual([
       [
         'mock-parent-5',

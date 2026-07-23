@@ -118,14 +118,15 @@ describe('connect', () => {
       { type: 'start', position: 'pos3' },
     );
 
-    const out = connect(
-      parentElement,
-      src,
-      MenuLayout,
-      UpperStrokeCanvas,
-      LowerStrokeCanvas,
-      GestureFeedback,
-    );
+    const out = connect({
+      parent: parentElement,
+      navigation$: src,
+      createMenuLayout: MenuLayout,
+      createUpperStrokeCanvas: UpperStrokeCanvas,
+      createLowerStrokeCanvas: LowerStrokeCanvas,
+      createGestureFeedback: GestureFeedback,
+      log,
+    });
     out.subscribe({
       next() {
         expect(parentElement).toMatchSnapshot();
@@ -178,14 +179,15 @@ describe('connect', () => {
       { type: 'change', active: { id: 'active-item-5' } },
     );
 
-    const out = connect(
-      parentElement,
-      src,
-      MenuLayout,
-      UpperStrokeCanvas,
-      LowerStrokeCanvas,
-      GestureFeedback,
-    );
+    const out = connect({
+      parent: parentElement,
+      navigation$: src,
+      createMenuLayout: MenuLayout,
+      createUpperStrokeCanvas: UpperStrokeCanvas,
+      createLowerStrokeCanvas: LowerStrokeCanvas,
+      createGestureFeedback: GestureFeedback,
+      log,
+    });
     out.subscribe({
       next() {
         expect(parentElement).toMatchSnapshot();
@@ -211,15 +213,15 @@ describe('connect', () => {
     const obs = m.hot('---s--o--#', values, error);
     const exp = m.hot('---s--o--#', values, error);
     m.expect(
-      connect(
-        parentElement,
-        obs,
-        MenuLayout,
-        UpperStrokeCanvas,
-        LowerStrokeCanvas,
-        GestureFeedback,
-        log
-      )
+      connect({
+        parent: parentElement,
+        navigation$: obs,
+        createMenuLayout: MenuLayout,
+        createUpperStrokeCanvas: UpperStrokeCanvas,
+        createLowerStrokeCanvas: LowerStrokeCanvas,
+        createGestureFeedback: GestureFeedback,
+        log,
+      })
     ).toBeObservable(exp);
     m.flush();
     expect(parentElement).toMatchSnapshot();
@@ -242,15 +244,15 @@ describe('connect', () => {
     const obs = m.hot('---s--o--x-', values);
     const exp = m.hot('---s--o--#', values, error);
     m.expect(
-      connect(
-        parentElement,
-        obs,
-        MenuLayout,
-        UpperStrokeCanvas,
-        LowerStrokeCanvas,
-        GestureFeedback,
-        log
-      )
+      connect({
+        parent: parentElement,
+        navigation$: obs,
+        createMenuLayout: MenuLayout,
+        createUpperStrokeCanvas: UpperStrokeCanvas,
+        createLowerStrokeCanvas: LowerStrokeCanvas,
+        createGestureFeedback: GestureFeedback,
+        log,
+      })
     ).toBeObservable(exp);
     m.flush();
     expect(parentElement).toMatchSnapshot();

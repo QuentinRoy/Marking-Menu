@@ -131,10 +131,10 @@ export default function createMarkingMenu({
   );
 
   // Connect the engine's notifications to menu opening/closing.
-  const connectedNavigation$ = connectLayout(
+  const connectedNavigation$ = connectLayout({
     parent,
     navigation$,
-    (menuParent, menuModel, center, current) =>
+    createMenuLayout: (menuParent, menuModel, center, current) =>
       createMenuLayout({
         parent: menuParent,
         model: menuModel,
@@ -142,13 +142,14 @@ export default function createMarkingMenu({
         current,
         ...menuLayoutOptions,
       }),
-    (canvasParent) => createStrokeCanvas(canvasParent, strokeCanvasOptions),
-    (canvasParent) =>
+    createUpperStrokeCanvas: (canvasParent) =>
+      createStrokeCanvas(canvasParent, strokeCanvasOptions),
+    createLowerStrokeCanvas: (canvasParent) =>
       createStrokeCanvas(canvasParent, lowerStrokeCanvasOptions),
-    (feedbackParent) =>
+    createGestureFeedback: (feedbackParent) =>
       createGestureFeedback(feedbackParent, gestureFeedbackOptions),
     log,
-  );
+  });
 
   // If every steps should be notified, just export connectedNavigation$.
   if (notifySteps) {
