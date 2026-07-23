@@ -222,7 +222,7 @@ findMiddlePointForMinAngle({ pointA, pointC, pointList, startIndex, endIndex })
 
 Positional `minDist` between list and options. Borderline; primary-positional + options could be `findNextPointFurtherThan(pointList, { minDist, ... })`.
 
-### 2.4 `recursivelyCreateModelItems(items, baseId, parent)` — `src/model.js:103` ⬜
+### 2.4 `recursivelyCreateModelItems(items, baseId, parent)` — `src/model.js:103` ✅
 
 Positional optional `baseId`/`parent`. Internal recursion only; candidate for `({ items, baseId, parent })` or waiver.
 
