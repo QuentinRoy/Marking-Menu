@@ -268,9 +268,13 @@ findMiddlePointForMinAngle(pointList, { from, to, startIndex, endIndex });
 
 Positional `minDist` between list and options. Borderline; primary-positional + options could be `findNextPointFurtherThan(pointList, { minDist, ... })`.
 
+**Converted:** `minDist` moved into the options object, matching the `findMiddlePointForMinAngle` convention. A malformed four-argument test call was normalized in the migration.
+
 ### 2.4 `recursivelyCreateModelItems(items, baseId, parent)` — `src/model.js:103` ✅
 
 Positional optional `baseId`/`parent`. Internal recursion only; candidate for `({ items, baseId, parent })` or waiver.
+
+**Converted:** project-specific recursive state (`baseId`, `parent`) is named via an options object; the recursive and `createModel` call sites are now self-describing.
 
 ### 2.5 `connectLayout` internal closures — `src/layout/connect.js` ✅
 
