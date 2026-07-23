@@ -55,7 +55,7 @@ its bare `rxjs` imports:
     <script type="importmap">
       {
         "imports": {
-          "marking-menu": "https://unpkg.com/marking-menu/marking-menu.mjs",
+          "marking-menu": "https://esm.sh/marking-menu@0.10.1?raw",
           "rxjs": "https://esm.sh/rxjs@7.5.5",
           "rxjs/operators": "https://esm.sh/rxjs@7.5.5/operators"
         }
