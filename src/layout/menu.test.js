@@ -1,7 +1,7 @@
-import createMenu from './menu';
+import createMenu from './menu.js';
 
 const createModel = (itemNb = 0) => ({
-  children: Array.from({ length: itemNb }).map((_, i) => ({
+  children: Array.from({ length: itemNb }, (_, i) => ({
     name: `item-${i}-name`,
     angle: i * 10,
     id: `item-${i}-id`,
@@ -11,19 +11,36 @@ const createModel = (itemNb = 0) => ({
 describe('createMenu', () => {
   it('renders', () => {
     const div = document.createElement('div');
-    createMenu(div, createModel(6), [30, 50], 'item-5-id', document);
+    createMenu({
+      parent: div,
+      model: createModel(6),
+      center: [30, 50],
+      current: 'item-5-id',
+      doc: document,
+    });
     expect(div).toMatchSnapshot();
   });
 
   it('renders without active element', () => {
     const div = document.createElement('div');
-    createMenu(div, createModel(4), [30, 50], undefined, document);
+    createMenu({
+      parent: div,
+      model: createModel(4),
+      center: [30, 50],
+      doc: document,
+    });
     expect(div).toMatchSnapshot();
   });
 
   it('update the active element', () => {
     const div = document.createElement('div');
-    const m = createMenu(div, createModel(4), [30, 50], 'item-2-id', document);
+    const m = createMenu({
+      parent: div,
+      model: createModel(4),
+      center: [30, 50],
+      current: 'item-2-id',
+      doc: document,
+    });
     expect(div).toMatchSnapshot();
     m.setActive('item-1-id');
     expect(div).toMatchSnapshot();
@@ -31,7 +48,13 @@ describe('createMenu', () => {
 
   it('can be removed', () => {
     const div = document.createElement('div');
-    const m = createMenu(div, createModel(4), [30, 50], 'item-2-id', document);
+    const m = createMenu({
+      parent: div,
+      model: createModel(4),
+      center: [30, 50],
+      current: 'item-2-id',
+      doc: document,
+    });
     expect(div).toMatchSnapshot();
     m.remove();
     expect(div).toMatchSnapshot();

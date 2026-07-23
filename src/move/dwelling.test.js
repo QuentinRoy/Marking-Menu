@@ -1,6 +1,6 @@
 import { configure } from 'rxjs-marbles/jest';
-import dwelling from './dwelling';
-import longMove from './long-move';
+import dwelling from './dwelling.js';
+import longMove from './long-move.js';
 
 const { marbles } = configure({ run: false });
 

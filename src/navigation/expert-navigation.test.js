@@ -1,6 +1,6 @@
 import { marbles } from 'rxjs-marbles';
-import expertNavigation from './expert-navigation';
-import recognize from '../recognizer';
+import recognize from '../recognizer/index.js';
+import expertNavigation from './expert-navigation.js';
 
 vi.mock('../recognizer');
 

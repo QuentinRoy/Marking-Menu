@@ -34,5 +34,6 @@ jobs:
             ${{ runner.os }}-yarn-
       - run: yarn install --immutable
       - run: yarn lint
+      - run: yarn format:check
       - run: yarn coverage
       - run: yarn build-demo

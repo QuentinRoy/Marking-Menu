@@ -1,4 +1,4 @@
-import stroke from './stroke';
+import stroke from './stroke.js';
 
 const docCreateElement = document.createElement;
 
@@ -11,7 +11,7 @@ const createMockContext = () =>
     },
     {
       get(target, name) {
-        return name in target
+        return Object.hasOwn(target, name)
           ? target[name]
           : (...args) => {
               target.mock.methodCalls.push({
@@ -20,7 +20,7 @@ const createMockContext = () =>
               });
             };
       },
-    }
+    },
   );
 
 describe('stroke', () => {
@@ -35,6 +35,7 @@ describe('stroke', () => {
         const context = createMockContext();
         elt.getContext = () => context;
       }
+
       return elt;
     });
 

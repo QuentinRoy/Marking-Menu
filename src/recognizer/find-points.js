@@ -1,18 +1,21 @@
-import { dist, angle } from '../utils';
+import { dist, angle } from '../utils.js';
 
 /**
- * @param {Array.<number[]>} pointList - The list of points.
- * @param {number} minDist - A distance.
- * @param {object} options - Options.
- * @param {number} [options.direction=1] - The direction of the lookup: negative values means
- *                                         descending lookup.
- * @param {number} [options.startIndex] - The index of the first point to investigate inside
- *                                        pointList. If not provided, the lookup will start
- *                                        from the start or the end of pointList depending
- *                                        on `direction`.
- * @param {number[]} [options.refPoint=pointList[startIndex]] - The reference point.
- * @return {number} The index of the first point inside pointList that it at least `minDist` from
- *                  `refPoint`.
+ Find the index of the first point of `pointList` that is at least `minDist` away from a
+ reference point.
+
+ @param {Array.<number[]>} pointList - The list of points.
+ @param {number} minDist - A distance.
+ @param {object} lookupOptions - The lookup's configuration.
+ @param {number} [lookupOptions.direction=1] - The direction of the lookup: negative values means
+ descending lookup.
+ @param {number} [lookupOptions.startIndex] - The index of the first point to investigate inside
+ pointList. If not provided, the lookup will start
+ from the start or the end of pointList depending
+ on `direction`.
+ @param {number[]} [lookupOptions.refPoint=pointList[startIndex]] - The reference point.
+ @returns {number} The index of the first point inside pointList that it at least `minDist` from
+ `refPoint`.
  */
 export const findNextPointFurtherThan = (
   pointList,
@@ -21,7 +24,7 @@ export const findNextPointFurtherThan = (
     direction = 1,
     startIndex = direction > 0 ? 0 : pointList.length - 1,
     refPoint = pointList[startIndex],
-  } = {}
+  } = {},
 ) => {
   const step = direction / Math.abs(direction);
   const n = pointList.length;
@@ -30,26 +33,29 @@ export const findNextPointFurtherThan = (
       return i;
     }
   }
+
   return -1;
 };
 
 /**
- * @param {number[]} pointA - The point a.
- * @param {number[]} pointC - The point b.
- * @param {List.<number[]>} pointList - A list of points.
- * @param {number[]} options - Options.
- * @param {number} [options.startIndex=0] - The index of the first point to investigate inside
- *                                          pointList.
- * @param {number} [options.endIndex=pointList.length - 1] - The index of the first point to
- *                                                           investigate inside pointList.
- * @return {{index, angle}} The index of the point b of pointList that maximizes the angle abc and
- *                          the angle abc.
+ Find the point of `pointList` that, as the middle point b, minimizes the angle abc.
+
+ @param {number[]} pointA - The first point of the angle.
+ @param {number[]} pointC - The last point of the angle.
+ @param {List.<number[]>} pointList - A list of points.
+ @param {object} lookupOptions - The lookup's configuration.
+ @param {number} [lookupOptions.startIndex=0] - The index of the first point to investigate inside
+ pointList.
+ @param {number} [lookupOptions.endIndex=pointList.length - 1] - The index of the first point to
+ investigate inside pointList.
+ @returns {{index, angle}} The index of the point b of pointList that maximizes the angle abc and
+ the angle abc.
  */
 export const findMiddlePointForMinAngle = (
   pointA,
   pointC,
   pointList,
-  { startIndex = 0, endIndex = pointList.length - 1 } = {}
+  { startIndex = 0, endIndex = pointList.length - 1 } = {},
 ) => {
   let minAngle = Infinity;
   let maxAngleIndex = -1;
@@ -60,5 +66,6 @@ export const findMiddlePointForMinAngle = (
       maxAngleIndex = i;
     }
   }
+
   return { index: maxAngleIndex, angle: minAngle };
 };

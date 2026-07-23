@@ -1,9 +1,6 @@
-import { createRequire } from 'node:module';
-import { resolve } from 'node:path';
+import path from 'node:path';
 import { defineConfig } from 'vite';
-
-const require = createRequire(import.meta.url);
-const { version } = require('./package.json');
+import { version } from './package.json' with { type: 'json' };
 
 const banner = `/*!
  * Marking Menu Javascript Library v${version}
@@ -22,7 +19,7 @@ export default defineConfig({
   build: {
     cssMinify: 'lightningcss',
     lib: {
-      entry: resolve(import.meta.dirname, 'src/index.js'),
+      entry: path.resolve(import.meta.dirname, 'src/index.js'),
       fileName: (format) =>
         format === 'es' ? 'marking-menu.mjs' : 'marking-menu.js',
       formats: ['es', 'umd'],

@@ -1,15 +1,15 @@
-import createStrokeCanvas from './stroke';
+import createStrokeCanvas from './stroke.js';
 
-export default (
+export default function createGestureFeedback(
   parentDOM,
-  { duration, strokeOptions = {}, canceledStrokeOptions = {} }
-) => {
+  { duration, strokeOptions = {}, canceledStrokeOptions = {} },
+) {
   let strokeTimeoutEntries = [];
 
   const show = (stroke, isCanceled = false) => {
     const canvas = createStrokeCanvas(parentDOM, {
       ...strokeOptions,
-      ...(isCanceled ? canceledStrokeOptions : {}),
+      ...(isCanceled && canceledStrokeOptions),
     });
     canvas.drawStroke(stroke);
     const timeoutEntry = {
@@ -17,7 +17,7 @@ export default (
       timeout: setTimeout(() => {
         // Remove the entry from the strokeTimeoutEntries.
         strokeTimeoutEntries = strokeTimeoutEntries.filter(
-          (x) => x !== timeoutEntry
+          (x) => x !== timeoutEntry,
         );
         // Clear the stroke canvas.
         canvas.remove();
@@ -27,12 +27,13 @@ export default (
   };
 
   const remove = () => {
-    strokeTimeoutEntries.forEach(({ timeout, canvas }) => {
+    for (const { timeout, canvas } of strokeTimeoutEntries) {
       clearTimeout(timeout);
       canvas.remove();
-    });
+    }
+
     strokeTimeoutEntries = [];
   };
 
   return { show, remove };
-};
+}

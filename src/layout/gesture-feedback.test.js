@@ -1,5 +1,5 @@
-import createGestureFeedback from './gesture-feedback';
-import createStrokeCanvas from './stroke';
+import createGestureFeedback from './gesture-feedback.js';
+import createStrokeCanvas from './stroke.js';
 
 vi.mock('./stroke');
 

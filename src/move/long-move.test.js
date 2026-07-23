@@ -1,6 +1,6 @@
 import { marbles } from 'rxjs-marbles';
-import { dist } from '../utils';
-import longMove from './long-move';
+import { dist } from '../utils.js';
+import longMove from './long-move.js';
 
 vi.mock('../utils');
 
@@ -20,7 +20,7 @@ describe('longMove', () => {
   // prettier-ignore
   it('filters out movements smaller than its threshold', marbles(m => {
       // Mock distance from current with current's value.
-      dist.mockImplementation((prev, cur) => cur);
+      dist.mockImplementation((previous, cur) => cur);
 
       const drag$     = m.hot('^a-ba--b-xbaa--by-aa--x-b(e|)', values);
       const expected$ = m.hot('^--------x------y-----x--|',    values);
@@ -30,7 +30,7 @@ describe('longMove', () => {
   // prettier-ignore
   it('the threshold is null by default (i.e. almost everything goes through)', marbles(m => {
     // Mock distance from current with current's value.
-    dist.mockImplementation((prev, cur) => cur);
+    dist.mockImplementation((previous, cur) => cur);
 
     const drag$     = m.hot('^a-ba--b-xbaa--by-aa--x-b(e|)', values);
     const expected$ = m.hot('^--ba--b-xbaa--by-aa--x-b|',    values);

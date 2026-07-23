@@ -8,34 +8,34 @@ import {
   mergeMap,
   exhaustMap,
 } from 'rxjs/operators';
-import noviceNavigation from './novice-navigation';
-import expertNavigation from './expert-navigation';
-import { longMoves, dwellings, draw } from '../move';
-import recognize from '../recognizer';
+import { longMoves, dwellings, draw } from '../move/index.js';
+import recognize from '../recognizer/index.js';
+import noviceNavigation from './novice-navigation.js';
+import expertNavigation from './expert-navigation.js';
 
 export const confirmedNoviceNavigationHOO = (drag$, start, model, options) =>
   dwellings(drag$, options.noviceDwellingTime, options.movementsThreshold).pipe(
     take(1),
     map(() =>
-      (start != null ? of(start) : drag$).pipe(
+      (start === null || start === undefined ? drag$ : of(start)).pipe(
         take(1),
         mergeMap((start_) =>
           noviceNavigation(
             // Same as before, skip the first.
             drag$.pipe(skip(1)),
             model,
-            { ...options, menuCenter: start_.position }
-          ).pipe(map((n) => ({ ...n, mode: 'novice' })))
-        )
-      )
-    )
+            { ...options, menuCenter: start_.position },
+          ).pipe(map((n) => ({ ...n, mode: 'novice' }))),
+        ),
+      ),
+    ),
   );
 
 export const expertToNoviceSwitchHOO = (drag$, model, initStroke, options) =>
   dwellings(
     draw(drag$, { initStroke }),
     options.noviceDwellingTime,
-    options.movementsThreshold
+    options.movementsThreshold,
   ).pipe(
     take(1),
     map((evt) => {
@@ -47,12 +47,13 @@ export const expertToNoviceSwitchHOO = (drag$, model, initStroke, options) =>
       if (!menu || menu.isRoot()) {
         return of({ ...evt, type: 'cancel' });
       }
+
       // Start a novice navigation from there.
       return noviceNavigation(drag$.pipe(skip(1)), menu, {
         ...options,
         menuCenter: evt.position,
       });
-    })
+    }),
   );
 
 export const confirmedExpertNavigationHOO = (
@@ -61,23 +62,25 @@ export const confirmedExpertNavigationHOO = (
   {
     expertToNoviceSwitchHOO: expertToNoviceSwitchHOO_ = expertToNoviceSwitchHOO,
     ...options
-  } = {}
+  } = {},
 ) =>
   longMoves(draw(drag$, { type: 'draw' }), options.movementsThreshold).pipe(
     take(1),
-    map((e) => {
+    map((event_) => {
       const expertNav$ = expertNavigation(
         // Drag always return the last value when observed, in this case we are
         // not interested in it as it has already been took into account.
         drag$.pipe(skip(1)),
         model,
-        e.stroke
+        event_.stroke,
       ).pipe(map((n) => ({ ...n, mode: 'expert' })));
-      return expertToNoviceSwitchHOO_(drag$, model, e.stroke, options).pipe(
-        startWith(expertNav$),
-        switchAll()
-      );
-    })
+      return expertToNoviceSwitchHOO_(
+        drag$,
+        model,
+        event_.stroke,
+        options,
+      ).pipe(startWith(expertNav$), switchAll());
+    }),
   );
 
 export const startup = (drag$, model) =>
@@ -85,8 +88,8 @@ export const startup = (drag$, model) =>
     map((n, i) =>
       i === 0
         ? { ...n, type: 'start', mode: 'startup' }
-        : { ...n, mode: 'startup' }
-    )
+        : { ...n, mode: 'startup' },
+    ),
   );
 
 export const navigationFromDrag = (
@@ -100,7 +103,7 @@ export const navigationFromDrag = (
     confirmedNoviceNavigationHOO:
       confirmedNoviceNavigationHOO_ = confirmedNoviceNavigationHOO,
     startup: startup_ = startup,
-  } = {}
+  } = {},
 ) => {
   // Start up observable (while neither expert or novice are confirmed).
   const startUp$ = startup_(drag$, model);
@@ -109,7 +112,7 @@ export const navigationFromDrag = (
   const confirmedExpertNavigation$$ = confirmedExpertNavigationHOO_(
     drag$,
     model,
-    options
+    options,
   );
 
   // Observable on confirmed novice navigation.
@@ -117,13 +120,13 @@ export const navigationFromDrag = (
     drag$,
     start,
     model,
-    options
+    options,
   );
 
   // Observable on expert or novice navigation once confirmed.
   const confirmedNavigation$$ = race(
     confirmedExpertNavigation$$,
-    confirmedNoviceNavigation$$
+    confirmedNoviceNavigation$$,
   );
 
   // Start with startup navigation (similar to expert) but switch to the
@@ -132,25 +135,28 @@ export const navigationFromDrag = (
 };
 
 /**
- * @param {Observable} drags$ - A higher order observable on drag movements.
- * @param {MMItem} menu - The model of the menu.
- * @param {object} options - Configuration options (see {@link ../index.js}).
- * @param {function} [navigationFromDrag_] - function to convert a drags higher
- *                                         order observable to a navigation
- *                                         observable.
- * @return {Observable} An observable on the marking menu events.
+ Navigate the menu from a higher order observable of drags.
+
+ @param {Observable} drags$ - A higher order observable on drag movements.
+ @param {MMItem} menu - The model of the menu.
+ @param {object} options - Configuration options (see {@link ../index.js}).
+ @param {(drag$: Observable, start: object, model: MMItem, options: object) => Observable}
+ [navigationFromDrag_] - function to convert a drags higher order observable to a navigation
+ observable.
+ @returns {Observable} An observable on the marking menu events.
  */
-export default (
+export default function navigation(
   drags$,
   menu,
   options,
-  navigationFromDrag_ = navigationFromDrag
-) =>
-  drags$.pipe(
+  navigationFromDrag_ = navigationFromDrag,
+) {
+  return drags$.pipe(
     exhaustMap((drag$) =>
       drag$.pipe(
         take(1),
-        mergeMap((start) => navigationFromDrag_(drag$, start, menu, options))
-      )
-    )
+        mergeMap((start) => navigationFromDrag_(drag$, start, menu, options)),
+      ),
+    ),
   );
+}

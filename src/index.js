@@ -1,3 +1,1 @@
-import MarkingMenu from './main';
-
-export default MarkingMenu;
+export { default } from './main.js';
