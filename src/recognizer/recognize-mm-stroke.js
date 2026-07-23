@@ -130,11 +130,10 @@ export default function recognizeMMStroke(
   const expectedSegmentLength = length / maxDepth;
   const sensitivity = 0.75;
   const angleThreshold = 360 / maxMenuBreadth / 2 / sensitivity;
-  const articulationPoints = getStrokeArticulationPoints(
-    stroke,
+  const articulationPoints = getStrokeArticulationPoints(stroke, {
     expectedSegmentLength,
     angleThreshold,
-  );
+  });
   const minSegmentSize = expectedSegmentLength / 3;
   // Get the segments of the marking menus.
   const segments = pointsToSegments(articulationPoints)
