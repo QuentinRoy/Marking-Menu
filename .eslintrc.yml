@@ -5,6 +5,11 @@ env:
 extends:
   - airbnb-base
   - prettier
+parserOptions:
+  ecmaVersion: 2022
+settings:
+  import/core-modules:
+    - vite
 rules:
   valid-jsdoc: error
   import/no-extraneous-dependencies:
