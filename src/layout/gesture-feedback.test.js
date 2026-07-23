@@ -55,7 +55,7 @@ describe('createGestureFeedback#draw', () => {
   });
 
   it('draw a canceled stroke', () => {
-    gs.show('mock-canceled-stroke', true);
+    gs.show('mock-canceled-stroke', { canceled: true });
     // Expect the stroke canvas to have been properly created.
     expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
     expect(createStrokeCanvas).toHaveBeenCalledWith({

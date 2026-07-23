@@ -112,10 +112,10 @@ export default function connectLayout({
     lowerStroke = null;
   };
 
-  const showGestureFeedback = (isCanceled) => {
+  const showGestureFeedback = ({ canceled }) => {
     gestureFeedback.show(
       lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke,
-      isCanceled,
+      { canceled },
     );
   };
 
@@ -165,7 +165,7 @@ export default function connectLayout({
           closeMenu();
         }
 
-        showGestureFeedback(notification.type === 'cancel');
+        showGestureFeedback({ canceled: notification.type === 'cancel' });
         clearUpperStroke();
         clearLowerStroke();
         break;
