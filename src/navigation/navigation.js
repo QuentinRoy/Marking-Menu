@@ -143,15 +143,14 @@ export const navigationFromDrag = (
  @param {MMItem} menu - The model of the menu.
  @param {object} options - Configuration options (see {@link ../index.js}).
  @param {(drag$: Observable, start: object, model: MMItem, options: object) => Observable}
- [navigationFromDrag_] - function to convert a drags higher order observable to a navigation
+ [options.navigationFromDrag] - Function to convert a drags higher order observable to a navigation
  observable.
  @returns {Observable} An observable on the marking menu events.
  */
 export default function navigation(
   drags$,
   menu,
-  options,
-  navigationFromDrag_ = navigationFromDrag,
+  { navigationFromDrag: navigationFromDrag_ = navigationFromDrag, ...options },
 ) {
   return drags$.pipe(
     exhaustMap((drag$) =>
