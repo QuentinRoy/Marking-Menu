@@ -1,7 +1,8 @@
 {
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     ":automergeMinor",
-    ":automergeBranchPush",
+    ":automergeBranch",
     ":semanticCommits",
     ":rebaseStalePrs",
     ":semanticCommitScopeDisabled",
@@ -9,24 +10,22 @@
   ],
   "packageRules": [
     {
-      "packagePatterns": [
-        "eslint",
-        "husky",
-        "sass-lint",
-        "prettier",
-        "cross-env",
-        "commitlint",
-        "standard-version"
+      "matchPackageNames": [
+        "/eslint/",
+        "/husky/",
+        "/prettier/",
+        "/cross-env/",
+        "/commitlint/",
+        "/standard-version/"
       ],
       "groupName": "ci"
     },
     {
-      "packagePatterns": ["rollup", "babel"],
+      "matchPackageNames": ["/rollup/", "/babel/"],
       "groupName": "build"
     },
     {
-      "packagePatterns": ["jest"],
-      "packageNames": ["rxjs-marbles"],
+      "matchPackageNames": ["/jest/", "rxjs-marbles"],
       "groupName": "test"
     }
   ]
