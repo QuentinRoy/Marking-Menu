@@ -1,25 +1,27 @@
 import {
-  createPEventFromMouseEvent,
-  createPEventFromTouchEvent,
+  createPointerEventFromMouseEvent,
+  createPointerEventFromTouchEvent,
 } from './pointer-events.js';
 
-describe('createPEventFromMouseEvent', () => {
+describe('createPointerEventFromMouseEvent', () => {
   it('creates a pointer event from a mouse event', () => {
     const mouseEvt = {
       clientX: 10,
       clientY: 20,
       timeStamp: 1980,
     };
-    expect(createPEventFromMouseEvent(mouseEvt)).toEqual({
+    expect(createPointerEventFromMouseEvent(mouseEvt)).toEqual({
       position: [10, 20],
       timeStamp: 1980,
       originalEvent: mouseEvt,
     });
-    expect(createPEventFromMouseEvent(mouseEvt).originalEvent).toBe(mouseEvt);
+    expect(createPointerEventFromMouseEvent(mouseEvt).originalEvent).toBe(
+      mouseEvt,
+    );
   });
 });
 
-describe('createPEventFromTouchEvent', () => {
+describe('createPointerEventFromTouchEvent', () => {
   it('creates a pointer event from a mouse event', () => {
     const touchEvent = {
       // Use an object instead of an array because it needs to work with
@@ -32,12 +34,12 @@ describe('createPEventFromTouchEvent', () => {
       },
       timeStamp: 1990,
     };
-    expect(createPEventFromTouchEvent(touchEvent)).toEqual({
+    expect(createPointerEventFromTouchEvent(touchEvent)).toEqual({
       position: [11, 6],
       timeStamp: 1990,
       originalEvent: touchEvent,
     });
-    expect(createPEventFromTouchEvent(touchEvent).originalEvent).toBe(
+    expect(createPointerEventFromTouchEvent(touchEvent).originalEvent).toBe(
       touchEvent,
     );
   });

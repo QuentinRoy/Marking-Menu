@@ -1,14 +1,15 @@
-import { fromEvent, merge, empty, of } from 'rxjs';
+import { fromEvent, merge, EMPTY, of, type Observable } from 'rxjs';
 import { takeUntil, withLatestFrom } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles';
+import { type Mock } from 'vitest';
 import watchDrags, { mouseDrags, touchDrags } from './linear-drag.js';
 import {
-  createPEventFromTouchEvent,
-  createPEventFromMouseEvent,
+  createPointerEventFromTouchEvent,
+  createPointerEventFromMouseEvent,
 } from './pointer-events.js';
 
-const toPromise = (obs) =>
-  new Promise((resolve, reject) => {
+const toPromise = async (obs: Observable<unknown>): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
     obs.subscribe({
       complete: resolve,
       error: reject,
@@ -16,26 +17,55 @@ const toPromise = (obs) =>
   });
 
 vi.mock('./pointer-events', () => ({
-  createPEventFromTouchEvent: vi.fn(() => {}),
-  createPEventFromMouseEvent: vi.fn(() => {}),
+  createPointerEventFromTouchEvent: vi.fn(() => {
+    // Mocked.
+  }),
+  createPointerEventFromMouseEvent: vi.fn(() => {
+    // Mocked.
+  }),
 }));
 
 vi.mock('rxjs', async () => ({
   ...(await vi.importActual('rxjs')),
-  fromEvent: vi.fn(() => {}),
+  fromEvent: vi.fn(() => {
+    // Mocked.
+  }),
 }));
 
+// The mocked fromEvent accepts any target; the node only serves as an
+// identity token in these tests.
+const rootNode = 'root-node' as unknown as HTMLElement;
+const mockDom = 'mock-dom' as unknown as HTMLElement;
+
+// The module is fully mocked; these doubles map fake events to marble tokens
+// and intentionally do not match the real generic signatures.
+const mockCreatePointerEventFromTouchEvent =
+  createPointerEventFromTouchEvent as unknown as Mock<
+    (x: { name: string }) => unknown
+  >;
+const mockCreatePointerEventFromMouseEvent =
+  createPointerEventFromMouseEvent as unknown as Mock<(x: string) => unknown>;
+
 beforeEach(() => {
-  createPEventFromTouchEvent.mockImplementation((x) => x);
-  createPEventFromMouseEvent.mockImplementation((x) => x);
+  mockCreatePointerEventFromTouchEvent.mockImplementation((x) => x);
+  mockCreatePointerEventFromMouseEvent.mockImplementation((x) => x);
 });
 
 afterEach(() => {
   vi.resetAllMocks();
 });
 
-const mockFromEvent = (observables) => {
-  fromEvent.mockImplementation((_, evt) => observables[evt]);
+// FromEvent's deprecated explicit-type-parameter signatures flag any
+// materialization of its type; the mock only needs a simple signature.
+// eslint-disable-next-line @typescript-eslint/no-deprecated
+const fromEventMock = fromEvent as unknown as Mock<
+  (target: unknown, eventName: string) => Observable<unknown>
+>;
+
+const mockFromEvent = (observables: Record<string, Observable<unknown>>) => {
+  fromEventMock.mockImplementation(
+    (_: unknown, evt: string) => observables[evt] ?? EMPTY,
+  );
 };
 
 // prettier-ignore
@@ -54,9 +84,12 @@ describe('mouseDrags', () => {
     const expected  = m.hot('^----x--------------y----------', drags);
 
     mockFromEvent({ mousedown, mousemove, mouseup });
-    createPEventFromMouseEvent.mockImplementation(x => `m${x}`)
+    mockCreatePointerEventFromMouseEvent.mockImplementation(x => `m${x}`)
 
-    m.expect(mouseDrags('root-node')).toBeObservable(expected);
+    // Marble tokens stand in for pointer notifications; rxjs-marbles compares
+    // structurally at runtime.
+    const drags$: Observable<unknown> = mouseDrags(rootNode);
+    m.expect(drags$).toBeObservable(expected);
     m.expect(mousemove).toHaveSubscriptions([moveUpSub1, moveUpSub2]);
     m.expect(mouseup).toHaveSubscriptions([moveUpSub1, moveUpSub2]);
   }));
@@ -69,9 +102,9 @@ describe('mouseDrags', () => {
 
     mockFromEvent({ mousedown, mousemove, mouseup });
 
-    await toPromise(mouseDrags('root-node').pipe(takeUntil(end)));
+    await toPromise(mouseDrags(rootNode).pipe(takeUntil(end)));
     expect(
-      fromEvent.mock.calls.every(call => call[0] === 'root-node')
+      fromEventMock.mock.calls.every(call => Object.is(call[0], rootNode))
     ).toBe(true);
   }));
 
@@ -88,14 +121,14 @@ describe('mouseDrags', () => {
 
     mockFromEvent({ mousedown: down, mousemove: move, mouseup: up });
     const latest$ = i.pipe(
-      withLatestFrom(mouseDrags('root-node'), (_, d) => merge(empty(), d)),
+      withLatestFrom(mouseDrags(rootNode), (_, d) => merge(EMPTY, d)),
     );
     m.expect(latest$).toBeObservable(i);
   }));
 });
 
 describe('touchDrags', () => {
-  let v;
+  let v: Record<string, { targetTouches: { length: number }; name: string }>;
   beforeEach(() => {
     v = {
       o: { targetTouches: { length: 0 }, name: 'o' },
@@ -109,13 +142,13 @@ describe('touchDrags', () => {
 
   // prettier-ignore
   it('properly emit drags', marbles(m => {
-    createPEventFromTouchEvent.mockImplementation(x => x.name);
+    mockCreatePointerEventFromTouchEvent.mockImplementation(x => x.name);
     const touchstart  = m.hot('^b-----a-----a---c--b----a-----------------', v);
     const touchmove   = m.hot('^-m-m-i-m-i-i-m-m-i-i-m-i-i-i-i-m-i-i-i-i-i', v);
     const touchend    = m.hot('^--a-o-----o-------a--o------a------o------', v);
     const touchcancel = m.hot('^------------i---------o---a-----o---------', v);
 
-    // Do not use v in the expected drags. If, createPEventFromTouchEvent is
+    // Do not use v in the expected drags. If, createPointerEventFromTouchEvent is
     // properly called, values will be maped back to their name.
     const drags = {
       d:               m.cold(       'am-i|'                               ),
@@ -126,12 +159,15 @@ describe('touchDrags', () => {
 
     mockFromEvent({ touchstart, touchmove, touchend, touchcancel });
 
-    m.expect(touchDrags('root-node')).toBeObservable(expected);
+    // Marble tokens stand in for pointer notifications; rxjs-marbles compares
+    // structurally at runtime.
+    const drags$: Observable<unknown> = touchDrags(rootNode);
+    m.expect(drags$).toBeObservable(expected);
   }));
 
   // prettier-ignore
   it('calls fromEvent with the provided node', marbles(async m => {
-    createPEventFromTouchEvent.mockImplementation(x => x.name);
+    mockCreatePointerEventFromTouchEvent.mockImplementation(x => x.name);
     const touchstart  = m.hot('^b-----a-----a---c-', v);
     const touchmove   = m.hot('^-m-m-i-m-i-i-m-m-i', v);
     const touchend    = m.hot('^--a-o-----o-------', v);
@@ -140,15 +176,15 @@ describe('touchDrags', () => {
 
     mockFromEvent({ touchstart, touchmove, touchend, touchcancel });
 
-    await toPromise(touchDrags('root-node').pipe(takeUntil(end)));
+    await toPromise(touchDrags(rootNode).pipe(takeUntil(end)));
     expect(
-      fromEvent.mock.calls.every(call => call[0] === 'root-node')
+      fromEventMock.mock.calls.every(call => Object.is(call[0], rootNode))
     ).toBe(true);
   }));
 
   // prettier-ignore
   it('creates sub-drags as behaviors',  marbles(m => {
-    createPEventFromTouchEvent.mockImplementation(x => x.name);
+    mockCreatePointerEventFromTouchEvent.mockImplementation(x => x.name);
     const touchstart  = m.hot('^---a--------------------------', v);
     const touchmove   = m.hot('^i---m----m---i--i----m-i------', v);
     const touchend    = m.hot('^-o--------------------o-------', v);
@@ -163,7 +199,7 @@ describe('touchDrags', () => {
     mockFromEvent({ touchstart, touchmove, touchend, touchcancel });
 
     const latest$ = i.pipe(
-      withLatestFrom(touchDrags('root-node'), (_, d) => merge(empty(), d)),
+      withLatestFrom(touchDrags(rootNode), (_, d) => merge(EMPTY, d)),
     );
     m.expect(latest$).toBeObservable(i);
   }));
@@ -176,9 +212,9 @@ describe('watchDrags', () => {
       vi.fn(() => of('b')),
       vi.fn(() => of('c')),
     ];
-    watchDrags('mock-dom', { dragObsFactories: [...factories] });
+    watchDrags(mockDom, { dragObsFactories: [...factories] });
     for (const f of factories) {
-      expect(f.mock.calls).toEqual([['mock-dom']]);
+      expect(f.mock.calls).toEqual([[mockDom]]);
     }
   });
 
@@ -188,7 +224,7 @@ describe('watchDrags', () => {
     const d2$ = m.hot(      'f--g--h--|');
     const expected$ = m.hot('f-ag--(bh)c--d-e|');
     m.expect(
-      watchDrags('mock-dom', {
+      watchDrags(mockDom, {
         dragObsFactories: [() => d1$, () => d2$],
       }),
     ).toBeObservable(expected$);

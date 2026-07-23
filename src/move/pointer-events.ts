@@ -1,5 +1,23 @@
+import type { Point } from '../types.js';
+
+/**
+ A normalized pointer notification, created from a mouse or touch event.
+ */
+export type PointerNotification<E> = {
+  originalEvent: E;
+  position: Point;
+  timeStamp: number;
+};
+
+/** The properties of a touch point used to compute the pointer position. */
+type TouchPoint = { clientX: number; clientY: number };
+
 // Create a custom pointer event from a touch event.
-export const createPEventFromTouchEvent = (touchEvt) => {
+export const createPointerEventFromTouchEvent = <
+  E extends { targetTouches: ArrayLike<TouchPoint>; timeStamp: number },
+>(
+  touchEvt: E,
+): PointerNotification<E> => {
   // `targetTouches` is only array-like (not iterable across engines), so it cannot
   // be spread.
   // eslint-disable-next-line unicorn/prefer-spread
@@ -16,7 +34,11 @@ export const createPEventFromTouchEvent = (touchEvt) => {
 };
 
 // Create a custom pointer from a mouse event.
-export const createPEventFromMouseEvent = (mouseEvt) => ({
+export const createPointerEventFromMouseEvent = <
+  E extends { clientX: number; clientY: number; timeStamp: number },
+>(
+  mouseEvt: E,
+): PointerNotification<E> => ({
   originalEvent: mouseEvt,
   position: [mouseEvt.clientX, mouseEvt.clientY],
   timeStamp: mouseEvt.timeStamp,
