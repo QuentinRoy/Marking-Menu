@@ -226,9 +226,11 @@ Positional `minDist` between list and options. Borderline; primary-positional + 
 
 Positional optional `baseId`/`parent`. Internal recursion only; candidate for `({ items, baseId, parent })` or waiver.
 
-### 2.5 `connectLayout` internal closures — `src/layout/connect.js` ⬜
+### 2.5 `connectLayout` internal closures — `src/layout/connect.js` ✅
 
 `openMenu(model, position)`, `startUpperStroke(position)`, `showGestureFeedback(isCanceled)` etc. Local closures; `showGestureFeedback(isCanceled)` takes a positional boolean but is only called with a computed expression (`notification.type === 'cancel'`), so the call site stays readable — likely fine to waive per the "small local utilities" exception, but listed for completeness.
+
+**Waived:** private, short, conventional closures scoped to one `connectLayout` invocation. The `showGestureFeedback` boolean concern is no longer applicable; it now accepts `{ canceled }` after item 1.9.
 
 ### 2.6 `utils.js` helpers — `mod`, `dist`, `angle`, `deltaAngle`, `toPolar`, `findMaxEntry` ⬜
 
