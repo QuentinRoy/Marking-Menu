@@ -99,14 +99,17 @@ describe('walkMMModel', () => {
   it('finds an item from a segment list and a MM mode', () => {
     {
       const menu = createMockMMModel(1);
-      const selection = walkMMModel(menu, [{ angle: 90 }]);
+      const selection = walkMMModel({ model: menu, segments: [{ angle: 90 }] });
       expect(selection.requestedAngle).toBe(90);
       expect(selection.parent).toBe(menu);
     }
 
     {
       const menu = createMockMMModel(2);
-      const selection = walkMMModel(menu, [{ angle: 90 }, { angle: 180 }]);
+      const selection = walkMMModel({
+        model: menu,
+        segments: [{ angle: 90 }, { angle: 180 }],
+      });
       expect(selection.requestedAngle).toBe(180);
       expect(selection.parent.requestedAngle).toBe(90);
       expect(selection.parent.parent).toBe(menu);
@@ -114,11 +117,10 @@ describe('walkMMModel', () => {
 
     {
       const menu = createMockMMModel(3);
-      const selection = walkMMModel(menu, [
-        { angle: 90 },
-        { angle: 0 },
-        { angle: 180 },
-      ]);
+      const selection = walkMMModel({
+        model: menu,
+        segments: [{ angle: 90 }, { angle: 0 }, { angle: 180 }],
+      });
       expect(selection.requestedAngle).toBe(180);
       expect(selection.parent.requestedAngle).toBe(0);
       expect(selection.parent.parent.requestedAngle).toBe(90);
@@ -127,20 +129,37 @@ describe('walkMMModel', () => {
 
     {
       const menu = createMockMMModel(1);
-      expect(walkMMModel(menu, [])).toBe(null);
+      expect(walkMMModel({ model: menu, segments: [] })).toBe(null);
     }
 
     {
       const menu = createMockMMModel(1);
-      expect(walkMMModel(menu, [{ angle: 200 }, { angle: 0 }])).toBe(null);
+      expect(
+        walkMMModel({ model: menu, segments: [{ angle: 200 }, { angle: 0 }] }),
+      ).toBe(null);
     }
 
     {
       const menu = createMockMMModel(2);
       expect(
-        walkMMModel(menu, [{ angle: 200 }, { angle: 5 }, { angle: 10 }]),
+        walkMMModel({
+          model: menu,
+          segments: [{ angle: 200 }, { angle: 5 }, { angle: 10 }],
+        }),
       ).toBe(null);
     }
+  });
+
+  it('starts walking at the configured segment index', () => {
+    const menu = createMockMMModel(1);
+    const selection = walkMMModel({
+      model: menu,
+      segments: [{ angle: 0 }, { angle: 90 }],
+      startIndex: 1,
+    });
+
+    expect(selection.requestedAngle).toBe(90);
+    expect(selection.parent).toBe(menu);
   });
 });
 
