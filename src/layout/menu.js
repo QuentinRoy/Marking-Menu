@@ -1,5 +1,13 @@
 import { degreesToRadians } from '../utils';
-import './menu.css';
+// Vite's inline query keeps the published bundles self-contained.
+// eslint-disable-next-line import/no-unresolved
+import menuStyles from './menu.css?inline';
+
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = menuStyles;
+  document.head.appendChild(style);
+}
 
 const template = ({ items, center }, doc) => {
   const main = doc.createElement('div');
