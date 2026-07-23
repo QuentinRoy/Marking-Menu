@@ -87,7 +87,9 @@ describe('main', () => {
       navigation.mockImplementation(() => mockNavObs$);
       connectLayout.mockImplementation(() => connectedObs$);
       callMain = (options = {}) =>
-        main('mock-items', 'mock-parentDOM', {
+        main({
+          items: 'mock-items',
+          parent: 'mock-parent',
           minSelectionDist: 'mock-minSelectionDist',
           minMenuSelectionDist: 'mock-minMenuSelectionDist',
           submenuOpeningDelay: 'mock-submenuOpeningDelay',
@@ -121,7 +123,7 @@ describe('main', () => {
   });
   it('properly creates the drags observable', () => {
     callMain();
-    expect(watchDrags.mock.calls).toEqual([['mock-parentDOM']]);
+    expect(watchDrags.mock.calls).toEqual([['mock-parent']]);
   });
   it('properly creates the navigation observable', () => {
     callMain();
@@ -160,7 +162,7 @@ describe('main', () => {
     const connectedSub =  '^---------!';
     callMain().subscribe();
     expect(connectLayout).toHaveBeenCalledTimes(1);
-    expect(connectLayout.mock.calls[0][0]).toBe('mock-parentDOM');
+    expect(connectLayout.mock.calls[0][0]).toBe('mock-parent');
     m.expect(connectLayout.mock.calls[0][1]).toBeObservable(mockNavObs$);
     m.expect(connectedObs$).toHaveSubscriptions(connectedSub);
     expect(connectLayout.mock.calls[0][2]).toBeInstanceOf(Function);

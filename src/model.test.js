@@ -2,27 +2,27 @@ import createModel, { MMItem } from './model.js';
 
 describe('MMItem', () => {
   it('can be created properly', () => {
-    const a = new MMItem('id', 'name', 10);
+    const a = new MMItem('id', 'label', 10);
     expect(a.angle).toBe(10);
     expect(a.id).toBe('id');
-    expect(a.name).toBe('name');
+    expect(a.label).toBe('label');
   });
 
   it('isLeaf checks if the item has children', () => {
-    expect(new MMItem('a', 'name', 10).isLeaf()).toBe(true);
-    expect(new MMItem('b', 'name', 10, { children: [] }).isLeaf()).toBe(true);
+    expect(new MMItem('a', 'label', 10).isLeaf()).toBe(true);
+    expect(new MMItem('b', 'label', 10, { children: [] }).isLeaf()).toBe(true);
     expect(
-      new MMItem('c', 'name', 10, {
-        children: [new MMItem('sub', 'child', 5)],
+      new MMItem('c', 'label', 10, {
+        children: [new MMItem('sub', 'childLabel', 5)],
       }).isLeaf(),
     ).toBe(false);
   });
 
   it('isRoot checks if the item has a parent', () => {
-    expect(new MMItem('id', 'name', 0).isRoot()).toBe(true);
+    expect(new MMItem('id', 'label', 0).isRoot()).toBe(true);
     expect(
-      new MMItem('id', 'name', 0, {
-        parent: new MMItem('parentId', 'parentName', 0),
+      new MMItem('id', 'label', 0, {
+        parent: new MMItem('parentId', 'parentLabel', 0),
       }).isRoot(),
     ).toBe(false);
   });
@@ -38,14 +38,14 @@ describe('MMItem', () => {
     expect(mi.getChild('sub2')).toBe(children[1]);
   });
 
-  it('getChildrenByName returns the children with the corresponding name', () => {
+  it('getChildrenByLabel returns the children with the corresponding label', () => {
     const children = [
       new MMItem('sub1', 'child1', 180),
       new MMItem('sub2', 'child2', 90),
       new MMItem('sub2', 'child2', 120), // Weird, but why not.
     ];
     const mi = new MMItem('a', 'name', 10, { children });
-    expect(mi.getChildrenByName('child2')).toEqual(children.slice(1));
+    expect(mi.getChildrenByLabel('child2')).toEqual(children.slice(1));
   });
 
   it('getNearestChild returns the children the closest to the provided angle', () => {
@@ -81,7 +81,7 @@ describe('MMItem', () => {
     const sub3 = new MMItem('sub3', 'child3', 45, {
       children: [new MMItem('subsub5', 'subchild5', 0)],
     });
-    const m = new MMItem('id', 'n', 0, {
+    const m = new MMItem('id', 'l', 0, {
       children: [
         sub1,
         new MMItem('sub2', 'child2', 90),
@@ -112,7 +112,7 @@ describe('MMItem', () => {
     const sub3 = new MMItem('sub3', 'child3', 45, {
       children: [new MMItem('subsub5', 'subchild5', 0)],
     });
-    const m = new MMItem('id', 'n', 0, {
+    const m = new MMItem('id', 'l', 0, {
       children: [
         sub1,
         new MMItem('sub2', 'child2', 90),
@@ -127,33 +127,33 @@ describe('MMItem', () => {
 describe('createModel', () => {
   it('creates a whole hierarchy of menu items', () => {
     const m = createModel([
-      'right',
+      { label: 'right' },
       {
-        name: 'bottom',
+        label: 'bottom',
         children: [
-          'Sub 1',
-          { name: 'Sub 2', id: 'custom-id' },
-          'Sub 3',
-          'Sub 4',
-          'Sub 5',
-          'Sub 6',
+          { label: 'Sub 1' },
+          { label: 'Sub 2', id: 'custom-id' },
+          { label: 'Sub 3' },
+          { label: 'Sub 4' },
+          { label: 'Sub 5' },
+          { label: 'Sub 6' },
         ],
       },
-      'left',
-      'up',
+      { label: 'left' },
+      { label: 'up' },
     ]);
 
     const [, bottom] = m.children;
     const [, custom] = bottom.children;
 
-    // Check that the names are correct.
-    expect(m.children.map((c) => c.name)).toEqual([
+    // Check that the labels are correct.
+    expect(m.children.map((c) => c.label)).toEqual([
       'right',
       'bottom',
       'left',
       'up',
     ]);
-    expect(bottom.children.map((c) => c.name)).toEqual([
+    expect(bottom.children.map((c) => c.label)).toEqual([
       'Sub 1',
       'Sub 2',
       'Sub 3',
