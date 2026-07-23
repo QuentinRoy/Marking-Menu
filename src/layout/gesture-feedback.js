@@ -8,11 +8,11 @@ export default function createGestureFeedback({
 }) {
   let strokeTimeoutEntries = [];
 
-  const show = (stroke, isCanceled = false) => {
+  const show = (stroke, { canceled = false } = {}) => {
     const canvas = createStrokeCanvas({
       parent: parentDOM,
       ...strokeOptions,
-      ...(isCanceled && canceledStrokeOptions),
+      ...(canceled && canceledStrokeOptions),
     });
     canvas.drawStroke(stroke);
     const timeoutEntry = {
