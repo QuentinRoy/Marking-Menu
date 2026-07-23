@@ -14,7 +14,10 @@ import noviceNavigation from './novice-navigation.js';
 import expertNavigation from './expert-navigation.js';
 
 export const confirmedNoviceNavigationHOO = (drag$, start, model, options) =>
-  dwellings(drag$, options.noviceDwellingTime, options.movementsThreshold).pipe(
+  dwellings(drag$, {
+    delay: options.noviceDwellingTime,
+    movementsThreshold: options.movementsThreshold,
+  }).pipe(
     take(1),
     map(() =>
       (start === null || start === undefined ? drag$ : of(start)).pipe(
@@ -32,11 +35,10 @@ export const confirmedNoviceNavigationHOO = (drag$, start, model, options) =>
   );
 
 export const expertToNoviceSwitchHOO = (drag$, model, initStroke, options) =>
-  dwellings(
-    draw(drag$, { initStroke }),
-    options.noviceDwellingTime,
-    options.movementsThreshold,
-  ).pipe(
+  dwellings(draw(drag$, { initStroke }), {
+    delay: options.noviceDwellingTime,
+    movementsThreshold: options.movementsThreshold,
+  }).pipe(
     take(1),
     map((evt) => {
       // Look for the furthest menu (not leaf).

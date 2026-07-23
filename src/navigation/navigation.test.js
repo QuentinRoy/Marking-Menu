@@ -151,7 +151,10 @@ describe('confirmedNoviceNavigationHOO', () => {
       .toBeObservable(expected$);
     m.flush();
     expect(dwellings.mock.calls).toEqual([
-      [drag$, 'mock-dwelling', 'mock-move-threshold']
+      [drag$, {
+        delay: 'mock-dwelling',
+        movementsThreshold: 'mock-move-threshold'
+      }]
     ]);
   }));
 });
@@ -188,8 +191,10 @@ describe('expertToNoviceSwitchHOO', () => {
     expect(draw.mock.calls).toEqual([[drag$, { initStroke: 'mock-stroke' }]])
     expect(dwellings.mock.calls).toEqual([[
       'mock-draw',
-      'mock-dwelling',
-      'mock-move-threshold'
+      {
+        delay: 'mock-dwelling',
+        movementsThreshold: 'mock-move-threshold'
+      }
     ]]);
     expect(noviceNavigation).toHaveBeenCalledTimes(1);
     expect(noviceNavigation.mock.calls[0].slice(1)).toEqual([

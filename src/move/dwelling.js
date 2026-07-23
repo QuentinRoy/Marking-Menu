@@ -12,19 +12,18 @@ import longMoves from './long-move.js';
  Detect dwellings: pauses in a stream of drag movements.
 
  @param {Observable} drag$ - An observable on drag movements.
- @param {number} delay - The time (in ms) to wait before considering an absence of movements
+ @param {object} options - Configuration options.
+ @param {number} options.delay - The time (in ms) to wait before considering an absence of movements
  as a dwell.
- @param {number} [movementsThreshold=0] - The threshold below which movements are considered
+ @param {number} [options.movementsThreshold=0] - The threshold below which movements are considered
  static.
- @param {Scheduler} [scheduler] - The scheduler to use for managing the timers that handle the timeout
- for each value
+ @param {Scheduler} [options.scheduler] - The scheduler to use for managing the timers that handle
+ the timeout for each value
  @returns {Observable} An observable on dwellings in the movement.
  */
 export default function dwellings(
   drag$,
-  delay,
-  movementsThreshold = 0,
-  scheduler = undefined,
+  { delay, movementsThreshold = 0, scheduler },
 ) {
   const dragEnd$ = drag$.pipe(last());
   return merge(drag$.pipe(first()), longMoves(drag$, movementsThreshold)).pipe(

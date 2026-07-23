@@ -19,7 +19,11 @@ describe('dwelling', () => {
     longMove.mockImplementation(() => longMove$);
 
     m.expect(
-      dwelling(drag$, 30, 50, m.scheduler)
+      dwelling(drag$, {
+              delay: 30,
+              movementsThreshold: 50,
+              scheduler: m.scheduler,
+            })
     ).toBeObservable(expected$);
 
     expect(longMove.mock.calls).toEqual([[drag$, 50]]);
