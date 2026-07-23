@@ -61,10 +61,9 @@ export default function getStrokeArticulationPoints(
       refPoint: c,
       direction: -1,
     });
-    const { index: bi, angle: angleABC } = findMiddlePointForMinAngle({
-      pointA: a,
-      pointC: stroke[ci],
-      pointList: stroke,
+    const { index: bi, angle: angleABC } = findMiddlePointForMinAngle(stroke, {
+      from: a,
+      to: stroke[ci],
       startIndex: labi,
       endIndex: lbci,
     });
