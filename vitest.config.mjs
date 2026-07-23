@@ -4,10 +4,12 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['src/**/*.test.js'],
+    // Test files are being migrated from .js to .ts; match both until the
+    // migration completes.
+    include: ['src/**/*.test.{js,ts}'],
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.js'],
+      include: ['src/**/*.{js,ts}'],
       thresholds: {
         statements: 95,
         branches: 90,

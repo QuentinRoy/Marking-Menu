@@ -129,6 +129,6 @@ describe('toPolar', () => {
 
 describe('noOp', () => {
   it('does nothing', () => {
-    expect(noOp()).toBeUndefined();
+    expect(noOp).not.toThrow();
   });
 });

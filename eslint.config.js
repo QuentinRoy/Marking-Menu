@@ -22,21 +22,24 @@ export default defineConfig([
       // it's incompatible with prettier.
       // C.f. https://github.com/xojs/xo/issues/889.
       '@stylistic/no-mixed-operators': 'off',
+
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+      '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+      // This repo uses many factory functions, that starts with a capital letter, but are not classes.
+      'new-cap': 'off',
     },
   },
   {
     files: ['demo/**'],
     rules: {
-      // MarkingMenu is a factory function (an arrow function under the hood),
-      // not a constructor -- `new MarkingMenu(...)` would throw.
-      'new-cap': ['error', { capIsNewExceptions: ['MarkingMenu'] }],
       // No project preview image exists yet to use as og:image; og:title,
       // og:type, and og:url are already set above.
       '@html-eslint/require-open-graph-protocol': 'off',
     },
   },
   {
-    files: ['src/**/*.test.js'],
+    files: ['src/**/*.test.{js,ts}'],
     plugins: { vitest },
     languageOptions: {
       globals: vitest.environments.env.globals,
@@ -52,14 +55,6 @@ export default defineConfig([
       // Describe() is called with an imported function reference in some
       // files; the rule can't resolve the import to confirm it's a function.
       'vitest/valid-title': ['error', { allowArguments: true }],
-      // These test suites use a `*Notif` naming convention for local
-      // notification-object factory helpers; none of them are constructors.
-      'new-cap': [
-        'error',
-        {
-          capIsNewExceptions: ['Notif', 'OpenNotif', 'MNotif', 'EndNotif'],
-        },
-      ],
     },
   },
 ]);
