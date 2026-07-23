@@ -2,122 +2,162 @@ import createModel, { MMItem } from './model.js';
 
 describe('MMItem', () => {
   it('can be created properly', () => {
-    const a = new MMItem('id', 'label', 10);
+    const a = new MMItem({ id: 'id', label: 'label', angle: 10 });
     expect(a.angle).toBe(10);
     expect(a.id).toBe('id');
     expect(a.label).toBe('label');
   });
 
   it('isLeaf checks if the item has children', () => {
-    expect(new MMItem('a', 'label', 10).isLeaf()).toBe(true);
-    expect(new MMItem('b', 'label', 10, { children: [] }).isLeaf()).toBe(true);
+    expect(new MMItem({ id: 'a', label: 'label', angle: 10 }).isLeaf()).toBe(
+      true,
+    );
     expect(
-      new MMItem('c', 'label', 10, {
-        children: [new MMItem('sub', 'childLabel', 5)],
+      new MMItem({ id: 'b', label: 'label', angle: 10, children: [] }).isLeaf(),
+    ).toBe(true);
+    expect(
+      new MMItem({
+        id: 'c',
+        label: 'label',
+        angle: 10,
+        children: [new MMItem({ id: 'sub', label: 'childLabel', angle: 5 })],
       }).isLeaf(),
     ).toBe(false);
   });
 
   it('isRoot checks if the item has a parent', () => {
-    expect(new MMItem('id', 'label', 0).isRoot()).toBe(true);
+    expect(new MMItem({ id: 'id', label: 'label', angle: 0 }).isRoot()).toBe(
+      true,
+    );
     expect(
-      new MMItem('id', 'label', 0, {
-        parent: new MMItem('parentId', 'parentLabel', 0),
+      new MMItem({
+        id: 'id',
+        label: 'label',
+        angle: 0,
+        parent: new MMItem({ id: 'parentId', label: 'parentLabel', angle: 0 }),
       }).isRoot(),
     ).toBe(false);
   });
 
   it('getChild returns the (first) child with the corresponding id', () => {
     const children = [
-      new MMItem('sub1', 'child1', 180),
-      new MMItem('sub2', 'child2', 90),
-      new MMItem('sub2', 'child2', 100), // This should not be allowed
+      new MMItem({ id: 'sub1', label: 'child1', angle: 180 }),
+      new MMItem({ id: 'sub2', label: 'child2', angle: 90 }),
+      new MMItem({ id: 'sub2', label: 'child2', angle: 100 }), // This should not be allowed
     ];
-    const mi = new MMItem('a', 'name', 10, { children });
+    const mi = new MMItem({ id: 'a', label: 'name', angle: 10, children });
     expect(mi.getChild('sub1')).toBe(children[0]);
     expect(mi.getChild('sub2')).toBe(children[1]);
   });
 
   it('getChildrenByLabel returns the children with the corresponding label', () => {
     const children = [
-      new MMItem('sub1', 'child1', 180),
-      new MMItem('sub2', 'child2', 90),
-      new MMItem('sub2', 'child2', 120), // Weird, but why not.
+      new MMItem({ id: 'sub1', label: 'child1', angle: 180 }),
+      new MMItem({ id: 'sub2', label: 'child2', angle: 90 }),
+      new MMItem({ id: 'sub2', label: 'child2', angle: 120 }), // Weird, but why not.
     ];
-    const mi = new MMItem('a', 'name', 10, { children });
+    const mi = new MMItem({ id: 'a', label: 'name', angle: 10, children });
     expect(mi.getChildrenByLabel('child2')).toEqual(children.slice(1));
   });
 
   it('getNearestChild returns the children the closest to the provided angle', () => {
     const children = [
-      new MMItem('sub1', 'child1', 180),
-      new MMItem('sub2', 'child2', 90),
-      new MMItem('sub3', 'child3', 45),
-      new MMItem('sub4', 'child3', 0),
+      new MMItem({ id: 'sub1', label: 'child1', angle: 180 }),
+      new MMItem({ id: 'sub2', label: 'child2', angle: 90 }),
+      new MMItem({ id: 'sub3', label: 'child3', angle: 45 }),
+      new MMItem({ id: 'sub4', label: 'child3', angle: 0 }),
     ];
-    const mi = new MMItem('a', 'name', 10, { children });
+    const mi = new MMItem({ id: 'a', label: 'name', angle: 10, children });
     expect(mi.getNearestChild(45)).toBe(children[2]);
     expect(mi.getNearestChild(220)).toBe(children[0]);
     expect(mi.getNearestChild(300)).toBe(children[3]);
   });
 
   it('getMaxDepth returns the maximum depth of the item hierarchy', () => {
-    expect(new MMItem('id', 'name', 0).getMaxDepth()).toBe(0);
+    expect(
+      new MMItem({ id: 'id', label: 'name', angle: 0 }).getMaxDepth(),
+    ).toBe(0);
 
-    const subsub4 = new MMItem('subsub4', 'subchild4', 0, {
+    const subsub4 = new MMItem({
+      id: 'subsub4',
+      label: 'subchild4',
+      angle: 0,
       children: [
-        new MMItem('subsubsub1', 'subsubchild1', 0),
-        new MMItem('subsubsub2', 'subsubchild2', 0),
+        new MMItem({ id: 'subsubsub1', label: 'subsubchild1', angle: 0 }),
+        new MMItem({ id: 'subsubsub2', label: 'subsubchild2', angle: 0 }),
       ],
     });
-    const sub1 = new MMItem('sub1', 'child1', 180, {
+    const sub1 = new MMItem({
+      id: 'sub1',
+      label: 'child1',
+      angle: 180,
       children: [
-        new MMItem('subsub1', 'subchild1', 180),
-        new MMItem('subsub2', 'subchild2', 90),
-        new MMItem('subsub3', 'subchild3', 45),
+        new MMItem({ id: 'subsub1', label: 'subchild1', angle: 180 }),
+        new MMItem({ id: 'subsub2', label: 'subchild2', angle: 90 }),
+        new MMItem({ id: 'subsub3', label: 'subchild3', angle: 45 }),
         subsub4,
       ],
     });
-    const sub3 = new MMItem('sub3', 'child3', 45, {
-      children: [new MMItem('subsub5', 'subchild5', 0)],
+    const sub3 = new MMItem({
+      id: 'sub3',
+      label: 'child3',
+      angle: 45,
+      children: [new MMItem({ id: 'subsub5', label: 'subchild5', angle: 0 })],
     });
-    const m = new MMItem('id', 'l', 0, {
+    const m = new MMItem({
+      id: 'id',
+      label: 'l',
+      angle: 0,
       children: [
         sub1,
-        new MMItem('sub2', 'child2', 90),
+        new MMItem({ id: 'sub2', label: 'child2', angle: 90 }),
         sub3,
-        new MMItem('sub4', 'child3', 0),
+        new MMItem({ id: 'sub4', label: 'child3', angle: 0 }),
       ],
     });
     expect(m.getMaxDepth()).toBe(3);
   });
 
   it('getMaxBreadth returns the maximum breadth of the item hierarchy', () => {
-    expect(new MMItem('id', 'name', 0).getMaxBreadth()).toBe(0);
+    expect(
+      new MMItem({ id: 'id', label: 'name', angle: 0 }).getMaxBreadth(),
+    ).toBe(0);
 
-    const subsub4 = new MMItem('subsub4', 'subchild4', 0, {
+    const subsub4 = new MMItem({
+      id: 'subsub4',
+      label: 'subchild4',
+      angle: 0,
       children: [
-        new MMItem('subsubsub1', 'subsubchild1', 0),
-        new MMItem('subsubsub2', 'subsubchild2', 0),
+        new MMItem({ id: 'subsubsub1', label: 'subsubchild1', angle: 0 }),
+        new MMItem({ id: 'subsubsub2', label: 'subsubchild2', angle: 0 }),
       ],
     });
-    const sub1 = new MMItem('sub1', 'child1', 180, {
+    const sub1 = new MMItem({
+      id: 'sub1',
+      label: 'child1',
+      angle: 180,
       children: [
-        new MMItem('subsub1', 'subchild1', 180),
-        new MMItem('subsub2', 'subchild2', 90),
-        new MMItem('subsub3', 'subchild3', 45),
+        new MMItem({ id: 'subsub1', label: 'subchild1', angle: 180 }),
+        new MMItem({ id: 'subsub2', label: 'subchild2', angle: 90 }),
+        new MMItem({ id: 'subsub3', label: 'subchild3', angle: 45 }),
         subsub4,
       ],
     });
-    const sub3 = new MMItem('sub3', 'child3', 45, {
-      children: [new MMItem('subsub5', 'subchild5', 0)],
+    const sub3 = new MMItem({
+      id: 'sub3',
+      label: 'child3',
+      angle: 45,
+      children: [new MMItem({ id: 'subsub5', label: 'subchild5', angle: 0 })],
     });
-    const m = new MMItem('id', 'l', 0, {
+    const m = new MMItem({
+      id: 'id',
+      label: 'l',
+      angle: 0,
       children: [
         sub1,
-        new MMItem('sub2', 'child2', 90),
+        new MMItem({ id: 'sub2', label: 'child2', angle: 90 }),
         sub3,
-        new MMItem('sub4', 'child3', 0),
+        new MMItem({ id: 'sub4', label: 'child3', angle: 0 }),
       ],
     });
     expect(m.getMaxBreadth()).toBe(4);
