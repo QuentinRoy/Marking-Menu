@@ -55,7 +55,7 @@ beforeEach(() => {
   UpperStrokeCanvas = createStrokeCanvasFactory('upper');
   LowerStrokeCanvas = createStrokeCanvasFactory('lower');
 
-  GestureFeedback = vi.fn((parent) => {
+  GestureFeedback = vi.fn(({ parent }) => {
     let divs = [];
     const show = (stroke) => {
       const div = document.createElement('div');
