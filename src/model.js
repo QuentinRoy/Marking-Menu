@@ -9,14 +9,14 @@ export class MMItem {
   /**
    Create a menu item.
 
-   @param {string} id - The item's id. Required except for the root item.
-   @param {string} label - The item's label. Required except for the root item.
-   @param {Integer} angle - The item's angle. Required except for the root item.
-   @param {object} [options] - Some additional options.
-   @param {ItemModel} [options.parent] - The parent menu of the item.
-   @param {List<ItemModel>} [options.children] - The children of the item menu.
+   @param {object} config - The item configuration.
+   @param {string} config.id - The item's id. Required except for the root item.
+   @param {string} config.label - The item's label. Required except for the root item.
+   @param {Integer} config.angle - The item's angle. Required except for the root item.
+   @param {ItemModel} [config.parent] - The parent menu of the item.
+   @param {List<ItemModel>} [config.children] - The children of the item menu.
    */
-  constructor(id, label, angle, { parent, children } = {}) {
+  constructor({ id, label, angle, parent, children } = {}) {
     this.id = id;
     this.label = label;
     this.angle = angle;
@@ -113,7 +113,10 @@ const recursivelyCreateModelItems = (
       // Standard item id.
       const stdId = baseId ? [baseId, i].join('-') : i.toString();
       // Create the item.
-      const mmItem = new MMItem(item.id ?? stdId, item.label, i * angleRange, {
+      const mmItem = new MMItem({
+        id: item.id ?? stdId,
+        label: item.label,
+        angle: i * angleRange,
         parent,
       });
       // Add its children if any.
@@ -138,7 +141,7 @@ const recursivelyCreateModelItems = (
  @returns {MMItem} - The root item of the model.
  */
 export default function createModel(itemList) {
-  const menu = new MMItem(null, null, null);
+  const menu = new MMItem({ id: null, label: null, angle: null });
   menu.children = recursivelyCreateModelItems(itemList, undefined, menu);
   return Object.freeze(menu);
 }
