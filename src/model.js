@@ -16,7 +16,7 @@ export class MMItem {
    @param {ItemModel} [config.parent] - The parent menu of the item.
    @param {List<ItemModel>} [config.children] - The children of the item menu.
    */
-  constructor({ id, label, angle, parent, children } = {}) {
+  constructor({ id, label, angle, parent = null, children } = {}) {
     this.id = id;
     this.label = label;
     this.angle = angle;
@@ -29,7 +29,7 @@ export class MMItem {
   }
 
   isRoot() {
-    return !this.parent;
+    return this.parent === null;
   }
 
   /**
@@ -144,7 +144,7 @@ const recursivelyCreateModelItems = ({
 
 /**
  Create the marking menu model.
- 
+
  @param {List<{label, children}>} itemList - The list of items.
  @returns {MMItem} - The root item of the model.
  */

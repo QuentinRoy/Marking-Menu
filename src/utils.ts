@@ -47,17 +47,20 @@ export const deltaAngle = (alpha: number, beta: number): number =>
  */
 export const dist = (point1: number[], point2: number[]): number => {
   if (point1.length !== point2.length) {
-    throw new Error(`Points must have the same dimension. Got ${point1.length} and ${point2.length}.`);
+    throw new Error(
+      `Points must have the same dimension. Got ${point1.length} and ${point2.length}.`,
+    );
   }
 
   return Math.hypot(
-    ...point1.map((x1i, i) => 
-      // Type assertions here is safe because we already checked that the two points
-      // have the same dimension, and making ts happy would require unnecessary extra type checks.
-       (point2[i] as number) - x1i
+    ...point1.map(
+      (x1i, i) =>
+        // Type assertions here is safe because we already checked that the two points
+        // have the same dimension, and making ts happy would require unnecessary extra type checks.
+        (point2[i] as number) - x1i,
     ),
   );
-}
+};
 
 const ANGLE_ROUNDING = 10e-8;
 /**

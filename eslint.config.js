@@ -23,11 +23,42 @@ export default defineConfig([
       // C.f. https://github.com/xojs/xo/issues/889.
       '@stylistic/no-mixed-operators': 'off',
 
+      // This repo uses many factory functions, that starts with a capital letter, but are not classes.
+      'new-cap': 'off',
+    },
+  },
+  {
+    // The @typescript-eslint plugin is only registered for TypeScript files.
+    files: ['**/*.{ts,tsx,mts,cts}'],
+    rules: {
       '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/no-unnecessary-type-assertion': 'error',
       '@typescript-eslint/non-nullable-type-assertion-style': 'off',
-      // This repo uses many factory functions, that starts with a capital letter, but are not classes.
-      'new-cap': 'off',
+      // The codebase models "no item" with `null` (recognizer results, root
+      // MMItem fields, ...) and tests assert on it. Banning `null` types
+      // would force inaccurate `undefined` annotations. Keep the rest of
+      // XO's restricted types.
+      '@typescript-eslint/no-restricted-types': [
+        'error',
+        {
+          types: {
+            object: {
+              message:
+                'The `object` type is hard to use. Use `Record<string, unknown>` instead. See: https://github.com/typescript-eslint/typescript-eslint/pull/848',
+              fixWith: 'Record<string, unknown>',
+            },
+            Buffer: {
+              message:
+                'Use Uint8Array instead. See: https://sindresorhus.com/blog/goodbye-nodejs-buffer',
+              suggest: ['Uint8Array'],
+            },
+            '[]': "Don't use the empty array type `[]`. It only allows empty arrays. Use `SomeType[]` instead.",
+            '[[]]':
+              "Don't use `[[]]`. It only allows an array with a single element which is an empty array. Use `SomeType[][]` instead.",
+            '[[[]]]': "Don't use `[[[]]]`. Use `SomeType[][][]` instead.",
+          },
+        },
+      ],
     },
   },
   {
