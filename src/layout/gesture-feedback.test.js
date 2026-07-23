@@ -41,7 +41,8 @@ describe('createGestureFeedback#draw', () => {
     gs.show('mock-stroke');
     // Expect the stroke canvas to have been properly created.
     expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
-    expect(createStrokeCanvas).toHaveBeenCalledWith('mock-div', {
+    expect(createStrokeCanvas).toHaveBeenCalledWith({
+      parent: 'mock-div',
       strokeArg1: 'arg1',
       strokeArg2: 'arg2',
     });
@@ -54,7 +55,8 @@ describe('createGestureFeedback#draw', () => {
     gs.show('mock-canceled-stroke', true);
     // Expect the stroke canvas to have been properly created.
     expect(createStrokeCanvas).toHaveBeenCalledTimes(1);
-    expect(createStrokeCanvas).toHaveBeenCalledWith('mock-div', {
+    expect(createStrokeCanvas).toHaveBeenCalledWith({
+      parent: 'mock-div',
       strokeArg1: 'canceledArg1',
       strokeArg2: 'arg2',
       canceledStrokeArg3: 'canceledArg3',

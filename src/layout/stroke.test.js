@@ -41,7 +41,8 @@ describe('stroke', () => {
 
     div = document.createElement('div');
     div.getBoundingClientRect = () => ({ width: 50, height: 60 });
-    strokeCanvas = stroke(div, {
+    strokeCanvas = stroke({
+      parent: div,
       doc: document,
       ptSize: 1 / 4,
       pointRadius: 100,

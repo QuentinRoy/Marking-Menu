@@ -199,8 +199,8 @@ describe('main', () => {
     connectLayout.mock.calls[0][0].createUpperStrokeCanvas('mock-parent-3');
     expect(createStrokeCanvas.mock.calls).toEqual([
       [
-        'mock-parent-3',
         {
+          parent: 'mock-parent-3',
           lineColor: 'mock-strokeColor',
           lineWidth: 'mock-strokeWidth',
           pointRadius: 'mock-strokeStartPointRadius',
@@ -214,8 +214,8 @@ describe('main', () => {
     connectLayout.mock.calls[0][0].createLowerStrokeCanvas('mock-parent-4');
     expect(createStrokeCanvas.mock.calls).toEqual([
       [
-        'mock-parent-4',
         {
+          parent: 'mock-parent-4',
           lineColor: 'mock-lowerStrokeColor',
           lineWidth: 'mock-lowerStrokeWidth',
           pointRadius: 'mock-lowerStrokeStartPointRadius',
