@@ -1,11 +1,11 @@
 import { fromEvent, merge, empty, of } from 'rxjs';
 import { takeUntil, withLatestFrom } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles';
-import watchDrags, { mouseDrags, touchDrags } from './linear-drag';
+import watchDrags, { mouseDrags, touchDrags } from './linear-drag.js';
 import {
   createPEventFromTouchEvent,
   createPEventFromMouseEvent,
-} from './pointer-events';
+} from './pointer-events.js';
 
 const toPromise = (obs) =>
   new Promise((resolve, reject) => {
@@ -87,12 +87,10 @@ describe('mouseDrags', () => {
     const i    = m.hot ('^--------x--------y---------z', iValues);
 
     mockFromEvent({ mousedown: down, mousemove: move, mouseup: up });
-    m.expect(
-      i.pipe(withLatestFrom(
-        mouseDrags('root-node'),
-        (_, d) => merge(empty(), d)
-      )
-    )).toBeObservable(i);
+    const latest$ = i.pipe(
+      withLatestFrom(mouseDrags('root-node'), (_, d) => merge(empty(), d)),
+    );
+    m.expect(latest$).toBeObservable(i);
   }));
 });
 
@@ -164,12 +162,10 @@ describe('touchDrags', () => {
 
     mockFromEvent({ touchstart, touchmove, touchend, touchcancel });
 
-    m.expect(
-      i.pipe(withLatestFrom(
-        touchDrags('root-node'),
-        (_, d) => merge(empty(), d)
-      )
-    )).toBeObservable(i);
+    const latest$ = i.pipe(
+      withLatestFrom(touchDrags('root-node'), (_, d) => merge(empty(), d)),
+    );
+    m.expect(latest$).toBeObservable(i);
   }));
 });
 
@@ -180,10 +176,10 @@ describe('watchDrags', () => {
       vi.fn(() => of('b')),
       vi.fn(() => of('c')),
     ];
-    watchDrags('mock-dom', factories.slice());
-    factories.forEach((f) => {
+    watchDrags('mock-dom', [...factories]);
+    for (const f of factories) {
       expect(f.mock.calls).toEqual([['mock-dom']]);
-    });
+    }
   });
 
   // prettier-ignore

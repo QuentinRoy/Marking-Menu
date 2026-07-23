@@ -1,3 +1,1 @@
-import recognizeMMStroke from './recognize-mm-stroke';
-
-export default recognizeMMStroke;
+export { default } from './recognize-mm-stroke.js';

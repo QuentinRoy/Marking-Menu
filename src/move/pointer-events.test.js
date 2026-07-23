@@ -1,7 +1,7 @@
 import {
   createPEventFromMouseEvent,
   createPEventFromTouchEvent,
-} from './pointer-events';
+} from './pointer-events.js';
 
 describe('createPEventFromMouseEvent', () => {
   it('creates a pointer event from a mouse event', () => {
@@ -38,7 +38,7 @@ describe('createPEventFromTouchEvent', () => {
       originalEvent: touchEvent,
     });
     expect(createPEventFromTouchEvent(touchEvent).originalEvent).toBe(
-      touchEvent
+      touchEvent,
     );
   });
 });

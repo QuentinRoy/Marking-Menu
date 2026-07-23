@@ -1,10 +1,9 @@
 import MarkingMenu from 'marking-menu';
 
-let mainElt = document.getElementById('main');
-let toastElement = document.getElementById('toast');
+const toastElement = document.querySelector('#toast');
 
 // Create the menu with a sub-menu at the bottom.
-let items = [
+const items = [
   'Right',
   'Down-Right',
   {
@@ -17,7 +16,7 @@ let items = [
   'Up',
   'Up-Right',
 ];
-let mm = MarkingMenu(items, document.getElementById('main'));
+const mm = MarkingMenu(items, document.querySelector('#main'));
 
 let toastTimeoutId = null;
 function toastMessage(message) {
@@ -30,7 +29,7 @@ function toastMessage(message) {
 }
 
 // Toast the marking menu's selections.
-let subscription = mm.subscribe({
+mm.subscribe({
   next(selection) {
     toastMessage(selection.name);
   },

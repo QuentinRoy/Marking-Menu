@@ -1,4 +1,4 @@
-import createModel, { MMItem } from './model';
+import createModel, { MMItem } from './model.js';
 
 describe('MMItem', () => {
   it('can be created properly', () => {
@@ -14,7 +14,7 @@ describe('MMItem', () => {
     expect(
       new MMItem('c', 'name', 10, {
         children: [new MMItem('sub', 'child', 5)],
-      }).isLeaf()
+      }).isLeaf(),
     ).toBe(false);
   });
 
@@ -23,7 +23,7 @@ describe('MMItem', () => {
     expect(
       new MMItem('id', 'name', 0, {
         parent: new MMItem('parentId', 'parentName', 0),
-      }).isRoot()
+      }).isRoot(),
     ).toBe(false);
   });
 
@@ -63,25 +63,29 @@ describe('MMItem', () => {
 
   it('getMaxDepth returns the maximum depth of the item hierarchy', () => {
     expect(new MMItem('id', 'name', 0).getMaxDepth()).toBe(0);
+
+    const subsub4 = new MMItem('subsub4', 'subchild4', 0, {
+      children: [
+        new MMItem('subsubsub1', 'subsubchild1', 0),
+        new MMItem('subsubsub2', 'subsubchild2', 0),
+      ],
+    });
+    const sub1 = new MMItem('sub1', 'child1', 180, {
+      children: [
+        new MMItem('subsub1', 'subchild1', 180),
+        new MMItem('subsub2', 'subchild2', 90),
+        new MMItem('subsub3', 'subchild3', 45),
+        subsub4,
+      ],
+    });
+    const sub3 = new MMItem('sub3', 'child3', 45, {
+      children: [new MMItem('subsub5', 'subchild5', 0)],
+    });
     const m = new MMItem('id', 'n', 0, {
       children: [
-        new MMItem('sub1', 'child1', 180, {
-          children: [
-            new MMItem('subsub1', 'subchild1', 180),
-            new MMItem('subsub2', 'subchild2', 90),
-            new MMItem('subsub3', 'subchild3', 45),
-            new MMItem('subsub4', 'subchild4', 0, {
-              children: [
-                new MMItem('subsubsub1', 'subsubchild1', 0),
-                new MMItem('subsubsub2', 'subsubchild2', 0),
-              ],
-            }),
-          ],
-        }),
+        sub1,
         new MMItem('sub2', 'child2', 90),
-        new MMItem('sub3', 'child3', 45, {
-          children: [new MMItem('subsub5', 'subchild5', 0)],
-        }),
+        sub3,
         new MMItem('sub4', 'child3', 0),
       ],
     });
@@ -90,25 +94,29 @@ describe('MMItem', () => {
 
   it('getMaxBreadth returns the maximum breadth of the item hierarchy', () => {
     expect(new MMItem('id', 'name', 0).getMaxBreadth()).toBe(0);
+
+    const subsub4 = new MMItem('subsub4', 'subchild4', 0, {
+      children: [
+        new MMItem('subsubsub1', 'subsubchild1', 0),
+        new MMItem('subsubsub2', 'subsubchild2', 0),
+      ],
+    });
+    const sub1 = new MMItem('sub1', 'child1', 180, {
+      children: [
+        new MMItem('subsub1', 'subchild1', 180),
+        new MMItem('subsub2', 'subchild2', 90),
+        new MMItem('subsub3', 'subchild3', 45),
+        subsub4,
+      ],
+    });
+    const sub3 = new MMItem('sub3', 'child3', 45, {
+      children: [new MMItem('subsub5', 'subchild5', 0)],
+    });
     const m = new MMItem('id', 'n', 0, {
       children: [
-        new MMItem('sub1', 'child1', 180, {
-          children: [
-            new MMItem('subsub1', 'subchild1', 180),
-            new MMItem('subsub2', 'subchild2', 90),
-            new MMItem('subsub3', 'subchild3', 45),
-            new MMItem('subsub4', 'subchild4', 0, {
-              children: [
-                new MMItem('subsubsub1', 'subsubchild1', 0),
-                new MMItem('subsubsub2', 'subsubchild2', 0),
-              ],
-            }),
-          ],
-        }),
+        sub1,
         new MMItem('sub2', 'child2', 90),
-        new MMItem('sub3', 'child3', 45, {
-          children: [new MMItem('subsub5', 'subchild5', 0)],
-        }),
+        sub3,
         new MMItem('sub4', 'child3', 0),
       ],
     });
@@ -135,6 +143,9 @@ describe('createModel', () => {
       'up',
     ]);
 
+    const [, bottom] = m.children;
+    const [, custom] = bottom.children;
+
     // Check that the names are correct.
     expect(m.children.map((c) => c.name)).toEqual([
       'right',
@@ -142,7 +153,7 @@ describe('createModel', () => {
       'left',
       'up',
     ]);
-    expect(m.children[1].children.map((c) => c.name)).toEqual([
+    expect(bottom.children.map((c) => c.name)).toEqual([
       'Sub 1',
       'Sub 2',
       'Sub 3',
@@ -154,28 +165,26 @@ describe('createModel', () => {
     // Check that ids are all unique
     expect(
       m.children.every((c1) =>
-        m.children.every((c2) => c2 === c1 || c2.id !== c1.id)
-      )
+        m.children.every((c2) => c2 === c1 || c2.id !== c1.id),
+      ),
     ).toBe(true);
     expect(
-      m.children[1].children.every((c1) =>
-        m.children[1].children.every((c2) => c2 === c1 || c2.id !== c1.id)
-      )
+      bottom.children.every((c1) =>
+        bottom.children.every((c2) => c2 === c1 || c2.id !== c1.id),
+      ),
     ).toBe(true);
 
     // Check that the angles are properly set up.
     expect(m.children.map((c) => c.angle)).toEqual([0, 90, 180, 270]);
-    expect(m.children[1].children.map((c) => c.angle)).toEqual([
+    expect(bottom.children.map((c) => c.angle)).toEqual([
       0, 45, 90, 135, 180, 225,
     ]);
 
     // Check that the parents are properly set up
     expect(m.children.every((c) => c.parent === m)).toBe(true);
-    expect(
-      m.children[1].children.every((c) => c.parent === m.children[1])
-    ).toBe(true);
+    expect(bottom.children.every((c) => c.parent === bottom)).toBe(true);
 
     // Check that the custom-id has been properly set.
-    expect(m.children[1].children[1].id).toBe('custom-id');
+    expect(custom.id).toBe('custom-id');
   });
 });

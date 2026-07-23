@@ -1,17 +1,18 @@
-import { dist } from '../utils';
+import { dist } from '../utils.js';
 
 /**
- * @param {List<List<number>>} stroke - A stroke.
- * @return {number} The length of the stroke `stroke`.
+ Calculate the length of a stroke.
+
+ @param {List<List<number>>} stroke - An ordered list of 2D coordinates.
+ @returns {number} The sum of the euclidean distances between consecutive points.
  */
-export default (stroke) =>
-  stroke.reduce(
-    (res, current) => {
-      const prev = res.prev || current;
-      return {
-        prev: current,
-        length: res.length + dist(prev, current),
-      };
-    },
-    { length: 0 }
-  ).length;
+export default function strokeLength(stroke) {
+  let length = 0;
+  let previous = stroke[0];
+  for (const current of stroke) {
+    length += dist(previous, current);
+    previous = current;
+  }
+
+  return length;
+}

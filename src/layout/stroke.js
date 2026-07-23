@@ -1,17 +1,20 @@
 /**
- * @param {HTMLElement} parent - The parent node.
- * @param {Document} options - Options.
- * @param {Document} [options.doc=document] - The root document. Mostly useful for testing purposes.
- * @param {number} [options.lineWidth=2] - The width of the stroke.
- * @param {string} [options.lineColor='black'] - CSS representation of the stroke color.
- * @param {number} [options.startPointRadius=0] - The radius of the start point.
- * @param {number} [options.startPointColor=options.lineColor] - CSS representation of the start
- *                                                               point color.
- * @param {number} [options.ptSize=1 / devicePixelRatio] - The size of the canvas points
- *                                                         (px).
- * @return {{ clear, setStroke, remove }} The canvas methods.
+ Create a stroke canvas.
+
+ @param {HTMLElement} parent - The parent node.
+ @param {object} options - Configuration options.
+ @param {Document} [options.doc=document] - The root document. Mostly useful for testing purposes.
+ @param {number} [options.lineWidth=2] - The width of the stroke, in pixels.
+ @param {string} [options.lineColor='black'] - CSS representation of the stroke color.
+ @param {number} [options.pointRadius=0] - The radius of the point drawn at the start of the
+ stroke.
+ @param {string} [options.pointColor=options.lineColor] - CSS representation of the start point
+ color.
+ @param {number} [options.ptSize=1 / devicePixelRatio] - The size of the canvas points
+ (px).
+ @returns {{ clear, drawStroke, drawPoint, remove }} The canvas methods.
  */
-export default (
+export default function createStrokeCanvas(
   parent,
   {
     doc = document,
@@ -20,8 +23,8 @@ export default (
     pointRadius = 0,
     pointColor = lineColor,
     ptSize = window.devicePixelRatio ? 1 / window.devicePixelRatio : 1,
-  }
-) => {
+  },
+) {
   // Create the canvas.
   const { width, height } = parent.getBoundingClientRect();
   const canvas = doc.createElement('canvas');
@@ -35,7 +38,7 @@ export default (
     height: `${height}px`,
     'pointer-events': 'none',
   });
-  parent.appendChild(canvas);
+  parent.append(canvas);
 
   // Get the canvas' context and set it up
   const ctx = canvas.getContext('2d');
@@ -43,8 +46,10 @@ export default (
   ctx.scale(1 / ptSize, 1 / ptSize);
 
   /**
-   * @param {number[]} point - Position of the point to draw.
-   * @return {undefined}
+   Render the start-of-stroke marker at the given position.
+
+   @param {number[]} point - Position of the point to draw.
+   @returns {undefined}
    */
   const drawPoint = ([x, y]) => {
     ctx.save();
@@ -58,19 +63,19 @@ export default (
   };
 
   /**
-   * Clear the canvas.
-   *
-   * @return {undefined}
+   Clear the canvas.
+   
+   @returns {undefined}
    */
   const clear = () => {
     ctx.clearRect(0, 0, width, height);
   };
 
   /**
-   * Draw the stroke.
-   *
-   * @param {List<number[]>} stroke - The new stroke.
-   * @return {undefined}
+   Render a path connecting every point of the given stroke.
+
+   @param {List<number[]>} stroke - The new stroke.
+   @returns {undefined}
    */
   const drawStroke = (stroke) => {
     ctx.save();
@@ -80,21 +85,25 @@ export default (
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = lineWidth;
     ctx.beginPath();
-    stroke.forEach((point, i) => {
-      if (i === 0) ctx.moveTo(...point);
-      else ctx.lineTo(...point);
-    });
+    for (const [i, point] of stroke.entries()) {
+      if (i === 0) {
+        ctx.moveTo(...point);
+      } else {
+        ctx.lineTo(...point);
+      }
+    }
+
     ctx.stroke();
     ctx.restore();
   };
 
   /**
-   * Destroy the canvas.
-   * @return {undefined}
+   Destroy the canvas.
+   @returns {undefined}
    */
   const remove = () => {
     canvas.remove();
   };
 
   return { clear, drawStroke, drawPoint, remove };
-};
+}

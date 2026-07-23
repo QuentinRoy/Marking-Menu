@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import { marbles } from 'rxjs-marbles';
-import connect from './connect';
+import connect from './connect.js';
 
 vi.mock('raf-schd', () => ({ default: vi.fn((f) => f) }));
 
@@ -22,7 +22,7 @@ beforeEach(() => {
     vi.fn((parent) => {
       const div = document.createElement('div');
       div.className = `${name}-stroke-canvas`;
-      parent.appendChild(div);
+      parent.append(div);
 
       // Set up the strokes properties as data attributes.
       div.dataset.points = JSON.stringify([]);
@@ -60,13 +60,18 @@ beforeEach(() => {
     const show = (stroke) => {
       const div = document.createElement('div');
       div.className = `mock-gesture-feedback`;
-      parent.appendChild(div);
+      parent.append(div);
       div.dataset.stroke = JSON.stringify(stroke);
     };
+
     const remove = () => {
-      divs.forEach((d) => d.remove());
+      for (const d of divs) {
+        d.remove();
+      }
+
       divs = [];
     };
+
     return { show, remove };
   });
 
@@ -74,7 +79,7 @@ beforeEach(() => {
   MenuLayout = vi.fn((parent, model, center, active) => {
     const div = document.createElement('div');
     div.className = 'menu';
-    parent.appendChild(div);
+    parent.append(div);
 
     // Set up the menu properties as data attributes.
     div.dataset.model = JSON.stringify(model);
@@ -104,13 +109,13 @@ describe('connect', () => {
   it('draws expert strokes on draw notifications', () => {
     const src = of(
       { type: 'start', position: 'pos1' },
-      { type: 'draw', stroke: 'stroke1' },
-      { type: 'draw', stroke: 'stroke2' },
+      { type: 'draw', stroke: ['stroke1'] },
+      { type: 'draw', stroke: ['stroke2'] },
       { type: 'select' },
       { type: 'start', position: 'pos2' },
-      { type: 'draw', stroke: 'stroke3' },
+      { type: 'draw', stroke: ['stroke3'] },
       { type: 'cancel' },
-      { type: 'start', position: 'pos3' }
+      { type: 'start', position: 'pos3' },
     );
 
     const out = connect(
@@ -119,7 +124,7 @@ describe('connect', () => {
       MenuLayout,
       UpperStrokeCanvas,
       LowerStrokeCanvas,
-      GestureFeedback
+      GestureFeedback,
     );
     out.subscribe({
       next() {
@@ -170,7 +175,7 @@ describe('connect', () => {
       { type: 'start', position: 'pos3' },
       { type: 'open', menu: 'menu4', center: [90, 30], position: [102, 201] },
       { type: 'move', position: [500, 0] },
-      { type: 'change', active: { id: 'active-item-5' } }
+      { type: 'change', active: { id: 'active-item-5' } },
     );
 
     const out = connect(
@@ -179,7 +184,7 @@ describe('connect', () => {
       MenuLayout,
       UpperStrokeCanvas,
       LowerStrokeCanvas,
-      GestureFeedback
+      GestureFeedback,
     );
     out.subscribe({
       next() {

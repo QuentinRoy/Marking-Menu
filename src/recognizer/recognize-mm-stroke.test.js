@@ -1,15 +1,19 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
+import { promisify } from 'node:util';
 import { parse as csvParseCallback } from 'csv-parse';
 import angles from 'angles';
-import { promisify } from 'util';
 import recognizeMMStroke, {
   pointsToSegments,
   divideLongestSegment,
   walkMMModel,
-} from './recognize-mm-stroke';
+} from './recognize-mm-stroke.js';
 
-const STROKES_PATH = path.resolve(__dirname, '__fixtures__', 'strokes');
+const STROKES_PATH = path.resolve(
+  import.meta.dirname,
+  '__fixtures__',
+  'strokes',
+);
 
 const readFile = promisify(fs.readFile);
 const csvParse = promisify(csvParseCallback);
@@ -18,11 +22,12 @@ const createMockMMModel = (
   depth = 1,
   breadth = 8,
   requestedAngle = undefined,
-  parent = undefined
+  parent = undefined,
 ) => {
   if (depth === 0) {
     return { isLeaf: vi.fn(() => true), requestedAngle, parent };
   }
+
   if (depth > 0) {
     const m = {
       parent,
@@ -31,11 +36,12 @@ const createMockMMModel = (
       getMaxBreadth: vi.fn(() => breadth),
       isLeaf: vi.fn(() => false),
       getNearestChild: vi.fn((childAngle) =>
-        createMockMMModel(depth - 1, breadth, childAngle, m)
+        createMockMMModel(depth - 1, breadth, childAngle, m),
       ),
     };
     return m;
   }
+
   throw new Error(`Invalid depth: ${depth}`);
 };
 
@@ -43,7 +49,7 @@ const readStroke = async (strokeName) => {
   const data = await readFile(path.resolve(STROKES_PATH, `${strokeName}.csv`));
   const lines = await csvParse(data, { columns: true });
   // Adapt the line, inverting y so that the origin is on the top instead of the bottom.
-  return lines.map((row) => [+row.x, 4000 - row.y]);
+  return lines.map((row) => [Number(row.x), 4000 - row.y]);
 };
 
 describe('pointsToSegments', () => {
@@ -54,7 +60,7 @@ describe('pointsToSegments', () => {
         [5, 3],
         [10, 8],
         [15, 4],
-      ])
+      ]),
     ).toEqual([
       [
         [0, 3],
@@ -79,7 +85,7 @@ describe('divideLongestSegment', () => {
         { length: 10, angle: 5 },
         { length: 30, angle: 10 },
         { length: 20, angle: 20 },
-      ])
+      ]),
     ).toEqual([
       { length: 10, angle: 5 },
       { length: 15, angle: 10 },
@@ -97,6 +103,7 @@ describe('walkMMModel', () => {
       expect(selection.requestedAngle).toBe(90);
       expect(selection.parent).toBe(menu);
     }
+
     {
       const menu = createMockMMModel(2);
       const selection = walkMMModel(menu, [{ angle: 90 }, { angle: 180 }]);
@@ -104,6 +111,7 @@ describe('walkMMModel', () => {
       expect(selection.parent.requestedAngle).toBe(90);
       expect(selection.parent.parent).toBe(menu);
     }
+
     {
       const menu = createMockMMModel(3);
       const selection = walkMMModel(menu, [
@@ -116,18 +124,21 @@ describe('walkMMModel', () => {
       expect(selection.parent.parent.requestedAngle).toBe(90);
       expect(selection.parent.parent.parent).toBe(menu);
     }
+
     {
       const menu = createMockMMModel(1);
       expect(walkMMModel(menu, [])).toBe(null);
     }
+
     {
       const menu = createMockMMModel(1);
       expect(walkMMModel(menu, [{ angle: 200 }, { angle: 0 }])).toBe(null);
     }
+
     {
       const menu = createMockMMModel(2);
       expect(
-        walkMMModel(menu, [{ angle: 200 }, { angle: 5 }, { angle: 10 }])
+        walkMMModel(menu, [{ angle: 200 }, { angle: 5 }, { angle: 10 }]),
       ).toBe(null);
     }
   });
@@ -145,9 +156,10 @@ describe('recognizeMMStroke', () => {
       const selection = recognizeMMStroke(stroke, model);
       // Make sure the angle is close to the expected stroke angle (mock model dynamically)
       expect(
-        angles.distance(selection.requestedAngle, strokeAngle) < precision
+        angles.distance(selection.requestedAngle, strokeAngle) < precision,
       ).toBe(true);
     };
+
     await testStroke(0);
     await testStroke(45);
     await testStroke(90);
@@ -162,7 +174,7 @@ describe('recognizeMMStroke', () => {
     const precision = 15;
     const testStroke = async (
       strokeAngles,
-      strokeName = strokeAngles.join('-')
+      strokeName = strokeAngles.join('-'),
     ) => {
       // Read the stroke.
       const stroke = await readStroke(strokeName);
@@ -172,20 +184,21 @@ describe('recognizeMMStroke', () => {
       const selection = recognizeMMStroke(stroke, model);
       // Make sure the angle is close to the expected stroke angle (mock model dynamically).
       expect(
-        angles.distance(selection.requestedAngle, strokeAngles[2]) < precision
+        angles.distance(selection.requestedAngle, strokeAngles[2]) < precision,
       ).toBe(true);
       expect(
         angles.distance(selection.parent.requestedAngle, strokeAngles[1]) <
-          precision
+          precision,
       ).toBe(true);
       expect(
         angles.distance(
           selection.parent.parent.requestedAngle,
-          strokeAngles[0]
-        ) < precision
+          strokeAngles[0],
+        ) < precision,
       ).toBe(true);
       expect(selection.parent.parent.parent).toBe(model);
     };
+
     await testStroke([225, 0, 135]);
     await testStroke([270, 0, 90]);
     await testStroke([270, 45, 90]);
@@ -223,7 +236,7 @@ describe('recognizeMMStroke', () => {
       recognizeMMStroke(stroke, model, {
         maxDepth: 3,
         requireMenu: true,
-      }).isLeaf()
+      }).isLeaf(),
     ).toBe(false);
   });
 

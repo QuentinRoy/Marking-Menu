@@ -1,4 +1,4 @@
-import { resolve } from 'node:path';
+import path from 'node:path';
 import { defineConfig } from 'vite';
 
 const importMapDependencies = new Set([
@@ -11,7 +11,7 @@ export default defineConfig(({ command }) => ({
   base: './',
   build: {
     emptyOutDir: true,
-    outDir: resolve(import.meta.dirname, 'demo-dist'),
+    outDir: path.resolve(import.meta.dirname, 'demo-dist'),
   },
   plugins: [
     {
@@ -28,14 +28,19 @@ export default defineConfig(({ command }) => ({
         if (importMapDependencies.has(source)) {
           return { external: true, id: source };
         }
+
         return null;
       },
     },
   ],
-  publicDir: resolve(import.meta.dirname, 'dist'),
+  publicDir: path.resolve(import.meta.dirname, 'dist'),
   resolve:
     command === 'serve'
-      ? { alias: { 'marking-menu': resolve(import.meta.dirname, 'src/index.js') } }
+      ? {
+          alias: {
+            'marking-menu': path.resolve(import.meta.dirname, 'src/index.js'),
+          },
+        }
       : undefined,
-  root: resolve(import.meta.dirname, 'demo'),
+  root: path.resolve(import.meta.dirname, 'demo'),
 }));

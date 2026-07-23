@@ -2,30 +2,31 @@ import { finalize, tap } from 'rxjs/operators';
 import rafThrottle from 'raf-schd';
 
 /**
- * Connect navigation notifications to menu opening and closing.
- *
- * @param {HTMLElement} parentDOM - The element where to append the menu.
- * @param {Observable} navigation$ - Notifications of the navigation.
- * @param {Function} createMenuLayout - Menu layout factory.
- * @param {Function} createUpperStrokeCanvas - Upper stroke canvas factory. The
- * upper stroke show the user interaction on the current menu, and the movements
- * in expert mode.
- * @param {Function} createLowerStrokeCanvas - Lower stroke canvas factory. The
- * lower stroke is stroke drawn below the menu. It keeps track of the previous
- * movements.
- * @param {Function} createGestureFeedback - Create gesture feedback.
- * @param {{error}} log - Logger.
- * @return {Observable} `navigation$` with menu opening and closing side effects.
+ Connect navigation notifications to menu opening and closing.
+ 
+ @param {HTMLElement} parentDOM - The element where to append the menu.
+ @param {Observable} navigation$ - Notifications of the navigation.
+ @param {(parentDOM: HTMLElement, model: object, position: number[]) => object} createMenuLayout -
+ Menu layout factory.
+ @param {(parentDOM: HTMLElement) => object} createUpperStrokeCanvas - Upper stroke canvas
+ factory. The upper stroke show the user interaction on the current menu, and the movements
+ in expert mode.
+ @param {(parentDOM: HTMLElement) => object} createLowerStrokeCanvas - Lower stroke canvas
+ factory. The lower stroke is stroke drawn below the menu. It keeps track of the previous
+ movements.
+ @param {(parentDOM: HTMLElement) => object} createGestureFeedback - Gesture feedback factory.
+ @param {{error}} log - Logger.
+ @returns {Observable} `navigation$` with menu opening and closing side effects.
  */
-export default (
+export default function connectLayout(
   parentDOM,
   navigation$,
   createMenuLayout,
   createUpperStrokeCanvas,
   createLowerStrokeCanvas,
   createGestureFeedback,
-  log
-) => {
+  log,
+) {
   // The menu object.
   let menu = null;
   // A stroke drawn on top of the menu.
@@ -63,23 +64,28 @@ export default (
   };
 
   const noviceMove = rafThrottle((position) => {
-    if (upperStrokeCanvas) {
-      upperStrokeCanvas.clear();
-      if (position) {
-        upperStroke = [upperStroke[0], position];
-        upperStrokeCanvas.drawStroke(upperStroke);
-      }
-      upperStrokeCanvas.drawPoint(upperStroke[0]);
+    if (!upperStrokeCanvas) {
+      return;
     }
+
+    upperStrokeCanvas.clear();
+    if (position) {
+      upperStroke = [upperStroke[0], position];
+      upperStrokeCanvas.drawStroke(upperStroke);
+    }
+
+    upperStrokeCanvas.drawPoint(upperStroke[0]);
   });
 
   const expertDraw = rafThrottle((stroke) => {
     // FIXME: Not very efficient.
-    if (upperStrokeCanvas) {
-      upperStrokeCanvas.clear();
-      upperStroke = stroke.slice();
-      upperStrokeCanvas.drawStroke(upperStroke);
+    if (!upperStrokeCanvas) {
+      return;
     }
+
+    upperStrokeCanvas.clear();
+    upperStroke = [...stroke];
+    upperStrokeCanvas.drawStroke(upperStroke);
   });
 
   const clearUpperStroke = () => {
@@ -91,7 +97,7 @@ export default (
   const swapUpperStroke = () => {
     lowerStroke = lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke;
     clearUpperStroke();
-    lowerStrokeCanvas = lowerStrokeCanvas || createLowerStrokeCanvas(parentDOM);
+    lowerStrokeCanvas ||= createLowerStrokeCanvas(parentDOM);
     lowerStrokeCanvas.drawStroke(lowerStroke);
   };
 
@@ -100,66 +106,90 @@ export default (
       lowerStrokeCanvas.remove();
       lowerStrokeCanvas = null;
     }
+
     lowerStroke = null;
   };
 
   const showGestureFeedback = (isCanceled) => {
     gestureFeedback.show(
       lowerStroke ? [...lowerStroke, ...upperStroke] : upperStroke,
-      isCanceled
+      isCanceled,
     );
   };
 
   const cleanUp = () => {
     // Make sure everything is cleaned upon completion.
-    if (menu) closeMenu();
-    if (upperStrokeCanvas) clearUpperStroke();
-    if (lowerStrokeCanvas) clearLowerStroke();
+    if (menu) {
+      closeMenu();
+    }
+
+    if (upperStrokeCanvas) {
+      clearUpperStroke();
+    }
+
+    if (lowerStrokeCanvas) {
+      clearLowerStroke();
+    }
+
     gestureFeedback.remove();
-    // eslint-disable-next-line no-param-reassign
+
     parentDOM.style.cursor = '';
   };
 
   const onNotification = (notification) => {
     switch (notification.type) {
       case 'open': {
-        // eslint-disable-next-line no-param-reassign
         parentDOM.style.cursor = 'none';
-        if (menu) closeMenu();
+        if (menu) {
+          closeMenu();
+        }
+
         swapUpperStroke();
         openMenu(notification.menu, notification.center);
         startUpperStroke(notification.center);
         noviceMove(notification.position);
         break;
       }
+
       case 'change': {
         setActive((notification.active && notification.active.id) || null);
         break;
       }
+
       case 'select':
-      case 'cancel':
-        // eslint-disable-next-line no-param-reassign
+      case 'cancel': {
         parentDOM.style.cursor = '';
-        if (menu) closeMenu();
+        if (menu) {
+          closeMenu();
+        }
+
         showGestureFeedback(notification.type === 'cancel');
         clearUpperStroke();
         clearLowerStroke();
         break;
-      case 'start':
-        // eslint-disable-next-line no-param-reassign
+      }
+
+      case 'start': {
         parentDOM.style.cursor = 'crosshair';
         startUpperStroke(notification.position);
         break;
-      case 'draw':
+      }
+
+      case 'draw': {
         expertDraw(notification.stroke);
         break;
-      case 'move':
+      }
+
+      case 'move': {
         noviceMove(notification.position);
         break;
-      default:
+      }
+
+      default: {
         throw new Error(
-          `Invalid navigation notification type: ${notification.type}`
+          `Invalid navigation notification type: ${notification.type}`,
         );
+      }
     }
   };
 
@@ -168,23 +198,23 @@ export default (
       next(notification) {
         try {
           onNotification(notification);
-        } catch (e) {
-          log.error(e);
-          throw e;
+        } catch (error) {
+          log.error(error);
+          throw error;
         }
       },
-      error(e) {
-        log.error(e);
-        throw e;
+      error(error) {
+        log.error(error);
+        throw error;
       },
     }),
     finalize(() => {
       try {
         cleanUp();
-      } catch (e) {
-        log.error(e);
-        throw e;
+      } catch (error) {
+        log.error(error);
+        throw error;
       }
-    })
+    }),
   );
-};
+}

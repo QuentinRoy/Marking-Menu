@@ -1,15 +1,15 @@
 import { map } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
-import main, { exportNotification } from './main';
-import navigation from './navigation';
-import createModel from './model';
+import main, { exportNotification } from './main.js';
+import navigation from './navigation/index.js';
+import createModel from './model.js';
 import {
   createMenuLayout,
   createStrokeCanvas,
   createGestureFeedback,
   connectLayout,
-} from './layout';
-import { watchDrags } from './move';
+} from './layout/index.js';
+import { watchDrags } from './move/index.js';
 
 vi.mock('./navigation');
 vi.mock('./layout');
@@ -28,7 +28,7 @@ describe('exportNotification', () => {
         foo: 'foo',
         selection: 'selection',
         timeStamp: 'timeStamp',
-      })
+      }),
     ).toEqual({
       type: 'type',
       mode: 'mode',
@@ -42,7 +42,7 @@ describe('exportNotification', () => {
     expect(
       exportNotification({
         center: ['mock-center'],
-      })
+      }),
     ).toEqual({
       menuCenter: ['mock-center'],
     });
@@ -86,11 +86,11 @@ describe('main', () => {
       connectedObs$ = mockNavObs$.pipe(map((n) => ({ ...n, connected: true })));
       navigation.mockImplementation(() => mockNavObs$);
       connectLayout.mockImplementation(() => connectedObs$);
-      callMain = (opts = {}) =>
+      callMain = (options = {}) =>
         main('mock-items', 'mock-parentDOM', {
           minSelectionDist: 'mock-minSelectionDist',
           minMenuSelectionDist: 'mock-minMenuSelectionDist',
-          subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
+          submenuOpeningDelay: 'mock-submenuOpeningDelay',
           movementsThreshold: 'mock-movementsThreshold',
           noviceDwellingTime: 'mock-noviceDwellingTime',
           strokeColor: 'mock-strokeColor',
@@ -106,9 +106,9 @@ describe('main', () => {
             'mock-gestureFeedbackCanceledStrokeColor',
           notifySteps: true,
           log: 'mock-log',
-          ...opts,
+          ...options,
         });
-    })
+    }),
   );
 
   afterEach(() => {
@@ -132,7 +132,7 @@ describe('main', () => {
         {
           minSelectionDist: 'mock-minSelectionDist',
           minMenuSelectionDist: 'mock-minMenuSelectionDist',
-          subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
+          submenuOpeningDelay: 'mock-submenuOpeningDelay',
           movementsThreshold: 'mock-movementsThreshold',
           noviceDwellingTime: 'mock-noviceDwellingTime',
         },
@@ -142,9 +142,12 @@ describe('main', () => {
 
   it("properly prevents default from navigation's notifications", () => {
     callMain().subscribe((n) => {
-      // c does not have original event to make sure it does not fail
+      // C does not have original event to make sure it does not fail
       // without it.
-      if (n.active === 'c') return;
+      if (n.active === 'c') {
+        return;
+      }
+
       const mockNotif = mockNavNotifs[n.active];
       expect(mockNotif.originalEvent.preventDefault).toHaveBeenCalled();
     });
@@ -174,15 +177,16 @@ describe('main', () => {
       'mock-parent-2',
       'mock-menuModel-2',
       'mock-center-2',
-      'mock-current-2'
+      'mock-current-2',
     );
     expect(createMenuLayout.mock.calls).toEqual([
       [
-        'mock-parent-2',
-        'mock-menuModel-2',
-        'mock-center-2',
-        'mock-current-2',
-        {},
+        {
+          parent: 'mock-parent-2',
+          model: 'mock-menuModel-2',
+          center: 'mock-center-2',
+          current: 'mock-current-2',
+        },
       ],
     ]);
   });

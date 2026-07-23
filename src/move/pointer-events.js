@@ -1,5 +1,8 @@
 // Create a custom pointer event from a touch event.
 export const createPEventFromTouchEvent = (touchEvt) => {
+  // `targetTouches` is only array-like (not iterable across engines), so it cannot
+  // be spread.
+  // eslint-disable-next-line unicorn/prefer-spread
   const touchList = Array.from(touchEvt.targetTouches);
   const sumX = touchList.reduce((acc, t) => acc + t.clientX, 0);
   const sumY = touchList.reduce((acc, t) => acc + t.clientY, 0);

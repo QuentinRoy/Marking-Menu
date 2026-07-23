@@ -10,13 +10,7 @@
   ],
   "packageRules": [
     {
-      "matchPackageNames": [
-        "/eslint/",
-        "/husky/",
-        "/prettier/",
-        "/commitlint/",
-        "/standard-version/"
-      ],
+      "matchPackageNames": ["/eslint/", "/prettier/", "/standard-version/"],
       "groupName": "ci"
     },
     {

@@ -1,15 +1,17 @@
 import { merge } from 'rxjs';
 import { startWith, last, map, share } from 'rxjs/operators';
-import { draw } from '../move';
-import recognize from '../recognizer';
+import { draw } from '../move/index.js';
+import recognize from '../recognizer/index.js';
 
 /**
- * @param {Observable} drag$ - An observable of drag movements.
- * @param {MMItem} model - The model of the menu.
- * @param {List<number[]>} initStroke - Initial stroke.
- * @return {Observable} An observable on the gesture drawing and recognition.
+ Navigate the menu in expert mode: recognize the gesture drawn during the drag.
+
+ @param {Observable} drag$ - An observable of drag movements.
+ @param {MMItem} model - The model of the menu.
+ @param {List<number[]>} initStroke - Initial stroke.
+ @returns {Observable} An observable on the gesture drawing and recognition.
  */
-export default (drag$, model, initStroke = []) => {
+export default function expertNavigation(drag$, model, initStroke = []) {
   // Observable on gesture drawing.
   const draw$ = draw(drag$, { initStroke, type: 'draw' }).pipe(share());
 
@@ -17,14 +19,18 @@ export default (drag$, model, initStroke = []) => {
   const end$ = draw$.pipe(
     startWith(null),
     last(),
-    map((e) => {
-      if (!e) return { type: 'cancel' };
-      const selection = recognize(e.stroke, model);
-      if (selection) {
-        return { ...e, type: 'select', selection };
+    map((event_) => {
+      if (!event_) {
+        return { type: 'cancel' };
       }
-      return { ...e, type: 'cancel' };
-    })
+
+      const selection = recognize(event_.stroke, model);
+      if (selection) {
+        return { ...event_, type: 'select', selection };
+      }
+
+      return { ...event_, type: 'cancel' };
+    }),
   );
   return merge(draw$, end$);
-};
+}

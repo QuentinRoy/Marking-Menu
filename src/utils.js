@@ -1,51 +1,56 @@
 /**
- * @param {number} a the dividend
- * @param {number} n the divisor
- * @return {number} The modulo of `a` over `n` (% is not exactly modulo but remainder).
+ Calculate the modulo of `a` over `n`.
+
+ @param {number} a the dividend
+ @param {number} n the divisor
+ @returns {number} The modulo of `a` over `n` (% is not exactly modulo but remainder).
  */
 export const mod = (a, n) => ((a % n) + n) % n;
 
 /**
- * @param {number} radians an angle in radians
- * @return {number} The angle in degrees.
+ Convert an angle from radians to degrees.
+
+ @param {number} radians an angle in radians
+ @returns {number} The angle in degrees.
  */
 export const radiansToDegrees = (radians) => radians * (180 / Math.PI);
 
 /**
- * @param {number} degrees an angle in degrees
- * @return {number} The angle in radians.
+ Convert an angle from degrees to radians.
+
+ @param {number} degrees an angle in degrees
+ @returns {number} The angle in radians.
  */
 export const degreesToRadians = (degrees) => degrees * (Math.PI / 180);
 
 /**
- * @param {number} alpha a first angle (in degrees)
- * @param {number} beta a second angle (in degrees)
- * @return {number} The (signed) delta between the two angles (in degrees).
+ Calculate the signed delta between two angles.
+
+ @param {number} alpha a first angle (in degrees)
+ @param {number} beta a second angle (in degrees)
+ @returns {number} The (signed) delta between the two angles (in degrees).
  */
 export const deltaAngle = (alpha, beta) => mod(beta - alpha + 180, 360) - 180;
 
 /**
- * Calculate the euclidean distance between two
- * points.
- *
- * @param {List<number>} point1 - The first point
- * @param {List<number>} point2 - The second point
- * @return {number} The distance between the two points.
+ Calculate the euclidean distance between two
+ points.
+
+ @param {List<number>} point1 - The first point
+ @param {List<number>} point2 - The second point
+ @returns {number} The distance between the two points.
  */
-export const dist = (point1, point2) => {
-  const sum = point1.reduce((acc, x1i, i) => {
-    const x2i = point2[i];
-    return acc + (x2i - x1i) ** 2;
-  }, 0);
-  return Math.sqrt(sum);
-};
+export const dist = (point1, point2) =>
+  Math.hypot(...point1.map((x1i, i) => point2[i] - x1i));
 
 const ANGLE_ROUNDING = 10e-8;
 /**
- * @param {number[]} a - The first point.
- * @param {number[]} b - The second point, center of the angle.
- * @param {number[]} c - The third point.
- * @return {number} The angle abc (in degrees) rounded at the 8th decimal.
+ Calculate the angle abc formed by three points.
+
+ @param {number[]} a - The first point.
+ @param {number[]} b - The second point, center of the angle.
+ @param {number[]} c - The third point.
+ @returns {number} The angle abc (in degrees) rounded at the 8th decimal.
  */
 export const angle = (a, b, c) => {
   const lab = dist(a, b);
@@ -61,42 +66,49 @@ export const angle = (a, b, c) => {
 };
 
 /**
- * @callback findMaxEntryComp
- * @param {*} item1 - A first item.
- * @param {*} item2 - A second item.
- * @return {number} A positive number if the second item should be ranked higher than the first,
- *                  a negative number if it should be ranked lower and 0 if they should be ranked
- *                  the same.
+ @callback findMaxEntryComp
+ @param {unknown} item1 - A first item.
+ @param {unknown} item2 - A second item.
+ @returns {number} A positive number if the second item should be ranked higher than the first,
+ a negative number if it should be ranked lower and 0 if they should be ranked
+ the same.
  */
 
 /**
- * @param {List} list - A list of items.
- * @param {findMaxEntryComp} comp - A function to calculate a value from an item.
- * @return {[index, item]} The found entry.
+ Find the entry of `list` ranked highest by `comp`.
+
+ @param {List} list - A list of items.
+ @param {findMaxEntryComp} comp - A function to calculate a value from an item.
+ @returns {[index, item]} The found entry.
  */
-export const findMaxEntry = (list, comp) =>
-  list.slice(0).reduce(
-    (result, item, index) => {
-      if (comp(result[1], item) > 1) return [index, item];
-      return result;
-    },
-    [0, list[0]]
-  );
+export const findMaxEntry = (list, comp) => {
+  let result = [0, list[0]];
+  for (const [index, item] of [...list].entries()) {
+    if (comp(result[1], item) > 1) {
+      result = [index, item];
+    }
+  }
+
+  return result;
+};
 
 /**
- * Converts the coordinates of a point in polar coordinates (angle in degrees).
- *
- * @param  {number[]} point - A point.
- * @param  {number[]} [pole=[0, 0]] - The pole of a polar coordinate
- *                                    system
- * @return {{azymuth, radius}} The angle coordinate of the point in the polar
- *                             coordinate system in degrees.
+ Converts the coordinates of a point in polar coordinates (angle in degrees).
+
+ @param {number[]} point - A point.
+ @param {number[]} [pole=[0, 0]] - The pole of a polar coordinate
+ system
+ @returns {{azymuth, radius}} The angle coordinate of the point in the polar
+ coordinate system in degrees.
  */
 export const toPolar = ([px, py], [cx, cy] = [0, 0]) => {
   const x = px - cx;
   const y = py - cy;
   return {
     azymuth: radiansToDegrees(Math.atan2(y, x)),
-    radius: Math.sqrt(x * x + y * y),
+    radius: Math.hypot(x, y),
   };
 };
+
+/** A function that does nothing. Useful as a default callback. */
+export const noOp = () => {};

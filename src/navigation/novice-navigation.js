@@ -9,8 +9,8 @@ import {
   switchAll,
   take,
 } from 'rxjs/operators';
-import { toPolar } from '../utils';
-import { dwellings } from '../move';
+import { toPolar } from '../utils.js';
+import { dwellings } from '../move/index.js';
 
 export const noviceMoves = (drag$, menu, { menuCenter, minSelectionDist }) => {
   // Analyse local movements.
@@ -23,7 +23,7 @@ export const noviceMoves = (drag$, menu, { menuCenter, minSelectionDist }) => {
         const type = last_.active === active ? 'move' : 'change';
         return { active, type, azymuth, radius, ...n };
       },
-      { active: null }
+      { active: null },
     ),
     startWith({
       type: 'open',
@@ -31,7 +31,7 @@ export const noviceMoves = (drag$, menu, { menuCenter, minSelectionDist }) => {
       center: menuCenter,
       timeStamp: new Event('marking-menu-open').timeStamp,
     }),
-    share()
+    share(),
   );
 
   const end$ = moves$.pipe(
@@ -41,7 +41,7 @@ export const noviceMoves = (drag$, menu, { menuCenter, minSelectionDist }) => {
       ...n,
       type: n.active && n.active.isLeaf() ? 'select' : 'cancel',
       selection: n.active,
-    }))
+    })),
   );
 
   return merge(moves$, end$).pipe(share());
@@ -49,43 +49,60 @@ export const noviceMoves = (drag$, menu, { menuCenter, minSelectionDist }) => {
 
 export const menuSelection = (
   move$,
-  { subMenuOpeningDelay, movementsThreshold, minMenuSelectionDist }
+  { submenuOpeningDelay, movementsThreshold, minMenuSelectionDist },
 ) =>
   // Wait for a pause in the movements.
-  dwellings(move$, subMenuOpeningDelay, movementsThreshold).pipe(
+  dwellings(move$, submenuOpeningDelay, movementsThreshold).pipe(
     // Filter dwellings occurring outside of the selection area.
     filter(
-      (n) => n.active && n.radius > minMenuSelectionDist && !n.active.isLeaf()
-    )
+      (n) => n.active && n.radius > minMenuSelectionDist && !n.active.isLeaf(),
+    ),
   );
 
-export const subMenuNavigation = (menuSelection$, drag$, subNav, navOptions) =>
+export const submenuNavigation = (menuSelection$, drag$, subNav, navOptions) =>
   menuSelection$.pipe(
     map((n) =>
-      subNav(drag$, n.active, { menuCenter: n.position, ...navOptions })
-    )
+      subNav(drag$, n.active, { menuCenter: n.position, ...navOptions }),
+    ),
   );
 
 /**
- * @param {Observable} drag$ - An observable of drag movements.
- * @param {MMItem} menu - The model of the menu.
- * @param {object} options - Configuration options.
- * @return {Observable} An observable on the menu navigation events.
+ Navigate the menu in novice mode: highlight items as the pointer approaches them.
+
+ @param {Observable} drag$ - An observable of drag movements.
+ @param {MMItem} menu - The model of the menu.
+ @param {object} options - Configuration options.
+ @param {number} options.minSelectionDist - The minimum distance from the center to select an
+ item.
+ @param {number} options.minMenuSelectionDist - The minimum distance from the center to open a
+ sub-menu.
+ @param {number} options.movementsThreshold - The minimum distance between two points to be
+ considered a significant movement.
+ @param {number} options.submenuOpeningDelay - The dwelling delay before opening a sub-menu.
+ @param {number[]} options.menuCenter - The pixel coordinates of the menu's center.
+ @param {(drag$: Observable, menu: MMItem, options: object) => Observable} [options.noviceMoves] -
+ Override the function that analyses local drag movements.
+ @param {(move$: Observable, options: object) => Observable} [options.menuSelection] - Override
+ the function that detects (sub)menu selections.
+ @param {(menuSelection$: Observable, drag$: Observable, subNav: (...args: unknown[]) =>
+ Observable, navOptions: object) => Observable} [options.submenuNavigation] - Override the
+ function that creates sub-menu navigation observables.
+ @returns {Observable} An observable on the menu navigation events.
  */
-const noviceNavigation = (
+export default function noviceNavigation(
   drag$,
   menu,
   {
     minSelectionDist,
     minMenuSelectionDist,
     movementsThreshold,
-    subMenuOpeningDelay,
+    submenuOpeningDelay,
     menuCenter,
     noviceMoves: noviceMoves_ = noviceMoves,
     menuSelection: menuSelection_ = menuSelection,
-    subMenuNavigation: subMenuNavigation_ = subMenuNavigation,
-  }
-) => {
+    submenuNavigation: submenuNavigation_ = submenuNavigation,
+  },
+) {
   // Observe the local navigation.
   const move$ = noviceMoves_(drag$, menu, {
     menuCenter,
@@ -94,13 +111,13 @@ const noviceNavigation = (
 
   // Look for (sub)menu selection.
   const menuSelection$ = menuSelection_(move$, {
-    subMenuOpeningDelay,
+    submenuOpeningDelay,
     movementsThreshold,
     minMenuSelectionDist,
   });
 
   // Higher order observable on navigation inside sub-menus.
-  const subMenuNavigation$ = subMenuNavigation_(
+  const submenuNavigation$ = submenuNavigation_(
     menuSelection$,
     drag$,
     noviceNavigation,
@@ -108,16 +125,14 @@ const noviceNavigation = (
       minSelectionDist,
       minMenuSelectionDist,
       movementsThreshold,
-      subMenuOpeningDelay,
+      submenuOpeningDelay,
       noviceMoves: noviceMoves_,
       menuSelection: menuSelection_,
-      subMenuNavigation: subMenuNavigation_,
-    }
+      submenuNavigation: submenuNavigation_,
+    },
   );
 
   // Start with local navigation but switch to the first sub-menu navigation
   // (if any).
-  return subMenuNavigation$.pipe(take(1), startWith(move$), switchAll());
-};
-
-export default noviceNavigation;
+  return submenuNavigation$.pipe(take(1), startWith(move$), switchAll());
+}

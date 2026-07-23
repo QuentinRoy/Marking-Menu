@@ -31,7 +31,7 @@ exports[`connect > draws expert strokes on draw notifications 2`] = `
   <div
     class="upper-stroke-canvas"
     data-points="[]"
-    data-stroke=""stroke1""
+    data-stroke="["stroke1"]"
   />
 </div>
 `;
@@ -43,7 +43,7 @@ exports[`connect > draws expert strokes on draw notifications 3`] = `
   <div
     class="upper-stroke-canvas"
     data-points="[]"
-    data-stroke=""stroke2""
+    data-stroke="["stroke2"]"
   />
 </div>
 `;
@@ -54,7 +54,7 @@ exports[`connect > draws expert strokes on draw notifications 4`] = `
 >
   <div
     class="mock-gesture-feedback"
-    data-stroke=""stroke2""
+    data-stroke="["stroke2"]"
   />
 </div>
 `;
@@ -65,7 +65,7 @@ exports[`connect > draws expert strokes on draw notifications 5`] = `
 >
   <div
     class="mock-gesture-feedback"
-    data-stroke=""stroke2""
+    data-stroke="["stroke2"]"
   />
   <div
     class="upper-stroke-canvas"
@@ -81,12 +81,12 @@ exports[`connect > draws expert strokes on draw notifications 6`] = `
 >
   <div
     class="mock-gesture-feedback"
-    data-stroke=""stroke2""
+    data-stroke="["stroke2"]"
   />
   <div
     class="upper-stroke-canvas"
     data-points="[]"
-    data-stroke=""stroke3""
+    data-stroke="["stroke3"]"
   />
 </div>
 `;
@@ -97,11 +97,11 @@ exports[`connect > draws expert strokes on draw notifications 7`] = `
 >
   <div
     class="mock-gesture-feedback"
-    data-stroke=""stroke2""
+    data-stroke="["stroke2"]"
   />
   <div
     class="mock-gesture-feedback"
-    data-stroke=""stroke3""
+    data-stroke="["stroke3"]"
   />
 </div>
 `;
@@ -112,11 +112,11 @@ exports[`connect > draws expert strokes on draw notifications 8`] = `
 >
   <div
     class="mock-gesture-feedback"
-    data-stroke=""stroke2""
+    data-stroke="["stroke2"]"
   />
   <div
     class="mock-gesture-feedback"
-    data-stroke=""stroke3""
+    data-stroke="["stroke3"]"
   />
   <div
     class="upper-stroke-canvas"
@@ -132,11 +132,11 @@ exports[`connect > draws expert strokes on draw notifications 9`] = `
 >
   <div
     class="mock-gesture-feedback"
-    data-stroke=""stroke2""
+    data-stroke="["stroke2"]"
   />
   <div
     class="mock-gesture-feedback"
-    data-stroke=""stroke3""
+    data-stroke="["stroke3"]"
   />
   <div
     class="upper-stroke-canvas"

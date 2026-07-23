@@ -1,17 +1,17 @@
 import { of } from 'rxjs';
 import { publishBehavior, scan, map } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
+import { longMoves, dwellings, draw } from '../move/index.js';
+import recognize from '../recognizer/index.js';
 import navigation, {
   confirmedExpertNavigationHOO,
   confirmedNoviceNavigationHOO,
   expertToNoviceSwitchHOO,
   startup,
   navigationFromDrag,
-} from './navigation';
-import expertNavigation from './expert-navigation';
-import { longMoves, dwellings, draw } from '../move';
-import noviceNavigation from './novice-navigation';
-import recognize from '../recognizer';
+} from './navigation.js';
+import expertNavigation from './expert-navigation.js';
+import noviceNavigation from './novice-navigation.js';
 
 vi.mock('./expert-navigation');
 vi.mock('./novice-navigation');
@@ -44,7 +44,7 @@ describe('confirmedExpertNavigationHOO', () => {
 
     expertNavigation.mockImplementation(
       (obs$, model, init) => obs$.pipe(scan(
-        (prev, n) => ({ stroke: prev.stroke + n, model }),
+        (previous, n) => ({ stroke: previous.stroke + n, model }),
         { stroke: init || '' }
       )
     ));
@@ -86,7 +86,7 @@ describe('confirmedExpertNavigationHOO', () => {
     // Mock Expert navigation concats all event labels in the stroke.
     expertNavigation.mockImplementation(
       (obs$, model, init) => obs$.pipe(scan(
-        (prev, n) => ({ stroke: prev.stroke + n, model  }),
+        (previous, n) => ({ stroke: previous.stroke + n, model  }),
         { stroke: init || '' }
       )
     ));
@@ -282,7 +282,7 @@ describe('navigationFromDrag', () => {
           confirmedExpertNavigationHOO: mockConfirmedExpertNavigationHOO,
           confirmedNoviceNavigationHOO: mockConfirmedNoviceNavigationHOO,
           startup: mockStartup,
-        }
+        },
       );
   });
 
@@ -374,7 +374,7 @@ describe('navigation', () => {
     const drags$ = m.hot(   'A----E-------J-------P-|', subs);
     const expected$ = m.hot('a----b-c-----ij----k-l----m-|', transformedValues);
 
-    Object.values(subs).forEach(sub => sub.connect());
+    for (const sub of Object.values(subs)) {sub.connect();}
 
     const mockNavFromDrag = vi.fn((obs, start, menu, options) =>
       obs.pipe(map(name => ({ name, start, menu, options })))

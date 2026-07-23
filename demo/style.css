@@ -65,6 +65,19 @@ h1 {
   opacity: 1;
 }
 
+.github-corner svg {
+  border: 0;
+  color: #fff;
+  fill: rgb(31, 31, 31);
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.github-corner .octo-arm {
+  transform-origin: 130px 106px;
+}
+
 .github-corner:hover .octo-arm {
   animation: octocat-wave 560ms ease-in-out;
 }

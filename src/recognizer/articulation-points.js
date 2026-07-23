@@ -1,32 +1,37 @@
 import {
   findNextPointFurtherThan,
   findMiddlePointForMinAngle,
-} from './find-points';
+} from './find-points.js';
 
 /**
- * @typedef {number[]} Point
+ @typedef {number[]} Point
  */
 
 /**
- * A segment.
- * @typedef {Point[2]} Segment
+ A segment.
+ @typedef {Point[2]} Segment
  */
 
 /**
- * @param {Point[]} stroke - The points of a stroke.
- * @param {number} expectedSegmentLength - The expected length of a segment
- *                                         (usually strokeLength / maxMenuDepth).
- * @param {number} angleThreshold - The min angle threshold in a point required for it to be
- *                                  considered an articulation points.
- * @return {Point[]} The list of articulation points.
+ Find the articulation points of a stroke.
+
+ @param {Point[]} stroke - The points of a stroke.
+ @param {number} expectedSegmentLength - The expected length of a segment
+ (usually strokeLength / maxMenuDepth).
+ @param {number} angleThreshold - The min angle threshold in a point required for it to be
+ considered an articulation points.
+ @returns {Point[]} The list of articulation points.
  */
-const getStrokeArticulationPoints = (
+export default function getStrokeArticulationPoints(
   stroke,
   expectedSegmentLength,
-  angleThreshold
-) => {
+  angleThreshold,
+) {
   const n = stroke.length;
-  if (n === 0) return [];
+  if (n === 0) {
+    return [];
+  }
+
   const w = expectedSegmentLength * 0.3;
 
   // Add the first point of the stroke.
@@ -39,7 +44,10 @@ const getStrokeArticulationPoints = (
       startIndex: ai + 2,
       refPoint: a,
     });
-    if (ci < 0) break;
+    if (ci < 0) {
+      break;
+    }
+
     const c = stroke[ci];
     const labi = findNextPointFurtherThan(stroke, w / 8, {
       startIndex: ai + 1,
@@ -57,7 +65,7 @@ const getStrokeArticulationPoints = (
       {
         startIndex: labi,
         endIndex: lbci,
-      }
+      },
     );
     if (bi > 0 && Math.abs(180 - angleABC) > angleThreshold) {
       const b = stroke[bi];
@@ -71,8 +79,6 @@ const getStrokeArticulationPoints = (
   }
 
   // Add the last point of the stroke.
-  articulationPoints.push(stroke[stroke.length - 1]);
+  articulationPoints.push(stroke.at(-1));
   return articulationPoints;
-};
-
-export default getStrokeArticulationPoints;
+}

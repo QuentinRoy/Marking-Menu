@@ -1,12 +1,12 @@
 import { marbles } from 'rxjs-marbles/jest';
 import { Observable } from 'rxjs';
+import { toPolar } from '../utils.js';
+import { dwellings } from '../move/index.js';
 import noviceNavigation, {
   noviceMoves,
   menuSelection,
-  subMenuNavigation,
-} from './novice-navigation';
-import { toPolar } from '../utils';
-import { dwellings } from '../move';
+  submenuNavigation,
+} from './novice-navigation.js';
 
 vi.mock('../utils');
 vi.mock('../move');
@@ -20,8 +20,8 @@ const OpenNotif = ({
   type = 'open',
   menu = 'mockMenu',
   center = 'mockMenuCenter',
-  timeStamp = 'mockTime',
-} = {}) => ({ type, menu, center, timeStamp });
+  timeStamp: timestamp = 'mockTime',
+} = {}) => ({ type, menu, center, timeStamp: timestamp });
 
 const MNotif = (type, position, active = null) => ({
   type,
@@ -41,10 +41,10 @@ const EndNotif = (type, position, active = null) => ({
 beforeEach(() => {
   // A class, not an arrow function: the mock is invoked as a constructor
   // (`new Event(...)`), and arrow functions can't be constructed.
-  vi.spyOn(global, 'Event').mockImplementation(
+  vi.spyOn(globalThis, 'Event').mockImplementation(
     class MockEvent {
       timeStamp = 'mockTime';
-    }
+    },
   );
   toPolar.mockImplementation(([radius, azymuth]) => ({ azymuth, radius }));
 });
@@ -66,7 +66,7 @@ describe('noviceMoves', () => {
       .expect(
         noviceMoves(drag$, 'mockMenu', {
           menuCenter: 'mockMenuCenter',
-          minSelectionDist: 10000
+          minSelectionDist: 10_000
         })
       )
       .toBeObservable(expected$);
@@ -190,7 +190,7 @@ test('menuSelection', marbles(m => {
   m
     .expect(
       menuSelection(move$, {
-        subMenuOpeningDelay: 'mockDelay',
+        submenuOpeningDelay: 'mockDelay',
         movementsThreshold: 'mockThreshold',
         minMenuSelectionDist: 10
       })
@@ -203,7 +203,7 @@ test('menuSelection', marbles(m => {
 }));
 
 // prettier-ignore
-test('subMenuNavigation', marbles(m => {
+test('submenuNavigation', marbles(m => {
   const subNav = vi.fn((n, active) => active.mapped);
   const values = {
     a: { active: { mapped: 'A' }, position: 'a-pos', mapped: 'A' },
@@ -214,7 +214,7 @@ test('subMenuNavigation', marbles(m => {
   const src = m.hot('--a-b-|', values);
   const out = m.hot('--A-B-|', values);
   m
-    .expect(subMenuNavigation(src, 'mockDrag', subNav, { opt: 'mockOpt' }))
+    .expect(submenuNavigation(src, 'mockDrag', subNav, { opt: 'mockOpt' }))
     .toBeObservable(out);
   m.flush();
   expect(subNav.mock.calls).toEqual([
@@ -230,7 +230,7 @@ test(
     const moveSub = '^---!';
     const subs = {
       f: m.cold('-ij---k|'),
-      // g and h below are not supposed to be used.
+      // G and h below are not supposed to be used.
       g: m.cold('-o-o-o-o-o-o-o-o|'),
       h: m.cold('ooo|'),
     };
@@ -241,19 +241,19 @@ test(
 
     const mockNoviceMoves = vi.fn(() => move$);
     const mockMenuSelection = vi.fn(() => 'mockMenuSelection');
-    const mockSubMenuNavigation = vi.fn(() => subNavs$);
+    const mockSubmenuNavigation = vi.fn(() => subNavs$);
 
     m.expect(
       noviceNavigation('mockDrags', 'mockMenu', {
         minSelectionDist: 'mock-minSelectionDist',
         minMenuSelectionDist: 'mock-minMenuSelectionDist',
         movementsThreshold: 'mock-movementsThreshold',
-        subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
+        submenuOpeningDelay: 'mock-submenuOpeningDelay',
         menuCenter: 'mock-menuCenter',
         noviceMoves: mockNoviceMoves,
         menuSelection: mockMenuSelection,
-        subMenuNavigation: mockSubMenuNavigation,
-      })
+        submenuNavigation: mockSubmenuNavigation,
+      }),
     ).toBeObservable(expected$);
     m.expect(move$).toHaveSubscriptions(moveSub);
     m.expect(subNavs$).toHaveSubscriptions(subNavsSub);
@@ -279,14 +279,15 @@ test(
       expect(moveArg$).toBeInstanceOf(Observable);
       expect(argRest).toEqual([
         {
-          subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
+          submenuOpeningDelay: 'mock-submenuOpeningDelay',
           movementsThreshold: 'mock-movementsThreshold',
           minMenuSelectionDist: 'mock-minMenuSelectionDist',
         },
       ]);
       expect(otherCalls.length).toBe(0);
     }
-    expect(mockSubMenuNavigation.mock.calls).toEqual([
+
+    expect(mockSubmenuNavigation.mock.calls).toEqual([
       [
         'mockMenuSelection',
         'mockDrags',
@@ -295,12 +296,12 @@ test(
           minSelectionDist: 'mock-minSelectionDist',
           minMenuSelectionDist: 'mock-minMenuSelectionDist',
           movementsThreshold: 'mock-movementsThreshold',
-          subMenuOpeningDelay: 'mock-subMenuOpeningDelay',
+          submenuOpeningDelay: 'mock-submenuOpeningDelay',
           noviceMoves: mockNoviceMoves,
           menuSelection: mockMenuSelection,
-          subMenuNavigation: mockSubMenuNavigation,
+          submenuNavigation: mockSubmenuNavigation,
         },
       ],
     ]);
-  })
+  }),
 );
