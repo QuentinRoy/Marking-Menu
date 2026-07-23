@@ -40,7 +40,8 @@ export default function getStrokeArticulationPoints(
   let ai = 0;
   let a = stroke[ai];
   while (ai < n) {
-    const ci = findNextPointFurtherThan(stroke, w, {
+    const ci = findNextPointFurtherThan(stroke, {
+      minDist: w,
       startIndex: ai + 2,
       refPoint: a,
     });
@@ -49,11 +50,13 @@ export default function getStrokeArticulationPoints(
     }
 
     const c = stroke[ci];
-    const labi = findNextPointFurtherThan(stroke, w / 8, {
+    const labi = findNextPointFurtherThan(stroke, {
+      minDist: w / 8,
       startIndex: ai + 1,
       refPoint: a,
     });
-    const lbci = findNextPointFurtherThan(stroke, w / 8, {
+    const lbci = findNextPointFurtherThan(stroke, {
+      minDist: w / 8,
       startIndex: ci - 1,
       refPoint: c,
       direction: -1,
