@@ -6,6 +6,7 @@ import angles from 'angles';
 import recognizeMMStroke, {
   pointsToSegments,
   divideLongestSegment,
+  findMMItem,
   walkMMModel,
 } from './recognize-mm-stroke.js';
 
@@ -156,6 +157,36 @@ describe('walkMMModel', () => {
       model: menu,
       segments: [{ angle: 0 }, { angle: 90 }],
       startIndex: 1,
+    });
+
+    expect(selection.requestedAngle).toBe(90);
+    expect(selection.parent).toBe(menu);
+  });
+});
+
+describe('findMMItem', () => {
+  it('finds an item using the model depth by default', () => {
+    const menu = createMockMMModel(2);
+    const selection = findMMItem({
+      model: menu,
+      segments: [
+        { angle: 90, length: 10 },
+        { angle: 180, length: 10 },
+      ],
+    });
+
+    expect(selection.requestedAngle).toBe(180);
+    expect(selection.parent.requestedAngle).toBe(90);
+    expect(selection.parent.parent).toBe(menu);
+    expect(menu.getMaxDepth).toHaveBeenCalledOnce();
+  });
+
+  it('uses the configured maximum depth', () => {
+    const menu = createMockMMModel(2);
+    const selection = findMMItem({
+      model: menu,
+      segments: [{ angle: 90, length: 10 }],
+      maxDepth: 1,
     });
 
     expect(selection.requestedAngle).toBe(90);
