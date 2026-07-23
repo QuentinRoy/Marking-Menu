@@ -15,8 +15,8 @@ import rafThrottle from 'raf-schd';
  @param {(parentDOM: HTMLElement) => object} options.createLowerStrokeCanvas - Lower stroke
  canvas factory. The lower stroke is stroke drawn below the menu. It keeps track of the
  previous movements.
- @param {(parentDOM: HTMLElement) => object} options.createGestureFeedback - Gesture feedback
- factory.
+ @param {function(object): object} options.createGestureFeedback - Gesture feedback factory
+ accepting an options object with a `parent` property.
  @param {{error}} options.log - Logger.
  @returns {Observable} `navigation$` with menu opening and closing side effects.
  */
@@ -40,7 +40,7 @@ export default function connectLayout({
   // The points of the upper stroke.
   let upperStroke = null;
 
-  const gestureFeedback = createGestureFeedback(parentDOM);
+  const gestureFeedback = createGestureFeedback({ parent: parentDOM });
 
   const closeMenu = () => {
     menu.remove();

@@ -226,11 +226,13 @@ describe('main', () => {
 
   it('properly binds GestureFeedback when it connects the layout', () => {
     callMain();
-    connectLayout.mock.calls[0][0].createGestureFeedback('mock-parent-5');
+    connectLayout.mock.calls[0][0].createGestureFeedback({
+      parent: 'mock-parent-5',
+    });
     expect(createGestureFeedback.mock.calls).toEqual([
       [
-        'mock-parent-5',
         {
+          parent: 'mock-parent-5',
           duration: 'mock-gestureFeedbackDuration',
           strokeOptions: {
             lineColor: 'mock-gestureFeedbackStrokeColor',

@@ -16,7 +16,9 @@ afterEach(() => {
 
 describe('createGestureFeedback', () => {
   it('creates a gesture feedback instance', () => {
-    expect(() => createGestureFeedback('div', { duration: 50 })).not.toThrow();
+    expect(() =>
+      createGestureFeedback({ parent: 'div', duration: 50 }),
+    ).not.toThrow();
   });
 });
 
@@ -24,7 +26,8 @@ describe('createGestureFeedback#draw', () => {
   let gs;
   beforeEach(() => {
     // Create the stroke canvas and show a stroke for 50ms.
-    gs = createGestureFeedback('mock-div', {
+    gs = createGestureFeedback({
+      parent: 'mock-div',
       duration: 50,
       strokeOptions: {
         strokeArg1: 'arg1',
@@ -83,7 +86,8 @@ describe('createGestureFeedback#remove', () => {
 
   it('immediately clear any feedbacks', () => {
     // Create the stroke canvas and show a stroke for 50ms.
-    gs = createGestureFeedback('mock-div', {
+    gs = createGestureFeedback({
+      parent: 'mock-div',
       duration: 5000,
       strokeArg1: 'foo',
       strokeArg2: 'bar',
