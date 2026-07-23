@@ -14,18 +14,17 @@
         "/eslint/",
         "/husky/",
         "/prettier/",
-        "/cross-env/",
         "/commitlint/",
         "/standard-version/"
       ],
       "groupName": "ci"
     },
     {
-      "matchPackageNames": ["/rollup/", "/babel/"],
+      "matchPackageNames": ["/vite/"],
       "groupName": "build"
     },
     {
-      "matchPackageNames": ["/jest/", "rxjs-marbles"],
+      "matchPackageNames": ["/vitest/", "rxjs-marbles"],
       "groupName": "test"
     }
   ]
