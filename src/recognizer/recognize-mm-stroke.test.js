@@ -21,16 +21,16 @@ const createMockMMModel = (
   parent = undefined
 ) => {
   if (depth === 0) {
-    return { isLeaf: jest.fn(() => true), requestedAngle, parent };
+    return { isLeaf: vi.fn(() => true), requestedAngle, parent };
   }
   if (depth > 0) {
     const m = {
       parent,
       requestedAngle,
-      getMaxDepth: jest.fn(() => depth),
-      getMaxBreadth: jest.fn(() => breadth),
-      isLeaf: jest.fn(() => false),
-      getNearestChild: jest.fn((childAngle) =>
+      getMaxDepth: vi.fn(() => depth),
+      getMaxBreadth: vi.fn(() => breadth),
+      isLeaf: vi.fn(() => false),
+      getNearestChild: vi.fn((childAngle) =>
         createMockMMModel(depth - 1, breadth, childAngle, m)
       ),
     };

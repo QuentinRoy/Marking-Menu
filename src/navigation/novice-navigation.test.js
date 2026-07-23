@@ -8,12 +8,12 @@ import noviceNavigation, {
 import { toPolar } from '../utils';
 import { dwellings } from '../move';
 
-jest.mock('../utils');
-jest.mock('../move');
+vi.mock('../utils');
+vi.mock('../move');
 
 afterEach(() => {
-  jest.restoreAllMocks();
-  jest.resetAllMocks();
+  vi.restoreAllMocks();
+  vi.resetAllMocks();
 });
 
 const OpenNotif = ({
@@ -39,9 +39,13 @@ const EndNotif = (type, position, active = null) => ({
 });
 
 beforeEach(() => {
-  jest.spyOn(global, 'Event').mockImplementation(() => ({
-    timeStamp: 'mockTime',
-  }));
+  // A class, not an arrow function: the mock is invoked as a constructor
+  // (`new Event(...)`), and arrow functions can't be constructed.
+  vi.spyOn(global, 'Event').mockImplementation(
+    class MockEvent {
+      timeStamp = 'mockTime';
+    }
+  );
   toPolar.mockImplementation(([radius, azymuth]) => ({ azymuth, radius }));
 });
 
@@ -73,7 +77,7 @@ describe('noviceMoves', () => {
     const item1 = { name: 'mockActive1', isLeaf: () => true };
     const item2 = { name: 'mockActive2', isLeaf: () => true };
     const menu = {
-      getNearestChild: jest
+      getNearestChild: vi
         .fn()
         .mockImplementationOnce(() => item1)
         .mockImplementationOnce(() => item1)
@@ -107,7 +111,7 @@ describe('noviceMoves', () => {
     const item2 = { name: 'mockActive2', isLeaf: () => true };
     const item3 = { name: 'mockActive3', isLeaf: () => true };
     const menu = {
-      getNearestChild: jest
+      getNearestChild: vi
         .fn()
         .mockImplementationOnce(() => item1)
         .mockImplementationOnce(() => item1)
@@ -149,7 +153,7 @@ describe('noviceMoves', () => {
   // prettier-ignore
   it('emit cancel if selected item is not a leaf', marbles(m => {
     const item = { isLeaf: () => false };
-    const menu = { getNearestChild: jest.fn(() => item) };
+    const menu = { getNearestChild: vi.fn(() => item) };
     const values = {
       a: { position: [200, 'a-az'] },
       O: OpenNotif({ menu }),
@@ -200,7 +204,7 @@ test('menuSelection', marbles(m => {
 
 // prettier-ignore
 test('subMenuNavigation', marbles(m => {
-  const subNav = jest.fn((n, active) => active.mapped);
+  const subNav = vi.fn((n, active) => active.mapped);
   const values = {
     a: { active: { mapped: 'A' }, position: 'a-pos', mapped: 'A' },
     b: { active: { mapped: 'B' }, position: 'b-pos', mapped: 'B' },
@@ -235,9 +239,9 @@ test(
     const subNavsSub = '^---!';
     const expected$ = m.hot('a-b--ij---k|');
 
-    const mockNoviceMoves = jest.fn(() => move$);
-    const mockMenuSelection = jest.fn(() => 'mockMenuSelection');
-    const mockSubMenuNavigation = jest.fn(() => subNavs$);
+    const mockNoviceMoves = vi.fn(() => move$);
+    const mockMenuSelection = vi.fn(() => 'mockMenuSelection');
+    const mockSubMenuNavigation = vi.fn(() => subNavs$);
 
     m.expect(
       noviceNavigation('mockDrags', 'mockMenu', {

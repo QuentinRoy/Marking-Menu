@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 import { marbles } from 'rxjs-marbles';
 import connect from './connect';
 
-jest.mock('raf-schd', () => jest.fn((f) => f));
+vi.mock('raf-schd', () => ({ default: vi.fn((f) => f) }));
 
 // Mock values.
 let UpperStrokeCanvas;
@@ -19,7 +19,7 @@ beforeEach(() => {
 
   strokeCanvasInstances = [];
   const createStrokeCanvasFactory = (name) =>
-    jest.fn((parent) => {
+    vi.fn((parent) => {
       const div = document.createElement('div');
       div.className = `${name}-stroke-canvas`;
       parent.appendChild(div);
@@ -31,20 +31,20 @@ beforeEach(() => {
       const self = {
         name,
         mock: { div, parent, removed: false },
-        drawStroke: jest.fn((stroke) => {
+        drawStroke: vi.fn((stroke) => {
           div.dataset.stroke = JSON.stringify(stroke);
         }),
-        drawPoint: jest.fn((p) => {
+        drawPoint: vi.fn((p) => {
           div.dataset.points = JSON.stringify([
             ...JSON.parse(div.dataset.points),
             p,
           ]);
         }),
-        clear: jest.fn(() => {
+        clear: vi.fn(() => {
           div.dataset.stroke = null;
           div.dataset.points = JSON.stringify([]);
         }),
-        remove: jest.fn(() => {
+        remove: vi.fn(() => {
           div.remove();
           self.mock.removed = true;
         }),
@@ -55,7 +55,7 @@ beforeEach(() => {
   UpperStrokeCanvas = createStrokeCanvasFactory('upper');
   LowerStrokeCanvas = createStrokeCanvasFactory('lower');
 
-  GestureFeedback = jest.fn((parent) => {
+  GestureFeedback = vi.fn((parent) => {
     let divs = [];
     const show = (stroke) => {
       const div = document.createElement('div');
@@ -71,7 +71,7 @@ beforeEach(() => {
   });
 
   menuLayoutInstances = [];
-  MenuLayout = jest.fn((parent, model, center, active) => {
+  MenuLayout = vi.fn((parent, model, center, active) => {
     const div = document.createElement('div');
     div.className = 'menu';
     parent.appendChild(div);
@@ -83,10 +83,10 @@ beforeEach(() => {
 
     const self = {
       mock: { div, parent, removed: false, active: null },
-      setActive: jest.fn((newActive) => {
+      setActive: vi.fn((newActive) => {
         div.dataset.active = JSON.stringify(newActive);
       }),
-      remove: jest.fn(() => {
+      remove: vi.fn(() => {
         div.remove();
         self.mock.removed = true;
       }),
@@ -96,12 +96,12 @@ beforeEach(() => {
   });
 
   log = {
-    error: jest.fn(),
+    error: vi.fn(),
   };
 });
 
 describe('connect', () => {
-  it('draws expert strokes on draw notifications', (done) => {
+  it('draws expert strokes on draw notifications', () => {
     const src = of(
       { type: 'start', position: 'pos1' },
       { type: 'draw', stroke: 'stroke1' },
@@ -127,13 +127,12 @@ describe('connect', () => {
       },
       complete() {
         expect(parentElement).toMatchSnapshot();
-        done();
       },
     });
   });
 
-  it('opens the menu, draws novice stroke, and updates the menu', (done) => {
-    parentElement.getBoundingClientRect = jest.fn(() => ({ left: 1, top: 2 }));
+  it('opens the menu, draws novice stroke, and updates the menu', () => {
+    parentElement.getBoundingClientRect = vi.fn(() => ({ left: 1, top: 2 }));
     const src = of(
       { type: 'start', position: 'pos1' },
       {
@@ -188,7 +187,6 @@ describe('connect', () => {
       },
       complete() {
         expect(parentElement).toMatchSnapshot();
-        done();
       },
     });
   });

@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`createMenu can be removed 1`] = `
+exports[`createMenu > can be removed 1`] = `
 <div>
   <div
     class="marking-menu"
@@ -66,9 +66,9 @@ exports[`createMenu can be removed 1`] = `
 </div>
 `;
 
-exports[`createMenu can be removed 2`] = `<div />`;
+exports[`createMenu > can be removed 2`] = `<div />`;
 
-exports[`createMenu renders 1`] = `
+exports[`createMenu > renders 1`] = `
 <div>
   <div
     class="marking-menu"
@@ -162,7 +162,7 @@ exports[`createMenu renders 1`] = `
 </div>
 `;
 
-exports[`createMenu renders without active element 1`] = `
+exports[`createMenu > renders without active element 1`] = `
 <div>
   <div
     class="marking-menu"
@@ -228,7 +228,7 @@ exports[`createMenu renders without active element 1`] = `
 </div>
 `;
 
-exports[`createMenu update the active element 1`] = `
+exports[`createMenu > update the active element 1`] = `
 <div>
   <div
     class="marking-menu"
@@ -294,7 +294,7 @@ exports[`createMenu update the active element 1`] = `
 </div>
 `;
 
-exports[`createMenu update the active element 2`] = `
+exports[`createMenu > update the active element 2`] = `
 <div>
   <div
     class="marking-menu"

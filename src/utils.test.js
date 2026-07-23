@@ -10,7 +10,7 @@ import {
 } from './utils';
 
 describe('mod', () => {
-  it(' returns a positive modulo', () => {
+  it('returns a positive modulo', () => {
     expect(mod(3, 10)).toBe(3);
     expect(mod(-3, 10)).toBe(7);
     expect(mod(13, 10)).toBe(3);
@@ -19,29 +19,33 @@ describe('mod', () => {
 });
 
 describe('radianToDegrees', () => {
-  const pi = 3.141592653589793;
-  expect(radiansToDegrees(pi)).toEqual(180);
-  expect(radiansToDegrees(0)).toEqual(0);
-  expect(radiansToDegrees(2 * pi)).toEqual(360);
-  expect(radiansToDegrees(pi / 2)).toEqual(90);
-  expect(radiansToDegrees(pi / 4)).toEqual(45);
-  expect(radiansToDegrees(4 * pi)).toEqual(720);
-  expect(radiansToDegrees(-pi / 2)).toEqual(-90);
+  it('converts radians to degrees', () => {
+    const pi = 3.141592653589793;
+    expect(radiansToDegrees(pi)).toEqual(180);
+    expect(radiansToDegrees(0)).toEqual(0);
+    expect(radiansToDegrees(2 * pi)).toEqual(360);
+    expect(radiansToDegrees(pi / 2)).toEqual(90);
+    expect(radiansToDegrees(pi / 4)).toEqual(45);
+    expect(radiansToDegrees(4 * pi)).toEqual(720);
+    expect(radiansToDegrees(-pi / 2)).toEqual(-90);
+  });
 });
 
-describe('radianToDegrees', () => {
-  const pi = 3.141592653589793;
-  expect(degreesToRadians(180)).toEqual(pi);
-  expect(degreesToRadians(0)).toEqual(0);
-  expect(degreesToRadians(360)).toEqual(2 * pi);
-  expect(degreesToRadians(90)).toEqual(pi / 2);
-  expect(degreesToRadians(45)).toEqual(pi / 4);
-  expect(degreesToRadians(720)).toEqual(4 * pi);
-  expect(degreesToRadians(-90)).toEqual(-pi / 2);
+describe('degreesToRadians', () => {
+  it('converts degrees to radians', () => {
+    const pi = 3.141592653589793;
+    expect(degreesToRadians(180)).toEqual(pi);
+    expect(degreesToRadians(0)).toEqual(0);
+    expect(degreesToRadians(360)).toEqual(2 * pi);
+    expect(degreesToRadians(90)).toEqual(pi / 2);
+    expect(degreesToRadians(45)).toEqual(pi / 4);
+    expect(degreesToRadians(720)).toEqual(4 * pi);
+    expect(degreesToRadians(-90)).toEqual(-pi / 2);
+  });
 });
 
 describe('deltaAngle', () => {
-  it(' properly returns the delta between two angles', () => {
+  it('properly returns the delta between two angles', () => {
     expect(deltaAngle(40, 50)).toBe(10);
 
     expect(deltaAngle(40, 50 + 360)).toBe(10);
@@ -59,7 +63,7 @@ describe('deltaAngle', () => {
 });
 
 describe('dist', () => {
-  it(' returns the euclidean distance between two vectors', () => {
+  it('returns the euclidean distance between two vectors', () => {
     expect(dist([0, 0], [0, 0])).toBe(0);
     expect(dist([42, 11], [42, 11])).toBe(0);
 
@@ -88,7 +92,7 @@ describe('dist', () => {
 });
 
 describe('angle', () => {
-  it(' calculate an angle from three points', () => {
+  it('calculate an angle from three points', () => {
     expect(angle([5, 1], [1, 1], [1, 20])).toBe(90);
     expect(angle([5, 1], [1, 1], [1, -20])).toBe(90);
     expect(angle([5, 1], [1, 1], [110, 1])).toBe(0);
@@ -99,7 +103,7 @@ describe('angle', () => {
 });
 
 describe('findMaxEntry', () => {
-  it(' return an entry with the item that raised the highest number', () => {
+  it('return an entry with the item that raised the highest number', () => {
     expect(
       findMaxEntry(
         [{ l: 2 }, { l: 0 }, { l: 10 }, { l: 5 }],
@@ -116,7 +120,7 @@ describe('findMaxEntry', () => {
 });
 
 describe('toPolar', () => {
-  it(' calculates the coordinates of a point in a polar system', () => {
+  it('calculates the coordinates of a point in a polar system', () => {
     expect(toPolar([10, 0], [0, 0])).toEqual({ azymuth: 0, radius: 10 });
     expect(toPolar([10, 0])).toEqual({ azymuth: 0, radius: 10 });
     expect(toPolar([10, 5], [5, 5])).toEqual({ azymuth: 0, radius: 5 });

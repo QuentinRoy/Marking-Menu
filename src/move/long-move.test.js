@@ -2,10 +2,10 @@ import { marbles } from 'rxjs-marbles';
 import { dist } from '../utils';
 import longMove from './long-move';
 
-jest.mock('../utils');
+vi.mock('../utils');
 
 afterEach(() => {
-  jest.resetAllMocks();
+  vi.resetAllMocks();
 });
 
 describe('longMove', () => {
@@ -18,7 +18,7 @@ describe('longMove', () => {
   };
 
   // prettier-ignore
-  it('it filters out movements smaller than its threshold', marbles(m => {
+  it('filters out movements smaller than its threshold', marbles(m => {
       // Mock distance from current with current's value.
       dist.mockImplementation((prev, cur) => cur);
 

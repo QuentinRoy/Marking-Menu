@@ -15,14 +15,14 @@ const toPromise = (obs) =>
     });
   });
 
-jest.mock('./pointer-events', () => ({
-  createPEventFromTouchEvent: jest.fn(() => {}),
-  createPEventFromMouseEvent: jest.fn(() => {}),
+vi.mock('./pointer-events', () => ({
+  createPEventFromTouchEvent: vi.fn(() => {}),
+  createPEventFromMouseEvent: vi.fn(() => {}),
 }));
 
-jest.mock('rxjs', () => ({
-  ...jest.requireActual('rxjs'),
-  fromEvent: jest.fn(() => {}),
+vi.mock('rxjs', async () => ({
+  ...(await vi.importActual('rxjs')),
+  fromEvent: vi.fn(() => {}),
 }));
 
 beforeEach(() => {
@@ -31,7 +31,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  jest.resetAllMocks();
+  vi.resetAllMocks();
 });
 
 const mockFromEvent = (observables) => {
@@ -176,9 +176,9 @@ describe('touchDrags', () => {
 describe('watchDrags', () => {
   it('calls the provided factories with root dom', () => {
     const factories = [
-      jest.fn(() => of('a')),
-      jest.fn(() => of('b')),
-      jest.fn(() => of('c')),
+      vi.fn(() => of('a')),
+      vi.fn(() => of('b')),
+      vi.fn(() => of('c')),
     ];
     watchDrags('mock-dom', factories.slice());
     factories.forEach((f) => {

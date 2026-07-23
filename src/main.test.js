@@ -11,10 +11,10 @@ import {
 } from './layout';
 import { watchDrags } from './move';
 
-jest.mock('./navigation');
-jest.mock('./layout');
-jest.mock('./model');
-jest.mock('./move');
+vi.mock('./navigation');
+vi.mock('./layout');
+vi.mock('./model');
+vi.mock('./move');
 
 describe('exportNotification', () => {
   it('filters everything but the proper properties', () => {
@@ -67,7 +67,7 @@ describe('main', () => {
     active: id,
     type,
     notifMockProp: 'notif-mock-prop-val',
-    originalEvent: { preventDefault: jest.fn() },
+    originalEvent: { preventDefault: vi.fn() },
     ...props,
   });
 
@@ -112,7 +112,7 @@ describe('main', () => {
   );
 
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it('properly creates the model', () => {
@@ -144,10 +144,9 @@ describe('main', () => {
     callMain().subscribe((n) => {
       // c does not have original event to make sure it does not fail
       // without it.
-      if (n.active !== 'c') {
-        const mockNotif = mockNavNotifs[n.active];
-        expect(mockNotif.originalEvent.preventDefault).toHaveBeenCalled();
-      }
+      if (n.active === 'c') return;
+      const mockNotif = mockNavNotifs[n.active];
+      expect(mockNotif.originalEvent.preventDefault).toHaveBeenCalled();
     });
   });
 
