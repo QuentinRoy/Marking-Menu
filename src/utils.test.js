@@ -7,6 +7,7 @@ import {
   toPolar,
   radiansToDegrees,
   degreesToRadians,
+  noOp,
 } from './utils.js';
 
 describe('mod', () => {
@@ -123,5 +124,11 @@ describe('toPolar', () => {
     });
     expect(toPolar([-10, 0])).toEqual({ azymuth: 180, radius: 10 });
     expect(toPolar([0, -20])).toEqual({ azymuth: -90, radius: 20 });
+  });
+});
+
+describe('noOp', () => {
+  it('does nothing', () => {
+    expect(noOp()).toBeUndefined();
   });
 });

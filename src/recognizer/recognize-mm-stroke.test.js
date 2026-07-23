@@ -290,6 +290,25 @@ describe('recognizeMMStroke', () => {
     ).toBe(false);
   });
 
+  it('treats a negative maxDepth as relative to the model maximum depth', async () => {
+    // Read the stroke.
+    const stroke = await readStroke('90');
+    // Create the model
+    const model = createMockMMModel(3);
+    // Apply the recognizer with a max depth of 3 - 1 = 2.
+    const selection = recognizeMMStroke(stroke, model, {
+      maxDepth: -1,
+      requireMenu: true,
+    });
+    // The selection is the depth 2 menu: it is returned as is by requireMenu.
+    expect(selection.isLeaf()).toBe(false);
+    expect(angles.distance(selection.requestedAngle, 90) < 15).toBe(true);
+    expect(angles.distance(selection.parent.requestedAngle, 90) < 15).toBe(
+      true,
+    );
+    expect(selection.parent.parent).toBe(model);
+  });
+
   it('throws if both requireMenu and requireLeaf are true', async () => {
     expect(() => {
       recognizeMMStroke('stroke', createMockMMModel(), {

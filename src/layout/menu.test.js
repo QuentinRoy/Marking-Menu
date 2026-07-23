@@ -32,6 +32,28 @@ describe('createMenu', () => {
     expect(div).toMatchSnapshot();
   });
 
+  it('identifies corner items', () => {
+    const div = document.createElement('div');
+    createMenu({
+      parent: div,
+      model: {
+        children: [45, 135, 225, 315, 90].map((angle, i) => ({
+          label: `item-${i}-name`,
+          angle,
+          id: `item-${i}-id`,
+        })),
+      },
+      center: [30, 50],
+      doc: document,
+    });
+    const items = div.querySelectorAll('.marking-menu-item');
+    expect(items[0].classList.contains('bottom-right-item')).toBe(true);
+    expect(items[1].classList.contains('bottom-left-item')).toBe(true);
+    expect(items[2].classList.contains('top-left-item')).toBe(true);
+    expect(items[3].classList.contains('top-right-item')).toBe(true);
+    expect(items[4].className).toBe('marking-menu-item');
+  });
+
   it('update the active element', () => {
     const div = document.createElement('div');
     const m = createMenu({

@@ -1,6 +1,15 @@
 import getStrokeArticulationPoints from './articulation-points.js';
 
 describe(getStrokeArticulationPoints, () => {
+  it('returns an empty list for an empty stroke', () => {
+    expect(
+      getStrokeArticulationPoints([], {
+        expectedSegmentLength: 4,
+        angleThreshold: 20,
+      }),
+    ).toEqual([]);
+  });
+
   it('works for simple strokes', () => {
     expect(
       getStrokeArticulationPoints(

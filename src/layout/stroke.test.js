@@ -55,6 +55,31 @@ describe('stroke', () => {
 
   afterEach(() => {
     document.createElement = docCreateElement;
+    vi.unstubAllGlobals();
+  });
+
+  it('defaults ptSize to the device pixel ratio', () => {
+    vi.stubGlobal('devicePixelRatio', 2);
+    const dprDiv = document.createElement('div');
+    dprDiv.getBoundingClientRect = () => ({ width: 50, height: 60 });
+    stroke({ parent: dprDiv, doc: document });
+    const canvas = dprDiv.querySelector('canvas');
+    expect(canvas.width).toBe(100);
+    expect(canvas.getContext().mock.methodCalls).toEqual([
+      { method: 'scale', args: [2, 2] },
+    ]);
+  });
+
+  it('defaults ptSize to 1 if there is no device pixel ratio', () => {
+    vi.stubGlobal('devicePixelRatio', undefined);
+    const noDprDiv = document.createElement('div');
+    noDprDiv.getBoundingClientRect = () => ({ width: 50, height: 60 });
+    stroke({ parent: noDprDiv, doc: document });
+    const canvas = noDprDiv.querySelector('canvas');
+    expect(canvas.width).toBe(50);
+    expect(canvas.getContext().mock.methodCalls).toEqual([
+      { method: 'scale', args: [1, 1] },
+    ]);
   });
 
   it('creates its DOM and set up the canvas scale', () => {

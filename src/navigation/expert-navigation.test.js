@@ -89,4 +89,16 @@ describe('expertNavigation', () => {
     m.flush();
     expect(recognize.mock.calls).toEqual([[['a-pos'], 'model']]);
   }));
+
+  // prettier-ignore
+  it('emits cancel on completion if the drag is empty', marbles(m => {
+    const values = {
+      c: { type: 'cancel' }
+    };
+    const drag$ = m.hot('^--|', values);
+    const expected$ = m.hot('^--(c|)', values);
+    m.expect(expertNavigation(drag$, 'model')).toBeObservable(expected$);
+    m.flush();
+    expect(recognize).not.toHaveBeenCalled();
+  }));
 });

@@ -106,6 +106,34 @@ beforeEach(() => {
 });
 
 describe('connect', () => {
+  it('ignores move and draw notifications before the first start', () => {
+    const src = of(
+      { type: 'move', position: [100, 200] },
+      {
+        type: 'draw',
+        stroke: [
+          [0, 0],
+          [1, 1],
+        ],
+      },
+    );
+
+    const out = connect({
+      parent: parentElement,
+      navigation$: src,
+      createMenuLayout: MenuLayout,
+      createUpperStrokeCanvas: UpperStrokeCanvas,
+      createLowerStrokeCanvas: LowerStrokeCanvas,
+      createGestureFeedback: GestureFeedback,
+      log,
+    });
+    out.subscribe();
+    expect(UpperStrokeCanvas).not.toHaveBeenCalled();
+    expect(LowerStrokeCanvas).not.toHaveBeenCalled();
+    expect(MenuLayout).not.toHaveBeenCalled();
+    expect(log.error).not.toHaveBeenCalled();
+  });
+
   it('draws expert strokes on draw notifications', () => {
     const src = of(
       { type: 'start', position: 'pos1' },
