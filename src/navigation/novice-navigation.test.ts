@@ -1,39 +1,65 @@
+/* eslint-disable @typescript-eslint/naming-convention -- Observable testing use capital letters for HOO */
+
 import { marbles } from 'rxjs-marbles/jest';
 import { Observable } from 'rxjs';
+import { type Mock } from 'vitest';
 import { toPolar } from '../utils.js';
 import { dwellings } from '../move/index.js';
+import type { MarkingMenuModelItem, Point } from '../types.js';
 import noviceNavigation, {
   noviceMoves,
   menuSelection,
   submenuNavigation,
+  type NoviceNotification,
+  type NoviceNavigationOptions,
 } from './novice-navigation.js';
+import type { NavigationDrag } from './expert-navigation.js';
 
 vi.mock('../utils');
 vi.mock('../move');
+
+// `dwellings` is driven with placeholder tokens compared only structurally at
+// runtime, so the mock is typed loosely.
+const mockDwellings = vi.mocked(dwellings) as unknown as Mock<
+  (...args: unknown[]) => Observable<unknown>
+>;
 
 afterEach(() => {
   vi.restoreAllMocks();
   vi.resetAllMocks();
 });
 
-const OpenNotif = ({
+const createOpenNotification = ({
   type = 'open',
   menu = 'mockMenu',
   center = 'mockMenuCenter',
   timeStamp: timestamp = 'mockTime',
+}: {
+  type?: string;
+  menu?: unknown;
+  center?: unknown;
+  timeStamp?: unknown;
 } = {}) => ({ type, menu, center, timeStamp: timestamp });
 
-const MNotif = (type, position, active = null) => ({
+const createMoveNotification = (
+  type: string,
+  position: unknown,
+  active: unknown = null,
+) => ({
   type,
   active,
-  ...toPolar(position),
+  ...toPolar(position as Point),
   position,
 });
 
-const EndNotif = (type, position, active = null) => ({
+const createEndNotification = (
+  type: string,
+  position: unknown,
+  active: unknown = null,
+) => ({
   active,
   type,
-  ...toPolar(position),
+  ...toPolar(position as Point),
   position,
   selection: active,
 });
@@ -44,9 +70,12 @@ beforeEach(() => {
   vi.spyOn(globalThis, 'Event').mockImplementation(
     class MockEvent {
       timeStamp = 'mockTime';
-    },
+    } as unknown as typeof Event,
   );
-  toPolar.mockImplementation(([radius, azymuth]) => ({ azymuth, radius }));
+  vi.mocked(toPolar).mockImplementation(([radius, azymuth]) => ({
+    azymuth,
+    radius,
+  }));
 });
 
 describe('noviceMoves', () => {
@@ -55,19 +84,23 @@ describe('noviceMoves', () => {
     const values = {
       a: { position: [10, 'a-az'] },
       b: { position: [20, 'b-az'] },
-      O: OpenNotif(),
-      A: MNotif('move', [10, 'a-az']),
-      B: MNotif('move', [20, 'b-az']),
-      C: EndNotif('cancel', [20, 'b-az'])
+      O: createOpenNotification(),
+      A: createMoveNotification('move', [10, 'a-az']),
+      B: createMoveNotification('move', [20, 'b-az']),
+      C: createEndNotification('cancel', [20, 'b-az'])
     };
     const drag$     = m.hot('----a--b--|', values);
     const expected$ = m.hot('O---A--B--(C|)', values);
     m
-      .expect(
-        noviceMoves(drag$, 'mockMenu', {
-          menuCenter: 'mockMenuCenter',
-          minSelectionDist: 10_000
-        })
+      .expect<unknown>(
+        noviceMoves(
+          drag$ as unknown as Observable<NavigationDrag>,
+          'mockMenu' as unknown as MarkingMenuModelItem,
+          {
+            menuCenter: 'mockMenuCenter' as unknown as Point,
+            minSelectionDist: 10_000
+          }
+        )
       )
       .toBeObservable(expected$);
   }));
@@ -87,20 +120,24 @@ describe('noviceMoves', () => {
       a: { position: [200, 'a-az'] },
       b: { position: [300, 'b-az'] },
       c: { position: [400, 'c-az'] },
-      O: OpenNotif({ menu }),
-      A: MNotif('change', [200, 'a-az'], item1),
-      B: MNotif('move', [300, 'b-az'], item1),
-      C: MNotif('change', [400, 'c-az'], item2),
-      S: EndNotif('select', [400, 'c-az'], item2)
+      O: createOpenNotification({ menu }),
+      A: createMoveNotification('change', [200, 'a-az'], item1),
+      B: createMoveNotification('move', [300, 'b-az'], item1),
+      C: createMoveNotification('change', [400, 'c-az'], item2),
+      S: createEndNotification('select', [400, 'c-az'], item2)
     };
     const drag$     = m.hot('----a--bc--|', values);
     const expected$ = m.hot('O---A--BC--(S|)', values);
     m
-      .expect(
-        noviceMoves(drag$, menu, {
-          menuCenter: 'mockMenuCenter',
-          minSelectionDist: 100
-        })
+      .expect<unknown>(
+        noviceMoves(
+          drag$ as unknown as Observable<NavigationDrag>,
+          menu as unknown as MarkingMenuModelItem,
+          {
+            menuCenter: 'mockMenuCenter' as unknown as Point,
+            minSelectionDist: 100
+          }
+        )
       )
       .toBeObservable(expected$);
   }));
@@ -127,25 +164,29 @@ describe('noviceMoves', () => {
       f: { position: [400, 'f-az'] },
       g: { position: [500, 'g-az'] },
       h: { position: [50, 'h-az'] },
-      O: OpenNotif({ menu }),
-      A: MNotif('move', [10, 'a-az']),
-      B: MNotif('change', [200, 'b-az'], item1),
-      C: MNotif('move', [300, 'c-az'], item1),
-      D: MNotif('change', [20, 'd-az']),
-      E: MNotif('move', [50, 'e-az']),
-      F: MNotif('change', [400, 'f-az'], item2),
-      G: MNotif('change', [500, 'g-az'], item3),
-      H: MNotif('change', [50, 'h-az']),
-      Z: EndNotif('cancel', [50, 'h-az'])
+      O: createOpenNotification({ menu }),
+      A: createMoveNotification('move', [10, 'a-az']),
+      B: createMoveNotification('change', [200, 'b-az'], item1),
+      C: createMoveNotification('move', [300, 'c-az'], item1),
+      D: createMoveNotification('change', [20, 'd-az']),
+      E: createMoveNotification('move', [50, 'e-az']),
+      F: createMoveNotification('change', [400, 'f-az'], item2),
+      G: createMoveNotification('change', [500, 'g-az'], item3),
+      H: createMoveNotification('change', [50, 'h-az']),
+      Z: createEndNotification('cancel', [50, 'h-az'])
     };
     const drag$     = m.hot('-a--b-cde-fg--h|', values);
     const expected$ = m.hot('OA--B-CDE-FG--H(Z|)', values);
     m
-      .expect(
-        noviceMoves(drag$, menu, {
-          menuCenter: 'mockMenuCenter',
-          minSelectionDist: 100
-        })
+      .expect<unknown>(
+        noviceMoves(
+          drag$ as unknown as Observable<NavigationDrag>,
+          menu as unknown as MarkingMenuModelItem,
+          {
+            menuCenter: 'mockMenuCenter' as unknown as Point,
+            minSelectionDist: 100
+          }
+        )
       )
       .toBeObservable(expected$);
   }));
@@ -156,18 +197,22 @@ describe('noviceMoves', () => {
     const menu = { getNearestChild: vi.fn(() => item) };
     const values = {
       a: { position: [200, 'a-az'] },
-      O: OpenNotif({ menu }),
-      A: MNotif('change', [200, 'a-az'], item),
-      Z: EndNotif('cancel', [200, 'a-az'], item)
+      O: createOpenNotification({ menu }),
+      A: createMoveNotification('change', [200, 'a-az'], item),
+      Z: createEndNotification('cancel', [200, 'a-az'], item)
     };
     const drag$ =     m.hot('-a--|)', values);
     const expected$ = m.hot('OA--(Z|)', values);
     m
-      .expect(
-        noviceMoves(drag$, menu, {
-          menuCenter: 'mockMenuCenter',
-          minSelectionDist: 100
-        })
+      .expect<unknown>(
+        noviceMoves(
+          drag$ as unknown as Observable<NavigationDrag>,
+          menu as unknown as MarkingMenuModelItem,
+          {
+            menuCenter: 'mockMenuCenter' as unknown as Point,
+            minSelectionDist: 100
+          }
+        )
       )
       .toBeObservable(expected$);
   }));
@@ -185,19 +230,22 @@ test('menuSelection', marbles(m => {
   const dwelling$ = m.hot('--a-b--c-d-|', values);
   const expected$ = m.hot('-------c---|', values);
 
-  dwellings.mockImplementation(() => dwelling$);
+  mockDwellings.mockImplementation(() => dwelling$);
 
   m
-    .expect(
-      menuSelection(move$, {
-        submenuOpeningDelay: 'mockDelay',
-        movementsThreshold: 'mockThreshold',
-        minMenuSelectionDist: 10
-      })
+    .expect<unknown>(
+      menuSelection(
+        move$ as unknown as Observable<NoviceNotification<NavigationDrag>>,
+        {
+          submenuOpeningDelay: 'mockDelay',
+          movementsThreshold: 'mockThreshold',
+          minMenuSelectionDist: 10
+        } as unknown as Parameters<typeof menuSelection>[1]
+      )
     )
     .toBeObservable(expected$);
   m.flush();
-  expect(dwellings.mock.calls).toEqual([
+  expect(mockDwellings.mock.calls).toEqual([
     ['mockMove', {
       delay: 'mockDelay',
       movementsThreshold: 'mockThreshold'
@@ -207,7 +255,10 @@ test('menuSelection', marbles(m => {
 
 // prettier-ignore
 test('submenuNavigation', marbles(m => {
-  const subNav = vi.fn((n, active) => active.mapped);
+  const subNav = vi.fn(
+    (_drag: unknown, active: { mapped: string }, _options?: unknown) =>
+      active.mapped
+  );
   const values = {
     a: { active: { mapped: 'A' }, position: 'a-pos', mapped: 'A' },
     b: { active: { mapped: 'B' }, position: 'b-pos', mapped: 'B' },
@@ -217,7 +268,11 @@ test('submenuNavigation', marbles(m => {
   const src = m.hot('--a-b-|', values);
   const out = m.hot('--A-B-|', values);
   m
-    .expect(submenuNavigation(src, 'mockDrag', subNav, { opt: 'mockOpt' }))
+    .expect<unknown>(
+      submenuNavigation(
+        ...([src, 'mockDrag', subNav, { opt: 'mockOpt' }] as unknown as Parameters<typeof submenuNavigation>)
+      )
+    )
     .toBeObservable(out);
   m.flush();
   expect(subNav.mock.calls).toEqual([
@@ -233,7 +288,7 @@ test(
     const moveSub = '^---!';
     const subs = {
       f: m.cold('-ij---k|'),
-      // G and h below are not supposed to be used.
+      // `g` and `h` below are not supposed to be used.
       g: m.cold('-o-o-o-o-o-o-o-o|'),
       h: m.cold('ooo|'),
     };
@@ -242,21 +297,27 @@ test(
     const subNavsSub = '^---!';
     const expected$ = m.hot('a-b--ij---k|');
 
-    const mockNoviceMoves = vi.fn(() => move$);
-    const mockMenuSelection = vi.fn(() => 'mockMenuSelection');
-    const mockSubmenuNavigation = vi.fn(() => subNavs$);
+    const mockNoviceMoves = vi.fn((..._args: unknown[]) => move$);
+    const mockMenuSelection = vi.fn(
+      (..._args: unknown[]) => 'mockMenuSelection',
+    );
+    const mockSubmenuNavigation = vi.fn((..._args: unknown[]) => subNavs$);
 
-    m.expect(
-      noviceNavigation('mockDrags', 'mockMenu', {
-        minSelectionDist: 'mock-minSelectionDist',
-        minMenuSelectionDist: 'mock-minMenuSelectionDist',
-        movementsThreshold: 'mock-movementsThreshold',
-        submenuOpeningDelay: 'mock-submenuOpeningDelay',
-        menuCenter: 'mock-menuCenter',
-        noviceMoves: mockNoviceMoves,
-        menuSelection: mockMenuSelection,
-        submenuNavigation: mockSubmenuNavigation,
-      }),
+    m.expect<unknown>(
+      noviceNavigation(
+        'mockDrags' as unknown as Observable<NavigationDrag>,
+        'mockMenu' as unknown as MarkingMenuModelItem,
+        {
+          minSelectionDist: 'mock-minSelectionDist',
+          minMenuSelectionDist: 'mock-minMenuSelectionDist',
+          movementsThreshold: 'mock-movementsThreshold',
+          submenuOpeningDelay: 'mock-submenuOpeningDelay',
+          menuCenter: 'mock-menuCenter',
+          noviceMoves: mockNoviceMoves,
+          menuSelection: mockMenuSelection,
+          submenuNavigation: mockSubmenuNavigation,
+        } as unknown as NoviceNavigationOptions<NavigationDrag>,
+      ),
     ).toBeObservable(expected$);
     m.expect(move$).toHaveSubscriptions(moveSub);
     m.expect(subNavs$).toHaveSubscriptions(subNavsSub);
@@ -275,9 +336,9 @@ test(
       ],
     ]);
     {
-      const [[moveArg$, ...argRest], ...otherCalls] =
-        mockMenuSelection.mock.calls;
-      // It is difficult to at this point to check that moveArg$ did emit the
+      const [[moveArg$, ...argRest], ...otherCalls] = mockMenuSelection.mock
+        .calls as [unknown[], ...unknown[][]];
+      // It is difficult at this point to check that moveArg$ did emit the
       // values in move. It might be possible, but I did not bother.
       expect(moveArg$).toBeInstanceOf(Observable);
       expect(argRest).toEqual([

@@ -1,22 +1,61 @@
-import { of } from 'rxjs';
+/* eslint-disable @typescript-eslint/naming-convention -- Observable testing use capital letters for HOO */
+
+import { of, type Observable, type ConnectableObservable } from 'rxjs';
 import { publishBehavior, scan, map } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
+import { type Mock } from 'vitest';
 import { longMoves, dwellings, draw } from '../move/index.js';
 import recognize from '../recognizer/index.js';
+import type { MarkingMenuModelItem, Point } from '../types.js';
 import navigation, {
   confirmedExpertNavigationHOO,
   confirmedNoviceNavigationHOO,
   expertToNoviceSwitchHOO,
   startup,
   navigationFromDrag,
+  type NavigationOptions,
 } from './navigation.js';
-import expertNavigation from './expert-navigation.js';
+import expertNavigation, { type NavigationDrag } from './expert-navigation.js';
 import noviceNavigation from './novice-navigation.js';
 
 vi.mock('./expert-navigation');
 vi.mock('./novice-navigation');
 vi.mock('../move');
 vi.mock('../recognizer');
+
+// The collaborators are auto-mocked and driven with placeholder tokens (string
+// positions/models, raw event labels) compared only structurally at runtime, so
+// each mock is aliased with a loose signature.
+const mockExpertNavigation = vi.mocked(expertNavigation) as unknown as Mock<
+  (
+    obs$: Observable<string>,
+    model?: unknown,
+    init?: string,
+  ) => Observable<unknown>
+>;
+const mockNoviceNavigation = vi.mocked(noviceNavigation) as unknown as Mock<
+  (
+    obs$: Observable<string>,
+    model?: unknown,
+    options?: unknown,
+  ) => Observable<unknown>
+>;
+const mockLongMoves = vi.mocked(longMoves) as unknown as Mock<
+  (...args: unknown[]) => Observable<unknown>
+>;
+const mockDwellings = vi.mocked(dwellings) as unknown as Mock<
+  (...args: unknown[]) => Observable<unknown>
+>;
+const mockDraw = vi.mocked(draw) as unknown as Mock<
+  (...args: unknown[]) => unknown
+>;
+const mockRecognize = vi.mocked(recognize) as unknown as Mock<
+  (...args: unknown[]) => unknown
+>;
+
+type ExpertHooOptions = NavigationOptions & {
+  expertToNoviceSwitchHOO?: typeof expertToNoviceSwitchHOO;
+};
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -35,32 +74,38 @@ describe('confirmedExpertNavigationHOO', () => {
     };
     // Drag is a behavior and in this case it matters. Note that values is not
     // passed, it emits raw events.
-    const drag$ = m.hot(    '--a-b--c--d-e---f--|').pipe(publishBehavior());
+    const drag$ = m.hot(    '--a-b--c--d-e---f--|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>;
     const long$ = m.hot(    '-------c----e------|', values);
     const sub$ = m.cold(           '---D-E---F--|', values);
     const etnsh$ = m.hot(   '-------------------|');
     const expected$ = m.hot('-------(X|)'         , { X: sub$ });
     drag$.connect();
 
-    expertNavigation.mockImplementation(
+    mockExpertNavigation.mockImplementation(
       (obs$, model, init) => obs$.pipe(scan(
         (previous, n) => ({ stroke: previous.stroke + n, model }),
-        { stroke: init || '' }
+        { stroke: init ?? '' }
       )
     ));
-    longMoves.mockImplementation(() => long$);
-    draw.mockImplementation(() => drag$);
+    mockLongMoves.mockImplementation(() => long$);
+    mockDraw.mockImplementation(() => drag$);
     const mockExpertToNoviceSwitchHOO = vi.fn(() => etnsh$);
 
     m
-      .expect(confirmedExpertNavigationHOO(drag$, 'mock-model', {
-        movementsThreshold: 'mock-threshold',
-        expertToNoviceSwitchHOO: mockExpertToNoviceSwitchHOO
-      }))
+      .expect<unknown>(
+        confirmedExpertNavigationHOO(
+          drag$ as unknown as Observable<NavigationDrag>,
+          'mock-model' as unknown as MarkingMenuModelItem,
+          {
+            movementsThreshold: 'mock-threshold',
+            expertToNoviceSwitchHOO: mockExpertToNoviceSwitchHOO
+          } as unknown as ExpertHooOptions
+        )
+      )
       .toBeObservable(expected$);
     m.flush();
-    expect(longMoves.mock.calls[0][1]).toEqual('mock-threshold');
-    expect(longMoves).toHaveBeenCalledTimes(1);
+    expect(mockLongMoves.mock.calls[0]?.[1]).toEqual('mock-threshold');
+    expect(mockLongMoves).toHaveBeenCalledTimes(1);
   }));
 
   // prettier-ignore
@@ -74,7 +119,7 @@ describe('confirmedExpertNavigationHOO', () => {
     };
     // Drag is a behavior and in this case it matters. Note that values is not
     // passed, it emits raw events.
-    const drag$ = m.hot(    '--a-b--c--d-e-----f--|').pipe(publishBehavior());
+    const drag$ = m.hot(    '--a-b--c--d-e-----f--|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>;
     const long$ = m.hot(    '-------c----e--------|', values);
     // const expert$ = m.cold(        '---D-E-----F--|', values);
     const noviceSwitch$ = m.cold(           '----F-|', values);
@@ -84,21 +129,27 @@ describe('confirmedExpertNavigationHOO', () => {
     drag$.connect();
 
     // Mock Expert navigation concats all event labels in the stroke.
-    expertNavigation.mockImplementation(
+    mockExpertNavigation.mockImplementation(
       (obs$, model, init) => obs$.pipe(scan(
         (previous, n) => ({ stroke: previous.stroke + n, model  }),
-        { stroke: init || '' }
+        { stroke: init ?? '' }
       )
     ));
-    longMoves.mockImplementation(() => long$);
-    draw.mockImplementation(() => drag$);
+    mockLongMoves.mockImplementation(() => long$);
+    mockDraw.mockImplementation(() => drag$);
     const mockExpertToNoviceSwitchHOO = vi.fn(() => etnsh$);
 
     m
-      .expect(confirmedExpertNavigationHOO(drag$, 'mock-model', {
-        movementsThreshold: 'mock-threshold',
-        expertToNoviceSwitchHOO: mockExpertToNoviceSwitchHOO
-      }))
+      .expect<unknown>(
+        confirmedExpertNavigationHOO(
+          drag$ as unknown as Observable<NavigationDrag>,
+          'mock-model' as unknown as MarkingMenuModelItem,
+          {
+            movementsThreshold: 'mock-threshold',
+            expertToNoviceSwitchHOO: mockExpertToNoviceSwitchHOO
+          } as unknown as ExpertHooOptions
+        )
+      )
       .toBeObservable(expected$);
   }));
 });
@@ -106,7 +157,7 @@ describe('confirmedExpertNavigationHOO', () => {
 describe('confirmedNoviceNavigationHOO', () => {
   // prettier-ignore
   it('emits novice navigation observables once they are confirmed', marbles(m => {
-    const createNotif = name => ({
+    const createNotif = (name: string) => ({
       name,
       mode: 'novice',
       model: 'mock-model',
@@ -124,33 +175,33 @@ describe('confirmedNoviceNavigationHOO', () => {
       F: createNotif('f')
     };
     // Drag is a behavior and in this case it matters.
-    const drag$ = m.hot(     '-a-b---c-d---e--f--|').pipe(publishBehavior());
+    const drag$ = m.hot(     '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>;
     const dwellings$ = m.hot('------b-----d------|');
     const sub$ = m.cold(           '-C-D---E--F--|', values);
     const expected$ = m.hot( '------(X|)'          , { X: sub$ });
     drag$.connect();
 
-    noviceNavigation.mockImplementation(
+    mockNoviceNavigation.mockImplementation(
       (obs$, model, options) => obs$.pipe(map(n => ({ name: n, model, options })))
     );
-    dwellings.mockImplementation(() => dwellings$);
+    mockDwellings.mockImplementation(() => dwellings$);
 
     m
-      .expect(
+      .expect<unknown>(
         confirmedNoviceNavigationHOO(
-          drag$,
-          { position: 'mock-start-position' },
-          'mock-model',
+          drag$ as unknown as Observable<NavigationDrag>,
+          { position: 'mock-start-position' } as unknown as NavigationDrag,
+          'mock-model' as unknown as MarkingMenuModelItem,
           {
             opt: 'mock-opt',
             noviceDwellingTime: 'mock-dwelling',
             movementsThreshold: 'mock-move-threshold'
-          }
+          } as unknown as NavigationOptions
         )
       )
       .toBeObservable(expected$);
     m.flush();
-    expect(dwellings.mock.calls).toEqual([
+    expect(mockDwellings.mock.calls).toEqual([
       [drag$, {
         delay: 'mock-dwelling',
         movementsThreshold: 'mock-move-threshold'
@@ -172,32 +223,37 @@ describe('expertToNoviceSwitchHOO', () => {
       movementsThreshold: 'mock-move-threshold'
     };
 
-    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior());
+    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined));
     const dwell$ = m.hot(   '------b-----d------|', values);
     const novice$ = m.cold(       'G---HI|)', values);
     const expected$ = m.hot('------(X|)', { X: novice$ });
 
-    dwellings.mockImplementation(() => dwell$);
-    recognize.mockImplementation(() => recognizedMenu);
-    noviceNavigation.mockImplementation(() => novice$);
-    draw.mockImplementation(() => 'mock-draw')
+    mockDwellings.mockImplementation(() => dwell$);
+    mockRecognize.mockImplementation(() => recognizedMenu);
+    mockNoviceNavigation.mockImplementation(() => novice$);
+    mockDraw.mockImplementation(() => 'mock-draw')
 
-    m.expect(
-      expertToNoviceSwitchHOO(drag$, 'mock-model', 'mock-stroke', options)
+    m.expect<unknown>(
+      expertToNoviceSwitchHOO(
+        drag$ as unknown as Observable<NavigationDrag>,
+        'mock-model' as unknown as MarkingMenuModelItem,
+        'mock-stroke' as unknown as Point[],
+        options as unknown as NavigationOptions
+      )
     ).toBeObservable(expected$);
 
     m.flush();
 
-    expect(draw.mock.calls).toEqual([[drag$, { initStroke: 'mock-stroke' }]])
-    expect(dwellings.mock.calls).toEqual([[
+    expect(mockDraw.mock.calls).toEqual([[drag$, { initStroke: 'mock-stroke' }]])
+    expect(mockDwellings.mock.calls).toEqual([[
       'mock-draw',
       {
         delay: 'mock-dwelling',
         movementsThreshold: 'mock-move-threshold'
       }
     ]]);
-    expect(noviceNavigation).toHaveBeenCalledTimes(1);
-    expect(noviceNavigation.mock.calls[0].slice(1)).toEqual([
+    expect(mockNoviceNavigation).toHaveBeenCalledTimes(1);
+    expect(mockNoviceNavigation.mock.calls[0]?.slice(1)).toEqual([
       recognizedMenu,
       {...options, menuCenter: 'mock-position'}
     ])
@@ -210,19 +266,24 @@ describe('expertToNoviceSwitchHOO', () => {
       B: { stroke: 'mock-stroke', type: 'cancel' }
     };
 
-    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior());
+    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined));
     const dwell$ = m.hot(   '------b-----d------|', values);
     const sub$ = m.cold(          '(B|)', values);
     const expected$ = m.hot('------(X|)', { X: sub$ });
 
-    dwellings.mockImplementation(() => dwell$);
-    recognize.mockImplementation(() => null);
+    mockDwellings.mockImplementation(() => dwell$);
+    mockRecognize.mockImplementation(() => null);
 
-    m.expect(
-      expertToNoviceSwitchHOO(drag$, 'mock-model', 'mock-stroke', {
-        noviceDwellingTime: 'mock-dwelling',
-        movementsThreshold: 'mock-move-threshold'
-      })
+    m.expect<unknown>(
+      expertToNoviceSwitchHOO(
+        drag$ as unknown as Observable<NavigationDrag>,
+        'mock-model' as unknown as MarkingMenuModelItem,
+        'mock-stroke' as unknown as Point[],
+        {
+          noviceDwellingTime: 'mock-dwelling',
+          movementsThreshold: 'mock-move-threshold'
+        } as unknown as NavigationOptions
+      )
     ).toBeObservable(expected$);
   }));
 
@@ -233,19 +294,24 @@ describe('expertToNoviceSwitchHOO', () => {
       B: { stroke: 'mock-stroke', type: 'cancel' }
     };
 
-    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior());
+    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined));
     const dwell$ = m.hot(   '------b-----d------|', values);
     const sub$ = m.cold(          '(B|)', values);
     const expected$ = m.hot('------(X|)', { X: sub$ });
 
-    dwellings.mockImplementation(() => dwell$);
-    recognize.mockImplementation(() => ({ isRoot: () => true }));
+    mockDwellings.mockImplementation(() => dwell$);
+    mockRecognize.mockImplementation(() => ({ isRoot: () => true }));
 
-    m.expect(
-      expertToNoviceSwitchHOO(drag$, 'mock-model', 'mock-stroke', {
-        noviceDwellingTime: 'mock-dwelling',
-        movementsThreshold: 'mock-move-threshold'
-      })
+    m.expect<unknown>(
+      expertToNoviceSwitchHOO(
+        drag$ as unknown as Observable<NavigationDrag>,
+        'mock-model' as unknown as MarkingMenuModelItem,
+        'mock-stroke' as unknown as Point[],
+        {
+          noviceDwellingTime: 'mock-dwelling',
+          movementsThreshold: 'mock-move-threshold'
+        } as unknown as NavigationOptions
+      )
     ).toBeObservable(expected$);
   }));
 });
@@ -253,7 +319,7 @@ describe('expertToNoviceSwitchHOO', () => {
 describe('startup', () => {
   // prettier-ignore
   it('emits expert-like notifications', marbles(m => {
-    expertNavigation.mockImplementation(obs$ =>
+    mockExpertNavigation.mockImplementation(obs$ =>
       obs$.pipe(map(n => ({ name: n, type: 'mock-type' })))
     );
     const values = {
@@ -263,31 +329,45 @@ describe('startup', () => {
     };
     const drag$ = m.hot(    '-a-bc--|');
     const expected$ = m.hot('-A-BC--|', values);
-    m.expect(startup(drag$)).toBeObservable(expected$);
+    m
+      .expect<unknown>(
+        startup(
+          drag$ as unknown as Observable<NavigationDrag>,
+          undefined as unknown as MarkingMenuModelItem
+        )
+      )
+      .toBeObservable(expected$);
   }));
 });
 
 describe('navigationFromDrag', () => {
-  let mockConfirmedExpertNavigationHOO;
-  let mockConfirmedNoviceNavigationHOO;
-  let mockStartup;
-  let callNavigationFromDrag;
+  let mockConfirmedExpertNavigationHOO: Mock<
+    (...args: unknown[]) => Observable<unknown>
+  >;
+  let mockConfirmedNoviceNavigationHOO: Mock<
+    (...args: unknown[]) => Observable<unknown>
+  >;
+  let mockStartup: Mock<(...args: unknown[]) => Observable<unknown>>;
+  let callNavigationFromDrag: () => Observable<unknown>;
+
+  const emptyObsMock = (): Mock<(...args: unknown[]) => Observable<unknown>> =>
+    vi.fn(() => of());
 
   beforeEach(() => {
-    mockConfirmedExpertNavigationHOO = vi.fn(() => of());
-    mockConfirmedNoviceNavigationHOO = vi.fn(() => of());
-    mockStartup = vi.fn(() => of());
+    mockConfirmedExpertNavigationHOO = emptyObsMock();
+    mockConfirmedNoviceNavigationHOO = emptyObsMock();
+    mockStartup = emptyObsMock();
     callNavigationFromDrag = () =>
       navigationFromDrag(
-        'mock-drag$',
-        'mock-start',
-        'mock-model',
-        'mock-options',
+        'mock-drag$' as unknown as Observable<NavigationDrag>,
+        'mock-start' as unknown as NavigationDrag,
+        'mock-model' as unknown as MarkingMenuModelItem,
+        'mock-options' as unknown as NavigationOptions,
         {
           confirmedExpertNavigationHOO: mockConfirmedExpertNavigationHOO,
           confirmedNoviceNavigationHOO: mockConfirmedNoviceNavigationHOO,
           startup: mockStartup,
-        },
+        } as unknown as Parameters<typeof navigationFromDrag>[4],
       );
   });
 
@@ -374,26 +454,32 @@ describe('navigation', () => {
       m: { name: 'm', start: 'l', menu: 'mock-menu', options: navigationOptions }
     };
     const subs = {
-      A: m.hot('-z---u----a--^----b-c-|').pipe(publishBehavior()),
-      E: m.hot('----e--------^----eee-ee-e|').pipe(publishBehavior()),
-      J: m.hot('--------i----^-------------j----k|').pipe(publishBehavior()),
-      P: m.hot(          ' l-^-------------------------m-|').pipe(publishBehavior())
+      A: m.hot('-z---u----a--^----b-c-|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>,
+      E: m.hot('----e--------^----eee-ee-e|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>,
+      J: m.hot('--------i----^-------------j----k|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>,
+      P: m.hot(          ' l-^-------------------------m-|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>
     };
     const drags$ = m.hot(   'A----E-------J-------P-|', subs);
     const expected$ = m.hot('a----b-c-----ij----k-l----m-|', transformedValues);
 
     for (const sub of Object.values(subs)) {sub.connect();}
 
-    const mockNavFromDrag = vi.fn((obs, start, menu, options) =>
+    const mockNavFromDrag = vi.fn((obs: Observable<string>, start: unknown, menu: unknown, options: unknown) =>
       obs.pipe(map(name => ({ name, start, menu, options })))
     );
 
     m
-      .expect(
-        navigation(drags$, 'mock-menu', {
-          ...navigationOptions,
-          navigationFromDrag: mockNavFromDrag,
-        }),
+      .expect<unknown>(
+        navigation(
+          drags$ as unknown as Observable<Observable<NavigationDrag>>,
+          'mock-menu' as unknown as MarkingMenuModelItem,
+          {
+            ...navigationOptions,
+            navigationFromDrag: mockNavFromDrag,
+          } as unknown as NavigationOptions & {
+            navigationFromDrag?: typeof navigationFromDrag;
+          }
+        )
       )
       .toBeObservable(expected$);
   }));

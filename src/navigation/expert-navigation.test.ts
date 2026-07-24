@@ -1,8 +1,18 @@
+/* eslint-disable @typescript-eslint/naming-convention -- Observable testing use capital letters for HOO */
 import { marbles } from 'rxjs-marbles';
+import { type Observable } from 'rxjs';
+import { type Mock } from 'vitest';
+import type { MarkingMenuModelItem, Point } from '../types.js';
 import recognize from '../recognizer/index.js';
-import expertNavigation from './expert-navigation.js';
+import expertNavigation, { type NavigationDrag } from './expert-navigation.js';
 
 vi.mock('../recognizer');
+
+// `recognize` and the drag/model tokens used below are placeholders compared
+// only structurally at runtime, so the mock is typed loosely.
+const mockRecognize = vi.mocked(recognize) as unknown as Mock<
+  (...args: unknown[]) => unknown
+>;
 
 afterEach(() => {
   vi.resetAllMocks();
@@ -34,7 +44,13 @@ describe('expertNavigation', () => {
     const drag$     = m.hot('^--a-b---c-', values);
     const expected$ = m.hot('^--A-B---C-', values);
     m
-      .expect(expertNavigation(drag$, 'model', ['i-pos', 'j-pos']))
+      .expect<unknown>(
+        expertNavigation(
+          drag$ as unknown as Observable<NavigationDrag>,
+          'model' as unknown as MarkingMenuModelItem,
+          ['i-pos', 'j-pos'] as unknown as Point[]
+        )
+      )
       .toBeObservable(expected$);
   }));
 
@@ -48,12 +64,19 @@ describe('expertNavigation', () => {
     };
     const drag$     = m.hot('^ab--', values);
     const expected$ = m.hot('^AB--', values);
-    m.expect(expertNavigation(drag$, 'model')).toBeObservable(expected$);
+    m
+      .expect<unknown>(
+        expertNavigation(
+          drag$ as unknown as Observable<NavigationDrag>,
+          'model' as unknown as MarkingMenuModelItem
+        )
+      )
+      .toBeObservable(expected$);
   }));
 
   // prettier-ignore
   it('emits select on completion if an item is recognized', marbles(m => {
-    recognize.mockImplementation(() => 'selection');
+    mockRecognize.mockImplementation(() => 'selection');
     const values = {
       a: { position: 'a-pos' },
       A: { type: 'draw', position: 'a-pos', stroke: ['a-pos'] },
@@ -66,14 +89,21 @@ describe('expertNavigation', () => {
     };
     const drag$ = m.hot('^-a-|', values);
     const expected$ = m.hot('^-A-(s|)', values);
-    m.expect(expertNavigation(drag$, 'model')).toBeObservable(expected$);
+    m
+      .expect<unknown>(
+        expertNavigation(
+          drag$ as unknown as Observable<NavigationDrag>,
+          'model' as unknown as MarkingMenuModelItem
+        )
+      )
+      .toBeObservable(expected$);
     m.flush();
-    expect(recognize.mock.calls).toEqual([[['a-pos'], 'model']]);
+    expect(mockRecognize.mock.calls).toEqual([[['a-pos'], 'model']]);
   }));
 
   // prettier-ignore
   it('emits cancel on completion if no items are recognized', marbles(m => {
-    recognize.mockImplementation(() => undefined);
+    mockRecognize.mockImplementation(() => undefined);
     const values = {
       a: { position: 'a-pos' },
       A: { type: 'draw', position: 'a-pos', stroke: ['a-pos'] },
@@ -85,9 +115,16 @@ describe('expertNavigation', () => {
     };
     const drag$ = m.hot('^-a-|', values);
     const expected$ = m.hot('^-A-(s|)', values);
-    m.expect(expertNavigation(drag$, 'model')).toBeObservable(expected$);
+    m
+      .expect<unknown>(
+        expertNavigation(
+          drag$ as unknown as Observable<NavigationDrag>,
+          'model' as unknown as MarkingMenuModelItem
+        )
+      )
+      .toBeObservable(expected$);
     m.flush();
-    expect(recognize.mock.calls).toEqual([[['a-pos'], 'model']]);
+    expect(mockRecognize.mock.calls).toEqual([[['a-pos'], 'model']]);
   }));
 
   // prettier-ignore
@@ -97,8 +134,15 @@ describe('expertNavigation', () => {
     };
     const drag$ = m.hot('^--|', values);
     const expected$ = m.hot('^--(c|)', values);
-    m.expect(expertNavigation(drag$, 'model')).toBeObservable(expected$);
+    m
+      .expect<unknown>(
+        expertNavigation(
+          drag$ as unknown as Observable<NavigationDrag>,
+          'model' as unknown as MarkingMenuModelItem
+        )
+      )
+      .toBeObservable(expected$);
     m.flush();
-    expect(recognize).not.toHaveBeenCalled();
+    expect(mockRecognize).not.toHaveBeenCalled();
   }));
 });
