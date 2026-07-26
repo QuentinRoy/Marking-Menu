@@ -3,14 +3,13 @@
   "extends": [
     ":automergeMinor",
     ":automergeBranch",
-    ":semanticCommits",
     ":rebaseStalePrs",
     ":semanticCommitScopeDisabled",
     ":preserveSemverRanges"
   ],
   "packageRules": [
     {
-      "matchPackageNames": ["/eslint/", "/prettier/", "/standard-version/"],
+      "matchPackageNames": ["/eslint/", "/prettier/"],
       "groupName": "ci"
     },
     {
