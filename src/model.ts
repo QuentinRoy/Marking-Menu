@@ -1,4 +1,11 @@
-import { deltaAngle } from './utils.js';
+import type {
+  LiteralId,
+  MarkingMenuInput,
+  MarkingMenuItemInput,
+  ModelItem,
+  ModelRoot,
+} from './types.js';
+import { deltaAngle, type EmptyTuple } from './utils.js';
 
 /*
  The marking menu model.
@@ -11,97 +18,17 @@ import { deltaAngle } from './utils.js';
  */
 
 /* -------------------------------------------------------------------------- *
- * Input
- * -------------------------------------------------------------------------- */
-
-/**
- An item of the menu, as described by the caller.
- */
-export type MarkingMenuItemInput = {
-  /**
-   The item's identifier. Purely semantic: it is never generated, and only the
-   caller gives it a meaning. It must be unique across the whole menu.
-   */
-  readonly id?: string | undefined;
-  /** The item's label. */
-  readonly label: string;
-  /** The item's sub-items, if any. */
-  readonly items?: readonly MarkingMenuItemInput[] | undefined;
-};
-
-/**
- The description of a marking menu, as provided to {@link createModel}.
- */
-export type MarkingMenuInput = {
-  /** The menu's top level items. */
-  readonly items: readonly MarkingMenuItemInput[];
-};
-
-/* -------------------------------------------------------------------------- *
  * Type level helpers
  * -------------------------------------------------------------------------- */
 
 /**
- Whether `T` is a tuple, i.e. its length is statically known.
- */
-type IsTuple<T extends readonly unknown[]> = number extends T['length']
-  ? false
-  : true;
-
-/**
- The literal id of an item, or `never` if it has no id or its id is a widened
- `string`. Applied item per item so that one item with an unknown id does not
- collapse the ids of its siblings.
- */
-type LiteralId<Item> = Item extends { id: infer Id }
-  ? string extends Id
-    ? never
-    : Id extends string
-      ? Id
-      : never
-  : never;
-
-/**
- The union of the statically known ids of `Items`.
- */
-type LiteralIds<Items extends readonly unknown[]> = {
-  [K in keyof Items]: LiteralId<Items[K]>;
-}[number];
-
-/**
- Whether `Ids` contains the (single) id `Id`. `never` is contained by nothing.
- */
+   Whether `Ids` contains the (single) id `Id`. `never` is contained by nothing.
+   */
 type Includes<Id, Ids> = [Id] extends [never]
   ? false
   : [Id] extends [Ids]
     ? true
     : false;
-
-/**
- A list statically known to be empty.
- */
-// The empty tuple is precisely what is meant here: a list known to have nothing
-// in it.
-// eslint-disable-next-line @typescript-eslint/no-restricted-types
-type Empty = readonly [];
-
-/**
- Whether an item list makes its owner a leaf. `boolean` when the list's length
- is not statically known.
- */
-type IsLeaf<Items extends readonly unknown[]> = Items['length'] extends 0
-  ? true
-  : Items extends readonly [unknown, ...unknown[]]
-    ? false
-    : boolean;
-
-/**
- Pick a type depending on whether the node is a leaf. Distributes over `Leaf`
- so that an undetermined `boolean` yields both alternatives.
- */
-type IfLeaf<Leaf extends boolean, WhenLeaf, WhenBranch> = Leaf extends true
-  ? WhenLeaf
-  : WhenBranch;
 
 /* -------------------------------------------------------------------------- *
  * Input validation
@@ -126,11 +53,11 @@ type AllIds<Items extends readonly MarkingMenuItemInput[]> =
     ...infer Rest extends readonly MarkingMenuItemInput[],
   ]
     ? [...OwnId<Head>, ...SubIds<Head>, ...AllIds<Rest>]
-    : Empty;
+    : EmptyTuple;
 
 /** The id of an item as a (possibly empty) list. */
 type OwnId<Item> = [LiteralId<Item>] extends [never]
-  ? Empty
+  ? EmptyTuple
   : [LiteralId<Item>];
 
 /** Every statically known id below an item. */
@@ -138,7 +65,7 @@ type SubIds<Item> = Item extends {
   items: infer SubItems extends readonly MarkingMenuItemInput[];
 }
   ? AllIds<SubItems>
-  : Empty;
+  : EmptyTuple;
 
 /**
  The first id `Ids` holds more than once, or `never` if they are all unique.
@@ -164,74 +91,6 @@ type RejectDuplicate<Duplicate extends string> = [Duplicate] extends [never]
   ? unknown
   : DuplicateItemIdsError<Duplicate>;
 
-/* -------------------------------------------------------------------------- *
- * Model
- * -------------------------------------------------------------------------- */
-
-/**
- What the root and the items of the model have in common.
- */
-type MenuNode<Items extends readonly unknown[]> = {
-  /** The node's direct sub-items. */
-  readonly items: Items;
-  /** Whether the node has no sub-item. */
-  readonly isLeaf: IsLeaf<Items>;
-  /**
-   Retrieve a direct sub-item by its id. Only accepts the ids of the node's own
-   sub-items, and hence always returns one of them.
-   */
-  readonly getChild: GetChild<Items>;
-  /**
-   Retrieve every direct sub-item matching a given label. Labels are not
-   required to be unique, nor known in advance.
-   */
-  getChildrenByLabel(childLabel: string): Array<Items[number]>;
-  /** Find the sub-item whose angle is the closest to a given angle. */
-  getNearestChild(angle: number): IfLeaf<IsLeaf<Items>, null, Items[number]>;
-  /** The maximum depth of the menu below this node. */
-  getMaxDepth(): IfLeaf<IsLeaf<Items>, 0, number>;
-  /** The maximum breadth of the menu below this node. */
-  getMaxBreadth(): IfLeaf<IsLeaf<Items>, 0, number>;
-};
-
-/**
- `getChild` accepts the ids of the sub-items it can actually find. When the
- sub-items are not a tuple — a menu built at runtime — the ids are unknown, so
- it falls back to accepting any string and possibly returning `null`.
- */
-type GetChild<Items extends readonly unknown[]> =
-  IsTuple<Items> extends true
-    ? <Id extends LiteralIds<Items>>(
-        childId: Id,
-      ) => Extract<Items[number], { id: Id }>
-    : (childId: string) => Items[number] | null;
-
-/**
- A node of the model that the caller described: it carries back the id and the
- label it was given, plus the angle the menu laid it out at.
- */
-type ModelItem<
-  Id extends string | undefined,
-  Label extends string,
-  Items extends readonly unknown[],
-> = MenuNode<Items> & {
-  /** The item's id, as provided by the caller (`undefined` if it had none). */
-  readonly id: Id;
-  /** The item's label. */
-  readonly label: Label;
-  /** The item's angle, in degrees. */
-  readonly angle: number;
-  /** Items are never the root of the menu. */
-  readonly isRoot: false;
-};
-
-/**
- The root of the model. Unlike items, it has no id, label nor angle.
- */
-type ModelRoot<Items extends readonly unknown[]> = MenuNode<Items> & {
-  readonly isRoot: true;
-};
-
 /** The id an input item resolves to. */
 type IdOf<Input> = Input extends { id: infer Id extends string }
   ? Id
@@ -242,7 +101,7 @@ type ItemsOf<Input> = Input extends {
   items: infer Items extends readonly MarkingMenuItemInput[];
 }
   ? Items
-  : Empty;
+  : EmptyTuple;
 
 /** The model items an input item list resolves to. */
 type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = {

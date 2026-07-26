@@ -8,6 +8,7 @@ import {
   radiansToDegrees,
   degreesToRadians,
   noOp,
+  isNonEmptyArray,
 } from './utils.js';
 
 describe('mod', () => {
@@ -80,6 +81,15 @@ describe('dist', () => {
       Math.hypot(1 - 4, 2 - 5, 3 - 6, 7 - 9, 8 - 10),
     );
   });
+
+  it('throws if the two points do not have the same dimension', () => {
+    expect(() => dist([0, 0], [0, 0, 0])).toThrow(
+      'Points must have the same dimension. Got 2 and 3.',
+    );
+    expect(() => dist([1, 2, 3], [1, 2])).toThrow(
+      'Points must have the same dimension. Got 3 and 2.',
+    );
+  });
 });
 
 describe('angle', () => {
@@ -130,5 +140,17 @@ describe('toPolar', () => {
 describe('noOp', () => {
   it('does nothing', () => {
     expect(noOp).not.toThrow();
+  });
+});
+
+describe('isNonEmptyArray', () => {
+  it('returns true for arrays with at least one element', () => {
+    expect(isNonEmptyArray([1])).toBe(true);
+    expect(isNonEmptyArray([1, 2, 3])).toBe(true);
+    expect(isNonEmptyArray([undefined])).toBe(true);
+  });
+
+  it('returns false for an empty array', () => {
+    expect(isNonEmptyArray([])).toBe(false);
   });
 });

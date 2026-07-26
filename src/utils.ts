@@ -1,5 +1,3 @@
-import type { Point } from './types.js';
-
 /**
  Calculate the modulo of `a` over `n`.
 
@@ -143,17 +141,16 @@ export type SetOptional<T, K extends keyof T> = Omit<T, K> &
   Partial<Pick<T, K>>;
 
 /**
- An array with at least one element.
- */
-export type NonEmptyArray<T> = [T, ...T[]];
-
-/**
  A type that simplifies a type by removing unnecessary intersections and making it more readable.
  */
 export type Simplify<T> = T extends infer O
   ? { [K in keyof O]: O[K] } & {}
   : never;
 
+/**
+ Recursively make a type's properties (and the properties of any array or
+ object nested within it) readonly. Functions are left untouched.
+ */
 export type DeepReadonly<T> = T extends (...args: any[]) => any
   ? T
   : T extends Array<infer U>
@@ -162,8 +159,50 @@ export type DeepReadonly<T> = T extends (...args: any[]) => any
       ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
       : T;
 
+/**
+ An array with at least one element.
+ */
+export type NonEmptyArray<T> = [T, ...T[]];
+
+/**
+ Check whether an array has at least one element, narrowing its type to
+ {@link NonEmptyArray} when it does.
+
+ @param array - The array to check.
+ @returns Whether `array` is non-empty.
+ */
 export function isNonEmptyArray<T>(
   array: readonly T[],
 ): array is NonEmptyArray<T> {
   return array.length > 0;
 }
+
+/**
+ A list statically known to be empty.
+ */
+// eslint-disable-next-line @typescript-eslint/no-restricted-types -- This is needed here.
+export type EmptyTuple = readonly [];
+
+/**
+ An array statically known to be empty (its element type is `never`), but,
+ unlike {@link EmptyTuple}, not necessarily a tuple: its length is not a
+ literal `0`, so {@link IsTuple} is `false` for it.
+ */
+export type EmptyArray = readonly never[];
+
+/**
+ Whether `T` is a tuple, i.e. its length is statically known.
+ */
+export type IsTuple<T extends readonly unknown[]> = number extends T['length']
+  ? false
+  : true;
+
+/**
+ A 2D point.
+ */
+export type Point = [number, number];
+
+/**
+ A segment joining two points.
+ */
+export type Segment = [Point, Point];

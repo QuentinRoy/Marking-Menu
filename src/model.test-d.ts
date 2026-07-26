@@ -1,5 +1,6 @@
 import { describe, it, expectTypeOf } from 'vitest';
-import createModel, { type MarkingMenuItemInput } from './model.js';
+import createModel from './model.js';
+import type { MarkingMenuItemInput } from './types.js';
 
 /*
  Type level tests: they assert what the type system knows about a model built
