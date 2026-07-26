@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.11.0
+
+### Minor Changes
+
+- [#129](https://github.com/QuentinRoy/Marking-Menu/pull/129) [`25c0a37`](https://github.com/QuentinRoy/Marking-Menu/commit/25c0a371f30676fa730f1854a793c6502e30058d) Thanks [@QuentinRoy](https://github.com/QuentinRoy)! - Menu items now use a single recursive shape `{ label, children? }`:
+
+  - The `name` property is renamed to `label`.
+  - The string shorthand for menu items is removed; every item must be an object.
+  - `MMItem#getChildrenByName` is renamed to `getChildrenByLabel`.
+
+  `MarkingMenu(items, parentDOM, options)` becomes `MarkingMenu({ items, parent, ...options })`, taking a single options object instead of positional arguments.
+
 All notable changes to this project will be documented in this file. Entries are generated from [Changesets](https://github.com/changesets/changesets) — see `.changeset/README.md` for how to add one.
 
 ### [0.10.1](https://github.com/QuentinRoy/Marking-Menu/compare/v0.10.0...v0.10.1) (2026-07-22)
