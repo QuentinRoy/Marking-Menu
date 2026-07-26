@@ -135,3 +135,35 @@ export const toPolar = (
 export const noOp = (): void => {
   // Intentionally empty.
 };
+
+/**
+  A type that makes some properties of a type optional.
+ */
+export type SetOptional<T, K extends keyof T> = Omit<T, K> &
+  Partial<Pick<T, K>>;
+
+/**
+ An array with at least one element.
+ */
+export type NonEmptyArray<T> = [T, ...T[]];
+
+/**
+ A type that simplifies a type by removing unnecessary intersections and making it more readable.
+ */
+export type Simplify<T> = T extends infer O
+  ? { [K in keyof O]: O[K] } & {}
+  : never;
+
+export type DeepReadonly<T> = T extends (...args: any[]) => any
+  ? T
+  : T extends Array<infer U>
+    ? ReadonlyArray<DeepReadonly<U>>
+    : T extends Record<string, unknown>
+      ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+      : T;
+
+export function isNonEmptyArray<T>(
+  array: readonly T[],
+): array is NonEmptyArray<T> {
+  return array.length > 0;
+}

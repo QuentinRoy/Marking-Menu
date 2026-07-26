@@ -26,8 +26,3 @@ export type MarkingMenuModelItem = {
   /** The maximum breadth of the menu below this item. */
   getMaxBreadth(): number;
 };
-
-/**
- An array with at least one element.
- */
-export type NonEmptyArray<T> = [T, ...T[]];
