@@ -1,5 +1,12 @@
-import { dist, findMaxEntry, radiansToDegrees } from '../utils.js';
-import type { Point, Segment, MarkingMenuModelItem } from '../types.js';
+import {
+  dist,
+  findMaxEntry,
+  radiansToDegrees,
+  type NonEmptyArray,
+  type Point,
+  type Segment,
+} from '../utils.js';
+import type { ModelItem } from '../types.js';
 import getStrokeArticulationPoints from './articulation-points.js';
 import strokeLength from './stroke-length.js';
 
@@ -40,9 +47,12 @@ export const pointsToSegments = (points: Point[]): Segment[] => {
  @param options.model - The marking menu model.
  @param options.segments - A list of segments to walk the model.
  @param options.startIndex - The start index in the angle list.
- @returns The corresponding item found by walking the model.
+ @returns The path walked down the model, from the item the first segment
+ lands on to the one the last segment lands on, or `null` if the segments do
+ not lead to an item. `model` itself is not part of the path, which is hence
+ never empty.
  */
-export const walkModel = <M extends MarkingMenuModelItem>({
+export const walkModel = <M extends ModelItem>({
   model,
   segments,
   startIndex = 0,
@@ -50,9 +60,9 @@ export const walkModel = <M extends MarkingMenuModelItem>({
   model: M;
   segments: Array<{ angle: number }>;
   startIndex?: number;
-}): M | null => {
+}): NonEmptyArray<M> | null => {
   const segment = segments[startIndex];
-  if (segment === undefined || model.isLeaf()) {
+  if (segment === undefined || model.isLeaf) {
     return null;
   }
 
@@ -64,10 +74,11 @@ export const walkModel = <M extends MarkingMenuModelItem>({
   }
 
   if (startIndex + 1 >= segments.length) {
-    return item;
+    return [item];
   }
 
-  return walkModel({ model: item, segments, startIndex: startIndex + 1 });
+  const rest = walkModel({ model: item, segments, startIndex: startIndex + 1 });
+  return rest === null ? null : [item, ...rest];
 };
 
 export const segmentAngle = (a: Point, b: Point): number =>
@@ -107,9 +118,9 @@ export const divideLongestSegment = (
  @param options.model - The marking menu model.
  @param options.segments - A list of segments.
  @param options.maxDepth - The maximum depth of the item.
- @returns The selected item.
+ @returns The path leading to the selected item (see {@link walkModel}).
  */
-export const findItem = <M extends MarkingMenuModelItem>({
+export const findItem = <M extends ModelItem>({
   model,
   segments,
   maxDepth = model.getMaxDepth(),
@@ -117,7 +128,7 @@ export const findItem = <M extends MarkingMenuModelItem>({
   model: M;
   segments: StrokeSegment[];
   maxDepth?: number;
-}): M | null => {
+}): NonEmptyArray<M> | null => {
   // If there is not segments, there is no selection to find.
   if (segments.length === 0) {
     return null;
@@ -125,17 +136,17 @@ export const findItem = <M extends MarkingMenuModelItem>({
 
   // While we haven't found a leaf item, divide the longest segment and walk the model.
   let currentSegments = segments;
-  let currentItem: M | null = null;
+  let currentPath: NonEmptyArray<M> | null = null;
   while (currentSegments.length <= maxDepth) {
-    currentItem = walkModel({ model, segments: currentSegments });
-    if (currentItem?.isLeaf()) {
-      return currentItem;
+    currentPath = walkModel({ model, segments: currentSegments });
+    if (currentPath?.at(-1)?.isLeaf) {
+      return currentPath;
     }
 
     currentSegments = divideLongestSegment(currentSegments);
   }
 
-  return currentItem;
+  return currentPath;
 };
 
 /**
@@ -151,9 +162,7 @@ export const findItem = <M extends MarkingMenuModelItem>({
  @param options.requireLeaf - Look for a leaf.
  @returns The item recognized by the stroke.
  */
-export default function recognizeMarkingMenuStroke<
-  M extends MarkingMenuModelItem,
->(
+export default function recognizeMarkingMenuStroke<M extends ModelItem>(
   stroke: Point[],
   model: M,
   {
@@ -194,17 +203,20 @@ export default function recognizeMarkingMenuStroke<
       angle: segmentAngle(...seg.points),
       length: seg.length,
     }));
-  const item = findItem({ model, segments, maxDepth });
+  const path = findItem({ model, segments, maxDepth });
+  // Paths are never empty, so the item is only nullish when the path is.
+  const item = path?.at(-1) ?? null;
   if (requireLeaf) {
-    return item?.isLeaf() ? item : null;
+    return item?.isLeaf ? item : null;
   }
 
   if (requireMenu) {
-    if (item?.isLeaf()) {
-      // A leaf found by walking the model always has a parent: the walk
-      // returns null for a leaf model, so it cannot be the root. The parent
-      // has the model's own type, hence the assertion.
-      return (item.parent ?? null) as M | null;
+    if (item?.isLeaf) {
+      // The menu holding the leaf is the item the walk visited just before it.
+      // A leaf can only ever be the last item of a path — the walk stops on a
+      // leaf model — so this is the leaf's own parent menu, and `model` itself
+      // when the leaf was found at the first level.
+      return path?.at(-2) ?? model;
     }
 
     return item;

@@ -4,7 +4,8 @@ import { promisify } from 'node:util';
 import { parse as csvParseCallback } from 'csv-parse';
 import angles from 'angles';
 import { type Mock } from 'vitest';
-import type { Point } from '../types.js';
+import type { Point } from '../utils.js';
+import type { ModelItem, ModelRoot } from '../types.js';
 import recognizeMarkingMenuStroke, {
   pointsToSegments,
   divideLongestSegment,
@@ -37,11 +38,9 @@ const csvParse = async (
     );
   });
 
-type MockModel = {
-  isLeaf: Mock<() => boolean>;
-  isRoot: Mock<() => boolean>;
+type MockModel = ModelItem & {
   requestedAngle: number | undefined;
-  parent: MockModel | null;
+  parent?: MockModel | undefined;
   getMaxDepth: Mock<() => number>;
   getMaxBreadth: Mock<() => number>;
   getNearestChild: Mock<(childAngle?: number) => MockModel>;
@@ -51,29 +50,37 @@ const createMockModel = (
   depth = 1,
   breadth = 8,
   requestedAngle?: number,
-  parent: MockModel | null = null,
+  parent?: MockModel,
 ): MockModel => {
+  const base = {
+    items: [],
+    id: undefined,
+    label: 'Mock',
+    angle: requestedAngle ?? 0,
+    getChild: vi.fn(() => null),
+    getChildrenByLabel: vi.fn(() => []),
+    isRoot: false as const,
+    parent,
+  };
   if (depth === 0) {
     return {
-      isLeaf: vi.fn(() => true),
-      isRoot: vi.fn(() => parent === null),
+      ...base,
+      isLeaf: true,
+      isRoot: false,
       getMaxDepth: vi.fn(() => 0),
       getMaxBreadth: vi.fn(() => 0),
-      // Never called: the walk stops at leaf items.
       getNearestChild: vi.fn<(childAngle?: number) => MockModel>(),
       requestedAngle,
-      parent,
     };
   }
 
   if (depth > 0) {
     const m: MockModel = {
-      parent,
+      ...base,
       requestedAngle,
-      isRoot: vi.fn(() => parent === null),
       getMaxDepth: vi.fn(() => depth),
       getMaxBreadth: vi.fn(() => breadth),
-      isLeaf: vi.fn(() => false),
+      isLeaf: false,
       getNearestChild: vi.fn((childAngle?: number) =>
         createMockModel(depth - 1, breadth, childAngle, m),
       ),
@@ -134,35 +141,31 @@ describe('divideLongestSegment', () => {
 });
 
 describe('walkModel', () => {
-  it('finds an item from a segment list and a MM mode', () => {
+  it('returns the path walked from a segment list and a MM model', () => {
     {
       const menu = createMockModel(1);
-      const selection = walkModel({ model: menu, segments: [{ angle: 90 }] });
-      expect(selection?.requestedAngle).toBe(90);
-      expect(selection?.parent).toBe(menu);
+      const walkedPath = walkModel({ model: menu, segments: [{ angle: 90 }] });
+      expect(walkedPath?.map((item) => item.requestedAngle)).toEqual([90]);
     }
 
     {
       const menu = createMockModel(2);
-      const selection = walkModel({
+      const walkedPath = walkModel({
         model: menu,
         segments: [{ angle: 90 }, { angle: 180 }],
       });
-      expect(selection?.requestedAngle).toBe(180);
-      expect(selection?.parent?.requestedAngle).toBe(90);
-      expect(selection?.parent?.parent).toBe(menu);
+      expect(walkedPath?.map((item) => item.requestedAngle)).toEqual([90, 180]);
     }
 
     {
       const menu = createMockModel(3);
-      const selection = walkModel({
+      const walkedPath = walkModel({
         model: menu,
         segments: [{ angle: 90 }, { angle: 0 }, { angle: 180 }],
       });
-      expect(selection?.requestedAngle).toBe(180);
-      expect(selection?.parent?.requestedAngle).toBe(0);
-      expect(selection?.parent?.parent?.requestedAngle).toBe(90);
-      expect(selection?.parent?.parent?.parent).toBe(menu);
+      expect(walkedPath?.map((item) => item.requestedAngle)).toEqual([
+        90, 0, 180,
+      ]);
     }
 
     {
@@ -190,21 +193,20 @@ describe('walkModel', () => {
 
   it('starts walking at the configured segment index', () => {
     const menu = createMockModel(1);
-    const selection = walkModel({
+    const walkedPath = walkModel({
       model: menu,
       segments: [{ angle: 0 }, { angle: 90 }],
       startIndex: 1,
     });
 
-    expect(selection?.requestedAngle).toBe(90);
-    expect(selection?.parent).toBe(menu);
+    expect(walkedPath?.map((item) => item.requestedAngle)).toEqual([90]);
   });
 });
 
 describe('findItem', () => {
   it('finds an item using the model depth by default', () => {
     const menu = createMockModel(2);
-    const selection = findItem({
+    const foundPath = findItem({
       model: menu,
       segments: [
         { angle: 90, length: 10 },
@@ -212,22 +214,19 @@ describe('findItem', () => {
       ],
     });
 
-    expect(selection?.requestedAngle).toBe(180);
-    expect(selection?.parent?.requestedAngle).toBe(90);
-    expect(selection?.parent?.parent).toBe(menu);
+    expect(foundPath?.map((item) => item.requestedAngle)).toEqual([90, 180]);
     expect(menu.getMaxDepth).toHaveBeenCalledOnce();
   });
 
   it('uses the configured maximum depth', () => {
     const menu = createMockModel(2);
-    const selection = findItem({
+    const foundPath = findItem({
       model: menu,
       segments: [{ angle: 90, length: 10 }],
       maxDepth: 1,
     });
 
-    expect(selection?.requestedAngle).toBe(90);
-    expect(selection?.parent).toBe(menu);
+    expect(foundPath?.map((item) => item.requestedAngle)).toEqual([90]);
   });
 });
 
@@ -329,7 +328,7 @@ describe('recognizeMarkingMenuStroke', () => {
       recognizeMarkingMenuStroke(stroke, model, {
         maxDepth: 3,
         requireMenu: true,
-      })?.isLeaf(),
+      })?.isLeaf,
     ).toBe(false);
   });
 
@@ -344,7 +343,7 @@ describe('recognizeMarkingMenuStroke', () => {
       requireMenu: true,
     });
     // The selection is the depth 2 menu: it is returned as is by requireMenu.
-    expect(selection?.isLeaf()).toBe(false);
+    expect(selection?.isLeaf).toBe(false);
     expect(angles.distance(selection?.requestedAngle ?? NaN, 90) < 15).toBe(
       true,
     );

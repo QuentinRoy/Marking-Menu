@@ -136,7 +136,7 @@ const getAngleRange = (items: readonly unknown[]): number =>
 abstract class MarkingMenuNode {
   readonly #items: readonly MarkingMenuItem[];
 
-  constructor(items: readonly MarkingMenuItem[]) {
+  constructor({ items }: { items: readonly MarkingMenuItem[] }) {
     this.#items = items;
   }
 
@@ -245,7 +245,7 @@ class MarkingMenuItem extends MarkingMenuNode {
     angle: number;
     items: readonly MarkingMenuItem[];
   }) {
-    super(items);
+    super({ items });
     this.#id = id;
     this.#label = label;
     this.#angle = angle;
@@ -291,7 +291,7 @@ class MarkingMenuRoot extends MarkingMenuNode {
  */
 const createItems = (
   inputs: readonly MarkingMenuItemInput[],
-  seenIds: Set<string>,
+  seenIds: Set<string> = new Set(),
 ): readonly MarkingMenuItem[] => {
   const angleRange = getAngleRange(inputs);
   return Object.freeze(
@@ -332,7 +332,7 @@ export default function createModel<const Input extends MarkingMenuInput>(
   // types `MarkingMenuModel` derives from the (literal) description. This is
   // the single point where the precise types are re-attached to the loosely
   // typed implementation classes.
-  return new MarkingMenuRoot(
-    createItems(input.items, new Set()),
-  ) as unknown as MarkingMenuModel<Input>;
+  return new MarkingMenuRoot({
+    items: createItems(input.items),
+  }) as unknown as MarkingMenuModel<Input>;
 }

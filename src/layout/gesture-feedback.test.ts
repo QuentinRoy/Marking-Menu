@@ -1,4 +1,4 @@
-import type { Point } from '../types.js';
+import type { Point } from '../utils.js';
 import createGestureFeedback, {
   type GestureFeedback,
 } from './gesture-feedback.js';

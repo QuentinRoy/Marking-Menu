@@ -78,9 +78,9 @@ type GetChild<Items extends readonly unknown[]> =
  label it was given, plus the angle the menu laid it out at.
  */
 export type ModelItem<
-  Id extends string | undefined,
-  Label extends string,
-  Items extends readonly unknown[],
+  Id extends string | undefined = string | undefined,
+  Label extends string = string,
+  Items extends readonly unknown[] = readonly unknown[],
 > = MenuNode<Items> & {
   /** The item's id, as provided by the caller (`undefined` if it had none). */
   readonly id: Id;
@@ -95,9 +95,10 @@ export type ModelItem<
 /**
  The root of the model. Unlike items, it has no id, label nor angle.
  */
-export type ModelRoot<Items extends readonly unknown[]> = MenuNode<Items> & {
-  readonly isRoot: true;
-};
+export type ModelRoot<Items extends readonly unknown[] = readonly unknown[]> =
+  MenuNode<Items> & {
+    readonly isRoot: true;
+  };
 
 /* -------------------------------------------------------------------------- *
  * Helpers
