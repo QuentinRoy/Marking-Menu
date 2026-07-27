@@ -78,14 +78,15 @@ export const expertToNoviceSwitchHOO = <D extends NavigationDrag>(
         requireMenu: true,
       });
       if (!menu || menu.isRoot) {
-        return of({ ...evt, type: 'cancel' });
+        // No menu to switch to: this cancels the expert attempt, not a novice one.
+        return of({ ...evt, type: 'cancel', mode: 'expert' });
       }
 
       // Start a novice navigation from there.
       return noviceNavigation(drag$.pipe(skip(1)), menu, {
         ...options,
         menuCenter: evt.position,
-      });
+      }).pipe(map((n) => ({ ...n, mode: 'novice' })));
     }),
   );
 
