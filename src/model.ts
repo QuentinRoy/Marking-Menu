@@ -83,7 +83,7 @@ type DuplicateId<Ids extends readonly string[]> = Ids extends readonly [
  What a menu description must additionally satisfy, as a type to intersect the
  input with: `unknown` where everything is fine, an error type where it is not.
  */
-type ValidateInput<Input extends MarkingMenuInput> = RejectDuplicate<
+export type ValidateInput<Input extends MarkingMenuInput> = RejectDuplicate<
   DuplicateId<AllIds<Input['items']>>
 >;
 

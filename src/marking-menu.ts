@@ -6,10 +6,21 @@ import {
   type MenuLayoutModel,
 } from './layout/menu.js';
 import { createStrokeCanvas } from './layout/stroke.js';
-import { createModel } from './model.js';
+import {
+  createModel,
+  type MarkingMenuModel,
+  type ValidateInput,
+} from './model.js';
 import { watchDrags } from './move/linear-drag.js';
 import { navigation } from './navigation/navigation.js';
-import type { MarkingMenuItemInput } from './types.js';
+import type {
+  AnyModelNode,
+  MarkingMenuInput,
+  MarkingMenuItemInput,
+  ModelItems,
+  ModelLeaves,
+  ModelMenus,
+} from './types.js';
 import { noOp, type Point } from './utils.js';
 
 /**
@@ -34,31 +45,71 @@ type RawNotification = {
 };
 
 /**
- A marking menu notification, as exported to the caller.
+ The loosely-typed shape {@link exportNotification} produces at runtime. The
+ precise, discriminated {@link MarkingMenuNotification} the public API returns
+ is re-attached once, via the documented cast in {@link createMarkingMenu}'s
+ return statements — the same idiom `model.ts`'s `createModel` establishes.
  */
-export type MarkingMenuNotification = {
-  /** The kind of the notification (e.g. `'open'`, `'change'`, `'select'`). */
+type RawExportedNotification = {
   type?: string | undefined;
-  /** The navigation mode the notification was produced in. */
   mode?: string | undefined;
-  /** The current pointer position, if relevant. */
   position?: Point | undefined;
-  /** The currently pointed at item, if any. */
   active?: unknown;
-  /** The selected item, once a selection has been made. */
   selection?: unknown;
-  /** The pixel coordinates of the currently open menu's center. */
   menuCenter?: Point | undefined;
-  /** The timestamp of the notification. */
   timeStamp?: number | undefined;
 };
+
+/**
+ A marking menu notification, as exported to the caller, discriminated on
+ `type`. Verified against the navigation/layout emission sites (not by the
+ compiler): {@link createMarkingMenu}'s runtime shape tests are load-bearing
+ for this type, not decorative.
+ */
+export type MarkingMenuNotification<M extends AnyModelNode = AnyModelNode> =
+  | { type: 'start'; mode: 'startup'; position?: Point; timeStamp?: number }
+  | {
+      type: 'draw';
+      mode: 'startup' | 'expert';
+      position: Point;
+      timeStamp?: number;
+    }
+  | {
+      type: 'open';
+      mode: 'novice';
+      menu: ModelMenus<M>;
+      menuCenter: Point;
+      position?: Point;
+      timeStamp?: number;
+    }
+  | {
+      type: 'move' | 'change';
+      mode: 'novice';
+      position: Point;
+      active: ModelItems<M> | null;
+      timeStamp?: number;
+    }
+  | {
+      type: 'select';
+      mode: 'novice' | 'expert';
+      selection: ModelLeaves<M>;
+      position?: Point;
+      timeStamp?: number;
+    }
+  | {
+      type: 'cancel';
+      mode: 'novice' | 'expert';
+      selection?: ModelItems<M> | null;
+      position?: Point;
+      timeStamp?: number;
+    };
 
 /**
  Clone a notification in a protected way so that the internal state cannot be corrupted.
  */
 export const exportNotification = (
   n: RawNotification,
-): MarkingMenuNotification => ({
+): RawExportedNotification => ({
   type: n.type,
   mode: n.mode,
   position: n.position ? [...n.position] : undefined,
@@ -81,12 +132,7 @@ export type MarkingMenuLogger = {
 /**
  Configuration of a marking menu, as accepted by {@link createMarkingMenu}.
  */
-export type MarkingMenuConfig = {
-  /**
-   The list of items. Each item must have a `label`; an item with `children`
-   is a sub-menu.
-   */
-  items: readonly MarkingMenuItemInput[];
+export type MarkingMenuConfig = MarkingMenuInput & {
   /** The parent node. */
   parent: HTMLElement;
   /** The minimum distance from the center to select an item. */
@@ -146,45 +192,54 @@ export type MarkingMenuConfig = {
 };
 
 /**
+ The observable {@link createMarkingMenu} returns: every step of the
+ navigation when `Steps` is `true`, only the (leaf) selections otherwise.
+ Written with a naked type parameter so that a widened `boolean` (a caller
+ passing a variable rather than a literal for `notifySteps`) distributes over
+ both branches instead of silently collapsing to one.
+ */
+type CreateMarkingMenuResult<
+  Steps extends boolean | undefined,
+  M extends AnyModelNode,
+> = Steps extends true
+  ? Observable<MarkingMenuNotification<M>>
+  : Observable<ModelLeaves<M>>;
+
+/**
  Create a Marking Menu.
 
  @param config - The menu configuration.
  @returns An observable on menu selections (or, if `notifySteps` is true, on
  every step of the navigation).
  */
-export function createMarkingMenu(
-  config: MarkingMenuConfig & { notifySteps: true },
-): Observable<MarkingMenuNotification>;
-export function createMarkingMenu(
-  config: MarkingMenuConfig & { notifySteps?: false | undefined },
-): Observable<unknown>;
-export function createMarkingMenu({
-  items,
-  parent,
-  minSelectionDist = 40,
-  minMenuSelectionDist = 80,
-  submenuOpeningDelay = 100,
-  movementsThreshold = 5,
-  noviceDwellingTime = 1000 / 3,
-  strokeColor = '#000',
-  strokeWidth = 4,
-  strokeStartPointRadius = 8,
-  lowerStrokeColor = '#777',
-  lowerStrokeWidth = strokeWidth,
-  lowerStrokeStartPointRadius = lowerStrokeWidth,
-  gestureFeedbackDuration = 1000,
-  gestureFeedbackStrokeWidth = strokeWidth,
-  gestureFeedbackCanceledStrokeColor = '#DE6C52',
-  gestureFeedbackStrokeColor = strokeColor,
-  notifySteps = false,
-  log = {
-    error: console?.error?.bind(console) ?? noOp,
-    info: console?.info?.bind(console) ?? noOp,
-    warn: console?.warn?.bind(console) ?? noOp,
-    debug: noOp,
-  },
-}: MarkingMenuConfig):
-  Observable<MarkingMenuNotification> | Observable<unknown> {
+export function createMarkingMenu<const Config extends MarkingMenuConfig>(
+  config: Config & ValidateInput<Config>,
+): CreateMarkingMenuResult<Config['notifySteps'], MarkingMenuModel<Config>> {
+  const {
+    parent,
+    minSelectionDist = 40,
+    minMenuSelectionDist = 80,
+    submenuOpeningDelay = 100,
+    movementsThreshold = 5,
+    noviceDwellingTime = 1000 / 3,
+    strokeColor = '#000',
+    strokeWidth = 4,
+    strokeStartPointRadius = 8,
+    lowerStrokeColor = '#777',
+    lowerStrokeWidth = strokeWidth,
+    lowerStrokeStartPointRadius = lowerStrokeWidth,
+    gestureFeedbackDuration = 1000,
+    gestureFeedbackStrokeWidth = strokeWidth,
+    gestureFeedbackCanceledStrokeColor = '#DE6C52',
+    gestureFeedbackStrokeColor = strokeColor,
+    notifySteps = false,
+    log = {
+      error: console?.error?.bind(console) ?? noOp,
+      info: console?.info?.bind(console) ?? noOp,
+      warn: console?.warn?.bind(console) ?? noOp,
+      debug: noOp,
+    },
+  } = config;
   // Create the display options.
   const menuLayoutOptions = {};
   const strokeCanvasOptions = {
@@ -209,7 +264,10 @@ export function createMarkingMenu({
   };
 
   // Create model and navigation observable.
-  const model = createModel({ items });
+  // `config` already satisfies `ValidateInput<Config>`; passing it through
+  // (rather than a freshly built `{ items }` object) keeps that evidence and
+  // avoids re-validating a brand new, unvalidated object literal.
+  const model = createModel(config);
   // The navigation engine's notifications are a discriminated union keyed on
   // `type`, so its precise type cannot express "whichever fields this step
   // attached, opaquely forwarded" — hence the cast to `RawNotification` (see
@@ -265,15 +323,34 @@ export function createMarkingMenu({
     log,
   }) as unknown as Observable<RawNotification>;
 
+  // The public return type is precise (discriminated on `type`, `active` and
+  // `selection` typed against the model); `connectedNavigation$` only carries
+  // the loose `RawNotification` shape threaded through the navigation/layout
+  // pipeline. The two branches below are the single, documented point where
+  // that precision is re-attached — verified by reading the emission sites
+  // (see `MarkingMenuNotification`'s own doc comment), backed by this
+  // function's runtime shape tests, not by the compiler.
+  type Result = CreateMarkingMenuResult<
+    Config['notifySteps'],
+    MarkingMenuModel<Config>
+  >;
+
   // If every steps should be notified, just export connectedNavigation$.
   if (notifySteps) {
-    return connectedNavigation$.pipe(map(exportNotification), share());
+    const notifications$ = connectedNavigation$.pipe(
+      map(exportNotification),
+      share(),
+    );
+    return notifications$ as Result;
   }
 
-  // Else, return an observable on the selections.
-  return connectedNavigation$.pipe(
+  // Else, return an observable on the (leaf) selections: the expert path only
+  // selects via `recognize(...)` with `requireLeaf` defaulting to `true`, and
+  // the novice path only sets `type: 'select'` when `n.active.isLeaf`.
+  const selections$ = connectedNavigation$.pipe(
     filter((notification) => notification.type === 'select'),
     map((notification) => notification.selection),
     share(),
   );
+  return selections$ as Result;
 }
