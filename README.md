@@ -33,7 +33,7 @@ bare `rxjs` imports:
     <script type="importmap">
       {
         "imports": {
-          "marking-menu": "https://esm.sh/marking-menu@0.10.1?raw",
+          "marking-menu": "https://esm.sh/marking-menu@1?raw",
           "rxjs": "https://esm.sh/rxjs@7.8.2"
         }
       }

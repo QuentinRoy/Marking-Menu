@@ -1,5 +1,5 @@
 ---
-'marking-menu': minor
+'marking-menu': major
 ---
 
 Replace the `isRoot()` method on emitted menu items with an `isRoot` boolean
