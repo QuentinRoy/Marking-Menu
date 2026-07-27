@@ -1,5 +1,6 @@
 import type { Point } from '../utils.js';
-import createStrokeCanvas, {
+import {
+  createStrokeCanvas,
   type StrokeCanvas,
   type StrokeCanvasOptions,
 } from './stroke.js';
@@ -25,7 +26,7 @@ type StrokeTimeoutEntry = {
   timeout: ReturnType<typeof setTimeout>;
 };
 
-export default function createGestureFeedback({
+export function createGestureFeedback({
   parent: parentDOM,
   duration,
   strokeOptions = {},

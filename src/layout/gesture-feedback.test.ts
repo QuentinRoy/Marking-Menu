@@ -1,8 +1,9 @@
 import type { Point } from '../utils.js';
-import createGestureFeedback, {
+import {
+  createGestureFeedback,
   type GestureFeedback,
 } from './gesture-feedback.js';
-import createStrokeCanvas, { type StrokeCanvas } from './stroke.js';
+import { createStrokeCanvas, type StrokeCanvas } from './stroke.js';
 
 vi.mock('./stroke');
 

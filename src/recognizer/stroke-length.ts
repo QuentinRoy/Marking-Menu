@@ -6,7 +6,7 @@ import { dist } from '../utils.js';
  @param stroke - An ordered list of coordinates.
  @returns The sum of the euclidean distances between consecutive points.
  */
-export default function strokeLength(stroke: number[][]): number {
+export function strokeLength(stroke: number[][]): number {
   let length = 0;
   let previous = stroke[0];
   if (previous === undefined) {

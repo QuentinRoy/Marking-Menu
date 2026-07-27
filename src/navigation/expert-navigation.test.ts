@@ -4,8 +4,8 @@ import { type Observable } from 'rxjs';
 import { type Mock } from 'vitest';
 import type { Point } from '../utils.js';
 import type { MarkingMenuModelItem } from '../types.js';
-import recognize from '../recognizer/recognize-mm-stroke.js';
-import expertNavigation, { type NavigationDrag } from './expert-navigation.js';
+import { recognizeMarkingMenuStroke as recognize } from '../recognizer/recognize-mm-stroke.js';
+import { expertNavigation, type NavigationDrag } from './expert-navigation.js';
 
 vi.mock('../recognizer/recognize-mm-stroke');
 

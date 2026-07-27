@@ -48,7 +48,7 @@ export type StrokeCanvas = {
  @param options.ptSize - The size of the canvas points (px).
  @returns The canvas methods.
  */
-export default function createStrokeCanvas({
+export function createStrokeCanvas({
   parent,
   doc = document,
   lineWidth = 2,

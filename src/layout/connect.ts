@@ -40,7 +40,7 @@ export type LayoutNotification<M> =
  @param options.log.error - Logs errors.
  @returns `navigation$` with menu opening and closing side effects.
  */
-export default function connectLayout<M, N extends LayoutNotification<M>>({
+export function connectLayout<M, N extends LayoutNotification<M>>({
   parent: parentDOM,
   navigation$,
   createMenuLayout,

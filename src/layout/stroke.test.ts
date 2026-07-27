@@ -1,4 +1,4 @@
-import stroke from './stroke.js';
+import { createStrokeCanvas as stroke } from './stroke.js';
 
 // `document.createElement`'s typings include a deprecated overload. Alias the
 // document through a minimal, non-deprecated shape so overriding the method

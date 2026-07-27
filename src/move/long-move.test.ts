@@ -1,6 +1,6 @@
 import { marbles } from 'rxjs-marbles';
 import { dist } from '../utils.js';
-import longMove from './long-move.js';
+import { longMoves as longMove } from './long-move.js';
 
 vi.mock('../utils');
 

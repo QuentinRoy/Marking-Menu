@@ -8,14 +8,14 @@ import {
   mergeMap,
   exhaustMap,
 } from 'rxjs/operators';
-import longMoves from '../move/long-move.js';
-import dwellings from '../move/dwelling.js';
-import draw from '../move/draw.js';
-import recognize from '../recognizer/recognize-mm-stroke.js';
+import { longMoves } from '../move/long-move.js';
+import { dwellings } from '../move/dwelling.js';
+import { draw } from '../move/draw.js';
+import { recognizeMarkingMenuStroke as recognize } from '../recognizer/recognize-mm-stroke.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { Point } from '../utils.js';
-import noviceNavigation from './novice-navigation.js';
-import expertNavigation, { type NavigationDrag } from './expert-navigation.js';
+import { noviceNavigation } from './novice-navigation.js';
+import { expertNavigation, type NavigationDrag } from './expert-navigation.js';
 
 /**
  Configuration options threaded through the navigation.
@@ -185,7 +185,7 @@ export const navigationFromDrag = <D extends NavigationDrag>(
  navigation observable.
  @returns An observable on the marking menu events.
  */
-export default function navigation<D extends NavigationDrag>(
+export function navigation<D extends NavigationDrag>(
   drags$: Observable<Observable<D>>,
   menu: MarkingMenuModelItem,
   {

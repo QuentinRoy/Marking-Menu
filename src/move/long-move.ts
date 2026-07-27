@@ -17,7 +17,7 @@ export type DragNotification = {
  static.
  @returns An observable only emitting on long enough movements.
  */
-export default function longMoves<T extends DragNotification>(
+export function longMoves<T extends DragNotification>(
   drag$: Observable<T>,
   movementsThreshold = 0,
 ): Observable<T> {

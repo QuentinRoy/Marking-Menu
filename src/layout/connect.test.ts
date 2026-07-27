@@ -2,7 +2,10 @@ import { of, type Observable } from 'rxjs';
 import { marbles } from 'rxjs-marbles';
 import { type Mock } from 'vitest';
 import type { Point } from '../utils.js';
-import connect, { type LayoutNotification } from './connect.js';
+import {
+  connectLayout as connect,
+  type LayoutNotification,
+} from './connect.js';
 import type { Menu } from './menu.js';
 import type { StrokeCanvas } from './stroke.js';
 import type { GestureFeedback } from './gesture-feedback.js';

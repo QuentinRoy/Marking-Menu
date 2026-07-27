@@ -1,7 +1,7 @@
 import { merge, type Observable } from 'rxjs';
 import { startWith, last, map, share } from 'rxjs/operators';
-import draw from '../move/draw.js';
-import recognize from '../recognizer/recognize-mm-stroke.js';
+import { draw } from '../move/draw.js';
+import { recognizeMarkingMenuStroke as recognize } from '../recognizer/recognize-mm-stroke.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { Point } from '../utils.js';
 
@@ -38,7 +38,7 @@ export type ExpertNavigationNotification<D> =
  @param initStroke - Initial stroke.
  @returns An observable on the gesture drawing and recognition.
  */
-export default function expertNavigation<D extends NavigationDrag>(
+export function expertNavigation<D extends NavigationDrag>(
   drag$: Observable<D>,
   model: MarkingMenuModelItem,
   initStroke: Point[] = [],

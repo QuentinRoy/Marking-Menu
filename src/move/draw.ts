@@ -10,7 +10,7 @@ import type { Point } from '../utils.js';
  @param options.type - A type to set on every emitted notification.
  @returns An observable on the gesture drawing.
  */
-export default function draw<T extends { position: Point }>(
+export function draw<T extends { position: Point }>(
   drag$: Observable<T>,
   { initStroke = [], type }: { initStroke?: Point[]; type?: string } = {},
 ): Observable<T & { stroke: Point[]; type?: string }> {

@@ -89,7 +89,7 @@ const template = (
  purposes.
  @returns The menu controls.
  */
-export default function createMenu({
+export function createMenu({
   doc = document,
   parent,
   model,

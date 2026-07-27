@@ -4,13 +4,14 @@ import { of, type Observable, type ConnectableObservable } from 'rxjs';
 import { publishBehavior, scan, map } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
 import { type Mock } from 'vitest';
-import longMoves from '../move/long-move.js';
-import dwellings from '../move/dwelling.js';
-import draw from '../move/draw.js';
-import recognize from '../recognizer/recognize-mm-stroke.js';
+import { longMoves } from '../move/long-move.js';
+import { dwellings } from '../move/dwelling.js';
+import { draw } from '../move/draw.js';
+import { recognizeMarkingMenuStroke as recognize } from '../recognizer/recognize-mm-stroke.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { Point } from '../utils.js';
-import navigation, {
+import {
+  navigation,
   confirmedExpertNavigationHOO,
   confirmedNoviceNavigationHOO,
   expertToNoviceSwitchHOO,
@@ -18,8 +19,8 @@ import navigation, {
   navigationFromDrag,
   type NavigationOptions,
 } from './navigation.js';
-import expertNavigation, { type NavigationDrag } from './expert-navigation.js';
-import noviceNavigation from './novice-navigation.js';
+import { expertNavigation, type NavigationDrag } from './expert-navigation.js';
+import { noviceNavigation } from './novice-navigation.js';
 
 vi.mock('./expert-navigation');
 vi.mock('./novice-navigation');

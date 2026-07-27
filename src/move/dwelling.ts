@@ -6,7 +6,7 @@ import {
   withLatestFrom,
   last,
 } from 'rxjs/operators';
-import longMoves, { type DragNotification } from './long-move.js';
+import { longMoves, type DragNotification } from './long-move.js';
 
 /**
  Detect dwellings: pauses in a stream of drag movements.
@@ -21,7 +21,7 @@ import longMoves, { type DragNotification } from './long-move.js';
  the timeout for each value
  @returns An observable on dwellings in the movement.
  */
-export default function dwellings<T extends DragNotification>(
+export function dwellings<T extends DragNotification>(
   drag$: Observable<T>,
   {
     delay,

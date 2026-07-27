@@ -7,8 +7,8 @@ import {
   type Segment,
 } from '../utils.js';
 import type { MarkingMenuModelItem } from '../types.js';
-import getStrokeArticulationPoints from './articulation-points.js';
-import strokeLength from './stroke-length.js';
+import { getStrokeArticulationPoints } from './articulation-points.js';
+import { strokeLength } from './stroke-length.js';
 
 /**
  A segment of a marking-menu stroke, described by its length and angle.
@@ -162,9 +162,7 @@ export const findItem = <M extends MarkingMenuModelItem>({
  @param options.requireLeaf - Look for a leaf.
  @returns The item recognized by the stroke.
  */
-export default function recognizeMarkingMenuStroke<
-  M extends MarkingMenuModelItem,
->(
+export function recognizeMarkingMenuStroke<M extends MarkingMenuModelItem>(
   stroke: Point[],
   model: M,
   {

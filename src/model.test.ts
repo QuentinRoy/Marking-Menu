@@ -1,4 +1,4 @@
-import createModel from './model.js';
+import { createModel } from './model.js';
 import type { MarkingMenuItemInput } from './types.js';
 
 const fourItems = [

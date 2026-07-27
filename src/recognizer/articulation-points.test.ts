@@ -1,4 +1,4 @@
-import getStrokeArticulationPoints from './articulation-points.js';
+import { getStrokeArticulationPoints } from './articulation-points.js';
 
 describe(getStrokeArticulationPoints, () => {
   it('returns an empty list for an empty stroke', () => {

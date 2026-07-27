@@ -10,7 +10,7 @@ import {
   take,
 } from 'rxjs/operators';
 import { toPolar, type Point } from '../utils.js';
-import dwellings from '../move/dwelling.js';
+import { dwellings } from '../move/dwelling.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { NavigationDrag } from './expert-navigation.js';
 
@@ -278,7 +278,7 @@ export type NoviceNavigationFn<D extends NavigationDrag> = (
  navigation observables.
  @returns An observable on the menu navigation events.
  */
-export default function noviceNavigation<D extends NavigationDrag>(
+export function noviceNavigation<D extends NavigationDrag>(
   drag$: Observable<D>,
   menu: MarkingMenuModelItem,
   {

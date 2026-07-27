@@ -1,4 +1,4 @@
-import createMenu, { type MenuLayoutModel } from './menu.js';
+import { createMenu, type MenuLayoutModel } from './menu.js';
 
 const createModel = (itemNb = 0): MenuLayoutModel => ({
   children: Array.from({ length: itemNb }, (_, i) => ({

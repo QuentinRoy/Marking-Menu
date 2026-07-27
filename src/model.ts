@@ -325,7 +325,7 @@ const createItems = (
  @returns The root of the model.
  @throws If two items share the same id.
  */
-export default function createModel<const Input extends MarkingMenuInput>(
+export function createModel<const Input extends MarkingMenuInput>(
   input: Input & ValidateInput<Input>,
 ): MarkingMenuModel<Input> {
   // The model is assembled from runtime lists, which cannot carry the tuple

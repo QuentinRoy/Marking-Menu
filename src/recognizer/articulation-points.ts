@@ -15,7 +15,7 @@ import {
  considered an articulation points.
  @returns The list of articulation points.
  */
-export default function getStrokeArticulationPoints(
+export function getStrokeArticulationPoints(
   stroke: Point[],
   {
     expectedSegmentLength,

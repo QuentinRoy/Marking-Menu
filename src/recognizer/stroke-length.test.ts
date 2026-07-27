@@ -1,4 +1,4 @@
-import strokeLength from './stroke-length.js';
+import { strokeLength } from './stroke-length.js';
 
 describe('strokeLength', () => {
   it('calculate the length of a path', () => {

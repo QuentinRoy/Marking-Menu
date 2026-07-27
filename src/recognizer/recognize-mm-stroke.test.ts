@@ -6,7 +6,8 @@ import angles from 'angles';
 import { type Mock } from 'vitest';
 import type { Point } from '../utils.js';
 import type { ModelItem, ModelRoot } from '../types.js';
-import recognizeMarkingMenuStroke, {
+import {
+  recognizeMarkingMenuStroke,
   pointsToSegments,
   divideLongestSegment,
   findItem,

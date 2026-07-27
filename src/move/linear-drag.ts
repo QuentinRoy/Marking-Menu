@@ -89,11 +89,11 @@ export type DefaultDragNotification = PointerNotification<
  published as behaviors so that any new subscription immediately get the last
  position.
  */
-export default function watchDrags<T>(
+export function watchDrags<T>(
   rootDOM: HTMLElement,
   options: { dragObsFactories: Array<(root: HTMLElement) => Observable<T>> },
 ): Observable<T>;
-export default function watchDrags(
+export function watchDrags(
   rootDOM: HTMLElement,
   options?: {
     dragObsFactories?: Array<
@@ -101,7 +101,7 @@ export default function watchDrags(
     >;
   },
 ): Observable<Observable<DefaultDragNotification>>;
-export default function watchDrags(
+export function watchDrags(
   rootDOM: HTMLElement,
   {
     dragObsFactories = [touchDrags, mouseDrags],

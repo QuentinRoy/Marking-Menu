@@ -4,9 +4,10 @@ import { marbles } from 'rxjs-marbles/jest';
 import { Observable } from 'rxjs';
 import { type Mock } from 'vitest';
 import { toPolar, type Point } from '../utils.js';
-import dwellings from '../move/dwelling.js';
+import { dwellings } from '../move/dwelling.js';
 import type { MarkingMenuModelItem } from '../types.js';
-import noviceNavigation, {
+import {
+  noviceNavigation,
   noviceMoves,
   menuSelection,
   submenuNavigation,
