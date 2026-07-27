@@ -42,9 +42,6 @@
     "interaction",
     "technique"
   ],
-  "dependencies": {
-    "raf-schd": "^4.0.3"
-  },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
     "@changesets/changelog-github": "^0.7.0",

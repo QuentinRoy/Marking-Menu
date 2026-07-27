@@ -4527,7 +4527,6 @@ __metadata:
     jsdom: "npm:^29.1.1"
     prettier: "npm:^3.9.6"
     publint: "npm:^0.3.22"
-    raf-schd: "npm:^4.0.3"
     rxjs: "npm:^7.8.2"
     rxjs-marbles: "npm:^7.0.1"
     typescript: "npm:@typescript/typescript6@^6.0.2"
@@ -5685,13 +5684,6 @@ __metadata:
   version: 0.1.0
   resolution: "quote-js-string@npm:0.1.0"
   checksum: 10c0/72b18e676ae2397d91b90966b41babe3d0203ddbccf28c5e7f91fd4aa827d1c2259abeef597d1404a689cf75f085792b592196dec074f164cc3950172caabd5f
-  languageName: node
-  linkType: hard
-
-"raf-schd@npm:^4.0.3":
-  version: 4.0.3
-  resolution: "raf-schd@npm:4.0.3"
-  checksum: 10c0/ecabf0957c05fad059779bddcd992f1a9d3a35dfea439a6f0935c382fcf4f7f7fa60489e467b4c2db357a3665167d2a379782586b59712bb36c766e02824709b
   languageName: node
   linkType: hard
 
