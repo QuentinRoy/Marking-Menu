@@ -1,5 +1,6 @@
 import { defineConfig } from 'eslint/config';
 import eslintConfigXo from 'eslint-config-xo';
+import importX from 'eslint-plugin-import-x';
 import vitest from '@vitest/eslint-plugin';
 
 export default defineConfig([
@@ -17,26 +18,75 @@ export default defineConfig([
     gitignore: import.meta.url,
   }),
   {
+    plugins: { 'import-x': importX },
     rules: {
-      // But in eslintConfigXo, the rule should be disabled because
-      // it's incompatible with prettier.
+      // Disabled because it conflicts with prettier.
       // C.f. https://github.com/xojs/xo/issues/889.
       '@stylistic/no-mixed-operators': 'off',
+
+      // This repo uses many factory functions, that starts with a capital letter, but are not classes.
+      'new-cap': 'off',
+
+      // Unicorn tends to think marking menu items are DOM elements, triggering
+      // annoying false positives.
+      'unicorn/better-dom-traversing': 'off',
+
+      // This repo uses named exports only (c.f. bcb1332).
+      'import-x/no-default-export': 'error',
+    },
+  },
+  {
+    // The @typescript-eslint plugin is only registered for TypeScript files.
+    files: ['**/*.{ts,tsx,mts,cts}'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+      '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+      // The codebase models "no item" with `null` (recognizer results, root
+      // MMItem fields, ...) and tests assert on it. Banning `null` types
+      // would force inaccurate `undefined` annotations. Keep the rest of
+      // XO's restricted types.
+      '@typescript-eslint/no-restricted-types': [
+        'error',
+        {
+          types: {
+            object: {
+              message:
+                'The `object` type is hard to use. Use `Record<string, unknown>` instead. See: https://github.com/typescript-eslint/typescript-eslint/pull/848',
+              fixWith: 'Record<string, unknown>',
+            },
+            Buffer: {
+              message:
+                'Use Uint8Array instead. See: https://sindresorhus.com/blog/goodbye-nodejs-buffer',
+              suggest: ['Uint8Array'],
+            },
+            '[]': "Don't use the empty array type `[]`. It only allows empty arrays. Use `SomeType[]` instead.",
+            '[[]]':
+              "Don't use `[[]]`. It only allows an array with a single element which is an empty array. Use `SomeType[][]` instead.",
+            '[[[]]]': "Don't use `[[[]]]`. Use `SomeType[][][]` instead.",
+          },
+        },
+      ],
+    },
+  },
+  {
+    // Vite/Vitest/Prettier config files must use a default export; that's
+    // the contract those tools require.
+    files: ['*.config.{js,ts}'],
+    rules: {
+      'import-x/no-default-export': 'off',
     },
   },
   {
     files: ['demo/**'],
     rules: {
-      // MarkingMenu is a factory function (an arrow function under the hood),
-      // not a constructor -- `new MarkingMenu(...)` would throw.
-      'new-cap': ['error', { capIsNewExceptions: ['MarkingMenu'] }],
       // No project preview image exists yet to use as og:image; og:title,
       // og:type, and og:url are already set above.
       '@html-eslint/require-open-graph-protocol': 'off',
     },
   },
   {
-    files: ['src/**/*.test.js'],
+    files: ['src/**/*.test.{js,ts}'],
     plugins: { vitest },
     languageOptions: {
       globals: vitest.environments.env.globals,
@@ -52,14 +102,6 @@ export default defineConfig([
       // Describe() is called with an imported function reference in some
       // files; the rule can't resolve the import to confirm it's a function.
       'vitest/valid-title': ['error', { allowArguments: true }],
-      // These test suites use a `*Notif` naming convention for local
-      // notification-object factory helpers; none of them are constructors.
-      'new-cap': [
-        'error',
-        {
-          capIsNewExceptions: ['Notif', 'OpenNotif', 'MNotif', 'EndNotif'],
-        },
-      ],
     },
   },
 ]);
