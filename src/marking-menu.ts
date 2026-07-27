@@ -1,5 +1,4 @@
-import { tap, map, share, filter } from 'rxjs/operators';
-import type { Observable } from 'rxjs';
+import { tap, map, share, filter, type Observable } from 'rxjs';
 import { navigation } from './navigation/navigation.js';
 import {
   createMenu as createMenuLayout,

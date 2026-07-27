@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention -- Observable testing use capital letters for HOO */
 /* eslint-disable @typescript-eslint/no-deprecated -- Marble tests require manually connected behavior observables */
 
-import { of, type Observable, type ConnectableObservable } from 'rxjs';
-import { publishBehavior, scan, map } from 'rxjs/operators';
+import { of, type Observable, type ConnectableObservable, publishBehavior, scan, map } from 'rxjs';
 import { marbles } from 'rxjs-marbles/jest';
 import { type Mock } from 'vitest';
 import { longMoves } from '../move/long-move.js';

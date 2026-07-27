@@ -1,5 +1,4 @@
-import { finalize, tap } from 'rxjs/operators';
-import type { Observable } from 'rxjs';
+import { finalize, tap, type Observable } from 'rxjs';
 import rafThrottle from 'raf-schd';
 import type { NonEmptyArray, Point } from '../utils.js';
 import type { Menu } from './menu.js';

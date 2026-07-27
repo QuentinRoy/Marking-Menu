@@ -4,7 +4,6 @@ import { defineConfig } from 'vite';
 const importMapDependencies = new Set([
   'marking-menu',
   'rxjs',
-  'rxjs/operators',
 ]);
 
 export default defineConfig(({ command }) => ({
