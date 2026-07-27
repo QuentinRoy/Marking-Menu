@@ -7,7 +7,7 @@ const banner = `/*!
  * https://github.com/QuentinRoy/Marking-Menu
  *
  * Released under the MIT license.
- * https://raw.githubusercontent.com/QuentinRoy/Marking-Menu/master/LICENSE
+ * https://raw.githubusercontent.com/QuentinRoy/Marking-Menu/main/LICENSE
  *
  * Marking Menus may be patented independently from this software.
  *
