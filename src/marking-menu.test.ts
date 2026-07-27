@@ -1,8 +1,7 @@
-import { map } from 'rxjs/operators';
+import { map, type Observable } from 'rxjs';
 import { marbles } from 'rxjs-marbles/jest';
 import type { TestObservableLike } from 'rxjs-marbles/types';
 import { type Mock } from 'vitest';
-import type { Observable } from 'rxjs';
 import {
   createMarkingMenu as main,
   exportNotification,

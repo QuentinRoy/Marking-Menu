@@ -27,12 +27,11 @@ export default defineConfig({
     },
     minify: false,
     rolldownOptions: {
-      external: ['rxjs', 'rxjs/operators'],
+      external: ['rxjs'],
       output: {
         banner,
         globals: {
           rxjs: 'rxjs',
-          'rxjs/operators': 'rxjs.operators',
         },
       },
     },
