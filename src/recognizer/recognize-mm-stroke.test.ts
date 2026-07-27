@@ -1,16 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { parse as csvParseCallback } from 'csv-parse';
 import angles from 'angles';
+import { parse as csvParseCallback } from 'csv-parse';
 import { type Mock } from 'vitest';
-import type { Point } from '../utils.js';
 import type { ModelItem, ModelRoot } from '../types.js';
+import type { Point } from '../utils.js';
 import {
-  recognizeMarkingMenuStroke,
-  pointsToSegments,
   divideLongestSegment,
   findItem,
+  pointsToSegments,
+  recognizeMarkingMenuStroke,
   walkModel,
 } from './recognize-mm-stroke.js';
 

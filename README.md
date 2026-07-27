@@ -64,6 +64,7 @@ its bare `rxjs` imports:
     </script>
     <script type="module">
       import { createMarkingMenu } from 'marking-menu';
+
       // Your stuff.
     </script>
   </head>

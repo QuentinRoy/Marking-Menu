@@ -1,5 +1,5 @@
-import { scan } from 'rxjs/operators';
 import type { Observable } from 'rxjs';
+import { scan } from 'rxjs/operators';
 import type { Point } from '../utils.js';
 
 /**

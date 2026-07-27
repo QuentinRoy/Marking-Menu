@@ -1,7 +1,7 @@
-import { defineConfig } from 'eslint/config';
+import vitest from '@vitest/eslint-plugin';
 import eslintConfigXo from 'eslint-config-xo';
 import importX from 'eslint-plugin-import-x';
-import vitest from '@vitest/eslint-plugin';
+import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
   {

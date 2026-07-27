@@ -1,11 +1,11 @@
-import { fromEvent, merge, EMPTY, of, type Observable } from 'rxjs';
-import { takeUntil, withLatestFrom } from 'rxjs/operators';
+import { EMPTY, fromEvent, merge, of, type Observable } from 'rxjs';
 import { marbles } from 'rxjs-marbles';
+import { takeUntil, withLatestFrom } from 'rxjs/operators';
 import { type Mock } from 'vitest';
-import { watchDrags, mouseDrags, touchDrags } from './linear-drag.js';
+import { mouseDrags, touchDrags, watchDrags } from './linear-drag.js';
 import {
-  createPointerEventFromTouchEvent,
   createPointerEventFromMouseEvent,
+  createPointerEventFromTouchEvent,
 } from './pointer-events.js';
 
 const toPromise = async (obs: Observable<unknown>): Promise<void> =>

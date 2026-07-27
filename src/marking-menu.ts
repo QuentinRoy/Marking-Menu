@@ -1,17 +1,17 @@
-import { tap, map, share, filter } from 'rxjs/operators';
 import type { Observable } from 'rxjs';
-import { navigation } from './navigation/navigation.js';
+import { filter, map, share, tap } from 'rxjs/operators';
+import { connectLayout, type LayoutNotification } from './layout/connect.js';
+import { createGestureFeedback } from './layout/gesture-feedback.js';
 import {
   createMenu as createMenuLayout,
   type MenuLayoutModel,
 } from './layout/menu.js';
 import { createStrokeCanvas } from './layout/stroke.js';
-import { connectLayout, type LayoutNotification } from './layout/connect.js';
-import { createGestureFeedback } from './layout/gesture-feedback.js';
 import { createModel } from './model.js';
 import { watchDrags } from './move/linear-drag.js';
-import { noOp, type Point } from './utils.js';
+import { navigation } from './navigation/navigation.js';
 import type { MarkingMenuItemInput } from './types.js';
+import { noOp, type Point } from './utils.js';
 
 /**
  A notification as produced by the navigation/layout pipeline, before it is

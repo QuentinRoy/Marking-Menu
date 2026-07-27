@@ -6,9 +6,9 @@ import {
   connectLayout as connect,
   type LayoutNotification,
 } from './connect.js';
+import type { GestureFeedback } from './gesture-feedback.js';
 import type { Menu } from './menu.js';
 import type { StrokeCanvas } from './stroke.js';
-import type { GestureFeedback } from './gesture-feedback.js';
 
 vi.mock('raf-schd', () => ({ default: vi.fn((f: unknown) => f) }));
 
