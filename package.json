@@ -8,7 +8,7 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/marking-menu.d.ts",
       "default": "./dist/marking-menu.js"
     }
   },
