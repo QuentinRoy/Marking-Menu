@@ -9,7 +9,7 @@ import type { Point } from '../utils.js';
  position. Extra fields (timeStamp, originalEvent, …) are threaded through
  unchanged.
  */
-export type NavigationDrag = { position: Point };
+export type NavigationDrag = { canceled?: boolean; position: Point };
 
 /**
  A drawing notification: a drag notification augmented with the stroke drawn so
@@ -52,6 +52,10 @@ export function expertNavigation<D extends NavigationDrag>(
     map((event_): ExpertNavigationNotification<D> => {
       if (!event_) {
         return { type: 'cancel' };
+      }
+
+      if (event_.canceled) {
+        return { ...event_, type: 'cancel' };
       }
 
       const selection = recognize(event_.stroke, model);

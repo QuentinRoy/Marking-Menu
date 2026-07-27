@@ -66,6 +66,13 @@ import { createMarkingMenu } from 'marking-menu';
 
 `createMarkingMenu` returns a 'hot' [`Observable`](https://github.com/tc39/proposal-observable) that emits the selected menu items. The menu is activated upon subscription of this observable, and disabled upon un-subscription.
 
+Activation uses the primary button of a mouse, the primary touch contact, or a
+primary pen contact. While the menu is active, it temporarily sets the
+parent's inline `touch-action` to `none !important` so pointer gestures remain
+reliable. The previous inline value and priority are restored when the last
+subscription ends, unless the application changed the property in the
+meantime.
+
 - `items`: `Array` of `{ label, items? }`. The list of the menu's items. If `items` is provided, the item will be considered as a sub-menu (nested `items` has the same form as the top-level list). Currently, `createMarkingMenu` supports up to 8 items per level. The first item is on the right and the followings are layed out clockwise.
 
 - `parent`: `HTMLElement`. The container of the menu.

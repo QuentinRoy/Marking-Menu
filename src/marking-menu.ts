@@ -1,4 +1,4 @@
-import { filter, map, share, tap, type Observable } from 'rxjs';
+import { filter, map, share, type Observable } from 'rxjs';
 import { connectLayout, type LayoutNotification } from './layout/connect.js';
 import { createGestureFeedback } from './layout/gesture-feedback.js';
 import {
@@ -11,7 +11,7 @@ import {
   type MarkingMenuModel,
   type ValidateInput,
 } from './model.js';
-import { watchDrags } from './move/linear-drag.js';
+import { pointerDrags } from './move/pointer-drag.js';
 import { navigation } from './navigation/navigation.js';
 import type {
   AnyModelNode,
@@ -42,7 +42,6 @@ type RawNotification = {
   menu?: unknown;
   center?: Point | undefined;
   timeStamp?: number | undefined;
-  originalEvent?: { preventDefault(): void } | null | undefined;
 };
 
 /**
@@ -275,22 +274,13 @@ export function createMarkingMenu<const Config extends MarkingMenuConfig>(
   // `type`, so its precise type cannot express "whichever fields this step
   // attached, opaquely forwarded" — hence the cast to `RawNotification` (see
   // its definition above).
-  const navigation$ = (
-    navigation(watchDrags(parent), model, {
-      minSelectionDist,
-      minMenuSelectionDist,
-      submenuOpeningDelay,
-      movementsThreshold,
-      noviceDwellingTime,
-    }) as unknown as Observable<RawNotification>
-  ).pipe(
-    tap(({ originalEvent }) => {
-      // Prevent default on every notifications.
-      if (originalEvent) {
-        originalEvent.preventDefault();
-      }
-    }),
-  );
+  const navigation$ = navigation(pointerDrags(parent), model, {
+    minSelectionDist,
+    minMenuSelectionDist,
+    submenuOpeningDelay,
+    movementsThreshold,
+    noviceDwellingTime,
+  }) as unknown as Observable<RawNotification>;
 
   // Connect the engine's notifications to menu opening/closing. Same
   // rationale as above for the casts around `navigation$`.

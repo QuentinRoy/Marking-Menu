@@ -12,7 +12,7 @@ import {
   type MarkingMenuConfig,
 } from './marking-menu.js';
 import { createModel } from './model.js';
-import { watchDrags } from './move/linear-drag.js';
+import { pointerDrags } from './move/pointer-drag.js';
 import { navigation } from './navigation/navigation.js';
 
 vi.mock('./navigation/navigation');
@@ -21,7 +21,7 @@ vi.mock('./layout/stroke');
 vi.mock('./layout/gesture-feedback');
 vi.mock('./layout/connect');
 vi.mock('./model');
-vi.mock('./move/linear-drag');
+vi.mock('./move/pointer-drag');
 
 // The collaborators are auto-mocked and driven with placeholder tokens (string
 // parents/models, raw event labels) compared only structurally at runtime, so
@@ -32,7 +32,7 @@ const mockNavigation = vi.mocked(navigation) as unknown as Mock<
 const mockCreateModel = vi.mocked(createModel) as unknown as Mock<
   (...args: unknown[]) => unknown
 >;
-const mockWatchDrags = vi.mocked(watchDrags) as unknown as Mock<
+const mockPointerDrags = vi.mocked(pointerDrags) as unknown as Mock<
   (...args: unknown[]) => unknown
 >;
 const mockConnectLayout = vi.mocked(connectLayout) as unknown as Mock<
@@ -113,18 +113,17 @@ describe('main', () => {
     active: id,
     type,
     notifMockProp: 'notif-mock-prop-val',
-    originalEvent: { preventDefault: vi.fn() },
     ...props,
   });
 
   beforeEach(
     marbles((m) => {
       mockCreateModel.mockImplementation(() => 'mock-model');
-      mockWatchDrags.mockImplementation(() => 'mock-drags');
+      mockPointerDrags.mockImplementation(() => 'mock-drags');
       mockNavNotifs = {
         a: createNotif('a', 'mock-type-1'),
         b: createNotif('b', 'select', { selection: 'mock-selection-b' }),
-        c: createNotif('c', 'mock-type-2', { originalEvent: null }),
+        c: createNotif('c', 'mock-type-2'),
         d: createNotif('d', 'select', { selection: 'mock-selection-d' }),
         e: createNotif('e', 'mock-type-4', { selection: 'mock-selection-e' }),
       };
@@ -199,7 +198,7 @@ describe('main', () => {
   });
   it('properly creates the drags observable', () => {
     callMain();
-    expect(mockWatchDrags.mock.calls).toEqual([['mock-parent']]);
+    expect(mockPointerDrags.mock.calls).toEqual([['mock-parent']]);
   });
   it('properly creates the navigation observable', () => {
     callMain();
@@ -216,22 +215,6 @@ describe('main', () => {
         },
       ],
     ]);
-  });
-
-  it("properly prevents default from navigation's notifications", () => {
-    callMain().subscribe((n) => {
-      const notif = n as { active: string };
-      // C does not have original event to make sure it does not fail
-      // without it.
-      if (notif.active === 'c') {
-        return;
-      }
-
-      const mockNotif = mockNavNotifs[notif.active] as {
-        originalEvent: { preventDefault: Mock };
-      };
-      expect(mockNotif.originalEvent.preventDefault).toHaveBeenCalled();
-    });
   });
 
   // prettier-ignore
