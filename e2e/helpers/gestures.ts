@@ -85,16 +85,24 @@ export const releaseAt = async (page: Page, at?: Point): Promise<void> => {
   await page.mouse.up();
 };
 
-/** Wait for a (sub-)menu to be open, however it got there (novice or dwell). */
+/**
+ Wait for a (sub-)menu to be open, however it got there (novice or dwell).
+ Checked on `.marking-menu-label`, the first element in the menu's DOM with
+ an actual rendered size: `.marking-menu` and `.marking-menu-item` are both
+ zero-size positioning anchors (`position: absolute`, no set dimensions), so
+ Playwright never considers either one "visible".
+ */
 export const waitForMenuOpen = async (page: Page): Promise<void> => {
-  await expect(page.locator('.marking-menu')).toBeVisible();
+  await expect(page.locator('.marking-menu-label').first()).toBeVisible();
 };
 
-/** The `.marking-menu-item` whose rendered label is exactly `label`. */
-export const menuItemByLabel = (page: Page, label: string) =>
-  page
-    .locator('.marking-menu-item')
-    .filter({ has: page.getByText(label, { exact: true }) });
+/**
+ The `.marking-menu-label` element itself (not its zero-size
+ `.marking-menu-item` container) whose rendered text is exactly `label`,
+ scoped to the currently open menu so it can't match the notification log.
+ */
+export const menuItemLabel = (page: Page, label: string) =>
+  page.locator('.marking-menu').getByText(label, { exact: true });
 
 /** The signed delta between two angles in degrees, wrapped to [-180, 180]. */
 const deltaAngle = (a: number, b: number): number =>
@@ -118,7 +126,7 @@ export const expectApproximateOctants = async (
 
   const measuredAngles = await Promise.all(
     entries.map(async ([id, { label }]) => {
-      const box = await menuItemByLabel(page, label).boundingBox();
+      const box = await menuItemLabel(page, label).boundingBox();
       if (!box) {
         throw new TypeError(`Menu item "${label}" (${id}) is not visible.`);
       }

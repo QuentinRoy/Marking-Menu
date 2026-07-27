@@ -27,8 +27,10 @@ export default defineConfig({
   webServer: {
     // Serves the already-built fixture; building it is a separate step
     // (`yarn e2e:build`) so CI can run it once against a downloaded `dist/`
-    // instead of paying for a build inside the test run.
-    command: 'vite preview --config e2e/vite.config.ts',
+    // instead of paying for a build inside the test run. Playwright runs
+    // this command with the config file's own directory as cwd, hence the
+    // path relative to `e2e/` rather than the repo root.
+    command: 'vite preview --config vite.config.ts',
     url: 'http://127.0.0.1:4173',
     reuseExistingServer: process.env.CI === undefined,
   },
