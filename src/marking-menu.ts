@@ -190,7 +190,7 @@ export type MarkingMenuConfig = MarkingMenuInput & {
    */
   notifySteps?: boolean;
   /** Override the default logger to use. */
-  log?: MarkingMenuLogger;
+  log?: Partial<MarkingMenuLogger>;
 };
 
 /**
@@ -235,15 +235,19 @@ export function createMarkingMenu<const Config extends MarkingMenuConfig>(
     gestureFeedbackCanceledStrokeColor = '#DE6C52',
     gestureFeedbackStrokeColor = strokeColor,
     notifySteps = false,
-    log = {
-      error: console?.error?.bind(console) ?? noOp,
-      info: console?.info?.bind(console) ?? noOp,
-      warn: console?.warn?.bind(console) ?? noOp,
-      debug: noOp,
-    },
+    log: {
+      error: logError = console?.error?.bind(console) ?? noOp,
+      info: logInfo = console?.info?.bind(console) ?? noOp,
+      warn: logWarn = console?.warn?.bind(console) ?? noOp,
+      debug: logDebug = noOp,
+    } = {},
   } = config;
-  // Create the display options.
-  const menuLayoutOptions = {};
+  const log = {
+    error: logError,
+    info: logInfo,
+    warn: logWarn,
+    debug: logDebug,
+  };
   const strokeCanvasOptions = {
     lineColor: strokeColor,
     lineWidth: strokeWidth,
@@ -298,7 +302,6 @@ export function createMarkingMenu<const Config extends MarkingMenuConfig>(
         parent: menuParent,
         model: menuModel,
         center,
-        ...menuLayoutOptions,
       }),
     createUpperStrokeCanvas: (canvasParent: HTMLElement) =>
       createStrokeCanvas({ parent: canvasParent, ...strokeCanvasOptions }),
