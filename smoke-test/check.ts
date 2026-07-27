@@ -1,7 +1,6 @@
 /*
  A consumer snippet typechecked against the package as actually published
- (see scripts/smoke-test.mjs): resolved through node_modules by package name,
- using only the files `package.json`'s `files` field ships. Exercises the
+ (see scripts/smoke-test.ts): resolved through node_modules by package name,
  public API surface that's easy to get wrong when re-exporting or packaging:
  generic inference, the compile-time duplicate-id check, and notification
  discrimination.
