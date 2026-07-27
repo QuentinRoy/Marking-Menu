@@ -39,7 +39,7 @@ const csvParse = async (
     );
   });
 
-type MockModel = ModelItem & {
+type MockModel = ModelItem<string | undefined, string, readonly MockModel[]> & {
   requestedAngle: number | undefined;
   parent?: MockModel | undefined;
   getMaxDepth: Mock<() => number>;

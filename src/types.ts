@@ -109,11 +109,17 @@ export type ModelRoot<Items extends readonly unknown[] = readonly unknown[]> =
  The members of a model node that a caller can use without knowing the
  literal ids described in a specific menu: `getChild` and `getChildrenByLabel`
  are excluded, as `getChild`'s overload is only sound for the exact tuple type
- it was built from, and `items` along with it (its element type is the same
- tuple).
+ it was built from. `items` is kept — its element type is the same
+ self-referential erased shape, not the literal tuple — so that
+ {@link MarkingMenuModelItem} satisfies {@link AnyModelNode}.
  */
 type GenericNodeKeys =
-  'isLeaf' | 'isRoot' | 'getNearestChild' | 'getMaxDepth' | 'getMaxBreadth';
+  | 'isLeaf'
+  | 'isRoot'
+  | 'items'
+  | 'getNearestChild'
+  | 'getMaxDepth'
+  | 'getMaxBreadth';
 
 /**
  The shape of a model node — root or item — for callers that walk the model
@@ -125,6 +131,63 @@ export type MarkingMenuModelItem =
       GenericNodeKeys
     >
   | Pick<ModelRoot<readonly MarkingMenuModelItem[]>, GenericNodeKeys>;
+
+/* -------------------------------------------------------------------------- *
+ * Generic node walking
+ * -------------------------------------------------------------------------- */
+
+/**
+ The shape of a model node — root or item — precise enough to walk the model
+ generically while keeping `getNearestChild` sound: unlike
+ {@link MarkingMenuModelItem}, its return type is tied to the node's own
+ `items` via a polymorphic `this`, so a generic node's nearest child resolves
+ to that node's own item type instead of the erased one.
+
+ Declared as an interface (not a type alias) because polymorphic `this` is
+ only available on interfaces and classes.
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- see above.
+export interface AnyModelNode {
+  readonly isLeaf: boolean;
+  readonly isRoot: boolean;
+  readonly items: readonly AnyModelNode[];
+  getNearestChild(angle: number): this['items'][number] | null;
+  getMaxDepth(): number;
+  getMaxBreadth(): number;
+}
+
+/**
+ Every node of the (sub-)tree rooted at `N`, including `N` itself: `N` and,
+ recursively, every one of its descendants. Recursion is guarded on
+ {@link IsTuple}: for a menu built at runtime (a non-literal `items` list),
+ the item type is already the same for every node of the (sub-)tree, so it
+ degrades to `N` itself rather than recursing forever.
+ */
+export type ModelNodes<N extends AnyModelNode> = N extends {
+  items: infer I extends readonly AnyModelNode[];
+}
+  ? IsTuple<I> extends true
+    ? N | ModelNodes<I[number]>
+    : N
+  : N;
+
+/** Every node of the (sub-)tree rooted at `N`, excluding the root. */
+export type ModelItems<N extends AnyModelNode> = Exclude<
+  ModelNodes<N>,
+  { isRoot: true }
+>;
+
+/** Every leaf of the (sub-)tree rooted at `N`. */
+export type ModelLeaves<N extends AnyModelNode> = Extract<
+  ModelItems<N>,
+  { isLeaf: true }
+>;
+
+/** Every non-leaf node of the (sub-)tree rooted at `N`, root included. */
+export type ModelMenus<N extends AnyModelNode> = Extract<
+  ModelNodes<N>,
+  { isLeaf: false }
+>;
 
 /* -------------------------------------------------------------------------- *
  * Helpers
