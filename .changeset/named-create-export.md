@@ -1,5 +1,5 @@
 ---
-'marking-menu': minor
+'marking-menu': major
 ---
 
 Replace the default `MarkingMenu` export with the named `createMarkingMenu`

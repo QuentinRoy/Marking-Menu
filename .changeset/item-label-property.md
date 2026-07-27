@@ -1,5 +1,5 @@
 ---
-'marking-menu': minor
+'marking-menu': major
 ---
 
 Rename the menu item `name` property to `label`.
