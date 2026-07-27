@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/naming-convention -- Observable testing use capital letters for HOO */
-/* eslint-disable @typescript-eslint/no-deprecated -- Marble tests require manually connected behavior observables */
 
 import {
+  BehaviorSubject,
+  connectable,
   map,
   of,
-  publishBehavior,
   scan,
-  type ConnectableObservable,
   type Observable,
 } from 'rxjs';
 import { marbles } from 'rxjs-marbles/jest';
@@ -70,6 +69,12 @@ type ExpertHooOptions = NavigationOptions & {
   expertToNoviceSwitchHOO?: typeof expertToNoviceSwitchHOO;
 };
 
+const toBehaviorConnectable = <T>(source$: Observable<T>) =>
+  connectable<T | undefined>(source$, {
+    connector: () => new BehaviorSubject<T | undefined>(undefined),
+    resetOnDisconnect: false,
+  });
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.resetAllMocks();
@@ -87,7 +92,7 @@ describe('confirmedExpertNavigationHOO', () => {
     };
     // Drag is a behavior and in this case it matters. Note that values is not
     // passed, it emits raw events.
-    const drag$ = m.hot(    '--a-b--c--d-e---f--|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>;
+    const drag$ = toBehaviorConnectable(m.hot(    '--a-b--c--d-e---f--|'));
     const long$ = m.hot(    '-------c----e------|', values);
     const sub$ = m.cold(           '---D-E---F--|', values);
     const etnsh$ = m.hot(   '-------------------|');
@@ -132,7 +137,7 @@ describe('confirmedExpertNavigationHOO', () => {
     };
     // Drag is a behavior and in this case it matters. Note that values is not
     // passed, it emits raw events.
-    const drag$ = m.hot(    '--a-b--c--d-e-----f--|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>;
+    const drag$ = toBehaviorConnectable(m.hot(    '--a-b--c--d-e-----f--|'));
     const long$ = m.hot(    '-------c----e--------|', values);
     // const expert$ = m.cold(        '---D-E-----F--|', values);
     const noviceSwitch$ = m.cold(           '----F-|', values);
@@ -188,7 +193,7 @@ describe('confirmedNoviceNavigationHOO', () => {
       F: createNotif('f')
     };
     // Drag is a behavior and in this case it matters.
-    const drag$ = m.hot(     '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>;
+    const drag$ = toBehaviorConnectable(m.hot(     '-a-b---c-d---e--f--|'));
     const dwellings$ = m.hot('------b-----d------|');
     const sub$ = m.cold(           '-C-D---E--F--|', values);
     const expected$ = m.hot( '------(X|)'          , { X: sub$ });
@@ -241,7 +246,7 @@ describe('expertToNoviceSwitchHOO', () => {
       movementsThreshold: 'mock-move-threshold'
     };
 
-    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined));
+    const drag$ = toBehaviorConnectable(m.hot(    '-a-b---c-d---e--f--|'));
     const dwell$ = m.hot(   '------b-----d------|', values);
     const novice$ = m.cold(       'G---HI|)', values);
     const expected$ = m.hot('------(X|)', { X: novice$ });
@@ -284,7 +289,7 @@ describe('expertToNoviceSwitchHOO', () => {
       B: { stroke: 'mock-stroke', type: 'cancel', mode: 'expert' }
     };
 
-    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined));
+    const drag$ = toBehaviorConnectable(m.hot(    '-a-b---c-d---e--f--|'));
     const dwell$ = m.hot(   '------b-----d------|', values);
     const sub$ = m.cold(          '(B|)', values);
     const expected$ = m.hot('------(X|)', { X: sub$ });
@@ -312,7 +317,7 @@ describe('expertToNoviceSwitchHOO', () => {
       B: { stroke: 'mock-stroke', type: 'cancel', mode: 'expert' }
     };
 
-    const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined));
+    const drag$ = toBehaviorConnectable(m.hot(    '-a-b---c-d---e--f--|'));
     const dwell$ = m.hot(   '------b-----d------|', values);
     const sub$ = m.cold(          '(B|)', values);
     const expected$ = m.hot('------(X|)', { X: sub$ });
@@ -475,10 +480,10 @@ describe('navigation', () => {
       m: { name: 'm', start: 'l', menu: 'mock-menu', options: navigationOptions }
     };
     const subs = {
-      A: m.hot('-z---u----a--^----b-c-|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>,
-      E: m.hot('----e--------^----eee-ee-e|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>,
-      J: m.hot('--------i----^-------------j----k|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>,
-      P: m.hot(          ' l-^-------------------------m-|').pipe(publishBehavior(undefined)) as unknown as ConnectableObservable<unknown>
+      A: toBehaviorConnectable(m.hot('-z---u----a--^----b-c-|')),
+      E: toBehaviorConnectable(m.hot('----e--------^----eee-ee-e|')),
+      J: toBehaviorConnectable(m.hot('--------i----^-------------j----k|')),
+      P: toBehaviorConnectable(m.hot(          ' l-^-------------------------m-|'))
     };
     const drags$ = m.hot(   'A----E-------J-------P-|', subs);
     const expected$ = m.hot('a----b-c-----ij----k-l----m-|', transformedValues);
