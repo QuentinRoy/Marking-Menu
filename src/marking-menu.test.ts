@@ -3,21 +3,25 @@ import { marbles } from 'rxjs-marbles/jest';
 import type { TestObservableLike } from 'rxjs-marbles/types';
 import { type Mock } from 'vitest';
 import type { Observable } from 'rxjs';
-import main, { exportNotification, type MarkingMenuConfig } from './main.js';
-import navigation from './navigation/index.js';
+import main, {
+  exportNotification,
+  type MarkingMenuConfig,
+} from './marking-menu.js';
+import navigation from './navigation/navigation.js';
 import createModel from './model.js';
-import {
-  createMenuLayout,
-  createStrokeCanvas,
-  createGestureFeedback,
-  connectLayout,
-} from './layout/index.js';
-import { watchDrags } from './move/index.js';
+import createMenuLayout from './layout/menu.js';
+import createStrokeCanvas from './layout/stroke.js';
+import createGestureFeedback from './layout/gesture-feedback.js';
+import connectLayout from './layout/connect.js';
+import watchDrags from './move/linear-drag.js';
 
-vi.mock('./navigation');
-vi.mock('./layout');
+vi.mock('./navigation/navigation');
+vi.mock('./layout/menu');
+vi.mock('./layout/stroke');
+vi.mock('./layout/gesture-feedback');
+vi.mock('./layout/connect');
 vi.mock('./model');
-vi.mock('./move');
+vi.mock('./move/linear-drag');
 
 // The collaborators are auto-mocked and driven with placeholder tokens (string
 // parents/models, raw event labels) compared only structurally at runtime, so

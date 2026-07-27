@@ -4,7 +4,7 @@ import { marbles } from 'rxjs-marbles/jest';
 import { Observable } from 'rxjs';
 import { type Mock } from 'vitest';
 import { toPolar, type Point } from '../utils.js';
-import { dwellings } from '../move/index.js';
+import dwellings from '../move/dwelling.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import noviceNavigation, {
   noviceMoves,
@@ -16,7 +16,7 @@ import noviceNavigation, {
 import type { NavigationDrag } from './expert-navigation.js';
 
 vi.mock('../utils');
-vi.mock('../move');
+vi.mock('../move/dwelling');
 
 // `dwellings` is driven with placeholder tokens compared only structurally at
 // runtime, so the mock is typed loosely.

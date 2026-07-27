@@ -10,7 +10,7 @@ import {
   take,
 } from 'rxjs/operators';
 import { toPolar, type Point } from '../utils.js';
-import { dwellings } from '../move/index.js';
+import dwellings from '../move/dwelling.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { NavigationDrag } from './expert-navigation.js';
 

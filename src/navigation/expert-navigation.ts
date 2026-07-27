@@ -1,7 +1,7 @@
 import { merge, type Observable } from 'rxjs';
 import { startWith, last, map, share } from 'rxjs/operators';
-import { draw } from '../move/index.js';
-import recognize from '../recognizer/index.js';
+import draw from '../move/draw.js';
+import recognize from '../recognizer/recognize-mm-stroke.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { Point } from '../utils.js';
 

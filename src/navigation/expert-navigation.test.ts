@@ -4,10 +4,10 @@ import { type Observable } from 'rxjs';
 import { type Mock } from 'vitest';
 import type { Point } from '../utils.js';
 import type { MarkingMenuModelItem } from '../types.js';
-import recognize from '../recognizer/index.js';
+import recognize from '../recognizer/recognize-mm-stroke.js';
 import expertNavigation, { type NavigationDrag } from './expert-navigation.js';
 
-vi.mock('../recognizer');
+vi.mock('../recognizer/recognize-mm-stroke');
 
 // `recognize` and the drag/model tokens used below are placeholders compared
 // only structurally at runtime, so the mock is typed loosely.

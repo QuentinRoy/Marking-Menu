@@ -8,8 +8,10 @@ import {
   mergeMap,
   exhaustMap,
 } from 'rxjs/operators';
-import { longMoves, dwellings, draw } from '../move/index.js';
-import recognize from '../recognizer/index.js';
+import longMoves from '../move/long-move.js';
+import dwellings from '../move/dwelling.js';
+import draw from '../move/draw.js';
+import recognize from '../recognizer/recognize-mm-stroke.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { Point } from '../utils.js';
 import noviceNavigation from './novice-navigation.js';

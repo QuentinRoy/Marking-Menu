@@ -4,8 +4,10 @@ import { of, type Observable, type ConnectableObservable } from 'rxjs';
 import { publishBehavior, scan, map } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
 import { type Mock } from 'vitest';
-import { longMoves, dwellings, draw } from '../move/index.js';
-import recognize from '../recognizer/index.js';
+import longMoves from '../move/long-move.js';
+import dwellings from '../move/dwelling.js';
+import draw from '../move/draw.js';
+import recognize from '../recognizer/recognize-mm-stroke.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { Point } from '../utils.js';
 import navigation, {
@@ -21,8 +23,10 @@ import noviceNavigation from './novice-navigation.js';
 
 vi.mock('./expert-navigation');
 vi.mock('./novice-navigation');
-vi.mock('../move');
-vi.mock('../recognizer');
+vi.mock('../move/long-move');
+vi.mock('../move/dwelling');
+vi.mock('../move/draw');
+vi.mock('../recognizer/recognize-mm-stroke');
 
 // The collaborators are auto-mocked and driven with placeholder tokens (string
 // positions/models, raw event labels) compared only structurally at runtime, so
