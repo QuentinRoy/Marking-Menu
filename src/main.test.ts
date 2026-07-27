@@ -1,6 +1,9 @@
 import { map } from 'rxjs/operators';
 import { marbles } from 'rxjs-marbles/jest';
-import main, { exportNotification } from './main.js';
+import type { TestObservableLike } from 'rxjs-marbles/types';
+import { type Mock } from 'vitest';
+import type { Observable } from 'rxjs';
+import main, { exportNotification, type MarkingMenuConfig } from './main.js';
 import navigation from './navigation/index.js';
 import createModel from './model.js';
 import {
@@ -16,6 +19,31 @@ vi.mock('./layout');
 vi.mock('./model');
 vi.mock('./move');
 
+// The collaborators are auto-mocked and driven with placeholder tokens (string
+// parents/models, raw event labels) compared only structurally at runtime, so
+// each mock is aliased with a loose signature.
+const mockNavigation = vi.mocked(navigation) as unknown as Mock<
+  (...args: unknown[]) => Observable<unknown>
+>;
+const mockCreateModel = vi.mocked(createModel) as unknown as Mock<
+  (...args: unknown[]) => unknown
+>;
+const mockWatchDrags = vi.mocked(watchDrags) as unknown as Mock<
+  (...args: unknown[]) => unknown
+>;
+const mockConnectLayout = vi.mocked(connectLayout) as unknown as Mock<
+  (...args: unknown[]) => Observable<unknown>
+>;
+const mockCreateMenuLayout = vi.mocked(createMenuLayout) as unknown as Mock<
+  (...args: unknown[]) => unknown
+>;
+const mockCreateStrokeCanvas = vi.mocked(createStrokeCanvas) as unknown as Mock<
+  (...args: unknown[]) => unknown
+>;
+const mockCreateGestureFeedback = vi.mocked(
+  createGestureFeedback,
+) as unknown as Mock<(...args: unknown[]) => unknown>;
+
 describe('exportNotification', () => {
   it('filters everything but the proper properties', () => {
     expect(
@@ -28,7 +56,7 @@ describe('exportNotification', () => {
         foo: 'foo',
         selection: 'selection',
         timeStamp: 'timeStamp',
-      }),
+      } as unknown as Parameters<typeof exportNotification>[0]),
     ).toEqual({
       type: 'type',
       mode: 'mode',
@@ -42,28 +70,40 @@ describe('exportNotification', () => {
     expect(
       exportNotification({
         center: ['mock-center'],
-      }),
+      } as unknown as Parameters<typeof exportNotification>[0]),
     ).toEqual({
       menuCenter: ['mock-center'],
     });
   });
   it('copies rather than exposes center', () => {
     const center = ['mock-center'];
-    expect(exportNotification({ center }).menuCenter).not.toBe(center);
+    expect(
+      exportNotification({
+        center,
+      } as unknown as Parameters<typeof exportNotification>[0]).menuCenter,
+    ).not.toBe(center);
   });
   it('copies rather than exposes position', () => {
     const position = ['mock-position'];
-    expect(exportNotification({ position }).position).not.toBe(position);
+    expect(
+      exportNotification({
+        position,
+      } as unknown as Parameters<typeof exportNotification>[0]).position,
+    ).not.toBe(position);
   });
 });
 
 describe('main', () => {
-  let callMain;
-  let mockNavNotifs;
-  let mockNavObs$;
-  let connectedObs$;
+  let callMain: (options?: Record<string, unknown>) => Observable<unknown>;
+  let mockNavNotifs: Record<string, unknown>;
+  let mockNavObs$: TestObservableLike<unknown>;
+  let connectedObs$: Observable<unknown>;
 
-  const Notif = (id, type, props) => ({
+  const createNotif = (
+    id: string,
+    type: string,
+    props?: Record<string, unknown>,
+  ) => ({
     active: id,
     type,
     notifMockProp: 'notif-mock-prop-val',
@@ -73,19 +113,21 @@ describe('main', () => {
 
   beforeEach(
     marbles((m) => {
-      createModel.mockImplementation(() => 'mock-model');
-      watchDrags.mockImplementation(() => 'mock-drags');
+      mockCreateModel.mockImplementation(() => 'mock-model');
+      mockWatchDrags.mockImplementation(() => 'mock-drags');
       mockNavNotifs = {
-        a: Notif('a', 'mock-type-1'),
-        b: Notif('b', 'select', { selection: 'mock-selection-b' }),
-        c: Notif('c', 'mock-type-2', { originalEvent: null }),
-        d: Notif('d', 'select', { selection: 'mock-selection-d' }),
-        e: Notif('e', 'mock-type-4', { selection: 'mock-selection-e' }),
+        a: createNotif('a', 'mock-type-1'),
+        b: createNotif('b', 'select', { selection: 'mock-selection-b' }),
+        c: createNotif('c', 'mock-type-2', { originalEvent: null }),
+        d: createNotif('d', 'select', { selection: 'mock-selection-d' }),
+        e: createNotif('e', 'mock-type-4', { selection: 'mock-selection-e' }),
       };
       mockNavObs$ = m.hot('--a--b-c--de-|');
-      connectedObs$ = mockNavObs$.pipe(map((n) => ({ ...n, connected: true })));
-      navigation.mockImplementation(() => mockNavObs$);
-      connectLayout.mockImplementation(() => connectedObs$);
+      connectedObs$ = mockNavObs$.pipe(
+        map((n) => ({ ...(n as Record<string, unknown>), connected: true })),
+      );
+      mockNavigation.mockImplementation(() => mockNavObs$);
+      mockConnectLayout.mockImplementation(() => connectedObs$);
       callMain = (options = {}) =>
         main({
           items: 'mock-items',
@@ -109,7 +151,7 @@ describe('main', () => {
           notifySteps: true,
           log: 'mock-log',
           ...options,
-        });
+        } as unknown as MarkingMenuConfig & { notifySteps: true });
     }),
   );
 
@@ -119,15 +161,15 @@ describe('main', () => {
 
   it('properly creates the model', () => {
     callMain();
-    expect(createModel.mock.calls).toEqual([['mock-items']]);
+    expect(mockCreateModel.mock.calls).toEqual([[{ items: 'mock-items' }]]);
   });
   it('properly creates the drags observable', () => {
     callMain();
-    expect(watchDrags.mock.calls).toEqual([['mock-parent']]);
+    expect(mockWatchDrags.mock.calls).toEqual([['mock-parent']]);
   });
   it('properly creates the navigation observable', () => {
     callMain();
-    expect(navigation.mock.calls).toEqual([
+    expect(mockNavigation.mock.calls).toEqual([
       [
         'mock-drags',
         'mock-model',
@@ -144,13 +186,16 @@ describe('main', () => {
 
   it("properly prevents default from navigation's notifications", () => {
     callMain().subscribe((n) => {
+      const notif = n as { active: string };
       // C does not have original event to make sure it does not fail
       // without it.
-      if (n.active === 'c') {
+      if (notif.active === 'c') {
         return;
       }
 
-      const mockNotif = mockNavNotifs[n.active];
+      const mockNotif = mockNavNotifs[notif.active] as {
+        originalEvent: { preventDefault: Mock };
+      };
       expect(mockNotif.originalEvent.preventDefault).toHaveBeenCalled();
     });
   });
@@ -161,8 +206,16 @@ describe('main', () => {
     connectedObs$ = m.hot('--d-e--f-g|');
     const connectedSub =  '^---------!';
     callMain().subscribe();
-    expect(connectLayout).toHaveBeenCalledTimes(1);
-    const options = connectLayout.mock.calls[0][0];
+    expect(mockConnectLayout).toHaveBeenCalledTimes(1);
+    const options = mockConnectLayout.mock.calls[0]?.[0] as {
+      parent: unknown;
+      navigation$: Observable<unknown>;
+      createMenuLayout: unknown;
+      createUpperStrokeCanvas: unknown;
+      createLowerStrokeCanvas: unknown;
+      createGestureFeedback: unknown;
+      log: unknown;
+    };
     expect(options.parent).toBe('mock-parent');
     m.expect(options.navigation$).toBeObservable(mockNavObs$);
     m.expect(connectedObs$).toHaveSubscriptions(connectedSub);
@@ -176,13 +229,16 @@ describe('main', () => {
   it('properly binds MenuLayout when it connects the layout', () => {
     callMain();
     // Make sure it properly binds connectLayout and stroke canvas.
-    connectLayout.mock.calls[0][0].createMenuLayout(
+    const options = mockConnectLayout.mock.calls[0]?.[0] as {
+      createMenuLayout: (...args: unknown[]) => unknown;
+    };
+    options.createMenuLayout(
       'mock-parent-2',
       'mock-menuModel-2',
       'mock-center-2',
       'mock-current-2',
     );
-    expect(createMenuLayout.mock.calls).toEqual([
+    expect(mockCreateMenuLayout.mock.calls).toEqual([
       [
         {
           parent: 'mock-parent-2',
@@ -196,8 +252,11 @@ describe('main', () => {
 
   it('properly binds UpperStrokeCanvas when it connects the layout', () => {
     callMain();
-    connectLayout.mock.calls[0][0].createUpperStrokeCanvas('mock-parent-3');
-    expect(createStrokeCanvas.mock.calls).toEqual([
+    const options = mockConnectLayout.mock.calls[0]?.[0] as {
+      createUpperStrokeCanvas: (...args: unknown[]) => unknown;
+    };
+    options.createUpperStrokeCanvas('mock-parent-3');
+    expect(mockCreateStrokeCanvas.mock.calls).toEqual([
       [
         {
           parent: 'mock-parent-3',
@@ -211,8 +270,11 @@ describe('main', () => {
 
   it('properly binds LowerStrokeCanvas when it connects the layout', () => {
     callMain();
-    connectLayout.mock.calls[0][0].createLowerStrokeCanvas('mock-parent-4');
-    expect(createStrokeCanvas.mock.calls).toEqual([
+    const options = mockConnectLayout.mock.calls[0]?.[0] as {
+      createLowerStrokeCanvas: (...args: unknown[]) => unknown;
+    };
+    options.createLowerStrokeCanvas('mock-parent-4');
+    expect(mockCreateStrokeCanvas.mock.calls).toEqual([
       [
         {
           parent: 'mock-parent-4',
@@ -226,10 +288,13 @@ describe('main', () => {
 
   it('properly binds GestureFeedback when it connects the layout', () => {
     callMain();
-    connectLayout.mock.calls[0][0].createGestureFeedback({
+    const options = mockConnectLayout.mock.calls[0]?.[0] as {
+      createGestureFeedback: (...args: unknown[]) => unknown;
+    };
+    options.createGestureFeedback({
       parent: 'mock-parent-5',
     });
-    expect(createGestureFeedback.mock.calls).toEqual([
+    expect(mockCreateGestureFeedback.mock.calls).toEqual([
       [
         {
           parent: 'mock-parent-5',
@@ -248,6 +313,7 @@ describe('main', () => {
 
   // prettier-ignore
   it('can notify every steps', marbles((m) => {
+      /* eslint-disable @typescript-eslint/naming-convention -- Observable testing use capital letters for marble values */
       const expectedValues = {
         A: {
           type: 'mock-type-1',
@@ -277,6 +343,7 @@ describe('main', () => {
           timeStamp: undefined,
         },
       };
+      /* eslint-enable @typescript-eslint/naming-convention */
       connectedObs$ = m.hot('--a-b--c-|', mockNavNotifs);
       const expected$ = m.hot('--A-B--C-|', expectedValues);
       m.expect(callMain()).toBeObservable(expected$);
@@ -285,10 +352,12 @@ describe('main', () => {
 
   // prettier-ignore
   it('can notify selections only', marbles(m => {
+    /* eslint-disable @typescript-eslint/naming-convention -- Observable testing use capital letters for marble values */
     const selections = {
       B: 'mock-selection-b',
       D: 'mock-selection-d'
     };
+    /* eslint-enable @typescript-eslint/naming-convention */
     connectedObs$ = m.hot(  '--a-b--c-de-|', mockNavNotifs);
     const expected$ = m.hot('----B----D--|', selections);
     m.expect(callMain({ notifySteps: false })).toBeObservable(expected$);

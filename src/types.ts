@@ -100,6 +100,27 @@ export type ModelRoot<Items extends readonly unknown[] = readonly unknown[]> =
     readonly isRoot: true;
   };
 
+/**
+ The members of a model node that a caller can use without knowing the
+ literal ids described in a specific menu: `getChild` and `getChildrenByLabel`
+ are excluded, as `getChild`'s overload is only sound for the exact tuple type
+ it was built from, and `items` along with it (its element type is the same
+ tuple).
+ */
+type GenericNodeKeys =
+  'isLeaf' | 'isRoot' | 'getNearestChild' | 'getMaxDepth' | 'getMaxBreadth';
+
+/**
+ The shape of a model node — root or item — for callers that walk the model
+ generically rather than through the literal ids described in a specific menu.
+ */
+export type MarkingMenuModelItem =
+  | Pick<
+      ModelItem<string | undefined, string, readonly MarkingMenuModelItem[]>,
+      GenericNodeKeys
+    >
+  | Pick<ModelRoot<readonly MarkingMenuModelItem[]>, GenericNodeKeys>;
+
 /* -------------------------------------------------------------------------- *
  * Helpers
  * -------------------------------------------------------------------------- */

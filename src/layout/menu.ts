@@ -1,5 +1,4 @@
-import { degreesToRadians } from '../utils.js';
-import type { Point } from '../types.js';
+import { degreesToRadians, type Point } from '../utils.js';
 import menuStyles from './menu.css?inline';
 
 if (typeof document !== 'undefined') {

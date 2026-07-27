@@ -1,1 +1,1 @@
-export { default, type MarkingMenuModelItem } from './recognize-mm-stroke.js';
+export { default } from './recognize-mm-stroke.js';

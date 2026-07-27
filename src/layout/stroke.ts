@@ -1,4 +1,4 @@
-import type { Point } from '../types.js';
+import type { Point } from '../utils.js';
 
 /**
  Configuration options of a stroke canvas.

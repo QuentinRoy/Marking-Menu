@@ -6,7 +6,8 @@ import { marbles } from 'rxjs-marbles/jest';
 import { type Mock } from 'vitest';
 import { longMoves, dwellings, draw } from '../move/index.js';
 import recognize from '../recognizer/index.js';
-import type { MarkingMenuModelItem, Point } from '../types.js';
+import type { MarkingMenuModelItem } from '../types.js';
+import type { Point } from '../utils.js';
 import navigation, {
   confirmedExpertNavigationHOO,
   confirmedNoviceNavigationHOO,
@@ -216,7 +217,7 @@ describe('expertToNoviceSwitchHOO', () => {
     const values = {
       b: { stroke: 'mock-stroke', position: 'mock-position' }
     };
-    const recognizedMenu = { isRoot: () => false };
+    const recognizedMenu = { isRoot: false };
     const options = {
       opt: 'mock-opt',
       noviceDwellingTime: 'mock-dwelling',
@@ -300,7 +301,7 @@ describe('expertToNoviceSwitchHOO', () => {
     const expected$ = m.hot('------(X|)', { X: sub$ });
 
     mockDwellings.mockImplementation(() => dwell$);
-    mockRecognize.mockImplementation(() => ({ isRoot: () => true }));
+    mockRecognize.mockImplementation(() => ({ isRoot: true }));
 
     m.expect<unknown>(
       expertToNoviceSwitchHOO(

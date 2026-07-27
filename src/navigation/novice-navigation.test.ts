@@ -3,9 +3,9 @@
 import { marbles } from 'rxjs-marbles/jest';
 import { Observable } from 'rxjs';
 import { type Mock } from 'vitest';
-import { toPolar } from '../utils.js';
+import { toPolar, type Point } from '../utils.js';
 import { dwellings } from '../move/index.js';
-import type { MarkingMenuModelItem, Point } from '../types.js';
+import type { MarkingMenuModelItem } from '../types.js';
 import noviceNavigation, {
   noviceMoves,
   menuSelection,
@@ -107,8 +107,8 @@ describe('noviceMoves', () => {
 
   // prettier-ignore
   it('look for nearest item and emit changes when the position is far from the center', marbles(m => {
-    const item1 = { name: 'mockActive1', isLeaf: () => true };
-    const item2 = { name: 'mockActive2', isLeaf: () => true };
+    const item1 = { name: 'mockActive1', isLeaf: true };
+    const item2 = { name: 'mockActive2', isLeaf: true };
     const menu = {
       getNearestChild: vi
         .fn()
@@ -144,9 +144,9 @@ describe('noviceMoves', () => {
 
   // prettier-ignore
   it('switch between no active items to active item', marbles(m => {
-    const item1 = { name: 'mockActive1', isLeaf: () => true };
-    const item2 = { name: 'mockActive2', isLeaf: () => true };
-    const item3 = { name: 'mockActive3', isLeaf: () => true };
+    const item1 = { name: 'mockActive1', isLeaf: true };
+    const item2 = { name: 'mockActive2', isLeaf: true };
+    const item3 = { name: 'mockActive3', isLeaf: true };
     const menu = {
       getNearestChild: vi
         .fn()
@@ -193,7 +193,7 @@ describe('noviceMoves', () => {
 
   // prettier-ignore
   it('emit cancel if selected item is not a leaf', marbles(m => {
-    const item = { isLeaf: () => false };
+    const item = { isLeaf: false };
     const menu = { getNearestChild: vi.fn(() => item) };
     const values = {
       a: { position: [200, 'a-az'] },
@@ -222,10 +222,10 @@ describe('noviceMoves', () => {
 test('menuSelection', marbles(m => {
   const move$ = 'mockMove';
   const values = {
-    a: { active: { isLeaf: () => true }, radius: 11 },
-    b: { active: { isLeaf: () => true }, radius: 9 },
-    c: { active: { isLeaf: () => false }, radius: 11 },
-    d: { active: { isLeaf: () => false }, radius: 9 }
+    a: { active: { isLeaf: true }, radius: 11 },
+    b: { active: { isLeaf: true }, radius: 9 },
+    c: { active: { isLeaf: false }, radius: 11 },
+    d: { active: { isLeaf: false }, radius: 9 }
   };
   const dwelling$ = m.hot('--a-b--c-d-|', values);
   const expected$ = m.hot('-------c---|', values);

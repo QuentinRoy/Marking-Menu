@@ -2,7 +2,8 @@ import { merge, type Observable } from 'rxjs';
 import { startWith, last, map, share } from 'rxjs/operators';
 import { draw } from '../move/index.js';
 import recognize from '../recognizer/index.js';
-import type { MarkingMenuModelItem, Point } from '../types.js';
+import type { MarkingMenuModelItem } from '../types.js';
+import type { Point } from '../utils.js';
 
 /**
  A drag notification consumed by the navigation: it carries at least a pixel

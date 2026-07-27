@@ -2,7 +2,8 @@
 import { marbles } from 'rxjs-marbles';
 import { type Observable } from 'rxjs';
 import { type Mock } from 'vitest';
-import type { MarkingMenuModelItem, Point } from '../types.js';
+import type { Point } from '../utils.js';
+import type { MarkingMenuModelItem } from '../types.js';
 import recognize from '../recognizer/index.js';
 import expertNavigation, { type NavigationDrag } from './expert-navigation.js';
 

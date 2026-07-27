@@ -10,7 +10,8 @@ import {
 } from 'rxjs/operators';
 import { longMoves, dwellings, draw } from '../move/index.js';
 import recognize from '../recognizer/index.js';
-import type { MarkingMenuModelItem, Point } from '../types.js';
+import type { MarkingMenuModelItem } from '../types.js';
+import type { Point } from '../utils.js';
 import noviceNavigation from './novice-navigation.js';
 import expertNavigation, { type NavigationDrag } from './expert-navigation.js';
 
@@ -72,7 +73,7 @@ export const expertToNoviceSwitchHOO = <D extends NavigationDrag>(
         maxDepth: -1,
         requireMenu: true,
       });
-      if (!menu || menu.isRoot()) {
+      if (!menu || menu.isRoot) {
         return of({ ...evt, type: 'cancel' });
       }
 

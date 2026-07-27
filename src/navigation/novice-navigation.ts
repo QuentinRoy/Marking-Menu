@@ -9,9 +9,9 @@ import {
   switchAll,
   take,
 } from 'rxjs/operators';
-import { toPolar } from '../utils.js';
+import { toPolar, type Point } from '../utils.js';
 import { dwellings } from '../move/index.js';
-import type { MarkingMenuModelItem, Point } from '../types.js';
+import type { MarkingMenuModelItem } from '../types.js';
 import type { NavigationDrag } from './expert-navigation.js';
 
 /**
@@ -110,7 +110,7 @@ export const noviceMoves = <D extends NavigationDrag>(
     last(),
     map((n): NoviceNotification<D> => ({
       ...n,
-      type: n.active?.isLeaf() ? 'select' : 'cancel',
+      type: n.active?.isLeaf ? 'select' : 'cancel',
       selection: n.active,
     })),
   );
@@ -167,7 +167,7 @@ export const menuSelection = <D extends NavigationDrag>(
         n.active !== null &&
         n.active !== undefined &&
         n.radius > minMenuSelectionDist &&
-        !n.active.isLeaf(),
+        !n.active.isLeaf,
     ),
   );
 

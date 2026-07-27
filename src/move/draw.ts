@@ -1,6 +1,6 @@
 import { scan } from 'rxjs/operators';
 import type { Observable } from 'rxjs';
-import type { Point } from '../types.js';
+import type { Point } from '../utils.js';
 
 /**
  Augment a drag$ observable so that events also include the stroke.

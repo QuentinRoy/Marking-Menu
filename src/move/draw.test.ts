@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import type { Point } from '../types.js';
+import type { Point } from '../utils.js';
 import draw from './draw.js';
 
 const dragNotif = (x: number, y: number): { position: Point } => ({

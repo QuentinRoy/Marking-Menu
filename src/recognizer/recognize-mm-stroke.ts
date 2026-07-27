@@ -6,7 +6,7 @@ import {
   type Point,
   type Segment,
 } from '../utils.js';
-import type { ModelItem } from '../types.js';
+import type { MarkingMenuModelItem } from '../types.js';
 import getStrokeArticulationPoints from './articulation-points.js';
 import strokeLength from './stroke-length.js';
 
@@ -52,7 +52,7 @@ export const pointsToSegments = (points: Point[]): Segment[] => {
  not lead to an item. `model` itself is not part of the path, which is hence
  never empty.
  */
-export const walkModel = <M extends ModelItem>({
+export const walkModel = <M extends MarkingMenuModelItem>({
   model,
   segments,
   startIndex = 0,
@@ -120,7 +120,7 @@ export const divideLongestSegment = (
  @param options.maxDepth - The maximum depth of the item.
  @returns The path leading to the selected item (see {@link walkModel}).
  */
-export const findItem = <M extends ModelItem>({
+export const findItem = <M extends MarkingMenuModelItem>({
   model,
   segments,
   maxDepth = model.getMaxDepth(),
@@ -162,7 +162,9 @@ export const findItem = <M extends ModelItem>({
  @param options.requireLeaf - Look for a leaf.
  @returns The item recognized by the stroke.
  */
-export default function recognizeMarkingMenuStroke<M extends ModelItem>(
+export default function recognizeMarkingMenuStroke<
+  M extends MarkingMenuModelItem,
+>(
   stroke: Point[],
   model: M,
   {
