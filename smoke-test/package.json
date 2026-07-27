@@ -1,9 +1,5 @@
 {
   "name": "smoke-test-fixture",
   "private": true,
-  "type": "module",
-  "dependencies": {
-    "marking-menu": "file:./package.tgz",
-    "rxjs": "file:../node_modules/rxjs"
-  }
+  "type": "module"
 }
