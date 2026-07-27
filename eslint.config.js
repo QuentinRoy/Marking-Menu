@@ -1,5 +1,6 @@
 import { defineConfig } from 'eslint/config';
 import eslintConfigXo from 'eslint-config-xo';
+import importX from 'eslint-plugin-import-x';
 import vitest from '@vitest/eslint-plugin';
 
 export default defineConfig([
@@ -17,9 +18,9 @@ export default defineConfig([
     gitignore: import.meta.url,
   }),
   {
+    plugins: { 'import-x': importX },
     rules: {
-      // But in eslintConfigXo, the rule should be disabled because
-      // it's incompatible with prettier.
+      // Disabled because it conflicts with prettier.
       // C.f. https://github.com/xojs/xo/issues/889.
       '@stylistic/no-mixed-operators': 'off',
 
@@ -29,6 +30,9 @@ export default defineConfig([
       // Unicorn tends to think marking menu items are DOM elements, triggering
       // annoying false positives.
       'unicorn/better-dom-traversing': 'off',
+
+      // This repo uses named exports only (c.f. bcb1332).
+      'import-x/no-default-export': 'error',
     },
   },
   {
@@ -63,6 +67,14 @@ export default defineConfig([
           },
         },
       ],
+    },
+  },
+  {
+    // Vite/Vitest/Prettier config files must use a default export; that's
+    // the contract those tools require.
+    files: ['*.config.{js,ts}'],
+    rules: {
+      'import-x/no-default-export': 'off',
     },
   },
   {

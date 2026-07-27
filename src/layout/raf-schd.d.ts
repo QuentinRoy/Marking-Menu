@@ -6,6 +6,7 @@ declare module 'raf-schd' {
     cancel: () => void;
   };
 
+  // eslint-disable-next-line import-x/no-default-export -- This is a third-party module, we do not control its export structure.
   export default function rafSchd<Arguments extends readonly unknown[]>(
     fn: (...args: Arguments) => void,
   ): ThrottledFunction<Arguments>;

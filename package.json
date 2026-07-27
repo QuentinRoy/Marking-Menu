@@ -57,6 +57,7 @@
     "csv-parse": "^7.0.0",
     "eslint": "^10.4",
     "eslint-config-xo": "^0.58.1",
+    "eslint-plugin-import-x": "^4.17.1",
     "jsdom": "^29.1.1",
     "prettier": "^3",
     "rxjs": "^7.5.5",

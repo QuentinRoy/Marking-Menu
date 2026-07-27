@@ -23,7 +23,7 @@ export default defineConfig({
       fileName: (format) =>
         format === 'es' ? 'marking-menu.mjs' : 'marking-menu.js',
       formats: ['es', 'umd'],
-      name: 'MarkingMenu',
+      name: 'createMarkingMenu',
     },
     minify: false,
     rolldownOptions: {
