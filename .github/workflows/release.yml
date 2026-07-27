@@ -22,7 +22,7 @@ jobs:
         with:
           node-version-file: .tool-versions
           registry-url: https://registry.npmjs.org
-      - run: corepack enable
+      - run: npm install --global corepack
       - name: Get Yarn cache directory
         id: yarn-cache
         run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
