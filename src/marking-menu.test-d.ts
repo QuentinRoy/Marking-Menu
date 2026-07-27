@@ -1,6 +1,7 @@
 import type { Observable } from 'rxjs';
 import { describe, expectTypeOf, it } from 'vitest';
 import { createMarkingMenu } from './marking-menu.js';
+import type { MarkingMenuItemInput } from './types.js';
 
 /*
  Type level tests: they assert what the type system knows about
@@ -33,6 +34,14 @@ describe('createMarkingMenu', () => {
     });
     expectTypeOf<Value<typeof menu$>['id']>().toEqualTypeOf<'right'>();
     expectTypeOf<Value<typeof menu$>['isLeaf']>().toEqualTypeOf<true>();
+  });
+
+  it('returns typed selections for an item list built at runtime', () => {
+    const items: MarkingMenuItemInput[] = [{ label: 'Right' }];
+    const menu$ = createMarkingMenu({ items, parent });
+
+    expectTypeOf<Value<typeof menu$>>().not.toBeNever();
+    expectTypeOf<Value<typeof menu$>['label']>().toEqualTypeOf<string>();
   });
 
   it('returns an observable of notifications when notifySteps is true', () => {

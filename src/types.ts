@@ -160,15 +160,15 @@ export interface AnyModelNode {
  Every node of the (sub-)tree rooted at `N`, including `N` itself: `N` and,
  recursively, every one of its descendants. Recursion is guarded on
  {@link IsTuple}: for a menu built at runtime (a non-literal `items` list),
- the item type is already the same for every node of the (sub-)tree, so it
- degrades to `N` itself rather than recursing forever.
+ the item type is already the same for every item in the (sub-)tree, so it
+ includes that type without recursing forever.
  */
 export type ModelNodes<N extends AnyModelNode> = N extends {
   items: infer I extends readonly AnyModelNode[];
 }
   ? IsTuple<I> extends true
     ? N | ModelNodes<I[number]>
-    : N
+    : N | I[number]
   : N;
 
 /** Every node of the (sub-)tree rooted at `N`, excluding the root. */
