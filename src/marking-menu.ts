@@ -93,14 +93,14 @@ export type MarkingMenuNotification<M extends AnyModelNode = AnyModelNode> =
     }
   | {
       type: 'select';
-      mode: 'novice' | 'expert';
+      mode: 'startup' | 'novice' | 'expert';
       selection: ModelLeaves<M>;
       position?: Point;
       timeStamp?: number;
     }
   | {
       type: 'cancel';
-      mode: 'novice' | 'expert';
+      mode: 'startup' | 'novice' | 'expert';
       selection?: ModelItems<M> | null;
       position?: Point;
       timeStamp?: number;

@@ -53,6 +53,12 @@ describe('createMarkingMenu', () => {
     expectTypeOf<Value<typeof menu$>['type']>().toEqualTypeOf<
       'start' | 'draw' | 'open' | 'move' | 'change' | 'select' | 'cancel'
     >();
+    expectTypeOf<
+      Extract<Value<typeof menu$>, { type: 'select' }>['mode']
+    >().toEqualTypeOf<'startup' | 'novice' | 'expert'>();
+    expectTypeOf<
+      Extract<Value<typeof menu$>, { type: 'cancel' }>['mode']
+    >().toEqualTypeOf<'startup' | 'novice' | 'expert'>();
   });
 
   it('distributes over a widened notifySteps instead of collapsing to one branch', () => {

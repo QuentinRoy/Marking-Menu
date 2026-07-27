@@ -338,12 +338,15 @@ describe('startup', () => {
   // prettier-ignore
   it('emits expert-like notifications', marbles(m => {
     mockExpertNavigation.mockImplementation(obs$ =>
-      obs$.pipe(map(n => ({ name: n, type: 'mock-type' })))
+      obs$.pipe(map((name, index) => ({
+        name,
+        type: index === 1 ? 'select' : index === 2 ? 'cancel' : 'draw'
+      })))
     );
     const values = {
       A: { name: 'a', mode: 'startup', type: 'start' },
-      B: { name: 'b', mode: 'startup', type: 'mock-type' },
-      C: { name: 'c', mode: 'startup', type: 'mock-type' }
+      B: { name: 'b', mode: 'startup', type: 'select' },
+      C: { name: 'c', mode: 'startup', type: 'cancel' }
     };
     const drag$ = m.hot(    '-a-bc--|');
     const expected$ = m.hot('-A-BC--|', values);
