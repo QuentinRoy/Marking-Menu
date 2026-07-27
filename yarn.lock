@@ -3908,7 +3908,7 @@ __metadata:
     vite: "npm:^8.1.5"
     vitest: "npm:^4.1.10"
   peerDependencies:
-    rxjs: ^7.8.2
+    rxjs: ^7.2.0
   languageName: unknown
   linkType: soft
 
