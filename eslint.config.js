@@ -1,6 +1,7 @@
 import vitest from '@vitest/eslint-plugin';
 import eslintConfigXo from 'eslint-config-xo';
 import importX from 'eslint-plugin-import-x';
+import playwright from 'eslint-plugin-playwright';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
@@ -78,9 +79,9 @@ export default defineConfig([
     },
   },
   {
-    // Vite/Vitest/Prettier config files must use a default export; that's
-    // the contract those tools require.
-    files: ['*.config.{js,ts}'],
+    // Vite/Vitest/Prettier/Playwright config files must use a default
+    // export; that's the contract those tools require.
+    files: ['*.config.{js,ts}', 'e2e/*.config.{js,ts}'],
     rules: {
       'import-x/no-default-export': 'off',
     },
@@ -110,6 +111,13 @@ export default defineConfig([
       // Describe() is called with an imported function reference in some
       // files; the rule can't resolve the import to confirm it's a function.
       'vitest/valid-title': ['error', { allowArguments: true }],
+    },
+  },
+  {
+    files: ['e2e/**/*.ts'],
+    plugins: { playwright },
+    rules: {
+      ...playwright.configs['flat/recommended'].rules,
     },
   },
 ]);
