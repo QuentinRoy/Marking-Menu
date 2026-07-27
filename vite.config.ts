@@ -19,7 +19,7 @@ export default defineConfig({
   build: {
     cssMinify: 'lightningcss',
     lib: {
-      entry: path.resolve(import.meta.dirname, 'src/index.js'),
+      entry: path.resolve(import.meta.dirname, 'src/index.ts'),
       fileName: (format) =>
         format === 'es' ? 'marking-menu.mjs' : 'marking-menu.js',
       formats: ['es', 'umd'],

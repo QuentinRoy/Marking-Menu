@@ -34,13 +34,12 @@ export default defineConfig(({ command }) => ({
     },
   ],
   publicDir: path.resolve(import.meta.dirname, 'dist'),
-  resolve:
-    command === 'serve'
-      ? {
-          alias: {
-            'marking-menu': path.resolve(import.meta.dirname, 'src/index.js'),
-          },
-        }
-      : undefined,
+  ...(command === 'serve' && {
+    resolve: {
+      alias: {
+        'marking-menu': path.resolve(import.meta.dirname, 'src/index.ts'),
+      },
+    },
+  }),
   root: path.resolve(import.meta.dirname, 'demo'),
 }));

@@ -21,11 +21,11 @@
   "scripts": {
     "test": "vitest run",
     "watch-test": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "coverage": "vitest run --coverage",
     "build": "vite build",
-    "build-demo": "yarn build && vite build --config vite.demo.config.mjs",
-    "dev": "vite --config vite.demo.config.mjs",
+    "build-demo": "yarn build && vite build --config vite.demo.config.ts",
+    "dev": "vite --config vite.demo.config.ts",
     "watch": "vite build --watch",
     "prepare": "yarn build",
     "changeset": "changeset",
@@ -34,7 +34,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "serve": "yarn preview",
-    "preview": "vite preview --config vite.demo.config.mjs"
+    "preview": "vite preview --config vite.demo.config.ts"
   },
   "files": [
     "dist"
