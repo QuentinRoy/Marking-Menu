@@ -16,24 +16,23 @@
   "packageManager": "yarn@4.17.1",
   "scripts": {
     "test": "vitest run",
-    "watch-test": "vitest",
+    "test:watch": "vitest",
     "typecheck": "tsc -b",
-    "coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage",
     "build": "vite build",
-    "build-demo": "yarn build && vite build --config vite.demo.config.ts",
-    "dev": "vite --config vite.demo.config.ts",
-    "watch": "vite build --watch",
+    "build:watch": "vite build --watch",
+    "demo:build": "yarn build && vite build --config vite.demo.config.ts",
+    "demo:dev": "vite --config vite.demo.config.ts",
+    "demo:preview": "vite preview --config vite.demo.config.ts",
     "prepare": "yarn build",
     "changeset": "changeset",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "publint": "publint",
-    "check-types-published": "attw --pack . --profile esm-only",
-    "smoke-test": "node scripts/smoke-test.ts",
-    "serve": "yarn preview",
-    "preview": "vite preview --config vite.demo.config.ts"
+    "package:lint": "publint",
+    "package:types": "attw --pack . --profile esm-only",
+    "package:smoke-test": "node scripts/smoke-test.ts"
   },
   "files": [
     "dist"

@@ -36,8 +36,8 @@ jobs:
       - run: yarn lint
       - run: yarn format:check
       - run: yarn typecheck
-      - run: yarn coverage
-      - run: yarn build-demo
-      - run: yarn publint
-      - run: yarn check-types-published
-      - run: yarn smoke-test
+      - run: yarn test:coverage
+      - run: yarn demo:build
+      - run: yarn package:lint
+      - run: yarn package:types
+      - run: yarn package:smoke-test
