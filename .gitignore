@@ -34,6 +34,12 @@ yarn-error.log*
 dist/
 demo-dist/
 build/
+e2e/fixture-dist/
+
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
 
 # Serverless generated files
 .serverless/

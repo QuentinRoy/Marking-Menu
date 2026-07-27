@@ -1,0 +1,46 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: #fafafa;
+  font-family: sans-serif;
+}
+
+/*
+ Both #log and #surface are taken out of normal flow (position: fixed) at
+ fixed coordinates matching the Playwright projects' fixed viewport, so
+ #log's content growing while a gesture streams notifications can never
+ reflow, and hence never move, #surface out from under the pointer.
+ */
+
+#log {
+  background: #fff;
+  border-bottom: 1px solid #ccc;
+  font-size: 10px;
+  height: 120px;
+  left: 0;
+  overflow: auto;
+  padding: 4px;
+  position: fixed;
+  right: 0;
+  top: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+#surface {
+  background: #fff;
+  border: 1px solid #ccc;
+  height: 300px;
+  left: 250px;
+  position: fixed;
+  top: 150px;
+  width: 300px;
+}

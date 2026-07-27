@@ -1132,6 +1132,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@playwright/test@npm:^1.62.0":
+  version: 1.62.0
+  resolution: "@playwright/test@npm:1.62.0"
+  dependencies:
+    playwright: "npm:1.62.0"
+  bin:
+    playwright: cli.js
+  checksum: 10c0/1132666c5cc4955fb043d41447475b4947e6571bd390e1b7c9fdcc9381cb58563fa7f86509a4a61e572e9b0f7ff2d9d9027eb9ee8b1f24bea7423b52b4308436
+  languageName: node
+  linkType: hard
+
 "@publint/pack@npm:^0.1.6":
   version: 0.1.6
   resolution: "@publint/pack@npm:0.1.6"
@@ -3198,6 +3209,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-playwright@npm:^2.10.5":
+  version: 2.10.5
+  resolution: "eslint-plugin-playwright@npm:2.10.5"
+  dependencies:
+    globals: "npm:^17.3.0"
+  peerDependencies:
+    eslint: ">=8.40.0"
+  checksum: 10c0/23b18631364f44cd2e176e47791b28b58421217b6634da6684de108c7ef417101f02d7d55141e57a9d15fb83fe23ab5b29133385013919a561da3757461a692c
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-prettier@npm:^5.5.6":
   version: 5.5.6
   resolution: "eslint-plugin-prettier@npm:5.5.6"
@@ -3659,12 +3681,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fsevents@npm:2.3.2":
+  version: 2.3.2
+  resolution: "fsevents@npm:2.3.2"
+  dependencies:
+    node-gyp: "npm:latest"
+  checksum: 10c0/be78a3efa3e181cda3cf7a4637cb527bcebb0bd0ea0440105a3bb45b86f9245b307dc10a2507e8f4498a7d4ec349d1910f4d73e4d4495b16103106e07eee735b
+  conditions: os=darwin
+  languageName: node
+  linkType: hard
+
 "fsevents@npm:~2.3.3":
   version: 2.3.3
   resolution: "fsevents@npm:2.3.3"
   dependencies:
     node-gyp: "npm:latest"
   checksum: 10c0/a1f0c44595123ed717febbc478aa952e47adfc28e2092be66b8ab1635147254ca6cfe1df792a8997f22716d4cbafc73309899ff7bfac2ac3ad8cf2e4ecc3ec60
+  conditions: os=darwin
+  languageName: node
+  linkType: hard
+
+"fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>":
+  version: 2.3.2
+  resolution: "fsevents@patch:fsevents@npm%3A2.3.2#optional!builtin<compat/fsevents>::version=2.3.2&hash=df0bf1"
+  dependencies:
+    node-gyp: "npm:latest"
   conditions: os=darwin
   languageName: node
   linkType: hard
@@ -3751,6 +3792,13 @@ __metadata:
   version: 15.15.0
   resolution: "globals@npm:15.15.0"
   checksum: 10c0/f9ae80996392ca71316495a39bec88ac43ae3525a438b5626cd9d5ce9d5500d0a98a266409605f8cd7241c7acf57c354a48111ea02a767ba4f374b806d6861fe
+  languageName: node
+  linkType: hard
+
+"globals@npm:^17.3.0":
+  version: 17.8.0
+  resolution: "globals@npm:17.8.0"
+  checksum: 10c0/e31b36cef3befd446487674dc6ca7b8f8e62a3b76aadd975dbf80ffa732366b3ac58df8941999eb6b1406d97480103711db85d2a49c955da47ff5ec688bee9b5
   languageName: node
   linkType: hard
 
@@ -4515,6 +4563,7 @@ __metadata:
     "@changesets/cli": "npm:^2.31.1"
     "@ianvs/prettier-plugin-sort-imports": "npm:^4.7.1"
     "@microsoft/api-extractor": "npm:^7.58.12"
+    "@playwright/test": "npm:^1.62.0"
     "@types/node": "npm:^26.1.1"
     "@typescript/native": "npm:typescript@^7.0.2"
     "@vitest/coverage-v8": "npm:^4.1.10"
@@ -4524,6 +4573,7 @@ __metadata:
     eslint: "npm:^10.8.0"
     eslint-config-xo: "npm:^0.58.1"
     eslint-plugin-import-x: "npm:^4.17.1"
+    eslint-plugin-playwright: "npm:^2.10.5"
     jsdom: "npm:^29.1.1"
     prettier: "npm:^3.9.6"
     publint: "npm:^0.3.22"
@@ -5573,6 +5623,30 @@ __metadata:
     exsolve: "npm:^1.0.8"
     pathe: "npm:^2.0.3"
   checksum: 10c0/dd9b20682426abaddcac9dc786aa22542e12df15a03dea2afa7bf54da0933358c6c7f545c0c3c1c7b24a2904ab4a451bf4e34a50c6837e458359eea30c257ed4
+  languageName: node
+  linkType: hard
+
+"playwright-core@npm:1.62.0":
+  version: 1.62.0
+  resolution: "playwright-core@npm:1.62.0"
+  bin:
+    playwright-core: cli.js
+  checksum: 10c0/bc7c770cc4118a7ea65d2c357fc271aaef49af6b5b8964aa19d765d4ea3473e56af926f693123fd63ed6e580830059905722ac68fbf22a31a5b1533e11600228
+  languageName: node
+  linkType: hard
+
+"playwright@npm:1.62.0":
+  version: 1.62.0
+  resolution: "playwright@npm:1.62.0"
+  dependencies:
+    fsevents: "npm:2.3.2"
+    playwright-core: "npm:1.62.0"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    playwright: cli.js
+  checksum: 10c0/14d2d2c35e4ef88cf69d9e6c5bf351ff47fe9cd00da09da9f48da8aaf75ebdb266330c073cb217821785fb35d7e5d9d89789220b208329e4934aaaa43da260f3
   languageName: node
   linkType: hard
 
