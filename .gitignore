@@ -13,6 +13,8 @@ yarn-error.log*
 /node_modules
 /jspm_packages
 /bower_components
+# Populated by scripts/smoke-test.mjs, not a real install.
+/smoke-test/node_modules
 
 # Yarn Integrity file
 .yarn-integrity

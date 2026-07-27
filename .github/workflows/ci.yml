@@ -35,5 +35,9 @@ jobs:
       - run: yarn install --immutable
       - run: yarn lint
       - run: yarn format:check
+      - run: yarn typecheck
       - run: yarn coverage
       - run: yarn build-demo
+      - run: yarn publint
+      - run: yarn attw
+      - run: yarn smoke-test
