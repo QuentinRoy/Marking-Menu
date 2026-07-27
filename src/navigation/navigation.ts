@@ -1,23 +1,23 @@
 import {
-  race,
-  of,
-  type Observable,
-  take,
+  exhaustMap,
   map,
+  mergeMap,
+  of,
+  race,
   skip,
   startWith,
   switchAll,
-  mergeMap,
-  exhaustMap,
+  take,
+  type Observable,
 } from 'rxjs';
-import { longMoves } from '../move/long-move.js';
-import { dwellings } from '../move/dwelling.js';
 import { draw } from '../move/draw.js';
+import { dwellings } from '../move/dwelling.js';
+import { longMoves } from '../move/long-move.js';
 import { recognizeMarkingMenuStroke as recognize } from '../recognizer/recognize-mm-stroke.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { Point } from '../utils.js';
-import { noviceNavigation } from './novice-navigation.js';
 import { expertNavigation, type NavigationDrag } from './expert-navigation.js';
+import { noviceNavigation } from './novice-navigation.js';
 
 /**
  Configuration options threaded through the navigation.

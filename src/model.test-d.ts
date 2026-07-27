@@ -1,4 +1,4 @@
-import { describe, it, expectTypeOf } from 'vitest';
+import { describe, expectTypeOf, it } from 'vitest';
 import { createModel } from './model.js';
 import type { MarkingMenuItemInput } from './types.js';
 

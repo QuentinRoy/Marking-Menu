@@ -2,18 +2,18 @@ import { map, type Observable } from 'rxjs';
 import { marbles } from 'rxjs-marbles/jest';
 import type { TestObservableLike } from 'rxjs-marbles/types';
 import { type Mock } from 'vitest';
-import {
-  createMarkingMenu as main,
-  exportNotification,
-  type MarkingMenuConfig,
-} from './marking-menu.js';
-import { navigation } from './navigation/navigation.js';
-import { createModel } from './model.js';
+import { connectLayout } from './layout/connect.js';
+import { createGestureFeedback } from './layout/gesture-feedback.js';
 import { createMenu as createMenuLayout } from './layout/menu.js';
 import { createStrokeCanvas } from './layout/stroke.js';
-import { createGestureFeedback } from './layout/gesture-feedback.js';
-import { connectLayout } from './layout/connect.js';
+import {
+  exportNotification,
+  createMarkingMenu as main,
+  type MarkingMenuConfig,
+} from './marking-menu.js';
+import { createModel } from './model.js';
 import { watchDrags } from './move/linear-drag.js';
+import { navigation } from './navigation/navigation.js';
 
 vi.mock('./navigation/navigation');
 vi.mock('./layout/menu');

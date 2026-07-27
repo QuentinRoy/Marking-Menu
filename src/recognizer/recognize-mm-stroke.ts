@@ -1,3 +1,4 @@
+import type { MarkingMenuModelItem } from '../types.js';
 import {
   dist,
   findMaxEntry,
@@ -6,7 +7,6 @@ import {
   type Point,
   type Segment,
 } from '../utils.js';
-import type { MarkingMenuModelItem } from '../types.js';
 import { getStrokeArticulationPoints } from './articulation-points.js';
 import { strokeLength } from './stroke-length.js';
 

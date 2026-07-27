@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/naming-convention -- Observable testing use capital letters for HOO */
 
-import { marbles } from 'rxjs-marbles/jest';
 import { Observable } from 'rxjs';
+import { marbles } from 'rxjs-marbles/jest';
 import { type Mock } from 'vitest';
-import { toPolar, type Point } from '../utils.js';
 import { dwellings } from '../move/dwelling.js';
 import type { MarkingMenuModelItem } from '../types.js';
-import {
-  noviceNavigation,
-  noviceMoves,
-  menuSelection,
-  submenuNavigation,
-  type NoviceNotification,
-  type NoviceNavigationOptions,
-} from './novice-navigation.js';
+import { toPolar, type Point } from '../utils.js';
 import type { NavigationDrag } from './expert-navigation.js';
+import {
+  menuSelection,
+  noviceMoves,
+  noviceNavigation,
+  submenuNavigation,
+  type NoviceNavigationOptions,
+  type NoviceNotification,
+} from './novice-navigation.js';
 
 vi.mock('../utils');
 vi.mock('../move/dwelling');

@@ -1,14 +1,14 @@
 import {
-  fromEvent,
-  of,
-  merge,
-  connectable,
   BehaviorSubject,
-  type Observable,
-  map,
-  takeUntil,
+  connectable,
   filter,
+  fromEvent,
+  map,
+  merge,
+  of,
   startWith,
+  takeUntil,
+  type Observable,
 } from 'rxjs';
 import {
   createPointerEventFromMouseEvent,

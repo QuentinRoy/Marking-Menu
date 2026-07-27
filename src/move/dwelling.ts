@@ -1,12 +1,12 @@
 import {
+  debounceTime,
+  first,
+  last,
   merge,
+  takeUntil,
+  withLatestFrom,
   type Observable,
   type SchedulerLike,
-  debounceTime,
-  takeUntil,
-  first,
-  withLatestFrom,
-  last,
 } from 'rxjs';
 import { longMoves, type DragNotification } from './long-move.js';
 

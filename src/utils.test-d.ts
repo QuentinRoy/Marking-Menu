@@ -1,15 +1,15 @@
-import { describe, it, expectTypeOf } from 'vitest';
+import { describe, expectTypeOf, it } from 'vitest';
 import {
   isNonEmptyArray,
-  type SetOptional,
-  type Simplify,
   type DeepReadonly,
-  type NonEmptyArray,
-  type EmptyTuple,
   type EmptyArray,
+  type EmptyTuple,
   type IsTuple,
+  type NonEmptyArray,
   type Point,
   type Segment,
+  type SetOptional,
+  type Simplify,
 } from './utils.js';
 
 /*

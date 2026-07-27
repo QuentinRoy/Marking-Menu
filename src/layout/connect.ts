@@ -1,9 +1,9 @@
-import { finalize, tap, type Observable } from 'rxjs';
 import rafThrottle from 'raf-schd';
+import { finalize, tap, type Observable } from 'rxjs';
 import type { NonEmptyArray, Point } from '../utils.js';
+import type { GestureFeedback } from './gesture-feedback.js';
 import type { Menu } from './menu.js';
 import type { StrokeCanvas } from './stroke.js';
-import type { GestureFeedback } from './gesture-feedback.js';
 
 /**
  A navigation notification consumed by the layout.

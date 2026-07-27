@@ -1,7 +1,7 @@
 import type { Point } from '../utils.js';
 import {
-  findNextPointFurtherThan,
   findMiddlePointForMinAngle,
+  findNextPointFurtherThan,
 } from './find-points.js';
 
 /**

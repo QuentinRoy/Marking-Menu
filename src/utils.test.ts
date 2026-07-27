@@ -1,14 +1,14 @@
 import {
-  deltaAngle,
-  mod,
-  dist,
   angle,
-  findMaxEntry,
-  toPolar,
-  radiansToDegrees,
   degreesToRadians,
-  noOp,
+  deltaAngle,
+  dist,
+  findMaxEntry,
   isNonEmptyArray,
+  mod,
+  noOp,
+  radiansToDegrees,
+  toPolar,
 } from './utils.js';
 
 describe('mod', () => {

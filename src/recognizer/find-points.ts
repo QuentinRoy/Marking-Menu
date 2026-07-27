@@ -1,4 +1,4 @@
-import { dist, angle, type Point } from '../utils.js';
+import { angle, dist, type Point } from '../utils.js';
 
 /**
  Find the index of the first point of `pointList` that is at least `minDist` away from a

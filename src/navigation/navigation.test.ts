@@ -2,31 +2,31 @@
 /* eslint-disable @typescript-eslint/no-deprecated -- Marble tests require manually connected behavior observables */
 
 import {
+  map,
   of,
-  type Observable,
-  type ConnectableObservable,
   publishBehavior,
   scan,
-  map,
+  type ConnectableObservable,
+  type Observable,
 } from 'rxjs';
 import { marbles } from 'rxjs-marbles/jest';
 import { type Mock } from 'vitest';
-import { longMoves } from '../move/long-move.js';
-import { dwellings } from '../move/dwelling.js';
 import { draw } from '../move/draw.js';
+import { dwellings } from '../move/dwelling.js';
+import { longMoves } from '../move/long-move.js';
 import { recognizeMarkingMenuStroke as recognize } from '../recognizer/recognize-mm-stroke.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import type { Point } from '../utils.js';
+import { expertNavigation, type NavigationDrag } from './expert-navigation.js';
 import {
-  navigation,
   confirmedExpertNavigationHOO,
   confirmedNoviceNavigationHOO,
   expertToNoviceSwitchHOO,
-  startup,
+  navigation,
   navigationFromDrag,
+  startup,
   type NavigationOptions,
 } from './navigation.js';
-import { expertNavigation, type NavigationDrag } from './expert-navigation.js';
 import { noviceNavigation } from './novice-navigation.js';
 
 vi.mock('./expert-navigation');
