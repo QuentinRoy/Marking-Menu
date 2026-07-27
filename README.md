@@ -57,8 +57,7 @@ its bare `rxjs` imports:
       {
         "imports": {
           "marking-menu": "https://esm.sh/marking-menu@0.10.1?raw",
-          "rxjs": "https://esm.sh/rxjs@7.5.5",
-          "rxjs/operators": "https://esm.sh/rxjs@7.5.5/operators"
+          "rxjs": "https://esm.sh/rxjs@7.8.2"
         }
       }
     </script>

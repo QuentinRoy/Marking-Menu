@@ -1,6 +1,13 @@
-import { EMPTY, fromEvent, merge, of, type Observable } from 'rxjs';
+import {
+  EMPTY,
+  fromEvent,
+  merge,
+  of,
+  takeUntil,
+  withLatestFrom,
+  type Observable,
+} from 'rxjs';
 import { marbles } from 'rxjs-marbles';
-import { takeUntil, withLatestFrom } from 'rxjs/operators';
 import { type Mock } from 'vitest';
 import { mouseDrags, touchDrags, watchDrags } from './linear-drag.js';
 import {

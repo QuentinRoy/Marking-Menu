@@ -1,7 +1,6 @@
-import type { Observable } from 'rxjs';
+import { map, type Observable } from 'rxjs';
 import { marbles } from 'rxjs-marbles/jest';
 import type { TestObservableLike } from 'rxjs-marbles/types';
-import { map } from 'rxjs/operators';
 import { type Mock } from 'vitest';
 import { connectLayout } from './layout/connect.js';
 import { createGestureFeedback } from './layout/gesture-feedback.js';

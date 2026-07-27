@@ -1,13 +1,15 @@
-import { of, race, type Observable } from 'rxjs';
 import {
   exhaustMap,
   map,
   mergeMap,
+  of,
+  race,
   skip,
   startWith,
   switchAll,
   take,
-} from 'rxjs/operators';
+  type Observable,
+} from 'rxjs';
 import { draw } from '../move/draw.js';
 import { dwellings } from '../move/dwelling.js';
 import { longMoves } from '../move/long-move.js';

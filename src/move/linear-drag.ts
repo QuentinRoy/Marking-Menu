@@ -1,12 +1,15 @@
 import {
   BehaviorSubject,
   connectable,
+  filter,
   fromEvent,
+  map,
   merge,
   of,
+  startWith,
+  takeUntil,
   type Observable,
 } from 'rxjs';
-import { filter, map, startWith, takeUntil } from 'rxjs/operators';
 import {
   createPointerEventFromMouseEvent,
   createPointerEventFromTouchEvent,

@@ -1,6 +1,5 @@
 import rafThrottle from 'raf-schd';
-import type { Observable } from 'rxjs';
-import { finalize, tap } from 'rxjs/operators';
+import { finalize, tap, type Observable } from 'rxjs';
 import type { NonEmptyArray, Point } from '../utils.js';
 import type { GestureFeedback } from './gesture-feedback.js';
 import type { Menu } from './menu.js';

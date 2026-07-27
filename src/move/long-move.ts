@@ -1,5 +1,4 @@
-import type { Observable } from 'rxjs';
-import { filter, map, scan } from 'rxjs/operators';
+import { filter, map, scan, type Observable } from 'rxjs';
 import { dist } from '../utils.js';
 
 /**

@@ -1,5 +1,4 @@
-import type { Observable } from 'rxjs';
-import { filter, map, share, tap } from 'rxjs/operators';
+import { filter, map, share, tap, type Observable } from 'rxjs';
 import { connectLayout, type LayoutNotification } from './layout/connect.js';
 import { createGestureFeedback } from './layout/gesture-feedback.js';
 import {

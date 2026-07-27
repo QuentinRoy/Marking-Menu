@@ -1,14 +1,15 @@
-import { merge, type Observable } from 'rxjs';
 import {
   filter,
   last,
   map,
+  merge,
   scan,
   share,
   startWith,
   switchAll,
   take,
-} from 'rxjs/operators';
+  type Observable,
+} from 'rxjs';
 import { dwellings } from '../move/dwelling.js';
 import type { MarkingMenuModelItem } from '../types.js';
 import { toPolar, type Point } from '../utils.js';

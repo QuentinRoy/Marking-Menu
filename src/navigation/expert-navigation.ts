@@ -1,5 +1,4 @@
-import { merge, type Observable } from 'rxjs';
-import { last, map, share, startWith } from 'rxjs/operators';
+import { last, map, merge, share, startWith, type Observable } from 'rxjs';
 import { draw } from '../move/draw.js';
 import { recognizeMarkingMenuStroke as recognize } from '../recognizer/recognize-mm-stroke.js';
 import type { MarkingMenuModelItem } from '../types.js';
