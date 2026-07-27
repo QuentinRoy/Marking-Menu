@@ -95,6 +95,15 @@ export default defineConfig([
     },
   },
   {
+    files: ['e2e/fixture/**'],
+    rules: {
+      // The fixture is a test harness, not a public page: it has no
+      // SEO/social surface to describe.
+      '@html-eslint/require-meta-description': 'off',
+      '@html-eslint/require-open-graph-protocol': 'off',
+    },
+  },
+  {
     files: ['src/**/*.test.{js,ts}'],
     plugins: { vitest },
     languageOptions: {
