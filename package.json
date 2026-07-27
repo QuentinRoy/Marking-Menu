@@ -21,10 +21,11 @@
   "scripts": {
     "test": "vitest run",
     "watch-test": "vitest",
+    "typecheck": "tsc -b",
     "coverage": "vitest run --coverage",
     "build": "vite build",
-    "build-demo": "yarn build && vite build --config vite.demo.config.mjs",
-    "dev": "vite --config vite.demo.config.mjs",
+    "build-demo": "yarn build && vite build --config vite.demo.config.ts",
+    "dev": "vite --config vite.demo.config.ts",
     "watch": "vite build --watch",
     "prepare": "yarn build",
     "changeset": "changeset",
@@ -33,7 +34,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "serve": "yarn preview",
-    "preview": "vite preview --config vite.demo.config.mjs"
+    "preview": "vite preview --config vite.demo.config.ts"
   },
   "files": [
     "dist"
@@ -48,16 +49,20 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.1",
+    "@types/node": "^26.1.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "@vitest/coverage-v8": "^4.1.10",
     "@vitest/eslint-plugin": "^1.6.23",
     "angles": "^0.5.0",
     "csv-parse": "^7.0.0",
     "eslint": "^10.4",
     "eslint-config-xo": "^0.58.1",
+    "eslint-plugin-import-x": "^4.17.1",
     "jsdom": "^29.1.1",
     "prettier": "^3",
     "rxjs": "^7.5.5",
     "rxjs-marbles": "^7.0.1",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.1.5",
     "vitest": "^4.1.10"
   },

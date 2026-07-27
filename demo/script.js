@@ -1,4 +1,4 @@
-import MarkingMenu from 'marking-menu';
+import { createMarkingMenu } from 'marking-menu';
 
 const toastElement = document.querySelector('#toast');
 
@@ -8,7 +8,7 @@ const items = [
   { label: 'Down-Right' },
   {
     label: 'Others...',
-    children: [
+    items: [
       { label: 'Sub Right' },
       { label: 'Sub Down' },
       { label: 'Sub Left' },
@@ -21,7 +21,10 @@ const items = [
   { label: 'Up' },
   { label: 'Up-Right' },
 ];
-const mm = MarkingMenu({ items, parent: document.querySelector('#main') });
+const mm = createMarkingMenu({
+  items,
+  parent: document.querySelector('#main'),
+});
 
 let toastTimeoutId = null;
 function toastMessage(message) {

@@ -38,6 +38,7 @@ You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.i
     ></script>
     <script src="https://unpkg.com/marking-menu" defer></script>
     <script defer>
+      const { createMarkingMenu } = window.createMarkingMenu;
       // Your stuff.
     </script>
   </head>
@@ -62,7 +63,7 @@ its bare `rxjs` imports:
       }
     </script>
     <script type="module">
-      import MarkingMenu from 'marking-menu';
+      import { createMarkingMenu } from 'marking-menu';
       // Your stuff.
     </script>
   </head>
@@ -79,22 +80,22 @@ npm install -S marking-menu
 Then (ES modules)
 
 ```js
-import MarkingMenu from 'marking-menu';
+import { createMarkingMenu } from 'marking-menu';
 ```
 
 or (CommonJS)
 
 ```js
-var MarkingMenu = require('marking-menu');
+const { createMarkingMenu } = require('marking-menu');
 ```
 
 ## API
 
-### `MarkingMenu({ items, parent, ...options }): Observable`
+### `createMarkingMenu({ items, parent, ...options }): Observable`
 
-`MarkingMenu` returns a 'hot' [`Observable`](https://github.com/tc39/proposal-observable) that emits the selected menu items. The menu is activated upon subscription of this observable, and disabled upon un-subscription.
+`createMarkingMenu` returns a 'hot' [`Observable`](https://github.com/tc39/proposal-observable) that emits the selected menu items. The menu is activated upon subscription of this observable, and disabled upon un-subscription.
 
-- `items`: `Array` of `{ label, children? }`. The list of the menu's items. If `children` is provided, the item will be considered as a sub-menu (`children` has the same form as `items`). Currently, `MarkingMenu` supports up to 8 items per level. The first item is on the right and the followings are layed out clockwise.
+- `items`: `Array` of `{ label, items? }`. The list of the menu's items. If `items` is provided, the item will be considered as a sub-menu (nested `items` has the same form as the top-level list). Currently, `createMarkingMenu` supports up to 8 items per level. The first item is on the right and the followings are layed out clockwise.
 
 - `parent`: `HTMLElement`. The container of the menu.
 
@@ -106,7 +107,7 @@ const items = [
   { label: 'Item Right' },
   {
     label: 'Others...',
-    children: [
+    items: [
       { label: 'Sub Right' },
       { label: 'Sub Down' },
       { label: 'Sub Left' },
@@ -116,10 +117,13 @@ const items = [
   { label: 'Item Left' },
   { label: 'Item Up' },
 ];
-const mm = MarkingMenu({ items, parent: document.getElementById('main') });
+const menu$ = createMarkingMenu({
+  items,
+  parent: document.getElementById('main'),
+});
 
 // Subscribe (and activates) the menu.
-const subscription = mm.subscribe((selection) => {
+const subscription = menu$.subscribe((selection) => {
   // Do something.
   console.log(selection.label);
 });
