@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { defineConfig } from 'vite';
+import dts from 'vite-plugin-dts';
 import { version } from './package.json' with { type: 'json' };
 
 const banner = `/*!
@@ -16,6 +17,16 @@ const banner = `/*!
 `;
 
 export default defineConfig({
+  plugins: [
+    // Bundling declarations (`bundleTypes`) needs `@microsoft/api-extractor`,
+    // whose internal TS engine doesn't support this project's TypeScript
+    // version. The unbundled, per-module output below works fine even though
+    // the build itself emits a single JS bundle: `.d.ts` resolution is purely
+    // a compile-time concern, so `./model.js`-style relative specifiers in
+    // the generated declarations resolve to their sibling `.d.ts` file
+    // without the runtime `.js` file needing to exist.
+    dts({ tsconfigPath: 'tsconfig.app.json' }),
+  ],
   build: {
     cssMinify: 'lightningcss',
     lib: {

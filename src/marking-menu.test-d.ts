@@ -11,6 +11,8 @@ import { createMarkingMenu } from './marking-menu.js';
 type Value<O> = O extends Observable<infer T> ? T : never;
 
 declare const parent: HTMLElement;
+// eslint-disable-next-line unicorn/consistent-boolean-name -- mirrors the public `notifySteps` config field.
+declare const notifySteps: boolean;
 
 describe('createMarkingMenu', () => {
   it('rejects sibling items sharing the same id', () => {
@@ -45,15 +47,19 @@ describe('createMarkingMenu', () => {
   });
 
   it('distributes over a widened notifySteps instead of collapsing to one branch', () => {
-    // eslint-disable-next-line unicorn/consistent-boolean-name -- mirrors the public `notifySteps` config field.
-    declare const notifySteps: boolean;
     const menu$ = createMarkingMenu({
       items: [{ id: 'right', label: 'Right' }],
       parent,
       notifySteps,
     });
-    // Both branches survive: a notification's `type`, and a leaf's `id`.
-    expectTypeOf<Value<typeof menu$>>().toHaveProperty('id');
-    expectTypeOf<Value<typeof menu$>>().toHaveProperty('type');
+    // Both branches survive: a leaf (has `id`) and a notification (has `type`).
+    // `keyof` the whole union would only give keys common to every member
+    // (none, here), hence `Extract` instead of `toHaveProperty`.
+    expectTypeOf<
+      Extract<Value<typeof menu$>, { id: string }>
+    >().not.toBeNever();
+    expectTypeOf<
+      Extract<Value<typeof menu$>, { type: string }>
+    >().not.toBeNever();
   });
 });

@@ -6,7 +6,12 @@
   "repository": "github:QuentinRoy/Marking-Menu",
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "type": "module",
-  "exports": "./dist/marking-menu.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/marking-menu.js"
+    }
+  },
   "sideEffects": false,
   "engines": {
     "node": ">=24"
@@ -59,6 +64,7 @@
     "rxjs-marbles": "^7.0.1",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.1.5",
+    "vite-plugin-dts": "^5.0.3",
     "vitest": "^4.1.10"
   },
   "peerDependencies": {
