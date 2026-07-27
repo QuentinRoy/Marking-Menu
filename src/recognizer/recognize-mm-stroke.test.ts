@@ -56,6 +56,7 @@ const createMockModel = (
   const base = {
     items: [],
     id: undefined,
+    key: 'mock',
     label: 'Mock',
     angle: requestedAngle ?? 0,
     getChild: vi.fn(() => null),

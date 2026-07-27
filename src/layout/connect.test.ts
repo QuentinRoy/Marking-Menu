@@ -220,11 +220,11 @@ describe('connect', () => {
       },
       { type: 'open', menu: 'menu1', center: [10, 20], position: [100, 200] },
       { type: 'move', position: [1000, 2000] },
-      { type: 'change', active: { id: 'active-item-1' } },
+      { type: 'change', active: { key: 'active-item-1' } },
       { type: 'move', position: [500, 700] },
       { type: 'move', position: [100, 200] },
       { type: 'change', active: undefined },
-      { type: 'change', active: { id: 'active-item-2' } },
+      { type: 'change', active: { key: 'active-item-2' } },
       { type: 'select' },
 
       { type: 'start', position: 'pos2' },
@@ -237,16 +237,16 @@ describe('connect', () => {
       },
       { type: 'open', menu: 'menu2', center: [30, 40], position: [300, 800] },
       { type: 'move', position: [200, 900] },
-      { type: 'change', active: { id: 'active-item-3' } },
+      { type: 'change', active: { key: 'active-item-3' } },
       { type: 'open', menu: 'menu3', center: [60, 70], position: [300, 800] },
-      { type: 'change', active: { id: 'active-item-4' } },
+      { type: 'change', active: { key: 'active-item-4' } },
       { type: 'move', position: [700, 100] },
       { type: 'cancel' },
 
       { type: 'start', position: 'pos3' },
       { type: 'open', menu: 'menu4', center: [90, 30], position: [102, 201] },
       { type: 'move', position: [500, 0] },
-      { type: 'change', active: { id: 'active-item-5' } },
+      { type: 'change', active: { key: 'active-item-5' } },
     ) as unknown as Observable<Notification>;
 
     const out = connect<string, Notification>({

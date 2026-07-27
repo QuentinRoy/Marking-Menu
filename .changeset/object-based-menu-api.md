@@ -2,7 +2,7 @@
 'marking-menu': minor
 ---
 
-Menu items now use a single recursive shape `{ label, children? }`:
+Menu items now use a single recursive shape `{ label, items? }`:
 
 - The `name` property is renamed to `label`.
 - The string shorthand for menu items is removed; every item must be an object.

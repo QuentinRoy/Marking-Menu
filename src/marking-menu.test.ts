@@ -241,7 +241,6 @@ describe('main', () => {
       'mock-parent-2',
       'mock-menuModel-2',
       'mock-center-2',
-      'mock-current-2',
     );
     expect(mockCreateMenuLayout.mock.calls).toEqual([
       [
@@ -249,7 +248,6 @@ describe('main', () => {
           parent: 'mock-parent-2',
           model: 'mock-menuModel-2',
           center: 'mock-center-2',
-          current: 'mock-current-2',
         },
       ],
     ]);

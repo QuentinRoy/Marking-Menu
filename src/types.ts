@@ -90,6 +90,11 @@ export type ModelItem<
   readonly angle: number;
   /** Items are never the root of the menu. */
   readonly isRoot: false;
+  /**
+   The item's library-assigned positional key (e.g. `"1-0-2"`), unique across
+   the whole menu. Unlike `id`, it is never provided by the caller.
+   */
+  readonly key: string;
 };
 
 /**

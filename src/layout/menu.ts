@@ -1,18 +1,28 @@
 import { degreesToRadians, type Point } from '../utils.js';
 import menuStyles from './menu.css?inline';
 
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
+let hasInjectedStyles = false;
+
+/**
+ Inject the menu's stylesheet into a document, once.
+ */
+function ensureStylesInjected(doc: Document): void {
+  if (hasInjectedStyles) {
+    return;
+  }
+
+  hasInjectedStyles = true;
+  const style = doc.createElement('style');
   style.textContent = menuStyles;
-  document.head.append(style);
+  doc.head.append(style);
 }
 
 /**
  An item of the menu layout's model.
  */
 export type MenuLayoutItem = {
-  /** The item's id. */
-  id: string;
+  /** The item's key. */
+  key: string;
   /** The item's label. */
   label: string;
   /** The item's angle, in degrees. */
@@ -24,7 +34,7 @@ export type MenuLayoutItem = {
  */
 export type MenuLayoutModel = {
   /** The items of the (sub-)menu to display. */
-  children: readonly MenuLayoutItem[];
+  items: readonly MenuLayoutItem[];
 };
 
 /**
@@ -56,7 +66,7 @@ const template = (
   for (const item of items) {
     const elt = doc.createElement('div');
     elt.className = 'marking-menu-item';
-    elt.dataset.itemId = item.id;
+    elt.dataset.itemId = item.key;
     elt.style.setProperty('--angle', `${item.angle}deg`);
     const cornerClass = CORNER_ITEM_CLASSES[item.angle];
     if (cornerClass !== undefined) {
@@ -84,7 +94,6 @@ const template = (
  @param options.model - The model of the menu to open.
  @param options.center - The pixel coordinates where the menu should be
  anchored.
- @param options.current - The currently active item.
  @param options.doc - The root document of the menu. Mostly useful for testing
  purposes.
  @returns The menu controls.
@@ -94,16 +103,16 @@ export function createMenu({
   parent,
   model,
   center,
-  current,
 }: {
   doc?: Document;
   parent: HTMLElement;
   model: MenuLayoutModel;
   center: Point;
-  current?: string;
 }): Menu {
+  ensureStylesInjected(doc);
+
   // Create the DOM.
-  const main = template({ items: model.children, center }, doc);
+  const main = template({ items: model.items, center }, doc);
   parent.append(main);
 
   // Clear any  active items.
@@ -145,11 +154,6 @@ export function createMenu({
   const remove = () => {
     main.remove();
   };
-
-  // Initialize the menu.
-  if (current !== undefined && current !== '') {
-    setActive(current);
-  }
 
   // Create the interface.
   return { setActive, remove };

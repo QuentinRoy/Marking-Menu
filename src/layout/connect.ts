@@ -14,7 +14,7 @@ import type { GestureFeedback } from './gesture-feedback.js';
  */
 export type LayoutNotification<M> =
   | { type: 'open'; menu: M; center: Point; position?: Point }
-  | { type: 'change'; active?: { id: string } | null }
+  | { type: 'change'; active?: { key: string } | null }
   | { type: 'select' }
   | { type: 'cancel' }
   | { type: 'start'; position: Point }
@@ -216,7 +216,7 @@ export function connectLayout<M, N extends LayoutNotification<M>>({
       }
 
       case 'change': {
-        setActive(notification.active?.id ?? null);
+        setActive(notification.active?.key ?? null);
         break;
       }
 

@@ -233,22 +233,26 @@ class MarkingMenuItem extends MarkingMenuNode {
   readonly #id: string | undefined;
   readonly #label: string;
   readonly #angle: number;
+  readonly #key: string;
 
   constructor({
     id,
     label,
     angle,
+    key,
     items,
   }: {
     id: string | undefined;
     label: string;
     angle: number;
+    key: string;
     items: readonly MarkingMenuItem[];
   }) {
     super({ items });
     this.#id = id;
     this.#label = label;
     this.#angle = angle;
+    this.#key = key;
   }
 
   get id(): string | undefined {
@@ -261,6 +265,10 @@ class MarkingMenuItem extends MarkingMenuNode {
 
   get angle(): number {
     return this.#angle;
+  }
+
+  get key(): string {
+    return this.#key;
   }
 
   override get isRoot(): false {
@@ -284,6 +292,8 @@ class MarkingMenuRoot extends MarkingMenuNode {
  @param inputs - The description of the level's items.
  @param seenIds - The ids already used elsewhere in the menu. Mutated as the
  items are created.
+ @param baseKey - The generated key of the parent level, if any. Joined with
+ each item's index to derive its own key.
  @returns The level's model items.
  @throws If an item reuses an id. Duplicates are a compile error for a menu
  described literally, but ids are only known at runtime for a menu built
@@ -292,6 +302,7 @@ class MarkingMenuRoot extends MarkingMenuNode {
 const createItems = (
   inputs: readonly MarkingMenuItemInput[],
   seenIds: Set<string> = new Set(),
+  baseKey?: string,
 ): readonly MarkingMenuItem[] => {
   const angleRange = getAngleRange(inputs);
   return Object.freeze(
@@ -306,12 +317,15 @@ const createItems = (
         seenIds.add(input.id);
       }
 
+      const key = baseKey === undefined ? `${index}` : `${baseKey}-${index}`;
+
       return new MarkingMenuItem({
         id: input.id,
         label: input.label,
         angle: index * angleRange,
+        key,
         items: input.items
-          ? createItems(input.items, seenIds)
+          ? createItems(input.items, seenIds, key)
           : Object.freeze([]),
       });
     }),

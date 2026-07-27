@@ -243,13 +243,11 @@ export function createMarkingMenu({
       menuParent: HTMLElement,
       menuModel: MenuLayoutModel,
       center: Point,
-      current?: string,
     ) =>
       createMenuLayout({
         parent: menuParent,
         model: menuModel,
         center,
-        ...(current !== undefined && { current }),
         ...menuLayoutOptions,
       }),
     createUpperStrokeCanvas: (canvasParent: HTMLElement) =>

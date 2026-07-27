@@ -8,7 +8,7 @@ exports[`createMenu > can be removed 1`] = `
   >
     <div
       class="marking-menu-item"
-      data-item-id="item-0-id"
+      data-item-id="item-0-key"
       style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
@@ -22,7 +22,7 @@ exports[`createMenu > can be removed 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-1-id"
+      data-item-id="item-1-key"
       style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
@@ -36,7 +36,7 @@ exports[`createMenu > can be removed 1`] = `
     </div>
     <div
       class="marking-menu-item active"
-      data-item-id="item-2-id"
+      data-item-id="item-2-key"
       style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
@@ -50,7 +50,7 @@ exports[`createMenu > can be removed 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-3-id"
+      data-item-id="item-3-key"
       style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
@@ -76,7 +76,7 @@ exports[`createMenu > renders 1`] = `
   >
     <div
       class="marking-menu-item"
-      data-item-id="item-0-id"
+      data-item-id="item-0-key"
       style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
@@ -90,7 +90,7 @@ exports[`createMenu > renders 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-1-id"
+      data-item-id="item-1-key"
       style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
@@ -104,7 +104,7 @@ exports[`createMenu > renders 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-2-id"
+      data-item-id="item-2-key"
       style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
@@ -118,7 +118,7 @@ exports[`createMenu > renders 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-3-id"
+      data-item-id="item-3-key"
       style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
@@ -132,7 +132,7 @@ exports[`createMenu > renders 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-4-id"
+      data-item-id="item-4-key"
       style="--angle: 40deg; --cosine: 0.766044443118978; --sine: -0.6427876096865393;"
     >
       <div
@@ -146,7 +146,7 @@ exports[`createMenu > renders 1`] = `
     </div>
     <div
       class="marking-menu-item active"
-      data-item-id="item-5-id"
+      data-item-id="item-5-key"
       style="--angle: 50deg; --cosine: 0.6427876096865394; --sine: -0.766044443118978;"
     >
       <div
@@ -170,7 +170,7 @@ exports[`createMenu > renders without active element 1`] = `
   >
     <div
       class="marking-menu-item"
-      data-item-id="item-0-id"
+      data-item-id="item-0-key"
       style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
@@ -184,7 +184,7 @@ exports[`createMenu > renders without active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-1-id"
+      data-item-id="item-1-key"
       style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
@@ -198,7 +198,7 @@ exports[`createMenu > renders without active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-2-id"
+      data-item-id="item-2-key"
       style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
@@ -212,7 +212,7 @@ exports[`createMenu > renders without active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-3-id"
+      data-item-id="item-3-key"
       style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
@@ -236,7 +236,7 @@ exports[`createMenu > update the active element 1`] = `
   >
     <div
       class="marking-menu-item"
-      data-item-id="item-0-id"
+      data-item-id="item-0-key"
       style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
@@ -250,7 +250,7 @@ exports[`createMenu > update the active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-1-id"
+      data-item-id="item-1-key"
       style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
@@ -264,7 +264,7 @@ exports[`createMenu > update the active element 1`] = `
     </div>
     <div
       class="marking-menu-item active"
-      data-item-id="item-2-id"
+      data-item-id="item-2-key"
       style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
@@ -278,7 +278,7 @@ exports[`createMenu > update the active element 1`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-3-id"
+      data-item-id="item-3-key"
       style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
@@ -302,7 +302,7 @@ exports[`createMenu > update the active element 2`] = `
   >
     <div
       class="marking-menu-item"
-      data-item-id="item-0-id"
+      data-item-id="item-0-key"
       style="--angle: 0deg; --cosine: 1; --sine: 0;"
     >
       <div
@@ -316,7 +316,7 @@ exports[`createMenu > update the active element 2`] = `
     </div>
     <div
       class="marking-menu-item active"
-      data-item-id="item-1-id"
+      data-item-id="item-1-key"
       style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
     >
       <div
@@ -330,7 +330,7 @@ exports[`createMenu > update the active element 2`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-2-id"
+      data-item-id="item-2-key"
       style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
     >
       <div
@@ -344,7 +344,7 @@ exports[`createMenu > update the active element 2`] = `
     </div>
     <div
       class="marking-menu-item"
-      data-item-id="item-3-id"
+      data-item-id="item-3-key"
       style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
     >
       <div
