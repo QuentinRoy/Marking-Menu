@@ -33,6 +33,10 @@ export default defineConfig([
 
       // This repo uses named exports only (c.f. bcb1332).
       'import-x/no-default-export': 'error',
+
+      // This is a browser library. Node is a development tool pinned in
+      // .tool-versions, not a supported runtime of the published package.
+      'package-json/require-engines': 'off',
     },
   },
   {
