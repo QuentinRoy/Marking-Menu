@@ -1,52 +1,68 @@
 /*
  Typechecks smoke-test/check.ts against the package as it will actually be
- published: only the files package.json's `files` field ships, resolved
- through node_modules by package name (not a relative import into src/ or
- dist/). This is what catches exports/types-field mistakes that a plain
- `tsc` run against the source tree never would.
+ published: packed with `yarn pack` and installed into an isolated fixture
+ by npm, then resolved through its node_modules by package name (not a
+ relative import into src/ or dist/). Packing (rather than hand-copying
+ `files`) picks up npm's implicit includes/excludes exactly as the real
+ publish would. The fixture is then typechecked under both a bundler-style
+ and a Node-style `moduleResolution`, since a `.d.ts` bug can be invisible
+ to one and not the other.
  */
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { cp, mkdir, readFile, rm, symlink } from 'node:fs/promises';
+import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const smokeTestDir = path.join(root, 'smoke-test');
-const packageDir = path.join(smokeTestDir, 'node_modules', 'marking-menu');
+const tarballPath = path.join(smokeTestDir, 'package.tgz');
 
-const pkg = JSON.parse(
-  await readFile(path.join(root, 'package.json'), 'utf8'),
-) as { files: string[] };
-
-await rm(packageDir, { recursive: true, force: true });
-await mkdir(packageDir, { recursive: true });
-await Promise.all([
-  cp(path.join(root, 'package.json'), path.join(packageDir, 'package.json')),
-  ...pkg.files.map(async (file) =>
-    cp(path.join(root, file), path.join(packageDir, file), {
-      recursive: true,
-    }),
-  ),
-]);
-
-// `rxjs` is a peer dependency: link it in rather than making smoke-test/ its
-// own installable project.
-const rxjsLink = path.join(smokeTestDir, 'node_modules', 'rxjs');
-if (!existsSync(rxjsLink)) {
-  await symlink(path.join(root, 'node_modules', 'rxjs'), rxjsLink, 'dir');
+/** Runs a command, exiting the process immediately if it fails. */
+function runOrExit(command: string, args: string[], cwd: string): void {
+  const result = spawnSync(command, args, { cwd, stdio: 'inherit' });
+  if (result.status !== 0) {
+    // eslint-disable-next-line unicorn/no-process-exit -- this is a CLI script.
+    process.exit(result.status ?? 1);
+  }
 }
 
-const tsc = path.join(root, 'node_modules', '.bin', 'tsc');
-const result = spawnSync(
-  tsc,
-  ['-p', path.join('smoke-test', 'tsconfig.json'), '--noEmit'],
-  {
-    cwd: root,
-    stdio: 'inherit',
-  },
+await rm(tarballPath, { force: true });
+runOrExit('yarn', ['pack', '--out', tarballPath], root);
+
+await rm(path.join(smokeTestDir, 'node_modules'), {
+  recursive: true,
+  force: true,
+});
+runOrExit(
+  'npm',
+  [
+    'install',
+    '--no-audit',
+    '--no-fund',
+    '--no-package-lock',
+    '--ignore-scripts',
+  ],
+  smokeTestDir,
 );
 
+const tsc = path.join(root, 'node_modules', '.bin', 'tsc');
+const configs = ['tsconfig.bundler.json', 'tsconfig.nodenext.json'];
+
+// Run every resolution mode rather than stopping at the first failure, so a
+// single invocation reports everything that's broken.
+let hasFailed = false;
+for (const config of configs) {
+  console.log(`\n--- smoke-test: ${config} ---`);
+  const result = spawnSync(
+    tsc,
+    ['-p', path.join('smoke-test', config), '--noEmit'],
+    { cwd: root, stdio: 'inherit' },
+  );
+  if (result.status !== 0) {
+    hasFailed = true;
+  }
+}
+
 // eslint-disable-next-line unicorn/no-process-exit -- this is a CLI script.
-process.exit(result.status ?? 1);
+process.exit(hasFailed ? 1 : 0);
