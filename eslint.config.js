@@ -10,6 +10,10 @@ export default defineConfig([
       'CHANGELOG.md',
       // Git worktrees excluded via .git/info/exclude, not .gitignore.
       '.claude/worktrees/**',
+      // Deliberately outside any tsconfig project: it's a consumer fixture
+      // typechecked by scripts/smoke-test.ts against the published package,
+      // not against source, so type-aware linting doesn't apply to it.
+      'smoke-test/**',
     ],
   },
   ...eslintConfigXo({
