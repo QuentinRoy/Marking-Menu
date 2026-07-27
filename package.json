@@ -32,7 +32,8 @@
     "format:check": "prettier --check .",
     "package:lint": "publint",
     "package:types": "attw --pack . --profile esm-only",
-    "package:smoke-test": "node scripts/smoke-test.ts"
+    "package:smoke-test": "node scripts/smoke-test.ts",
+    "prototype:event-target": "node src/navigation/event-target-state-machine-prototype/prototype.ts"
   },
   "files": [
     "dist"

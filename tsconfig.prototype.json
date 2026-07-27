@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "target": "ES2024",
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    "types": ["node"],
     "strict": true,
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
@@ -20,10 +21,5 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true
   },
-  "include": ["src"],
-  "exclude": [
-    "src/**/*.test.ts",
-    "src/**/*.test-d.ts",
-    "src/navigation/event-target-state-machine-prototype"
-  ]
+  "include": ["src/navigation/event-target-state-machine-prototype/**/*.ts"]
 }
