@@ -30,7 +30,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "publint": "publint",
-    "attw": "attw --pack . --profile esm-only",
+    "check-types-published": "attw --pack . --profile esm-only",
     "smoke-test": "node scripts/smoke-test.ts",
     "serve": "yarn preview",
     "preview": "vite preview --config vite.demo.config.ts"
