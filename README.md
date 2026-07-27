@@ -23,31 +23,8 @@ The authors and contributors of this library may not be held responsible for any
 
 ### Browser with CDN
 
-You can use [unpkg](https://unpkg.com) to fetch both [`rxjs`](http://reactivex.io/rxjs/) and `marking-menu`:
-
-- https://unpkg.com/rxjs@7/dist/bundles/rxjs.umd.js,
-- https://unpkg.com/marking-menu,
-
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <script
-      src="https://unpkg.com/rxjs@7/dist/bundles/rxjs.umd.js"
-      defer
-    ></script>
-    <script src="https://unpkg.com/marking-menu" defer></script>
-    <script defer>
-      const { createMarkingMenu } = window.createMarkingMenu;
-      // Your stuff.
-    </script>
-  </head>
-  <body></body>
-</html>
-```
-
-Or, as a native ES module using an import map to resolve `marking-menu` and
-its bare `rxjs` imports:
+Use a native ES module with an import map to resolve `marking-menu` and its
+bare `rxjs` imports:
 
 ```html
 <!DOCTYPE html>
@@ -71,22 +48,16 @@ its bare `rxjs` imports:
 </html>
 ```
 
-### ES modules or CommonJS
+### ES modules
 
 ```sh
 npm install -S marking-menu
 ```
 
-Then (ES modules)
+Then:
 
 ```js
 import { createMarkingMenu } from 'marking-menu';
-```
-
-or (CommonJS)
-
-```js
-const { createMarkingMenu } = require('marking-menu');
 ```
 
 ## API
