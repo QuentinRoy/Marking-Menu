@@ -13,9 +13,6 @@
     }
   },
   "sideEffects": false,
-  "engines": {
-    "node": ">=24"
-  },
   "packageManager": "yarn@4.17.1",
   "scripts": {
     "test": "vitest run",
