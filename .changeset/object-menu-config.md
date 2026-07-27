@@ -1,5 +1,5 @@
 ---
-'marking-menu': minor
+'marking-menu': major
 ---
 
 Pass a single configuration object to `createMarkingMenu` instead of using

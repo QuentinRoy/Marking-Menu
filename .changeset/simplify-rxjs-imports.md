@@ -1,7 +1,6 @@
 ---
-'marking-menu': minor
+'marking-menu': patch
 ---
 
-Import RxJS operators from `rxjs`. ES module users can remove `rxjs/operators`
-from their import maps; custom shims must expose operators on the root `rxjs`
-export.
+Resolve RxJS operators from the root `rxjs` entry point. Native ES module
+consumers can remove the `rxjs/operators` entry from their import maps.
