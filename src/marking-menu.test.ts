@@ -59,6 +59,7 @@ describe('exportNotification', () => {
         active: 'active',
         foo: 'foo',
         selection: 'selection',
+        menu: 'menu',
         timeStamp: 'timeStamp',
       } as unknown as Parameters<typeof exportNotification>[0]),
     ).toEqual({
@@ -67,6 +68,7 @@ describe('exportNotification', () => {
       position: ['pos'],
       active: 'active',
       selection: 'selection',
+      menu: 'menu',
       timeStamp: 'timeStamp',
     });
   });
@@ -348,6 +350,7 @@ describe('main', () => {
         A: {
           type: 'mock-type-1',
           active: 'a',
+          menu: undefined,
           menuCenter: undefined,
           mode: undefined,
           position: undefined,
@@ -358,6 +361,7 @@ describe('main', () => {
           type: 'select',
           active: 'b',
           selection: 'mock-selection-b',
+          menu: undefined,
           menuCenter: undefined,
           mode: undefined,
           position: undefined,
@@ -366,6 +370,7 @@ describe('main', () => {
         C: {
           type: 'mock-type-2',
           active: 'c',
+          menu: undefined,
           menuCenter: undefined,
           mode: undefined,
           position: undefined,

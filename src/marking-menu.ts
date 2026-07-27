@@ -39,6 +39,7 @@ type RawNotification = {
   position?: Point | undefined;
   active?: unknown;
   selection?: unknown;
+  menu?: unknown;
   center?: Point | undefined;
   timeStamp?: number | undefined;
   originalEvent?: { preventDefault(): void } | null | undefined;
@@ -56,6 +57,7 @@ type RawExportedNotification = {
   position?: Point | undefined;
   active?: unknown;
   selection?: unknown;
+  menu?: unknown;
   menuCenter?: Point | undefined;
   timeStamp?: number | undefined;
 };
@@ -115,6 +117,7 @@ export const exportNotification = (
   position: n.position ? [...n.position] : undefined,
   active: n.active,
   selection: n.selection,
+  menu: n.menu,
   menuCenter: n.center ? [...n.center] : undefined,
   timeStamp: n.timeStamp,
 });
