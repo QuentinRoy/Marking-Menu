@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention -- Observable testing use capital letters for HOO */
+/* eslint-disable @typescript-eslint/no-deprecated -- Marble tests require manually connected behavior observables */
 
 import { of, type Observable, type ConnectableObservable } from 'rxjs';
 import { publishBehavior, scan, map } from 'rxjs/operators';
