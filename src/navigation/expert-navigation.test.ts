@@ -146,4 +146,28 @@ describe('expertNavigation', () => {
     m.flush();
     expect(mockRecognize).not.toHaveBeenCalled();
   }));
+
+  // prettier-ignore
+  it('cancels rather than selecting when the final drag notification is canceled', marbles(m => {
+    mockRecognize.mockImplementation(() => 'selection');
+    const values = {
+      a: { position: 'a-pos' },
+      c: { position: 'c-pos', canceled: true },
+      A: { type: 'draw', position: 'a-pos', stroke: ['a-pos'] },
+      C: { type: 'draw', position: 'c-pos', canceled: true, stroke: ['a-pos', 'c-pos'] },
+      z: { type: 'cancel', position: 'c-pos', canceled: true, stroke: ['a-pos', 'c-pos'] }
+    };
+    const drag$ = m.hot('^-ac|', values);
+    const expected$ = m.hot('^-AC(z|)', values);
+    m
+      .expect<unknown>(
+        expertNavigation(
+          drag$ as unknown as Observable<NavigationDrag>,
+          'model' as unknown as MarkingMenuModelItem
+        )
+      )
+      .toBeObservable(expected$);
+    m.flush();
+    expect(mockRecognize).not.toHaveBeenCalled();
+  }));
 });

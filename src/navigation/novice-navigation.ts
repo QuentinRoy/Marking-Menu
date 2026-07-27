@@ -111,7 +111,10 @@ export const noviceMoves = <D extends NavigationDrag>(
     last(),
     map((n): NoviceNotification<D> => ({
       ...n,
-      type: n.active?.isLeaf ? 'select' : 'cancel',
+      type:
+        ('canceled' in n && n.canceled) || !n.active?.isLeaf
+          ? 'cancel'
+          : 'select',
       selection: n.active,
     })),
   );

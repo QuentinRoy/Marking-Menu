@@ -217,6 +217,34 @@ describe('noviceMoves', () => {
       )
       .toBeObservable(expected$);
   }));
+
+  // prettier-ignore
+  it('cancels rather than selecting when the final drag notification is canceled', marbles(m => {
+    const item = { isLeaf: true };
+    const menu = { getNearestChild: vi.fn(() => item) };
+    const values = {
+      a: { position: [200, 'a-az'] },
+      c: { position: [300, 'c-az'], canceled: true },
+      O: createOpenNotification({ menu }),
+      A: createMoveNotification('change', [200, 'a-az'], item),
+      C: { ...createMoveNotification('move', [300, 'c-az'], item), canceled: true },
+      Z: { ...createEndNotification('cancel', [300, 'c-az'], item), canceled: true }
+    };
+    const drag$ = m.hot('-ac|', values);
+    const expected$ = m.hot('OAC(Z|)', values);
+    m
+      .expect<unknown>(
+        noviceMoves(
+          drag$ as unknown as Observable<NavigationDrag>,
+          menu as unknown as MarkingMenuModelItem,
+          {
+            menuCenter: 'mockMenuCenter' as unknown as Point,
+            minSelectionDist: 100
+          }
+        )
+      )
+      .toBeObservable(expected$);
+  }));
 });
 
 // prettier-ignore
