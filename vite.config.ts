@@ -20,7 +20,8 @@ export default defineConfig({
     cssMinify: 'lightningcss',
     lib: {
       entry: path.resolve(import.meta.dirname, 'src/index.ts'),
-      fileName: 'marking-menu.mjs',
+      // Using a callback so vite does not add the .js extension to the file name.
+      fileName: () => 'marking-menu.mjs',
       formats: ['es'],
     },
     minify: false,

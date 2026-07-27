@@ -6,13 +6,7 @@
   "repository": "github:QuentinRoy/Marking-Menu",
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "type": "module",
-  "exports": {
-    ".": {
-      "import": "./dist/marking-menu.mjs",
-      "require": "./dist/marking-menu.js",
-      "default": "./dist/marking-menu.js"
-    }
-  },
+  "exports": "./dist/marking-menu.mjs",
   "sideEffects": false,
   "engines": {
     "node": ">=24"
