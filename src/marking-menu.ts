@@ -131,6 +131,13 @@ export type MarkingMenuLogger = {
   debug: (...args: unknown[]) => void;
 };
 
+const defaultLogger: MarkingMenuLogger = {
+  error: console?.error?.bind(console) ?? noOp,
+  info: console?.info?.bind(console) ?? noOp,
+  warn: console?.warn?.bind(console) ?? noOp,
+  debug: noOp,
+};
+
 /**
  Configuration of a marking menu, as accepted by {@link createMarkingMenu}.
  */
@@ -235,19 +242,8 @@ export function createMarkingMenu<const Config extends MarkingMenuConfig>(
     gestureFeedbackCanceledStrokeColor = '#DE6C52',
     gestureFeedbackStrokeColor = strokeColor,
     notifySteps = false,
-    log: {
-      error: logError = console?.error?.bind(console) ?? noOp,
-      info: logInfo = console?.info?.bind(console) ?? noOp,
-      warn: logWarn = console?.warn?.bind(console) ?? noOp,
-      debug: logDebug = noOp,
-    } = {},
   } = config;
-  const log = {
-    error: logError,
-    info: logInfo,
-    warn: logWarn,
-    debug: logDebug,
-  };
+  const log = { ...defaultLogger, ...config.log };
   const strokeCanvasOptions = {
     lineColor: strokeColor,
     lineWidth: strokeWidth,
