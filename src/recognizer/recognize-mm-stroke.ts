@@ -139,7 +139,7 @@ const findItemLoose = (
   segments: StrokeSegment[],
   maxDepth: number,
 ): NonEmptyArray<AnyModelNode> | null => {
-  // If there is not segments, there is no selection to find.
+  // If there are no segments, there is no selection to find.
   if (segments.length === 0) {
     return null;
   }
