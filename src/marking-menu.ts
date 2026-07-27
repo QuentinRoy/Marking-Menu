@@ -1,4 +1,4 @@
-import { tap, map, share, filter, pluck } from 'rxjs/operators';
+import { tap, map, share, filter } from 'rxjs/operators';
 import type { Observable } from 'rxjs';
 import { navigation } from './navigation/navigation.js';
 import {
@@ -274,7 +274,7 @@ export function createMarkingMenu({
   // Else, return an observable on the selections.
   return connectedNavigation$.pipe(
     filter((notification) => notification.type === 'select'),
-    pluck('selection'),
+    map((notification) => notification.selection),
     share(),
   );
 }
