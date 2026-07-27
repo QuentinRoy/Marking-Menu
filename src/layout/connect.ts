@@ -1,8 +1,8 @@
-import rafThrottle from 'raf-schd';
 import { finalize, tap, type Observable } from 'rxjs';
 import type { NonEmptyArray, Point } from '../utils.js';
 import type { GestureFeedback } from './gesture-feedback.js';
 import type { Menu } from './menu.js';
+import { rafThrottle } from './raf-throttle.js';
 import type { StrokeCanvas } from './stroke.js';
 
 /**

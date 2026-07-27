@@ -1,0 +1,5 @@
+{
+  "name": "smoke-test-fixture",
+  "private": true,
+  "type": "module"
+}

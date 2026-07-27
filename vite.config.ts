@@ -1,6 +1,22 @@
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { defineConfig } from 'vite';
+import dts from 'vite-plugin-dts';
 import { version } from './package.json' with { type: 'json' };
+
+// `bundleTypes` runs `@microsoft/api-extractor`, and unplugin-dts points it at
+// the resolved `typescript` package so that its `lib/` supplies the
+// `lib.*.d.ts` files. That breaks here: our `typescript` dependency is the
+// `@typescript/typescript6` shim, whose `lib/` merely re-exports the real
+// compiler and ships no `lib.dom.d.ts` — leaving API Extractor unable to
+// resolve DOM globals ("Unable to follow symbol for HTMLElement"). Point it at
+// the package the shim delegates to, which has the actual libs.
+const require = createRequire(import.meta.url);
+const typescriptCompilerFolder = path.dirname(
+  require.resolve('@typescript/old/package.json', {
+    paths: [require.resolve('typescript/package.json')],
+  }),
+);
 
 const banner = `/*!
  * Marking Menu Javascript Library v${version}
@@ -16,6 +32,12 @@ const banner = `/*!
 `;
 
 export default defineConfig({
+  plugins: [
+    dts({
+      tsconfigPath: 'tsconfig.app.json',
+      bundleTypes: { invokeOptions: { typescriptCompilerFolder } },
+    }),
+  ],
   build: {
     cssMinify: 'lightningcss',
     lib: {

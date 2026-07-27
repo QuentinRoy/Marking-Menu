@@ -59,6 +59,7 @@ describe('exportNotification', () => {
         active: 'active',
         foo: 'foo',
         selection: 'selection',
+        menu: 'menu',
         timeStamp: 'timeStamp',
       } as unknown as Parameters<typeof exportNotification>[0]),
     ).toEqual({
@@ -67,6 +68,7 @@ describe('exportNotification', () => {
       position: ['pos'],
       active: 'active',
       selection: 'selection',
+      menu: 'menu',
       timeStamp: 'timeStamp',
     });
   });
@@ -164,8 +166,36 @@ describe('main', () => {
   });
 
   it('properly creates the model', () => {
+    // `createModel` is now called with the whole (already-validated) config,
+    // not a freshly built `{ items }` object — see marking-menu.ts's
+    // rationale on its `createModel(config)` call.
     callMain();
-    expect(mockCreateModel.mock.calls).toEqual([[{ items: 'mock-items' }]]);
+    expect(mockCreateModel.mock.calls).toEqual([
+      [
+        {
+          items: 'mock-items',
+          parent: 'mock-parent',
+          minSelectionDist: 'mock-minSelectionDist',
+          minMenuSelectionDist: 'mock-minMenuSelectionDist',
+          submenuOpeningDelay: 'mock-submenuOpeningDelay',
+          movementsThreshold: 'mock-movementsThreshold',
+          noviceDwellingTime: 'mock-noviceDwellingTime',
+          strokeColor: 'mock-strokeColor',
+          strokeWidth: 'mock-strokeWidth',
+          strokeStartPointRadius: 'mock-strokeStartPointRadius',
+          lowerStrokeColor: 'mock-lowerStrokeColor',
+          lowerStrokeWidth: 'mock-lowerStrokeWidth',
+          lowerStrokeStartPointRadius: 'mock-lowerStrokeStartPointRadius',
+          gestureFeedbackDuration: 'mock-gestureFeedbackDuration',
+          gestureFeedbackStrokeWidth: 'mock-gestureFeedbackStrokeWidth',
+          gestureFeedbackStrokeColor: 'mock-gestureFeedbackStrokeColor',
+          gestureFeedbackCanceledStrokeColor:
+            'mock-gestureFeedbackCanceledStrokeColor',
+          notifySteps: true,
+          log: 'mock-log',
+        },
+      ],
+    ]);
   });
   it('properly creates the drags observable', () => {
     callMain();
@@ -320,6 +350,7 @@ describe('main', () => {
         A: {
           type: 'mock-type-1',
           active: 'a',
+          menu: undefined,
           menuCenter: undefined,
           mode: undefined,
           position: undefined,
@@ -330,6 +361,7 @@ describe('main', () => {
           type: 'select',
           active: 'b',
           selection: 'mock-selection-b',
+          menu: undefined,
           menuCenter: undefined,
           mode: undefined,
           position: undefined,
@@ -338,6 +370,7 @@ describe('main', () => {
         C: {
           type: 'mock-type-2',
           active: 'c',
+          menu: undefined,
           menuCenter: undefined,
           mode: undefined,
           position: undefined,

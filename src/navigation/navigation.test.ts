@@ -227,7 +227,12 @@ describe('expertToNoviceSwitchHOO', () => {
   // prettier-ignore
   it('return noviceNavigation on dwell', marbles(m => {
     const values = {
-      b: { stroke: 'mock-stroke', position: 'mock-position' }
+      b: { stroke: 'mock-stroke', position: 'mock-position' },
+      // The real code merges `mode: 'novice'` onto every novice notification;
+      // G, H and I are otherwise valueless in this diagram.
+      G: { mode: 'novice' },
+      H: { mode: 'novice' },
+      I: { mode: 'novice' }
     };
     const recognizedMenu = { isRoot: false };
     const options = {
@@ -276,7 +281,7 @@ describe('expertToNoviceSwitchHOO', () => {
   it('cancels if no menu is recognized', marbles(m => {
     const values = {
       b: { stroke: 'mock-stroke' },
-      B: { stroke: 'mock-stroke', type: 'cancel' }
+      B: { stroke: 'mock-stroke', type: 'cancel', mode: 'expert' }
     };
 
     const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined));
@@ -304,7 +309,7 @@ describe('expertToNoviceSwitchHOO', () => {
   it('cancels if the recognized item is the root', marbles(m => {
     const values = {
       b: { stroke: 'mock-stroke' },
-      B: { stroke: 'mock-stroke', type: 'cancel' }
+      B: { stroke: 'mock-stroke', type: 'cancel', mode: 'expert' }
     };
 
     const drag$ = m.hot(    '-a-b---c-d---e--f--|').pipe(publishBehavior(undefined));
@@ -333,12 +338,15 @@ describe('startup', () => {
   // prettier-ignore
   it('emits expert-like notifications', marbles(m => {
     mockExpertNavigation.mockImplementation(obs$ =>
-      obs$.pipe(map(n => ({ name: n, type: 'mock-type' })))
+      obs$.pipe(map((name, index) => ({
+        name,
+        type: index === 1 ? 'select' : index === 2 ? 'cancel' : 'draw'
+      })))
     );
     const values = {
       A: { name: 'a', mode: 'startup', type: 'start' },
-      B: { name: 'b', mode: 'startup', type: 'mock-type' },
-      C: { name: 'c', mode: 'startup', type: 'mock-type' }
+      B: { name: 'b', mode: 'startup', type: 'select' },
+      C: { name: 'c', mode: 'startup', type: 'cancel' }
     };
     const drag$ = m.hot(    '-a-bc--|');
     const expected$ = m.hot('-A-BC--|', values);

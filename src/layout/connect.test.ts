@@ -10,7 +10,7 @@ import type { GestureFeedback } from './gesture-feedback.js';
 import type { Menu } from './menu.js';
 import type { StrokeCanvas } from './stroke.js';
 
-vi.mock('raf-schd', () => ({ default: vi.fn((f: unknown) => f) }));
+vi.mock('./raf-throttle.js', () => ({ rafThrottle: vi.fn((f: unknown) => f) }));
 
 type StrokeCanvasMock = StrokeCanvas & {
   name: string;

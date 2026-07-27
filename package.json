@@ -6,7 +6,12 @@
   "repository": "github:QuentinRoy/Marking-Menu",
   "author": "Quentin Roy <quentin@quentinroy.fr>",
   "type": "module",
-  "exports": "./dist/marking-menu.js",
+  "exports": {
+    ".": {
+      "types": "./dist/marking-menu.d.ts",
+      "default": "./dist/marking-menu.js"
+    }
+  },
   "sideEffects": false,
   "packageManager": "yarn@4.17.1",
   "scripts": {
@@ -24,6 +29,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "publint": "publint",
+    "check-types-published": "attw --pack . --profile esm-only",
+    "smoke-test": "node scripts/smoke-test.ts",
     "serve": "yarn preview",
     "preview": "vite preview --config vite.demo.config.ts"
   },
@@ -34,13 +42,12 @@
     "interaction",
     "technique"
   ],
-  "dependencies": {
-    "raf-schd": "^4.0.3"
-  },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.1",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
+    "@microsoft/api-extractor": "^7.58.12",
     "@types/node": "^26.1.1",
     "@typescript/native": "npm:typescript@^7.0.2",
     "@vitest/coverage-v8": "^4.1.10",
@@ -52,10 +59,12 @@
     "eslint-plugin-import-x": "^4.17.1",
     "jsdom": "^29.1.1",
     "prettier": "^3.9.6",
+    "publint": "^0.3.22",
     "rxjs": "^7.8.2",
     "rxjs-marbles": "^7.0.1",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.1.5",
+    "vite-plugin-dts": "^5.0.3",
     "vitest": "^4.1.10"
   },
   "peerDependencies": {

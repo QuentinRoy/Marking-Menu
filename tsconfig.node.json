@@ -20,5 +20,5 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true
   },
-  "include": ["*.config.ts"]
+  "include": ["*.config.ts", "scripts/**/*.ts"]
 }
