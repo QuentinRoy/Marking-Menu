@@ -20,20 +20,13 @@ export default defineConfig({
     cssMinify: 'lightningcss',
     lib: {
       entry: path.resolve(import.meta.dirname, 'src/index.ts'),
-      fileName: (format) =>
-        format === 'es' ? 'marking-menu.mjs' : 'marking-menu.js',
-      formats: ['es', 'umd'],
-      name: 'createMarkingMenu',
+      fileName: 'marking-menu.mjs',
+      formats: ['es'],
     },
     minify: false,
     rolldownOptions: {
       external: ['rxjs'],
-      output: {
-        banner,
-        globals: {
-          rxjs: 'rxjs',
-        },
-      },
+      output: { banner },
     },
     sourcemap: true,
   },
