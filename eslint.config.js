@@ -87,6 +87,13 @@ export default defineConfig([
     },
   },
   {
+    // `baseURL` is Playwright's own option name, not ours to rename.
+    files: ['e2e/playwright.config.ts'],
+    rules: {
+      '@typescript-eslint/naming-convention': 'off',
+    },
+  },
+  {
     files: ['demo/**'],
     rules: {
       // No project preview image exists yet to use as og:image; og:title,
