@@ -10,6 +10,7 @@ import {
   exportNotification,
   createMarkingMenu as main,
   type MarkingMenuConfig,
+  type MarkingMenuLogger,
 } from './marking-menu.js';
 import { createModel } from './model.js';
 import { pointerDrags } from './move/pointer-drag.js';
@@ -222,7 +223,8 @@ describe('main', () => {
     mockNavObs$ = m.hot(  '--a--b-c|', mockNavNotifs);
     connectedObs$ = m.hot('--d-e--f-g|');
     const connectedSub =  '^---------!';
-    callMain().subscribe();
+    const logDebug = vi.fn();
+    callMain({ log: { debug: logDebug } }).subscribe();
     expect(mockConnectLayout).toHaveBeenCalledTimes(1);
     const options = mockConnectLayout.mock.calls[0]?.[0] as {
       parent: unknown;
@@ -231,7 +233,7 @@ describe('main', () => {
       createUpperStrokeCanvas: unknown;
       createLowerStrokeCanvas: unknown;
       createGestureFeedback: unknown;
-      log: unknown;
+      log: MarkingMenuLogger;
     };
     expect(options.parent).toBe('mock-parent');
     m.expect(options.navigation$).toBeObservable(mockNavObs$);
@@ -240,7 +242,10 @@ describe('main', () => {
     expect(options.createUpperStrokeCanvas).toBeInstanceOf(Function);
     expect(options.createLowerStrokeCanvas).toBeInstanceOf(Function);
     expect(options.createGestureFeedback).toBeInstanceOf(Function);
-    expect(options.log).toBe('mock-log');
+    expect(options.log.error).toBeInstanceOf(Function);
+    expect(options.log.info).toBeInstanceOf(Function);
+    expect(options.log.warn).toBeInstanceOf(Function);
+    expect(options.log.debug).toBe(logDebug);
   }));
 
   it('properly binds MenuLayout when it connects the layout', () => {
