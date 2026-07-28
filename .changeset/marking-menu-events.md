@@ -7,5 +7,4 @@ upcoming native event-based API will use: `MarkingMenuStartEvent`,
 `MarkingMenuOpenEvent`, `MarkingMenuMoveEvent`, `MarkingMenuChangeEvent`,
 `MarkingMenuSelectEvent`, `MarkingMenuCancelEvent`, their shared
 `MarkingMenuEventBase`, the `MarkingMenuEventMap`/`MarkingMenuEvent` types, and
-`MarkingMenuEventTarget`. Nothing dispatches these yet; this ships the
-contract ahead of the engine that will emit them.
+`MarkingMenuEventTarget`.
