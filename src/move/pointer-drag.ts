@@ -9,54 +9,7 @@ import {
   createPointerNotification,
   type PointerNotification,
 } from './pointer-events.js';
-
-type TouchActionState = {
-  count: number;
-  priority: string;
-  value: string;
-};
-
-const touchActionStates = new WeakMap<HTMLElement, TouchActionState>();
-
-const disableTouchAction = (rootDOM: HTMLElement): (() => void) => {
-  const currentState = touchActionStates.get(rootDOM);
-  if (currentState) {
-    currentState.count += 1;
-  } else {
-    touchActionStates.set(rootDOM, {
-      count: 1,
-      priority: rootDOM.style.getPropertyPriority('touch-action'),
-      value: rootDOM.style.getPropertyValue('touch-action'),
-    });
-    rootDOM.style.setProperty('touch-action', 'none', 'important');
-  }
-
-  return () => {
-    const state = touchActionStates.get(rootDOM);
-    if (!state) {
-      return;
-    }
-
-    state.count -= 1;
-    if (state.count > 0) {
-      return;
-    }
-
-    touchActionStates.delete(rootDOM);
-    if (
-      rootDOM.style.getPropertyValue('touch-action') !== 'none' ||
-      rootDOM.style.getPropertyPriority('touch-action') !== 'important'
-    ) {
-      return;
-    }
-
-    if (state.value === '') {
-      rootDOM.style.removeProperty('touch-action');
-    } else {
-      rootDOM.style.setProperty('touch-action', state.value, state.priority);
-    }
-  };
-};
+import { claimTouchAction } from './touch-action.js';
 
 type ActiveDrag = {
   connection: Subscription;
@@ -76,7 +29,7 @@ export const pointerDrags = (
 ): Observable<Observable<PointerNotification<PointerEvent>>> =>
   new Observable((subscriber) => {
     let active: ActiveDrag | undefined;
-    const restoreTouchAction = disableTouchAction(rootDOM);
+    const releaseTouchAction = claimTouchAction(rootDOM);
 
     const releaseCapture = (pointerId: number) => {
       try {
@@ -192,6 +145,6 @@ export const pointerDrags = (
       rootDOM.removeEventListener('pointercancel', onPointerCancel);
       rootDOM.removeEventListener('lostpointercapture', onLostPointerCapture);
       finish();
-      restoreTouchAction();
+      releaseTouchAction();
     };
   });
