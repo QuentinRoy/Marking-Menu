@@ -223,8 +223,8 @@ describe('main', () => {
     mockNavObs$ = m.hot(  '--a--b-c|', mockNavNotifs);
     connectedObs$ = m.hot('--d-e--f-g|');
     const connectedSub =  '^---------!';
-    const logDebug = vi.fn();
-    callMain({ log: { debug: logDebug } }).subscribe();
+    const logError = vi.fn();
+    callMain({ log: { error: logError } }).subscribe();
     expect(mockConnectLayout).toHaveBeenCalledTimes(1);
     const options = mockConnectLayout.mock.calls[0]?.[0] as {
       parent: unknown;
@@ -242,11 +242,16 @@ describe('main', () => {
     expect(options.createUpperStrokeCanvas).toBeInstanceOf(Function);
     expect(options.createLowerStrokeCanvas).toBeInstanceOf(Function);
     expect(options.createGestureFeedback).toBeInstanceOf(Function);
-    expect(options.log.error).toBeInstanceOf(Function);
-    expect(options.log.info).toBeInstanceOf(Function);
-    expect(options.log.warn).toBeInstanceOf(Function);
-    expect(options.log.debug).toBe(logDebug);
+    expect(options.log.error).toBe(logError);
   }));
+
+  it('defaults log.error when no override is given', () => {
+    callMain();
+    const options = mockConnectLayout.mock.calls[0]?.[0] as {
+      log: MarkingMenuLogger;
+    };
+    expect(options.log.error).toBeInstanceOf(Function);
+  });
 
   it('properly binds MenuLayout when it connects the layout', () => {
     callMain();

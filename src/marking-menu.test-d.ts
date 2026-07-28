@@ -1,6 +1,6 @@
 import type { Observable } from 'rxjs';
 import { describe, expectTypeOf, it } from 'vitest';
-import { createMarkingMenu } from './marking-menu.js';
+import { createMarkingMenu, type MarkingMenuLogger } from './marking-menu.js';
 import type { MarkingMenuItemInput } from './types.js';
 
 /*
@@ -76,5 +76,41 @@ describe('createMarkingMenu', () => {
     expectTypeOf<
       Extract<Value<typeof menu$>, { type: string }>
     >().not.toBeNever();
+  });
+
+  it('accepts a logger overriding only `error`', () => {
+    createMarkingMenu({
+      items: [{ id: 'right', label: 'Right' }],
+      parent,
+      log: { error: (error: unknown) => sendToSentry(error) },
+    });
+  });
+
+  it('accepts `console` as the logger', () => {
+    createMarkingMenu({
+      items: [{ id: 'right', label: 'Right' }],
+      parent,
+      log: console,
+    });
+  });
+
+  it('rejects a logger missing `error`', () => {
+    createMarkingMenu({
+      items: [{ id: 'right', label: 'Right' }],
+      parent,
+      // @ts-expect-error -- `log` no longer accepts `info`/`warn`/`debug` in
+      // place of the required `error`.
+      log: { info: (message: unknown) => sendToSentry(message) },
+    });
+  });
+});
+
+declare function sendToSentry(error: unknown): void;
+
+describe('MarkingMenuLogger', () => {
+  it('narrows `error` to a single `unknown` argument, not varargs', () => {
+    expectTypeOf<MarkingMenuLogger>().toEqualTypeOf<{
+      error: (error: unknown) => void;
+    }>();
   });
 });
