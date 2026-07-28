@@ -16,8 +16,7 @@ const isClaimedOnElement = (element: HTMLElement): boolean =>
 
 const setTouchAction = (
   element: HTMLElement,
-  value: string,
-  priority: string,
+  { priority, value }: { priority: string; value: string },
 ): void => {
   if (value === '') {
     element.style.removeProperty(PROPERTY);
@@ -47,7 +46,10 @@ export const claimTouchAction = (element: HTMLElement): (() => void) => {
       priority: element.style.getPropertyPriority(PROPERTY),
       value: element.style.getPropertyValue(PROPERTY),
     });
-    setTouchAction(element, CLAIMED_VALUE, CLAIMED_PRIORITY);
+    setTouchAction(element, {
+      priority: CLAIMED_PRIORITY,
+      value: CLAIMED_VALUE,
+    });
   }
 
   let isReleased = false;
@@ -72,6 +74,6 @@ export const claimTouchAction = (element: HTMLElement): (() => void) => {
       return;
     }
 
-    setTouchAction(element, state.value, state.priority);
+    setTouchAction(element, state);
   };
 };
