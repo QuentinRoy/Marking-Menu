@@ -5,7 +5,7 @@ import {
   type MarkingMenuMode,
 } from '../events.js';
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
-import type { AnyModelNode, ModelLeaves } from '../types.js';
+import type { AnyModelNode } from '../types.js';
 import { dist, type Point } from '../utils.js';
 
 /*
@@ -67,9 +67,8 @@ function finish<M extends AnyModelNode>(
   },
   environment: NavigationEnvironment<M>,
 ): Transition<M> {
-  const item = recognizeMarkingMenuStroke([...stroke], environment.model);
-  if (item?.isLeaf) {
-    const selection = item as ModelLeaves<M>;
+  const selection = recognizeMarkingMenuStroke(stroke, environment.model);
+  if (selection !== null) {
     return {
       state: { phase: 'idle' },
       commands: [

@@ -99,7 +99,9 @@ describe('expertNavigation', () => {
       )
       .toBeObservable(expected$);
     m.flush();
-    expect(mockRecognize.mock.calls).toEqual([[['a-pos'], 'model']]);
+    expect(mockRecognize.mock.calls).toEqual([
+      [['a-pos'], 'model', { requireLeaf: true }],
+    ]);
   }));
 
   // prettier-ignore
@@ -125,7 +127,9 @@ describe('expertNavigation', () => {
       )
       .toBeObservable(expected$);
     m.flush();
-    expect(mockRecognize.mock.calls).toEqual([[['a-pos'], 'model']]);
+    expect(mockRecognize.mock.calls).toEqual([
+      [['a-pos'], 'model', { requireLeaf: true }],
+    ]);
   }));
 
   // prettier-ignore

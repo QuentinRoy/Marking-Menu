@@ -1,4 +1,4 @@
-import type { AnyModelNode, ModelNodes } from '../types.js';
+import type { AnyModelNode, ModelLeaves, ModelNodes } from '../types.js';
 import {
   dist,
   findMaxEntry,
@@ -197,7 +197,25 @@ export const findItem = <N extends AnyModelNode>({
  @returns The item recognized by the stroke.
  */
 export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
-  stroke: Point[],
+  stroke: readonly Point[],
+  model: N,
+  options?: {
+    maxDepth?: number;
+    requireMenu?: false;
+    requireLeaf?: true;
+  },
+): ModelLeaves<N> | null;
+export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
+  stroke: readonly Point[],
+  model: N,
+  options: {
+    maxDepth?: number;
+    requireMenu?: boolean;
+    requireLeaf?: boolean;
+  },
+): ModelNodes<N> | null;
+export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
+  stroke: readonly Point[],
   model: N,
   {
     maxDepth: maxDepthOption = model.getMaxDepth(),
