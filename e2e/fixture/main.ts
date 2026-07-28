@@ -61,6 +61,15 @@ const logEvent = (
   );
 };
 
+// `move`, `change`, and `cancel` all log the same pair of fields.
+const activeAndMenuFields = (event: {
+  readonly active: unknown;
+  readonly menu: unknown;
+}): Record<string, string | undefined> => ({
+  activeId: idOf(event.active),
+  menuId: idOf(event.menu),
+});
+
 mm.addEventListener('start', (event) => {
   logEvent(event, 'start');
 });
@@ -68,16 +77,10 @@ mm.addEventListener('open', (event) => {
   logEvent(event, 'open', { menuId: idOf(event.menu) });
 });
 mm.addEventListener('move', (event) => {
-  logEvent(event, 'move', {
-    activeId: idOf(event.active),
-    menuId: idOf(event.menu),
-  });
+  logEvent(event, 'move', activeAndMenuFields(event));
 });
 mm.addEventListener('change', (event) => {
-  logEvent(event, 'change', {
-    activeId: idOf(event.active),
-    menuId: idOf(event.menu),
-  });
+  logEvent(event, 'change', activeAndMenuFields(event));
 });
 mm.addEventListener('select', (event) => {
   logEvent(event, 'select', {
@@ -86,8 +89,5 @@ mm.addEventListener('select', (event) => {
   });
 });
 mm.addEventListener('cancel', (event) => {
-  logEvent(event, 'cancel', {
-    activeId: idOf(event.active),
-    menuId: idOf(event.menu),
-  });
+  logEvent(event, 'cancel', activeAndMenuFields(event));
 });
