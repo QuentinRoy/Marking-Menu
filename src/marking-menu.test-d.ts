@@ -127,14 +127,26 @@ describe('createMarkingMenu', () => {
       log: { info: (message: unknown) => sendToSentry(message) },
     });
   });
+
+  it('accepts a logger whose `error` expects an `Error`', () => {
+    // The point of typing `error` as `Error` rather than `unknown`: a
+    // handler that only accepts `Error` (`reportError`, here) can be passed
+    // directly, without a wrapper that widens its parameter first.
+    createMarkingMenu({
+      items: [{ id: 'right', label: 'Right' }],
+      parent,
+      log: { error: reportError },
+    });
+  });
 });
 
 declare function sendToSentry(error: unknown): void;
+declare function reportError(error: Error): void;
 
 describe('MarkingMenuLogger', () => {
-  it('narrows `error` to a single `unknown` argument, not varargs', () => {
+  it('narrows `error` to a single `Error` argument, not varargs', () => {
     expectTypeOf<MarkingMenuLogger['error']>().toEqualTypeOf<
-      (error: unknown) => void
+      (error: Error) => void
     >();
   });
 
