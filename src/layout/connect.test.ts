@@ -299,6 +299,32 @@ describe('connect', () => {
   }));
 
   // prettier-ignore
+  it('normalizes a non-Error upstream error before logging it, but rethrows the original value', marbles(m => {
+    const values: Record<string, Notification> = {
+      s: { type: 'start', position: 'pos1' as unknown as Point },
+    };
+    const error = 'a plain string failure';
+    const obs = m.hot('---s--#', values, error);
+    const exp = m.hot('---s--#', values, error);
+    m.expect(
+      connect<string, Notification>({
+        parent: parentElement,
+        navigation$: obs,
+        createMenuLayout: menuLayout,
+        createUpperStrokeCanvas: upperStrokeCanvas,
+        createLowerStrokeCanvas: lowerStrokeCanvas,
+        createGestureFeedback: gestureFeedback,
+        log,
+      })
+    ).toBeObservable(exp);
+    m.flush();
+    expect(log.error.mock.calls).toEqual([[expect.any(Error)]]);
+    const [loggedError] = log.error.mock.calls[0] as [Error];
+    expect(loggedError.message).toContain(error);
+    expect(loggedError.cause).toBe(error);
+  }));
+
+  // prettier-ignore
   it('cleans-up and throws on unknown event type', marbles(m => {
     const values: Record<string, Notification> = {
       s: { type: 'start', position: 'pos1' as unknown as Point },
