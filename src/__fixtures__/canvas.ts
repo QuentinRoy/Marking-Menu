@@ -40,26 +40,29 @@ const createMockContext = (): MockContext => {
   });
 };
 
-/** Give every canvas created while held a recording 2D context. */
-export const stubbedCanvasContexts = (): Disposable => {
-  // Kept unbound so disposal restores the exact original method, rather than
-  // leaving a bound copy of it behind on `document`.
-  const original = doc.createElement;
-  doc.createElement = vi.fn((tag: string, options?: ElementCreationOptions) => {
-    const elt = original.call(document, tag, options);
-    if (tag === 'canvas') {
-      const context = createMockContext();
-      (elt as HTMLCanvasElement).getContext = (() =>
-        context) as unknown as HTMLCanvasElement['getContext'];
-    }
+/**
+ Give every canvas created while held a recording 2D context.
 
-    return elt;
-  });
-  return {
-    [Symbol.dispose]() {
-      doc.createElement = original;
-    },
-  };
+ `vi.spyOn`'s return value is natively `Disposable` — disposal calls
+ `mockRestore()`, which puts `document.createElement` back — so `using` on
+ the result is enough; no hand-rolled restore is needed.
+ */
+export const stubbedCanvasContexts = (): Disposable => {
+  // Captured unbound, ahead of the spy, so the mock implementation below can
+  // still call through to the real `createElement`.
+  const original = doc.createElement;
+  return vi
+    .spyOn(doc, 'createElement')
+    .mockImplementation((tag: string, options?: ElementCreationOptions) => {
+      const elt = original.call(document, tag, options);
+      if (tag === 'canvas') {
+        const context = createMockContext();
+        (elt as HTMLCanvasElement).getContext = (() =>
+          context) as unknown as HTMLCanvasElement['getContext'];
+      }
+
+      return elt;
+    });
 };
 
 export const fakeTimers = (): Disposable => {
