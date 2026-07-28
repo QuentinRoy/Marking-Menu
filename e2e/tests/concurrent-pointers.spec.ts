@@ -32,8 +32,8 @@ test('concurrent pointers: a second touch cannot move, select or cancel the owni
   expect(await readLog(page)).toEqual(logBeforeDecoy);
 
   // The owner finishes normally, as if the decoy had never happened.
-  await drag.movePrimary(target);
-  await drag.endPrimary();
+  await drag.moveFinger(0, target);
+  await drag.liftFinger(0);
 
   const log = await waitForLogEntry(page, (entry) => entry.type === 'select');
   expect(log.at(-1)).toMatchObject({
@@ -70,8 +70,8 @@ test('a decoy finger lifted after the gesture it never touched has already ended
 
   // The decoy touches down and just stays put while the owner finishes.
   await drag.addFinger(1, decoy);
-  await drag.movePrimary(target);
-  await drag.endPrimary();
+  await drag.moveFinger(0, target);
+  await drag.liftFinger(0);
 
   const log = await waitForLogEntry(page, (entry) => entry.type === 'select');
   expect(log.at(-1)).toMatchObject({
@@ -107,8 +107,8 @@ test('three concurrent pointers: two decoys produce nothing regardless of order,
   await drag.liftFinger(1);
   expect(await readLog(page)).toEqual(logBeforeDecoys);
 
-  await drag.movePrimary(target);
-  await drag.endPrimary();
+  await drag.moveFinger(0, target);
+  await drag.liftFinger(0);
 
   const log = await waitForLogEntry(page, (entry) => entry.type === 'select');
   expect(log.at(-1)).toMatchObject({

@@ -124,15 +124,6 @@ export class CdpMultiTouchDrag {
     await this.#dispatchEnd([id]);
   }
 
-  async movePrimary(at: Point): Promise<void> {
-    this.#points.set(0, at);
-    await this.#dispatchActive('touchMove');
-  }
-
-  async endPrimary(): Promise<void> {
-    await this.#dispatchEnd([0]);
-  }
-
   // `Symbol.asyncDispose` is standard (part of the explicit-resource-management
   // proposal TypeScript and Node already support — see e2e/tsconfig.json's
   // `lib` comment); `eslint-plugin-unicorn`@72's built-in `Symbol` property
