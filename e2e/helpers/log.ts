@@ -8,6 +8,7 @@ import { expect, type Page } from '@playwright/test';
 export type LogEntry = {
   type: string;
   mode: string;
+  position: readonly [number, number];
   selectionId?: string;
   activeId?: string;
   menuId?: string;
