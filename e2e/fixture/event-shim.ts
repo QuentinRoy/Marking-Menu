@@ -17,7 +17,6 @@ import {
   type ModelMenus,
   type ReadonlyPoint,
 } from 'marking-menu';
-// eslint-disable-next-line import-x/order -- see the comment above: `marking-menu` resolves via this package's own path mapping, putting import-x's resolver and prettier's import sort at odds over where it belongs.
 import type { Observable, Subscription } from 'rxjs';
 
 /**
