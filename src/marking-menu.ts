@@ -124,10 +124,14 @@ export const exportNotification = (
 /**
  A logger, as accepted by {@link createMarkingMenu}. `error` is the only
  method anything in the library calls, so any object exposing it — `console`
- included — satisfies this type.
+ included — satisfies this type. `info`/`warn`/`debug` are accepted but
+ ignored, so a fuller logger doesn't need to be stripped down first.
  */
 export type MarkingMenuLogger = {
   error: (error: unknown) => void;
+  info?: unknown;
+  warn?: unknown;
+  debug?: unknown;
 };
 
 const defaultLogger: MarkingMenuLogger = {

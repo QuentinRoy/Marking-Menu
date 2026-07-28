@@ -94,12 +94,18 @@ describe('createMarkingMenu', () => {
     });
   });
 
-  it('rejects a logger using `info`/`warn`/`debug` in place of `error`', () => {
+  it('accepts a logger implementing extra methods like `info`/`warn`/`debug`', () => {
+    // Nothing in the library calls them, but a richer logger (e.g. one
+    // shared with the rest of an app) can still be passed as-is.
     createMarkingMenu({
       items: [{ id: 'right', label: 'Right' }],
       parent,
-      // @ts-expect-error -- `log` no longer accepts `info`/`warn`/`debug`.
-      log: { info: (message: unknown) => sendToSentry(message) },
+      log: {
+        error: (error: unknown) => sendToSentry(error),
+        info: (message: unknown) => sendToSentry(message),
+        warn: (message: unknown) => sendToSentry(message),
+        debug: (message: unknown) => sendToSentry(message),
+      },
     });
   });
 
@@ -113,14 +119,30 @@ describe('createMarkingMenu', () => {
       log: {},
     });
   });
+
+  it('accepts a logger with only extra methods and no `error`', () => {
+    createMarkingMenu({
+      items: [{ id: 'right', label: 'Right' }],
+      parent,
+      log: { info: (message: unknown) => sendToSentry(message) },
+    });
+  });
 });
 
 declare function sendToSentry(error: unknown): void;
 
 describe('MarkingMenuLogger', () => {
   it('narrows `error` to a single `unknown` argument, not varargs', () => {
-    expectTypeOf<MarkingMenuLogger>().toEqualTypeOf<{
-      error: (error: unknown) => void;
-    }>();
+    expectTypeOf<MarkingMenuLogger['error']>().toEqualTypeOf<
+      (error: unknown) => void
+    >();
+  });
+
+  it('allows properties beyond `error`', () => {
+    const logger: MarkingMenuLogger = {
+      error: (error: unknown) => sendToSentry(error),
+      info: (message: unknown) => sendToSentry(message),
+    };
+    expectTypeOf(logger.info).not.toBeNever();
   });
 });

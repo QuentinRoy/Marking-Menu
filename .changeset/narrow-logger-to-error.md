@@ -1,9 +1,8 @@
 ---
-'marking-menu': major
+'marking-menu': patch
 ---
 
-Narrow `MarkingMenuLogger` to `{ error: (error: unknown) => void }`. `info`,
-`warn` and `debug` are gone since nothing in the library called them. Anything
-with an `error` method, `console` included, still satisfies the type. `log`
-stays a partial override, so `error` can still be left out; only a custom
-logger whose `error` took more than one argument needs an update.
+`MarkingMenuLogger`'s `error` now takes a single `unknown` argument instead of
+varargs, matching how it's actually called. `info`, `warn` and `debug` are now
+optional and ignored; `console` still satisfies the type, and `log` can be
+partially overridden, `error` included.
