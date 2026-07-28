@@ -68,12 +68,23 @@ const queryCanvasContext = (parent: HTMLElement): MockContext =>
     parent.querySelector('canvas')?.getContext as unknown as () => MockContext
   )();
 
+/*
+ JSDOM implements none of the pointer-capture API, so the three methods are
+ stubbed onto a real element. They are stubbed *statefully* — capture is
+ tracked in a set — so `hasPointerCapture` answers truthfully and a test can
+ assert when, relative to a dispatched event, capture is actually let go.
+ */
 const createParent = (): HTMLElement => {
   const parent = document.createElement('div');
+  const captured = new Set<number>();
   Object.assign(parent, {
-    hasPointerCapture: vi.fn(() => true),
-    releasePointerCapture: vi.fn(),
-    setPointerCapture: vi.fn(),
+    hasPointerCapture: vi.fn((pointerId: number) => captured.has(pointerId)),
+    releasePointerCapture: vi.fn((pointerId: number) => {
+      captured.delete(pointerId);
+    }),
+    setPointerCapture: vi.fn((pointerId: number) => {
+      captured.add(pointerId);
+    }),
   });
   return parent;
 };
@@ -228,6 +239,13 @@ describe('createController', () => {
     expect(parent.style.getPropertyValue('touch-action')).toBe('');
     expect(parent.style.cursor).toBe('');
 
+    // Disposal happened mid-gesture, so the capture the gesture took is the
+    // controller's to give back: nothing else will ever release it.
+    expect(
+      pointerCaptureMocks(parent).releasePointerCapture,
+    ).toHaveBeenCalledExactlyOnceWith(1);
+    expect(parent.hasPointerCapture(1)).toBe(false);
+
     // Further pointer input is inert: the DOM listeners are gone.
     parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
     expect(selected).not.toHaveBeenCalled();
@@ -309,6 +327,25 @@ describe('createController', () => {
       pointer('pointerup', { pointerId: 1, clientX: 120, clientY: 0 }),
     );
     expect(releasePointerCapture).toHaveBeenCalledExactlyOnceWith(1);
+  });
+
+  it('has already released pointer capture by the time select is dispatched', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    using controller = createController({ items, parent });
+
+    let heldDuringSelect: boolean | undefined;
+    controller.addEventListener('select', () => {
+      heldDuringSelect = parent.hasPointerCapture(1);
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
+
+    // A `select` listener sees fully committed state, and capture ownership is
+    // part of that state: a listener may legitimately start its own gesture.
+    expect(heldDuringSelect).toBe(false);
   });
 
   it('[Symbol.dispose]() delegates to dispose()', () => {

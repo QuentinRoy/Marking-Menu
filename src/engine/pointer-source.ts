@@ -24,6 +24,22 @@ export function createPointerSource({
   let activePointerId: number | null = null;
   const releaseTouchAction = claimTouchAction(parent);
 
+  /**
+   Give back the capture the active gesture took, if it still holds one.
+   Idempotent, and safe to call with no gesture in progress.
+   */
+  const releaseCapture = (): void => {
+    if (activePointerId === null) {
+      return;
+    }
+
+    const pointerId = activePointerId;
+    activePointerId = null;
+    if (parent.hasPointerCapture(pointerId)) {
+      parent.releasePointerCapture(pointerId);
+    }
+  };
+
   const onPointerDown = (event: PointerEvent): void => {
     if (activePointerId !== null || !event.isPrimary || event.button !== 0) {
       return;
@@ -47,9 +63,11 @@ export function createPointerSource({
       return;
     }
 
-    activePointerId = null;
+    // Before `send`, not after: `send` dispatches `select` synchronously, and
+    // a listener must observe fully committed state — including capture
+    // ownership, so that it may start a gesture of its own.
+    releaseCapture();
     runtime.send({ type: 'pointer.up', position: toPosition(event) });
-    parent.releasePointerCapture(event.pointerId);
   };
 
   parent.addEventListener('pointerdown', onPointerDown);
@@ -60,6 +78,9 @@ export function createPointerSource({
     parent.removeEventListener('pointerdown', onPointerDown);
     parent.removeEventListener('pointermove', onPointerMove);
     parent.removeEventListener('pointerup', onPointerUp);
+    // Disposing mid-gesture: the listeners that would have released the
+    // capture are gone, so nothing else ever would.
+    releaseCapture();
     releaseTouchAction();
   };
 
