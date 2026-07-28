@@ -6,6 +6,70 @@
  discrimination.
  */
 import { createMarkingMenu } from 'marking-menu';
+import type {
+  AnyModelNode,
+  MarkingMenuCancelEvent,
+  MarkingMenuChangeEvent,
+  MarkingMenuConfig,
+  MarkingMenuEvent,
+  MarkingMenuEventBase,
+  MarkingMenuEventMap,
+  MarkingMenuEventTarget,
+  MarkingMenuInput,
+  MarkingMenuItemInput,
+  MarkingMenuLogger,
+  MarkingMenuMode,
+  MarkingMenuModel,
+  MarkingMenuModelItem,
+  MarkingMenuMoveEvent,
+  MarkingMenuNotification,
+  MarkingMenuOpenEvent,
+  MarkingMenuSelectEvent,
+  MarkingMenuStartEvent,
+  ModelItem,
+  ModelItems,
+  ModelLeaves,
+  ModelMenus,
+  ModelNodes,
+  ModelRoot,
+  ReadonlyPoint,
+} from 'marking-menu';
+
+/*
+ Every name `src/index.ts` exports, named again here: the published
+ declarations are rolled up separately from the runtime bundle, so an export
+ that never reaches them still typechecks everywhere else. Keep this in step
+ with `src/index.ts` when adding a public export.
+ */
+export type PublicSurface = [
+  typeof createMarkingMenu,
+  AnyModelNode,
+  MarkingMenuCancelEvent<AnyModelNode>,
+  MarkingMenuChangeEvent<AnyModelNode>,
+  MarkingMenuConfig,
+  MarkingMenuEvent<AnyModelNode>,
+  MarkingMenuEventBase,
+  MarkingMenuEventMap<AnyModelNode>,
+  MarkingMenuEventTarget<AnyModelNode>,
+  MarkingMenuInput,
+  MarkingMenuItemInput,
+  MarkingMenuLogger,
+  MarkingMenuMode,
+  MarkingMenuModel<MarkingMenuInput>,
+  MarkingMenuModelItem,
+  MarkingMenuMoveEvent<AnyModelNode>,
+  MarkingMenuNotification,
+  MarkingMenuOpenEvent<AnyModelNode>,
+  MarkingMenuSelectEvent<AnyModelNode>,
+  MarkingMenuStartEvent,
+  ModelItem,
+  ModelItems<AnyModelNode>,
+  ModelLeaves<AnyModelNode>,
+  ModelMenus<AnyModelNode>,
+  ModelNodes<AnyModelNode>,
+  ModelRoot,
+  ReadonlyPoint,
+];
 
 declare const parent: HTMLElement;
 
