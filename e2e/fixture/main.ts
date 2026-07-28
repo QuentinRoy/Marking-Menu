@@ -47,15 +47,18 @@ const idOf = (node: unknown): string | undefined =>
     : undefined;
 
 const logEvent = (
-  event: { readonly mode: string; readonly position: ReadonlyPoint },
-  type: string,
+  event: {
+    readonly type: string;
+    readonly mode: string;
+    readonly position: ReadonlyPoint;
+  },
   fields: Record<string, string | undefined> = {},
 ): void => {
   log.append(
     `${JSON.stringify({
       mode: event.mode,
       position: event.position,
-      type,
+      type: event.type,
       ...fields,
     })}\n`,
   );
@@ -71,23 +74,23 @@ const activeAndMenuFields = (event: {
 });
 
 mm.addEventListener('start', (event) => {
-  logEvent(event, 'start');
+  logEvent(event);
 });
 mm.addEventListener('open', (event) => {
-  logEvent(event, 'open', { menuId: idOf(event.menu) });
+  logEvent(event, { menuId: idOf(event.menu) });
 });
 mm.addEventListener('move', (event) => {
-  logEvent(event, 'move', activeAndMenuFields(event));
+  logEvent(event, activeAndMenuFields(event));
 });
 mm.addEventListener('change', (event) => {
-  logEvent(event, 'change', activeAndMenuFields(event));
+  logEvent(event, activeAndMenuFields(event));
 });
 mm.addEventListener('select', (event) => {
-  logEvent(event, 'select', {
+  logEvent(event, {
     menuId: idOf(event.menu),
     selectionId: idOf(event.selection),
   });
 });
 mm.addEventListener('cancel', (event) => {
-  logEvent(event, 'cancel', activeAndMenuFields(event));
+  logEvent(event, activeAndMenuFields(event));
 });
