@@ -21,6 +21,15 @@ export type LayoutNotification<M> =
   | { type: 'move'; position?: Point };
 
 /**
+ Normalize a caught or emitted value into an `Error` before it reaches
+ `log.error`, whose `error` only accepts `Error`. The upstream navigation
+ observable is `unknown` on error, so a non-`Error` value (e.g. thrown by a
+ caller-supplied model) can otherwise reach here.
+ */
+const toError = (value: unknown): Error =>
+  value instanceof Error ? value : new Error(String(value), { cause: value });
+
+/**
  Connect navigation notifications to menu opening and closing.
 
  @param options - Connection options.
@@ -54,7 +63,7 @@ export function connectLayout<M, N extends LayoutNotification<M>>({
   createUpperStrokeCanvas: (parentDOM: HTMLElement) => StrokeCanvas;
   createLowerStrokeCanvas: (parentDOM: HTMLElement) => StrokeCanvas;
   createGestureFeedback: (options: { parent: HTMLElement }) => GestureFeedback;
-  log: { error: (error: unknown) => void };
+  log: { error: (error: Error) => void };
 }): Observable<N> {
   // The menu object.
   let menu: Menu | null = null;
@@ -266,12 +275,12 @@ export function connectLayout<M, N extends LayoutNotification<M>>({
         try {
           onNotification(notification);
         } catch (error) {
-          log.error(error);
+          log.error(toError(error));
           throw error;
         }
       },
       error(error: unknown) {
-        log.error(error);
+        log.error(toError(error));
         throw error;
       },
     }),
@@ -279,7 +288,7 @@ export function connectLayout<M, N extends LayoutNotification<M>>({
       try {
         cleanUp();
       } catch (error) {
-        log.error(error);
+        log.error(toError(error));
         throw error;
       }
     }),
