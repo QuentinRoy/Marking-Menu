@@ -2,6 +2,6 @@
 'marking-menu': patch
 ---
 
-Rename the bundle to `dist/index.js`. Importing `marking-menu` is unaffected;
-this only matters when loading the file by path, as an import map or a CDN URL
-pinned to the file name does.
+The bundle is now `dist/index.js` instead of `dist/marking-menu.js`. Importing
+`marking-menu` is unaffected. Code that loads the file by path, such as an
+import map or a pinned CDN URL, needs updating.
