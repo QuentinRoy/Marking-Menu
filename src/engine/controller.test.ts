@@ -175,6 +175,24 @@ describe('createController', () => {
     expect(parent.style.cursor).toBe('crosshair');
   });
 
+  it("restores the parent's own inline cursor rather than clearing it", () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    parent.style.cursor = 'pointer';
+    const controller = createController({ items, parent });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    expect(parent.style.cursor).toBe('crosshair');
+
+    // Back to idle: the parent's cursor is the parent's again, not blank.
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
+    expect(parent.style.cursor).toBe('pointer');
+
+    controller.dispose();
+    expect(parent.style.cursor).toBe('pointer');
+  });
+
   it('draws the stroke through the RAF throttle, converging to the latest state when frames coalesce', () => {
     using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
