@@ -1,3 +1,7 @@
+const PROPERTY = 'touch-action';
+const CLAIMED_VALUE = 'none';
+const CLAIMED_PRIORITY = 'important';
+
 type TouchActionClaimState = {
   count: number;
   priority: string;
@@ -5,6 +9,22 @@ type TouchActionClaimState = {
 };
 
 const claimStates = new WeakMap<HTMLElement, TouchActionClaimState>();
+
+const isClaimedOnElement = (element: HTMLElement): boolean =>
+  element.style.getPropertyValue(PROPERTY) === CLAIMED_VALUE &&
+  element.style.getPropertyPriority(PROPERTY) === CLAIMED_PRIORITY;
+
+const setTouchAction = (
+  element: HTMLElement,
+  value: string,
+  priority: string,
+): void => {
+  if (value === '') {
+    element.style.removeProperty(PROPERTY);
+  } else {
+    element.style.setProperty(PROPERTY, value, priority);
+  }
+};
 
 /**
  Claim an element's inline `touch-action`, forcing `none !important` on it.
@@ -24,10 +44,10 @@ export const claimTouchAction = (element: HTMLElement): (() => void) => {
   } else {
     claimStates.set(element, {
       count: 1,
-      priority: element.style.getPropertyPriority('touch-action'),
-      value: element.style.getPropertyValue('touch-action'),
+      priority: element.style.getPropertyPriority(PROPERTY),
+      value: element.style.getPropertyValue(PROPERTY),
     });
-    element.style.setProperty('touch-action', 'none', 'important');
+    setTouchAction(element, CLAIMED_VALUE, CLAIMED_PRIORITY);
   }
 
   let isReleased = false;
@@ -48,17 +68,10 @@ export const claimTouchAction = (element: HTMLElement): (() => void) => {
     }
 
     claimStates.delete(element);
-    if (
-      element.style.getPropertyValue('touch-action') !== 'none' ||
-      element.style.getPropertyPriority('touch-action') !== 'important'
-    ) {
+    if (!isClaimedOnElement(element)) {
       return;
     }
 
-    if (state.value === '') {
-      element.style.removeProperty('touch-action');
-    } else {
-      element.style.setProperty('touch-action', state.value, state.priority);
-    }
+    setTouchAction(element, state.value, state.priority);
   };
 };
