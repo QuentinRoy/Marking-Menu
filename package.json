@@ -8,8 +8,8 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/marking-menu.d.ts",
-      "default": "./dist/marking-menu.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "sideEffects": false,

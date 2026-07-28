@@ -35,6 +35,13 @@ export default defineConfig({
   plugins: [
     dts({
       tsconfigPath: 'tsconfig.app.json',
+      // The declaration rollup starts from package.json's `types`, so that
+      // path must not collide with the per-file declaration of a source
+      // module other than the entry: unplugin-dts leaves the existing file in
+      // place rather than writing the entry re-export there, and API
+      // Extractor then rolls up the wrong module, silently dropping whatever
+      // `src/index.ts` adds on top of it. Hence the bundle is named after its
+      // entry module, `index`, and not after the library.
       bundleTypes: { invokeOptions: { typescriptCompilerFolder } },
     }),
   ],
@@ -42,7 +49,7 @@ export default defineConfig({
     cssMinify: 'lightningcss',
     lib: {
       entry: path.resolve(import.meta.dirname, 'src/index.ts'),
-      fileName: 'marking-menu',
+      fileName: 'index',
       formats: ['es'],
     },
     minify: false,

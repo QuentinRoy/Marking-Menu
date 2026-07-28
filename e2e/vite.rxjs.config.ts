@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { defineConfig } from 'vite';
 
-// The published `dist/marking-menu.js` imports the bare specifier `rxjs`,
+// The published `dist/index.js` imports the bare specifier `rxjs`,
 // which the browser resolves through the fixture's import map (see
 // `e2e/fixture/index.html`). RxJS's own package exports are not directly
 // loadable by a browser without bundler resolution (internal, extensionless,
