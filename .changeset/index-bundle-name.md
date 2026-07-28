@@ -1,5 +1,5 @@
 ---
-'marking-menu': patch
+'marking-menu': major
 ---
 
 The bundle is now `dist/index.js` instead of `dist/marking-menu.js`. Importing
