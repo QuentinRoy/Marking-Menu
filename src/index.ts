@@ -1,4 +1,18 @@
 export {
+  MarkingMenuCancelEvent,
+  MarkingMenuChangeEvent,
+  type MarkingMenuEvent,
+  MarkingMenuEventBase,
+  type MarkingMenuEventMap,
+  type MarkingMenuEventTarget,
+  type MarkingMenuMode,
+  MarkingMenuMoveEvent,
+  MarkingMenuOpenEvent,
+  MarkingMenuSelectEvent,
+  MarkingMenuStartEvent,
+  type ReadonlyPoint,
+} from './events.js';
+export {
   createMarkingMenu,
   type MarkingMenuConfig,
   type MarkingMenuLogger,
