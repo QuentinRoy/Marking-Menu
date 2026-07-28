@@ -5,7 +5,7 @@ import {
   TOP_LEVEL_ITEMS,
   waitForMenuOpen,
 } from '../helpers/gestures.js';
-import { readLog, waitForLogEntry } from '../helpers/log.js';
+import { readLog, waitForLogEntry, waitForLogGrowth } from '../helpers/log.js';
 import { CdpMultiTouchDrag, CdpTouchDrag } from '../helpers/touch.js';
 
 // Same margin-from-thresholds rationale as mouse.spec.ts.
@@ -46,18 +46,11 @@ test('concurrent pointers: a second touch cannot move, select or cancel the owni
   // the surface for a new primary pointer. The log already holds a `select`
   // entry from the first gesture, so wait on log growth rather than
   // `waitForLogEntry`, which would resolve on that stale entry immediately.
-  const logLengthBeforeFresh = log.length;
   const freshDrag = await CdpTouchDrag.start(page, center);
   await freshDrag.moveTo(target);
   await freshDrag.end();
 
-  let freshLog: Awaited<ReturnType<typeof readLog>> = [];
-  await expect
-    .poll(async () => {
-      freshLog = await readLog(page);
-      return freshLog.length > logLengthBeforeFresh;
-    })
-    .toBe(true);
+  const freshLog = await waitForLogGrowth(page, log.length);
   expect(freshLog.at(-1)).toMatchObject({
     mode: 'expert',
     selectionId: 'right',
