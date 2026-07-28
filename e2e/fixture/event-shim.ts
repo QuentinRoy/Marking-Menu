@@ -56,8 +56,8 @@ class MarkingMenuEventShim<
       error(error: unknown) {
         console.error(error);
       },
-      next: (n) => {
-        this.#target.dispatchEvent(this.#toEvent(n));
+      next: (notification) => {
+        this.#target.dispatchEvent(this.#toEvent(notification));
       },
     });
   }
