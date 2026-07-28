@@ -1356,9 +1356,9 @@ __metadata:
   linkType: hard
 
 "@rviscomi/capo.js@npm:^2.1.0":
-  version: 2.1.1
-  resolution: "@rviscomi/capo.js@npm:2.1.1"
-  checksum: 10c0/ef6d3205f1e2d1d00da50777bdc47f5a3bd26bf6b5f7d680067c239bd4522d19030a28ee1621642a6183f96547d027e59ad947565f7d44a5c10bb4718d7c5736
+  version: 2.2.0
+  resolution: "@rviscomi/capo.js@npm:2.2.0"
+  checksum: 10c0/ce8e145a35fe0bef3507039582effd4ed0394e5f9eff8f13181cdfda33a7789274737bf699271192c1fa87583b5a8d62e12bfe842bfbf68d94a1f41038b66543
   languageName: node
   linkType: hard
 
@@ -2403,11 +2403,11 @@ __metadata:
   linkType: hard
 
 "baseline-browser-mapping@npm:^2.10.44":
-  version: 2.11.3
-  resolution: "baseline-browser-mapping@npm:2.11.3"
+  version: 2.11.4
+  resolution: "baseline-browser-mapping@npm:2.11.4"
   bin:
     baseline-browser-mapping: dist/cli.cjs
-  checksum: 10c0/163c8fd7161133afdd660d21f87b7ec4eb31ae0070dfaffa2f8b8c49929263a205b0667052814b48325fdd940b93bcaa0ce2dff3446413d2ef4ebce452b8edce
+  checksum: 10c0/670e2817531db0485ef3065de01f468f833f6b070a358940aaf1b4b507534ff972f748da89d04a262723245f5e2b585e406504f97cd91334e98cc2cad0e8e763
   languageName: node
   linkType: hard
 
@@ -3161,8 +3161,8 @@ __metadata:
   linkType: hard
 
 "eslint-plugin-jsdoc@npm:^63.0.13":
-  version: 63.3.0
-  resolution: "eslint-plugin-jsdoc@npm:63.3.0"
+  version: 63.3.1
+  resolution: "eslint-plugin-jsdoc@npm:63.3.1"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.90.0"
     "@es-joy/resolve.exports": "npm:1.2.0"
@@ -3180,7 +3180,7 @@ __metadata:
     to-valid-identifier: "npm:^1.0.0"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
-  checksum: 10c0/0e409fa2c77939d9aeb1ad389d8457b5cfd2eccddd46ba276ef80a0ab29a4299ff7e1b181cb515c19a18a732b66b805c11a994bbd2f8662cede85b549cd58b20
+  checksum: 10c0/e27da2ae00599c0ce70354e4aff06d6dcacf56cde2c405fcd52ecaa6fe5b61a7d90becbdcdc8a3516c27bf8ebc55eacb62dc1e24067df9c5ecc5ccf955a9ddbf
   languageName: node
   linkType: hard
 
@@ -3210,13 +3210,13 @@ __metadata:
   linkType: hard
 
 "eslint-plugin-playwright@npm:^2.10.5":
-  version: 2.10.5
-  resolution: "eslint-plugin-playwright@npm:2.10.5"
+  version: 2.11.0
+  resolution: "eslint-plugin-playwright@npm:2.11.0"
   dependencies:
     globals: "npm:^17.3.0"
   peerDependencies:
     eslint: ">=8.40.0"
-  checksum: 10c0/23b18631364f44cd2e176e47791b28b58421217b6634da6684de108c7ef417101f02d7d55141e57a9d15fb83fe23ab5b29133385013919a561da3757461a692c
+  checksum: 10c0/b93698d905fbb22893501a00eb813350a88a9bf373bcbda8f7241c0c962cfa6295155f3b66c49783eb20957f3d091d55218837cb81e083940c2ccb7f7b72c0bb
   languageName: node
   linkType: hard
 
@@ -3795,17 +3795,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:^17.3.0":
+"globals@npm:^17.3.0, globals@npm:^17.7.0":
   version: 17.8.0
   resolution: "globals@npm:17.8.0"
   checksum: 10c0/e31b36cef3befd446487674dc6ca7b8f8e62a3b76aadd975dbf80ffa732366b3ac58df8941999eb6b1406d97480103711db85d2a49c955da47ff5ec688bee9b5
-  languageName: node
-  linkType: hard
-
-"globals@npm:^17.7.0":
-  version: 17.7.0
-  resolution: "globals@npm:17.7.0"
-  checksum: 10c0/e83f791acf537b85fa1632ac48a45432a1999a61acd9f955b5c2145f66d6b5000a7945029874b6184fa2dfac8d33af03885a5a7ffa457866f1bcf0b40d0c1291
   languageName: node
   linkType: hard
 
