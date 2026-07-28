@@ -35,6 +35,13 @@ export default defineConfig({
   plugins: [
     dts({
       tsconfigPath: 'tsconfig.app.json',
+      // The declaration rollup starts from package.json's `types`, so that
+      // path must not collide with the per-file declaration of a source
+      // module other than the entry: unplugin-dts leaves the existing file in
+      // place rather than writing the entry re-export there, and API
+      // Extractor then rolls up the wrong module, silently dropping whatever
+      // `src/index.ts` adds on top of it. Hence `types` is `dist/index.d.ts`
+      // — matching `src/index.ts` — while the bundle keeps the library name.
       bundleTypes: { invokeOptions: { typescriptCompilerFolder } },
     }),
   ],

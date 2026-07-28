@@ -6,6 +6,46 @@
  discrimination.
  */
 import { createMarkingMenu } from 'marking-menu';
+import type {
+  AnyModelNode,
+  MarkingMenuConfig,
+  MarkingMenuInput,
+  MarkingMenuItemInput,
+  MarkingMenuLogger,
+  MarkingMenuModel,
+  MarkingMenuModelItem,
+  MarkingMenuNotification,
+  ModelItem,
+  ModelItems,
+  ModelLeaves,
+  ModelMenus,
+  ModelNodes,
+  ModelRoot,
+} from 'marking-menu';
+
+/*
+ Every name `src/index.ts` exports, named again here: the published
+ declarations are rolled up separately from the runtime bundle, so an export
+ that never reaches them still typechecks everywhere else. Keep this in step
+ with `src/index.ts` when adding a public export.
+ */
+export type PublicSurface = [
+  typeof createMarkingMenu,
+  AnyModelNode,
+  MarkingMenuConfig,
+  MarkingMenuInput,
+  MarkingMenuItemInput,
+  MarkingMenuLogger,
+  MarkingMenuModel<MarkingMenuInput>,
+  MarkingMenuModelItem,
+  MarkingMenuNotification,
+  ModelItem,
+  ModelItems<AnyModelNode>,
+  ModelLeaves<AnyModelNode>,
+  ModelMenus<AnyModelNode>,
+  ModelNodes<AnyModelNode>,
+  ModelRoot,
+];
 
 declare const parent: HTMLElement;
 
