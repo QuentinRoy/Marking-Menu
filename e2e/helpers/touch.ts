@@ -46,19 +46,26 @@ export class CdpTouchDrag {
 }
 
 /**
- A two-finger touch driven through CDP, for scenarios that need a genuine
- second concurrent pointer id rather than a single drag. The primary finger
- (id 0) is the one Pointer Events reports as `isPrimary`; the secondary
- finger (id 1) can be added, moved and lifted independently while the
- primary stays down, the same way a real second touch contact behaves.
+ A multi-finger touch driven through CDP, for scenarios that need genuine
+ concurrent pointer ids rather than a single drag. The primary finger (id 0)
+ is the one Pointer Events reports as `isPrimary`; any number of other
+ fingers (ids 1, 2, ...) can be added, moved and lifted independently while
+ the primary stays down, the same way real extra touch contacts behave.
 
  `Input.dispatchTouchEvent` takes `touchPoints` differently depending on
  `type`: `touchStart`/`touchMove` want every currently active point (a
  point missing from the list is otherwise untouched, so this always sends
- the two finger's full current positions), but `touchEnd` wants only the
- point(s) *ending* in that event — sending the still-down finger there too
+ every finger's full current positions), but `touchEnd` wants only the
+ point(s) *ending* in that event — sending a still-down finger there too
  (as if it were the "remaining active set") ends it as well, which is not
- what "lift one finger, keep the other down" means.
+ what "lift one finger, keep the others down" means.
+
+ Disposal (closing the underlying CDP session) is kept separate from ending
+ the primary — rather than folded into it, the way `CdpTouchDrag.end` does
+ for its single point — so a test can end the primary and keep driving
+ other fingers afterward, e.g. lifting a decoy that outlives the gesture it
+ was a decoy for. It's exposed as `Symbol.asyncDispose` so callers open it
+ with `await using` instead of a manual try/finally.
  */
 export class CdpMultiTouchDrag {
   static async start(page: Page, primaryAt: Point): Promise<CdpMultiTouchDrag> {
@@ -102,18 +109,19 @@ export class CdpMultiTouchDrag {
     }
   }
 
-  async addSecondary(at: Point): Promise<void> {
-    this.#points.set(1, at);
+  /** Touch a non-primary finger down. `id` must be neither 0 nor already active. */
+  async addFinger(id: number, at: Point): Promise<void> {
+    this.#points.set(id, at);
     await this.#dispatchActive('touchStart');
   }
 
-  async moveSecondary(at: Point): Promise<void> {
-    this.#points.set(1, at);
+  async moveFinger(id: number, at: Point): Promise<void> {
+    this.#points.set(id, at);
     await this.#dispatchActive('touchMove');
   }
 
-  async liftSecondary(): Promise<void> {
-    await this.#dispatchEnd([1]);
+  async liftFinger(id: number): Promise<void> {
+    await this.#dispatchEnd([id]);
   }
 
   async movePrimary(at: Point): Promise<void> {
@@ -123,6 +131,14 @@ export class CdpMultiTouchDrag {
 
   async endPrimary(): Promise<void> {
     await this.#dispatchEnd([0]);
+  }
+
+  // `Symbol.asyncDispose` is standard (part of the explicit-resource-management
+  // proposal TypeScript and Node already support — see e2e/tsconfig.json's
+  // `lib` comment); `eslint-plugin-unicorn`@72's built-in `Symbol` property
+  // list simply predates it.
+  // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties
+  async [Symbol.asyncDispose](): Promise<void> {
     await this.#client.detach();
   }
 }
