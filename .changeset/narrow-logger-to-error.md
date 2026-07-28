@@ -1,8 +1,10 @@
 ---
-'marking-menu': patch
+'marking-menu': major
 ---
 
-`MarkingMenuLogger`'s `error` now takes a single `unknown` argument instead of
-varargs, matching how it's actually called. `info`, `warn` and `debug` are now
-optional and ignored; `console` still satisfies the type, and `log` can be
-partially overridden, `error` included.
+Narrow `MarkingMenuLogger` to `error`, now taking a single `unknown` argument
+rather than varargs. `info`, `warn` and `debug` become optional and ignored,
+since nothing in the library ever called them. `console` still satisfies the
+type, and `log` can still be overridden partially. Two things break: a logger
+whose `error` declares two or more required parameters, and any code that
+imported `MarkingMenuLogger` to call `.info()`, `.warn()` or `.debug()` on it.
