@@ -127,9 +127,9 @@ describe('IsTuple', () => {
 });
 
 describe('Point', () => {
-  it('is a tuple of two numbers', () => {
+  it('is a readonly tuple of two numbers', () => {
     const value: Point = [1, 2];
-    expectTypeOf(value).toEqualTypeOf<[number, number]>();
+    expectTypeOf(value).toEqualTypeOf<readonly [number, number]>();
 
     // @ts-expect-error -- a point has exactly two coordinates.
     const missingCoordinate: Point = [1];

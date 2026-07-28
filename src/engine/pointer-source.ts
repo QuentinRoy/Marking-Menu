@@ -7,7 +7,7 @@ export type PointerSource = {
 };
 
 const toPosition = (event: PointerEvent): Point =>
-  Object.freeze([event.clientX, event.clientY]) as Point;
+  Object.freeze([event.clientX, event.clientY] as const);
 
 /**
  Native pointer listeners: accepts only the primary pointer and primary

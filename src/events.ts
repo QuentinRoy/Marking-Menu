@@ -4,6 +4,7 @@ import type {
   ModelLeaves,
   ModelMenus,
 } from './types.js';
+import type { Point } from './utils.js';
 
 /*
  The public event contract: the events {@link createMarkingMenu}'s controller
@@ -17,8 +18,13 @@ import type {
 /** The navigation mode a gesture is in when an event is dispatched. */
 export type MarkingMenuMode = 'startup' | 'novice' | 'expert';
 
-/** A 2D point, as carried by event payloads. */
-export type ReadonlyPoint = readonly [number, number];
+/**
+ A 2D point, as carried by event payloads.
+
+ The public name for the library's internal {@link Point}, which is readonly
+ for exactly this reason.
+ */
+export type ReadonlyPoint = Point;
 
 /* -------------------------------------------------------------------------- *
  * Event classes
