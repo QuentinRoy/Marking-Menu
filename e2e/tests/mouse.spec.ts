@@ -42,6 +42,14 @@ test('novice mode: dwelling opens the menu, lays out every item, and a release s
     selectionId: 'right',
     type: 'select',
   });
+  expect(
+    log.every(
+      (entry) =>
+        Array.isArray(entry.position) &&
+        entry.position.length === 2 &&
+        entry.position.every((coordinate) => typeof coordinate === 'number'),
+    ),
+  ).toBe(true);
 });
 
 test('expert mode: a quick decisive stroke selects without ever opening a menu', async ({
@@ -185,12 +193,13 @@ test('novice non-leaf cancellation: releasing over a submenu item (not far enoug
   await releaseAt(page);
 
   const log = await waitForLogEntry(page, (entry) => entry.type === 'cancel');
-  expect(log.at(-1)).toMatchObject({
+  const last = log.at(-1);
+  expect(last).toMatchObject({
     activeId: 'others',
     mode: 'novice',
-    selectionId: 'others',
     type: 'cancel',
   });
+  expect(last?.selectionId).toBeUndefined();
   expect(log.some((entry) => entry.type === 'select')).toBe(false);
 });
 
