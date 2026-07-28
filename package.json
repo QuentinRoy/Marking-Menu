@@ -9,7 +9,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/marking-menu.js"
+      "default": "./dist/index.js"
     }
   },
   "sideEffects": false,

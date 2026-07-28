@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 
 // Kept as bare specifiers in the built output and resolved by the fixture's
 // import map (see `e2e/fixture/index.html`) instead of being bundled, so the
-// tests exercise the exact unchanged `dist/marking-menu.js`.
+// tests exercise the exact unchanged `dist/index.js`.
 const importMapDependencies = new Set(['marking-menu', 'rxjs']);
 
 export default defineConfig({
@@ -15,7 +15,7 @@ export default defineConfig({
       external: (source: string) => importMapDependencies.has(source),
     },
   },
-  // Copies `dist/marking-menu.js` (and its sourcemap and declaration file)
+  // Copies `dist/index.js` (and its sourcemap and declaration file)
   // into the built fixture unmodified, the same way `vite.demo.config.ts`
   // does for the production demo.
   publicDir: path.resolve(import.meta.dirname, '../dist'),
