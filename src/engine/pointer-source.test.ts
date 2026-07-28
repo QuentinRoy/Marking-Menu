@@ -1,23 +1,6 @@
+import { createParent, pointer } from './__fixtures__/pointer.js';
 import type { NavigationInput } from './machine.js';
 import { createPointerSource } from './pointer-source.js';
-
-const createParent = (): HTMLElement => {
-  const parent = document.createElement('div');
-  Object.assign(parent, {
-    hasPointerCapture: vi.fn(() => true),
-    releasePointerCapture: vi.fn(),
-    setPointerCapture: vi.fn(),
-  });
-  return parent;
-};
-
-const pointer = (type: string, init: PointerEventInit = {}): PointerEvent =>
-  new PointerEvent(type, {
-    button: 0,
-    isPrimary: true,
-    pointerId: 1,
-    ...init,
-  });
 
 describe('createPointerSource', () => {
   it('ignores move and up events from a pointer that is not the active gesture owner', () => {

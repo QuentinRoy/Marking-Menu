@@ -1,93 +1,11 @@
 import { type Mock } from 'vitest';
+import {
+  fakeTimers,
+  queryCanvasContext,
+  stubbedCanvasContexts,
+} from '../__fixtures__/canvas.js';
+import { createParent, pointer } from './__fixtures__/pointer.js';
 import { createController } from './controller.js';
-
-/*
- JSDOM has no real canvas 2D context (the `canvas` package isn't a
- dependency); every canvas element created during a test gets a fake context
- that records the methods called on it, mirroring `src/layout/stroke.test.ts`.
- The `doc` alias (a narrower, non-overloaded signature) is that same file's
- way of stubbing `createElement` without going through its deprecated
- `(tag, options)` overload.
- */
-const doc = document as unknown as {
-  createElement: (tag: string, options?: ElementCreationOptions) => HTMLElement;
-};
-
-type MockContext = {
-  mock: {
-    methodCalls: Array<{ method: string | symbol; args: readonly unknown[] }>;
-  };
-};
-
-const createMockContext = (): MockContext => {
-  const target: MockContext = { mock: { methodCalls: [] } };
-  return new Proxy(target, {
-    get(t, name) {
-      return Object.hasOwn(t, name)
-        ? (t as Record<string | symbol, unknown>)[name]
-        : (...args: unknown[]) => {
-            t.mock.methodCalls.push({ method: name, args });
-          };
-    },
-  });
-};
-
-/** Give every canvas created while held a recording 2D context. */
-const stubbedCanvasContexts = (): Disposable => {
-  // Kept unbound so disposal restores the exact original method, rather than
-  // leaving a bound copy of it behind on `document`.
-  const original = doc.createElement;
-  doc.createElement = vi.fn((tag: string, options?: ElementCreationOptions) => {
-    const elt = original.call(document, tag, options);
-    if (tag === 'canvas') {
-      const context = createMockContext();
-      (elt as HTMLCanvasElement).getContext = (() =>
-        context) as unknown as HTMLCanvasElement['getContext'];
-    }
-
-    return elt;
-  });
-  return {
-    [Symbol.dispose]() {
-      doc.createElement = original;
-    },
-  };
-};
-
-const fakeTimers = (): Disposable => {
-  vi.useFakeTimers();
-  return {
-    [Symbol.dispose]() {
-      vi.useRealTimers();
-    },
-  };
-};
-
-const queryCanvasContext = (parent: HTMLElement): MockContext =>
-  (
-    parent.querySelector('canvas')?.getContext as unknown as () => MockContext
-  )();
-
-/*
- JSDOM implements none of the pointer-capture API, so the three methods are
- stubbed onto a real element. They are stubbed *statefully* — capture is
- tracked in a set — so `hasPointerCapture` answers truthfully and a test can
- assert when, relative to a dispatched event, capture is actually let go.
- */
-const createParent = (): HTMLElement => {
-  const parent = document.createElement('div');
-  const captured = new Set<number>();
-  Object.assign(parent, {
-    hasPointerCapture: vi.fn((pointerId: number) => captured.has(pointerId)),
-    releasePointerCapture: vi.fn((pointerId: number) => {
-      captured.delete(pointerId);
-    }),
-    setPointerCapture: vi.fn((pointerId: number) => {
-      captured.add(pointerId);
-    }),
-  });
-  return parent;
-};
 
 /** Read the pointer-capture mocks `createParent` attaches to a real element. */
 const pointerCaptureMocks = (
@@ -102,14 +20,6 @@ const pointerCaptureMocks = (
     releasePointerCapture: Mock;
     setPointerCapture: Mock;
   };
-
-const pointer = (type: string, init: PointerEventInit = {}): PointerEvent =>
-  new PointerEvent(type, {
-    button: 0,
-    isPrimary: true,
-    pointerId: 1,
-    ...init,
-  });
 
 const items = [
   { id: 'right', label: 'Right' },
