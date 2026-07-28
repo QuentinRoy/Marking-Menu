@@ -31,60 +31,70 @@ const createMockContext = (): MockContext => {
   });
 };
 
+/** Give every canvas created while held a recording 2D context. */
+const stubbedCanvasContexts = (): Disposable => {
+  // Kept unbound so disposal restores the exact original method, rather than
+  // leaving a bound copy of it behind on `document`.
+  const original = doc.createElement;
+  doc.createElement = vi.fn((tag: string, options?: ElementCreationOptions) => {
+    const elt = original.call(document, tag, options);
+    if (tag === 'canvas') {
+      const context = createMockContext();
+      (elt as HTMLCanvasElement).getContext = (() =>
+        context) as unknown as HTMLCanvasElement['getContext'];
+    }
+
+    return elt;
+  });
+  return {
+    [Symbol.dispose]() {
+      doc.createElement = original;
+    },
+  };
+};
+
+const fakeTimers = (): Disposable => {
+  vi.useFakeTimers();
+  return {
+    [Symbol.dispose]() {
+      vi.useRealTimers();
+    },
+  };
+};
+
 describe('createRenderer', () => {
   it('skips the redraw when the upper stroke is reference-equal to the previous frame', () => {
-    const docCreateElement = doc.createElement.bind(document);
-    doc.createElement = vi.fn(
-      (tag: string, options?: ElementCreationOptions) => {
-        const elt = docCreateElement(tag, options);
-        if (tag === 'canvas') {
-          const context = createMockContext();
-          (elt as HTMLCanvasElement).getContext = (() =>
-            context) as unknown as HTMLCanvasElement['getContext'];
-        }
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
 
-        return elt;
-      },
-    );
+    const parent = document.createElement('div');
+    const renderer = createRenderer({ parent });
+    const stroke: Point[] = [
+      [0, 0],
+      [10, 0],
+    ];
 
-    try {
-      vi.useFakeTimers();
-      try {
-        const parent = document.createElement('div');
-        const renderer = createRenderer({ parent });
-        const stroke: Point[] = [
-          [0, 0],
-          [10, 0],
-        ];
+    renderer.render({
+      cursor: 'crosshair',
+      menu: null,
+      upperStroke: stroke,
+      lowerStroke: null,
+    });
+    // Same array reference: the second render must skip the redraw.
+    renderer.render({
+      cursor: 'crosshair',
+      menu: null,
+      upperStroke: stroke,
+      lowerStroke: null,
+    });
 
-        renderer.render({
-          cursor: 'crosshair',
-          menu: null,
-          upperStroke: stroke,
-          lowerStroke: null,
-        });
-        // Same array reference: the second render must skip the redraw.
-        renderer.render({
-          cursor: 'crosshair',
-          menu: null,
-          upperStroke: stroke,
-          lowerStroke: null,
-        });
+    vi.advanceTimersToNextFrame();
 
-        vi.advanceTimersToNextFrame();
-
-        const context = (
-          parent.querySelector('canvas')
-            ?.getContext as unknown as () => MockContext
-        )();
-        expect(
-          context.mock.methodCalls.filter((c) => c.method === 'stroke'),
-        ).toHaveLength(1);
-      } finally {
-        vi.useRealTimers();
-      }
-    } finally {
-      doc.createElement = docCreateElement;
-    }
+    const context = (
+      parent.querySelector('canvas')?.getContext as unknown as () => MockContext
+    )();
+    expect(
+      context.mock.methodCalls.filter((c) => c.method === 'stroke'),
+    ).toHaveLength(1);
   });
 });

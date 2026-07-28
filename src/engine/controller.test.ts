@@ -32,11 +32,13 @@ const createMockContext = (): MockContext => {
   });
 };
 
-const docCreateElement = doc.createElement.bind(document);
-
-beforeEach(() => {
+/** Give every canvas created while held a recording 2D context. */
+const stubbedCanvasContexts = (): Disposable => {
+  // Kept unbound so disposal restores the exact original method, rather than
+  // leaving a bound copy of it behind on `document`.
+  const original = doc.createElement;
   doc.createElement = vi.fn((tag: string, options?: ElementCreationOptions) => {
-    const elt = docCreateElement(tag, options);
+    const elt = original.call(document, tag, options);
     if (tag === 'canvas') {
       const context = createMockContext();
       (elt as HTMLCanvasElement).getContext = (() =>
@@ -45,11 +47,21 @@ beforeEach(() => {
 
     return elt;
   });
-});
+  return {
+    [Symbol.dispose]() {
+      doc.createElement = original;
+    },
+  };
+};
 
-afterEach(() => {
-  doc.createElement = docCreateElement;
-});
+const fakeTimers = (): Disposable => {
+  vi.useFakeTimers();
+  return {
+    [Symbol.dispose]() {
+      vi.useRealTimers();
+    },
+  };
+};
 
 const queryCanvasContext = (parent: HTMLElement): MockContext =>
   (
@@ -102,8 +114,9 @@ const voidMock = <Arguments extends readonly unknown[]>() =>
 
 describe('createController', () => {
   it('dispatches select carrying the leaf a straight drag recognizes', () => {
+    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    const controller = createController({ items, parent });
+    using controller = createController({ items, parent });
 
     const selected = vi.fn<() => void>();
     let selectedId: string | undefined;
@@ -121,8 +134,9 @@ describe('createController', () => {
   });
 
   it('dispatches start as the first event, before select', () => {
+    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    const controller = createController({ items, parent });
+    using controller = createController({ items, parent });
 
     const seen: string[] = [];
     controller.addEventListener('start', (event) => {
@@ -141,8 +155,9 @@ describe('createController', () => {
   });
 
   it('shows a crosshair cursor on gesture start', () => {
+    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    createController({ items, parent });
+    using _controller = createController({ items, parent });
 
     expect(parent.style.cursor).toBe('');
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
@@ -150,45 +165,41 @@ describe('createController', () => {
   });
 
   it('draws the stroke through the RAF throttle, converging to the latest state when frames coalesce', () => {
-    vi.useFakeTimers();
-    try {
-      const parent = createParent();
-      createController({ items, parent });
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    using _controller = createController({ items, parent });
 
-      parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
-      parent.dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 0 }));
-      parent.dispatchEvent(pointer('pointermove', { clientX: 50, clientY: 0 }));
-      parent.dispatchEvent(
-        pointer('pointermove', { clientX: 100, clientY: 0 }),
-      );
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 50, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
 
-      // No frame has run yet: nothing is drawn synchronously.
-      const context = queryCanvasContext(parent);
-      expect(
-        context.mock.methodCalls.filter((c) => c.method === 'stroke'),
-      ).toHaveLength(0);
+    // No frame has run yet: nothing is drawn synchronously.
+    const context = queryCanvasContext(parent);
+    expect(
+      context.mock.methodCalls.filter((c) => c.method === 'stroke'),
+    ).toHaveLength(0);
 
-      vi.advanceTimersToNextFrame();
+    vi.advanceTimersToNextFrame();
 
-      // The three coalesced moves converge to a single draw of the full,
-      // latest stroke: one `beginPath`/`stroke` pair, moveTo + 3 lineTo.
-      const strokeCalls = context.mock.methodCalls.filter(
-        (c) => c.method === 'stroke',
-      );
-      const lineToCalls = context.mock.methodCalls.filter(
-        (c) => c.method === 'lineTo',
-      );
-      expect(strokeCalls).toHaveLength(1);
-      expect(lineToCalls).toHaveLength(3);
-      expect(lineToCalls.at(-1)?.args).toEqual([100, 0]);
-    } finally {
-      vi.useRealTimers();
-    }
+    // The three coalesced moves converge to a single draw of the full,
+    // latest stroke: one `beginPath`/`stroke` pair, moveTo + 3 lineTo.
+    const strokeCalls = context.mock.methodCalls.filter(
+      (c) => c.method === 'stroke',
+    );
+    const lineToCalls = context.mock.methodCalls.filter(
+      (c) => c.method === 'lineTo',
+    );
+    expect(strokeCalls).toHaveLength(1);
+    expect(lineToCalls).toHaveLength(3);
+    expect(lineToCalls.at(-1)?.args).toEqual([100, 0]);
   });
 
   it('shows one gesture-feedback trace on completion', () => {
+    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    createController({ items, parent });
+    using _controller = createController({ items, parent });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
@@ -198,8 +209,9 @@ describe('createController', () => {
   });
 
   it('dispose() removes listeners, DOM, and the touch-action claim, and is idempotent', () => {
+    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    const controller = createController({ items, parent });
+    using controller = createController({ items, parent });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
@@ -226,8 +238,9 @@ describe('createController', () => {
   });
 
   it('freezes position on start and select, and dispatches select after the DOM is fully rendered', () => {
+    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    const controller = createController({ items, parent });
+    using controller = createController({ items, parent });
 
     let startPosition: readonly number[] | undefined;
     controller.addEventListener('start', (event) => {
@@ -256,8 +269,9 @@ describe('createController', () => {
   });
 
   it('only accepts the primary pointer and primary button, and owns pointer capture', () => {
+    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    const controller = createController({ items, parent });
+    using controller = createController({ items, parent });
     const { releasePointerCapture, setPointerCapture } =
       pointerCaptureMocks(parent);
 
@@ -298,13 +312,13 @@ describe('createController', () => {
   });
 
   it('[Symbol.dispose]() delegates to dispose()', () => {
+    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     expect(parent.querySelectorAll('canvas')).toHaveLength(1);
 
-    // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties -- see `Controller`'s own comment.
     controller[Symbol.dispose]();
 
     expect(parent.querySelectorAll('canvas')).toHaveLength(0);

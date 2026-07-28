@@ -36,6 +36,12 @@ export default defineConfig([
       // annoying false positives.
       'unicorn/better-dom-traversing': 'off',
 
+      // The rule's list of `Symbol` statics predates Explicit Resource
+      // Management, so it flags the very much standard `Symbol.dispose` this
+      // repo implements and consumes via `using`. It takes no allowlist
+      // option, so the whole rule has to go.
+      'unicorn/no-nonstandard-builtin-properties': 'off',
+
       // This repo uses named exports only (c.f. bcb1332).
       'import-x/no-default-export': 'error',
 

@@ -17,10 +17,6 @@ export type EngineConfig = MarkingMenuInput & {
 export type MarkingMenuController<M extends AnyModelNode> =
   MarkingMenuEventTarget<M> & {
     dispose: () => void;
-    // `Symbol.dispose` is part of the TC39 Explicit Resource Management
-    // proposal (the `ESNext.Disposable` lib); this lint rule's built-in
-    // property list predates it.
-    // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties
     [Symbol.dispose]: () => void;
   };
 
@@ -59,7 +55,6 @@ class Controller extends EventTarget {
     this.#runtime.dispose();
   }
 
-  // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties -- see the type's own comment above.
   [Symbol.dispose](): void {
     this.dispose();
   }
