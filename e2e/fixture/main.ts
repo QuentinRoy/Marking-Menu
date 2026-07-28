@@ -1,4 +1,5 @@
-import { createMarkingMenu } from 'marking-menu';
+import { createMarkingMenu, type ReadonlyPoint } from 'marking-menu';
+import { shimMarkingMenuEvents } from './event-shim.js';
 
 // The demo's eight-direction topology (see `demo/script.js`), with stable
 // ids added: tests key off `id`, not display order or label text.
@@ -28,7 +29,12 @@ if (!(surface instanceof HTMLElement) || !(log instanceof HTMLElement)) {
   throw new TypeError('Fixture markup is missing #surface or #log.');
 }
 
-const mm = createMarkingMenu({ items, notifySteps: true, parent: surface });
+const notifications$ = createMarkingMenu({
+  items,
+  notifySteps: true,
+  parent: surface,
+});
+const mm = shimMarkingMenuEvents(notifications$);
 
 // A node carries an `id` only when the caller gave it one (root has none);
 // tests need that id, not the whole node, so pull it out defensively.
@@ -40,27 +46,51 @@ const idOf = (node: unknown): string | undefined =>
     ? node.id
     : undefined;
 
-mm.subscribe({
-  error(error: unknown) {
-    console.error(error);
+const logEvent = (
+  event: {
+    readonly type: string;
+    readonly mode: string;
+    readonly position: ReadonlyPoint;
   },
-  next(notification) {
-    const entry: Record<string, unknown> = {
-      mode: notification.mode,
-      type: notification.type,
-    };
-    if ('selection' in notification) {
-      entry.selectionId = idOf(notification.selection);
-    }
+  fields: Record<string, string | undefined> = {},
+): void => {
+  log.append(
+    `${JSON.stringify({
+      mode: event.mode,
+      position: event.position,
+      type: event.type,
+      ...fields,
+    })}\n`,
+  );
+};
 
-    if ('active' in notification) {
-      entry.activeId = idOf(notification.active);
-    }
+// `move`, `change`, and `cancel` all log the same pair of fields.
+const activeAndMenuFields = (event: {
+  readonly active: unknown;
+  readonly menu: unknown;
+}): Record<string, string | undefined> => ({
+  activeId: idOf(event.active),
+  menuId: idOf(event.menu),
+});
 
-    if ('menu' in notification) {
-      entry.menuId = idOf(notification.menu);
-    }
-
-    log.append(`${JSON.stringify(entry)}\n`);
-  },
+mm.addEventListener('start', (event) => {
+  logEvent(event);
+});
+mm.addEventListener('open', (event) => {
+  logEvent(event, { menuId: idOf(event.menu) });
+});
+mm.addEventListener('move', (event) => {
+  logEvent(event, activeAndMenuFields(event));
+});
+mm.addEventListener('change', (event) => {
+  logEvent(event, activeAndMenuFields(event));
+});
+mm.addEventListener('select', (event) => {
+  logEvent(event, {
+    menuId: idOf(event.menu),
+    selectionId: idOf(event.selection),
+  });
+});
+mm.addEventListener('cancel', (event) => {
+  logEvent(event, activeAndMenuFields(event));
 });
