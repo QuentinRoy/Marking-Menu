@@ -36,8 +36,11 @@ export default defineConfig({
   },
   projects: [
     {
+      // `multiple-controllers.spec.ts` drives the library directly (no
+      // pointer input), so one browser is enough coverage for it; it rides
+      // along with this project rather than getting its own.
       name: 'chromium',
-      testMatch: /mouse\.spec\.ts/v,
+      testMatch: /(?:mouse|multiple-controllers)\.spec\.ts/v,
       use: { ...devices['Desktop Chrome'], viewport },
     },
     {
@@ -51,8 +54,11 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'], viewport },
     },
     {
+      // `concurrent-pointers.spec.ts` needs the same CDP-driven native touch
+      // input as `touch.spec.ts` (see `e2e/helpers/touch.ts`), to get a
+      // genuine second pointer id rather than a simulated one.
       name: 'chromium-touch',
-      testMatch: /touch\.spec\.ts/v,
+      testMatch: /(?:concurrent-pointers|touch)\.spec\.ts/v,
       use: { ...devices['Desktop Chrome'], hasTouch: true, viewport },
     },
   ],
