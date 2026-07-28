@@ -193,7 +193,7 @@ export type MarkingMenuConfig = MarkingMenuInput & {
    */
   notifySteps?: boolean;
   /** Override the default logger to use. */
-  log?: MarkingMenuLogger;
+  log?: Partial<MarkingMenuLogger>;
 };
 
 /**

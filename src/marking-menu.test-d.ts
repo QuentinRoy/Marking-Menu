@@ -94,13 +94,23 @@ describe('createMarkingMenu', () => {
     });
   });
 
-  it('rejects a logger missing `error`', () => {
+  it('rejects a logger using `info`/`warn`/`debug` in place of `error`', () => {
     createMarkingMenu({
       items: [{ id: 'right', label: 'Right' }],
       parent,
-      // @ts-expect-error -- `log` no longer accepts `info`/`warn`/`debug` in
-      // place of the required `error`.
+      // @ts-expect-error -- `log` no longer accepts `info`/`warn`/`debug`.
       log: { info: (message: unknown) => sendToSentry(message) },
+    });
+  });
+
+  it('accepts a logger omitting `error`', () => {
+    // Useless at runtime (nothing overrides the default), but harmless — and
+    // it leaves room for future logger methods without forcing every partial
+    // override to include `error`.
+    createMarkingMenu({
+      items: [{ id: 'right', label: 'Right' }],
+      parent,
+      log: {},
     });
   });
 });
