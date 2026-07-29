@@ -44,6 +44,12 @@ describe('createController', () => {
     expectTypeOf(controller.dispose).toEqualTypeOf<() => void>();
     expectTypeOf(controller[Symbol.dispose]).toEqualTypeOf<() => void>();
   });
+
+  it('exposes exactly the listen-only facade and disposal, nothing else', () => {
+    expectTypeOf<keyof MarkingMenuController<M>>().toEqualTypeOf<
+      'on' | 'off' | 'dispose' | typeof Symbol.dispose
+    >();
+  });
 });
 
 describe('createController listeners', () => {
