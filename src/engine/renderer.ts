@@ -58,11 +58,7 @@ export function createRenderer({
     },
     dispose() {
       parent.style.cursor = ownCursor;
-      // A frame scheduled by `drawUpperStroke` may still be pending. It is
-      // inert once the canvas below is dropped (the throttled callback
-      // optional-chains on it), so there is nothing to cancel here. See
-      // https://github.com/QuentinRoy/Marking-Menu/issues/153 for giving
-      // `rafThrottle` a real cancellation handle.
+      drawUpperStroke.cancel();
       upperStrokeCanvas?.remove();
       upperStrokeCanvas = null;
       gestureFeedback.remove();

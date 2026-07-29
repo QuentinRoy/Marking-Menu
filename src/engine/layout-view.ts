@@ -6,7 +6,7 @@ import type { NavigationState } from './machine.js';
  always `null` until a ticket introduces the `novice` phase.
  */
 export type LayoutView = {
-  readonly cursor: 'default' | 'crosshair' | 'none';
+  readonly cursor: 'default' | 'crosshair';
   readonly menu: null;
   readonly upperStroke: readonly Point[] | null;
   readonly lowerStroke: null;
