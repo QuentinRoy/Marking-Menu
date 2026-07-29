@@ -1,5 +1,5 @@
-import { shimMarkingMenuEvents } from './event-shim.js';
 import { createMarkingMenu, type ReadonlyPoint } from 'marking-menu';
+import { shimMarkingMenuEvents } from './event-shim.js';
 
 // The demo's eight-direction topology (see `demo/script.js`), with stable
 // ids added: tests key off `id`, not display order or label text.

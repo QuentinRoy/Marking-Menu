@@ -1,4 +1,3 @@
-import type { Observable, Subscription } from 'rxjs';
 import {
   MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
@@ -15,6 +14,7 @@ import {
   type ModelMenus,
   type ReadonlyPoint,
 } from 'marking-menu';
+import type { Observable, Subscription } from 'rxjs';
 
 /**
  Test-only shim translating the legacy `notifySteps` Observable into the
