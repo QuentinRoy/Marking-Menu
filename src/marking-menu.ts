@@ -16,7 +16,6 @@ import { navigation } from './navigation/navigation.js';
 import type {
   AnyModelNode,
   MarkingMenuInput,
-  MarkingMenuItemInput,
   ModelItems,
   ModelLeaves,
   ModelMenus,
