@@ -1,5 +1,8 @@
-import { shimMarkingMenuEvents } from './event-shim.js';
 import { createMarkingMenu, type ReadonlyPoint } from 'marking-menu';
+// See `event-shim.ts`: import-x and prettier disagree on where the
+// path-mapped `marking-menu` belongs, and prettier wins.
+// eslint-disable-next-line import-x/order
+import { shimMarkingMenuEvents } from './event-shim.js';
 
 // The demo's eight-direction topology (see `demo/script.js`), with stable
 // ids added: tests key off `id`, not display order or label text.

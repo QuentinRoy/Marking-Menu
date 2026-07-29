@@ -347,5 +347,6 @@ export type MarkingMenuEvent<M extends AnyModelNode> =
  are narrowed to the six known event names: there is no `type: string`
  fallback, so an unknown event name is rejected at the call site.
  */
-export type MarkingMenuEventEmitter<M extends AnyModelNode> =
-  TypedEventEmitter<MarkingMenuEventMap<M>>;
+export type MarkingMenuEventEmitter<M extends AnyModelNode> = TypedEventEmitter<
+  MarkingMenuEventMap<M>
+>;

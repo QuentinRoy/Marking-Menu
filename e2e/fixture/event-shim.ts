@@ -1,8 +1,3 @@
-// `marking-menu` resolves through this package's own tsconfig path mapping
-// rather than node_modules, which puts eslint-plugin-import-x's resolver and
-// the prettier import-sort plugin at odds over where it belongs; the
-// disable keeps prettier's ordering rather than fighting both tools.
-import type { Observable, Subscription } from 'rxjs';
 import {
   MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
@@ -19,6 +14,11 @@ import {
   type ModelMenus,
   type ReadonlyPoint,
 } from 'marking-menu';
+// `marking-menu` resolves through this package's tsconfig path mapping rather
+// than node_modules, so import-x's resolver sorts it as local while prettier's
+// import-sort plugin sorts it as external. Prettier wins; the rule stands down.
+// eslint-disable-next-line import-x/order
+import type { Observable, Subscription } from 'rxjs';
 
 /**
  Test-only shim translating the legacy `notifySteps` Observable into the

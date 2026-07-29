@@ -31,7 +31,6 @@ describe('MarkingMenuStartEvent', () => {
     const event = new MarkingMenuStartEvent({ position: [0, 0] });
     expect(event.type).toBe(MarkingMenuStartEvent.type);
   });
-
 });
 
 describe('MarkingMenuOpenEvent', () => {
@@ -48,7 +47,6 @@ describe('MarkingMenuOpenEvent', () => {
     expect(event.menu).toBe(menu);
     expect(event.menuCenter).toEqual([50, 50]);
   });
-
 });
 
 describe('MarkingMenuMoveEvent', () => {
@@ -79,7 +77,6 @@ describe('MarkingMenuMoveEvent', () => {
     expect(event.active).toBeNull();
     expect(event.menu).toBeNull();
   });
-
 });
 
 describe('MarkingMenuChangeEvent', () => {
@@ -109,7 +106,6 @@ describe('MarkingMenuChangeEvent', () => {
     expect(event.active).toBeNull();
     expect(event.previousActive).toBe(menu.items[0]);
   });
-
 });
 
 describe('MarkingMenuSelectEvent', () => {
@@ -138,7 +134,6 @@ describe('MarkingMenuSelectEvent', () => {
     expect(event.mode).toBe('expert');
     expect(event.menu).toBeNull();
   });
-
 });
 
 describe('MarkingMenuCancelEvent', () => {
@@ -167,5 +162,4 @@ describe('MarkingMenuCancelEvent', () => {
     expect(event.active).toBeNull();
     expect(event.menu).toBeNull();
   });
-
 });

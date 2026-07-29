@@ -1,4 +1,7 @@
-import type { MarkingMenuEventEmitter, MarkingMenuEventMap } from '../events.js';
+import type {
+  MarkingMenuEventEmitter,
+  MarkingMenuEventMap,
+} from '../events.js';
 import {
   createModel,
   type MarkingMenuModel,
