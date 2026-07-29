@@ -32,10 +32,6 @@ export default defineConfig([
       // This repo uses many factory functions, that starts with a capital letter, but are not classes.
       'new-cap': 'off',
 
-      // Unicorn tends to think marking menu items are DOM elements, triggering
-      // annoying false positives.
-      'unicorn/better-dom-traversing': 'off',
-
       // This repo uses named exports only (c.f. bcb1332).
       'import-x/no-default-export': 'error',
 
