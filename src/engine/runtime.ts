@@ -14,19 +14,14 @@ import {
 } from './machine.js';
 import type { LayoutRenderer } from './renderer.js';
 
-/**
- Somewhere to send pointer inputs. What an input source depends on: it has
- nothing to say about events or the model, so it should not see either.
- */
+/** All an input source needs of the runtime: no events, no model. */
 export type NavigationInputSink = {
   send: (input: NavigationInput) => void;
 };
 
 /**
- The runtime is the only thing that ever originates an event — interpreting
- the machine's `dispatch` commands is what produces them — so it owns the
- emitter rather than being handed somewhere to report to. Nothing above it
- emits; the controller only re-exposes `on`/`off` as its public facade.
+ The runtime owns the emitter: interpreting the machine's `dispatch` commands
+ is the only thing that ever originates an event.
  */
 export type NavigationRuntime<M extends AnyModelNode> = NavigationInputSink &
   MarkingMenuEventEmitter<M> & {
@@ -36,7 +31,7 @@ export type NavigationRuntime<M extends AnyModelNode> = NavigationInputSink &
 /**
  The runtime owns mutable infrastructure only: the committed state, the
  reentrant input queue, and command interpretation. It never makes domain
- decisions — those live in `transition`.
+ decisions: those live in `transition`.
  */
 export function createRuntime<M extends AnyModelNode>({
   model,
@@ -53,6 +48,9 @@ export function createRuntime<M extends AnyModelNode>({
   let isDraining = false;
   const pending: NavigationInput[] = [];
 
+  // Two passes, not one: every visual effect lands before the first listener
+  // runs, so a listener always observes fully committed state. See
+  // `pointer-source.ts`'s `onPointerUp` for the same rule applied to capture.
   const runCommands = (commands: ReadonlyArray<MachineCommand<M>>) => {
     for (const command of commands) {
       if (command.type === 'feedback.show') {

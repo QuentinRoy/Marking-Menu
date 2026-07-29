@@ -9,15 +9,13 @@ import { noOp } from '../utils.js';
 import { createController, type MarkingMenuController } from './controller.js';
 
 /*
- Type level tests: they assert that the model the controller's events carry is
- the one the *literal* config describes, not a widened one. Checked by `tsc`,
- not run.
+ Type level tests: the model the controller's events carry is the one the
+ *literal* config describes, not a widened one. Checked by `tsc`, not run.
 
- These are load-bearing for `createController`. `M` appears only in input
- positions on the controller, so `MarkingMenuController<A>` and
- `MarkingMenuController<B>` stay mutually assignable — no assignment the
- library makes can catch the model widening on its own. Reading a narrowed
- payload off a listener parameter is what catches it.
+ `M` appears only in input positions on the controller, so
+ `MarkingMenuController<A>` and `MarkingMenuController<B>` stay mutually
+ assignable and no plain assignment can catch the model widening. Reading a
+ narrowed payload off a listener parameter is what catches it.
  */
 
 const parent = null as unknown as HTMLElement;

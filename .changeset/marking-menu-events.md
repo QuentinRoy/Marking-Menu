@@ -11,6 +11,6 @@ the upcoming native event-based API will use: `MarkingMenuStartEvent`,
 
 These events are plain classes, not DOM `Event`s: this library has no DOM
 target, bubbling, or default action to prevent, so there is none of that
-machinery to carry around. `MarkingMenuEventEmitter` is listen-only —
-`on`/`off`, narrowed per event name, with no listener options
-(once/signal/capture) and no `dispatch`/`emit` in the type at all.
+machinery to carry around. `MarkingMenuEventEmitter` is listen-only: `on`/`off`
+narrowed per event name, with no listener options (once/signal/capture) and no
+`dispatch`/`emit` in the type at all.

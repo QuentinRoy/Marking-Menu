@@ -30,22 +30,16 @@ type EventMap<Config extends EngineConfig> = MarkingMenuEventMap<
 type EventName<Config extends EngineConfig> = keyof EventMap<Config> & string;
 
 /**
- The internal engine's entry point. Not reachable from `createMarkingMenu`
- until the cutover ticket (https://github.com/QuentinRoy/Marking-Menu/issues/184).
+ The internal engine's entry point: assembles the engine and owns its
+ lifetime. `on`/`off` are a facade over the runtime, which owns the emitter.
 
- Generic in `Config`, not merely in the model it produces: that is what makes
- the event types the engine dispatches *derived* rather than asserted.
- `createModel(config)` below returns `MarkingMenuModel<Config>`, which fixes
- `createRuntime`'s `M`, which fixes the `MarkingMenuEvent<M>` the machine may
- hand to the sink — the same type `createController` declares it returns. A
- non-generic constructor would widen the model to `MarkingMenuModel<EngineConfig>`
- and leave a cast as the only (unchecked) bridge back.
+ Generic in `Config`, not merely in the model it produces, so the event types
+ are derived from the literal config. A non-generic constructor would widen
+ the model to `MarkingMenuModel<EngineConfig>` and leave a cast as the only
+ bridge back.
 
- It assembles the engine and owns its lifetime; it does not originate events.
- Interpreting the machine's `dispatch` commands is what produces those, and
- that happens in the runtime, which owns the emitter accordingly — `on`/`off`
- below are a facade over it. Emitting is unreachable from here, so consumers
- get a listen-only surface with no private-field bookkeeping to enforce it.
+ Not reachable from `createMarkingMenu` until the cutover ticket
+ (https://github.com/QuentinRoy/Marking-Menu/issues/184).
  */
 class Controller<Config extends EngineConfig> implements MarkingMenuController<
   MarkingMenuModel<Config>
@@ -55,17 +49,9 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
   #disposed = false;
 
   constructor(config: Config & ValidateInput<Config>) {
-    // Both explicit type arguments are load-bearing, not decoration: they are
-    // what makes the model a *checked* link rather than an inferred one. Were
-    // the model to widen — the old failure mode, when this class took a
-    // non-generic `EngineConfig` — `createRuntime`'s `M` would reject it here,
-    // instead of the widened model flowing into the machine unnoticed and
-    // being papered over by a cast downstream.
-    //
-    // `createModel<Config>` rather than a `MarkingMenuModel<Config>`
-    // annotation on the result: inference would otherwise pick up the
-    // `Config & ValidateInput<Config>` parameter type as `Input`, and
-    // `MarkingMenuModel` of that is not the same type as of `Config`.
+    // Explicit `createModel<Config>` rather than annotating the result:
+    // inference would pick up the `Config & ValidateInput<Config>` parameter
+    // type as `Input`, and `MarkingMenuModel` of that is a different type.
     const model = createModel<Config>(config);
     const renderer = createRenderer({ parent: config.parent });
     this.#runtime = createRuntime<MarkingMenuModel<Config>>({
@@ -109,15 +95,8 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
 }
 
 /**
- Create the internal engine controller: an already-active object satisfying
- {@link MarkingMenuEventEmitter}.
-
- No type assertion: `Controller<Config>` *is* the declared return type, and
- its `implements` clause is what checks that. The model is derived rather
- than claimed — `createModel(config)` fixes `MarkingMenuModel<Config>`, which
- fixes `createRuntime`'s `M`, which fixes the `MarkingMenuEvent<M>` the
- machine may hand to the sink. `model.ts`'s single documented conversion
- stays the only place precision is re-attached; this path merely carries it.
+ Create the internal engine controller: an already-active, disposable object
+ satisfying {@link MarkingMenuEventEmitter}.
  */
 export function createController<const Config extends EngineConfig>(
   config: Config & ValidateInput<Config>,

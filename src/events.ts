@@ -36,9 +36,7 @@ export type ReadonlyPoint = Point;
  the pointer position, both at dispatch time.
 
  Not a DOM `Event`: this library has no DOM target, no bubbling, and no
- default action to prevent — `Event`'s machinery would all be dead weight.
- The custom-element wrapper, when it exists, will translate these into real
- DOM events at that boundary; the mechanism there is unrelated to this one.
+ default action to prevent, so `Event`'s machinery would all be dead weight.
  */
 export abstract class MarkingMenuEventBase {
   readonly #mode: MarkingMenuMode;
@@ -346,13 +344,8 @@ export type MarkingMenuEvent<M extends AnyModelNode> =
 
 /**
  The typed, listen-only facade a marking menu controller satisfies. `on`/`off`
- are narrowed to the six known event names via a single generic overload —
- there is no `type: string` fallback, so an unknown event name is rejected at
- the call site.
-
- An alias over {@link TypedEventEmitter}, not a bespoke shape: see that type
- for why this is declared standalone rather than as a class extending
- anything, and for why there is no `emit`/`dispatch` in the type at all.
+ are narrowed to the six known event names: there is no `type: string`
+ fallback, so an unknown event name is rejected at the call site.
  */
 export type MarkingMenuEventEmitter<M extends AnyModelNode> =
   TypedEventEmitter<MarkingMenuEventMap<M>>;

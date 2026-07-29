@@ -23,10 +23,9 @@ export function createRenderer({
   let upperStrokeCanvas: StrokeCanvas | null = null;
   // Reference-equality cache: an unchanged stroke array skips the redraw.
   let previousUpperStroke: readonly Point[] | null = null;
-  // The parent's own inline cursor, read before the renderer ever writes one.
-  // Restored — rather than cleared — whenever the view asks for `default`, in
-  // the same spirit as the `touch-action` claim next door: what the renderer
-  // did not set, it does not get to throw away.
+  // The parent's own inline cursor, read before the renderer writes one, and
+  // restored rather than cleared whenever the view asks for `default`: what
+  // the renderer did not set, it does not get to throw away.
   const ownCursor = parent.style.cursor;
   const gestureFeedback = createGestureFeedback({ parent, duration: 1000 });
 

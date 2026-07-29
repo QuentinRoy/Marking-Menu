@@ -6,10 +6,9 @@ import { vi } from 'vitest';
  fixture is shared by every test file that does: `src/layout/stroke.test.ts`,
  `src/engine/renderer.test.ts` and `src/engine/controller.test.ts`.
 
- `vi` is imported explicitly (rather than relied on as the ambient test
- global) because this file itself isn't a `*.test.ts` entry point matched by
- `tsconfig.test.json`, so the global augmentation from `vitest/globals` isn't
- in scope here.
+ `vi` is imported rather than used as the ambient test global: this file
+ isn't a `*.test.ts` entry point matched by `tsconfig.test.json`, so
+ `vitest/globals`' augmentation isn't in scope here.
  */
 
 /*
@@ -43,9 +42,8 @@ const createMockContext = (): MockContext => {
 /**
  Give every canvas created while held a recording 2D context.
 
- `vi.spyOn`'s return value is natively `Disposable` — disposal calls
- `mockRestore()`, which puts `document.createElement` back — so `using` on
- the result is enough; no hand-rolled restore is needed.
+ `vi.spyOn`'s return value is natively `Disposable`: disposal calls
+ `mockRestore()`, which puts `document.createElement` back.
  */
 export const stubbedCanvasContexts = (): Disposable => {
   // Captured unbound, ahead of the spy, so the mock implementation below can

@@ -33,9 +33,8 @@ import {
  forward across notifications to fill in what the legacy engine has no field
  for, and renames on the way out.
 
- Keeps its own listener bookkeeping rather than pulling in `mitt`: the shim
- only sees the public `marking-menu` package, which doesn't export `mitt` as
- an implementation detail, and a `Map` of `Set`s is all `on`/`off`/emit need.
+ Hand-rolls its listener bookkeeping because the shim only sees the public
+ `marking-menu` package, which does not re-export the `mitt` the engine uses.
  */
 class MarkingMenuEventShim<
   M extends AnyModelNode,
