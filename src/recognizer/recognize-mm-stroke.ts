@@ -44,7 +44,7 @@ export const pointsToSegments = (points: Point[]): Segment[] => {
  The implementation of {@link walkModel}, loosely typed over the erased
  {@link AnyModelNode}: the precise type is re-attached once, in `walkModel`
  itself. Recursing generically over `N` instead would require the compiler to
- unfold `ModelNodes<N>` — a recursively defined conditional type — across a
+ unfold `ModelNodes<N>`, a recursively defined conditional type, across a
  generic call, which it cannot do (see `walkModel`'s own cast).
  */
 const walkModelLoose = (
@@ -265,8 +265,8 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
   if (requireMenu) {
     if (item?.isLeaf) {
       // The menu holding the leaf is the item the walk visited just before it.
-      // A leaf can only ever be the last item of a path — the walk stops on a
-      // leaf model — so this is the leaf's own parent menu, and `model` itself
+      // A leaf can only ever be the last item of a path (the walk stops on a
+      // leaf model), so this is the leaf's own parent menu, and `model` itself
       // when the leaf was found at the first level. `N` is trivially a member
       // of `ModelNodes<N>` (its own base case); the cast is only needed
       // because the compiler does not unfold the conditional for generic `N`.

@@ -4,7 +4,7 @@ export default defineConfig({
   // Tests acquire their fixtures with `using`. Oxc downlevels `using` to a
   // helper from `@oxc-project/runtime` (not a dependency) unless the target
   // keeps it native; the test runner is the pinned dev Node, which supports
-  // it. Only the test transform is affected — the library build has its own
+  // it. Only the test transform is affected; the library build has its own
   // config and its own, lower, target.
   oxc: { target: 'esnext' },
   test: {

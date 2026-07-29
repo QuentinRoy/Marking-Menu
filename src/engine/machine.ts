@@ -12,7 +12,7 @@ import { dist, type Point } from '../utils.js';
  The pure navigation state machine: one entry point dispatching to a private
  handler per phase (idle/startup/expert), per the architecture settled on
  https://github.com/QuentinRoy/Marking-Menu/issues/153. `novice` is not a
- phase yet — no ticket has driven it into existence.
+ phase yet: no ticket has driven it into existence.
  */
 
 export type NavigationState =
@@ -176,7 +176,7 @@ function transitionIdle<M extends AnyModelNode>(
 
 /**
  The machine's single entry point: dispatches to one private handler per
- phase. Pure — no DOM, no timers.
+ phase. Pure: no DOM, no timers.
  */
 export function transition<M extends AnyModelNode>(
   state: NavigationState,

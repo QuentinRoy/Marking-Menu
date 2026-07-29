@@ -120,8 +120,8 @@ export default defineConfig([
     files: ['src/**/__fixtures__/**'],
     rules: {
       // `__fixtures__` (double underscore, both sides) is this repo's
-      // established name for a directory of test-only helpers/data — see
-      // `src/recognizer/__fixtures__`, predating this rule ever seeing a
+      // established name for a directory of test-only helpers/data (see
+      // `src/recognizer/__fixtures__`), predating this rule ever seeing a
       // `.ts` file directly inside one. Kebab-case doesn't allow it.
       'unicorn/filename-case': 'off',
     },

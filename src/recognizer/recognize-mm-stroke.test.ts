@@ -49,7 +49,7 @@ type MockModel = ModelItem<string | undefined, string, readonly MockModel[]> & {
 
 /*
  `MockModel` describes its children with an unbounded `readonly MockModel[]`
- rather than a tuple, so `ModelLeaves<MockModel>` collapses to `never` — the
+ rather than a tuple, so `ModelLeaves<MockModel>` collapses to `never`: the
  mock's children only exist at runtime, through `getNearestChild`. The tests
  below that read properties off the result therefore go through the general
  overload, which returns the wider `ModelNodes<MockModel>`.

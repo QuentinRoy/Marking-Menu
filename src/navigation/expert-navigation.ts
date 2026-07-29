@@ -12,8 +12,8 @@ import type { Point } from '../utils.js';
 export type NavigationDrag = { canceled?: boolean; position: Point };
 
 /*
- `MarkingMenuModelItem` — the base item type this file is generic over,
- since it describes no particular tree — has a non-literal `isLeaf: boolean`
+ `MarkingMenuModelItem`, the base item type this file is generic over since
+ it describes no particular tree, has a non-literal `isLeaf: boolean`
  field, so `ModelLeaves<MarkingMenuModelItem>` (and the leaf-narrowing
  overload it drives) collapses to `never`. The widened `boolean` (rather
  than the literal `true` the leaf-narrowing overload matches on) forces

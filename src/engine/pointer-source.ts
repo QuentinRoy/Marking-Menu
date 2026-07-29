@@ -64,7 +64,7 @@ export function createPointerSource({
     }
 
     // Before `send`, not after: `send` dispatches `select` synchronously, and
-    // a listener must observe fully committed state — including capture
+    // a listener must observe fully committed state, including capture
     // ownership, so that it may start a gesture of its own.
     releaseCapture();
     runtime.send({ type: 'pointer.up', position: toPosition(event) });

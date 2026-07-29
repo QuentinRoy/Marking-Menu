@@ -239,8 +239,8 @@ export class MarkingMenuChangeEvent<
 
 /**
  Dispatched once, as the last event of a gesture, when it ends on a leaf.
- `menu` is the menu the leaf was selected from — `null` in expert mode, since
- no menu is open there even though the leaf demonstrably has a parent.
+ `menu` is the menu the leaf was selected from, or `null` in expert mode,
+ since no menu is open there even though the leaf demonstrably has a parent.
  */
 export class MarkingMenuSelectEvent<
   M extends AnyModelNode,
@@ -283,7 +283,7 @@ export class MarkingMenuSelectEvent<
 /**
  Dispatched once, as the last event of a gesture, when it ends without a
  selection. `active` is the item that was active at the moment the gesture
- was abandoned — `ModelItems`, not `ModelLeaves`, since it need not be one;
+ was abandoned: `ModelItems`, not `ModelLeaves`, since it need not be one.
  `null` carries the genuine "nothing under the pointer" case.
  */
 export class MarkingMenuCancelEvent<

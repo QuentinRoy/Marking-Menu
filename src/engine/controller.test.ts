@@ -215,7 +215,7 @@ describe('createController', () => {
 
     // The listener observed the *complete* result of the pointerup input:
     // the upper-stroke canvas already gone, the feedback trace already
-    // shown, the cursor already reset — not a partial, mid-commit view.
+    // shown, the cursor already reset. Not a partial, mid-commit view.
     expect(observedDuringSelect).toEqual({ canvases: 1, cursor: '' });
   });
 
