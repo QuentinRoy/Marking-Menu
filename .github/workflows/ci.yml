@@ -60,9 +60,15 @@ jobs:
 
   E2E:
     needs: Build
-    # Playwright's browser dependencies need a full runner image, unlike the
-    # other jobs which only need Node and Yarn.
     runs-on: ubuntu-latest
+    # The official Playwright image ships the browsers and their system
+    # dependencies preinstalled, so the job never has to download them (that
+    # step used to hang for tens of minutes when the fetch stalled). Keep the
+    # tag's version in sync with the `@playwright/test` version in
+    # package.json: browsers are pinned per release, and a mismatch makes
+    # Playwright fail with "Executable doesn't exist".
+    container: mcr.microsoft.com/playwright:v1.62.0-noble
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: ./.github/actions/setup
@@ -70,7 +76,6 @@ jobs:
         with:
           name: dist
           path: dist/
-      - run: yarn playwright install --with-deps chromium firefox webkit
       # The fixture-only build, not `yarn e2e`: `dist/` was already built once
       # by the Build job above, so this avoids building the library again.
       - run: yarn e2e:build
