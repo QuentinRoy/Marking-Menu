@@ -43,3 +43,24 @@ export const waitForLogEntry = async (
     .toBe(true);
   return log;
 };
+
+/**
+ Poll the log until it holds more than `minLength` entries, then return it
+ as it stood at that point. For a gesture run after one already logged a
+ matching entry (a repeated `select`, say), `waitForLogEntry` would resolve
+ on that stale entry immediately; waiting on growth instead targets the
+ entries the next gesture actually appends.
+ */
+export const waitForLogGrowth = async (
+  page: Page,
+  minLength: number,
+): Promise<LogEntry[]> => {
+  let log: LogEntry[] = [];
+  await expect
+    .poll(async () => {
+      log = await readLog(page);
+      return log.length > minLength;
+    })
+    .toBe(true);
+  return log;
+};

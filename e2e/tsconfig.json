@@ -3,7 +3,12 @@
     "target": "ES2024",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    // ESNext over ES2024 to get `Symbol.dispose`/`Symbol.asyncDispose`
+    // (explicit resource management) for `using`/`await using` in the specs
+    // and CDP helpers — this project is `noEmit`, so the down-level codegen
+    // ships through Vite's own transpile of the fixture, not `tsc`, so there
+    // is no separate polyfill to add here.
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "types": ["node", "vite/client"],
     // The fixture imports `marking-menu` as a bare specifier, resolved at
     // runtime through the browser import map (see `e2e/fixture/index.html`)
