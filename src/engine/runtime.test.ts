@@ -1,6 +1,4 @@
-import type { MarkingMenuEvent } from '../events.js';
 import { createModel } from '../model.js';
-import type { AnyModelNode } from '../types.js';
 import { createRuntime } from './runtime.js';
 
 const model = createModel({ items: [{ id: 'right', label: 'Right' }] });
@@ -12,51 +10,39 @@ const createFakeRenderer = () => ({
   dispose: vi.fn(),
 });
 
-/**
- A fake emit-only sink: records every emitted event, and lets a test attach a
- reaction per event type (a stand-in for a listener, since the sink itself
- does not fan out to multiple listeners).
- */
-const createFakeSink = <M extends AnyModelNode>() => {
-  const emitted: Array<MarkingMenuEvent<M>> = [];
-  const reactions = new Map<string, () => void>();
-  return {
-    emitted,
-    on(type: string, reaction: () => void): void {
-      reactions.set(type, reaction);
-    },
-    emit(event: MarkingMenuEvent<M>): void {
-      emitted.push(event);
-      reactions.get(event.type)?.();
-    },
-  };
+/** Record every event the runtime emits, in order, by name. */
+const recordEmitted = (
+  runtime: ReturnType<typeof createRuntime<typeof model>>,
+): string[] => {
+  const emitted: string[] = [];
+  for (const type of ['start', 'select', 'cancel'] as const) {
+    runtime.on(type, (event) => {
+      emitted.push(event.type);
+    });
+  }
+
+  return emitted;
 };
 
 describe('createRuntime', () => {
   it('emits the events the machine produces, in order', () => {
-    const target = createFakeSink();
     const runtime = createRuntime({
       model,
       options,
-      target,
       renderer: createFakeRenderer(),
     });
+    const emitted = recordEmitted(runtime);
 
     runtime.send({ type: 'pointer.down', position: [0, 0] });
     runtime.send({ type: 'pointer.up', position: [100, 0] });
 
-    expect(target.emitted.map((event) => event.type)).toEqual([
-      'start',
-      'select',
-    ]);
+    expect(emitted).toEqual(['start', 'select']);
   });
 
   it('throws when sending an input after disposal, to surface implementation bugs', () => {
-    const target = createFakeSink();
     const runtime = createRuntime({
       model,
       options,
-      target,
       renderer: createFakeRenderer(),
     });
 
@@ -68,25 +54,23 @@ describe('createRuntime', () => {
   });
 
   it('queues a re-entrant send from within a dispatched listener, and only processes it once the listener returns', () => {
-    const target = createFakeSink();
     const runtime = createRuntime({
       model,
       options,
-      target,
       renderer: createFakeRenderer(),
     });
 
     let hasStartListenerReturned = false;
     let wasStartListenerDoneWhenSelectFired = false;
 
-    target.on('start', () => {
+    runtime.on('start', () => {
       // Re-entrant: a listener synthesizing another input, exactly the
       // scenario https://github.com/QuentinRoy/Marking-Menu/issues/153's
       // "Reentrancy" section describes.
       runtime.send({ type: 'pointer.up', position: [100, 0] });
       hasStartListenerReturned = true;
     });
-    target.on('select', () => {
+    runtime.on('select', () => {
       wasStartListenerDoneWhenSelectFired = hasStartListenerReturned;
     });
 
@@ -95,10 +79,25 @@ describe('createRuntime', () => {
     expect(wasStartListenerDoneWhenSelectFired).toBe(true);
   });
 
+  it('stops notifying a listener removed with off()', () => {
+    const runtime = createRuntime({
+      model,
+      options,
+      renderer: createFakeRenderer(),
+    });
+
+    const started = vi.fn<() => void>();
+    runtime.on('start', started);
+    runtime.off('start', started);
+
+    runtime.send({ type: 'pointer.down', position: [0, 0] });
+
+    expect(started).not.toHaveBeenCalled();
+  });
+
   it('dispose() is idempotent', () => {
-    const target = createFakeSink();
     const renderer = createFakeRenderer();
-    const runtime = createRuntime({ model, options, target, renderer });
+    const runtime = createRuntime({ model, options, renderer });
 
     runtime.dispose();
     runtime.dispose();

@@ -6,8 +6,7 @@ describe('createPointerSource', () => {
   it('ignores move and up events from a pointer that is not the active gesture owner', () => {
     const parent = createParent();
     const send = vi.fn<(input: NavigationInput) => void>();
-    const dispose = vi.fn<() => void>();
-    createPointerSource({ parent, runtime: { send, dispose } });
+    createPointerSource({ parent, runtime: { send } });
 
     parent.dispatchEvent(
       pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),

@@ -1,6 +1,6 @@
 import { claimTouchAction } from '../move/touch-action.js';
 import type { Point } from '../utils.js';
-import type { NavigationRuntime } from './runtime.js';
+import type { NavigationInputSink } from './runtime.js';
 
 export type PointerSource = {
   dispose: () => void;
@@ -19,7 +19,7 @@ export function createPointerSource({
   runtime,
 }: {
   parent: HTMLElement;
-  runtime: NavigationRuntime;
+  runtime: NavigationInputSink;
 }): PointerSource {
   let activePointerId: number | null = null;
   const releaseTouchAction = claimTouchAction(parent);

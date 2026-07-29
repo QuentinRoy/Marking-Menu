@@ -1,4 +1,3 @@
-import mitt from 'mitt';
 import type { MarkingMenuEventEmitter, MarkingMenuEventMap } from '../events.js';
 import {
   createModel,
@@ -42,18 +41,17 @@ type EventName<Config extends EngineConfig> = keyof EventMap<Config> & string;
  non-generic constructor would widen the model to `MarkingMenuModel<EngineConfig>`
  and leave a cast as the only (unchecked) bridge back.
 
- Backed by `mitt` rather than `EventTarget`: this library has no DOM target to
- offer, and `mitt`'s `on`/`emit` line up with {@link TypedEventEmitter}'s
- shape with no cast at the delegation boundary. `#emitter` is private, so
- emitting stays internal — consumers get a listen-only surface, and the
- machine's commands are the only thing that ever emits.
+ It assembles the engine and owns its lifetime; it does not originate events.
+ Interpreting the machine's `dispatch` commands is what produces those, and
+ that happens in the runtime, which owns the emitter accordingly — `on`/`off`
+ below are a facade over it. Emitting is unreachable from here, so consumers
+ get a listen-only surface with no private-field bookkeeping to enforce it.
  */
 class Controller<Config extends EngineConfig> implements MarkingMenuController<
   MarkingMenuModel<Config>
 > {
-  readonly #emitter = mitt<EventMap<Config>>();
   readonly #pointerSource: PointerSource;
-  readonly #runtime: NavigationRuntime;
+  readonly #runtime: NavigationRuntime<MarkingMenuModel<Config>>;
   #disposed = false;
 
   constructor(config: Config & ValidateInput<Config>) {
@@ -73,11 +71,6 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     this.#runtime = createRuntime<MarkingMenuModel<Config>>({
       model,
       options: { movementsThreshold: config.movementsThreshold ?? 5 },
-      target: {
-        emit: (event) => {
-          this.#emitter.emit(event.type, event);
-        },
-      },
       renderer,
     });
     this.#pointerSource = createPointerSource({
@@ -90,14 +83,14 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     type: K,
     listener: TypedEventListener<EventMap<Config>, K>,
   ): void {
-    this.#emitter.on(type, listener);
+    this.#runtime.on(type, listener);
   }
 
   off<K extends EventName<Config>>(
     type: K,
     listener: TypedEventListener<EventMap<Config>, K>,
   ): void {
-    this.#emitter.off(type, listener);
+    this.#runtime.off(type, listener);
   }
 
   dispose(): void {

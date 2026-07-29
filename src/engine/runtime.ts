@@ -1,4 +1,8 @@
-import type { MarkingMenuEvent } from '../events.js';
+import mitt from 'mitt';
+import type {
+  MarkingMenuEventEmitter,
+  MarkingMenuEventMap,
+} from '../events.js';
 import type { AnyModelNode } from '../types.js';
 import { projectLayout } from './layout-view.js';
 import {
@@ -10,22 +14,24 @@ import {
 } from './machine.js';
 import type { LayoutRenderer } from './renderer.js';
 
-export type NavigationRuntime = {
+/**
+ Somewhere to send pointer inputs. What an input source depends on: it has
+ nothing to say about events or the model, so it should not see either.
+ */
+export type NavigationInputSink = {
   send: (input: NavigationInput) => void;
-  dispose: () => void;
 };
 
 /**
- Where the runtime emits the machine's `dispatch` commands. Narrower than
- `EventTarget` on purpose: typed as the wide `EventTarget`, `M` would be a
- phantom here — nothing would check that the events reaching the sink are the
- ones this model can produce. `emit` rather than `dispatchEvent`: the runtime
- has exactly one thing to say to its sink — "this event happened" — with no DOM
- return value, no bubbling, and no target identity to negotiate.
+ The runtime is the only thing that ever originates an event — interpreting
+ the machine's `dispatch` commands is what produces them — so it owns the
+ emitter rather than being handed somewhere to report to. Nothing above it
+ emits; the controller only re-exposes `on`/`off` as its public facade.
  */
-export type MarkingMenuEventSink<M extends AnyModelNode> = {
-  emit: (event: MarkingMenuEvent<M>) => void;
-};
+export type NavigationRuntime<M extends AnyModelNode> = NavigationInputSink &
+  MarkingMenuEventEmitter<M> & {
+    dispose: () => void;
+  };
 
 /**
  The runtime owns mutable infrastructure only: the committed state, the
@@ -35,14 +41,13 @@ export type MarkingMenuEventSink<M extends AnyModelNode> = {
 export function createRuntime<M extends AnyModelNode>({
   model,
   options,
-  target,
   renderer,
 }: {
   model: M;
   options: NavigationOptions;
-  target: MarkingMenuEventSink<M>;
   renderer: LayoutRenderer;
-}): NavigationRuntime {
+}): NavigationRuntime<M> {
+  const emitter = mitt<MarkingMenuEventMap<M>>();
   let state: NavigationState = { phase: 'idle' };
   let isDisposed = false;
   let isDraining = false;
@@ -62,7 +67,7 @@ export function createRuntime<M extends AnyModelNode>({
 
     for (const command of commands) {
       if (command.type === 'dispatch') {
-        target.emit(command.event);
+        emitter.emit(command.event.type, command.event);
       }
     }
   };
@@ -109,5 +114,5 @@ export function createRuntime<M extends AnyModelNode>({
     renderer.dispose();
   };
 
-  return { send, dispose };
+  return { send, dispose, on: emitter.on, off: emitter.off };
 }
