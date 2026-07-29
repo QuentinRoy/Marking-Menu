@@ -124,11 +124,6 @@ export class CdpMultiTouchDrag {
     await this.#dispatchEnd([id]);
   }
 
-  // `Symbol.asyncDispose` is standard (part of the explicit-resource-management
-  // proposal TypeScript and Node already support — see e2e/tsconfig.json's
-  // `lib` comment); `eslint-plugin-unicorn`@72's built-in `Symbol` property
-  // list simply predates it.
-  // eslint-disable-next-line unicorn/no-nonstandard-builtin-properties
   async [Symbol.asyncDispose](): Promise<void> {
     await this.#client.detach();
   }
