@@ -4,6 +4,11 @@ import {
   queryCanvasContext,
   stubbedCanvasContexts,
 } from '../__fixtures__/canvas.js';
+import type {
+  MarkingMenuSelectEvent,
+  MarkingMenuStartEvent,
+} from '../events.js';
+import type { AnyModelNode } from '../types.js';
 import { createParent, pointer } from './__fixtures__/pointer.js';
 import { createController } from './controller.js';
 
@@ -41,7 +46,7 @@ describe('createController', () => {
 
     const selected = vi.fn<() => void>();
     let selectedId: string | undefined;
-    controller.addEventListener('select', (event) => {
+    controller.on('select', (event) => {
       selected();
       selectedId = event.selection.id;
     });
@@ -60,11 +65,11 @@ describe('createController', () => {
     using controller = createController({ items, parent });
 
     const seen: string[] = [];
-    controller.addEventListener('start', (event) => {
+    controller.on('start', (event) => {
       seen.push(event.type);
       expect(event.mode).toBe('startup');
     });
-    controller.addEventListener('select', (event) => {
+    controller.on('select', (event) => {
       seen.push(event.type);
     });
 
@@ -158,8 +163,8 @@ describe('createController', () => {
     expect(parent.querySelectorAll('canvas')).toHaveLength(1);
     expect(parent.style.getPropertyValue('touch-action')).toBe('none');
 
-    const selected = voidMock<[Event]>();
-    controller.addEventListener('select', selected);
+    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    controller.on('select', selected);
 
     controller.dispose();
 
@@ -189,12 +194,12 @@ describe('createController', () => {
     using controller = createController({ items, parent });
 
     let startPosition: readonly number[] | undefined;
-    controller.addEventListener('start', (event) => {
+    controller.on('start', (event) => {
       startPosition = event.position;
     });
 
     let observedDuringSelect: { canvases: number; cursor: string } | undefined;
-    controller.addEventListener('select', (event) => {
+    controller.on('select', (event) => {
       expect(Object.isFrozen(event.position)).toBe(true);
       observedDuringSelect = {
         canvases: parent.querySelectorAll('canvas').length,
@@ -221,8 +226,8 @@ describe('createController', () => {
     const { releasePointerCapture, setPointerCapture } =
       pointerCaptureMocks(parent);
 
-    const started = voidMock<[Event]>();
-    controller.addEventListener('start', started);
+    const started = voidMock<[MarkingMenuStartEvent]>();
+    controller.on('start', started);
 
     // Non-primary pointer and non-primary button are both ignored.
     parent.dispatchEvent(
@@ -263,7 +268,7 @@ describe('createController', () => {
     using controller = createController({ items, parent });
 
     let heldDuringSelect: boolean | undefined;
-    controller.addEventListener('select', () => {
+    controller.on('select', () => {
       heldDuringSelect = parent.hasPointerCapture(1);
     });
 

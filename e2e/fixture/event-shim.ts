@@ -2,6 +2,7 @@
 // rather than node_modules, which puts eslint-plugin-import-x's resolver and
 // the prettier import-sort plugin at odds over where it belongs; the
 // disable keeps prettier's ordering rather than fighting both tools.
+import type { Observable, Subscription } from 'rxjs';
 import {
   MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
@@ -10,14 +11,14 @@ import {
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
   type AnyModelNode,
+  type MarkingMenuEvent,
+  type MarkingMenuEventEmitter,
   type MarkingMenuEventMap,
-  type MarkingMenuEventTarget,
   type MarkingMenuNotification,
   type ModelItems,
   type ModelMenus,
   type ReadonlyPoint,
 } from 'marking-menu';
-import type { Observable, Subscription } from 'rxjs';
 
 /**
  Test-only shim translating the legacy `notifySteps` Observable into the
@@ -32,18 +33,18 @@ import type { Observable, Subscription } from 'rxjs';
  forward across notifications to fill in what the legacy engine has no field
  for, and renames on the way out.
 
- Wraps a private `EventTarget` rather than extending one: a real
- `class X extends EventTarget` overriding `addEventListener` fails
- TypeScript's override-compatibility check against the base class member
- (see `MarkingMenuEventTarget`'s own doc comment), so `addEventListener` and
- `removeEventListener` are declared here with their own narrow-overload-over
- -wide-implementation pair — the same idiom, applied to a method with no
- base class member to conflict with — and forward to the private target.
+ Keeps its own listener bookkeeping rather than pulling in `mitt`: the shim
+ only sees the public `marking-menu` package, which doesn't export `mitt` as
+ an implementation detail, and a `Map` of `Set`s is all `on`/`off`/emit need.
  */
 class MarkingMenuEventShim<
   M extends AnyModelNode,
-> implements MarkingMenuEventTarget<M> {
-  readonly #target = new EventTarget();
+> implements MarkingMenuEventEmitter<M> {
+  readonly #listeners = new Map<
+    string,
+    Set<(event: MarkingMenuEvent<M>) => void>
+  >();
+
   readonly #subscription: Subscription;
   #lastPosition: ReadonlyPoint = [0, 0];
   #lastMenu: ModelMenus<M> | null = null;
@@ -51,18 +52,21 @@ class MarkingMenuEventShim<
 
   constructor(notifications$: Observable<MarkingMenuNotification<M>>) {
     // The one `subscribe` call left in the whole E2E suite: everything else
-    // consumes this shim through `addEventListener`.
+    // consumes this shim through `on`.
     this.#subscription = notifications$.subscribe({
       error(error: unknown) {
         console.error(error);
       },
       next: (notification) => {
-        this.#target.dispatchEvent(this.#toEvent(notification));
+        const event = this.#toEvent(notification);
+        for (const listener of this.#listeners.get(event.type) ?? []) {
+          listener(event);
+        }
       },
     });
   }
 
-  #toEvent(notification: MarkingMenuNotification<M>): Event {
+  #toEvent(notification: MarkingMenuNotification<M>): MarkingMenuEvent<M> {
     const position = notification.position ?? this.#lastPosition;
     this.#lastPosition = position;
 
@@ -144,40 +148,26 @@ class MarkingMenuEventShim<
     }
   }
 
-  addEventListener<K extends keyof MarkingMenuEventMap<M>>(
+  on<K extends keyof MarkingMenuEventMap<M>>(
     type: K,
-    listener: (
-      this: MarkingMenuEventTarget<M>,
-      event: MarkingMenuEventMap<M>[K],
-    ) => void,
-    options?: boolean | AddEventListenerOptions,
-  ): void;
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions,
+    listener: (event: MarkingMenuEventMap<M>[K]) => void,
   ): void {
-    this.#target.addEventListener(type, listener, options);
+    const asUntyped = listener as (event: MarkingMenuEvent<M>) => void;
+    const listeners = this.#listeners.get(type);
+    if (listeners === undefined) {
+      this.#listeners.set(type, new Set([asUntyped]));
+    } else {
+      listeners.add(asUntyped);
+    }
   }
 
-  removeEventListener<K extends keyof MarkingMenuEventMap<M>>(
+  off<K extends keyof MarkingMenuEventMap<M>>(
     type: K,
-    listener: (
-      this: MarkingMenuEventTarget<M>,
-      event: MarkingMenuEventMap<M>[K],
-    ) => void,
-    options?: boolean | EventListenerOptions,
-  ): void;
-  removeEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions,
+    listener: (event: MarkingMenuEventMap<M>[K]) => void,
   ): void {
-    this.#target.removeEventListener(type, listener, options);
-  }
-
-  dispatchEvent(event: Event): boolean {
-    return this.#target.dispatchEvent(event);
+    this.#listeners
+      .get(type)
+      ?.delete(listener as (event: MarkingMenuEvent<M>) => void);
   }
 
   dispose(): void {
@@ -191,6 +181,6 @@ class MarkingMenuEventShim<
  */
 export function shimMarkingMenuEvents<M extends AnyModelNode>(
   notifications$: Observable<MarkingMenuNotification<M>>,
-): MarkingMenuEventTarget<M> & { dispose(): void } {
+): MarkingMenuEventEmitter<M> & { dispose(): void } {
   return new MarkingMenuEventShim(notifications$);
 }

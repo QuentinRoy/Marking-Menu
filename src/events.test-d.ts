@@ -3,8 +3,8 @@ import type {
   MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
   MarkingMenuEvent,
+  MarkingMenuEventEmitter,
   MarkingMenuEventMap,
-  MarkingMenuEventTarget,
   MarkingMenuMoveEvent,
   MarkingMenuOpenEvent,
   MarkingMenuSelectEvent,
@@ -54,6 +54,10 @@ describe('MarkingMenuEvent', () => {
     >();
   });
 
+  it('is not assignable to a DOM Event: this library is DOM-free', () => {
+    expectTypeOf<MarkingMenuEvent<M>>().not.toExtend<Event>();
+  });
+
   it('discriminates exhaustively on `type` across a `switch`', () => {
     // No `default` case: `@typescript-eslint/switch-exhaustiveness-check`
     // already fails the build if a case is missing, and `noImplicitReturns`
@@ -96,54 +100,28 @@ describe('MarkingMenuEvent', () => {
   });
 });
 
-declare const target: MarkingMenuEventTarget<M>;
+declare const target: MarkingMenuEventEmitter<M>;
 
-describe('MarkingMenuEventTarget', () => {
-  it('types the listener parameter of addEventListener per event name', () => {
-    target.addEventListener('select', (event) => {
+describe('MarkingMenuEventEmitter', () => {
+  it('types the listener parameter of `on` per event name', () => {
+    target.on('select', (event) => {
       expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<M>>();
     });
-    target.addEventListener('open', (event) => {
+    target.on('open', (event) => {
       expectTypeOf(event).toEqualTypeOf<MarkingMenuOpenEvent<M>>();
     });
   });
 
-  it('types the listener parameter of removeEventListener per event name', () => {
-    target.removeEventListener('select', noOp);
+  it('types the listener parameter of `off` per event name', () => {
+    target.off('select', noOp);
   });
 
-  it('rejects unknown event names on addEventListener and removeEventListener', () => {
+  it('rejects unknown event names on `on` and `off`', () => {
     // @ts-expect-error -- `selectt` is not one of the six known event names.
-    target.addEventListener('selectt', noOp);
+    target.on('selectt', noOp);
     // @ts-expect-error -- there is no `type: string` fallback overload.
-    target.addEventListener('anything', noOp);
-    // @ts-expect-error -- same rejection applies to removeEventListener.
-    target.removeEventListener('selectt', noOp);
-  });
-
-  it('leaves `once`, `signal` and `capture` unaffected', () => {
-    const controller = new AbortController();
-    target.addEventListener('select', noOp, {
-      once: true,
-      capture: true,
-      signal: controller.signal,
-    });
-    target.addEventListener('select', noOp, { capture: true });
-  });
-
-  it('remains assignable to EventTarget via the documented escape hatch', () => {
-    // The typed facade narrows the listener parameter, so plain implicit
-    // assignment to `EventTarget` is intentionally not what's being tested
-    // here — the documented escape hatch is the explicit downcast, which
-    // stays available for exactly the case an unknown event name is needed.
-    const asEventTarget: EventTarget = target as EventTarget;
-    asEventTarget.addEventListener('anything', noOp);
-    expectTypeOf(asEventTarget).toEqualTypeOf<EventTarget>();
-  });
-
-  it('keeps dispatchEvent unmodified from EventTarget', () => {
-    expectTypeOf(target.dispatchEvent).toEqualTypeOf<
-      EventTarget['dispatchEvent']
-    >();
+    target.on('anything', noOp);
+    // @ts-expect-error -- same rejection applies to `off`.
+    target.off('selectt', noOp);
   });
 });

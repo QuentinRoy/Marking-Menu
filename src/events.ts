@@ -1,3 +1,4 @@
+import type { TypedEventEmitter } from './typed-event-emitter.js';
 import type {
   AnyModelNode,
   ModelItems,
@@ -32,20 +33,23 @@ export type ReadonlyPoint = Point;
 
 /**
  What every marking menu event has in common: the mode the gesture was in, and
- the pointer position, both at dispatch time. Every marking menu event is
- non-cancelable, non-bubbling and non-composed: consumers observe committed
- state, so there is no default action left to prevent, and the events have no
- shadow-DOM boundary to cross.
+ the pointer position, both at dispatch time.
+
+ Not a DOM `Event`: this library has no DOM target, no bubbling, and no
+ default action to prevent — `Event`'s machinery would all be dead weight.
+ The custom-element wrapper, when it exists, will translate these into real
+ DOM events at that boundary; the mechanism there is unrelated to this one.
  */
-export abstract class MarkingMenuEventBase extends Event {
+export abstract class MarkingMenuEventBase {
   readonly #mode: MarkingMenuMode;
   readonly #position: ReadonlyPoint;
+  readonly type: string;
 
   constructor(
     type: string,
     data: { readonly mode: MarkingMenuMode; readonly position: ReadonlyPoint },
   ) {
-    super(type, { cancelable: false, bubbles: false, composed: false });
+    this.type = type;
     this.#mode = data.mode;
     this.#position = data.position;
   }
@@ -341,45 +345,14 @@ export type MarkingMenuEvent<M extends AnyModelNode> =
   MarkingMenuEventMap<M>[keyof MarkingMenuEventMap<M>];
 
 /**
- The typed `EventTarget` facade a marking menu controller satisfies.
- `addEventListener`/`removeEventListener` are narrowed to the six known event
- names via a single generic overload — there is no `type: string` fallback,
- so an unknown event name is rejected at the call site.
+ The typed, listen-only facade a marking menu controller satisfies. `on`/`off`
+ are narrowed to the six known event names via a single generic overload —
+ there is no `type: string` fallback, so an unknown event name is rejected at
+ the call site.
 
- Declared as a standalone type, not a class extending `EventTarget`: a real
- `class X extends EventTarget` overriding `addEventListener` with a narrower
- listener parameter fails TypeScript's override-compatibility check
- (`EventTarget`'s own signature accepts any string and
- `EventListenerOrEventListenerObject | null`, and narrowing it is only valid
- for interfaces such as `lib.dom.d.ts`'s own `HTMLElement`, which redeclares
- `addEventListener` without literally extending a real base class member).
- Declaring the facade as its own type — implemented by the controller class,
- not extended by it — sidesteps that check while keeping every constraint
- below intact: the narrowing compiles with zero type assertions, and the
- type is still structurally close enough to `EventTarget` that an explicit
- downcast works as the escape hatch for an unknown event name:
- `(menu as EventTarget).addEventListener(…)`. `dispatchEvent` is included
- unmodified: narrowing it would be unsound and evaporate the moment the
- controller is widened to a plain `EventTarget`.
+ An alias over {@link TypedEventEmitter}, not a bespoke shape: see that type
+ for why this is declared standalone rather than as a class extending
+ anything, and for why there is no `emit`/`dispatch` in the type at all.
  */
-export type MarkingMenuEventTarget<M extends AnyModelNode> = {
-  addEventListener<K extends keyof MarkingMenuEventMap<M>>(
-    type: K,
-    listener: (
-      this: MarkingMenuEventTarget<M>,
-      event: MarkingMenuEventMap<M>[K],
-    ) => void,
-    options?: boolean | AddEventListenerOptions,
-  ): void;
-
-  removeEventListener<K extends keyof MarkingMenuEventMap<M>>(
-    type: K,
-    listener: (
-      this: MarkingMenuEventTarget<M>,
-      event: MarkingMenuEventMap<M>[K],
-    ) => void,
-    options?: boolean | EventListenerOptions,
-  ): void;
-
-  dispatchEvent(event: Event): boolean;
-};
+export type MarkingMenuEventEmitter<M extends AnyModelNode> =
+  TypedEventEmitter<MarkingMenuEventMap<M>>;

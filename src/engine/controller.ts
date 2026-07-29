@@ -1,9 +1,11 @@
-import type { MarkingMenuEventMap, MarkingMenuEventTarget } from '../events.js';
+import mitt from 'mitt';
+import type { MarkingMenuEventEmitter, MarkingMenuEventMap } from '../events.js';
 import {
   createModel,
   type MarkingMenuModel,
   type ValidateInput,
 } from '../model.js';
+import type { TypedEventListener } from '../typed-event-emitter.js';
 import type { AnyModelNode, MarkingMenuInput } from '../types.js';
 import { createPointerSource, type PointerSource } from './pointer-source.js';
 import { createRenderer } from './renderer.js';
@@ -15,7 +17,7 @@ export type EngineConfig = MarkingMenuInput & {
 };
 
 export type MarkingMenuController<M extends AnyModelNode> =
-  MarkingMenuEventTarget<M> &
+  MarkingMenuEventEmitter<M> &
     Disposable & {
       dispose(): void;
     };
@@ -40,17 +42,16 @@ type EventName<Config extends EngineConfig> = keyof EventMap<Config> & string;
  non-generic constructor would widen the model to `MarkingMenuModel<EngineConfig>`
  and leave a cast as the only (unchecked) bridge back.
 
- It *composes* an `EventTarget` rather than extending one, which is what lets
- it `implements` the typed facade with no assertion anywhere — see
- {@link MarkingMenuEventTarget} for why extending cannot carry the narrowing.
- `#events` is private, so dispatching stays internal: consumers get a
- listen-only surface, and the machine's commands are the only thing that ever
- emits.
+ Backed by `mitt` rather than `EventTarget`: this library has no DOM target to
+ offer, and `mitt`'s `on`/`emit` line up with {@link TypedEventEmitter}'s
+ shape with no cast at the delegation boundary. `#emitter` is private, so
+ emitting stays internal — consumers get a listen-only surface, and the
+ machine's commands are the only thing that ever emits.
  */
 class Controller<Config extends EngineConfig> implements MarkingMenuController<
   MarkingMenuModel<Config>
 > {
-  readonly #events = new EventTarget();
+  readonly #emitter = mitt<EventMap<Config>>();
   readonly #pointerSource: PointerSource;
   readonly #runtime: NavigationRuntime;
   #disposed = false;
@@ -74,7 +75,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       options: { movementsThreshold: config.movementsThreshold ?? 5 },
       target: {
         emit: (event) => {
-          this.#events.dispatchEvent(event);
+          this.#emitter.emit(event.type, event);
         },
       },
       renderer,
@@ -85,34 +86,18 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     });
   }
 
-  addEventListener<K extends EventName<Config>>(
+  on<K extends EventName<Config>>(
     type: K,
-    listener: (
-      this: MarkingMenuEventTarget<MarkingMenuModel<Config>>,
-      event: EventMap<Config>[K],
-    ) => void,
-    options?: boolean | AddEventListenerOptions,
+    listener: TypedEventListener<EventMap<Config>, K>,
   ): void {
-    // `EventTarget`'s own signature is untyped by nature (`Event`, any type
-    // string). Narrowing is the whole point of the facade, so the loss is
-    // absorbed exactly here, at the delegation boundary — the listener is
-    // handed back events of precisely the type it was registered for.
-    this.#events.addEventListener(type, listener as EventListener, options);
+    this.#emitter.on(type, listener);
   }
 
-  removeEventListener<K extends EventName<Config>>(
+  off<K extends EventName<Config>>(
     type: K,
-    listener: (
-      this: MarkingMenuEventTarget<MarkingMenuModel<Config>>,
-      event: EventMap<Config>[K],
-    ) => void,
-    options?: boolean | EventListenerOptions,
+    listener: TypedEventListener<EventMap<Config>, K>,
   ): void {
-    this.#events.removeEventListener(type, listener as EventListener, options);
-  }
-
-  dispatchEvent(event: Event): boolean {
-    return this.#events.dispatchEvent(event);
+    this.#emitter.off(type, listener);
   }
 
   dispose(): void {
@@ -132,7 +117,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
 
 /**
  Create the internal engine controller: an already-active object satisfying
- {@link MarkingMenuEventTarget}.
+ {@link MarkingMenuEventEmitter}.
 
  No type assertion: `Controller<Config>` *is* the declared return type, and
  its `implements` clause is what checks that. The model is derived rather
