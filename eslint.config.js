@@ -36,12 +36,6 @@ export default defineConfig([
       // annoying false positives.
       'unicorn/better-dom-traversing': 'off',
 
-      // The rule's list of `Symbol` statics predates Explicit Resource
-      // Management, so it flags the very much standard `Symbol.dispose` this
-      // repo implements and consumes via `using`. It takes no allowlist
-      // option, so the whole rule has to go.
-      'unicorn/no-nonstandard-builtin-properties': 'off',
-
       // This repo uses named exports only (c.f. bcb1332).
       'import-x/no-default-export': 'error',
 
@@ -82,6 +76,22 @@ export default defineConfig([
           },
         },
       ],
+    },
+  },
+  {
+    // Only test code may reach for `Symbol.dispose`/`Symbol.asyncDispose`:
+    // shipped code must not require `using` of consumers, so the rule stays on
+    // everywhere else and is the thing that catches a lapse. It flags both,
+    // its `Symbol` list predating Explicit Resource Management, and it takes
+    // no allowlist option, hence disabling it wholesale for these files.
+    files: [
+      'src/**/*.test.ts',
+      'src/**/*.test-d.ts',
+      'src/**/__fixtures__/**',
+      'e2e/**',
+    ],
+    rules: {
+      'unicorn/no-nonstandard-builtin-properties': 'off',
     },
   },
   {

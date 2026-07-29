@@ -20,5 +20,9 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true
   },
-  "include": ["src/**/*.test.ts", "src/**/*.test-d.ts"]
+  "include": [
+    "src/**/*.test.ts",
+    "src/**/*.test-d.ts",
+    "src/**/__fixtures__/**/*"
+  ]
 }

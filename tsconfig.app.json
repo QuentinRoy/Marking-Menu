@@ -3,7 +3,7 @@
     "target": "ES2024",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2024", "ESNext.Disposable", "DOM", "DOM.Iterable"],
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
     "strict": true,
     "erasableSyntaxOnly": true,
@@ -21,5 +21,9 @@
     "noEmit": true
   },
   "include": ["src"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test-d.ts"]
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test-d.ts",
+    "src/**/__fixtures__/**/*"
+  ]
 }

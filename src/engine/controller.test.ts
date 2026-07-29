@@ -4,6 +4,7 @@ import {
   queryCanvasContext,
   stubbedCanvasContexts,
 } from '../__fixtures__/canvas.js';
+import { held } from '../__fixtures__/disposable.js';
 import type {
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
@@ -42,7 +43,7 @@ describe('createController', () => {
   it('dispatches select carrying the leaf a straight drag recognizes', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    using controller = createController({ items, parent });
+    using controller = held(createController({ items, parent }));
 
     const selected = vi.fn<() => void>();
     let selectedId: string | undefined;
@@ -62,7 +63,7 @@ describe('createController', () => {
   it('dispatches start as the first event, before select', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    using controller = createController({ items, parent });
+    using controller = held(createController({ items, parent }));
 
     const seen: string[] = [];
     controller.on('start', (event) => {
@@ -83,7 +84,7 @@ describe('createController', () => {
   it('shows a crosshair cursor on gesture start', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    using _controller = createController({ items, parent });
+    using _controller = held(createController({ items, parent }));
 
     expect(parent.style.cursor).toBe('');
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
@@ -112,7 +113,7 @@ describe('createController', () => {
     using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
-    using _controller = createController({ items, parent });
+    using _controller = held(createController({ items, parent }));
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     parent.dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 0 }));
@@ -143,7 +144,7 @@ describe('createController', () => {
   it('shows one gesture-feedback trace on completion', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    using _controller = createController({ items, parent });
+    using _controller = held(createController({ items, parent }));
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
@@ -155,7 +156,7 @@ describe('createController', () => {
   it('dispose() removes listeners, DOM, and the touch-action claim, and is idempotent', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    using controller = createController({ items, parent });
+    using controller = held(createController({ items, parent }));
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
@@ -191,7 +192,7 @@ describe('createController', () => {
   it('freezes position on start and select, and dispatches select after the DOM is fully rendered', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    using controller = createController({ items, parent });
+    using controller = held(createController({ items, parent }));
 
     let startPosition: readonly number[] | undefined;
     controller.on('start', (event) => {
@@ -222,7 +223,7 @@ describe('createController', () => {
   it('only accepts the primary pointer and primary button, and owns pointer capture', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    using controller = createController({ items, parent });
+    using controller = held(createController({ items, parent }));
     const { releasePointerCapture, setPointerCapture } =
       pointerCaptureMocks(parent);
 
@@ -265,7 +266,7 @@ describe('createController', () => {
   it('has already released pointer capture by the time select is dispatched', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
-    using controller = createController({ items, parent });
+    using controller = held(createController({ items, parent }));
 
     let heldDuringSelect: boolean | undefined;
     controller.on('select', () => {
@@ -279,19 +280,5 @@ describe('createController', () => {
     // A `select` listener sees fully committed state, and capture ownership is
     // part of that state: a listener may legitimately start its own gesture.
     expect(heldDuringSelect).toBe(false);
-  });
-
-  it('[Symbol.dispose]() delegates to dispose()', () => {
-    using _canvases = stubbedCanvasContexts();
-    const parent = createParent();
-    const controller = createController({ items, parent });
-
-    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
-    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
-
-    controller[Symbol.dispose]();
-
-    expect(parent.querySelectorAll('canvas')).toHaveLength(0);
-    expect(parent.style.getPropertyValue('touch-action')).toBe('');
   });
 });

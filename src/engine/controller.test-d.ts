@@ -38,14 +38,15 @@ describe('createController', () => {
     expectTypeOf(controller).toEqualTypeOf<MarkingMenuController<M>>();
   });
 
-  it('exposes both disposal forms', () => {
+  it('exposes disposal as a plain method', () => {
     expectTypeOf(controller.dispose).toEqualTypeOf<() => void>();
-    expectTypeOf(controller[Symbol.dispose]).toEqualTypeOf<() => void>();
   });
 
   it('exposes exactly the listen-only facade and disposal, nothing else', () => {
+    // Notably no `[Symbol.dispose]`: requiring `using` of consumers is not
+    // something this library does. See `controller.ts`.
     expectTypeOf<keyof MarkingMenuController<M>>().toEqualTypeOf<
-      'on' | 'off' | 'dispose' | typeof Symbol.dispose
+      'on' | 'off' | 'dispose'
     >();
   });
 });

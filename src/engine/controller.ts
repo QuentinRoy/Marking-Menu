@@ -18,11 +18,16 @@ export type EngineConfig = MarkingMenuInput & {
   readonly movementsThreshold?: number;
 };
 
+/*
+ No `Disposable`/`[Symbol.dispose]`, deliberately. `using` is syntax, so a
+ consumer on a runtime without it cannot even parse the call site, and support
+ sits around 70%. `dispose()` is the whole disposal contract; a `using`-capable
+ consumer can still wrap this themselves.
+ */
 export type MarkingMenuController<M extends AnyModelNode> =
-  MarkingMenuEventEmitter<M> &
-    Disposable & {
-      dispose(): void;
-    };
+  MarkingMenuEventEmitter<M> & {
+    dispose(): void;
+  };
 
 /** The event map of the controller a given config produces. */
 type EventMap<Config extends EngineConfig> = MarkingMenuEventMap<
@@ -90,10 +95,6 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     this.#disposed = true;
     this.#pointerSource.dispose();
     this.#runtime.dispose();
-  }
-
-  [Symbol.dispose](): void {
-    this.dispose();
   }
 }
 
