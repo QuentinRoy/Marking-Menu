@@ -61,6 +61,38 @@ describe('rafThrottle', () => {
     expect(fn).not.toHaveBeenCalled();
   });
 
+  it('does not call the throttled function once canceled', () => {
+    const fn = voidMock<[number]>();
+    const throttled = rafThrottle(fn);
+
+    throttled(1);
+    throttled.cancel();
+    vi.advanceTimersToNextFrame();
+
+    expect(fn).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when canceled with no frame pending', () => {
+    const fn = voidMock<[number]>();
+    const throttled = rafThrottle(fn);
+
+    expect(() => {
+      throttled.cancel();
+    }).not.toThrow();
+  });
+
+  it('can schedule a new frame after being canceled', () => {
+    const fn = voidMock<[number]>();
+    const throttled = rafThrottle(fn);
+
+    throttled(1);
+    throttled.cancel();
+    throttled(2);
+    vi.advanceTimersToNextFrame();
+
+    expect(fn).toHaveBeenCalledExactlyOnceWith(2);
+  });
+
   it('throttles each wrapped function independently', () => {
     const fn1 = voidMock<[string]>();
     const fn2 = voidMock<[string]>();
