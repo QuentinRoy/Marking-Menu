@@ -1,3 +1,4 @@
+import type { MarkingMenuEvent } from '../events.js';
 import type { AnyModelNode } from '../types.js';
 import { projectLayout } from './layout-view.js';
 import {
@@ -15,6 +16,18 @@ export type NavigationRuntime = {
 };
 
 /**
+ Where the runtime emits the machine's `dispatch` commands. Narrower than
+ `EventTarget` on purpose: typed as the wide `EventTarget`, `M` would be a
+ phantom here — nothing would check that the events reaching the sink are the
+ ones this model can produce. `emit` rather than `dispatchEvent`: the runtime
+ has exactly one thing to say to its sink — "this event happened" — with no DOM
+ return value, no bubbling, and no target identity to negotiate.
+ */
+export type MarkingMenuEventSink<M extends AnyModelNode> = {
+  emit: (event: MarkingMenuEvent<M>) => void;
+};
+
+/**
  The runtime owns mutable infrastructure only: the committed state, the
  reentrant input queue, and command interpretation. It never makes domain
  decisions — those live in `transition`.
@@ -27,7 +40,7 @@ export function createRuntime<M extends AnyModelNode>({
 }: {
   model: M;
   options: NavigationOptions;
-  target: EventTarget;
+  target: MarkingMenuEventSink<M>;
   renderer: LayoutRenderer;
 }): NavigationRuntime {
   let state: NavigationState = { phase: 'idle' };
@@ -49,7 +62,7 @@ export function createRuntime<M extends AnyModelNode>({
 
     for (const command of commands) {
       if (command.type === 'dispatch') {
-        target.dispatchEvent(command.event);
+        target.emit(command.event);
       }
     }
   };
