@@ -70,14 +70,26 @@ export function createPointerSource({
     runtime.send({ type: 'pointer.up', position: toPosition(event) });
   };
 
+  const onPointerCancel = (event: PointerEvent): void => {
+    if (event.pointerId !== activePointerId) {
+      return;
+    }
+
+    // Same ordering rationale as `onPointerUp`: release before dispatching.
+    releaseCapture();
+    runtime.send({ type: 'pointer.cancel', position: toPosition(event) });
+  };
+
   parent.addEventListener('pointerdown', onPointerDown);
   parent.addEventListener('pointermove', onPointerMove);
   parent.addEventListener('pointerup', onPointerUp);
+  parent.addEventListener('pointercancel', onPointerCancel);
 
   const dispose = (): void => {
     parent.removeEventListener('pointerdown', onPointerDown);
     parent.removeEventListener('pointermove', onPointerMove);
     parent.removeEventListener('pointerup', onPointerUp);
+    parent.removeEventListener('pointercancel', onPointerCancel);
     // Disposing mid-gesture: the listeners that would have released the
     // capture are gone, so nothing else ever would.
     releaseCapture();
