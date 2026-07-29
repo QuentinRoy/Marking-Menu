@@ -29,6 +29,17 @@ export default defineConfig([
       // C.f. https://github.com/xojs/xo/issues/889.
       '@stylistic/no-mixed-operators': 'off',
 
+      // Import order is owned by @ianvs/prettier-plugin-sort-imports (c.f.
+      // prettier.config.ts) and enforced by `yarn format:check`. This rule
+      // disagrees with it: `marking-menu` is this package's own name, so once
+      // dist/ is built, Node self-reference resolution makes import-x classify
+      // it as an `internal` import and sort it last (behind third-party and
+      // even relative imports), while prettier sorts it with third-party
+      // modules. Keeping both means `eslint --fix` and `prettier --write` undo
+      // each other, and that lint results depend on whether dist/ exists —
+      // which is why this only ever failed locally, never on CI.
+      'import-x/order': 'off',
+
       // This repo uses many factory functions, that starts with a capital letter, but are not classes.
       'new-cap': 'off',
 

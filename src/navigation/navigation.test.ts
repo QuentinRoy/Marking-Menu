@@ -367,6 +367,10 @@ describe('startup', () => {
 });
 
 describe('navigationFromDrag', () => {
+  // The dependency overrides are picked out of the same object as the
+  // navigation options, so the collaborators receive this rest object.
+  const navigationOptions = { custom: 'mock-options' };
+
   let mockConfirmedExpertNavigationHOO: Mock<
     (...args: unknown[]) => Observable<unknown>
   >;
@@ -388,12 +392,12 @@ describe('navigationFromDrag', () => {
         'mock-drag$' as unknown as Observable<NavigationDrag>,
         'mock-start' as unknown as NavigationDrag,
         'mock-model' as unknown as MarkingMenuModelItem,
-        'mock-options' as unknown as NavigationOptions,
         {
+          ...navigationOptions,
           confirmedExpertNavigationHOO: mockConfirmedExpertNavigationHOO,
           confirmedNoviceNavigationHOO: mockConfirmedNoviceNavigationHOO,
           startup: mockStartup,
-        } as unknown as Parameters<typeof navigationFromDrag>[4],
+        } as unknown as Parameters<typeof navigationFromDrag>[3],
       );
   });
 
@@ -401,10 +405,10 @@ describe('navigationFromDrag', () => {
     callNavigationFromDrag();
     expect(mockStartup.mock.calls).toEqual([['mock-drag$', 'mock-model']]);
     expect(mockConfirmedExpertNavigationHOO.mock.calls).toEqual([
-      ['mock-drag$', 'mock-model', 'mock-options'],
+      ['mock-drag$', 'mock-model', navigationOptions],
     ]);
     expect(mockConfirmedNoviceNavigationHOO.mock.calls).toEqual([
-      ['mock-drag$', 'mock-start', 'mock-model', 'mock-options'],
+      ['mock-drag$', 'mock-start', 'mock-model', navigationOptions],
     ]);
   });
 
