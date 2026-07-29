@@ -4,7 +4,7 @@ import { promisify } from 'node:util';
 import angles from 'angles';
 import { parse as csvParseCallback } from 'csv-parse';
 import { type Mock } from 'vitest';
-import type { ModelItem, ModelRoot } from '../types.js';
+import type { ModelItem } from '../types.js';
 import type { Point } from '../utils.js';
 import {
   divideLongestSegment,
