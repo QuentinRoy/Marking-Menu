@@ -136,18 +136,18 @@ export const navigationFromDrag = <D extends NavigationDrag>(
   drag$: Observable<D>,
   start: D | null | undefined,
   model: MarkingMenuModelItem,
-  options: NavigationOptions,
   {
     confirmedExpertNavigationHOO:
       confirmedExpertNavigationHOO_ = confirmedExpertNavigationHOO,
     confirmedNoviceNavigationHOO:
       confirmedNoviceNavigationHOO_ = confirmedNoviceNavigationHOO,
     startup: startup_ = startup,
-  }: {
+    ...options
+  }: NavigationOptions & {
     confirmedExpertNavigationHOO?: typeof confirmedExpertNavigationHOO;
     confirmedNoviceNavigationHOO?: typeof confirmedNoviceNavigationHOO;
     startup?: typeof startup;
-  } = {},
+  },
 ) => {
   // Start up observable (while neither expert or novice are confirmed).
   const startUp$ = startup_(drag$, model);
