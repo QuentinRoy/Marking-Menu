@@ -18,7 +18,7 @@ import { angle, dist, type Point } from '../utils.js';
  `refPoint`.
  */
 export const findNextPointFurtherThan = (
-  pointList: Point[],
+  pointList: readonly Point[],
   {
     minDist,
     direction = 1,
@@ -62,7 +62,7 @@ export const findNextPointFurtherThan = (
  angle from-b-to.
  */
 export const findMiddlePointForMinAngle = (
-  pointList: Point[],
+  pointList: readonly Point[],
   {
     from,
     to,

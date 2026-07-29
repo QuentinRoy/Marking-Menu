@@ -31,15 +31,6 @@ describe('MarkingMenuStartEvent', () => {
     const event = new MarkingMenuStartEvent({ position: [0, 0] });
     expect(event.type).toBe(MarkingMenuStartEvent.type);
   });
-
-  it('is a non-cancelable, non-bubbling, non-composed DOM event', () => {
-    const event = new MarkingMenuStartEvent({ position: [0, 0] });
-
-    expect(event).toBeInstanceOf(Event);
-    expect(event.cancelable).toBe(false);
-    expect(event.bubbles).toBe(false);
-    expect(event.composed).toBe(false);
-  });
 });
 
 describe('MarkingMenuOpenEvent', () => {
@@ -55,18 +46,6 @@ describe('MarkingMenuOpenEvent', () => {
     expect(event.position).toEqual([5, 5]);
     expect(event.menu).toBe(menu);
     expect(event.menuCenter).toEqual([50, 50]);
-  });
-
-  it('is a non-cancelable, non-bubbling, non-composed DOM event', () => {
-    const event = new MarkingMenuOpenEvent<M>({
-      position: [0, 0],
-      menu,
-      menuCenter: [0, 0],
-    });
-
-    expect(event.cancelable).toBe(false);
-    expect(event.bubbles).toBe(false);
-    expect(event.composed).toBe(false);
   });
 });
 
@@ -98,19 +77,6 @@ describe('MarkingMenuMoveEvent', () => {
     expect(event.active).toBeNull();
     expect(event.menu).toBeNull();
   });
-
-  it('is a non-cancelable, non-bubbling, non-composed DOM event', () => {
-    const event = new MarkingMenuMoveEvent<M>({
-      mode: 'startup',
-      position: [0, 0],
-      active: null,
-      menu: null,
-    });
-
-    expect(event.cancelable).toBe(false);
-    expect(event.bubbles).toBe(false);
-    expect(event.composed).toBe(false);
-  });
 });
 
 describe('MarkingMenuChangeEvent', () => {
@@ -140,19 +106,6 @@ describe('MarkingMenuChangeEvent', () => {
     expect(event.active).toBeNull();
     expect(event.previousActive).toBe(menu.items[0]);
   });
-
-  it('is a non-cancelable, non-bubbling, non-composed DOM event', () => {
-    const event = new MarkingMenuChangeEvent<M>({
-      position: [0, 0],
-      active: null,
-      previousActive: null,
-      menu,
-    });
-
-    expect(event.cancelable).toBe(false);
-    expect(event.bubbles).toBe(false);
-    expect(event.composed).toBe(false);
-  });
 });
 
 describe('MarkingMenuSelectEvent', () => {
@@ -181,19 +134,6 @@ describe('MarkingMenuSelectEvent', () => {
     expect(event.mode).toBe('expert');
     expect(event.menu).toBeNull();
   });
-
-  it('is a non-cancelable, non-bubbling, non-composed DOM event', () => {
-    const event = new MarkingMenuSelectEvent<M>({
-      mode: 'startup',
-      position: [0, 0],
-      selection: menu.items[0],
-      menu: null,
-    });
-
-    expect(event.cancelable).toBe(false);
-    expect(event.bubbles).toBe(false);
-    expect(event.composed).toBe(false);
-  });
 });
 
 describe('MarkingMenuCancelEvent', () => {
@@ -221,18 +161,5 @@ describe('MarkingMenuCancelEvent', () => {
 
     expect(event.active).toBeNull();
     expect(event.menu).toBeNull();
-  });
-
-  it('is a non-cancelable, non-bubbling, non-composed DOM event', () => {
-    const event = new MarkingMenuCancelEvent<M>({
-      mode: 'expert',
-      position: [0, 0],
-      active: null,
-      menu: null,
-    });
-
-    expect(event.cancelable).toBe(false);
-    expect(event.bubbles).toBe(false);
-    expect(event.composed).toBe(false);
   });
 });

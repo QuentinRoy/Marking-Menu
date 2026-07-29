@@ -1,8 +1,12 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "lib": ["ES2024", "ESNext.Disposable", "DOM", "DOM.Iterable"],
     "types": ["node", "vite/client", "vitest/globals"]
   },
-  "include": ["src/**/*.test.ts", "src/**/*.test-d.ts"]
+  "include": [
+    "src/**/*.test.ts",
+    "src/**/*.test-d.ts",
+    "src/**/__fixtures__/**/*"
+  ]
 }

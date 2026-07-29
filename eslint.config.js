@@ -32,10 +32,6 @@ export default defineConfig([
       // This repo uses many factory functions, that starts with a capital letter, but are not classes.
       'new-cap': 'off',
 
-      // Unicorn tends to think marking menu items are DOM elements, triggering
-      // annoying false positives.
-      'unicorn/better-dom-traversing': 'off',
-
       // This repo uses named exports only (c.f. bcb1332).
       'import-x/no-default-export': 'error',
 
@@ -79,6 +75,22 @@ export default defineConfig([
     },
   },
   {
+    // Only test code may reach for `Symbol.dispose`/`Symbol.asyncDispose`:
+    // shipped code must not require `using` of consumers, so the rule stays on
+    // everywhere else and is the thing that catches a lapse. It flags both,
+    // its `Symbol` list predating Explicit Resource Management, and it takes
+    // no allowlist option, hence disabling it wholesale for these files.
+    files: [
+      'src/**/*.test.ts',
+      'src/**/*.test-d.ts',
+      'src/**/__fixtures__/**',
+      'e2e/**',
+    ],
+    rules: {
+      'unicorn/no-nonstandard-builtin-properties': 'off',
+    },
+  },
+  {
     // Vite/Vitest/Prettier/Playwright config files must use a default
     // export; that's the contract those tools require.
     files: ['*.config.{js,ts}', 'e2e/*.config.{js,ts}'],
@@ -108,6 +120,16 @@ export default defineConfig([
       // SEO/social surface to describe.
       '@html-eslint/require-meta-description': 'off',
       '@html-eslint/require-open-graph-protocol': 'off',
+    },
+  },
+  {
+    files: ['src/**/__fixtures__/**'],
+    rules: {
+      // `__fixtures__` (double underscore, both sides) is this repo's
+      // established name for a directory of test-only helpers/data (see
+      // `src/recognizer/__fixtures__`), predating this rule ever seeing a
+      // `.ts` file directly inside one. Kebab-case doesn't allow it.
+      'unicorn/filename-case': 'off',
     },
   },
   {

@@ -73,24 +73,24 @@ const activeAndMenuFields = (event: {
   menuId: idOf(event.menu),
 });
 
-mm.addEventListener('start', (event) => {
+mm.on('start', (event) => {
   logEvent(event);
 });
-mm.addEventListener('open', (event) => {
+mm.on('open', (event) => {
   logEvent(event, { menuId: idOf(event.menu) });
 });
-mm.addEventListener('move', (event) => {
+mm.on('move', (event) => {
   logEvent(event, activeAndMenuFields(event));
 });
-mm.addEventListener('change', (event) => {
+mm.on('change', (event) => {
   logEvent(event, activeAndMenuFields(event));
 });
-mm.addEventListener('select', (event) => {
+mm.on('select', (event) => {
   logEvent(event, {
     menuId: idOf(event.menu),
     selectionId: idOf(event.selection),
   });
 });
-mm.addEventListener('cancel', (event) => {
+mm.on('cancel', (event) => {
   logEvent(event, activeAndMenuFields(event));
 });

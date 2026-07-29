@@ -5,7 +5,7 @@ import { dist } from '../utils.js';
  A drag notification: anything carrying a position and, optionally, a type.
  */
 export type DragNotification = {
-  position: number[];
+  position: readonly number[];
   type?: string;
 };
 

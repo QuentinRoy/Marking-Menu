@@ -43,7 +43,10 @@ export const deltaAngle = (alpha: number, beta: number): number =>
  @param point2 - The second point
  @returns The distance between the two points.
  */
-export const dist = (point1: number[], point2: number[]): number => {
+export const dist = (
+  point1: readonly number[],
+  point2: readonly number[],
+): number => {
   if (point1.length !== point2.length) {
     throw new Error(
       `Points must have the same dimension. Got ${point1.length} and ${point2.length}.`,
@@ -69,7 +72,11 @@ const ANGLE_ROUNDING = 10e-8;
  @param c - The third point.
  @returns The angle abc (in degrees) rounded at the 8th decimal.
  */
-export const angle = (a: number[], b: number[], c: number[]): number => {
+export const angle = (
+  a: readonly number[],
+  b: readonly number[],
+  c: readonly number[],
+): number => {
   const lab = dist(a, b);
   const lbc = dist(b, c);
   const lac = dist(a, c);
@@ -199,8 +206,12 @@ export type IsTuple<T extends readonly unknown[]> = number extends T['length']
 
 /**
  A 2D point.
+
+ Readonly: points are values, passed around and stored but never edited in
+ place, and the ones carried by events are frozen. Making that the type lets
+ `Object.freeze` results flow through without an assertion.
  */
-export type Point = [number, number];
+export type Point = readonly [number, number];
 
 /**
  A segment joining two points.
