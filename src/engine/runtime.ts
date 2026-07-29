@@ -53,14 +53,12 @@ export function createRuntime<M extends AnyModelNode>({
   // alongside a newer one of the same kind.
   const timers = new Map<TimerKind, ReturnType<typeof setTimeout>>();
 
-  // Three passes, not one: timers are armed/cancelled during commit (before
-  // layout is even projected), then every visual effect lands before the
-  // first listener runs, so a listener always observes fully committed
-  // state. See `pointer-source.ts`'s `onPointerUp` for the same rule applied
-  // to capture.
-  const runCommands = (commands: ReadonlyArray<MachineCommand<M>>) => {
-    for (const command of commands) {
-      if (command.type === 'timer.schedule') {
+  // Commit-time interpretation of one command: timers are armed/cancelled
+  // and feedback is shown before layout is even projected. `dispatch` is
+  // handled separately, only after rendering.
+  const commitCommand = (command: MachineCommand<M>): void => {
+    switch (command.type) {
+      case 'timer.schedule': {
         const handle = setTimeout(() => {
           timers.delete(command.kind);
           send({
@@ -70,21 +68,39 @@ export function createRuntime<M extends AnyModelNode>({
           });
         }, command.delay);
         timers.set(command.kind, handle);
-      } else if (command.type === 'timer.cancel') {
+        break;
+      }
+
+      case 'timer.cancel': {
         // `clearTimeout` is a no-op for `undefined` or an already-fired
         // handle, so no guard is needed here.
         clearTimeout(timers.get(command.kind));
         timers.delete(command.kind);
+        break;
       }
-    }
 
-    for (const command of commands) {
-      if (command.type === 'feedback.show') {
+      case 'feedback.show': {
         renderer.showFeedback({
           stroke: command.stroke,
           canceled: command.canceled,
         });
+        break;
       }
+
+      case 'dispatch': {
+        // Dispatched only after rendering, in a later pass.
+        break;
+      }
+    }
+  };
+
+  // Two passes, not one: every visual effect lands before the first
+  // listener runs, so a listener always observes fully committed state. See
+  // `pointer-source.ts`'s `onPointerUp` for the same rule applied to
+  // capture.
+  const runCommands = (commands: ReadonlyArray<MachineCommand<M>>) => {
+    for (const command of commands) {
+      commitCommand(command);
     }
 
     renderer.render(projectLayout(state));

@@ -136,6 +136,22 @@ export const toPolar = (
   };
 };
 
+/**
+ Convert a point in client coordinates to coordinates relative to a bounding
+ rectangle's top-left corner (e.g. an element's own
+ `getBoundingClientRect()`).
+
+ @param point - A point in client coordinates.
+ @param rect - The rectangle to make the point relative to.
+ @param rect.left - The rectangle's left edge, in client coordinates.
+ @param rect.top - The rectangle's top edge, in client coordinates.
+ @returns The point, relative to `rect`'s top-left corner.
+ */
+export const toLocalPoint = (
+  point: Point,
+  rect: { left: number; top: number },
+): Point => [point[0] - rect.left, point[1] - rect.top];
+
 /** A function that does nothing. Useful as a default callback. */
 export const noOp = (): void => {
   // Intentionally empty.

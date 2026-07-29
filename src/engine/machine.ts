@@ -138,54 +138,23 @@ function finish<M extends AnyModelNode>(
   },
   environment: NavigationEnvironment<M>,
 ): Transition<M> {
-  const timerCommands: Array<MachineCommand<M>> =
-    cancelTimer === undefined
-      ? []
-      : [
-          {
-            type: 'timer.cancel',
-            kind: cancelTimer.kind,
-            token: cancelTimer.token,
-          },
-        ];
-
   const selection = skipRecognition
     ? null
     : recognizeMarkingMenuStroke(stroke, environment.model);
+  const event =
+    selection === null
+      ? new MarkingMenuCancelEvent<M>({ mode, position, active: null, menu })
+      : new MarkingMenuSelectEvent<M>({ mode, position, selection, menu });
 
-  if (selection !== null) {
-    return {
-      state: { phase: 'idle', nextTimerToken },
-      commands: [
-        ...timerCommands,
-        { type: 'feedback.show', stroke, canceled: false },
-        {
-          type: 'dispatch',
-          event: new MarkingMenuSelectEvent<M>({
-            mode,
-            position,
-            selection,
-            menu,
-          }),
-        },
-      ],
-    };
-  }
+  const timerCommands: Array<MachineCommand<M>> =
+    cancelTimer === undefined ? [] : [{ type: 'timer.cancel', ...cancelTimer }];
 
   return {
     state: { phase: 'idle', nextTimerToken },
     commands: [
       ...timerCommands,
-      { type: 'feedback.show', stroke, canceled: true },
-      {
-        type: 'dispatch',
-        event: new MarkingMenuCancelEvent<M>({
-          mode,
-          position,
-          active: null,
-          menu,
-        }),
-      },
+      { type: 'feedback.show', stroke, canceled: selection === null },
+      { type: 'dispatch', event },
     ],
   };
 }
@@ -208,13 +177,7 @@ function transitionStartup<M extends AnyModelNode>(
             stroke,
             nextTimerToken: state.nextTimerToken,
           },
-          commands: [
-            {
-              type: 'timer.cancel',
-              kind: state.timer.kind,
-              token: state.timer.token,
-            },
-          ],
+          commands: [{ type: 'timer.cancel', ...state.timer }],
         };
       }
 
