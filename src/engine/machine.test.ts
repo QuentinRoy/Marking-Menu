@@ -30,9 +30,12 @@ const model = createModel({
   ],
 });
 
-const options = { movementsThreshold: 5 };
+const options = { movementsThreshold: 5, noviceDwellingTime: 300 };
 const environment = { model };
-const idle: NavigationState = { phase: 'idle' };
+const idle: NavigationState<typeof model> = {
+  phase: 'idle',
+  nextTimerToken: 0,
+};
 
 /** Find the `dispatch` command among a transition's commands, if any. */
 const dispatched = (commands: ReturnType<typeof transition>['commands']) =>
@@ -57,7 +60,7 @@ describe('transition', () => {
       options,
     );
 
-    expect(up.state).toEqual({ phase: 'idle' });
+    expect(up.state).toEqual({ phase: 'idle', nextTimerToken: 1 });
     const command = dispatched(up.commands);
     expect(command?.type === 'dispatch' && command.event.type).toBe('select');
   });
@@ -138,7 +141,7 @@ describe('transition', () => {
       options,
     );
 
-    expect(up.state).toEqual({ phase: 'idle' });
+    expect(up.state).toEqual({ phase: 'idle', nextTimerToken: 1 });
     expect(mockRecognize).not.toHaveBeenCalled();
 
     const command = dispatched(up.commands);
@@ -173,7 +176,7 @@ describe('transition', () => {
       options,
     );
 
-    expect(up.state).toEqual({ phase: 'idle' });
+    expect(up.state).toEqual({ phase: 'idle', nextTimerToken: 1 });
     expect(mockRecognize).toHaveBeenCalledTimes(1);
 
     const command = dispatched(up.commands);
@@ -203,7 +206,7 @@ describe('transition', () => {
       options,
     );
 
-    expect(canceled.state).toEqual({ phase: 'idle' });
+    expect(canceled.state).toEqual({ phase: 'idle', nextTimerToken: 1 });
     expect(mockRecognize).not.toHaveBeenCalled();
 
     const command = dispatched(canceled.commands);
@@ -231,7 +234,7 @@ describe('transition', () => {
       options,
     );
 
-    expect(canceled.state).toEqual({ phase: 'idle' });
+    expect(canceled.state).toEqual({ phase: 'idle', nextTimerToken: 1 });
     expect(mockRecognize).not.toHaveBeenCalled();
     const command = dispatched(canceled.commands);
     expect(command?.type === 'dispatch' && command.event.type).toBe('cancel');
@@ -246,5 +249,189 @@ describe('transition', () => {
         options,
       ),
     ).toEqual({ state: idle, commands: [] });
+  });
+
+  it('dispatches start as the very first command a gesture ever produces', () => {
+    const down = transition(
+      idle,
+      { type: 'pointer.down', position: [0, 0] },
+      environment,
+      options,
+    );
+
+    expect(down.commands[0]).toMatchObject({
+      type: 'dispatch',
+      event: { type: 'start' },
+    });
+  });
+
+  describe('startup dwelling into novice mode (objective 12)', () => {
+    it('opens novice mode at the gesture origin when the mode-dwell timer elapses without significant movement', () => {
+      const down = transition(
+        idle,
+        { type: 'pointer.down', position: [0, 0] },
+        environment,
+        options,
+      );
+      expect(down.state.phase).toBe('startup');
+      // The armed timer's token, asserted once here so every later use of
+      // the literal `0` below is justified.
+      expect(down.state.phase === 'startup' && down.state.timer).toEqual({
+        kind: 'mode-dwell',
+        token: 0,
+      });
+
+      const move = transition(
+        down.state,
+        { type: 'pointer.move', position: [1, 0] },
+        environment,
+        options,
+      );
+
+      const elapsed = transition(
+        move.state,
+        { type: 'timer.elapsed', kind: 'mode-dwell', token: 0 },
+        environment,
+        options,
+      );
+
+      expect(elapsed.state).toEqual({
+        phase: 'novice',
+        menu: model,
+        menuCenter: [0, 0],
+        upperStroke: [[0, 0]],
+        lowerStroke: [
+          [0, 0],
+          [1, 0],
+        ],
+        nextTimerToken: 1,
+      });
+
+      const command = dispatched(elapsed.commands);
+      expect(command?.type === 'dispatch' && command.event.type).toBe('open');
+      const event =
+        command?.type === 'dispatch' && command.event.type === 'open'
+          ? command.event
+          : undefined;
+      expect(event?.mode).toBe('novice');
+      expect(event?.menu).toBe(model);
+      expect(event?.menuCenter).toEqual([0, 0]);
+      // The position is the last committed one, despite `timer.elapsed`
+      // itself carrying no position of its own.
+      expect(event?.position).toEqual([1, 0]);
+    });
+
+    it('crossing movementsThreshold cancels the mode-dwell timer and switches to expert instead, mutually exclusive with the dwell', () => {
+      const down = transition(
+        idle,
+        { type: 'pointer.down', position: [0, 0] },
+        environment,
+        options,
+      );
+      expect(down.state.phase === 'startup' && down.state.timer).toEqual({
+        kind: 'mode-dwell',
+        token: 0,
+      });
+
+      const move = transition(
+        down.state,
+        { type: 'pointer.move', position: [100, 0] },
+        environment,
+        options,
+      );
+
+      expect(move.state.phase).toBe('expert');
+      expect(move.commands).toEqual([
+        { type: 'timer.cancel', kind: 'mode-dwell', token: 0 },
+      ]);
+
+      // The now-cancelled timer firing anyway is a no-op: expert owns no
+      // timer, so the dwell can never open novice mode after the fact.
+      const elapsed = transition(
+        move.state,
+        { type: 'timer.elapsed', kind: 'mode-dwell', token: 0 },
+        environment,
+        options,
+      );
+      expect(elapsed).toEqual({ state: move.state, commands: [] });
+    });
+
+    it('treats a timer.elapsed carrying a superseded token as a no-op at the machine level (objective 10)', () => {
+      const startupState: NavigationState<typeof model> = {
+        phase: 'startup',
+        origin: [0, 0],
+        stroke: [[0, 0]],
+        timer: { kind: 'mode-dwell', token: 5 },
+        nextTimerToken: 6,
+      };
+
+      const result = transition(
+        startupState,
+        { type: 'timer.elapsed', kind: 'mode-dwell', token: 4 },
+        environment,
+        options,
+      );
+
+      expect(result).toEqual({ state: startupState, commands: [] });
+    });
+  });
+
+  describe('novice phase (minimal: hit-testing is not implemented yet)', () => {
+    const noviceState: NavigationState<typeof model> = {
+      phase: 'novice',
+      menu: model,
+      menuCenter: [0, 0],
+      upperStroke: [[0, 0]],
+      lowerStroke: [[0, 0]],
+      nextTimerToken: 1,
+    };
+
+    it('cancels on pointer up, carrying the currently open menu and no active item', () => {
+      const up = transition(
+        noviceState,
+        { type: 'pointer.up', position: [0, 0] },
+        environment,
+        options,
+      );
+
+      expect(up.state).toEqual({ phase: 'idle', nextTimerToken: 1 });
+      const command = dispatched(up.commands);
+      expect(command?.type === 'dispatch' && command.event.type).toBe('cancel');
+      const event =
+        command?.type === 'dispatch' && command.event.type === 'cancel'
+          ? command.event
+          : undefined;
+      expect(event?.active).toBeNull();
+      expect(event?.menu).toBe(model);
+      expect(event?.mode).toBe('novice');
+      expect(mockRecognize).not.toHaveBeenCalled();
+    });
+
+    it('cancels on pointer cancel the same way as pointer up', () => {
+      const canceled = transition(
+        noviceState,
+        { type: 'pointer.cancel', position: [0, 0] },
+        environment,
+        options,
+      );
+
+      const command = dispatched(canceled.commands);
+      expect(command?.type === 'dispatch' && command.event.type).toBe('cancel');
+    });
+
+    it('ignores pointer.down, pointer.move, and a stray timer.elapsed', () => {
+      const inputs = [
+        { type: 'pointer.down', position: [1, 1] },
+        { type: 'pointer.move', position: [1, 1] },
+        { type: 'timer.elapsed', kind: 'mode-dwell', token: 0 },
+      ] as const;
+
+      for (const input of inputs) {
+        expect(transition(noviceState, input, environment, options)).toEqual({
+          state: noviceState,
+          commands: [],
+        });
+      }
+    });
   });
 });

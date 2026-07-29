@@ -6,6 +6,7 @@ import {
 } from '../__fixtures__/canvas.js';
 import type {
   MarkingMenuCancelEvent,
+  MarkingMenuOpenEvent,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
 } from '../events.js';
@@ -424,5 +425,195 @@ describe('createController', () => {
     expect(parent.querySelectorAll('canvas')).toHaveLength(0);
 
     controller.dispose();
+  });
+
+  it('opens novice mode at the gesture origin after the pointer dwells without moving', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+    });
+
+    let openEvent: MarkingMenuOpenEvent<AnyModelNode> | undefined;
+    controller.on('open', (event) => {
+      openEvent = event;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 50, clientY: 60 }));
+    vi.advanceTimersByTime(100);
+
+    expect(openEvent?.mode).toBe('novice');
+    expect(openEvent?.menuCenter).toEqual([50, 60]);
+    expect(openEvent?.position).toEqual([50, 60]);
+    expect(parent.querySelector('.marking-menu')).not.toBeNull();
+
+    controller.dispose();
+  });
+
+  it('renders the menu at its center in local coordinates, converting from client coordinates itself', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    parent.getBoundingClientRect = vi.fn(
+      () => ({ left: 10, top: 20 }) as unknown as DOMRect,
+    );
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 50, clientY: 60 }));
+    vi.advanceTimersByTime(100);
+
+    const menu = parent.querySelector<HTMLElement>('.marking-menu');
+    expect(menu?.style.getPropertyValue('--center-x')).toBe('40px');
+    expect(menu?.style.getPropertyValue('--center-y')).toBe('40px');
+
+    controller.dispose();
+  });
+
+  it('does not open novice mode when movement crosses movementsThreshold before the dwell time elapses', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+    });
+
+    const opened = voidMock<[MarkingMenuOpenEvent<AnyModelNode>]>();
+    controller.on('open', opened);
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    vi.advanceTimersByTime(200);
+
+    expect(opened).not.toHaveBeenCalled();
+    expect(parent.querySelector('.marking-menu')).toBeNull();
+
+    controller.dispose();
+  });
+
+  it('splits the stroke into an upper (current) and lower (accumulated) region once novice mode opens', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 1, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    vi.advanceTimersToNextFrame();
+
+    // The upper stroke (fresh, starting at the menu center) and the lower
+    // stroke (the accumulated startup stroke) are drawn on two separate
+    // canvases.
+    expect(parent.querySelectorAll('canvas')).toHaveLength(2);
+
+    controller.dispose();
+  });
+
+  it('sets the cursor to none once novice mode opens', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    expect(parent.style.cursor).toBe('crosshair');
+
+    vi.advanceTimersByTime(100);
+    expect(parent.style.cursor).toBe('none');
+
+    controller.dispose();
+  });
+
+  it('cancels, carrying the open menu and no active item, when the pointer releases right after novice mode opens', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+    });
+
+    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    controller.on('select', selected);
+
+    let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+    controller.on('cancel', (event) => {
+      cancelEvent = event;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    parent.dispatchEvent(pointer('pointerup', { clientX: 0, clientY: 0 }));
+
+    expect(selected).not.toHaveBeenCalled();
+    expect(cancelEvent?.mode).toBe('novice');
+    expect(cancelEvent?.active).toBeNull();
+    expect(cancelEvent?.menu).not.toBeNull();
+    expect(parent.querySelector('.marking-menu')).toBeNull();
+
+    controller.dispose();
+  });
+
+  it('does not recreate the menu DOM or redraw the lower stroke when a render repeats with the same identity', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+
+    const menuBefore = parent.querySelector('.marking-menu');
+    expect(menuBefore).not.toBeNull();
+
+    // Still novice mode, no hit-testing yet: this is a no-op transition at
+    // the machine level, but still triggers a render pass.
+    parent.dispatchEvent(pointer('pointermove', { clientX: 1, clientY: 0 }));
+
+    expect(parent.querySelector('.marking-menu')).toBe(menuBefore);
+    expect(parent.querySelectorAll('.marking-menu')).toHaveLength(1);
+
+    controller.dispose();
+  });
+
+  it('removes the menu DOM on dispose while novice mode is open', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    expect(parent.querySelector('.marking-menu')).not.toBeNull();
+
+    controller.dispose();
+
+    expect(parent.querySelector('.marking-menu')).toBeNull();
   });
 });
