@@ -63,10 +63,13 @@ jobs:
     runs-on: ubuntu-latest
     # The official Playwright image ships the browsers and their system
     # dependencies preinstalled, so the job never has to download them (that
-    # step used to hang for tens of minutes when the fetch stalled). Keep the
-    # tag's version in sync with the `@playwright/test` version in
-    # package.json: browsers are pinned per release, and a mismatch makes
-    # Playwright fail with "Executable doesn't exist".
+    # step used to hang for tens of minutes when the fetch stalled).
+    #
+    # This tag has to match the `@playwright/test` version: browsers are
+    # pinned per release, so a mismatch makes Playwright fail with "Executable
+    # doesn't exist". Renovate groups the two into one PR (see the `playwright`
+    # group in renovate.json), so bump them together if you touch either by
+    # hand.
     container: mcr.microsoft.com/playwright:v1.62.0-noble
     timeout-minutes: 20
     steps:
