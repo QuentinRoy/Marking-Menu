@@ -5,6 +5,7 @@ import {
   stubbedCanvasContexts,
 } from '../__fixtures__/canvas.js';
 import type {
+  MarkingMenuCancelEvent,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
 } from '../events.js';
@@ -293,6 +294,134 @@ describe('createController', () => {
     // A `select` listener sees fully committed state, and capture ownership is
     // part of that state: a listener may legitimately start its own gesture.
     expect(heldDuringSelect).toBe(false);
+
+    controller.dispose();
+  });
+
+  it('dispatches cancel carrying a null active, not select, for a gesture with no movement at all', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    const controller = createController({ items, parent });
+
+    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    controller.on('select', selected);
+
+    let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+    controller.on('cancel', (event) => {
+      cancelEvent = event;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerup', { clientX: 0, clientY: 0 }));
+
+    expect(selected).not.toHaveBeenCalled();
+    expect(cancelEvent?.mode).toBe('startup');
+    expect(cancelEvent?.active).toBeNull();
+
+    controller.dispose();
+  });
+
+  it('dispatches cancel, never select, when the native pointer is cancelled mid-gesture, even along a straight line that would otherwise recognize', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    const controller = createController({ items, parent });
+
+    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    controller.on('select', selected);
+
+    let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+    controller.on('cancel', (event) => {
+      cancelEvent = event;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(
+      pointer('pointercancel', { clientX: 100, clientY: 0 }),
+    );
+
+    expect(selected).not.toHaveBeenCalled();
+    expect(cancelEvent?.mode).toBe('expert');
+    expect(cancelEvent?.active).toBeNull();
+
+    controller.dispose();
+  });
+
+  it('has already released pointer capture by the time cancel is dispatched', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    const controller = createController({ items, parent });
+
+    let heldDuringCancel: boolean | undefined;
+    controller.on('cancel', () => {
+      heldDuringCancel = parent.hasPointerCapture(1);
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(
+      pointer('pointercancel', { clientX: 100, clientY: 0 }),
+    );
+
+    expect(heldDuringCancel).toBe(false);
+
+    controller.dispose();
+  });
+
+  it('leaves an earlier gesture-feedback trace untouched when a new gesture completes', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    const controller = createController({ items, parent });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
+    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerup', { clientX: 0, clientY: 0 }));
+    expect(parent.querySelectorAll('canvas')).toHaveLength(2);
+
+    controller.dispose();
+  });
+
+  it('lets three overlapping gesture-feedback traces expire independently, on their own schedules', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({ items, parent });
+
+    const gesture = (x: number) => {
+      parent.dispatchEvent(pointer('pointerdown', { clientX: x, clientY: 0 }));
+      parent.dispatchEvent(
+        pointer('pointermove', { clientX: x + 100, clientY: 0 }),
+      );
+      parent.dispatchEvent(
+        pointer('pointerup', { clientX: x + 120, clientY: 0 }),
+      );
+    };
+
+    // Trace #1 shown at 0ms (expires at 1000ms).
+    gesture(0);
+    vi.advanceTimersByTime(400);
+    // Trace #2 shown at 400ms (expires at 1400ms).
+    gesture(200);
+    vi.advanceTimersByTime(400);
+    // Trace #3 shown at 800ms (expires at 1800ms).
+    gesture(400);
+    expect(parent.querySelectorAll('canvas')).toHaveLength(3);
+
+    // 1000ms since trace #1 was shown: only that one has expired.
+    vi.advanceTimersByTime(200);
+    expect(parent.querySelectorAll('canvas')).toHaveLength(2);
+
+    // 1400ms since trace #1: trace #2 has now expired too.
+    vi.advanceTimersByTime(400);
+    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+
+    // 1800ms since trace #1: trace #3 has now expired too.
+    vi.advanceTimersByTime(400);
+    expect(parent.querySelectorAll('canvas')).toHaveLength(0);
 
     controller.dispose();
   });

@@ -1,10 +1,12 @@
 import {
+  MarkingMenuCancelEvent,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
   type MarkingMenuEvent,
   type MarkingMenuMode,
 } from '../events.js';
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
+import { strokeLength } from '../recognizer/stroke-length.js';
 import type { AnyModelNode } from '../types.js';
 import { dist, type Point } from '../utils.js';
 
@@ -27,7 +29,8 @@ export type NavigationState =
 export type NavigationInput =
   | { readonly type: 'pointer.down'; readonly position: Point }
   | { readonly type: 'pointer.move'; readonly position: Point }
-  | { readonly type: 'pointer.up'; readonly position: Point };
+  | { readonly type: 'pointer.up'; readonly position: Point }
+  | { readonly type: 'pointer.cancel'; readonly position: Point };
 
 export type NavigationEnvironment<M extends AnyModelNode> = {
   readonly model: M;
@@ -51,23 +54,33 @@ export type Transition<M extends AnyModelNode> = {
 };
 
 /**
- The shared terminal transition: recognize the gesture drawn so far and
- return to idle. Owns the one place `select`/`feedback.show` are built so
- `startup` and `expert` don't each repeat this policy.
+ The shared terminal transition: recognize the gesture drawn so far (unless
+ `skipRecognition`) and return to idle, either selecting the recognized item
+ or cancelling. Owns the one place `select`/`cancel`/`feedback.show` are
+ built so `startup` and `expert` don't each repeat this policy.
+
+ `skipRecognition` covers the two paths that must never select regardless of
+ what the stroke looks like: a pointer that was cancelled outright, and a
+ gesture that never moved at all (so there is nothing to recognize).
  */
 function finish<M extends AnyModelNode>(
   {
     mode,
     stroke,
     position,
+    skipRecognition = false,
   }: {
     mode: MarkingMenuMode;
     stroke: readonly Point[];
     position: Point;
+    skipRecognition?: boolean;
   },
   environment: NavigationEnvironment<M>,
 ): Transition<M> {
-  const selection = recognizeMarkingMenuStroke(stroke, environment.model);
+  const selection = skipRecognition
+    ? null
+    : recognizeMarkingMenuStroke(stroke, environment.model);
+
   if (selection !== null) {
     return {
       state: { phase: 'idle' },
@@ -86,7 +99,21 @@ function finish<M extends AnyModelNode>(
     };
   }
 
-  return { state: { phase: 'idle' }, commands: [] };
+  return {
+    state: { phase: 'idle' },
+    commands: [
+      { type: 'feedback.show', stroke, canceled: true },
+      {
+        type: 'dispatch',
+        event: new MarkingMenuCancelEvent<M>({
+          mode,
+          position,
+          active: null,
+          menu: null,
+        }),
+      },
+    ],
+  };
 }
 
 function transitionStartup<M extends AnyModelNode>(
@@ -106,11 +133,28 @@ function transitionStartup<M extends AnyModelNode>(
     }
 
     case 'pointer.up': {
+      const stroke = [...state.stroke, input.position];
+      return finish(
+        {
+          mode: 'startup',
+          stroke,
+          position: input.position,
+          // The pointer never moved at all: every recorded point (down,
+          // any moves below the threshold, and this up) sits at the same
+          // position, so there is nothing to recognize.
+          skipRecognition: strokeLength(stroke) === 0,
+        },
+        environment,
+      );
+    }
+
+    case 'pointer.cancel': {
       return finish(
         {
           mode: 'startup',
           stroke: [...state.stroke, input.position],
           position: input.position,
+          skipRecognition: true,
         },
         environment,
       );
@@ -141,6 +185,18 @@ function transitionExpert<M extends AnyModelNode>(
           mode: 'expert',
           stroke: [...state.stroke, input.position],
           position: input.position,
+        },
+        environment,
+      );
+    }
+
+    case 'pointer.cancel': {
+      return finish(
+        {
+          mode: 'expert',
+          stroke: [...state.stroke, input.position],
+          position: input.position,
+          skipRecognition: true,
         },
         environment,
       );

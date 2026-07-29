@@ -104,4 +104,50 @@ describe('createRuntime', () => {
 
     expect(renderer.dispose).toHaveBeenCalledTimes(1);
   });
+
+  it('emits cancel, not select, for a gesture with no movement at all', () => {
+    const runtime = createRuntime({
+      model,
+      options,
+      renderer: createFakeRenderer(),
+    });
+    const emitted = recordEmitted(runtime);
+
+    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    runtime.send({ type: 'pointer.up', position: [0, 0] });
+
+    expect(emitted).toEqual(['start', 'cancel']);
+  });
+
+  it('emits cancel, not select, when the pointer is cancelled mid-gesture', () => {
+    const runtime = createRuntime({
+      model,
+      options,
+      renderer: createFakeRenderer(),
+    });
+    const emitted = recordEmitted(runtime);
+
+    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    runtime.send({ type: 'pointer.move', position: [100, 0] });
+    runtime.send({ type: 'pointer.cancel', position: [100, 0] });
+
+    expect(emitted).toEqual(['start', 'cancel']);
+  });
+
+  it('shows the canceled feedback style for cancel, and the normal style for select', () => {
+    const renderer = createFakeRenderer();
+    const runtime = createRuntime({ model, options, renderer });
+
+    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    runtime.send({ type: 'pointer.up', position: [100, 0] });
+    expect(renderer.showFeedback).toHaveBeenLastCalledWith(
+      expect.objectContaining({ canceled: false }),
+    );
+
+    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    runtime.send({ type: 'pointer.up', position: [0, 0] });
+    expect(renderer.showFeedback).toHaveBeenLastCalledWith(
+      expect.objectContaining({ canceled: true }),
+    );
+  });
 });
