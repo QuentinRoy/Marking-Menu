@@ -60,9 +60,18 @@ jobs:
 
   E2E:
     needs: Build
-    # Playwright's browser dependencies need a full runner image, unlike the
-    # other jobs which only need Node and Yarn.
     runs-on: ubuntu-latest
+    # The official Playwright image ships the browsers and their system
+    # dependencies preinstalled, so the job never has to download them (that
+    # step used to hang for tens of minutes when the fetch stalled).
+    #
+    # This tag has to match the `@playwright/test` version: browsers are
+    # pinned per release, so a mismatch makes Playwright fail with "Executable
+    # doesn't exist". Renovate groups the two into one PR (see the `playwright`
+    # group in renovate.json), so bump them together if you touch either by
+    # hand.
+    container: mcr.microsoft.com/playwright:v1.62.0-noble
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: ./.github/actions/setup
@@ -70,8 +79,14 @@ jobs:
         with:
           name: dist
           path: dist/
-      - run: yarn playwright install --with-deps chromium firefox webkit
       # The fixture-only build, not `yarn e2e`: `dist/` was already built once
       # by the Build job above, so this avoids building the library again.
       - run: yarn e2e:build
+      # Inside the container the job runs as root, but the runner points $HOME
+      # at /github/home, which the image's `pwuser` owns. Firefox refuses to
+      # launch in that situation ("Running Nightly as root in a regular user's
+      # session is not supported"); the other browsers do not care. Overriding
+      # HOME here is the workaround Playwright's own error message prescribes.
       - run: yarn e2e:test
+        env:
+          HOME: /root

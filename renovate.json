@@ -19,6 +19,11 @@
     {
       "matchPackageNames": ["/vitest/", "rxjs-marbles"],
       "groupName": "test"
+    },
+    {
+      "matchPackageNames": ["@playwright/test", "mcr.microsoft.com/playwright"],
+      "groupName": "playwright",
+      "rangeStrategy": "update-lockfile"
     }
   ]
 }
