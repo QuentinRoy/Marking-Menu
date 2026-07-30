@@ -82,4 +82,11 @@ jobs:
       # The fixture-only build, not `yarn e2e`: `dist/` was already built once
       # by the Build job above, so this avoids building the library again.
       - run: yarn e2e:build
+      # Inside the container the job runs as root, but the runner points $HOME
+      # at /github/home, which the image's `pwuser` owns. Firefox refuses to
+      # launch in that situation ("Running Nightly as root in a regular user's
+      # session is not supported"); the other browsers do not care. Overriding
+      # HOME here is the workaround Playwright's own error message prescribes.
       - run: yarn e2e:test
+        env:
+          HOME: /root
