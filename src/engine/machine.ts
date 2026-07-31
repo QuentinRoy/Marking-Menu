@@ -13,14 +13,11 @@ import { dist, type Point } from '../utils.js';
 
 /*
  The pure navigation state machine: one entry point dispatching to a private
- handler per phase (idle/startup/expert/novice), per the architecture settled
- on https://github.com/QuentinRoy/Marking-Menu/issues/153.
+ handler per phase (idle/startup/expert/novice).
  */
 
 /**
  The only timer kind a phase can own yet: startup/expert dwelling into novice.
- `submenu-dwell` (novice dwelling into a sub-menu) has no ticket driving it
- into existence.
  */
 export type TimerKind = 'mode-dwell';
 
@@ -109,8 +106,7 @@ export type Transition<M extends AnyModelNode> = {
  `skipRecognition`) and return to idle, either selecting the recognized item
  or cancelling. Owns the one place `select`/`cancel`/`feedback.show` are
  built so every phase doesn't repeat this policy, and the one place a
- phase's owned timer is cancelled before rendering and dispatching, per
- https://github.com/QuentinRoy/Marking-Menu/issues/153's batch guarantee.
+ phase's owned timer is cancelled before rendering and dispatching.
 
  `skipRecognition` covers the paths that must never select regardless of what
  the stroke looks like: a pointer that was cancelled outright, a gesture that
