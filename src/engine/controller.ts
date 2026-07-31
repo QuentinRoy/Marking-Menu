@@ -16,6 +16,7 @@ import { createRuntime, type NavigationRuntime } from './runtime.js';
 export type EngineConfig = MarkingMenuInput & {
   readonly parent: HTMLElement;
   readonly movementsThreshold?: number;
+  readonly noviceDwellingTime?: number;
 };
 
 /*
@@ -61,10 +62,15 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     // inference would pick up the `Config & ValidateInput<Config>` parameter
     // type as `Input`, and `MarkingMenuModel` of that is a different type.
     const model = createModel<Config>(config);
-    const renderer = createRenderer({ parent: config.parent });
+    const renderer = createRenderer<MarkingMenuModel<Config>>({
+      parent: config.parent,
+    });
     this.#runtime = createRuntime<MarkingMenuModel<Config>>({
       model,
-      options: { movementsThreshold: config.movementsThreshold ?? 5 },
+      options: {
+        movementsThreshold: config.movementsThreshold ?? 5,
+        noviceDwellingTime: config.noviceDwellingTime ?? 1000 / 3,
+      },
       renderer,
     });
     this.#pointerSource = createPointerSource({
