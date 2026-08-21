@@ -10,7 +10,9 @@ const createFakeRenderer = () => ({
   dispose: vi.fn(),
 });
 
-/** Record every event the runtime emits, in order, by name. */
+/**
+Record every event the runtime emits, in order, by name.
+*/
 const recordEmitted = (
   runtime: ReturnType<typeof createRuntime<typeof model>>,
 ): string[] => {

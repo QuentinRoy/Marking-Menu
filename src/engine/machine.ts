@@ -28,7 +28,9 @@ export type TimerKind = 'mode-dwell';
  */
 export type TimerToken = number;
 
-/** What a phase holding an armed timer needs to remember about it. */
+/**
+What a phase holding an armed timer needs to remember about it.
+*/
 export type TimerRef = {
   readonly kind: TimerKind;
   readonly token: TimerToken;

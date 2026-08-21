@@ -109,7 +109,9 @@ export class CdpMultiTouchDrag {
     }
   }
 
-  /** Touch a non-primary finger down. `id` must be neither 0 nor already active. */
+  /**
+  Touch a non-primary finger down. `id` must be neither 0 nor already active.
+  */
   async addFinger(id: number, at: Point): Promise<void> {
     this.#points.set(id, at);
     await this.#dispatchActive('touchStart');

@@ -30,12 +30,16 @@ export type MarkingMenuController<M extends AnyModelNode> =
     dispose(): void;
   };
 
-/** The event map of the controller a given config produces. */
+/**
+The event map of the controller a given config produces.
+*/
 type EventMap<Config extends EngineConfig> = MarkingMenuEventMap<
   MarkingMenuModel<Config>
 >;
 
-/** The event names that map is keyed by. */
+/**
+The event names that map is keyed by.
+*/
 type EventName<Config extends EngineConfig> = keyof EventMap<Config> & string;
 
 /**

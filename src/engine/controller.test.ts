@@ -14,7 +14,9 @@ import type { AnyModelNode } from '../types.js';
 import { createParent, pointer } from './__fixtures__/pointer.js';
 import { createController } from './controller.js';
 
-/** Read the pointer-capture mocks `createParent` attaches to a real element. */
+/**
+Read the pointer-capture mocks `createParent` attaches to a real element.
+*/
 const pointerCaptureMocks = (
   parent: HTMLElement,
 ): {

@@ -144,13 +144,21 @@ const defaultLogger: MarkingMenuLogger = {
  Configuration of a marking menu, as accepted by {@link createMarkingMenu}.
  */
 export type MarkingMenuConfig = MarkingMenuInput & {
-  /** The parent node. */
+  /**
+  The parent node.
+  */
   parent: HTMLElement;
-  /** The minimum distance from the center to select an item. */
+  /**
+  The minimum distance from the center to select an item.
+  */
   minSelectionDist?: number;
-  /** The minimum distance from the center to open a sub-menu. */
+  /**
+  The minimum distance from the center to open a sub-menu.
+  */
   minMenuSelectionDist?: number;
-  /** The dwelling delay before opening a sub-menu. */
+  /**
+  The dwelling delay before opening a sub-menu.
+  */
   submenuOpeningDelay?: number;
   /**
    The minimum distance between two points to be considered a significant
@@ -161,9 +169,13 @@ export type MarkingMenuConfig = MarkingMenuInput & {
    The dwelling time required to trigger the novice mode (and open the menu).
    */
   noviceDwellingTime?: number;
-  /** The color of the gesture stroke. */
+  /**
+  The color of the gesture stroke.
+  */
   strokeColor?: string;
-  /** The width of the gesture stroke. */
+  /**
+  The width of the gesture stroke.
+  */
   strokeWidth?: number;
   /**
    The radius of the start point of the stroke (appearing at the middle of the
@@ -175,30 +187,40 @@ export type MarkingMenuConfig = MarkingMenuInput & {
    the menu. It keeps track of the previous movements.
    */
   lowerStrokeColor?: string;
-  /** The width of the lower stroke. Defaults to `strokeWidth`. */
+  /**
+  The width of the lower stroke. Defaults to `strokeWidth`.
+  */
   lowerStrokeWidth?: number;
   /**
    The radius of the start point of the lower stroke. Defaults to
    `strokeStartPointRadius`.
    */
   lowerStrokeStartPointRadius?: number;
-  /** The width of the stroke of the gesture feedback. Defaults to `strokeWidth`. */
+  /**
+  The width of the stroke of the gesture feedback. Defaults to `strokeWidth`.
+  */
   gestureFeedbackStrokeWidth?: number;
-  /** The color of the stroke of the gesture feedback. Defaults to `strokeColor`. */
+  /**
+  The color of the stroke of the gesture feedback. Defaults to `strokeColor`.
+  */
   gestureFeedbackStrokeColor?: string;
   /**
    The color of the stroke of the gesture feedback when the selection is
    canceled.
    */
   gestureFeedbackCanceledStrokeColor?: string;
-  /** The duration of the gesture feedback, in milliseconds. */
+  /**
+  The duration of the gesture feedback, in milliseconds.
+  */
   gestureFeedbackDuration?: number;
   /**
    If true, every steps of the marking menu (include move) events, will be
    notified. Useful for logging.
    */
   notifySteps?: boolean;
-  /** Override the default logger to use. */
+  /**
+  Override the default logger to use.
+  */
   log?: Partial<MarkingMenuLogger>;
 };
 

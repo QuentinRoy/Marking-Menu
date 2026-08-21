@@ -55,12 +55,16 @@ type AllIds<Items extends readonly MarkingMenuItemInput[]> =
     ? [...OwnId<Head>, ...SubIds<Head>, ...AllIds<Rest>]
     : EmptyTuple;
 
-/** The id of an item as a (possibly empty) list. */
+/**
+The id of an item as a (possibly empty) list.
+*/
 type OwnId<Item> = [LiteralId<Item>] extends [never]
   ? EmptyTuple
   : [LiteralId<Item>];
 
-/** Every statically known id below an item. */
+/**
+Every statically known id below an item.
+*/
 type SubIds<Item> = Item extends {
   items: infer SubItems extends readonly MarkingMenuItemInput[];
 }
@@ -91,24 +95,32 @@ type RejectDuplicate<Duplicate extends string> = [Duplicate] extends [never]
   ? unknown
   : DuplicateItemIdsError<Duplicate>;
 
-/** The id an input item resolves to. */
+/**
+The id an input item resolves to.
+*/
 type IdOf<Input> = Input extends { id: infer Id extends string }
   ? Id
   : undefined;
 
-/** The sub-items an input item resolves to. */
+/**
+The sub-items an input item resolves to.
+*/
 type ItemsOf<Input> = Input extends {
   items: infer Items extends readonly MarkingMenuItemInput[];
 }
   ? Items
   : EmptyTuple;
 
-/** The model items an input item list resolves to. */
+/**
+The model items an input item list resolves to.
+*/
 type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = {
   [K in keyof Inputs]: ToItem<Inputs[K]>;
 };
 
-/** The model item an input item resolves to. */
+/**
+The model item an input item resolves to.
+*/
 type ToItem<Input> = Input extends MarkingMenuItemInput
   ? ModelItem<IdOf<Input>, Input['label'], ToItems<ItemsOf<Input>>>
   : never;

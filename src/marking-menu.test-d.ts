@@ -8,7 +8,9 @@ import type { MarkingMenuItemInput } from './types.js';
  `createMarkingMenu`'s public surface. They are checked by `tsc`, not run.
  */
 
-/** The element type of an `Observable`. */
+/**
+The element type of an `Observable`.
+*/
 type Value<O> = O extends Observable<infer T> ? T : never;
 
 declare const parent: HTMLElement;

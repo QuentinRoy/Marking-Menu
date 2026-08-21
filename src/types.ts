@@ -17,9 +17,13 @@ export type MarkingMenuItemInput = {
    caller gives it a meaning. It must be unique across the whole menu.
    */
   readonly id?: string | undefined;
-  /** The item's label. */
+  /**
+  The item's label.
+  */
   readonly label: string;
-  /** The item's sub-items, if any. */
+  /**
+  The item's sub-items, if any.
+  */
   readonly items?: readonly MarkingMenuItemInput[] | undefined;
 };
 
@@ -27,7 +31,9 @@ export type MarkingMenuItemInput = {
  The description of a marking menu, as provided to {@link createModel}.
  */
 export type MarkingMenuInput = {
-  /** The menu's top level items. */
+  /**
+  The menu's top level items.
+  */
   readonly items: readonly MarkingMenuItemInput[];
 };
 
@@ -39,9 +45,13 @@ export type MarkingMenuInput = {
  What the root and the items of the model have in common.
  */
 type MenuNode<Items extends readonly unknown[]> = {
-  /** The node's direct sub-items. */
+  /**
+  The node's direct sub-items.
+  */
   readonly items: Items;
-  /** Whether the node has no sub-item. */
+  /**
+  Whether the node has no sub-item.
+  */
   readonly isLeaf: IsLeaf<Items>;
   /**
    Retrieve a direct sub-item by its id. Only accepts the ids of the node's own
@@ -53,11 +63,17 @@ type MenuNode<Items extends readonly unknown[]> = {
    required to be unique, nor known in advance.
    */
   getChildrenByLabel(childLabel: string): Array<Items[number]>;
-  /** Find the sub-item whose angle is the closest to a given angle. */
+  /**
+  Find the sub-item whose angle is the closest to a given angle.
+  */
   getNearestChild(angle: number): IfLeaf<IsLeaf<Items>, null, Items[number]>;
-  /** The maximum depth of the menu below this node. */
+  /**
+  The maximum depth of the menu below this node.
+  */
   getMaxDepth(): IfLeaf<IsLeaf<Items>, 0, number>;
-  /** The maximum breadth of the menu below this node. */
+  /**
+  The maximum breadth of the menu below this node.
+  */
   getMaxBreadth(): IfLeaf<IsLeaf<Items>, 0, number>;
 };
 
@@ -82,13 +98,21 @@ export type ModelItem<
   Label extends string = string,
   Items extends readonly unknown[] = readonly unknown[],
 > = MenuNode<Items> & {
-  /** The item's id, as provided by the caller (`undefined` if it had none). */
+  /**
+  The item's id, as provided by the caller (`undefined` if it had none).
+  */
   readonly id: Id;
-  /** The item's label. */
+  /**
+  The item's label.
+  */
   readonly label: Label;
-  /** The item's angle, in degrees. */
+  /**
+  The item's angle, in degrees.
+  */
   readonly angle: number;
-  /** Items are never the root of the menu. */
+  /**
+  Items are never the root of the menu.
+  */
   readonly isRoot: false;
   /**
    The item's library-assigned positional key (e.g. `"1-0-2"`), unique across
@@ -171,19 +195,25 @@ export type ModelNodes<N extends AnyModelNode> = N extends {
     : N | I[number]
   : N;
 
-/** Every node of the (sub-)tree rooted at `N`, excluding the root. */
+/**
+Every node of the (sub-)tree rooted at `N`, excluding the root.
+*/
 export type ModelItems<N extends AnyModelNode> = Exclude<
   ModelNodes<N>,
   { isRoot: true }
 >;
 
-/** Every leaf of the (sub-)tree rooted at `N`. */
+/**
+Every leaf of the (sub-)tree rooted at `N`.
+*/
 export type ModelLeaves<N extends AnyModelNode> = Extract<
   ModelItems<N>,
   { isLeaf: true }
 >;
 
-/** Every non-leaf node of the (sub-)tree rooted at `N`, root included. */
+/**
+Every non-leaf node of the (sub-)tree rooted at `N`, root included.
+*/
 export type ModelMenus<N extends AnyModelNode> = Extract<
   ModelNodes<N>,
   { isLeaf: false }

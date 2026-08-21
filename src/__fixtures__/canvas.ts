@@ -72,7 +72,9 @@ export const fakeTimers = (): Disposable => {
   };
 };
 
-/** Read the mock 2D context of the first canvas under `parent`. */
+/**
+Read the mock 2D context of the first canvas under `parent`.
+*/
 export const queryCanvasContext = (parent: HTMLElement): MockContext =>
   (
     parent.querySelector('canvas')?.getContext as unknown as () => MockContext
