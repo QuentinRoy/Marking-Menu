@@ -2,7 +2,9 @@ import { expect, type Page } from '@playwright/test';
 
 export type Point = { x: number; y: number };
 
-/** An item's rendered label and the angle (in degrees) it's laid out at. */
+/**
+An item's rendered label and the angle (in degrees) it's laid out at.
+*/
 export type MenuItemGeometry = { label: string; angle: number };
 
 /**
@@ -22,7 +24,9 @@ export const TOP_LEVEL_ITEMS = {
   'up-right': { angle: 315, label: 'Up-Right' },
 } satisfies Record<string, MenuItemGeometry>;
 
-/** The `Others...` submenu, laid out the same way around its own center. */
+/**
+The `Others...` submenu, laid out the same way around its own center.
+*/
 export const SUBMENU_ITEMS = {
   'sub-right': { angle: 0, label: 'Sub Right' },
   'sub-down': { angle: 90, label: 'Sub Down' },
@@ -30,7 +34,9 @@ export const SUBMENU_ITEMS = {
   'sub-up': { angle: 270, label: 'Sub Up' },
 } satisfies Record<string, MenuItemGeometry>;
 
-/** A point `radius` pixels away from `from`, in the direction `angleDeg`. */
+/**
+A point `radius` pixels away from `from`, in the direction `angleDeg`.
+*/
 export const offset = (
   from: Point,
   angleDeg: number,
@@ -43,7 +49,9 @@ export const offset = (
   };
 };
 
-/** The gesture surface's bounding box, in viewport coordinates. */
+/**
+The gesture surface's bounding box, in viewport coordinates.
+*/
 export const surfaceBoundingBox = async (
   page: Page,
 ): Promise<{ x: number; y: number; width: number; height: number }> => {
@@ -55,19 +63,25 @@ export const surfaceBoundingBox = async (
   return box;
 };
 
-/** The center of the gesture surface, in viewport coordinates. */
+/**
+The center of the gesture surface, in viewport coordinates.
+*/
 export const surfaceCenter = async (page: Page): Promise<Point> => {
   const box = await surfaceBoundingBox(page);
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 };
 
-/** Move the mouse to `at` and press the primary button, without releasing. */
+/**
+Move the mouse to `at` and press the primary button, without releasing.
+*/
 export const pressAt = async (page: Page, at: Point): Promise<void> => {
   await page.mouse.move(at.x, at.y);
   await page.mouse.down();
 };
 
-/** Move the (already pressed or free) mouse to `at`, interpolating steps. */
+/**
+Move the (already pressed or free) mouse to `at`, interpolating steps.
+*/
 export const moveTo = async (
   page: Page,
   at: Point,
@@ -76,7 +90,9 @@ export const moveTo = async (
   await page.mouse.move(at.x, at.y, { steps });
 };
 
-/** Optionally move to `at`, then release the primary mouse button. */
+/**
+Optionally move to `at`, then release the primary mouse button.
+*/
 export const releaseAt = async (page: Page, at?: Point): Promise<void> => {
   if (at) {
     await page.mouse.move(at.x, at.y);
@@ -104,7 +120,9 @@ export const waitForMenuOpen = async (page: Page): Promise<void> => {
 export const menuItemLabel = (page: Page, label: string) =>
   page.locator('.marking-menu').getByText(label, { exact: true });
 
-/** The signed delta between two angles in degrees, wrapped to [-180, 180]. */
+/**
+The signed delta between two angles in degrees, wrapped to [-180, 180].
+*/
 const deltaAngle = (a: number, b: number): number =>
   ((((b - a + 180) % 360) + 360) % 360) - 180;
 

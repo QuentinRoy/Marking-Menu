@@ -4,10 +4,14 @@
  rebinding, and events need not extend `Event`.
  */
 
-/** The minimal shape any event needs to be routed by its `type`. */
+/**
+The minimal shape any event needs to be routed by its `type`.
+*/
 export type EventLike = { readonly type: string };
 
-/** A listener for one event name `K` in `EventMap`. */
+/**
+A listener for one event name `K` in `EventMap`.
+*/
 export type TypedEventListener<
   EventMap extends Record<string, EventLike>,
   K extends keyof EventMap,

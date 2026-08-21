@@ -1,6 +1,8 @@
 import type { Point } from '../utils.js';
 
-/** A normalized Pointer Event notification. */
+/**
+A normalized Pointer Event notification.
+*/
 export type PointerNotification<E> = {
   canceled?: boolean;
   originalEvent: E;
@@ -8,7 +10,9 @@ export type PointerNotification<E> = {
   timeStamp: number;
 };
 
-/** Normalize a Pointer Event for the movement and navigation pipeline. */
+/**
+Normalize a Pointer Event for the movement and navigation pipeline.
+*/
 export const createPointerNotification = <
   E extends { clientX: number; clientY: number; timeStamp: number },
 >(

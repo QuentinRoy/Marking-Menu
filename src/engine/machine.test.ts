@@ -37,11 +37,15 @@ const idle: NavigationState<typeof model> = {
   nextTimerToken: 0,
 };
 
-/** Find the `dispatch` command among a transition's commands, if any. */
+/**
+Find the `dispatch` command among a transition's commands, if any.
+*/
 const dispatched = (commands: ReturnType<typeof transition>['commands']) =>
   commands.find((c) => c.type === 'dispatch');
 
-/** Find the `feedback.show` command among a transition's commands, if any. */
+/**
+Find the `feedback.show` command among a transition's commands, if any.
+*/
 const feedbackShown = (commands: ReturnType<typeof transition>['commands']) =>
   commands.find((c) => c.type === 'feedback.show');
 

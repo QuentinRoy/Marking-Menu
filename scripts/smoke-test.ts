@@ -40,7 +40,9 @@ function run(command: string, args: string[], isQuiet = false): number {
   return status;
 }
 
-/** Runs a setup command in the repo root, aborting the script if it fails. */
+/**
+Runs a setup command in the repo root, aborting the script if it fails.
+*/
 function runOrExit(command: string, args: string[]): void {
   if (run(command, args, true) !== 0) {
     process.exit(1);

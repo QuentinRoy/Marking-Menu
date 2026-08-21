@@ -12,7 +12,9 @@ const createDiv = (): HTMLDivElement => {
   return div;
 };
 
-/** A div holding a stroke canvas with the shared test config, and its mock context, calls so far cleared. */
+/**
+A div holding a stroke canvas with the shared test config, and its mock context, calls so far cleared.
+*/
 const createTestStroke = (): {
   div: HTMLDivElement;
   strokeCanvas: ReturnType<typeof stroke>;

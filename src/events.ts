@@ -16,7 +16,9 @@ import type { Point } from './utils.js';
  * Shared payload types
  * -------------------------------------------------------------------------- */
 
-/** The navigation mode a gesture is in when an event is dispatched. */
+/**
+The navigation mode a gesture is in when an event is dispatched.
+*/
 export type MarkingMenuMode = 'startup' | 'novice' | 'expert';
 
 /**
@@ -52,12 +54,16 @@ export abstract class MarkingMenuEventBase {
     this.#position = data.position;
   }
 
-  /** The navigation mode the gesture was in when this event was dispatched. */
+  /**
+  The navigation mode the gesture was in when this event was dispatched.
+  */
   get mode(): MarkingMenuMode {
     return this.#mode;
   }
 
-  /** The pointer position at the time this event was dispatched. */
+  /**
+  The pointer position at the time this event was dispatched.
+  */
   get position(): ReadonlyPoint {
     return this.#position;
   }
@@ -68,7 +74,9 @@ export abstract class MarkingMenuEventBase {
  down.
  */
 export class MarkingMenuStartEvent extends MarkingMenuEventBase {
-  /** This event's type, as a literal. */
+  /**
+  This event's type, as a literal.
+  */
   static get type(): 'start' {
     return 'start';
   }
@@ -94,7 +102,9 @@ export class MarkingMenuStartEvent extends MarkingMenuEventBase {
 export class MarkingMenuOpenEvent<
   M extends AnyModelNode,
 > extends MarkingMenuEventBase {
-  /** This event's type, as a literal. */
+  /**
+  This event's type, as a literal.
+  */
   static get type(): 'open' {
     return 'open';
   }
@@ -121,12 +131,16 @@ export class MarkingMenuOpenEvent<
     return 'novice';
   }
 
-  /** The menu that was just opened. */
+  /**
+  The menu that was just opened.
+  */
   get menu(): ModelMenus<M> {
     return this.#menu;
   }
 
-  /** The center the opened menu is positioned at. */
+  /**
+  The center the opened menu is positioned at.
+  */
   get menuCenter(): ReadonlyPoint {
     return this.#menuCenter;
   }
@@ -152,7 +166,9 @@ type ActiveMenuData<M extends AnyModelNode> = {
 export class MarkingMenuMoveEvent<
   M extends AnyModelNode,
 > extends MarkingMenuEventBase {
-  /** This event's type, as a literal. */
+  /**
+  This event's type, as a literal.
+  */
   static get type(): 'move' {
     return 'move';
   }
@@ -171,12 +187,16 @@ export class MarkingMenuMoveEvent<
     this.#menu = data.menu;
   }
 
-  /** The item under the pointer, or `null` if none is. */
+  /**
+  The item under the pointer, or `null` if none is.
+  */
   get active(): ModelItems<M> | null {
     return this.#active;
   }
 
-  /** The menu currently open, or `null` in startup and expert. */
+  /**
+  The menu currently open, or `null` in startup and expert.
+  */
   get menu(): ModelMenus<M> | null {
     return this.#menu;
   }
@@ -191,7 +211,9 @@ export class MarkingMenuMoveEvent<
 export class MarkingMenuChangeEvent<
   M extends AnyModelNode,
 > extends MarkingMenuEventBase {
-  /** This event's type, as a literal. */
+  /**
+  This event's type, as a literal.
+  */
   static get type(): 'change' {
     return 'change';
   }
@@ -221,17 +243,23 @@ export class MarkingMenuChangeEvent<
     return 'novice';
   }
 
-  /** The item under the pointer after the change, or `null` if none is. */
+  /**
+  The item under the pointer after the change, or `null` if none is.
+  */
   get active(): ModelItems<M> | null {
     return this.#active;
   }
 
-  /** The item that was active before this change, or `null` if none was. */
+  /**
+  The item that was active before this change, or `null` if none was.
+  */
   get previousActive(): ModelItems<M> | null {
     return this.#previousActive;
   }
 
-  /** The menu currently open. */
+  /**
+  The menu currently open.
+  */
   get menu(): ModelMenus<M> {
     return this.#menu;
   }
@@ -245,7 +273,9 @@ export class MarkingMenuChangeEvent<
 export class MarkingMenuSelectEvent<
   M extends AnyModelNode,
 > extends MarkingMenuEventBase {
-  /** This event's type, as a literal. */
+  /**
+  This event's type, as a literal.
+  */
   static get type(): 'select' {
     return 'select';
   }
@@ -269,12 +299,16 @@ export class MarkingMenuSelectEvent<
     this.#menu = data.menu;
   }
 
-  /** The leaf that was selected. */
+  /**
+  The leaf that was selected.
+  */
   get selection(): ModelLeaves<M> {
     return this.#selection;
   }
 
-  /** The menu the selection was made from, or `null` in expert mode. */
+  /**
+  The menu the selection was made from, or `null` in expert mode.
+  */
   get menu(): ModelMenus<M> | null {
     return this.#menu;
   }
@@ -289,7 +323,9 @@ export class MarkingMenuSelectEvent<
 export class MarkingMenuCancelEvent<
   M extends AnyModelNode,
 > extends MarkingMenuEventBase {
-  /** This event's type, as a literal. */
+  /**
+  This event's type, as a literal.
+  */
   static get type(): 'cancel' {
     return 'cancel';
   }
@@ -308,12 +344,16 @@ export class MarkingMenuCancelEvent<
     this.#menu = data.menu;
   }
 
-  /** The item that was active when the gesture was abandoned, or `null`. */
+  /**
+  The item that was active when the gesture was abandoned, or `null`.
+  */
   get active(): ModelItems<M> | null {
     return this.#active;
   }
 
-  /** The menu the gesture was abandoned from, or `null` in expert mode. */
+  /**
+  The menu the gesture was abandoned from, or `null` in expert mode.
+  */
   get menu(): ModelMenus<M> | null {
     return this.#menu;
   }

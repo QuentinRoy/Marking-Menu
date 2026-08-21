@@ -152,7 +152,9 @@ export const toLocalPoint = (
   rect: { left: number; top: number },
 ): Point => [point[0] - rect.left, point[1] - rect.top];
 
-/** A function that does nothing. Useful as a default callback. */
+/**
+A function that does nothing. Useful as a default callback.
+*/
 export const noOp = (): void => {
   // Intentionally empty.
 };

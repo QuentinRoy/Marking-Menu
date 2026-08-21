@@ -21,7 +21,9 @@ const parseLog = (text: string): LogEntry[] =>
     .filter((line) => line.length > 0)
     .map((line) => JSON.parse(line) as LogEntry);
 
-/** Read every notification the fixture has logged so far. */
+/**
+Read every notification the fixture has logged so far.
+*/
 export const readLog = async (page: Page): Promise<LogEntry[]> =>
   parseLog(await page.locator('#log').innerText());
 

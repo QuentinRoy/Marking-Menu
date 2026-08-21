@@ -15,9 +15,13 @@ export type GestureFeedbackStrokeOptions = Omit<StrokeCanvasOptions, 'parent'>;
  The gesture feedback controls.
  */
 export type GestureFeedback = {
-  /** Show the feedback for the given stroke. */
+  /**
+  Show the feedback for the given stroke.
+  */
   show: (stroke: readonly Point[], options?: { canceled?: boolean }) => void;
-  /** Immediately remove any shown feedback. */
+  /**
+  Immediately remove any shown feedback.
+  */
   remove: () => void;
 };
 
@@ -32,13 +36,21 @@ export function createGestureFeedback({
   strokeOptions = {},
   canceledStrokeOptions = {},
 }: {
-  /** The parent node. */
+  /**
+  The parent node.
+  */
   parent: HTMLElement;
-  /** The duration of the feedback, in milliseconds. */
+  /**
+  The duration of the feedback, in milliseconds.
+  */
   duration: number;
-  /** The options of the feedback strokes. */
+  /**
+  The options of the feedback strokes.
+  */
   strokeOptions?: GestureFeedbackStrokeOptions;
-  /** The options of the canceled feedback strokes. */
+  /**
+  The options of the canceled feedback strokes.
+  */
   canceledStrokeOptions?: GestureFeedbackStrokeOptions;
 }): GestureFeedback {
   let strokeTimeoutEntries: StrokeTimeoutEntry[] = [];

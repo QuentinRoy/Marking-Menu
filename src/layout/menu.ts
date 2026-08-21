@@ -21,11 +21,17 @@ function ensureStylesInjected(doc: Document): void {
  An item of the menu layout's model.
  */
 export type MenuLayoutItem = {
-  /** The item's key. */
+  /**
+  The item's key.
+  */
   key: string;
-  /** The item's label. */
+  /**
+  The item's label.
+  */
   label: string;
-  /** The item's angle, in degrees. */
+  /**
+  The item's angle, in degrees.
+  */
   angle: number;
 };
 
@@ -33,7 +39,9 @@ export type MenuLayoutItem = {
  The menu layout's view of the marking menu model.
  */
 export type MenuLayoutModel = {
-  /** The items of the (sub-)menu to display. */
+  /**
+  The items of the (sub-)menu to display.
+  */
   items: readonly MenuLayoutItem[];
 };
 
@@ -41,9 +49,13 @@ export type MenuLayoutModel = {
  The menu controls.
  */
 export type Menu = {
-  /** Mark the item with the given id as active (or none if nullish). */
+  /**
+  Mark the item with the given id as active (or none if nullish).
+  */
   setActive: (itemId: string | number | null) => void;
-  /** Remove the menu. */
+  /**
+  Remove the menu.
+  */
   remove: () => void;
 };
 

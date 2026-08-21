@@ -1,7 +1,11 @@
-/** A `rafThrottle`d function, with a handle to cancel its pending frame. */
+/**
+A `rafThrottle`d function, with a handle to cancel its pending frame.
+*/
 export type Throttled<Arguments extends readonly unknown[]> = {
   (...args: Arguments): void;
-  /** Cancel the pending frame, if any. A no-op when none is scheduled. */
+  /**
+  Cancel the pending frame, if any. A no-op when none is scheduled.
+  */
   cancel: () => void;
 };
 

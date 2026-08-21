@@ -4,19 +4,33 @@ import type { Point } from '../utils.js';
  Configuration options of a stroke canvas.
  */
 export type StrokeCanvasOptions = {
-  /** The parent node. */
+  /**
+  The parent node.
+  */
   parent: HTMLElement;
-  /** The root document. Mostly useful for testing purposes. */
+  /**
+  The root document. Mostly useful for testing purposes.
+  */
   doc?: Document;
-  /** The width of the stroke, in pixels. */
+  /**
+  The width of the stroke, in pixels.
+  */
   lineWidth?: number;
-  /** CSS representation of the stroke color. */
+  /**
+  CSS representation of the stroke color.
+  */
   lineColor?: string;
-  /** The radius of the point drawn at the start of the stroke. */
+  /**
+  The radius of the point drawn at the start of the stroke.
+  */
   pointRadius?: number;
-  /** CSS representation of the start point color. Defaults to `lineColor`. */
+  /**
+  CSS representation of the start point color. Defaults to `lineColor`.
+  */
   pointColor?: string;
-  /** The size of the canvas points (px). Defaults to `1 / devicePixelRatio`. */
+  /**
+  The size of the canvas points (px). Defaults to `1 / devicePixelRatio`.
+  */
   ptSize?: number;
 };
 
@@ -24,13 +38,21 @@ export type StrokeCanvasOptions = {
  The methods of a stroke canvas.
  */
 export type StrokeCanvas = {
-  /** Clear the canvas. */
+  /**
+  Clear the canvas.
+  */
   clear: () => void;
-  /** Render a path connecting every point of the given stroke. */
+  /**
+  Render a path connecting every point of the given stroke.
+  */
   drawStroke: (stroke: readonly Point[]) => void;
-  /** Render the start-of-stroke marker at the given position. */
+  /**
+  Render the start-of-stroke marker at the given position.
+  */
   drawPoint: (point: Point) => void;
-  /** Destroy the canvas. */
+  /**
+  Destroy the canvas.
+  */
   remove: () => void;
 };
 

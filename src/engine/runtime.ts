@@ -15,7 +15,9 @@ import {
 } from './machine.js';
 import type { LayoutRenderer } from './renderer.js';
 
-/** All an input source needs of the runtime: no events, no model. */
+/**
+All an input source needs of the runtime: no events, no model.
+*/
 export type NavigationInputSink = {
   send: (input: NavigationInput) => void;
 };
