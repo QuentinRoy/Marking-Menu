@@ -9,6 +9,10 @@
   ],
   "packageRules": [
     {
+      "matchPackageNames": ["/changesets/"],
+      "groupName": "changesets"
+    },
+    {
       "matchPackageNames": ["/eslint/", "/prettier/"],
       "groupName": "ci"
     },
