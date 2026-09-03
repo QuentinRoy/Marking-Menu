@@ -127,6 +127,10 @@ export type ModelItem<
 export type ModelRoot<Items extends readonly unknown[] = readonly unknown[]> =
   MenuNode<Items> & {
     readonly isRoot: true;
+    /**
+     The root has no parent: it is never nested within another node.
+     */
+    readonly parent: null;
   };
 
 /**
@@ -148,13 +152,22 @@ type GenericNodeKeys =
 /**
  The shape of a model node — root or item — for callers that walk the model
  generically rather than through the literal ids described in a specific menu.
+
+ `parent` is added outside of {@link GenericNodeKeys}: `ModelItem` itself has
+ no such field — a literal-preserving `parent` is exactly the type-level
+ problem this file works around (see {@link AnyModelNode} and how
+ {@link MarkingMenuModel} builds it) — so each variant states its own erased
+ `parent` type directly. An item's parent is always some node of this same
+ union; the root's is always `null`.
  */
 export type MarkingMenuModelItem =
-  | Pick<
+  | (Pick<
       ModelItem<string | undefined, string, readonly MarkingMenuModelItem[]>,
       GenericNodeKeys
-    >
-  | Pick<ModelRoot<readonly MarkingMenuModelItem[]>, GenericNodeKeys>;
+    > & { readonly parent: MarkingMenuModelItem })
+  | (Pick<ModelRoot<readonly MarkingMenuModelItem[]>, GenericNodeKeys> & {
+      readonly parent: null;
+    });
 
 /* -------------------------------------------------------------------------- *
  * Generic node walking
@@ -175,6 +188,12 @@ export interface AnyModelNode {
   readonly isLeaf: boolean;
   readonly isRoot: boolean;
   readonly items: readonly AnyModelNode[];
+  /**
+   The node one level up, or `null` for the root. Erased, like `items`: the
+   precise, literal-preserving parent lives on the model {@link createModel}
+   returns, not on this generic shape.
+   */
+  readonly parent: AnyModelNode | null;
   getNearestChild(angle: number): this['items'][number] | null;
   getMaxDepth(): number;
   getMaxBreadth(): number;
