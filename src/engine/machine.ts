@@ -40,11 +40,6 @@ export type NavigationOptions = {
   readonly minSelectionDist: number;
 };
 
-type Deps = {
-  readonly model: AnyModelNode;
-  readonly options: NavigationOptions;
-};
-
 /**
  The boundary input shape `pointer-source.ts` sends: unrelated to the
  machine's own (shorter) input vocabulary, so that layer never has to know
@@ -88,15 +83,21 @@ type NavigationInputs = {
 };
 
 type NavigationStates = {
-  idle: { readonly deps: Deps };
+  idle: { readonly model: AnyModelNode; readonly options: NavigationOptions };
   startup: {
-    readonly deps: Deps;
+    readonly model: AnyModelNode;
+    readonly options: NavigationOptions;
     readonly origin: Point;
     readonly stroke: readonly Point[];
   };
-  expert: { readonly deps: Deps; readonly stroke: readonly Point[] };
+  expert: {
+    readonly model: AnyModelNode;
+    readonly options: NavigationOptions;
+    readonly stroke: readonly Point[];
+  };
   novice: {
-    readonly deps: Deps;
+    readonly model: AnyModelNode;
+    readonly options: NavigationOptions;
     readonly menu: AnyModelNode;
     readonly menuCenter: Point;
     readonly active: AnyModelNode | null;
@@ -142,7 +143,7 @@ type NavigationOutputs = {
  Reassemble the boundary `NavigationState` from a committed `{ to, toData }`
  pair, for `projectLayout`. The cast is the same erasure-crossing every
  model-shaped field in this file needs: `toData`'s real shape already matches
- one of `NavigationState`'s variants field-for-field, `deps` aside.
+ one of `NavigationState`'s variants field-for-field, `model`/`options` aside.
  */
 function toNavigationState(
   to: keyof NavigationStates,
@@ -275,33 +276,45 @@ export const navigationMachine = machine({
   initial: 'idle',
 
   transitions: {
-    'idle -down> startup': ({ fromData, inputData }) => ({
-      deps: fromData.deps,
-      origin: inputData.position,
-      stroke: [inputData.position],
+    'idle -down> startup': ({
+      fromData: { model, options },
+      inputData: { position },
+    }) => ({
+      model,
+      options,
+      origin: position,
+      stroke: [position],
     }),
 
-    'startup -move> expert'({ fromData, inputData, skip }) {
-      const stroke = [...fromData.stroke, inputData.position];
-      return dist(fromData.origin, inputData.position) >=
-        fromData.deps.options.movementsThreshold
-        ? { deps: fromData.deps, stroke }
+    'startup -move> expert'({
+      fromData: { model, options, origin, stroke },
+      inputData: { position },
+      skip,
+    }) {
+      const newStroke = [...stroke, position];
+      return dist(origin, position) >= options.movementsThreshold
+        ? { model, options, stroke: newStroke }
         : skip();
     },
+
     'startup -move> startup': ({ fromData, inputData }) => ({
       ...fromData,
       stroke: [...fromData.stroke, inputData.position],
     }),
+
     // The dwell wins the startup race: open novice mode at the root menu,
     // centered on the gesture's origin. The pointer is still well within
     // `movementsThreshold` of it, so nothing is active yet.
-    'startup -dwell> novice': ({ fromData }) => ({
-      deps: fromData.deps,
-      menu: fromData.deps.model,
-      menuCenter: fromData.origin,
+    'startup -dwell> novice': ({
+      fromData: { model, options, origin, stroke },
+    }) => ({
+      model,
+      options,
+      menu: model,
+      menuCenter: origin,
       active: null,
-      upperStroke: [fromData.origin],
-      lowerStroke: fromData.stroke,
+      upperStroke: [origin],
+      lowerStroke: stroke,
     }),
 
     'expert -move> expert': ({ fromData, inputData }) => ({
@@ -309,31 +322,32 @@ export const navigationMachine = machine({
       stroke: [...fromData.stroke, inputData.position],
     }),
 
-    'novice -move> novice'({ fromData, inputData }) {
-      const { azymuth, radius } = toPolar(
-        inputData.position,
-        fromData.menuCenter,
-      );
+    'novice -move> novice'({ fromData, inputData: { position } }) {
+      const { menuCenter, options, menu } = fromData;
+      const { azymuth, radius } = toPolar(position, menuCenter);
       const active =
-        radius < fromData.deps.options.minSelectionDist
+        radius < options.minSelectionDist
           ? null
-          : fromData.menu.getNearestChild(azymuth);
+          : menu.getNearestChild(azymuth);
       return {
         ...fromData,
         active,
-        upperStroke: [...fromData.upperStroke, inputData.position],
+        upperStroke: [...fromData.upperStroke, position],
       };
     },
 
     // Idle has no gesture to end, so both decline there; every other state
     // (startup, expert, novice) resets to idle's own shape.
-    '* -up> idle': ({ from, fromData, skip }) =>
-      from === 'idle' ? skip() : { deps: fromData.deps },
-    '* -cancel> idle': ({ from, fromData, skip }) =>
-      from === 'idle' ? skip() : { deps: fromData.deps },
+    '* -up> idle': ({ from, fromData: { model, options }, skip }) =>
+      from === 'idle' ? skip() : { model, options },
+    '* -cancel> idle': ({ from, fromData: { model, options }, skip }) =>
+      from === 'idle' ? skip() : { model, options },
     // Dispose resets to idle's shape from anywhere, idle included: every
-    // state already carries `deps`, so one row covers all four.
-    '* -dispose> idle': ({ fromData }) => ({ deps: fromData.deps }),
+    // state already carries `model`/`options`, so one row covers all four.
+    '* -dispose> idle': ({ fromData: { model, options } }) => ({
+      model,
+      options,
+    }),
   },
 
   actions: {
@@ -347,7 +361,7 @@ export const navigationMachine = machine({
       run({ toData, send }) {
         const timer = setTimeout(() => {
           send('dwell');
-        }, toData.deps.options.noviceDwellingTime);
+        }, toData.options.noviceDwellingTime);
         return () => {
           clearTimeout(timer);
         };
@@ -441,7 +455,7 @@ export const navigationMachine = machine({
 
       const selection = isSkipRecognition
         ? null
-        : recognizeMarkingMenuStroke(stroke, fromData.deps.model);
+        : recognizeMarkingMenuStroke(stroke, fromData.model);
       emit('feedback', { stroke, canceled: selection === null });
 
       if (selection === null) {

@@ -62,7 +62,7 @@ export function createRuntime<M extends AnyModelNode>({
     Array<{ listener: (event: never) => void; wrapper: EventListener }>
   >();
 
-  const host = navigationMachine.start({ deps: { model, options } });
+  const host = navigationMachine.start({ model, options });
 
   const offLayout = host.on('layout', ({ data }) => {
     renderer.render(data as unknown as LayoutView<M>);
