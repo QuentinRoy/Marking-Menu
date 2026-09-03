@@ -3,7 +3,11 @@ import { createModel } from '../model.js';
 import { createRuntime } from './runtime.js';
 
 const model = createModel({ items: [{ id: 'right', label: 'Right' }] });
-const options = { movementsThreshold: 5, noviceDwellingTime: 300 };
+const options = {
+  movementsThreshold: 5,
+  noviceDwellingTime: 300,
+  minSelectionDist: 40,
+};
 
 const createFakeRenderer = () => ({
   render: vi.fn(),

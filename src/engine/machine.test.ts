@@ -31,7 +31,11 @@ const model = createModel({
   ],
 });
 
-const options = { movementsThreshold: 5, noviceDwellingTime: 300 };
+const options = {
+  movementsThreshold: 5,
+  noviceDwellingTime: 300,
+  minSelectionDist: 40,
+};
 
 /**
 Start a fresh host with the shared fixture model and options.
@@ -259,11 +263,67 @@ describe('navigationMachine', () => {
     });
   });
 
-  describe('novice phase (minimal: hit-testing is not implemented yet)', () => {
+  describe('novice phase: pointing at items', () => {
     const openNovice = (host: ReturnType<typeof startHost>) => {
       host.send('down', { position: [0, 0] });
       host.send('dwell');
     };
+
+    it('stays inactive while the pointer is within minSelectionDist of the menu center (objective 5)', () => {
+      const host = startHost();
+      const moved = vi.fn<(event: { active: unknown }) => void>();
+      host.on('move', ({ data }) => {
+        moved(data);
+      });
+      const changed = vi.fn<() => void>();
+      host.on('change', changed);
+
+      openNovice(host);
+      host.send('move', { position: [10, 0] });
+
+      expect(host.current.name).toBe('novice');
+      expect(
+        host.current.name === 'novice' && host.current.data.active,
+      ).toBeNull();
+      expect(moved).toHaveBeenCalledTimes(1);
+      expect(moved.mock.calls[0]?.[0].active).toBeNull();
+      expect(changed).not.toHaveBeenCalled();
+    });
+
+    it('activates the nearest item by angle once beyond minSelectionDist, and distinguishes a changed nearest item from continued pointing at the same one (objective 6)', () => {
+      const host = startHost();
+      const moved: unknown[] = [];
+      host.on('move', ({ data }) => {
+        moved.push(data.active);
+      });
+      const changed =
+        vi.fn<(event: { active: unknown; previousActive: unknown }) => void>();
+      host.on('change', ({ data }) => {
+        changed(data);
+      });
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] });
+
+      expect(host.current.name).toBe('novice');
+      const active =
+        host.current.name === 'novice' ? host.current.data.active : null;
+      expect(active).not.toBeNull();
+      expect((active as unknown as { id: string }).id).toBe('right');
+      expect(moved).toEqual([active]);
+      expect(changed).toHaveBeenCalledTimes(1);
+      const changeData = changed.mock.calls[0]?.[0] as {
+        active: unknown;
+        previousActive: unknown;
+      };
+      expect(changeData.active).toBe(active);
+      expect(changeData.previousActive).toBeNull();
+
+      // Continued pointing at the same item: another `move`, no further `change`.
+      host.send('move', { position: [110, 0] });
+      expect(moved).toEqual([active, active]);
+      expect(changed).toHaveBeenCalledTimes(1);
+    });
 
     it('cancels on pointer up, carrying the currently open menu and no active item', () => {
       const host = startHost();
@@ -297,15 +357,12 @@ describe('navigationMachine', () => {
       expect(canceled).toHaveBeenCalledTimes(1);
     });
 
-    it('ignores down, move, and a stray dwell', () => {
+    it('ignores down and a stray dwell', () => {
       const host = startHost();
       openNovice(host);
       const inNovice = host.current;
 
       host.send('down', { position: [1, 1] });
-      expect(host.current).toEqual(inNovice);
-
-      host.send('move', { position: [1, 1] });
       expect(host.current).toEqual(inNovice);
 
       host.send('dwell');
