@@ -53,6 +53,8 @@ const options = {
   movementsThreshold: 5,
   noviceDwellingTime: 300,
   minSelectionDist: 40,
+  minMenuSelectionDist: 80,
+  submenuOpeningDelay: 200,
 };
 
 /**
@@ -471,6 +473,169 @@ describe('navigationMachine', () => {
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
       expect((cancelData?.active as { id: string } | null)?.id).toBe('right');
+    });
+  });
+
+  describe('novice phase: dwelling into a submenu (objectives 9, 11)', () => {
+    it('opens the submenu when the dwell fires beyond minMenuSelectionDist on a non-leaf active item', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const opened: unknown[] = [];
+      host.on('open', ({ data }) => {
+        opened.push(data);
+      });
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] }); // Beyond minMenuSelectionDist (80), activates "right"
+      const submenu =
+        host.current.name === 'novice' ? host.current.data.active : null;
+      expect(submenu).not.toBeNull();
+
+      opened.length = 0; // Discard the root menu's own `open`
+      host.send('dwell');
+
+      // A genuine phase change: novice re-enters novice, but at the submenu.
+      expect(host.current.name).toBe('novice');
+      const data = host.current.name === 'novice' ? host.current.data : null;
+      expect(data?.menu).toBe(submenu);
+      expect(data?.menuCenter).toEqual([100, 0]);
+      expect(data?.active).toBeNull();
+
+      expect(opened).toHaveLength(1);
+      const event = opened[0] as {
+        mode: string;
+        menu: unknown;
+        menuCenter: number[];
+        position: number[];
+      };
+      expect(event.mode).toBe('novice');
+      expect(event.menu).toBe(submenu);
+      expect(event.menuCenter).toEqual([100, 0]);
+      expect(event.position).toEqual([100, 0]);
+    });
+
+    it('accumulates the prior stroke into the lower stroke and restarts the upper stroke from the new centre', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] });
+      host.send('dwell');
+
+      const data = host.current.name === 'novice' ? host.current.data : null;
+      expect(data?.upperStroke).toEqual([[100, 0]]);
+      expect(data?.lowerStroke).toEqual([
+        [0, 0],
+        [0, 0],
+        [100, 0],
+      ]);
+    });
+
+    it('does not open when dwelling within minMenuSelectionDist, even on a non-leaf active item', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      openNovice(host);
+      const opened = vi.fn<() => void>();
+      host.on('open', opened);
+
+      // Beyond minSelectionDist (40) so "right" is active, but within
+      // minMenuSelectionDist (80).
+      host.send('move', { position: [50, 0] });
+      const rootMenu =
+        host.current.name === 'novice' ? host.current.data.menu : null;
+
+      host.send('dwell');
+
+      expect(opened).not.toHaveBeenCalled();
+      expect(host.current.name === 'novice' && host.current.data.menu).toBe(
+        rootMenu,
+      );
+    });
+
+    it('does not open on a leaf active item, regardless of distance', () => {
+      const host = startHost(); // The plain, leaf-only fixture model
+      openNovice(host);
+      const opened = vi.fn<() => void>();
+      host.on('open', opened);
+
+      host.send('move', { position: [200, 0] });
+      host.send('dwell');
+
+      expect(opened).not.toHaveBeenCalled();
+      expect(host.current.name).toBe('novice');
+    });
+
+    it('does not open when nothing is active', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      openNovice(host);
+      const opened = vi.fn<() => void>();
+      host.on('open', opened);
+
+      host.send('move', { position: [10, 0] }); // Within minSelectionDist: active stays null
+      host.send('dwell');
+
+      expect(opened).not.toHaveBeenCalled();
+    });
+
+    it('a small movement leaves the pending submenu dwell untouched', () => {
+      using _timers = fakeTimers();
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const opened = vi.fn<() => void>();
+      host.on('open', opened);
+
+      host.send('down', { position: [0, 0] });
+      vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice
+      opened.mockClear();
+
+      host.send('move', { position: [100, 0] }); // Significant: activates "right", (re)starts the submenu dwell
+      vi.advanceTimersByTime(options.submenuOpeningDelay - 10);
+      host.send('move', { position: [102, 0] }); // Insignificant (<5px): must not reset it
+      vi.advanceTimersByTime(10);
+
+      expect(opened).toHaveBeenCalledTimes(1);
+    });
+
+    it('significant movement resets the submenu dwell rather than opening it (objective 9)', () => {
+      using _timers = fakeTimers();
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const opened = vi.fn<() => void>();
+      host.on('open', opened);
+
+      host.send('down', { position: [0, 0] });
+      vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice
+      opened.mockClear();
+
+      host.send('move', { position: [100, 0] }); // Starts the submenu dwell
+      vi.advanceTimersByTime(options.submenuOpeningDelay - 10);
+      host.send('move', { position: [200, 0] }); // Significant: restarts it
+      vi.advanceTimersByTime(10);
+
+      // Would have fired here without the reset.
+      expect(opened).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(options.submenuOpeningDelay - 10);
+      // Fires `submenuOpeningDelay` after the *second* move instead.
+      expect(opened).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps a submenu-dwell timer armed for the freshly opened submenu, even with no wobble between the move that activated it and the dwell that opened it', () => {
+      using _timers = fakeTimers();
+      const host = navigationMachine.start({ model: submenuModel, options });
+
+      host.send('down', { position: [0, 0] });
+      vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice at [0, 0]
+      expect(vi.getTimerCount()).toBe(1); // The root menu's own submenu-dwell timer
+
+      host.send('move', { position: [100, 0] }); // One significant move, straight onto "right"
+      expect(vi.getTimerCount()).toBe(1); // Restarted, not doubled or dropped
+
+      vi.advanceTimersByTime(options.submenuOpeningDelay);
+      expect(host.current.name).toBe('novice');
+      expect(
+        host.current.name === 'novice' && host.current.data.menuCenter,
+      ).toEqual([100, 0]);
+      // The residency must rearm on entering the submenu too, not stay
+      // dropped because this particular transition's `dwellAnchor` happens
+      // to be the very same reference the residency's `restart` predicate
+      // compares against.
+      expect(vi.getTimerCount()).toBe(1);
     });
   });
 });

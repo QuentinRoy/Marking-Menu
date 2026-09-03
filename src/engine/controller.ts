@@ -18,6 +18,8 @@ export type EngineConfig = MarkingMenuInput & {
   readonly movementsThreshold?: number;
   readonly noviceDwellingTime?: number;
   readonly minSelectionDist?: number;
+  readonly minMenuSelectionDist?: number;
+  readonly submenuOpeningDelay?: number;
 };
 
 /*
@@ -76,6 +78,8 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
         movementsThreshold: config.movementsThreshold ?? 5,
         noviceDwellingTime: config.noviceDwellingTime ?? 1000 / 3,
         minSelectionDist: config.minSelectionDist ?? 40,
+        minMenuSelectionDist: config.minMenuSelectionDist ?? 80,
+        submenuOpeningDelay: config.submenuOpeningDelay ?? 100,
       },
       renderer,
     });

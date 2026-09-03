@@ -78,6 +78,8 @@ describe('StatesOf<typeof navigationMachine>', () => {
         movementsThreshold: 5,
         noviceDwellingTime: 1,
         minSelectionDist: 40,
+        minMenuSelectionDist: 80,
+        submenuOpeningDelay: 1,
       },
     });
     expectTypeOf(carryModel).toBeFunction();

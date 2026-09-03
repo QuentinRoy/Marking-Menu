@@ -38,6 +38,8 @@ export type NavigationOptions = {
   readonly movementsThreshold: number;
   readonly noviceDwellingTime: number;
   readonly minSelectionDist: number;
+  readonly minMenuSelectionDist: number;
+  readonly submenuOpeningDelay: number;
 };
 
 /**
@@ -71,6 +73,7 @@ export type NavigationState<M extends AnyModelNode> =
       readonly active: ModelItems<M> | null;
       readonly upperStroke: readonly Point[];
       readonly lowerStroke: readonly Point[];
+      readonly dwellAnchor: Point;
     };
 
 type NavigationInputs = {
@@ -103,6 +106,11 @@ type NavigationStates = {
     readonly active: AnyModelNode | null;
     readonly upperStroke: readonly Point[];
     readonly lowerStroke: readonly Point[];
+    // The last position significant movement was measured from: distinct
+    // from `menuCenter`, which stays fixed for the life of this menu. Only a
+    // move that carries this anchor forward can restart the submenu-dwell
+    // residency; see its `restart` predicate below.
+    readonly dwellAnchor: Point;
   };
 };
 
@@ -252,6 +260,23 @@ function cancelEvent<N extends AnyModelNode>(data: {
 }
 
 /**
+ Shared body of the `startup` and `novice` dwell residencies: arm a `dwell`
+ timer for `delayMs` and clear it on exit, whatever ends the residency,
+ whether that is leaving the state or disposal.
+ */
+function armDwellTimer(
+  delayMs: number,
+  send: (input: 'dwell') => void,
+): () => void {
+  const timer = setTimeout(() => {
+    send('dwell');
+  }, delayMs);
+  return () => {
+    clearTimeout(timer);
+  };
+}
+
+/**
  The context every termination action needs: the stroke drawn so far
  (including the release/cancel position), the menu open when it ended (if
  any), and the item that was active (if any). That active item is precisely
@@ -329,6 +354,7 @@ export const navigationMachine = machine({
       active: null,
       upperStroke: [origin],
       lowerStroke: stroke,
+      dwellAnchor: origin,
     }),
 
     'expert -move> expert': ({ fromData, inputData }) => ({
@@ -337,7 +363,7 @@ export const navigationMachine = machine({
     }),
 
     'novice -move> novice'({ fromData, inputData: { position } }) {
-      const { menuCenter, options, menu } = fromData;
+      const { menuCenter, options, menu, dwellAnchor } = fromData;
       const { azymuth, radius } = toPolar(position, menuCenter);
       const active =
         radius < options.minSelectionDist
@@ -347,6 +373,55 @@ export const navigationMachine = machine({
         ...fromData,
         active,
         upperStroke: [...fromData.upperStroke, position],
+        // A fresh reference only when movement is significant: the
+        // submenu-dwell residency's `restart` predicate below compares this
+        // by reference, so an unchanged anchor must stay the same object.
+        dwellAnchor:
+          dist(dwellAnchor, position) >= options.movementsThreshold
+            ? position
+            : dwellAnchor,
+      };
+    },
+
+    // Pausing beyond `minMenuSelectionDist` on a non-leaf active item opens
+    // that submenu: a genuine phase change, even though the destination is
+    // named `novice` too. Anything else declines, and since no other row is
+    // declared for (novice, dwell), the dwell is silently dropped.
+    'novice -dwell> novice'({
+      fromData: {
+        active,
+        menuCenter,
+        upperStroke,
+        lowerStroke,
+        options,
+        model,
+      },
+      skip,
+    }) {
+      const position = upperStroke.at(-1) as Point;
+      const { radius } = toPolar(position, menuCenter);
+      if (
+        active === null ||
+        active.isLeaf ||
+        radius <= options.minMenuSelectionDist
+      ) {
+        return skip();
+      }
+
+      return {
+        model,
+        options,
+        menu: active,
+        menuCenter: position,
+        active: null,
+        upperStroke: [position],
+        lowerStroke: [...lowerStroke, ...upperStroke],
+        // A fresh reference, deliberately never `position` itself: opening a
+        // submenu must always restart the residency for the new menu, and
+        // `position` is `upperStroke.at(-1)`. With no wobble between the
+        // move that armed this dwell and the dwell itself, that is the very
+        // same reference `fromData.dwellAnchor` already holds.
+        dwellAnchor: [...position],
       };
     },
 
@@ -372,17 +447,23 @@ export const navigationMachine = machine({
     },
 
     startup: {
-      run({ toData, send }) {
-        const timer = setTimeout(() => {
-          send('dwell');
-        }, toData.options.noviceDwellingTime);
-        return () => {
-          clearTimeout(timer);
-        };
-      },
+      run: ({ toData, send }) =>
+        armDwellTimer(toData.options.noviceDwellingTime, send),
       // The dwell is armed once, on arrival: a self-transition (growing the
       // stroke below the movement threshold) must never restart it.
       restart: false,
+    },
+
+    novice: {
+      run: ({ toData, send }) =>
+        armDwellTimer(toData.options.submenuOpeningDelay, send),
+      // Only a self-transition that carries `dwellAnchor` forward to a new
+      // position restarts the residency, whether from significant movement
+      // or the fresh centre a submenu open itself produces. A small move,
+      // or a dwell that failed its own eligibility check and left the state
+      // unchanged, leaves the pending timer alone.
+      restart: ({ fromData, toData }) =>
+        fromData.dwellAnchor !== toData.dwellAnchor,
     },
 
     'idle -down> startup'({ toData, emit }) {
@@ -415,6 +496,21 @@ export const navigationMachine = machine({
 
     'expert -move> expert'({ inputData, emit }) {
       emitNullActiveMove(emit, 'expert', inputData.position);
+    },
+
+    // Same shape as `'startup -dwell> novice'`'s own `open`, one recursion
+    // level down: the row above already declined the input unless the
+    // dwell landed beyond `minMenuSelectionDist` on a non-leaf, so an
+    // eligible submenu is all this action ever announces.
+    'novice -dwell> novice'({ toData, emit }) {
+      emit(
+        'open',
+        openEvent({
+          position: toData.menuCenter,
+          menu: toData.menu,
+          menuCenter: toData.menuCenter,
+        }),
+      );
     },
 
     // `move` always fires; `change` only when the nearest item differs from
