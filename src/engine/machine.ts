@@ -254,12 +254,13 @@ function cancelEvent<N extends AnyModelNode>(data: {
 /**
  The context every termination action needs: the stroke drawn so far
  (including the release/cancel position), the menu open when it ended (if
- any), and the item that was active (if any) — precisely the thing that is
- not selected once a termination action decides not to select it. Narrows
- structurally on `'lowerStroke' in fromData` rather than taking `from` as a
- parameter: `from` and `fromData` are only correlated inside totorobot's own
- transition record, and splitting them across two parameters here
- decorrelates them, so novice is picked out by the field only it has.
+ any), and the item that was active (if any). That active item is precisely
+ the thing that is not selected once a termination action decides not to
+ select it. Narrows structurally on `'lowerStroke' in fromData` rather than
+ taking `from` as a parameter: `from` and `fromData` are only correlated
+ inside totorobot's own transition record, and splitting them across two
+ parameters here decorrelates them, so novice is picked out by the field
+ only it has.
  */
 function terminationContext(
   fromData: NavigationStates['startup' | 'expert' | 'novice'],
@@ -461,8 +462,8 @@ export const navigationMachine = machine({
       // Novice release hit-tests the item already tracked as active rather
       // than running stroke recognition: only a leaf can be selected, and a
       // non-leaf (or absent) active item carries straight through to
-      // `cancel.active` unchanged — it is precisely the thing that was not
-      // selected. Startup with zero movement has nothing to recognize;
+      // `cancel.active` unchanged, since it is precisely the thing that was
+      // not selected. Startup with zero movement has nothing to recognize;
       // expert, and startup with sub-threshold movement, always attempt it.
       let selection: AnyModelNode | null;
       if (from === 'novice') {
@@ -484,7 +485,7 @@ export const navigationMachine = machine({
 
     // A pointer cancelled outright never selects, regardless of what was
     // active or what the stroke looks like: recognition never runs, and a
-    // novice active item — leaf or not — carries through to `cancel.active`
+    // novice active item, leaf or not, carries through to `cancel.active`
     // unchanged (objective 8). Same `idle` narrowing as the `-up>` action
     // above.
     '* -cancel> idle'({ from, fromData, inputData, emit }) {
