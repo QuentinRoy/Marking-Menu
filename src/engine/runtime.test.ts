@@ -7,6 +7,8 @@ const options = {
   movementsThreshold: 5,
   noviceDwellingTime: 300,
   minSelectionDist: 40,
+  minMenuSelectionDist: 80,
+  submenuOpeningDelay: 200,
 };
 
 const createFakeRenderer = () => ({

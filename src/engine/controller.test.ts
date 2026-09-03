@@ -890,6 +890,142 @@ describe('createController', () => {
     controller.dispose();
   });
 
+  describe('dwelling into a submenu (objectives 9, 11)', () => {
+    const submenuItems = [
+      {
+        id: 'right',
+        label: 'Right',
+        items: [
+          { id: 'subRight', label: 'Sub Right' },
+          { id: 'subDown', label: 'Sub Down' },
+          { id: 'subLeft', label: 'Sub Left' },
+          { id: 'subUp', label: 'Sub Up' },
+        ],
+      },
+      { id: 'down', label: 'Down' },
+      { id: 'left', label: 'Left' },
+      { id: 'up', label: 'Up' },
+    ] as const;
+
+    it('dispatches open for the submenu and recreates the menu DOM for it, once the pointer dwells beyond minMenuSelectionDist on it', () => {
+      using _canvases = stubbedCanvasContexts();
+      using _timers = fakeTimers();
+      const parent = createParent();
+      const controller = createController({
+        items: submenuItems,
+        parent,
+        noviceDwellingTime: 100,
+        minSelectionDist: 40,
+        minMenuSelectionDist: 80,
+        submenuOpeningDelay: 100,
+      });
+
+      const openedMenus: unknown[] = [];
+      controller.on('open', (event) => {
+        openedMenus.push(event.menu);
+      });
+
+      parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+      vi.advanceTimersByTime(100); // Opens the root menu
+      const rootMenuDom = parent.querySelector('.marking-menu');
+
+      // Beyond minMenuSelectionDist (80) on "right", a submenu.
+      parent.dispatchEvent(
+        pointer('pointermove', { clientX: 100, clientY: 0 }),
+      );
+      vi.advanceTimersByTime(100); // The submenu dwell fires
+
+      expect(openedMenus).toHaveLength(2);
+      expect(openedMenus[1]).not.toBe(openedMenus[0]);
+      // A different menu identity: the DOM is recreated, not patched.
+      expect(parent.querySelector('.marking-menu')).not.toBe(rootMenuDom);
+      expect(parent.querySelectorAll('.marking-menu')).toHaveLength(1);
+
+      controller.dispose();
+    });
+
+    it('selects a leaf inside the submenu', () => {
+      using _canvases = stubbedCanvasContexts();
+      using _timers = fakeTimers();
+      const parent = createParent();
+      const controller = createController({
+        items: submenuItems,
+        parent,
+        noviceDwellingTime: 100,
+        minSelectionDist: 40,
+        minMenuSelectionDist: 80,
+        submenuOpeningDelay: 100,
+      });
+
+      let selectedId: string | undefined;
+      controller.on('select', (event) => {
+        selectedId = event.selection.id;
+      });
+
+      parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+      vi.advanceTimersByTime(100);
+      parent.dispatchEvent(
+        pointer('pointermove', { clientX: 100, clientY: 0 }),
+      );
+      vi.advanceTimersByTime(100); // Opens the submenu, centered at [100, 0]
+
+      // Relative to the submenu's own centre, the same geometry that
+      // activates "right" from the root activates "subRight" here.
+      parent.dispatchEvent(
+        pointer('pointermove', { clientX: 200, clientY: 0 }),
+      );
+      parent.dispatchEvent(pointer('pointerup', { clientX: 200, clientY: 0 }));
+
+      expect(selectedId).toBe('subRight');
+
+      controller.dispose();
+    });
+
+    it('cancels a gesture that ends inside the submenu without a leaf active', () => {
+      using _canvases = stubbedCanvasContexts();
+      using _timers = fakeTimers();
+      const parent = createParent();
+      const controller = createController({
+        items: submenuItems,
+        parent,
+        noviceDwellingTime: 100,
+        minSelectionDist: 40,
+        minMenuSelectionDist: 80,
+        submenuOpeningDelay: 100,
+      });
+
+      const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+      controller.on('select', selected);
+      let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+      controller.on('cancel', (event) => {
+        cancelEvent = event;
+      });
+      let openedMenu: unknown;
+      controller.on('open', (event) => {
+        openedMenu = event.menu;
+      });
+
+      parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+      vi.advanceTimersByTime(100);
+      parent.dispatchEvent(
+        pointer('pointermove', { clientX: 100, clientY: 0 }),
+      );
+      vi.advanceTimersByTime(100); // Opens the submenu, centered at [100, 0]
+      const submenu = openedMenu;
+
+      // Released back at the submenu's own centre: within minSelectionDist,
+      // so nothing is active there.
+      parent.dispatchEvent(pointer('pointerup', { clientX: 100, clientY: 0 }));
+
+      expect(selected).not.toHaveBeenCalled();
+      expect(cancelEvent?.mode).toBe('novice');
+      expect(cancelEvent?.active).toBeNull();
+      expect(cancelEvent?.menu).toBe(submenu);
+
+      controller.dispose();
+    });
+  });
+
   it('removes the menu DOM on dispose while novice mode is open', () => {
     using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
