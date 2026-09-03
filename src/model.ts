@@ -154,17 +154,18 @@ type ItemsAt<
   ParentPath extends readonly number[],
   Inputs extends readonly MarkingMenuItemInput[],
   Index extends readonly unknown[] = EmptyTuple,
-> = IsTuple<Inputs> extends true
-  ? Inputs extends readonly [
-      infer _Head,
-      ...infer Rest extends readonly MarkingMenuItemInput[],
-    ]
-    ? readonly [
-        NodeAt<Root, readonly [...ParentPath, Index['length']]>,
-        ...ItemsAt<Root, ParentPath, Rest, readonly [...Index, unknown]>,
+> =
+  IsTuple<Inputs> extends true
+    ? Inputs extends readonly [
+        infer _Head,
+        ...infer Rest extends readonly MarkingMenuItemInput[],
       ]
-    : EmptyTuple
-  : ToItems<Inputs>;
+      ? readonly [
+          NodeAt<Root, readonly [...ParentPath, Index['length']]>,
+          ...ItemsAt<Root, ParentPath, Rest, readonly [...Index, unknown]>,
+        ]
+      : EmptyTuple
+    : ToItems<Inputs>;
 
 /**
  The model items an input item list resolves to when its length is not
