@@ -83,6 +83,27 @@ describe('createModel', () => {
     expect(menu.items[0].items[0].isRoot).toBe(false);
   });
 
+  it('gives every item a reference back to its parent', () => {
+    const menu = createModel({
+      items: [
+        {
+          id: 'menu',
+          label: 'Menu',
+          items: [{ id: 'sub-1', label: 'Sub 1' }],
+        },
+        { id: 'right', label: 'Right' },
+      ],
+    });
+    expect(menu.items[0].parent).toBe(menu);
+    expect(menu.items[0].items[0].parent).toBe(menu.items[0]);
+    expect(menu.items[1].parent).toBe(menu);
+  });
+
+  it('has no parent at the root', () => {
+    const menu = createModel({ items: [] });
+    expect(menu.parent).toBeNull();
+  });
+
   it('retrieves a direct sub-item by its id', () => {
     const menu = createModel({ items: fourItems });
     expect(menu.getChild('left')).toBe(menu.items[2]);

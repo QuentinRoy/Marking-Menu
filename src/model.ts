@@ -2,10 +2,11 @@ import type {
   LiteralId,
   MarkingMenuInput,
   MarkingMenuItemInput,
+  MarkingMenuModelItem,
   ModelItem,
   ModelRoot,
 } from './types.js';
-import { deltaAngle, type EmptyTuple } from './utils.js';
+import { deltaAngle, type EmptyTuple, type IsTuple } from './utils.js';
 
 /*
  The marking menu model.
@@ -112,24 +113,121 @@ type ItemsOf<Input> = Input extends {
   : EmptyTuple;
 
 /**
-The model items an input item list resolves to.
-*/
+ The raw description of the item at `Path` within `Items`, following
+ `Path`'s indices one level at a time. `Path` must be non-empty: the root
+ has no input counterpart to look up, since it *is* the whole of `Root`.
+ */
+type InputAt<
+  Items extends readonly MarkingMenuItemInput[],
+  Path extends readonly [number, ...number[]],
+> = Path extends readonly [
+  infer Head extends number,
+  ...infer Tail extends readonly number[],
+]
+  ? Items[Head] extends infer Item extends MarkingMenuItemInput
+    ? Tail extends readonly [number, ...number[]]
+      ? InputAt<ItemsOf<Item>, Tail>
+      : Item
+    : never
+  : never;
+
+/**
+ The model items built for `Inputs`, the sub-items of the node at
+ `ParentPath` within `Root`.
+
+ Built by real recursion, peeling `Inputs` one element at a time while
+ growing `Index` in lockstep, so each child gets its own literal path. A
+ mapped type over `keyof Inputs` would substitute the generic `number` into
+ every path instead, collapsing all the children into one node whose `id`
+ is the union of its siblings'.
+
+ Guarded on {@link IsTuple}: once a menu's `items` length isn't known
+ statically, neither is any descendant's path, so this degrades to
+ {@link ToItems} instead of recursing forever. The guard stays at this
+ level rather than inside {@link ToItems}, because `Inputs` can itself be a
+ still-unresolved generic (e.g. a menu config not yet narrowed to a literal
+ type): the compiler then has to check both branches on their own, without
+ a meaningless `Root` from the tuple branch poisoning the dynamic one.
+ */
+type ItemsAt<
+  Root extends MarkingMenuInput,
+  ParentPath extends readonly number[],
+  Inputs extends readonly MarkingMenuItemInput[],
+  Index extends readonly unknown[] = EmptyTuple,
+> =
+  IsTuple<Inputs> extends true
+    ? Inputs extends readonly [
+        infer _Head,
+        ...infer Rest extends readonly MarkingMenuItemInput[],
+      ]
+      ? readonly [
+          NodeAt<Root, readonly [...ParentPath, Index['length']]>,
+          ...ItemsAt<Root, ParentPath, Rest, readonly [...Index, unknown]>,
+        ]
+      : EmptyTuple
+    : ToItems<Inputs>;
+
+/**
+ The model items an input item list resolves to when its length is not
+ statically known: a menu, or a portion of one, built at runtime.
+ */
 type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = {
   [K in keyof Inputs]: ToItem<Inputs[K]>;
 };
 
 /**
-The model item an input item resolves to.
-*/
+ The model item an input item resolves to, without a `Root`/`Path` to derive
+ a precise `parent` from: `parent` widens to the generic, erased
+ {@link MarkingMenuModelItem}, the same degradation `id`, `label` and
+ `items` already undergo.
+ */
 type ToItem<Input> = Input extends MarkingMenuItemInput
-  ? ModelItem<IdOf<Input>, Input['label'], ToItems<ItemsOf<Input>>>
+  ? ModelItem<IdOf<Input>, Input['label'], ToItems<ItemsOf<Input>>> & {
+      readonly parent: MarkingMenuModelItem;
+    }
+  : never;
+
+/**
+ The node the model built from `Root` has at `Path`: the root itself for an
+ empty path, or the item found by following `Path`'s indices otherwise.
+
+ Parameterizing by `Root` and a `Path`, rather than by the node's own
+ literal shape the way {@link ModelItem} is, lets an item carry a precise
+ `parent` without the type referencing itself: the parent is the same
+ lookup with the last path segment dropped. Node and parent are both
+ derived, independently, from the one acyclic `Root`, instead of one being
+ defined in terms of the other.
+ */
+type NodeAt<
+  Root extends MarkingMenuInput,
+  Path extends readonly number[],
+> = Path extends readonly [number, ...number[]]
+  ? InputAt<Root['items'], Path> extends infer Input extends
+      MarkingMenuItemInput
+    ? ModelItem<
+        IdOf<Input>,
+        Input['label'],
+        ItemsAt<Root, Path, ItemsOf<Input>>
+      > & { readonly parent: ParentAt<Root, Path> }
+    : never
+  : ModelRoot<ItemsAt<Root, EmptyTuple, Root['items']>>;
+
+/**
+ The parent of the node at (non-empty) `Path`: the node one path segment up.
+ */
+type ParentAt<
+  Root extends MarkingMenuInput,
+  Path extends readonly [number, ...number[]],
+> = Path extends readonly [...infer Init extends readonly number[], number]
+  ? NodeAt<Root, Init>
   : never;
 
 /**
  The model {@link createModel} builds from a menu description.
  */
-export type MarkingMenuModel<Input extends MarkingMenuInput> = ModelRoot<
-  ToItems<Input['items']>
+export type MarkingMenuModel<Input extends MarkingMenuInput> = NodeAt<
+  Input,
+  EmptyTuple
 >;
 
 /* -------------------------------------------------------------------------- *
@@ -147,13 +245,29 @@ const getAngleRange = (items: readonly unknown[]): number =>
  */
 abstract class MarkingMenuNode {
   readonly #items: readonly MarkingMenuItem[];
+  readonly #parent: MarkingMenuNode | null;
 
-  constructor({ items }: { items: readonly MarkingMenuItem[] }) {
-    this.#items = items;
+  constructor({
+    parent,
+    items,
+  }: {
+    parent: MarkingMenuNode | null;
+    /**
+     Builds the node's items, given the node itself: sub-items need their
+     parent to exist before they can be created.
+     */
+    items: (self: MarkingMenuNode) => readonly MarkingMenuItem[];
+  }) {
+    this.#parent = parent;
+    this.#items = items(this);
   }
 
   get items(): readonly MarkingMenuItem[] {
     return this.#items;
+  }
+
+  get parent(): MarkingMenuNode | null {
+    return this.#parent;
   }
 
   get isLeaf(): boolean {
@@ -252,15 +366,17 @@ class MarkingMenuItem extends MarkingMenuNode {
     label,
     angle,
     key,
+    parent,
     items,
   }: {
     id: string | undefined;
     label: string;
     angle: number;
     key: string;
-    items: readonly MarkingMenuItem[];
+    parent: MarkingMenuNode;
+    items: (self: MarkingMenuNode) => readonly MarkingMenuItem[];
   }) {
-    super({ items });
+    super({ parent, items });
     this.#id = id;
     this.#label = label;
     this.#angle = angle;
@@ -302,6 +418,7 @@ class MarkingMenuRoot extends MarkingMenuNode {
  Build the (frozen) item list of one menu level.
 
  @param inputs - The description of the level's items.
+ @param parent - The level's own node, i.e. the items' parent.
  @param seenIds - The ids already used elsewhere in the menu. Mutated as the
  items are created.
  @param baseKey - The generated key of the parent level, if any. Joined with
@@ -313,6 +430,7 @@ class MarkingMenuRoot extends MarkingMenuNode {
  */
 const createItems = (
   inputs: readonly MarkingMenuItemInput[],
+  parent: MarkingMenuNode,
   seenIds: Set<string> = new Set(),
   baseKey?: string,
 ): readonly MarkingMenuItem[] => {
@@ -336,9 +454,11 @@ const createItems = (
         label: input.label,
         angle: index * angleRange,
         key,
-        items: input.items
-          ? createItems(input.items, seenIds, key)
-          : Object.freeze([]),
+        parent,
+        items: (self) =>
+          input.items
+            ? createItems(input.items, self, seenIds, key)
+            : Object.freeze([]),
       });
     }),
   );
@@ -359,6 +479,7 @@ export function createModel<const Input extends MarkingMenuInput>(
   // the single point where the precise types are re-attached to the loosely
   // typed implementation classes.
   return new MarkingMenuRoot({
-    items: createItems(input.items),
+    parent: null,
+    items: (self) => createItems(input.items, self),
   }) as unknown as MarkingMenuModel<Input>;
 }
