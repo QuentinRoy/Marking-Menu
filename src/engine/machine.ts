@@ -387,9 +387,17 @@ export const navigationMachine = machine({
     // that submenu: a genuine phase change, even though the destination is
     // named `novice` too. Anything else declines, and — since no other row
     // is declared for (novice, dwell) — the dwell is silently dropped.
-    'novice -dwell> novice'({ fromData, skip }) {
-      const { active, menuCenter, upperStroke, lowerStroke, options } =
-        fromData;
+    'novice -dwell> novice'({
+      fromData: {
+        active,
+        menuCenter,
+        upperStroke,
+        lowerStroke,
+        options,
+        model,
+      },
+      skip,
+    }) {
       const position = upperStroke.at(-1) as Point;
       const { radius } = toPolar(position, menuCenter);
       if (
@@ -401,7 +409,7 @@ export const navigationMachine = machine({
       }
 
       return {
-        model: fromData.model,
+        model,
         options,
         menu: active,
         menuCenter: position,
