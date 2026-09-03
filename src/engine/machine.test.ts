@@ -40,7 +40,7 @@ const options = {
 /**
 Start a fresh host with the shared fixture model and options.
 */
-const startHost = () => navigationMachine.start({ deps: { model, options } });
+const startHost = () => navigationMachine.start({ model, options });
 
 /**
 Record every public output a host emits, in order, by name.

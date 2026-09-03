@@ -31,21 +31,28 @@ describe('StatesOf<typeof navigationMachine>', () => {
     >();
   });
 
-  it('threads deps through every phase', () => {
+  it('threads model and options through every phase', () => {
     expectTypeOf<States['idle']>().toEqualTypeOf<{
-      readonly deps: {
-        readonly model: AnyModelNode;
-        readonly options: NavigationOptions;
-      };
+      readonly model: AnyModelNode;
+      readonly options: NavigationOptions;
     }>();
-    expectTypeOf<States['startup']['deps']>().toEqualTypeOf<
-      States['idle']['deps']
+    expectTypeOf<States['startup']['model']>().toEqualTypeOf<
+      States['idle']['model']
     >();
-    expectTypeOf<States['expert']['deps']>().toEqualTypeOf<
-      States['idle']['deps']
+    expectTypeOf<States['startup']['options']>().toEqualTypeOf<
+      States['idle']['options']
     >();
-    expectTypeOf<States['novice']['deps']>().toEqualTypeOf<
-      States['idle']['deps']
+    expectTypeOf<States['expert']['model']>().toEqualTypeOf<
+      States['idle']['model']
+    >();
+    expectTypeOf<States['expert']['options']>().toEqualTypeOf<
+      States['idle']['options']
+    >();
+    expectTypeOf<States['novice']['model']>().toEqualTypeOf<
+      States['idle']['model']
+    >();
+    expectTypeOf<States['novice']['options']>().toEqualTypeOf<
+      States['idle']['options']
     >();
   });
 
@@ -59,22 +66,21 @@ describe('StatesOf<typeof navigationMachine>', () => {
     expectTypeOf<States['novice']['menu']>().toEqualTypeOf<AnyModelNode>();
   });
 
-  it("is generic-safe: a caller's own model still threads through `deps.model`", () => {
+  it("is generic-safe: a caller's own model still threads through `model`", () => {
     // The exact pattern `runtime.ts` relies on: a real `M` is narrower than
-    // `AnyModelNode`, so it is always assignable into the erased `deps.model`
-    // this file declares, for any `M` a caller instantiates `createRuntime`
-    // with — never just the fixture model this suite happens to use.
-    const carryDeps = <M extends AnyModelNode>(model: M): States['idle'] => ({
-      deps: {
-        model,
-        options: {
-          movementsThreshold: 5,
-          noviceDwellingTime: 1,
-          minSelectionDist: 40,
-        },
+    // `AnyModelNode`, so it is always assignable into the erased `model`
+    // field this file declares, for any `M` a caller instantiates
+    // `createRuntime` with — never just the fixture model this suite happens
+    // to use.
+    const carryModel = <M extends AnyModelNode>(model: M): States['idle'] => ({
+      model,
+      options: {
+        movementsThreshold: 5,
+        noviceDwellingTime: 1,
+        minSelectionDist: 40,
       },
     });
-    expectTypeOf(carryDeps).toBeFunction();
+    expectTypeOf(carryModel).toBeFunction();
   });
 });
 
