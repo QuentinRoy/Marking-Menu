@@ -31,6 +31,24 @@ const model = createModel({
   ],
 });
 
+// A second fixture, with "right" as a submenu rather than a leaf, for the
+// tests that need to end a gesture on a non-leaf active item.
+const submenuModel = createModel({
+  items: [
+    {
+      id: 'right',
+      label: 'Right',
+      items: [
+        { id: 'rightUp', label: 'Right Up' },
+        { id: 'rightDown', label: 'Right Down' },
+      ],
+    },
+    { id: 'down', label: 'Down' },
+    { id: 'left', label: 'Left' },
+    { id: 'up', label: 'Up' },
+  ],
+});
+
 const options = {
   movementsThreshold: 5,
   noviceDwellingTime: 300,
@@ -41,6 +59,14 @@ const options = {
 Start a fresh host with the shared fixture model and options.
 */
 const startHost = () => navigationMachine.start({ model, options });
+
+/**
+Dwell into novice mode at the origin, from a fresh host.
+*/
+const openNovice = (host: ReturnType<typeof startHost>): void => {
+  host.send('down', { position: [0, 0] });
+  host.send('dwell');
+};
 
 /**
 Record every public output a host emits, in order, by name.
@@ -264,11 +290,6 @@ describe('navigationMachine', () => {
   });
 
   describe('novice phase: pointing at items', () => {
-    const openNovice = (host: ReturnType<typeof startHost>) => {
-      host.send('down', { position: [0, 0] });
-      host.send('dwell');
-    };
-
     it('stays inactive while the pointer is within minSelectionDist of the menu center (objective 5)', () => {
       const host = startHost();
       const moved = vi.fn<(event: { active: unknown }) => void>();
@@ -367,6 +388,89 @@ describe('navigationMachine', () => {
 
       host.send('dwell');
       expect(host.current).toEqual(inNovice);
+    });
+  });
+
+  describe('novice phase: committing or abandoning the gesture (objectives 7, 8)', () => {
+    it('dispatches select carrying the leaf and the open menu when releasing on a leaf', () => {
+      const host = startHost();
+      const canceled = vi.fn<() => void>();
+      host.on('cancel', canceled);
+      let selectData: { selection: unknown; menu: unknown } | undefined;
+      host.on('select', ({ data }) => {
+        selectData = data;
+      });
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] }); // Activates "right"
+      host.send('up', { position: [100, 0] });
+
+      expect(host.current.name).toBe('idle');
+      expect(canceled).not.toHaveBeenCalled();
+      expect((selectData?.selection as { id: string }).id).toBe('right');
+      expect(selectData?.menu).toBe(model);
+    });
+
+    it('dispatches cancel, never select, when releasing on a non-leaf active item, carrying that item as active', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const selected = vi.fn<() => void>();
+      host.on('select', selected);
+      let cancelData: { active: unknown; menu: unknown } | undefined;
+      host.on('cancel', ({ data }) => {
+        cancelData = data;
+      });
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] }); // Activates "right", a submenu
+      expect(
+        host.current.name === 'novice' &&
+          (host.current.data.active as { isLeaf: boolean } | null)?.isLeaf,
+      ).toBe(false);
+
+      host.send('up', { position: [100, 0] });
+
+      expect(host.current.name).toBe('idle');
+      expect(selected).not.toHaveBeenCalled();
+      expect((cancelData?.active as { id: string } | null)?.id).toBe('right');
+      expect(cancelData?.menu).toBe(submenuModel);
+    });
+
+    it('dispatches cancel regardless of the active item being a leaf when the pointer is cancelled at the terminal sample (objective 8)', () => {
+      const host = startHost();
+      const selected = vi.fn<() => void>();
+      host.on('select', selected);
+      let cancelData: { active: unknown } | undefined;
+      host.on('cancel', ({ data }) => {
+        cancelData = data;
+      });
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] }); // Activates "right", a leaf
+
+      host.send('cancel', { position: [100, 0] });
+
+      expect(host.current.name).toBe('idle');
+      expect(selected).not.toHaveBeenCalled();
+      expect((cancelData?.active as { id: string } | null)?.id).toBe('right');
+    });
+
+    it('dispatches cancel when the pointer is cancelled on a non-leaf active item too (objective 8)', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const selected = vi.fn<() => void>();
+      host.on('select', selected);
+      let cancelData: { active: unknown } | undefined;
+      host.on('cancel', ({ data }) => {
+        cancelData = data;
+      });
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] }); // Activates "right", a submenu
+
+      host.send('cancel', { position: [100, 0] });
+
+      expect(host.current.name).toBe('idle');
+      expect(selected).not.toHaveBeenCalled();
+      expect((cancelData?.active as { id: string } | null)?.id).toBe('right');
     });
   });
 });

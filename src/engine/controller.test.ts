@@ -576,6 +576,133 @@ describe('createController', () => {
     controller.dispose();
   });
 
+  it('dispatches select carrying the leaf and the open menu when releasing on a leaf active item (objective 7)', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+      minSelectionDist: 40,
+    });
+
+    const canceled = voidMock<[MarkingMenuCancelEvent<AnyModelNode>]>();
+    controller.on('cancel', canceled);
+    let openedMenu: unknown;
+    controller.on('open', (event) => {
+      openedMenu = event.menu;
+    });
+    let selectedId: string | undefined;
+    let selectedMenu: unknown;
+    controller.on('select', (event) => {
+      selectedId = event.selection.id;
+      selectedMenu = event.menu;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerup', { clientX: 100, clientY: 0 }));
+
+    expect(canceled).not.toHaveBeenCalled();
+    expect(selectedId).toBe('right');
+    // `select.menu` is the same root menu that opened this gesture, not
+    // merely non-null.
+    expect(openedMenu).not.toBeNull();
+    expect(selectedMenu).toBe(openedMenu);
+    expect(parent.querySelector('.marking-menu')).toBeNull();
+    // A completed novice gesture shows feedback on the same terms as an
+    // expert one: the stroke canvases are gone, and exactly one trace
+    // remains.
+    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+
+    controller.dispose();
+  });
+
+  it('dispatches cancel, never select, when releasing on a non-leaf active item, carrying that item as active (objective 7)', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items: [
+        {
+          id: 'right',
+          label: 'Right',
+          items: [
+            { id: 'rightUp', label: 'Right Up' },
+            { id: 'rightDown', label: 'Right Down' },
+          ],
+        },
+        { id: 'down', label: 'Down' },
+        { id: 'left', label: 'Left' },
+        { id: 'up', label: 'Up' },
+      ],
+      parent,
+      noviceDwellingTime: 100,
+      minSelectionDist: 40,
+    });
+
+    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    controller.on('select', selected);
+    let openedMenu: unknown;
+    controller.on('open', (event) => {
+      openedMenu = event.menu;
+    });
+    let canceledActiveId: string | undefined;
+    let cancelMenu: unknown;
+    controller.on('cancel', (event) => {
+      canceledActiveId = event.active?.id;
+      cancelMenu = event.menu;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerup', { clientX: 100, clientY: 0 }));
+
+    expect(selected).not.toHaveBeenCalled();
+    expect(canceledActiveId).toBe('right');
+    // `cancel.menu` is the same root menu that opened this gesture, not
+    // merely non-null.
+    expect(openedMenu).not.toBeNull();
+    expect(cancelMenu).toBe(openedMenu);
+    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+
+    controller.dispose();
+  });
+
+  it('dispatches cancel, carrying the active item, when the native pointer is cancelled on a leaf active item (objective 8)', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+      minSelectionDist: 40,
+    });
+
+    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    controller.on('select', selected);
+    let canceledActiveId: string | undefined;
+    controller.on('cancel', (event) => {
+      canceledActiveId = event.active?.id;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(
+      pointer('pointercancel', { clientX: 100, clientY: 0 }),
+    );
+
+    expect(selected).not.toHaveBeenCalled();
+    expect(canceledActiveId).toBe('right');
+
+    controller.dispose();
+  });
+
   it('does not recreate the menu DOM or redraw the lower stroke when a render repeats with the same identity', () => {
     using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
