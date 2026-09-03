@@ -516,9 +516,9 @@ describe('navigationMachine', () => {
     it('accumulates the prior stroke into the lower stroke and restarts the upper stroke from the new centre', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
 
-      openNovice(host); // Novice at [0, 0]; lowerStroke [[0,0]], upperStroke [[0,0]]
-      host.send('move', { position: [100, 0] }); // UpperStroke [[0,0],[100,0]]
-      host.send('dwell'); // Opens the submenu at [100, 0]
+      openNovice(host);
+      host.send('move', { position: [100, 0] });
+      host.send('dwell');
 
       const data = host.current.name === 'novice' ? host.current.data : null;
       expect(data?.upperStroke).toEqual([[100, 0]]);
@@ -555,7 +555,7 @@ describe('navigationMachine', () => {
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
-      host.send('move', { position: [200, 0] }); // Well beyond minMenuSelectionDist
+      host.send('move', { position: [200, 0] });
       host.send('dwell');
 
       expect(opened).not.toHaveBeenCalled();
@@ -626,7 +626,7 @@ describe('navigationMachine', () => {
       host.send('move', { position: [100, 0] }); // One significant move, straight onto "right"
       expect(vi.getTimerCount()).toBe(1); // Restarted, not doubled or dropped
 
-      vi.advanceTimersByTime(options.submenuOpeningDelay); // Opens the submenu at [100, 0]
+      vi.advanceTimersByTime(options.submenuOpeningDelay);
       expect(host.current.name).toBe('novice');
       expect(
         host.current.name === 'novice' && host.current.data.menuCenter,

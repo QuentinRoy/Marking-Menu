@@ -261,8 +261,8 @@ function cancelEvent<N extends AnyModelNode>(data: {
 
 /**
  Shared body of the `startup` and `novice` dwell residencies: arm a `dwell`
- timer for `delayMs` and clear it on exit, whatever ends the residency —
- leaving the state, or disposal.
+ timer for `delayMs` and clear it on exit, whatever ends the residency,
+ whether that is leaving the state or disposal.
  */
 function armDwellTimer(
   delayMs: number,
@@ -385,8 +385,8 @@ export const navigationMachine = machine({
 
     // Pausing beyond `minMenuSelectionDist` on a non-leaf active item opens
     // that submenu: a genuine phase change, even though the destination is
-    // named `novice` too. Anything else declines, and — since no other row
-    // is declared for (novice, dwell) — the dwell is silently dropped.
+    // named `novice` too. Anything else declines, and since no other row is
+    // declared for (novice, dwell), the dwell is silently dropped.
     'novice -dwell> novice'({
       fromData: {
         active,
@@ -418,8 +418,8 @@ export const navigationMachine = machine({
         lowerStroke: [...lowerStroke, ...upperStroke],
         // A fresh reference, deliberately never `position` itself: opening a
         // submenu must always restart the residency for the new menu, and
-        // `position` is `upperStroke.at(-1)`, which — with no wobble between
-        // the move that armed this dwell and the dwell itself — is the very
+        // `position` is `upperStroke.at(-1)`. With no wobble between the
+        // move that armed this dwell and the dwell itself, that is the very
         // same reference `fromData.dwellAnchor` already holds.
         dwellAnchor: [...position],
       };
@@ -458,10 +458,10 @@ export const navigationMachine = machine({
       run: ({ toData, send }) =>
         armDwellTimer(toData.options.submenuOpeningDelay, send),
       // Only a self-transition that carries `dwellAnchor` forward to a new
-      // position — significant movement, or the fresh centre a submenu open
-      // itself produces — restarts the residency; a small move, or a dwell
-      // that failed its own eligibility check and left the state unchanged,
-      // leaves the pending timer alone.
+      // position restarts the residency, whether from significant movement
+      // or the fresh centre a submenu open itself produces. A small move,
+      // or a dwell that failed its own eligibility check and left the state
+      // unchanged, leaves the pending timer alone.
       restart: ({ fromData, toData }) =>
         fromData.dwellAnchor !== toData.dwellAnchor,
     },

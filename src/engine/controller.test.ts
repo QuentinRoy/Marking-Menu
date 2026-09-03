@@ -926,14 +926,14 @@ describe('createController', () => {
       });
 
       parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
-      vi.advanceTimersByTime(100); // Opens the root menu
+      vi.advanceTimersByTime(100);
       const rootMenuDom = parent.querySelector('.marking-menu');
 
       // Beyond minMenuSelectionDist (80) on "right", a submenu.
       parent.dispatchEvent(
         pointer('pointermove', { clientX: 100, clientY: 0 }),
       );
-      vi.advanceTimersByTime(100); // The submenu dwell fires
+      vi.advanceTimersByTime(100);
 
       expect(openedMenus).toHaveLength(2);
       expect(openedMenus[1]).not.toBe(openedMenus[0]);
