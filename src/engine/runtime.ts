@@ -1,17 +1,10 @@
-import mitt from 'mitt';
-import type {
-  MarkingMenuEventEmitter,
-  MarkingMenuEventMap,
-} from '../events.js';
+import type { MarkingMenuEventEmitter } from '../events.js';
 import type { AnyModelNode } from '../types.js';
-import { projectLayout } from './layout-view.js';
+import type { LayoutView } from './layout-view.js';
 import {
-  transition,
-  type MachineCommand,
+  navigationMachine,
   type NavigationInput,
   type NavigationOptions,
-  type NavigationState,
-  type TimerKind,
 } from './machine.js';
 import type { LayoutRenderer } from './renderer.js';
 
@@ -23,18 +16,32 @@ export type NavigationInputSink = {
 };
 
 /**
- The runtime owns the emitter: interpreting the machine's `dispatch` commands
- is the only thing that ever originates an event.
+ The runtime owns the emitter: interpreting the machine's public outputs is
+ the only thing that ever originates an event.
  */
 export type NavigationRuntime<M extends AnyModelNode> = NavigationInputSink &
   MarkingMenuEventEmitter<M> & {
     dispose: () => void;
   };
 
+const publicOutputs = [
+  'start',
+  'move',
+  'open',
+  'change',
+  'select',
+  'cancel',
+] as const;
+
 /**
- The runtime owns mutable infrastructure only: the committed state, the
- reentrant input queue, and command interpretation. It never makes domain
- decisions: those live in `transition`.
+ The runtime owns mutable infrastructure only: starting the host, forwarding
+ its outputs, and disposal ordering. It never makes domain decisions: those
+ live in `navigationMachine`.
+
+ A consumer listener is never a totorobot `on` listener: a throwing `on`
+ listener propagates out of the `emit` call and interrupts the action that
+ raised it mid-setup, so every public output is re-announced through a plain
+ `EventTarget`, whose `dispatchEvent` absorbs a throwing listener instead.
  */
 export function createRuntime<M extends AnyModelNode>({
   model,
@@ -45,105 +52,87 @@ export function createRuntime<M extends AnyModelNode>({
   options: NavigationOptions;
   renderer: LayoutRenderer<M>;
 }): NavigationRuntime<M> {
-  const emitter = mitt<MarkingMenuEventMap<M>>();
-  let state: NavigationState<M> = { phase: 'idle', nextTimerToken: 0 };
+  const target = new EventTarget();
+  // One registration per (type, listener) pair, in registration order, so
+  // `off` removes exactly the one `addEventListener` call `on` made for it —
+  // mirroring mitt's own on/off contract, which the public API is typed
+  // against.
+  const registrations = new Map<
+    string,
+    Array<{ listener: (event: never) => void; wrapper: EventListener }>
+  >();
+
+  const host = navigationMachine.start({ deps: { model, options } });
+
+  const offLayout = host.on('layout', ({ data }) => {
+    renderer.render(data as unknown as LayoutView<M>);
+  });
+  const offFeedback = host.on('feedback', ({ data }) => {
+    renderer.showFeedback(data);
+  });
+  const offPublic = publicOutputs.map((name) =>
+    host.on(name, ({ data }) => {
+      target.dispatchEvent(new CustomEvent(name, { detail: data }));
+    }),
+  );
+
   let isDisposed = false;
-  let isDraining = false;
-  const pending: NavigationInput[] = [];
-  // The named timer registry: at most one live native handle per kind, since
-  // a kind's timer is always replaced or cancelled, never left to run
-  // alongside a newer one of the same kind.
-  const timers = new Map<TimerKind, ReturnType<typeof setTimeout>>();
-
-  // Commit-time interpretation of one command: timers are armed/cancelled
-  // and feedback is shown before layout is even projected. `dispatch` is
-  // handled separately, only after rendering.
-  const commitCommand = (command: MachineCommand<M>): void => {
-    switch (command.type) {
-      case 'timer.schedule': {
-        const handle = setTimeout(() => {
-          timers.delete(command.kind);
-          send({
-            type: 'timer.elapsed',
-            kind: command.kind,
-            token: command.token,
-          });
-        }, command.delay);
-        timers.set(command.kind, handle);
-        break;
-      }
-
-      case 'timer.cancel': {
-        // `clearTimeout` is a no-op for `undefined` or an already-fired
-        // handle, so no guard is needed here.
-        clearTimeout(timers.get(command.kind));
-        timers.delete(command.kind);
-        break;
-      }
-
-      case 'feedback.show': {
-        renderer.showFeedback({
-          stroke: command.stroke,
-          canceled: command.canceled,
-        });
-        break;
-      }
-
-      case 'dispatch': {
-        // Dispatched only after rendering, in a later pass.
-        break;
-      }
-    }
-  };
-
-  // Two passes, not one: every visual effect lands before the first
-  // listener runs, so a listener always observes fully committed state. See
-  // `pointer-source.ts`'s `onPointerUp` for the same rule applied to
-  // capture.
-  const runCommands = (commands: ReadonlyArray<MachineCommand<M>>) => {
-    for (const command of commands) {
-      commitCommand(command);
-    }
-
-    renderer.render(projectLayout(state));
-
-    for (const command of commands) {
-      if (command.type === 'dispatch') {
-        emitter.emit(command.event.type, command.event);
-      }
-    }
-  };
 
   const send = (input: NavigationInput): void => {
     if (isDisposed) {
       throw new Error('Cannot send an input to a disposed controller.');
     }
 
-    pending.push(input);
-    if (isDraining) {
+    switch (input.type) {
+      case 'pointer.down': {
+        host.send('down', { position: input.position });
+        break;
+      }
+
+      case 'pointer.move': {
+        host.send('move', { position: input.position });
+        break;
+      }
+
+      case 'pointer.up': {
+        host.send('up', { position: input.position });
+        break;
+      }
+
+      case 'pointer.cancel': {
+        host.send('cancel', { position: input.position });
+        break;
+      }
+    }
+  };
+
+  const on = (type: string, listener: (event: never) => void): void => {
+    const wrapper: EventListener = (event) => {
+      listener((event as CustomEvent).detail as never);
+    };
+
+    const list = registrations.get(type) ?? [];
+    list.push({ listener, wrapper });
+    registrations.set(type, list);
+    target.addEventListener(type, wrapper);
+  };
+
+  const off = (type: string, listener: (event: never) => void): void => {
+    const list = registrations.get(type);
+    if (list === undefined) {
       return;
     }
 
-    isDraining = true;
-    try {
-      // `isDisposed` is reassigned by `dispose()`, not by this loop body: a
-      // listener dispatched from `runCommands` can call `dispose()`
-      // reentrantly, and the loop must stop draining the rest of the batch
-      // when that happens (disposal mid-batch drops the remainder).
-      // eslint-disable-next-line no-unmodified-loop-condition
-      while (!isDisposed) {
-        const next = pending.shift();
-        if (next === undefined) {
-          break;
-        }
+    const index = list.findIndex(
+      (registration) => registration.listener === listener,
+    );
+    if (index === -1) {
+      return;
+    }
 
-        const result = transition(state, next, { model }, options);
-        state = result.state;
-        runCommands(result.commands);
-      }
-    } finally {
-      isDraining = false;
-      pending.length = 0;
+    const [removed] = list.splice(index, 1);
+    if (removed !== undefined) {
+      target.removeEventListener(type, removed.wrapper);
     }
   };
 
@@ -153,13 +142,23 @@ export function createRuntime<M extends AnyModelNode>({
     }
 
     isDisposed = true;
-    for (const handle of timers.values()) {
-      clearTimeout(handle);
+    offLayout();
+    offFeedback();
+    for (const unsubscribe of offPublic) {
+      unsubscribe();
     }
 
-    timers.clear();
+    // Unsubscribed first, so this can never reach a listener: the machine
+    // still runs its own teardown and wildcard actions, but nothing is left
+    // to announce them to, and nothing renders during teardown.
+    host.send('dispose');
     renderer.dispose();
   };
 
-  return { send, dispose, on: emitter.on, off: emitter.off };
+  return {
+    send,
+    dispose,
+    on,
+    off,
+  };
 }

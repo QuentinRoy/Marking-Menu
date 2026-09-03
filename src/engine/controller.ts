@@ -103,8 +103,11 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     }
 
     this.#disposed = true;
-    this.#pointerSource.dispose();
+    // Runtime first: it unsubscribes, sends `dispose`, and tears down the
+    // rendered DOM before the pointer source releases capture and the
+    // touch-action claim.
     this.#runtime.dispose();
+    this.#pointerSource.dispose();
   }
 }
 

@@ -1,420 +1,359 @@
+import { machine, type } from 'totorobot';
 import {
   MarkingMenuCancelEvent,
   MarkingMenuOpenEvent,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
-  type MarkingMenuEvent,
+  type MarkingMenuChangeEvent,
   type MarkingMenuMode,
+  type MarkingMenuMoveEvent,
 } from '../events.js';
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
 import { strokeLength } from '../recognizer/stroke-length.js';
-import type { AnyModelNode, ModelMenus } from '../types.js';
+import type { AnyModelNode, ModelLeaves, ModelMenus } from '../types.js';
 import { dist, type Point } from '../utils.js';
+import { projectLayout } from './layout-view.js';
 
 /*
- The pure navigation state machine: one entry point dispatching to a private
- handler per phase (idle/startup/expert/novice).
+ The navigation machine, declared as a totorobot definition rather than a
+ hand-rolled reducer. `machine()` is inert data; `runtime.ts` is the only
+ place that ever calls `.start()` on it.
+
+ A definition is a single, non-generic value, so every field that would
+ otherwise carry the caller's precise model type `M` is erased to the bare
+ `AnyModelNode` here instead: `ModelMenus<AnyModelNode>` and
+ `ModelLeaves<AnyModelNode>` both collapse to `never` (their `isLeaf`/`isRoot`
+ conditions can never resolve against a plain `boolean`), so nothing in this
+ file can name them. `runtime.ts` stays generic over the caller's real `M` and
+ casts back at the boundary, the same erase-and-cast shape `renderer.ts`
+ already uses for `MenuLayoutModel`.
  */
-
-/**
- The only timer kind a phase can own yet: startup/expert dwelling into novice.
- */
-export type TimerKind = 'mode-dwell';
-
-/**
- A timer's identity: monotonically increasing across the controller's
- lifetime (including returns to idle), so a `timer.elapsed` input can never be
- confused with a timer armed earlier for the same kind.
- */
-export type TimerToken = number;
-
-/**
-What a phase holding an armed timer needs to remember about it.
-*/
-export type TimerRef = {
-  readonly kind: TimerKind;
-  readonly token: TimerToken;
-};
-
-export type NavigationState<M extends AnyModelNode> =
-  | { readonly phase: 'idle'; readonly nextTimerToken: TimerToken }
-  | {
-      readonly phase: 'startup';
-      readonly origin: Point;
-      readonly stroke: readonly Point[];
-      readonly timer: TimerRef;
-      readonly nextTimerToken: TimerToken;
-    }
-  | {
-      readonly phase: 'expert';
-      readonly stroke: readonly Point[];
-      readonly nextTimerToken: TimerToken;
-    }
-  | {
-      readonly phase: 'novice';
-      readonly menu: ModelMenus<M>;
-      readonly menuCenter: Point;
-      readonly upperStroke: readonly Point[];
-      readonly lowerStroke: readonly Point[];
-      readonly nextTimerToken: TimerToken;
-    };
-
-export type NavigationInput =
-  | { readonly type: 'pointer.down'; readonly position: Point }
-  | { readonly type: 'pointer.move'; readonly position: Point }
-  | { readonly type: 'pointer.up'; readonly position: Point }
-  | { readonly type: 'pointer.cancel'; readonly position: Point }
-  | {
-      readonly type: 'timer.elapsed';
-      readonly kind: TimerKind;
-      readonly token: TimerToken;
-    };
-
-export type NavigationEnvironment<M extends AnyModelNode> = {
-  readonly model: M;
-};
 
 export type NavigationOptions = {
   readonly movementsThreshold: number;
   readonly noviceDwellingTime: number;
 };
 
-export type MachineCommand<M extends AnyModelNode> =
-  | { readonly type: 'dispatch'; readonly event: MarkingMenuEvent<M> }
-  | {
-      readonly type: 'feedback.show';
-      readonly stroke: readonly Point[];
-      readonly canceled: boolean;
-    }
-  | {
-      readonly type: 'timer.schedule';
-      readonly kind: TimerKind;
-      readonly token: TimerToken;
-      readonly delay: number;
-    }
-  | {
-      readonly type: 'timer.cancel';
-      readonly kind: TimerKind;
-      readonly token: TimerToken;
-    };
-
-export type Transition<M extends AnyModelNode> = {
-  readonly state: NavigationState<M>;
-  readonly commands: ReadonlyArray<MachineCommand<M>>;
+type Deps = {
+  readonly model: AnyModelNode;
+  readonly options: NavigationOptions;
 };
 
 /**
- The shared terminal transition: recognize the gesture drawn so far (unless
- `skipRecognition`) and return to idle, either selecting the recognized item
- or cancelling. Owns the one place `select`/`cancel`/`feedback.show` are
- built so every phase doesn't repeat this policy, and the one place a
- phase's owned timer is cancelled before rendering and dispatching.
-
- `skipRecognition` covers the paths that must never select regardless of what
- the stroke looks like: a pointer that was cancelled outright, a gesture that
- never moved at all (so there is nothing to recognize), and novice mode, whose
- selection is proximity-based hit-testing rather than expert-style stroke
- recognition (not implemented yet, so novice always cancels).
+ The boundary input shape `pointer-source.ts` sends: unrelated to the
+ machine's own (shorter) input vocabulary, so that layer never has to know
+ about it.
  */
-function finish<M extends AnyModelNode>(
-  {
-    mode,
-    stroke,
-    position,
-    menu = null,
-    skipRecognition = false,
-    cancelTimer,
-    nextTimerToken,
-  }: {
-    mode: MarkingMenuMode;
-    stroke: readonly Point[];
-    position: Point;
-    menu?: ModelMenus<M> | null;
-    skipRecognition?: boolean;
-    cancelTimer?: TimerRef;
-    nextTimerToken: TimerToken;
-  },
-  environment: NavigationEnvironment<M>,
-): Transition<M> {
-  const selection = skipRecognition
-    ? null
-    : recognizeMarkingMenuStroke(stroke, environment.model);
-  const event =
-    selection === null
-      ? new MarkingMenuCancelEvent<M>({ mode, position, active: null, menu })
-      : new MarkingMenuSelectEvent<M>({ mode, position, selection, menu });
+export type NavigationInput =
+  | { readonly type: 'pointer.down'; readonly position: Point }
+  | { readonly type: 'pointer.move'; readonly position: Point }
+  | { readonly type: 'pointer.up'; readonly position: Point }
+  | { readonly type: 'pointer.cancel'; readonly position: Point };
 
-  const timerCommands: Array<MachineCommand<M>> =
-    cancelTimer === undefined ? [] : [{ type: 'timer.cancel', ...cancelTimer }];
-
-  return {
-    state: { phase: 'idle', nextTimerToken },
-    commands: [
-      ...timerCommands,
-      { type: 'feedback.show', stroke, canceled: selection === null },
-      { type: 'dispatch', event },
-    ],
-  };
-}
-
-function transitionStartup<M extends AnyModelNode>(
-  state: Extract<NavigationState<M>, { phase: 'startup' }>,
-  input: NavigationInput,
-  environment: NavigationEnvironment<M>,
-  options: NavigationOptions,
-): Transition<M> {
-  switch (input.type) {
-    case 'pointer.move': {
-      const stroke = [...state.stroke, input.position];
-      if (dist(state.origin, input.position) >= options.movementsThreshold) {
-        // Significant movement wins the startup race outright: cancel the
-        // mode-dwell timer so it can never fire novice mode open afterwards.
-        return {
-          state: {
-            phase: 'expert',
-            stroke,
-            nextTimerToken: state.nextTimerToken,
-          },
-          commands: [{ type: 'timer.cancel', ...state.timer }],
-        };
-      }
-
-      return { state: { ...state, stroke }, commands: [] };
+/**
+ The boundary view of the machine's current phase: what `layout-view.ts`
+ projects from. Kept as a plain discriminated union, independent of
+ totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
+ */
+export type NavigationState<M extends AnyModelNode> =
+  | { readonly phase: 'idle' }
+  | {
+      readonly phase: 'startup';
+      readonly origin: Point;
+      readonly stroke: readonly Point[];
     }
-
-    case 'pointer.up': {
-      const stroke = [...state.stroke, input.position];
-      return finish(
-        {
-          mode: 'startup',
-          stroke,
-          position: input.position,
-          // The pointer never moved at all: every recorded point (down,
-          // any moves below the threshold, and this up) sits at the same
-          // position, so there is nothing to recognize.
-          skipRecognition: strokeLength(stroke) === 0,
-          cancelTimer: state.timer,
-          nextTimerToken: state.nextTimerToken,
-        },
-        environment,
-      );
-    }
-
-    case 'pointer.cancel': {
-      return finish(
-        {
-          mode: 'startup',
-          stroke: [...state.stroke, input.position],
-          position: input.position,
-          skipRecognition: true,
-          cancelTimer: state.timer,
-          nextTimerToken: state.nextTimerToken,
-        },
-        environment,
-      );
-    }
-
-    case 'pointer.down': {
-      return { state, commands: [] };
-    }
-
-    case 'timer.elapsed': {
-      if (
-        input.kind !== state.timer.kind ||
-        input.token !== state.timer.token
-      ) {
-        // Superseded: this timer was already replaced or cancelled. A total
-        // function, not an exception, per objective 10.
-        return { state, commands: [] };
-      }
-
-      // The dwell wins the startup race: open novice mode at the root menu,
-      // centered on the gesture's origin. The pointer is still well within
-      // `movementsThreshold` of it, so nothing is active yet.
-      //
-      // The cast is safe: the root is always a menu, never a leaf. `M`'s
-      // `isLeaf` is an unresolved `boolean` here, so `ModelMenus<M>` cannot
-      // express that generically.
-      const menu = environment.model as unknown as ModelMenus<M>;
-      const menuCenter = state.origin;
-      // `timer.elapsed` carries no position of its own; the machine holds
-      // the last committed one instead. `state.stroke` always starts with
-      // the origin and is only ever appended to, so it is never empty; the
-      // cast avoids a disallowed non-null assertion for a case that cannot
-      // happen.
-      const position = state.stroke.at(-1) as Point;
-
-      return {
-        state: {
-          phase: 'novice',
-          menu,
-          menuCenter,
-          upperStroke: [menuCenter],
-          lowerStroke: state.stroke,
-          nextTimerToken: state.nextTimerToken,
-        },
-        commands: [
-          {
-            type: 'dispatch',
-            event: new MarkingMenuOpenEvent<M>({ position, menu, menuCenter }),
-          },
-        ],
-      };
-    }
-  }
-}
-
-function transitionExpert<M extends AnyModelNode>(
-  state: Extract<NavigationState<M>, { phase: 'expert' }>,
-  input: NavigationInput,
-  environment: NavigationEnvironment<M>,
-): Transition<M> {
-  switch (input.type) {
-    case 'pointer.move': {
-      return {
-        state: {
-          phase: 'expert',
-          stroke: [...state.stroke, input.position],
-          nextTimerToken: state.nextTimerToken,
-        },
-        commands: [],
-      };
-    }
-
-    case 'pointer.up': {
-      return finish(
-        {
-          mode: 'expert',
-          stroke: [...state.stroke, input.position],
-          position: input.position,
-          nextTimerToken: state.nextTimerToken,
-        },
-        environment,
-      );
-    }
-
-    case 'pointer.cancel': {
-      return finish(
-        {
-          mode: 'expert',
-          stroke: [...state.stroke, input.position],
-          position: input.position,
-          skipRecognition: true,
-          nextTimerToken: state.nextTimerToken,
-        },
-        environment,
-      );
-    }
-
-    case 'pointer.down': {
-      return { state, commands: [] };
-    }
-
-    case 'timer.elapsed': {
-      // Expert owns no timer yet: any that arrives here is stale.
-      return { state, commands: [] };
-    }
-  }
-}
-
-function transitionNovice<M extends AnyModelNode>(
-  state: Extract<NavigationState<M>, { phase: 'novice' }>,
-  input: NavigationInput,
-  environment: NavigationEnvironment<M>,
-): Transition<M> {
-  switch (input.type) {
-    case 'pointer.down':
-    case 'timer.elapsed': {
-      // No sub-menu timer yet, and a second concurrent gesture is rejected
-      // upstream: both are no-ops here.
-      return { state, commands: [] };
-    }
-
-    case 'pointer.move': {
-      // Hit-testing the menu is not implemented yet: movement inside novice
-      // mode has no ticket driving it into existence.
-      return { state, commands: [] };
-    }
-
-    case 'pointer.up':
-    case 'pointer.cancel': {
-      return finish(
-        {
-          mode: 'novice',
-          stroke: [...state.lowerStroke, ...state.upperStroke, input.position],
-          position: input.position,
-          menu: state.menu,
-          // Novice selection is proximity-based hit-testing, not expert-style
-          // stroke recognition, and hit-testing isn't implemented yet: every
-          // release cancels for now.
-          skipRecognition: true,
-          nextTimerToken: state.nextTimerToken,
-        },
-        environment,
-      );
-    }
-  }
-}
-
-function transitionIdle<M extends AnyModelNode>(
-  state: Extract<NavigationState<M>, { phase: 'idle' }>,
-  input: NavigationInput,
-  options: NavigationOptions,
-): Transition<M> {
-  if (input.type === 'pointer.down') {
-    const token = state.nextTimerToken;
-    return {
-      state: {
-        phase: 'startup',
-        origin: input.position,
-        stroke: [input.position],
-        timer: { kind: 'mode-dwell', token },
-        nextTimerToken: token + 1,
-      },
-      commands: [
-        {
-          type: 'dispatch',
-          event: new MarkingMenuStartEvent({ position: input.position }),
-        },
-        {
-          type: 'timer.schedule',
-          kind: 'mode-dwell',
-          token,
-          delay: options.noviceDwellingTime,
-        },
-      ],
+  | { readonly phase: 'expert'; readonly stroke: readonly Point[] }
+  | {
+      readonly phase: 'novice';
+      readonly menu: ModelMenus<M>;
+      readonly menuCenter: Point;
+      readonly upperStroke: readonly Point[];
+      readonly lowerStroke: readonly Point[];
     };
-  }
 
-  return { state, commands: [] };
+type NavigationInputs = {
+  down: { readonly position: Point };
+  move: { readonly position: Point };
+  up: { readonly position: Point };
+  cancel: { readonly position: Point };
+  dwell: undefined;
+  dispose: undefined;
+};
+
+type NavigationStates = {
+  idle: { readonly deps: Deps };
+  startup: {
+    readonly deps: Deps;
+    readonly origin: Point;
+    readonly stroke: readonly Point[];
+  };
+  expert: { readonly deps: Deps; readonly stroke: readonly Point[] };
+  novice: {
+    readonly deps: Deps;
+    readonly menu: AnyModelNode;
+    readonly menuCenter: Point;
+    readonly upperStroke: readonly Point[];
+    readonly lowerStroke: readonly Point[];
+  };
+};
+
+/**
+ The layout announcement's payload: `LayoutView<AnyModelNode>` with the same
+ erasure applied to its own `menu.model`, for the same reason `NavigationStates`
+ erases `novice.menu`.
+ */
+export type NavigationLayoutAnnouncement = {
+  readonly cursor: 'default' | 'crosshair' | 'none';
+  readonly menu: null | {
+    readonly model: AnyModelNode;
+    readonly center: Point;
+    readonly activeKey: string | null;
+  };
+  readonly upperStroke: readonly Point[] | null;
+  readonly lowerStroke: readonly Point[] | null;
+};
+
+export type NavigationFeedbackAnnouncement = {
+  readonly stroke: readonly Point[];
+  readonly canceled: boolean;
+};
+
+type NavigationOutputs = {
+  start: MarkingMenuStartEvent;
+  move: MarkingMenuMoveEvent<AnyModelNode>;
+  open: MarkingMenuOpenEvent<AnyModelNode>;
+  change: MarkingMenuChangeEvent<AnyModelNode>;
+  select: MarkingMenuSelectEvent<AnyModelNode>;
+  cancel: MarkingMenuCancelEvent<AnyModelNode>;
+  // Internal: consumed only by runtime.ts, never forwarded to a consumer.
+  layout: NavigationLayoutAnnouncement;
+  feedback: NavigationFeedbackAnnouncement;
+};
+
+/**
+ Reassemble the boundary `NavigationState` from a committed `{ to, toData }`
+ pair, for `projectLayout`. The cast is the same erasure-crossing every
+ model-shaped field in this file needs: `toData`'s real shape already matches
+ one of `NavigationState`'s variants field-for-field, `deps` aside.
+ */
+function toNavigationState(
+  to: keyof NavigationStates,
+  toData: NavigationStates[keyof NavigationStates],
+): NavigationState<AnyModelNode> {
+  return { phase: to, ...toData } as unknown as NavigationState<AnyModelNode>;
+}
+
+/*
+ Event-construction helpers, generic in a fresh `N`. `ModelMenus<AnyModelNode>`
+ and `ModelLeaves<AnyModelNode>` both collapse to `never` (see the module
+ comment above), so `MarkingMenuOpenEvent<AnyModelNode>` and its siblings
+ cannot be constructed directly from the erased `menu`/`selection` values this
+ file has. A generic `N` keeps those conditionals deferred, exactly like the
+ rest of the codebase's `as unknown as ModelMenus<M>` casts, so the erasure
+ crossing happens once per event kind instead of at every call site.
+ */
+function openEvent<N extends AnyModelNode>(data: {
+  readonly position: Point;
+  readonly menu: N;
+  readonly menuCenter: Point;
+}): MarkingMenuOpenEvent<N> {
+  return new MarkingMenuOpenEvent<N>(
+    data as unknown as {
+      position: Point;
+      menu: ModelMenus<N>;
+      menuCenter: Point;
+    },
+  );
+}
+
+function selectEvent<N extends AnyModelNode>(data: {
+  readonly mode: MarkingMenuMode;
+  readonly position: Point;
+  readonly selection: N;
+  readonly menu: N | null;
+}): MarkingMenuSelectEvent<N> {
+  return new MarkingMenuSelectEvent<N>(
+    data as unknown as {
+      mode: MarkingMenuMode;
+      position: Point;
+      selection: ModelLeaves<N>;
+      menu: ModelMenus<N> | null;
+    },
+  );
+}
+
+function cancelEvent<N extends AnyModelNode>(data: {
+  readonly mode: MarkingMenuMode;
+  readonly position: Point;
+  readonly menu: N | null;
+}): MarkingMenuCancelEvent<N> {
+  return new MarkingMenuCancelEvent<N>({ ...data, active: null } as unknown as {
+    mode: MarkingMenuMode;
+    position: Point;
+    active: null;
+    menu: ModelMenus<N> | null;
+  });
 }
 
 /**
- The machine's single entry point: dispatches to one private handler per
- phase. Pure: no DOM, no timers, no side effects — arming and cancelling a
- timer is a command the runtime interprets, not something this function does.
+ The context every termination action needs: the stroke drawn so far
+ (including the release/cancel position) and the menu open when it ended, if
+ any. Narrows structurally on `'lowerStroke' in fromData` rather than taking
+ `from` as a parameter: `from` and `fromData` are only correlated inside
+ totorobot's own transition record, and splitting them across two parameters
+ here decorrelates them, so novice is picked out by the field only it has.
  */
-export function transition<M extends AnyModelNode>(
-  state: NavigationState<M>,
-  input: NavigationInput,
-  environment: NavigationEnvironment<M>,
-  options: NavigationOptions,
-): Transition<M> {
-  switch (state.phase) {
-    case 'idle': {
-      return transitionIdle(state, input, options);
-    }
-
-    case 'startup': {
-      return transitionStartup(state, input, environment, options);
-    }
-
-    case 'expert': {
-      return transitionExpert(state, input, environment);
-    }
-
-    case 'novice': {
-      return transitionNovice(state, input, environment);
-    }
+function terminationContext(
+  fromData: NavigationStates['startup' | 'expert' | 'novice'],
+  position: Point,
+): { readonly stroke: readonly Point[]; readonly menu: AnyModelNode | null } {
+  if ('lowerStroke' in fromData) {
+    const { lowerStroke, upperStroke, menu } = fromData;
+    return { stroke: [...lowerStroke, ...upperStroke, position], menu };
   }
+
+  return { stroke: [...fromData.stroke, position], menu: null };
 }
+
+export const navigationMachine = machine({
+  inputs: type<NavigationInputs>(),
+  states: type<NavigationStates>(),
+  outputs: type<NavigationOutputs>(),
+
+  initial: 'idle',
+
+  transitions: {
+    'idle -down> startup': ({ fromData, inputData }) => ({
+      deps: fromData.deps,
+      origin: inputData.position,
+      stroke: [inputData.position],
+    }),
+
+    'startup -move> expert'({ fromData, inputData, skip }) {
+      const stroke = [...fromData.stroke, inputData.position];
+      return dist(fromData.origin, inputData.position) >=
+        fromData.deps.options.movementsThreshold
+        ? { deps: fromData.deps, stroke }
+        : skip();
+    },
+    'startup -move> startup': ({ fromData, inputData }) => ({
+      ...fromData,
+      stroke: [...fromData.stroke, inputData.position],
+    }),
+    // The dwell wins the startup race: open novice mode at the root menu,
+    // centered on the gesture's origin. The pointer is still well within
+    // `movementsThreshold` of it, so nothing is active yet.
+    'startup -dwell> novice': ({ fromData }) => ({
+      deps: fromData.deps,
+      menu: fromData.deps.model,
+      menuCenter: fromData.origin,
+      upperStroke: [fromData.origin],
+      lowerStroke: fromData.stroke,
+    }),
+
+    'expert -move> expert': ({ fromData, inputData }) => ({
+      ...fromData,
+      stroke: [...fromData.stroke, inputData.position],
+    }),
+
+    // Idle has no gesture to end, so both decline there; every other state
+    // (startup, expert, novice) resets to idle's own shape.
+    '* -up> idle': ({ from, fromData, skip }) =>
+      from === 'idle' ? skip() : { deps: fromData.deps },
+    '* -cancel> idle': ({ from, fromData, skip }) =>
+      from === 'idle' ? skip() : { deps: fromData.deps },
+    // Dispose resets to idle's shape from anywhere, idle included: every
+    // state already carries `deps`, so one row covers all four.
+    '* -dispose> idle': ({ fromData }) => ({ deps: fromData.deps }),
+  },
+
+  actions: {
+    // Declared first: every other action, including the dwell residency,
+    // must run after the layout for this commit has already been announced.
+    '* -> *'({ to, toData, emit }) {
+      emit('layout', projectLayout(toNavigationState(to, toData)));
+    },
+
+    startup: {
+      run({ toData, send }) {
+        const timer = setTimeout(() => {
+          send('dwell');
+        }, toData.deps.options.noviceDwellingTime);
+        return () => {
+          clearTimeout(timer);
+        };
+      },
+      // The dwell is armed once, on arrival: a self-transition (growing the
+      // stroke below the movement threshold) must never restart it.
+      restart: false,
+    },
+
+    'idle -down> startup'({ toData, emit }) {
+      emit('start', new MarkingMenuStartEvent({ position: toData.origin }));
+    },
+
+    'startup -dwell> novice'({ fromData, toData, emit }) {
+      emit(
+        'open',
+        openEvent({
+          // `dwell` carries no position of its own; the machine holds the
+          // last committed one instead. `fromData.stroke` always starts with
+          // the origin and is only ever appended to, so it is never empty.
+          position: fromData.stroke.at(-1) as Point,
+          menu: toData.menu,
+          menuCenter: toData.menuCenter,
+        }),
+      );
+    },
+
+    // The shared termination policy: recognize the gesture drawn so far
+    // (unless skipped) and announce `select` or `cancel`. One wildcard action
+    // per input covers startup, expert and novice, replacing the old
+    // `finish()` helper. `from` also admits `idle` here, since the matching
+    // transition row's own source is a wildcard too; that row already
+    // declines idle with `skip()`, so this action never actually runs for
+    // it, but totorobot checks table membership rather than reachability,
+    // so the type still has to be narrowed here.
+    '* -up> idle'({ from, fromData, inputData, emit }) {
+      if (from === 'idle') {
+        return;
+      }
+
+      const { position } = inputData;
+      const { stroke, menu } = terminationContext(fromData, position);
+      // Startup: the pointer never moved at all when the stroke has zero
+      // length, so there is nothing to recognize. Novice selection is
+      // proximity-based hit-testing, not expert-style stroke recognition,
+      // and hit-testing isn't implemented yet: every release cancels for
+      // now. Expert always attempts recognition.
+      const isSkipRecognition =
+        from === 'startup' ? strokeLength(stroke) === 0 : from === 'novice';
+
+      const selection = isSkipRecognition
+        ? null
+        : recognizeMarkingMenuStroke(stroke, fromData.deps.model);
+      emit('feedback', { stroke, canceled: selection === null });
+
+      if (selection === null) {
+        emit('cancel', cancelEvent({ mode: from, position, menu }));
+      } else {
+        emit('select', selectEvent({ mode: from, position, selection, menu }));
+      }
+    },
+
+    // A pointer cancelled outright never selects, regardless of what the
+    // stroke looks like: recognition never runs. Same `idle` narrowing as
+    // the `-up>` action above.
+    '* -cancel> idle'({ from, fromData, inputData, emit }) {
+      if (from === 'idle') {
+        return;
+      }
+
+      const { position } = inputData;
+      const { stroke, menu } = terminationContext(fromData, position);
+
+      emit('feedback', { stroke, canceled: true });
+      emit('cancel', cancelEvent({ mode: from, position, menu }));
+    },
+  },
+});

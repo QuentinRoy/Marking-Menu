@@ -1,3 +1,4 @@
+import { fakeTimers } from '../__fixtures__/canvas.js';
 import { createModel } from '../model.js';
 import { createRuntime } from './runtime.js';
 
@@ -134,6 +135,57 @@ describe('createRuntime', () => {
     runtime.send({ type: 'pointer.cancel', position: [100, 0] });
 
     expect(emitted).toEqual(['start', 'cancel']);
+  });
+
+  it('dispose() mid-gesture leaves no armed timer and emits no public event', () => {
+    using _timers = fakeTimers();
+    const runtime = createRuntime({
+      model,
+      options,
+      renderer: createFakeRenderer(),
+    });
+    const emitted = recordEmitted(runtime);
+
+    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    expect(vi.getTimerCount()).toBe(1);
+
+    runtime.dispose();
+
+    expect(vi.getTimerCount()).toBe(0);
+    expect(emitted).toEqual(['start']);
+  });
+
+  it('does not render during teardown: unsubscribing happens before the dispose input is sent', () => {
+    const renderer = createFakeRenderer();
+    const runtime = createRuntime({ model, options, renderer });
+
+    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    const rendersBeforeDispose = renderer.render.mock.calls.length;
+
+    runtime.dispose();
+
+    expect(renderer.render).toHaveBeenCalledTimes(rendersBeforeDispose);
+  });
+
+  it('absorbs a throwing consumer listener rather than letting it interrupt the controller', () => {
+    const runtime = createRuntime({
+      model,
+      options,
+      renderer: createFakeRenderer(),
+    });
+    runtime.on('start', () => {
+      throw new Error('boom');
+    });
+
+    expect(() => {
+      runtime.send({ type: 'pointer.down', position: [0, 0] });
+    }).not.toThrow();
+
+    const selected = vi.fn<() => void>();
+    runtime.on('select', selected);
+    runtime.send({ type: 'pointer.up', position: [100, 0] });
+
+    expect(selected).toHaveBeenCalledTimes(1);
   });
 
   it('shows the canceled feedback style for cancel, and the normal style for select', () => {
