@@ -238,34 +238,48 @@ function selectEvent<N extends AnyModelNode>(data: {
 function cancelEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
+  readonly active: N | null;
   readonly menu: N | null;
 }): MarkingMenuCancelEvent<N> {
-  return new MarkingMenuCancelEvent<N>({ ...data, active: null } as unknown as {
-    mode: MarkingMenuMode;
-    position: Point;
-    active: null;
-    menu: ModelMenus<N> | null;
-  });
+  return new MarkingMenuCancelEvent<N>(
+    data as unknown as {
+      mode: MarkingMenuMode;
+      position: Point;
+      active: ModelItems<N> | null;
+      menu: ModelMenus<N> | null;
+    },
+  );
 }
 
 /**
  The context every termination action needs: the stroke drawn so far
- (including the release/cancel position) and the menu open when it ended, if
- any. Narrows structurally on `'lowerStroke' in fromData` rather than taking
- `from` as a parameter: `from` and `fromData` are only correlated inside
- totorobot's own transition record, and splitting them across two parameters
- here decorrelates them, so novice is picked out by the field only it has.
+ (including the release/cancel position), the menu open when it ended (if
+ any), and the item that was active (if any). That active item is precisely
+ the thing that is not selected once a termination action decides not to
+ select it. Narrows structurally on `'lowerStroke' in fromData` rather than
+ taking `from` as a parameter: `from` and `fromData` are only correlated
+ inside totorobot's own transition record, and splitting them across two
+ parameters here decorrelates them, so novice is picked out by the field
+ only it has.
  */
 function terminationContext(
   fromData: NavigationStates['startup' | 'expert' | 'novice'],
   position: Point,
-): { readonly stroke: readonly Point[]; readonly menu: AnyModelNode | null } {
+): {
+  readonly stroke: readonly Point[];
+  readonly menu: AnyModelNode | null;
+  readonly active: AnyModelNode | null;
+} {
   if ('lowerStroke' in fromData) {
-    const { lowerStroke, upperStroke, menu } = fromData;
-    return { stroke: [...lowerStroke, ...upperStroke, position], menu };
+    const { lowerStroke, upperStroke, menu, active } = fromData;
+    return {
+      stroke: [...lowerStroke, ...upperStroke, position],
+      menu,
+      active,
+    };
   }
 
-  return { stroke: [...fromData.stroke, position], menu: null };
+  return { stroke: [...fromData.stroke, position], menu: null, active: null };
 }
 
 export const navigationMachine = machine({
@@ -443,41 +457,47 @@ export const navigationMachine = machine({
       }
 
       const { position } = inputData;
-      const { stroke, menu } = terminationContext(fromData, position);
-      // Startup: the pointer never moved at all when the stroke has zero
-      // length, so there is nothing to recognize. Novice selection is
-      // proximity-based hit-testing against the active item, not
-      // expert-style stroke recognition, and that wiring belongs to a later
-      // ticket: every release cancels for now, regardless of `active`.
-      // Expert always attempts recognition.
-      const isSkipRecognition =
-        from === 'startup' ? strokeLength(stroke) === 0 : from === 'novice';
+      const { stroke, menu, active } = terminationContext(fromData, position);
 
-      const selection = isSkipRecognition
-        ? null
-        : recognizeMarkingMenuStroke(stroke, fromData.model);
+      // Novice release hit-tests the item already tracked as active rather
+      // than running stroke recognition: only a leaf can be selected, and a
+      // non-leaf (or absent) active item carries straight through to
+      // `cancel.active` unchanged, since it is precisely the thing that was
+      // not selected. Startup with zero movement has nothing to recognize;
+      // expert, and startup with sub-threshold movement, always attempt it.
+      let selection: AnyModelNode | null;
+      if (from === 'novice') {
+        selection = active?.isLeaf === true ? active : null;
+      } else if (from === 'startup' && strokeLength(stroke) === 0) {
+        selection = null;
+      } else {
+        selection = recognizeMarkingMenuStroke(stroke, fromData.model);
+      }
+
       emit('feedback', { stroke, canceled: selection === null });
 
       if (selection === null) {
-        emit('cancel', cancelEvent({ mode: from, position, menu }));
+        emit('cancel', cancelEvent({ mode: from, position, active, menu }));
       } else {
         emit('select', selectEvent({ mode: from, position, selection, menu }));
       }
     },
 
-    // A pointer cancelled outright never selects, regardless of what the
-    // stroke looks like: recognition never runs. Same `idle` narrowing as
-    // the `-up>` action above.
+    // A pointer cancelled outright never selects, regardless of what was
+    // active or what the stroke looks like: recognition never runs, and a
+    // novice active item, leaf or not, carries through to `cancel.active`
+    // unchanged (objective 8). Same `idle` narrowing as the `-up>` action
+    // above.
     '* -cancel> idle'({ from, fromData, inputData, emit }) {
       if (from === 'idle') {
         return;
       }
 
       const { position } = inputData;
-      const { stroke, menu } = terminationContext(fromData, position);
+      const { stroke, menu, active } = terminationContext(fromData, position);
 
       emit('feedback', { stroke, canceled: true });
-      emit('cancel', cancelEvent({ mode: from, position, menu }));
+      emit('cancel', cancelEvent({ mode: from, position, active, menu }));
     },
   },
 });
