@@ -195,6 +195,31 @@ function cancelEvent<N extends AnyModelNode>(data: {
   });
 }
 
+/**
+ The context every termination action needs: the stroke drawn so far
+ (including the release/cancel position) and the menu open when it ended, if
+ any. Narrows structurally on `'lowerStroke' in fromData` rather than taking
+ `from` as a parameter: `from` and `fromData` are only correlated inside
+ totorobot's own transition record, and splitting them across two parameters
+ here decorrelates them, so novice is picked out by the field only it has.
+ */
+function terminationContext(
+  fromData: NavigationStates['startup' | 'expert' | 'novice'],
+  position: Point,
+): { readonly stroke: readonly Point[]; readonly menu: AnyModelNode | null } {
+  if ('lowerStroke' in fromData) {
+    const { lowerStroke, upperStroke, menu } = fromData;
+    return { stroke: [...lowerStroke, ...upperStroke, position], menu };
+  }
+
+  return { stroke: [...fromData.stroke, position], menu: null };
+}
+
+// Building this triggers TS4023 during declaration emit: totorobot's
+// `Machine` type isn't exported, so a bundler can't name this constant's
+// inferred type. Harmless today (this module isn't reachable from the
+// package's public entry yet), but tracked upstream:
+// https://github.com/QuentinRoy/totorobot/issues/136
 export const navigationMachine = machine({
   inputs: type<NavigationInputs>(),
   states: type<NavigationStates>(),
@@ -293,28 +318,14 @@ export const navigationMachine = machine({
     // `finish()` helper.
     '* -up> idle'({ from, fromData, inputData, emit }) {
       const { position } = inputData;
-      let stroke: readonly Point[];
-      let menu: AnyModelNode | null;
-      let isSkipRecognition: boolean;
-
-      if (from === 'startup') {
-        stroke = [...fromData.stroke, position];
-        menu = null;
-        // The pointer never moved at all: every recorded point sits at the
-        // same position, so there is nothing to recognize.
-        isSkipRecognition = strokeLength(stroke) === 0;
-      } else if (from === 'expert') {
-        stroke = [...fromData.stroke, position];
-        menu = null;
-        isSkipRecognition = false;
-      } else {
-        stroke = [...fromData.lowerStroke, ...fromData.upperStroke, position];
-        menu = fromData.menu;
-        // Novice selection is proximity-based hit-testing, not expert-style
-        // stroke recognition, and hit-testing isn't implemented yet: every
-        // release cancels for now.
-        isSkipRecognition = true;
-      }
+      const { stroke, menu } = terminationContext(fromData, position);
+      // Startup: the pointer never moved at all when the stroke has zero
+      // length, so there is nothing to recognize. Novice selection is
+      // proximity-based hit-testing, not expert-style stroke recognition,
+      // and hit-testing isn't implemented yet: every release cancels for
+      // now. Expert always attempts recognition.
+      const isSkipRecognition =
+        from === 'startup' ? strokeLength(stroke) === 0 : from === 'novice';
 
       const selection = isSkipRecognition
         ? null
@@ -332,16 +343,7 @@ export const navigationMachine = machine({
     // stroke looks like: recognition never runs.
     '* -cancel> idle'({ from, fromData, inputData, emit }) {
       const { position } = inputData;
-      let stroke: readonly Point[];
-      let menu: AnyModelNode | null;
-
-      if (from === 'novice') {
-        stroke = [...fromData.lowerStroke, ...fromData.upperStroke, position];
-        menu = fromData.menu;
-      } else {
-        stroke = [...fromData.stroke, position];
-        menu = null;
-      }
+      const { stroke, menu } = terminationContext(fromData, position);
 
       emit('feedback', { stroke, canceled: true });
       emit('cancel', cancelEvent({ mode: from, position, menu }));

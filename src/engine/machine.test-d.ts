@@ -1,4 +1,4 @@
-import type { OutputsOf, StatesOf } from 'totorobot';
+import { machine, type, type OutputsOf, type StatesOf } from 'totorobot';
 import { describe, expectTypeOf, it } from 'vitest';
 import type {
   MarkingMenuCancelEvent,
@@ -8,7 +8,8 @@ import type {
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
 } from '../events.js';
-import type { AnyModelNode } from '../types.js';
+import type { MarkingMenuModel } from '../model.js';
+import type { AnyModelNode, ModelLeaves, ModelMenus } from '../types.js';
 import { type navigationMachine, type NavigationOptions } from './machine.js';
 
 /*
@@ -104,5 +105,57 @@ describe('OutputsOf<typeof navigationMachine>', () => {
     expectTypeOf<Outputs['cancel']>().toEqualTypeOf<
       MarkingMenuCancelEvent<AnyModelNode>
     >();
+  });
+});
+
+// The type-plumbing spike: a machine kept genuinely generic over `M`, built
+// only to prove `StatesOf<>`/`OutputsOf<>` preserve it rather than resolving
+// it early. That's the reason `navigationMachine` above erases every
+// model-shaped field to `AnyModelNode` instead of keeping a real `M`: this
+// probe never gets erased, and never gets started either, since this file is
+// type-checked only and never run.
+function genericProbe<M extends AnyModelNode>() {
+  return machine({
+    states: type<{
+      idle: undefined;
+      open: { readonly menu: ModelMenus<M> };
+    }>(),
+    outputs: type<{ selected: { readonly leaf: ModelLeaves<M> } }>(),
+    initial: 'idle',
+    transitions: {},
+  });
+}
+
+type ProbeStates<M extends AnyModelNode> = StatesOf<
+  ReturnType<typeof genericProbe<M>>
+>;
+type ProbeOutputs<M extends AnyModelNode> = OutputsOf<
+  ReturnType<typeof genericProbe<M>>
+>;
+
+type ExampleModel = MarkingMenuModel<{
+  readonly items: readonly [{ readonly id: 'right'; readonly label: 'Right' }];
+}>;
+type OtherModel = MarkingMenuModel<{
+  readonly items: readonly [{ readonly id: 'up'; readonly label: 'Up' }];
+}>;
+
+describe('a genuinely generic totorobot machine (the type-plumbing spike)', () => {
+  it('resolves to a real, non-`never` type for a concrete model', () => {
+    expectTypeOf<
+      ProbeStates<ExampleModel>['open']['menu']
+    >().not.toEqualTypeOf<never>();
+    expectTypeOf<
+      ProbeOutputs<ExampleModel>['selected']['leaf']
+    >().toHaveProperty('id');
+  });
+
+  it('tracks whichever model a caller passes in, not one baked-in model', () => {
+    expectTypeOf<
+      ProbeOutputs<ExampleModel>['selected']['leaf']['id']
+    >().toEqualTypeOf<'right'>();
+    expectTypeOf<
+      ProbeOutputs<OtherModel>['selected']['leaf']['id']
+    >().toEqualTypeOf<'up'>();
   });
 });

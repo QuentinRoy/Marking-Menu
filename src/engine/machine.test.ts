@@ -43,7 +43,14 @@ Record every public output a host emits, in order, by name.
 */
 const recordEmitted = (host: ReturnType<typeof startHost>): string[] => {
   const emitted: string[] = [];
-  for (const output of ['start', 'open', 'select', 'cancel'] as const) {
+  for (const output of [
+    'start',
+    'move',
+    'open',
+    'change',
+    'select',
+    'cancel',
+  ] as const) {
     host.on(output, ({ output: name }) => {
       emitted.push(name);
     });
