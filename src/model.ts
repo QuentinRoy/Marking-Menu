@@ -116,7 +116,7 @@ type ItemsOf<Input> = Input extends {
  The raw description of the item at `Path` within `Items`, `Path`'s segments
  being the index to follow at each level, from `Items` down to the item
  itself. `Path` must be non-empty: the root has no input counterpart to look
- up — it *is* {@link MarkingMenuModel}'s `Root`, as a whole.
+ up. It *is* {@link MarkingMenuModel}'s `Root`, as a whole.
  */
 type InputAt<
   Items extends readonly MarkingMenuItemInput[],
@@ -136,22 +136,22 @@ type InputAt<
  The model items built for `Inputs`, the sub-items of the node at
  `ParentPath` within `Root`.
 
- Built by real recursion — peeling `Inputs` one element at a time while
+ Built by real recursion, peeling `Inputs` one element at a time while
  growing `Index` in lockstep, so each child's own path is a distinct literal
- tuple — rather than a mapped type over `keyof Inputs`: that would substitute
- the generic `number` into every child's path alike, collapsing them all into
+ tuple. A mapped type over `keyof Inputs` would substitute the generic
+ `number` into every child's path alike instead, collapsing them all into
  one node whose `id` is the union of its siblings' rather than each child's
  own.
 
  Guarded on {@link IsTuple}: a menu built at runtime has a non-literal
- `items` list, whose length — and hence every descendant's path — is not
+ `items` list, whose length (and hence every descendant's path) is not
  statically known, so it degrades to {@link ToItems} instead of recursing
  forever. The guard has to stay at this one level, rather than have
- {@link ToItems} recurse back into `ItemsAt`: `Root`/`Path` become
- meaningless once a list's length isn't known, and — because `Inputs` can
- itself be a still-unresolved generic (e.g. a menu config not yet narrowed
- to a literal type) — the compiler must be able to check *both* branches
- structurally without one poisoning the other with an unresolvable `Root`.
+ {@link ToItems} recurse back into `ItemsAt`. `Root`/`Path` become
+ meaningless once a list's length isn't known, and `Inputs` can itself be a
+ still-unresolved generic (e.g. a menu config not yet narrowed to a literal
+ type), so the compiler must be able to check *both* branches structurally
+ without one poisoning the other with an unresolvable `Root`.
  */
 type ItemsAt<
   Root extends MarkingMenuInput,
@@ -172,7 +172,7 @@ type ItemsAt<
 
 /**
  The model items an input item list resolves to when its length is not
- statically known — a menu, or a portion of one, built at runtime.
+ statically known: a menu, or a portion of one, built at runtime.
  */
 type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = {
   [K in keyof Inputs]: ToItem<Inputs[K]>;
@@ -181,7 +181,7 @@ type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = {
 /**
  The model item an input item resolves to, without a `Root`/`Path` to derive
  a precise `parent` from, so `parent` widens to the generic, erased
- {@link MarkingMenuModelItem} — the same degradation a dynamic list's
+ {@link MarkingMenuModelItem}. It's the same degradation a dynamic list's
  element type already undergoes for `id`, `label` and `items`.
  */
 type ToItem<Input> = Input extends MarkingMenuItemInput
@@ -194,8 +194,8 @@ type ToItem<Input> = Input extends MarkingMenuItemInput
  The node the model built from `Root` has at `Path`: the root itself for an
  empty path, or the item found by following `Path`'s indices otherwise.
 
- Parameterizing by `Root` and a `Path` locating the node within it — rather
- than by the node's own literal shape, the way {@link ModelItem} is — is what
+ Parameterizing by `Root` and a `Path` locating the node within it, rather
+ than by the node's own literal shape the way {@link ModelItem} is, is what
  lets an item carry a precise `parent` without the type referencing itself:
  the parent is the very same lookup with the last path segment dropped, so
  node and parent are both *derived*, independently, from the one acyclic

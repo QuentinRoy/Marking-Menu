@@ -154,9 +154,9 @@ type GenericNodeKeys =
  generically rather than through the literal ids described in a specific menu.
 
  `parent` is added outside of {@link GenericNodeKeys}: `ModelItem` itself has
- no such field — a literal-preserving `parent` is exactly the type-level
+ no such field. A literal-preserving `parent` is exactly the type-level
  problem this file works around (see {@link AnyModelNode} and how
- {@link MarkingMenuModel} builds it) — so each variant states its own erased
+ {@link MarkingMenuModel} builds it), so each variant states its own erased
  `parent` type directly. An item's parent is always some node of this same
  union; the root's is always `null`.
  */
