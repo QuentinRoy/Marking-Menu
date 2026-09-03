@@ -614,5 +614,28 @@ describe('navigationMachine', () => {
       // Fires `submenuOpeningDelay` after the *second* move instead.
       expect(opened).toHaveBeenCalledTimes(1);
     });
+
+    it('keeps a submenu-dwell timer armed for the freshly opened submenu, even with no wobble between the move that activated it and the dwell that opened it', () => {
+      using _timers = fakeTimers();
+      const host = navigationMachine.start({ model: submenuModel, options });
+
+      host.send('down', { position: [0, 0] });
+      vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice at [0, 0]
+      expect(vi.getTimerCount()).toBe(1); // The root menu's own submenu-dwell timer
+
+      host.send('move', { position: [100, 0] }); // One significant move, straight onto "right"
+      expect(vi.getTimerCount()).toBe(1); // Restarted, not doubled or dropped
+
+      vi.advanceTimersByTime(options.submenuOpeningDelay); // Opens the submenu at [100, 0]
+      expect(host.current.name).toBe('novice');
+      expect(
+        host.current.name === 'novice' && host.current.data.menuCenter,
+      ).toEqual([100, 0]);
+      // The residency must rearm on entering the submenu too, not stay
+      // dropped because this particular transition's `dwellAnchor` happens
+      // to be the very same reference the residency's `restart` predicate
+      // compares against.
+      expect(vi.getTimerCount()).toBe(1);
+    });
   });
 });

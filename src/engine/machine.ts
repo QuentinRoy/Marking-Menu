@@ -260,6 +260,23 @@ function cancelEvent<N extends AnyModelNode>(data: {
 }
 
 /**
+ Shared body of the `startup` and `novice` dwell residencies: arm a `dwell`
+ timer for `delayMs` and clear it on exit, whatever ends the residency —
+ leaving the state, or disposal.
+ */
+function armDwellTimer(
+  delayMs: number,
+  send: (input: 'dwell') => void,
+): () => void {
+  const timer = setTimeout(() => {
+    send('dwell');
+  }, delayMs);
+  return () => {
+    clearTimeout(timer);
+  };
+}
+
+/**
  The context every termination action needs: the stroke drawn so far
  (including the release/cancel position), the menu open when it ended (if
  any), and the item that was active (if any). That active item is precisely
@@ -391,7 +408,12 @@ export const navigationMachine = machine({
         active: null,
         upperStroke: [position],
         lowerStroke: [...lowerStroke, ...upperStroke],
-        dwellAnchor: position,
+        // A fresh reference, deliberately never `position` itself: opening a
+        // submenu must always restart the residency for the new menu, and
+        // `position` is `upperStroke.at(-1)`, which — with no wobble between
+        // the move that armed this dwell and the dwell itself — is the very
+        // same reference `fromData.dwellAnchor` already holds.
+        dwellAnchor: [...position],
       };
     },
 
@@ -417,28 +439,16 @@ export const navigationMachine = machine({
     },
 
     startup: {
-      run({ toData, send }) {
-        const timer = setTimeout(() => {
-          send('dwell');
-        }, toData.options.noviceDwellingTime);
-        return () => {
-          clearTimeout(timer);
-        };
-      },
+      run: ({ toData, send }) =>
+        armDwellTimer(toData.options.noviceDwellingTime, send),
       // The dwell is armed once, on arrival: a self-transition (growing the
       // stroke below the movement threshold) must never restart it.
       restart: false,
     },
 
     novice: {
-      run({ toData, send }) {
-        const timer = setTimeout(() => {
-          send('dwell');
-        }, toData.options.submenuOpeningDelay);
-        return () => {
-          clearTimeout(timer);
-        };
-      },
+      run: ({ toData, send }) =>
+        armDwellTimer(toData.options.submenuOpeningDelay, send),
       // Only a self-transition that carries `dwellAnchor` forward to a new
       // position — significant movement, or the fresh centre a submenu open
       // itself produces — restarts the residency; a small move, or a dwell
