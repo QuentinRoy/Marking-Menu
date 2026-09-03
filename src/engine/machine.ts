@@ -1,17 +1,22 @@
 import { machine, type } from 'totorobot';
 import {
   MarkingMenuCancelEvent,
+  MarkingMenuChangeEvent,
+  MarkingMenuMoveEvent,
   MarkingMenuOpenEvent,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
-  type MarkingMenuChangeEvent,
   type MarkingMenuMode,
-  type MarkingMenuMoveEvent,
 } from '../events.js';
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
 import { strokeLength } from '../recognizer/stroke-length.js';
-import type { AnyModelNode, ModelLeaves, ModelMenus } from '../types.js';
-import { dist, type Point } from '../utils.js';
+import type {
+  AnyModelNode,
+  ModelItems,
+  ModelLeaves,
+  ModelMenus,
+} from '../types.js';
+import { dist, toPolar, type Point } from '../utils.js';
 import { projectLayout } from './layout-view.js';
 
 /*
@@ -32,6 +37,7 @@ import { projectLayout } from './layout-view.js';
 export type NavigationOptions = {
   readonly movementsThreshold: number;
   readonly noviceDwellingTime: number;
+  readonly minSelectionDist: number;
 };
 
 type Deps = {
@@ -67,6 +73,7 @@ export type NavigationState<M extends AnyModelNode> =
       readonly phase: 'novice';
       readonly menu: ModelMenus<M>;
       readonly menuCenter: Point;
+      readonly active: ModelItems<M> | null;
       readonly upperStroke: readonly Point[];
       readonly lowerStroke: readonly Point[];
     };
@@ -92,6 +99,7 @@ type NavigationStates = {
     readonly deps: Deps;
     readonly menu: AnyModelNode;
     readonly menuCenter: Point;
+    readonly active: AnyModelNode | null;
     readonly upperStroke: readonly Point[];
     readonly lowerStroke: readonly Point[];
   };
@@ -162,6 +170,50 @@ function openEvent<N extends AnyModelNode>(data: {
       position: Point;
       menu: ModelMenus<N>;
       menuCenter: Point;
+    },
+  );
+}
+
+function moveEvent<N extends AnyModelNode>(data: {
+  readonly mode: MarkingMenuMode;
+  readonly position: Point;
+  readonly active: N | null;
+  readonly menu: N | null;
+}): MarkingMenuMoveEvent<N> {
+  return new MarkingMenuMoveEvent<N>(
+    data as unknown as {
+      mode: MarkingMenuMode;
+      position: Point;
+      active: ModelItems<N> | null;
+      menu: ModelMenus<N> | null;
+    },
+  );
+}
+
+/**
+ Shared body of the three startup/expert move actions: no menu is open in
+ either state, so `move` always carries a null `active` and `menu` there.
+ */
+function emitNullActiveMove(
+  emit: (name: 'move', data: MarkingMenuMoveEvent<AnyModelNode>) => void,
+  mode: 'startup' | 'expert',
+  position: Point,
+): void {
+  emit('move', moveEvent({ mode, position, active: null, menu: null }));
+}
+
+function changeEvent<N extends AnyModelNode>(data: {
+  readonly position: Point;
+  readonly active: N | null;
+  readonly previousActive: N | null;
+  readonly menu: N;
+}): MarkingMenuChangeEvent<N> {
+  return new MarkingMenuChangeEvent<N>(
+    data as unknown as {
+      position: Point;
+      active: ModelItems<N> | null;
+      previousActive: ModelItems<N> | null;
+      menu: ModelMenus<N>;
     },
   );
 }
@@ -247,6 +299,7 @@ export const navigationMachine = machine({
       deps: fromData.deps,
       menu: fromData.deps.model,
       menuCenter: fromData.origin,
+      active: null,
       upperStroke: [fromData.origin],
       lowerStroke: fromData.stroke,
     }),
@@ -255,6 +308,22 @@ export const navigationMachine = machine({
       ...fromData,
       stroke: [...fromData.stroke, inputData.position],
     }),
+
+    'novice -move> novice'({ fromData, inputData }) {
+      const { azymuth, radius } = toPolar(
+        inputData.position,
+        fromData.menuCenter,
+      );
+      const active =
+        radius < fromData.deps.options.minSelectionDist
+          ? null
+          : fromData.menu.getNearestChild(azymuth);
+      return {
+        ...fromData,
+        active,
+        upperStroke: [...fromData.upperStroke, inputData.position],
+      };
+    },
 
     // Idle has no gesture to end, so both decline there; every other state
     // (startup, expert, novice) resets to idle's own shape.
@@ -292,6 +361,16 @@ export const navigationMachine = machine({
       emit('start', new MarkingMenuStartEvent({ position: toData.origin }));
     },
 
+    // No menu is open in startup or expert, so nothing can be active: `move`
+    // always carries `active: null` and `menu: null` here, and `change` never
+    // fires outside novice.
+    'startup -move> expert'({ inputData, emit }) {
+      emitNullActiveMove(emit, 'expert', inputData.position);
+    },
+    'startup -move> startup'({ inputData, emit }) {
+      emitNullActiveMove(emit, 'startup', inputData.position);
+    },
+
     'startup -dwell> novice'({ fromData, toData, emit }) {
       emit(
         'open',
@@ -304,6 +383,36 @@ export const navigationMachine = machine({
           menuCenter: toData.menuCenter,
         }),
       );
+    },
+
+    'expert -move> expert'({ inputData, emit }) {
+      emitNullActiveMove(emit, 'expert', inputData.position);
+    },
+
+    // `move` always fires; `change` only when the nearest item differs from
+    // the one the previous commit landed on.
+    'novice -move> novice'({ fromData, toData, inputData, emit }) {
+      emit(
+        'move',
+        moveEvent({
+          mode: 'novice',
+          position: inputData.position,
+          active: toData.active,
+          menu: toData.menu,
+        }),
+      );
+
+      if (toData.active !== fromData.active) {
+        emit(
+          'change',
+          changeEvent({
+            position: inputData.position,
+            active: toData.active,
+            previousActive: fromData.active,
+            menu: toData.menu,
+          }),
+        );
+      }
     },
 
     // The shared termination policy: recognize the gesture drawn so far
@@ -323,9 +432,10 @@ export const navigationMachine = machine({
       const { stroke, menu } = terminationContext(fromData, position);
       // Startup: the pointer never moved at all when the stroke has zero
       // length, so there is nothing to recognize. Novice selection is
-      // proximity-based hit-testing, not expert-style stroke recognition,
-      // and hit-testing isn't implemented yet: every release cancels for
-      // now. Expert always attempts recognition.
+      // proximity-based hit-testing against the active item, not
+      // expert-style stroke recognition, and that wiring belongs to a later
+      // ticket: every release cancels for now, regardless of `active`.
+      // Expert always attempts recognition.
       const isSkipRecognition =
         from === 'startup' ? strokeLength(stroke) === 0 : from === 'novice';
 

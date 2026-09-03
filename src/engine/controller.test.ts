@@ -6,6 +6,8 @@ import {
 } from '../__fixtures__/canvas.js';
 import type {
   MarkingMenuCancelEvent,
+  MarkingMenuChangeEvent,
+  MarkingMenuMoveEvent,
   MarkingMenuOpenEvent,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
@@ -590,12 +592,173 @@ describe('createController', () => {
     const menuBefore = parent.querySelector('.marking-menu');
     expect(menuBefore).not.toBeNull();
 
-    // Still novice mode, no hit-testing yet: this is a no-op transition at
-    // the machine level, but still triggers a render pass.
+    // Still within `minSelectionDist`, so the active item stays null and the
+    // menu identity is unchanged: no DOM to patch, but a render pass still
+    // runs.
     parent.dispatchEvent(pointer('pointermove', { clientX: 1, clientY: 0 }));
 
     expect(parent.querySelector('.marking-menu')).toBe(menuBefore);
     expect(parent.querySelectorAll('.marking-menu')).toHaveLength(1);
+
+    controller.dispose();
+  });
+
+  it('activates no item while the pointer stays within minSelectionDist of the menu center', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+      minSelectionDist: 40,
+    });
+
+    const moved = voidMock<[MarkingMenuMoveEvent<AnyModelNode>]>();
+    controller.on('move', moved);
+    const changed = voidMock<[MarkingMenuChangeEvent<AnyModelNode>]>();
+    controller.on('change', changed);
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    parent.dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 0 }));
+
+    expect(moved).toHaveBeenCalledTimes(1);
+    expect(moved.mock.calls[0]?.[0].active).toBeNull();
+    expect(changed).not.toHaveBeenCalled();
+    expect(parent.querySelectorAll('.marking-menu-item.active')).toHaveLength(
+      0,
+    );
+
+    controller.dispose();
+  });
+
+  it('activates the nearest item by angle once beyond minSelectionDist, patching the DOM without recreating the menu, and distinguishes continued pointing at the same item from moving to a new one', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+      minSelectionDist: 40,
+    });
+
+    const moved = vi.fn<() => void>();
+    let lastMoveActiveId: string | undefined;
+    controller.on('move', (event) => {
+      moved();
+      lastMoveActiveId = event.active?.id;
+    });
+    const changed = vi.fn<() => void>();
+    let lastChangeActiveId: string | undefined;
+    let lastChangePreviousActive: unknown;
+    controller.on('change', (event) => {
+      changed();
+      lastChangeActiveId = event.active?.id;
+      lastChangePreviousActive = event.previousActive;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    const menuBefore = parent.querySelector('.marking-menu');
+
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+
+    expect(moved).toHaveBeenCalledTimes(1);
+    expect(lastMoveActiveId).toBe('right');
+    expect(changed).toHaveBeenCalledTimes(1);
+    expect(lastChangeActiveId).toBe('right');
+    expect(lastChangePreviousActive).toBeNull();
+
+    // The menu DOM is patched in place, not recreated.
+    expect(parent.querySelector('.marking-menu')).toBe(menuBefore);
+    const activeItems = parent.querySelectorAll('.marking-menu-item.active');
+    expect(activeItems).toHaveLength(1);
+    // "right" is the first described item, so its library-assigned key is
+    // "0" — `dataset.itemId` is keyed on that, not on the caller's own `id`.
+    expect((activeItems[0] as HTMLElement).dataset.itemId).toBe('0');
+
+    // Continued pointing at the same item: another `move`, no further `change`.
+    parent.dispatchEvent(pointer('pointermove', { clientX: 110, clientY: 0 }));
+    expect(moved).toHaveBeenCalledTimes(2);
+    expect(changed).toHaveBeenCalledTimes(1);
+    expect(parent.querySelectorAll('.marking-menu-item.active')).toHaveLength(
+      1,
+    );
+
+    controller.dispose();
+  });
+
+  it('dispatches change carrying the new and previous active item, in one batch with move, when the nearest item changes', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+      minSelectionDist: 40,
+    });
+
+    const seen: string[] = [];
+    controller.on('move', () => {
+      seen.push('move');
+    });
+    let lastChangeActiveId: string | undefined;
+    let lastChangePreviousActive: unknown;
+    controller.on('change', (event) => {
+      seen.push('change');
+      lastChangeActiveId = event.active?.id;
+      lastChangePreviousActive = event.previousActive;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    // First activates "right".
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    const previousActive = lastChangePreviousActive;
+    const firstActive = lastChangeActiveId;
+    expect(seen).toEqual(['move', 'change']);
+    expect(firstActive).toBe('right');
+    expect(previousActive).toBeNull();
+
+    // Moving to "down" produces a second, distinct change in the same batch
+    // as its move.
+    seen.length = 0;
+    parent.dispatchEvent(pointer('pointermove', { clientX: 0, clientY: 100 }));
+
+    expect(seen).toEqual(['move', 'change']);
+    expect(lastChangeActiveId).toBe('down');
+    expect(lastChangePreviousActive).not.toBeNull();
+
+    controller.dispose();
+  });
+
+  it('never fires change, and always reports a null active, for move events dispatched in startup and expert', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    const controller = createController({ items, parent });
+
+    const moved: Array<MarkingMenuMoveEvent<AnyModelNode>> = [];
+    controller.on('move', (event) => {
+      moved.push(event);
+    });
+    const changed = voidMock<[MarkingMenuChangeEvent<AnyModelNode>]>();
+    controller.on('change', changed);
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 1, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+
+    expect(moved).toHaveLength(2);
+    expect(moved[0]?.mode).toBe('startup');
+    expect(moved[0]?.active).toBeNull();
+    expect(moved[0]?.menu).toBeNull();
+    expect(moved[1]?.mode).toBe('expert');
+    expect(moved[1]?.active).toBeNull();
+    expect(moved[1]?.menu).toBeNull();
+    expect(changed).not.toHaveBeenCalled();
 
     controller.dispose();
   });

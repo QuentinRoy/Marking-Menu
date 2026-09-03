@@ -17,6 +17,7 @@ export type EngineConfig = MarkingMenuInput & {
   readonly parent: HTMLElement;
   readonly movementsThreshold?: number;
   readonly noviceDwellingTime?: number;
+  readonly minSelectionDist?: number;
 };
 
 /*
@@ -74,6 +75,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       options: {
         movementsThreshold: config.movementsThreshold ?? 5,
         noviceDwellingTime: config.noviceDwellingTime ?? 1000 / 3,
+        minSelectionDist: config.minSelectionDist ?? 40,
       },
       renderer,
     });

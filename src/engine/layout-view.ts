@@ -3,8 +3,7 @@ import type { Point } from '../utils.js';
 import type { NavigationState } from './machine.js';
 
 /**
- The DOM-free, state-derived layout projection. `activeKey` is always `null`
- until a ticket implements novice hit-testing.
+ The DOM-free, state-derived layout projection.
  */
 export type LayoutView<M extends AnyModelNode> = {
   readonly cursor: 'default' | 'crosshair' | 'none';
@@ -46,7 +45,12 @@ export function projectLayout<M extends AnyModelNode>(
         menu: {
           model: state.menu,
           center: state.menuCenter,
-          activeKey: null,
+          // `ModelItems<M>` is erased to a bare node at the machine's own
+          // boundary (see machine.ts's module comment); every real item
+          // built by `model.ts` carries `key`, the same reason `renderer.ts`
+          // casts `view.menu.model` to `MenuLayoutModel`.
+          activeKey:
+            (state.active as { readonly key: string } | null)?.key ?? null,
         },
         upperStroke: state.upperStroke,
         lowerStroke: state.lowerStroke,

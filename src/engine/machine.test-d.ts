@@ -67,7 +67,11 @@ describe('StatesOf<typeof navigationMachine>', () => {
     const carryDeps = <M extends AnyModelNode>(model: M): States['idle'] => ({
       deps: {
         model,
-        options: { movementsThreshold: 5, noviceDwellingTime: 1 },
+        options: {
+          movementsThreshold: 5,
+          noviceDwellingTime: 1,
+          minSelectionDist: 40,
+        },
       },
     });
     expectTypeOf(carryDeps).toBeFunction();
