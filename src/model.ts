@@ -113,10 +113,9 @@ type ItemsOf<Input> = Input extends {
   : EmptyTuple;
 
 /**
- The raw description of the item at `Path` within `Items`, `Path`'s segments
- being the index to follow at each level, from `Items` down to the item
- itself. `Path` must be non-empty: the root has no input counterpart to look
- up. It *is* {@link MarkingMenuModel}'s `Root`, as a whole.
+ The raw description of the item at `Path` within `Items`, following
+ `Path`'s indices one level at a time. `Path` must be non-empty: the root
+ has no input counterpart to look up, since it *is* the whole of `Root`.
  */
 type InputAt<
   Items extends readonly MarkingMenuItemInput[],
@@ -137,21 +136,18 @@ type InputAt<
  `ParentPath` within `Root`.
 
  Built by real recursion, peeling `Inputs` one element at a time while
- growing `Index` in lockstep, so each child's own path is a distinct literal
- tuple. A mapped type over `keyof Inputs` would substitute the generic
- `number` into every child's path alike instead, collapsing them all into
- one node whose `id` is the union of its siblings' rather than each child's
- own.
+ growing `Index` in lockstep, so each child gets its own literal path. A
+ mapped type over `keyof Inputs` would substitute the generic `number` into
+ every path instead, collapsing all the children into one node whose `id`
+ is the union of its siblings'.
 
- Guarded on {@link IsTuple}: a menu built at runtime has a non-literal
- `items` list, whose length (and hence every descendant's path) is not
- statically known, so it degrades to {@link ToItems} instead of recursing
- forever. The guard has to stay at this one level, rather than have
- {@link ToItems} recurse back into `ItemsAt`. `Root`/`Path` become
- meaningless once a list's length isn't known, and `Inputs` can itself be a
+ Guarded on {@link IsTuple}: once a menu's `items` length isn't known
+ statically, neither is any descendant's path, so this degrades to
+ {@link ToItems} instead of recursing forever. The guard stays at this
+ level rather than inside {@link ToItems}, because `Inputs` can itself be a
  still-unresolved generic (e.g. a menu config not yet narrowed to a literal
- type), so the compiler must be able to check *both* branches structurally
- without one poisoning the other with an unresolvable `Root`.
+ type): the compiler then has to check both branches on their own, without
+ a meaningless `Root` from the tuple branch poisoning the dynamic one.
  */
 type ItemsAt<
   Root extends MarkingMenuInput,
@@ -180,9 +176,9 @@ type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = {
 
 /**
  The model item an input item resolves to, without a `Root`/`Path` to derive
- a precise `parent` from, so `parent` widens to the generic, erased
- {@link MarkingMenuModelItem}. It's the same degradation a dynamic list's
- element type already undergoes for `id`, `label` and `items`.
+ a precise `parent` from: `parent` widens to the generic, erased
+ {@link MarkingMenuModelItem}, the same degradation `id`, `label` and
+ `items` already undergo.
  */
 type ToItem<Input> = Input extends MarkingMenuItemInput
   ? ModelItem<IdOf<Input>, Input['label'], ToItems<ItemsOf<Input>>> & {
@@ -194,12 +190,12 @@ type ToItem<Input> = Input extends MarkingMenuItemInput
  The node the model built from `Root` has at `Path`: the root itself for an
  empty path, or the item found by following `Path`'s indices otherwise.
 
- Parameterizing by `Root` and a `Path` locating the node within it, rather
- than by the node's own literal shape the way {@link ModelItem} is, is what
- lets an item carry a precise `parent` without the type referencing itself:
- the parent is the very same lookup with the last path segment dropped, so
- node and parent are both *derived*, independently, from the one acyclic
- `Root`, instead of one being defined in terms of the other.
+ Parameterizing by `Root` and a `Path`, rather than by the node's own
+ literal shape the way {@link ModelItem} is, lets an item carry a precise
+ `parent` without the type referencing itself: the parent is the same
+ lookup with the last path segment dropped. Node and parent are both
+ derived, independently, from the one acyclic `Root`, instead of one being
+ defined in terms of the other.
  */
 type NodeAt<
   Root extends MarkingMenuInput,
@@ -257,9 +253,7 @@ abstract class MarkingMenuNode {
     parent: MarkingMenuNode | null;
     /**
      Builds the node's items, given the node itself: sub-items need their
-     parent to exist before they can be created, so the node is constructed
-     first and its items second, the reverse of the previous, child-first
-     order.
+     parent to exist before they can be created.
      */
     items: (self: MarkingMenuNode) => readonly MarkingMenuItem[];
   }) {
