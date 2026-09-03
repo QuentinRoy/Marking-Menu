@@ -215,11 +215,6 @@ function terminationContext(
   return { stroke: [...fromData.stroke, position], menu: null };
 }
 
-// Building this triggers TS4023 during declaration emit: totorobot's
-// `Machine` type isn't exported, so a bundler can't name this constant's
-// inferred type. Harmless today (this module isn't reachable from the
-// package's public entry yet), but tracked upstream:
-// https://github.com/QuentinRoy/totorobot/issues/136
 export const navigationMachine = machine({
   inputs: type<NavigationInputs>(),
   states: type<NavigationStates>(),
@@ -233,7 +228,6 @@ export const navigationMachine = machine({
       origin: inputData.position,
       stroke: [inputData.position],
     }),
-    'idle -dispose> idle': ({ fromData }) => fromData,
 
     'startup -move> expert'({ fromData, inputData, skip }) {
       const stroke = [...fromData.stroke, inputData.position];
@@ -246,9 +240,6 @@ export const navigationMachine = machine({
       ...fromData,
       stroke: [...fromData.stroke, inputData.position],
     }),
-    'startup -up> idle': ({ fromData }) => ({ deps: fromData.deps }),
-    'startup -cancel> idle': ({ fromData }) => ({ deps: fromData.deps }),
-    'startup -dispose> idle': ({ fromData }) => ({ deps: fromData.deps }),
     // The dwell wins the startup race: open novice mode at the root menu,
     // centered on the gesture's origin. The pointer is still well within
     // `movementsThreshold` of it, so nothing is active yet.
@@ -264,13 +255,16 @@ export const navigationMachine = machine({
       ...fromData,
       stroke: [...fromData.stroke, inputData.position],
     }),
-    'expert -up> idle': ({ fromData }) => ({ deps: fromData.deps }),
-    'expert -cancel> idle': ({ fromData }) => ({ deps: fromData.deps }),
-    'expert -dispose> idle': ({ fromData }) => ({ deps: fromData.deps }),
 
-    'novice -up> idle': ({ fromData }) => ({ deps: fromData.deps }),
-    'novice -cancel> idle': ({ fromData }) => ({ deps: fromData.deps }),
-    'novice -dispose> idle': ({ fromData }) => ({ deps: fromData.deps }),
+    // Idle has no gesture to end, so both decline there; every other state
+    // (startup, expert, novice) resets to idle's own shape.
+    '* -up> idle': ({ from, fromData, skip }) =>
+      from === 'idle' ? skip() : { deps: fromData.deps },
+    '* -cancel> idle': ({ from, fromData, skip }) =>
+      from === 'idle' ? skip() : { deps: fromData.deps },
+    // Dispose resets to idle's shape from anywhere, idle included: every
+    // state already carries `deps`, so one row covers all four.
+    '* -dispose> idle': ({ fromData }) => ({ deps: fromData.deps }),
   },
 
   actions: {
@@ -315,8 +309,16 @@ export const navigationMachine = machine({
     // The shared termination policy: recognize the gesture drawn so far
     // (unless skipped) and announce `select` or `cancel`. One wildcard action
     // per input covers startup, expert and novice, replacing the old
-    // `finish()` helper.
+    // `finish()` helper. `from` also admits `idle` here, since the matching
+    // transition row's own source is a wildcard too; that row already
+    // declines idle with `skip()`, so this action never actually runs for
+    // it, but totorobot checks table membership rather than reachability,
+    // so the type still has to be narrowed here.
     '* -up> idle'({ from, fromData, inputData, emit }) {
+      if (from === 'idle') {
+        return;
+      }
+
       const { position } = inputData;
       const { stroke, menu } = terminationContext(fromData, position);
       // Startup: the pointer never moved at all when the stroke has zero
@@ -340,8 +342,13 @@ export const navigationMachine = machine({
     },
 
     // A pointer cancelled outright never selects, regardless of what the
-    // stroke looks like: recognition never runs.
+    // stroke looks like: recognition never runs. Same `idle` narrowing as
+    // the `-up>` action above.
     '* -cancel> idle'({ from, fromData, inputData, emit }) {
+      if (from === 'idle') {
+        return;
+      }
+
       const { position } = inputData;
       const { stroke, menu } = terminationContext(fromData, position);
 

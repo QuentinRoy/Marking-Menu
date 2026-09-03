@@ -4368,7 +4368,7 @@ __metadata:
     publint: "npm:^0.3.22"
     rxjs: "npm:^7.8.2"
     rxjs-marbles: "npm:^7.0.1"
-    totorobot: "npm:^2.1.0"
+    totorobot: "npm:^3.0.0"
     typescript: "npm:@typescript/typescript6@^6.0.2"
     vite: "npm:^8.1.5"
     vite-plugin-dts: "npm:^5.0.3"
@@ -5993,10 +5993,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"totorobot@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "totorobot@npm:2.1.0"
-  checksum: 10c0/c53f8bf88725e1956a5192344daf6f080b8afe9cc62f25ae43afe80af3518a65edad0f655753c08dddef4877846784f78e6acbbe35388f5cda68519422c28ad3
+"totorobot@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "totorobot@npm:3.0.0"
+  checksum: 10c0/e0dad4eee85cf684db5156c1d88b221780cf87cdd471e982d624a9024383c634fac624b532e1d231daeda445fee3efeeaa29d4561aef27d8d0ebfaccdc63441d
   languageName: node
   linkType: hard
 

@@ -66,7 +66,7 @@
     "publint": "^0.3.22",
     "rxjs": "^7.8.2",
     "rxjs-marbles": "^7.0.1",
-    "totorobot": "^2.1.0",
+    "totorobot": "^3.0.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.1.5",
     "vite-plugin-dts": "^5.0.3",
