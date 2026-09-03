@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import { createModel } from './model.js';
-import type { MarkingMenuItemInput } from './types.js';
+import type { MarkingMenuItemInput, MarkingMenuModelItem } from './types.js';
 
 /*
  Type level tests: they assert what the type system knows about a model built
@@ -50,6 +50,15 @@ describe('createModel', () => {
   it('knows whether a node is the root', () => {
     expectTypeOf(menu.isRoot).toEqualTypeOf<true>();
     expectTypeOf(menu.items[0].isRoot).toEqualTypeOf<false>();
+  });
+
+  it('gives every item a precise parent, and the root none', () => {
+    expectTypeOf(menu.parent).toEqualTypeOf<null>();
+    expectTypeOf(menu.items[0].parent).toEqualTypeOf<typeof menu>();
+    expectTypeOf(menu.items[1].items[0].parent).toEqualTypeOf<
+      (typeof menu.items)[1]
+    >();
+    expectTypeOf(menu.items[1].items[0].parent.label).toEqualTypeOf<'Bottom'>();
   });
 
   it('resolves getChild to the very item bearing the id', () => {
@@ -213,5 +222,9 @@ describe('createModel', () => {
     expectTypeOf(dynamic.getChild('whatever')).toBeNullable();
     expectTypeOf(dynamic.getNearestChild(0)).toBeNullable();
     expectTypeOf(dynamic.getMaxDepth()).toEqualTypeOf<number>();
+    expectTypeOf(dynamic.parent).toEqualTypeOf<null>();
+    expectTypeOf(dynamic.items[0]?.parent).toEqualTypeOf<
+      MarkingMenuModelItem | undefined
+    >();
   });
 });

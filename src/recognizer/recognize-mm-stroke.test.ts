@@ -41,7 +41,7 @@ const csvParse = async (
 
 type MockModel = ModelItem<string | undefined, string, readonly MockModel[]> & {
   requestedAngle: number | undefined;
-  parent?: MockModel | undefined;
+  parent: MockModel | null;
   getMaxDepth: Mock<() => number>;
   getMaxBreadth: Mock<() => number>;
   getNearestChild: Mock<(childAngle?: number) => MockModel>;
@@ -62,7 +62,7 @@ const createMockModel = (
   depth = 1,
   breadth = 8,
   requestedAngle?: number,
-  parent?: MockModel,
+  parent: MockModel | null = null,
 ): MockModel => {
   const base = {
     items: [],
