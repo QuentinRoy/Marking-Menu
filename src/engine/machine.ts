@@ -42,41 +42,7 @@ export type NavigationOptions = {
   readonly submenuOpeningDelay: number;
 };
 
-/**
- The boundary input shape `pointer-source.ts` sends: unrelated to the
- machine's own (shorter) input vocabulary, so that layer never has to know
- about it.
- */
-export type NavigationInput =
-  | { readonly type: 'pointer.down'; readonly position: Point }
-  | { readonly type: 'pointer.move'; readonly position: Point }
-  | { readonly type: 'pointer.up'; readonly position: Point }
-  | { readonly type: 'pointer.cancel'; readonly position: Point };
-
-/**
- The boundary view of the machine's current phase: what `layout-view.ts`
- projects from. Kept as a plain discriminated union, independent of
- totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
- */
-export type NavigationState<M extends AnyModelNode> =
-  | { readonly phase: 'idle' }
-  | {
-      readonly phase: 'startup';
-      readonly origin: Point;
-      readonly stroke: readonly Point[];
-    }
-  | { readonly phase: 'expert'; readonly stroke: readonly Point[] }
-  | {
-      readonly phase: 'novice';
-      readonly menu: ModelMenus<M>;
-      readonly menuCenter: Point;
-      readonly active: ModelItems<M> | null;
-      readonly upperStroke: readonly Point[];
-      readonly lowerStroke: readonly Point[];
-      readonly dwellAnchor: Point;
-    };
-
-type NavigationInputs = {
+type MachineInputs = {
   down: { readonly position: Point };
   move: { readonly position: Point };
   up: { readonly position: Point };
@@ -85,17 +51,34 @@ type NavigationInputs = {
   dispose: undefined;
 };
 
-type NavigationStates = {
-  idle: { readonly model: AnyModelNode; readonly options: NavigationOptions };
+type PointerInputName = 'down' | 'move' | 'up' | 'cancel';
+
+/**
+ The boundary input shape `pointer-source.ts` sends: unrelated to the
+ machine's own (shorter) input vocabulary, so that layer never has to know
+ about it. Derived from `MachineInputs`' pointer keys with a `pointer.`
+ prefix, so the two can't drift apart.
+ */
+export type NavigationInput = {
+  [K in PointerInputName]: { readonly type: `pointer.${K}` } & MachineInputs[K];
+}[PointerInputName];
+
+/**
+ Each phase's fields, factored out before `NavigationState` tags on a
+ `phase` discriminant or `MachineStates` adds `model`/`options`: the one
+ place either lists them, so the two can't diverge. Parameterized over the
+ menu/active node types since each needs a different projection:
+ `NavigationState` gets the caller's own `ModelMenus<M>`/`ModelItems<M>`,
+ `MachineStates` the file's erased `AnyModelNode` (see the module comment
+ above).
+ */
+type NavigationPhaseFields<Menu, Active> = {
+  idle: Record<never, never>;
   startup: {
-    readonly model: AnyModelNode;
-    readonly options: NavigationOptions;
     readonly origin: Point;
     readonly stroke: readonly Point[];
   };
   expert: {
-    readonly model: AnyModelNode;
-    readonly options: NavigationOptions;
     readonly stroke: readonly Point[];
     // Same role as novice's own `dwellAnchor`: the last position significant
     // movement was measured from, compared by reference in the residency's
@@ -103,11 +86,9 @@ type NavigationStates = {
     readonly dwellAnchor: Point;
   };
   novice: {
-    readonly model: AnyModelNode;
-    readonly options: NavigationOptions;
-    readonly menu: AnyModelNode;
+    readonly menu: Menu;
     readonly menuCenter: Point;
-    readonly active: AnyModelNode | null;
+    readonly active: Active | null;
     readonly upperStroke: readonly Point[];
     readonly lowerStroke: readonly Point[];
     // The last position significant movement was measured from: distinct
@@ -119,8 +100,26 @@ type NavigationStates = {
 };
 
 /**
+ The boundary view of the machine's current phase: what `layout-view.ts`
+ projects from. Kept as a plain discriminated union, independent of
+ totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
+ */
+export type NavigationState<M extends AnyModelNode> = {
+  [K in keyof NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>]: {
+    readonly phase: K;
+  } & NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>[K];
+}[keyof NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>];
+
+type MachineStates = {
+  [K in keyof NavigationPhaseFields<AnyModelNode, AnyModelNode>]: {
+    readonly model: AnyModelNode;
+    readonly options: NavigationOptions;
+  } & NavigationPhaseFields<AnyModelNode, AnyModelNode>[K];
+};
+
+/**
  The layout announcement's payload: `LayoutView<AnyModelNode>` with the same
- erasure applied to its own `menu.model`, for the same reason `NavigationStates`
+ erasure applied to its own `menu.model`, for the same reason `MachineStates`
  erases `novice.menu`.
  */
 export type NavigationLayoutAnnouncement = {
@@ -139,7 +138,7 @@ export type NavigationFeedbackAnnouncement = {
   readonly canceled: boolean;
 };
 
-type NavigationOutputs = {
+type MachineOutputs = {
   start: MarkingMenuStartEvent;
   move: MarkingMenuMoveEvent<AnyModelNode>;
   open: MarkingMenuOpenEvent<AnyModelNode>;
@@ -158,8 +157,8 @@ type NavigationOutputs = {
  one of `NavigationState`'s variants field-for-field, `model`/`options` aside.
  */
 function toNavigationState(
-  to: keyof NavigationStates,
-  toData: NavigationStates[keyof NavigationStates],
+  to: keyof MachineStates,
+  toData: MachineStates[keyof MachineStates],
 ): NavigationState<AnyModelNode> {
   return { phase: to, ...toData } as unknown as NavigationState<AnyModelNode>;
 }
@@ -292,7 +291,7 @@ function armDwellTimer(
  only it has.
  */
 function terminationContext(
-  fromData: NavigationStates['startup' | 'expert' | 'novice'],
+  fromData: MachineStates['startup' | 'expert' | 'novice'],
   position: Point,
 ): {
   readonly stroke: readonly Point[];
@@ -312,9 +311,9 @@ function terminationContext(
 }
 
 export const navigationMachine = machine({
-  inputs: type<NavigationInputs>(),
-  states: type<NavigationStates>(),
-  outputs: type<NavigationOutputs>(),
+  inputs: type<MachineInputs>(),
+  states: type<MachineStates>(),
+  outputs: type<MachineOutputs>(),
 
   initial: 'idle',
 
