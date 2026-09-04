@@ -76,8 +76,8 @@ export function createRuntime<M extends AnyModelNode>({
   const host = navigationMachine.start({ model, options });
 
   /**
-   An internal failure — an invariant violation surfacing while reacting to
-   the machine's own `layout`/`feedback` outputs, never a consumer's fault —
+   An internal failure (an invariant violation surfacing while reacting to
+   the machine's own `layout`/`feedback` outputs, never a consumer's fault)
    tears the controller down through the same path as `dispose()`, logs it,
    then rethrows so it still escapes the pointer listener or dwell timer
    that triggered it. A teardown failure while unwinding is itself logged

@@ -307,7 +307,7 @@ describe('createRuntime', () => {
 
       runtime.on('start', () => {
         // Re-entrant, queued behind the current batch (same mechanism the
-        // existing reentrancy test above exercises) — but this time,
+        // existing reentrancy test above exercises), but this time,
         // disposal happens before it can ever be observed.
         runtime.send({ type: 'pointer.up', position: [100, 0] });
         runtime.dispose();

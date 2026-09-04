@@ -112,7 +112,7 @@ describe('navigationMachine', () => {
     expect(host.current.name).toBe('startup');
   });
 
-  it('ignores a second down while a gesture is already in progress, in startup, expert and novice alike (the pointer source is the primary guard; the machine covers it defensively too, objective 15)', () => {
+  it('ignores a second down while a gesture is already in progress, in startup, expert and novice alike (the pointer source is the primary guard; the machine covers it defensively too)', () => {
     const host = startHost();
 
     host.send('down', { position: [0, 0] });
@@ -278,12 +278,12 @@ describe('navigationMachine', () => {
       host.send('move', { position: [100, 0] });
       expect(host.current.name).toBe('expert');
       // The startup dwell is gone, replaced by expert's own mid-gesture
-      // dwell (objective 14): still exactly one timer, never zero or two.
+      // dwell: still exactly one timer, never zero or two.
       expect(vi.getTimerCount()).toBe(1);
     });
   });
 
-  describe('expert phase: dwelling into novice or canceling (objective 14)', () => {
+  describe('expert phase: dwelling into novice or canceling', () => {
     it('switches to novice rooted at the menu a mid-expert dwell recognizes', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       const opened: unknown[] = [];

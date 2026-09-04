@@ -377,7 +377,7 @@ export const navigationMachine = machine({
 
     // Mid-expert dwell recognizes the stroke drawn so far as a menu, not a
     // leaf: a non-root match switches to novice rooted there. Anything else
-    // — no match, or the root itself — falls through to the unconditional
+    // (no match, or the root itself) falls through to the unconditional
     // row below, which cancels the expert attempt outright rather than
     // waiting for a release that recognition already knows will fail.
     'expert -dwell> novice'({ fromData: { model, options, stroke }, skip }) {
@@ -503,8 +503,8 @@ export const navigationMachine = machine({
       run: ({ toData, send }) =>
         armDwellTimer(toData.options.noviceDwellingTime, send),
       // Same rationale as novice's own submenu-dwell residency: only a
-      // self-transition that carries `dwellAnchor` forward to a new position
-      // — significant movement — restarts the pending dwell.
+      // self-transition that carries `dwellAnchor` forward to a new position,
+      // i.e. significant movement, restarts the pending dwell.
       restart: ({ fromData, toData }) =>
         fromData.dwellAnchor !== toData.dwellAnchor,
     },

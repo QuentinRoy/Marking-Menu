@@ -1109,7 +1109,7 @@ describe('createController', () => {
     });
   });
 
-  describe('mid-expert dwell falling back to novice, or canceling (objective 14)', () => {
+  describe('mid-expert dwell falling back to novice, or canceling', () => {
     const submenuItems = [
       {
         id: 'right',
