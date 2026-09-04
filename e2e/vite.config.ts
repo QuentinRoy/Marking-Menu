@@ -1,10 +1,10 @@
 import path from 'node:path';
 import { defineConfig } from 'vite';
 
-// Kept as bare specifiers in the built output and resolved by the fixture's
+// Kept as a bare specifier in the built output and resolved by the fixture's
 // import map (see `e2e/fixture/index.html`) instead of being bundled, so the
 // tests exercise the exact unchanged `dist/index.js`.
-const importMapDependencies = new Set(['marking-menu', 'rxjs']);
+const importMapDependencies = new Set(['marking-menu']);
 
 export default defineConfig({
   base: './',

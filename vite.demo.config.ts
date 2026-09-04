@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { defineConfig } from 'vite';
 
-const importMapDependencies = new Set(['marking-menu', 'rxjs']);
+const importMapDependencies = new Set(['marking-menu']);
 
 export default defineConfig(({ command }) => ({
   base: './',

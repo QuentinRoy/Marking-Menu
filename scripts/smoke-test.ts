@@ -11,7 +11,7 @@
  */
 /* eslint-disable unicorn/no-process-exit -- this is a CLI script. */
 import { spawnSync } from 'node:child_process';
-import { mkdir, rm, symlink } from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -57,13 +57,6 @@ const packageDir = path.join(modules, 'marking-menu');
 await rm(modules, { recursive: true, force: true });
 await mkdir(packageDir, { recursive: true });
 runOrExit('tar', ['-xzf', tarball, '-C', packageDir, '--strip-components=1']);
-
-// `rxjs` is a peer dependency, so a real consumer resolves its own copy.
-await symlink(
-  path.join(root, 'node_modules', 'rxjs'),
-  path.join(modules, 'rxjs'),
-  'dir',
-);
 
 // Check every resolution style rather than stopping at the first failure: a
 // declaration bug can be invisible to one and fatal to the other, and seeing

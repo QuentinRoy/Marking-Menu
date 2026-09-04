@@ -54,7 +54,6 @@ export default defineConfig({
     },
     minify: false,
     rolldownOptions: {
-      external: ['rxjs'],
       output: { banner },
     },
     sourcemap: true,

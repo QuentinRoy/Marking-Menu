@@ -25,7 +25,7 @@
     "demo:dev": "vite --config vite.demo.config.ts",
     "demo:preview": "vite preview --config vite.demo.config.ts",
     "e2e": "yarn build && yarn e2e:build && yarn e2e:test",
-    "e2e:build": "vite build --config e2e/vite.config.ts && vite build --config e2e/vite.rxjs.config.ts",
+    "e2e:build": "vite build --config e2e/vite.config.ts",
     "e2e:test": "playwright test --config e2e/playwright.config.ts",
     "prepare": "yarn build",
     "changeset": "changeset",
@@ -64,15 +64,10 @@
     "jsdom": "^30.0.1",
     "prettier": "^3.9.6",
     "publint": "^0.3.24",
-    "rxjs": "^7.8.2",
-    "rxjs-marbles": "^7.0.1",
     "totorobot": "^3.0.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.2.2",
     "vite-plugin-dts": "^5.1.0",
     "vitest": "^5.0.0"
-  },
-  "peerDependencies": {
-    "rxjs": "^7.2.0"
   }
 }
