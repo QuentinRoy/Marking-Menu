@@ -2,6 +2,7 @@ import {
   fakeTimers,
   queryCanvasContext,
   stubbedCanvasContexts,
+  type MockContext,
 } from '../__fixtures__/canvas.js';
 import { createModel } from '../model.js';
 import type { Point } from '../utils.js';
@@ -13,6 +14,33 @@ const model = createModel({
     { id: 'b', label: 'B' },
   ],
 });
+
+// A distinct model reference, which is all it takes for the renderer to
+// recreate the menu element rather than patch it.
+const otherModel = createModel({
+  items: [
+    { id: 'a', label: 'A' },
+    { id: 'b', label: 'B' },
+  ],
+});
+
+// The two stroke layers are told apart by their line width, the one drawing
+// property `drawPoint` leaves alone.
+const upperStrokeWidth = 7;
+const lowerStrokeWidth = 3;
+
+/**
+Name every child of `parent` by the layer it belongs to, in paint order.
+*/
+const layerOrder = (parent: HTMLElement): string[] =>
+  [...parent.children].map((child) => {
+    if (!(child instanceof HTMLCanvasElement)) {
+      return 'menu';
+    }
+
+    const context = (child.getContext as unknown as () => MockContext)();
+    return context.lineWidth === upperStrokeWidth ? 'upper' : 'lower';
+  });
 
 describe('createRenderer', () => {
   it('skips the redraw when the upper stroke is reference-equal to the previous frame', () => {
@@ -222,6 +250,81 @@ describe('createRenderer', () => {
     const selected = queryCanvasContext(parent);
     expect(selected.strokeStyle).toBe('#00ff00');
     expect(selected.lineWidth).toBe(5);
+
+    renderer.dispose();
+  });
+
+  it('paints the lower stroke behind the open menu and the upper stroke in front of it', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+
+    const parent = document.createElement('div');
+    const renderer = createRenderer<typeof model>({
+      parent,
+      strokeWidth: upperStrokeWidth,
+      lowerStrokeWidth,
+    });
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model, center: [0, 0], activeKey: null },
+      upperStroke: [
+        [0, 0],
+        [10, 0],
+      ],
+      lowerStroke: [
+        [0, 0],
+        [5, 5],
+      ],
+    });
+    vi.advanceTimersToNextFrame();
+
+    expect(layerOrder(parent)).toEqual(['lower', 'menu', 'upper']);
+
+    renderer.dispose();
+  });
+
+  it('restores the order when a submenu replaces the menu element', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+
+    const parent = document.createElement('div');
+    const renderer = createRenderer<typeof model>({
+      parent,
+      strokeWidth: upperStrokeWidth,
+      lowerStrokeWidth,
+    });
+    const upperStroke: Point[] = [
+      [0, 0],
+      [10, 0],
+    ];
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model, center: [0, 0], activeKey: null },
+      upperStroke,
+      lowerStroke: [
+        [0, 0],
+        [5, 5],
+      ],
+    });
+    vi.advanceTimersToNextFrame();
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model: otherModel, center: [10, 0], activeKey: null },
+      // Reference-equal, so the layer skips its redraw: the upper stroke
+      // must still be moved back in front of the recreated menu.
+      upperStroke,
+      lowerStroke: [
+        [0, 0],
+        [5, 5],
+        [10, 0],
+      ],
+    });
+    vi.advanceTimersToNextFrame();
+
+    expect(layerOrder(parent)).toEqual(['lower', 'menu', 'upper']);
 
     renderer.dispose();
   });

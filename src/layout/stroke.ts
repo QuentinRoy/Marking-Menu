@@ -39,6 +39,10 @@ export type StrokeCanvasOptions = {
  */
 export type StrokeCanvas = {
   /**
+  The canvas element, so callers can place it among its siblings.
+  */
+  element: HTMLCanvasElement;
+  /**
   Clear the canvas.
   */
   clear: () => void;
@@ -158,5 +162,5 @@ export function createStrokeCanvas({
     canvas.remove();
   };
 
-  return { clear, drawStroke, drawPoint, remove };
+  return { element: canvas, clear, drawStroke, drawPoint, remove };
 }
