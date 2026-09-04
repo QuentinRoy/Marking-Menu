@@ -56,21 +56,21 @@ type PointerInputName = 'down' | 'move' | 'up' | 'cancel';
 /**
  The boundary input shape `pointer-source.ts` sends: unrelated to the
  machine's own (shorter) input vocabulary, so that layer never has to know
- about it. Derived from `MachineInputs`' pointer-ish keys, tagged with a
- `pointer.` prefix, rather than restated: the two can never drift apart.
+ about it. Derived from `MachineInputs`' pointer keys with a `pointer.`
+ prefix, so the two can't drift apart.
  */
 export type NavigationInput = {
   [K in PointerInputName]: { readonly type: `pointer.${K}` } & MachineInputs[K];
 }[PointerInputName];
 
 /**
- The fields each machine phase itself carries, before `NavigationState` tags
- a `phase` discriminant onto them or `MachineStates` adds its own `model`/
- `options`: the one place either lists a phase's fields, so the two can never
- list them differently. Parameterized over the menu/active node types since
- the two need different projections of them: `NavigationState` gets its
- caller's own `ModelMenus<M>`/`ModelItems<M>`, `MachineStates` the file's
- erased `AnyModelNode` (see the module comment above).
+ Each phase's fields, factored out before `NavigationState` tags on a
+ `phase` discriminant or `MachineStates` adds `model`/`options`: the one
+ place either lists them, so the two can't diverge. Parameterized over the
+ menu/active node types since each needs a different projection:
+ `NavigationState` gets the caller's own `ModelMenus<M>`/`ModelItems<M>`,
+ `MachineStates` the file's erased `AnyModelNode` (see the module comment
+ above).
  */
 type NavigationPhaseFields<Menu, Active> = {
   idle: Record<never, never>;
