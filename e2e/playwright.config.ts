@@ -36,11 +36,14 @@ export default defineConfig({
   },
   projects: [
     {
-      // `multiple-controllers.spec.ts` drives the library directly (no
-      // pointer input), so one browser is enough coverage for it; it rides
-      // along with this project rather than getting its own.
+      // `multiple-controllers.spec.ts`, `disposal.spec.ts` and
+      // `dispatch-ordering.spec.ts` drive the library directly against
+      // their own detached surfaces, so one browser is enough coverage for
+      // them; they ride along with this project rather than getting their
+      // own.
       name: 'chromium',
-      testMatch: /(?:mouse|multiple-controllers)\.spec\.ts/v,
+      testMatch:
+        /(?:mouse|multiple-controllers|disposal|dispatch-ordering)\.spec\.ts/v,
       use: { ...devices['Desktop Chrome'], viewport },
     },
     {

@@ -28,16 +28,16 @@ test('multiple controllers on one parent: touch-action stays claimed until the l
     ];
     const results: TouchActionStyle[] = [];
 
-    const first = createMarkingMenu({ items, parent: element }).subscribe();
+    const first = createMarkingMenu({ items, parent: element });
     results.push(readStyle());
 
-    const second = createMarkingMenu({ items, parent: element }).subscribe();
+    const second = createMarkingMenu({ items, parent: element });
     results.push(readStyle());
 
-    first.unsubscribe();
+    first.dispose();
     results.push(readStyle());
 
-    second.unsubscribe();
+    second.dispose();
     results.push(readStyle());
 
     return results;

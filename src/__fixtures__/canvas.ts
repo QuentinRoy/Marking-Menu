@@ -24,6 +24,12 @@ export type MockContext = {
   mock: {
     methodCalls: Array<{ method: string | symbol; args: readonly unknown[] }>;
   };
+  // Drawing state a 2D context normally exposes as properties, not method
+  // calls: readable directly after a draw, rather than recovered from
+  // `methodCalls`.
+  strokeStyle?: string;
+  fillStyle?: string;
+  lineWidth?: number;
 };
 
 const createMockContext = (): MockContext => {

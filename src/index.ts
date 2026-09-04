@@ -12,15 +12,15 @@ export {
   MarkingMenuStartEvent,
   type ReadonlyPoint,
 } from './events.js';
+export type { MarkingMenuController } from './engine/controller.js';
 export {
   createMarkingMenu,
   type MarkingMenuConfig,
   type MarkingMenuLogger,
-  type MarkingMenuNotification,
 } from './marking-menu.js';
 // `createModel` is deliberately not exported: callers never hold a model
-// directly (see `MarkingMenuNotification`'s `menu`/`active`/`selection`
-// fields), only its types.
+// directly (see the events' `menu`/`active`/`selection` fields in
+// `events.ts`), only its types.
 export type { MarkingMenuModel } from './model.js';
 export type {
   AnyModelNode,

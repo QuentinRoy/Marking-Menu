@@ -1,5 +1,4 @@
 import { createMarkingMenu, type ReadonlyPoint } from 'marking-menu';
-import { shimMarkingMenuEvents } from './event-shim.js';
 
 // The demo's eight-direction topology (see `demo/script.js`), with stable
 // ids added: tests key off `id`, not display order or label text.
@@ -29,12 +28,7 @@ if (!(surface instanceof HTMLElement) || !(log instanceof HTMLElement)) {
   throw new TypeError('Fixture markup is missing #surface or #log.');
 }
 
-const notifications$ = createMarkingMenu({
-  items,
-  notifySteps: true,
-  parent: surface,
-});
-const mm = shimMarkingMenuEvents(notifications$);
+const mm = createMarkingMenu({ items, parent: surface });
 
 // A node carries an `id` only when the caller gave it one (root has none);
 // tests need that id, not the whole node, so pull it out defensively.

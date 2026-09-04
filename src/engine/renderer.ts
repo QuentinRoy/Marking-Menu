@@ -1,7 +1,11 @@
 import { createGestureFeedback } from '../layout/gesture-feedback.js';
 import { createMenu, type Menu, type MenuLayoutModel } from '../layout/menu.js';
 import { rafThrottle } from '../layout/raf-throttle.js';
-import { createStrokeCanvas, type StrokeCanvas } from '../layout/stroke.js';
+import {
+  createStrokeCanvas,
+  type StrokeCanvas,
+  type StrokeCanvasOptions,
+} from '../layout/stroke.js';
 import type { AnyModelNode, ModelMenus } from '../types.js';
 import { toLocalPoint, type Point } from '../utils.js';
 import type { LayoutView } from './layout-view.js';
@@ -32,28 +36,43 @@ type MenuHandle<M extends AnyModelNode> = {
  so an unchanged stroke array skips the redraw. `upperStroke` and
  `lowerStroke` are two independent instances of the exact same behavior.
  */
-function createStrokeLayer({ parent }: { parent: HTMLElement }): {
-  sync: (stroke: readonly Point[] | null) => void;
+function createStrokeLayer({
+  parent,
+  canvasOptions,
+}: {
+  parent: HTMLElement;
+  canvasOptions?: Omit<StrokeCanvasOptions, 'parent'>;
+}): {
+  sync: (
+    stroke: readonly Point[] | null,
+    options?: { drawStartPoint?: boolean },
+  ) => void;
   dispose: () => void;
 } {
   let canvas: StrokeCanvas | null = null;
   let previousStroke: readonly Point[] | null = null;
 
-  const draw = rafThrottle((stroke: readonly Point[]) => {
-    canvas?.clear();
-    canvas?.drawStroke(stroke);
-  });
+  const draw = rafThrottle(
+    (stroke: readonly Point[], shouldDrawStartPoint: boolean) => {
+      canvas?.clear();
+      canvas?.drawStroke(stroke);
+      const [start] = stroke;
+      if (shouldDrawStartPoint && start !== undefined) {
+        canvas?.drawPoint(start);
+      }
+    },
+  );
 
   return {
-    sync(stroke) {
+    sync(stroke, { drawStartPoint: shouldDrawStartPoint = false } = {}) {
       if (stroke === null) {
         canvas?.remove();
         canvas = null;
         previousStroke = null;
       } else if (stroke !== previousStroke) {
         previousStroke = stroke;
-        canvas ??= createStrokeCanvas({ parent });
-        draw(stroke);
+        canvas ??= createStrokeCanvas({ parent, ...canvasOptions });
+        draw(stroke, shouldDrawStartPoint);
       }
     },
     dispose() {
@@ -64,26 +83,108 @@ function createStrokeLayer({ parent }: { parent: HTMLElement }): {
   };
 }
 
+export type RendererOptions = {
+  readonly parent: HTMLElement;
+  /**
+  The color of the upper (current gesture) stroke.
+  */
+  readonly strokeColor?: string | undefined;
+  /**
+  The width of the upper stroke.
+  */
+  readonly strokeWidth?: number | undefined;
+  /**
+   The radius of the point marking the start of the upper stroke, drawn while
+   novice mode is open.
+   */
+  readonly strokeStartPointRadius?: number | undefined;
+  /**
+   The color of the lower stroke, tracking movement accumulated before the
+   currently open menu.
+   */
+  readonly lowerStrokeColor?: string | undefined;
+  /**
+  The width of the lower stroke. Defaults to `strokeWidth`.
+  */
+  readonly lowerStrokeWidth?: number | undefined;
+  /**
+  The radius of the lower stroke's start point. Defaults to `lowerStrokeWidth`.
+  */
+  readonly lowerStrokeStartPointRadius?: number | undefined;
+  /**
+  The duration a completed-gesture feedback trace stays visible, in ms.
+  */
+  readonly gestureFeedbackDuration?: number | undefined;
+  /**
+  The width of a gesture-feedback stroke. Defaults to `strokeWidth`.
+  */
+  readonly gestureFeedbackStrokeWidth?: number | undefined;
+  /**
+  The color of a selected gesture's feedback stroke. Defaults to `strokeColor`.
+  */
+  readonly gestureFeedbackStrokeColor?: string | undefined;
+  /**
+  The color of a canceled gesture's feedback stroke.
+  */
+  readonly gestureFeedbackCanceledStrokeColor?: string | undefined;
+};
+
 export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   parent,
-}: {
-  parent: HTMLElement;
-}): LayoutRenderer<M> {
+  strokeColor = '#000',
+  strokeWidth = 4,
+  strokeStartPointRadius = 8,
+  lowerStrokeColor = '#777',
+  lowerStrokeWidth = strokeWidth,
+  lowerStrokeStartPointRadius = lowerStrokeWidth,
+  gestureFeedbackDuration = 1000,
+  gestureFeedbackStrokeWidth = strokeWidth,
+  gestureFeedbackStrokeColor = strokeColor,
+  gestureFeedbackCanceledStrokeColor = '#DE6C52',
+}: RendererOptions): LayoutRenderer<M> {
   let menuHandle: MenuHandle<M> | null = null;
   // Reference-equality cache: an unchanged active key skips the DOM scan
   // `Menu.setActive` performs.
   let previousActiveKey: string | null = null;
-  const upperStroke = createStrokeLayer({ parent });
-  const lowerStroke = createStrokeLayer({ parent });
+  const upperStroke = createStrokeLayer({
+    parent,
+    canvasOptions: {
+      lineColor: strokeColor,
+      lineWidth: strokeWidth,
+      pointRadius: strokeStartPointRadius,
+    },
+  });
+  const lowerStroke = createStrokeLayer({
+    parent,
+    canvasOptions: {
+      lineColor: lowerStrokeColor,
+      lineWidth: lowerStrokeWidth,
+      pointRadius: lowerStrokeStartPointRadius,
+    },
+  });
   // The parent's own inline cursor, read before the renderer writes one, and
   // restored rather than cleared whenever the view asks for `default`: what
   // the renderer did not set, it does not get to throw away.
   const ownCursor = parent.style.cursor;
-  const gestureFeedback = createGestureFeedback({ parent, duration: 1000 });
+  const gestureFeedback = createGestureFeedback({
+    parent,
+    duration: gestureFeedbackDuration,
+    strokeOptions: {
+      lineColor: gestureFeedbackStrokeColor,
+      lineWidth: gestureFeedbackStrokeWidth,
+    },
+    canceledStrokeOptions: {
+      lineColor: gestureFeedbackCanceledStrokeColor,
+    },
+  });
 
   return {
     render(view) {
       parent.style.cursor = view.cursor === 'default' ? ownCursor : view.cursor;
+      // `projectLayout` sets `cursor: 'none'` exactly in novice mode: the
+      // only phase where the upper stroke's origin point (the gesture's
+      // start) is drawn alongside the line.
+      const isNoviceMode = view.cursor === 'none';
 
       if (view.menu === null) {
         menuHandle?.menu.remove();
@@ -119,7 +220,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
         }
       }
 
-      upperStroke.sync(view.upperStroke);
+      upperStroke.sync(view.upperStroke, { drawStartPoint: isNoviceMode });
       lowerStroke.sync(view.lowerStroke);
     },
     showFeedback(effect) {
