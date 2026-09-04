@@ -311,9 +311,10 @@ function terminationContext(
 }
 
 /**
- Shared tail of the `up` and `cancel` termination actions: announce
- `feedback`, then `select` or `cancel` depending on whether a selection was
- found. Cancel's own call always passes a null `selection`, since it never
+ Shared tail of every action that ends a gesture — `up`, `cancel`, and the
+ expert dwell that finds nothing to switch to: announce `feedback`, then
+ `select` or `cancel` depending on whether a selection was found. The
+ latter two callers always pass a null `selection`, since neither ever
  attempts one.
  */
 function emitTermination(
