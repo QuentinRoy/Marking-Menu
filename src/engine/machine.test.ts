@@ -355,7 +355,7 @@ describe('navigationMachine', () => {
       host.send('dwell');
 
       const data = host.current.name === 'novice' ? host.current.data : null;
-      expect(data?.upperStroke).toEqual([[100, 0]]);
+      expect(data?.lastPosition).toEqual([100, 0]);
       expect(data?.lowerStroke).toEqual([
         [0, 0],
         [100, 0],
@@ -642,7 +642,7 @@ describe('navigationMachine', () => {
       expect(event.position).toEqual([100, 0]);
     });
 
-    it('accumulates the prior stroke into the lower stroke and restarts the upper stroke from the new centre', () => {
+    it('accumulates the prior stroke into the lower stroke and restarts from the new center', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
 
       openNovice(host);
@@ -650,7 +650,7 @@ describe('navigationMachine', () => {
       host.send('dwell');
 
       const data = host.current.name === 'novice' ? host.current.data : null;
-      expect(data?.upperStroke).toEqual([[100, 0]]);
+      expect(data?.lastPosition).toEqual([100, 0]);
       expect(data?.lowerStroke).toEqual([
         [0, 0],
         [0, 0],
@@ -814,7 +814,12 @@ describe('navigationMachine', () => {
         [0, 0],
         [100, 0],
       ]);
-      expect(layouts.at(-1)?.upperStroke).toEqual([[100, 0]]);
+      // The fresh submenu has had no move yet, so its segment is still a
+      // single point drawn twice.
+      expect(layouts.at(-1)?.upperStroke).toEqual([
+        [100, 0],
+        [100, 0],
+      ]);
     });
 
     it('announces a completed novice gesture as one straight segment per menu level', () => {
