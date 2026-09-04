@@ -310,6 +310,41 @@ function terminationContext(
   return { stroke: [...fromData.stroke, position], menu: null, active: null };
 }
 
+/**
+ Shared tail of every action that ends a gesture — `up`, `cancel`, and the
+ expert dwell that finds nothing to switch to: announce `feedback`, then
+ `select` or `cancel` depending on whether a selection was found. The
+ latter two callers always pass a null `selection`, since neither ever
+ attempts one.
+ */
+function emitTermination(
+  emit: ((name: 'feedback', data: NavigationFeedbackAnnouncement) => void) &
+    ((name: 'cancel', data: MarkingMenuCancelEvent<AnyModelNode>) => void) &
+    ((name: 'select', data: MarkingMenuSelectEvent<AnyModelNode>) => void),
+  {
+    from,
+    position,
+    stroke,
+    menu,
+    active,
+    selection,
+  }: {
+    readonly from: MarkingMenuMode;
+    readonly position: Point;
+    readonly stroke: readonly Point[];
+    readonly menu: AnyModelNode | null;
+    readonly active: AnyModelNode | null;
+    readonly selection: AnyModelNode | null;
+  },
+): void {
+  emit('feedback', { stroke, canceled: selection === null });
+  if (selection === null) {
+    emit('cancel', cancelEvent({ mode: from, position, active, menu }));
+  } else {
+    emit('select', selectEvent({ mode: from, position, selection, menu }));
+  }
+}
+
 export const navigationMachine = machine({
   inputs: type<MachineInputs>(),
   states: type<MachineStates>(),
@@ -571,11 +606,14 @@ export const navigationMachine = machine({
     'expert -dwell> idle'({ fromData, emit }) {
       const { stroke } = fromData;
       const position = stroke.at(-1) as Point;
-      emit('feedback', { stroke, canceled: true });
-      emit(
-        'cancel',
-        cancelEvent({ mode: 'expert', position, active: null, menu: null }),
-      );
+      emitTermination(emit, {
+        from: 'expert',
+        position,
+        stroke,
+        menu: null,
+        active: null,
+        selection: null,
+      });
     },
 
     // Same shape as `'startup -dwell> novice'`'s own `open`, one recursion
@@ -650,13 +688,14 @@ export const navigationMachine = machine({
         selection = recognizeMarkingMenuStroke(stroke, fromData.model);
       }
 
-      emit('feedback', { stroke, canceled: selection === null });
-
-      if (selection === null) {
-        emit('cancel', cancelEvent({ mode: from, position, active, menu }));
-      } else {
-        emit('select', selectEvent({ mode: from, position, selection, menu }));
-      }
+      emitTermination(emit, {
+        from,
+        position,
+        stroke,
+        menu,
+        active,
+        selection,
+      });
     },
 
     // A pointer cancelled outright never selects, regardless of what was
@@ -672,8 +711,14 @@ export const navigationMachine = machine({
       const { position } = inputData;
       const { stroke, menu, active } = terminationContext(fromData, position);
 
-      emit('feedback', { stroke, canceled: true });
-      emit('cancel', cancelEvent({ mode: from, position, active, menu }));
+      emitTermination(emit, {
+        from,
+        position,
+        stroke,
+        menu,
+        active,
+        selection: null,
+      });
     },
   },
 });
