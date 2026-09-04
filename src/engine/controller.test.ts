@@ -181,12 +181,17 @@ describe('createController', () => {
 
     const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
     controller.on('select', selected);
+    // Disposal mid-gesture is silent: no final `cancel`, or any other public
+    // event, is ever dispatched for it.
+    const cancelled = voidMock<[MarkingMenuCancelEvent<AnyModelNode>]>();
+    controller.on('cancel', cancelled);
 
     controller.dispose();
 
     expect(parent.querySelectorAll('canvas')).toHaveLength(0);
     expect(parent.style.getPropertyValue('touch-action')).toBe('');
     expect(parent.style.cursor).toBe('');
+    expect(cancelled).not.toHaveBeenCalled();
 
     // Disposal happened mid-gesture, so the capture the gesture took is the
     // controller's to give back: nothing else will ever release it.
@@ -198,10 +203,88 @@ describe('createController', () => {
     // Further pointer input is inert: the DOM listeners are gone.
     parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
     expect(selected).not.toHaveBeenCalled();
+    expect(cancelled).not.toHaveBeenCalled();
 
     expect(() => {
       controller.dispose();
     }).not.toThrow();
+  });
+
+  it('is also disposable through [Symbol.dispose](), terminal and idempotent the same way as dispose()', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    const controller = createController({ items, parent });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    expect(parent.style.getPropertyValue('touch-action')).toBe('none');
+
+    controller[Symbol.dispose]();
+
+    expect(parent.style.getPropertyValue('touch-action')).toBe('');
+    expect(parent.querySelectorAll('canvas')).toHaveLength(0);
+
+    // Idempotent, and interchangeable with dispose(): whichever runs first
+    // wins, the other is a no-op.
+    expect(() => {
+      controller.dispose();
+      controller[Symbol.dispose]();
+    }).not.toThrow();
+  });
+
+  it('disposes via `using`, releasing everything at the end of the block', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+
+    {
+      using _controller = createController({ items, parent });
+      parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+      expect(parent.style.getPropertyValue('touch-action')).toBe('none');
+    }
+
+    expect(parent.style.getPropertyValue('touch-action')).toBe('');
+  });
+
+  it('does not restore touch-action while a second controller on the same parent still holds its own claim', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    const first = createController({ items, parent });
+    const second = createController({ items, parent });
+
+    expect(parent.style.getPropertyValue('touch-action')).toBe('none');
+
+    first.dispose();
+    expect(parent.style.getPropertyValue('touch-action')).toBe('none');
+
+    second.dispose();
+    expect(parent.style.getPropertyValue('touch-action')).toBe('');
+  });
+
+  it('does not let a throwing consumer listener affect the controller: the gesture proceeds and remaining listeners still run', () => {
+    using _canvases = stubbedCanvasContexts();
+    const parent = createParent();
+    const controller = createController({ items, parent });
+
+    controller.on('start', () => {
+      throw new Error('boom');
+    });
+    const alsoNotified = voidMock<[MarkingMenuStartEvent]>();
+    controller.on('start', alsoNotified);
+
+    expect(() => {
+      parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    }).not.toThrow();
+    expect(alsoNotified).toHaveBeenCalledTimes(1);
+
+    let selectedId: string | undefined;
+    controller.on('select', (event) => {
+      selectedId = event.selection.id;
+    });
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
+
+    expect(selectedId).toBe('right');
+
+    controller.dispose();
   });
 
   it('freezes position on start and select, and dispatches select after the DOM is fully rendered', () => {
@@ -1021,6 +1104,101 @@ describe('createController', () => {
       expect(cancelEvent?.mode).toBe('novice');
       expect(cancelEvent?.active).toBeNull();
       expect(cancelEvent?.menu).toBe(submenu);
+
+      controller.dispose();
+    });
+  });
+
+  describe('mid-expert dwell falling back to novice, or canceling (objective 14)', () => {
+    const submenuItems = [
+      {
+        id: 'right',
+        label: 'Right',
+        items: [
+          { id: 'subRight', label: 'Sub Right' },
+          { id: 'subDown', label: 'Sub Down' },
+          { id: 'subLeft', label: 'Sub Left' },
+          { id: 'subUp', label: 'Sub Up' },
+        ],
+      },
+      { id: 'down', label: 'Down' },
+      { id: 'left', label: 'Left' },
+      { id: 'up', label: 'Up' },
+    ] as const;
+
+    it('switches to novice, rooted at the menu the dwell recognizes, once an expert gesture pauses on a submenu', () => {
+      using _canvases = stubbedCanvasContexts();
+      using _timers = fakeTimers();
+      const parent = createParent();
+      const controller = createController({
+        items: submenuItems,
+        parent,
+        noviceDwellingTime: 100,
+      });
+
+      const opened: Array<MarkingMenuOpenEvent<AnyModelNode>> = [];
+      controller.on('open', (event) => {
+        opened.push(event);
+      });
+
+      parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+      // Crosses movementsThreshold straight onto "right": expert mode.
+      parent.dispatchEvent(
+        pointer('pointermove', { clientX: 100, clientY: 0 }),
+      );
+      vi.advanceTimersByTime(100); // The mid-expert dwell fires.
+
+      expect(opened).toHaveLength(1);
+      expect(opened[0]?.mode).toBe('novice');
+      expect(opened[0]?.menuCenter).toEqual([100, 0]);
+      expect(parent.querySelector('.marking-menu')).not.toBeNull();
+
+      // Selection now works at this depth, exactly as if novice had opened
+      // the submenu by dwelling on it directly.
+      let selectedId: string | undefined;
+      controller.on('select', (event) => {
+        selectedId = event.selection.id;
+      });
+      parent.dispatchEvent(
+        pointer('pointermove', { clientX: 200, clientY: 0 }),
+      );
+      parent.dispatchEvent(pointer('pointerup', { clientX: 200, clientY: 0 }));
+      expect(selectedId).toBe('subRight');
+
+      controller.dispose();
+    });
+
+    it('cancels the expert attempt, without ever selecting, when the dwell recognizes no menu but the root', () => {
+      using _canvases = stubbedCanvasContexts();
+      using _timers = fakeTimers();
+      const parent = createParent();
+      const controller = createController({
+        items, // The plain, leaf-only fixture: every dwell recognizes the root.
+        parent,
+        noviceDwellingTime: 100,
+      });
+
+      const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+      controller.on('select', selected);
+      const opened = voidMock<[MarkingMenuOpenEvent<AnyModelNode>]>();
+      controller.on('open', opened);
+      let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+      controller.on('cancel', (event) => {
+        cancelEvent = event;
+      });
+
+      parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+      parent.dispatchEvent(
+        pointer('pointermove', { clientX: 100, clientY: 0 }),
+      );
+      vi.advanceTimersByTime(100); // The mid-expert dwell fires.
+
+      expect(opened).not.toHaveBeenCalled();
+      expect(selected).not.toHaveBeenCalled();
+      expect(cancelEvent?.mode).toBe('expert');
+      expect(cancelEvent?.active).toBeNull();
+      expect(cancelEvent?.menu).toBeNull();
+      expect(parent.querySelector('.marking-menu')).toBeNull();
 
       controller.dispose();
     });

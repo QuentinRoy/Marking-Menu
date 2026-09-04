@@ -2,6 +2,7 @@ import type {
   MarkingMenuEventEmitter,
   MarkingMenuEventMap,
 } from '../events.js';
+import type { MarkingMenuLogger } from '../marking-menu.js';
 import {
   createModel,
   type MarkingMenuModel,
@@ -9,6 +10,7 @@ import {
 } from '../model.js';
 import type { TypedEventListener } from '../typed-event-emitter.js';
 import type { AnyModelNode, MarkingMenuInput } from '../types.js';
+import { noOp } from '../utils.js';
 import { createPointerSource, type PointerSource } from './pointer-source.js';
 import { createRenderer } from './renderer.js';
 import { createRuntime, type NavigationRuntime } from './runtime.js';
@@ -20,17 +22,27 @@ export type EngineConfig = MarkingMenuInput & {
   readonly minSelectionDist?: number;
   readonly minMenuSelectionDist?: number;
   readonly submenuOpeningDelay?: number;
+  /**
+  Override the default logger used to report internal failures.
+  */
+  readonly log?: Partial<MarkingMenuLogger>;
 };
 
-/*
- No `Disposable`/`[Symbol.dispose]`, deliberately. `using` is syntax, so a
- consumer on a runtime without it cannot even parse the call site, and support
- sits around 70%. `dispose()` is the whole disposal contract; a `using`-capable
- consumer can still wrap this themselves.
+const defaultLogger: MarkingMenuLogger = {
+  error: console?.error?.bind(console) ?? noOp,
+};
+
+/**
+ `dispose()` is the whole disposal contract, both terminal and idempotent;
+ `[Symbol.dispose]()` delegates to it so `using controller = createController(
+ config)` works wherever Explicit Resource Management is supported. Neither
+ patches `Symbol` nor ships a polyfill: a consumer without native support
+ cannot even parse a `using` call site and owns any transpilation it needs.
  */
 export type MarkingMenuController<M extends AnyModelNode> =
   MarkingMenuEventEmitter<M> & {
     dispose(): void;
+    [Symbol.dispose](): void;
   };
 
 /**
@@ -82,6 +94,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
         submenuOpeningDelay: config.submenuOpeningDelay ?? 100,
       },
       renderer,
+      log: { ...defaultLogger, ...config.log },
     });
     this.#pointerSource = createPointerSource({
       parent: config.parent,
@@ -114,6 +127,10 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     // touch-action claim.
     this.#runtime.dispose();
     this.#pointerSource.dispose();
+  }
+
+  [Symbol.dispose](): void {
+    this.dispose();
   }
 }
 

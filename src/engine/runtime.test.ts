@@ -210,4 +210,116 @@ describe('createRuntime', () => {
       expect.objectContaining({ canceled: true }),
     );
   });
+
+  describe('internal failure', () => {
+    it('tears down, logs, then rethrows, when reacting to the machine own layout output fails', () => {
+      const renderer = createFakeRenderer();
+      const failure = new Error('boom');
+      renderer.render.mockImplementationOnce(() => {
+        throw failure;
+      });
+      const log = { error: vi.fn<(error: Error) => void>() };
+      const runtime = createRuntime({ model, options, renderer, log });
+
+      expect(() => {
+        runtime.send({ type: 'pointer.down', position: [0, 0] });
+      }).toThrow(failure);
+
+      // Torn down through the same path as `dispose()`.
+      expect(renderer.dispose).toHaveBeenCalledTimes(1);
+      // Logged before the throw reaches the caller above.
+      expect(log.error).toHaveBeenCalledExactlyOnceWith(failure);
+      // Unrecoverable: further input throws the disposed-controller error,
+      // not a repeat of the original failure.
+      expect(() => {
+        runtime.send({ type: 'pointer.move', position: [1, 0] });
+      }).toThrow('disposed');
+    });
+
+    it('tears down, logs, then rethrows, when reacting to the machine own feedback output fails', () => {
+      const renderer = createFakeRenderer();
+      const failure = new Error('boom');
+      renderer.showFeedback.mockImplementationOnce(() => {
+        throw failure;
+      });
+      const log = { error: vi.fn<(error: Error) => void>() };
+      const runtime = createRuntime({ model, options, renderer, log });
+
+      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      expect(() => {
+        runtime.send({ type: 'pointer.up', position: [0, 0] });
+      }).toThrow(failure);
+
+      expect(renderer.dispose).toHaveBeenCalledTimes(1);
+      expect(log.error).toHaveBeenCalledExactlyOnceWith(failure);
+    });
+
+    it('logs and suppresses a teardown failure while unwinding a primary failure, and rethrows only the original', () => {
+      const renderer = createFakeRenderer();
+      const primaryFailure = new Error('primary');
+      const teardownFailure = new Error('teardown');
+      renderer.render.mockImplementationOnce(() => {
+        throw primaryFailure;
+      });
+      renderer.dispose.mockImplementationOnce(() => {
+        throw teardownFailure;
+      });
+      const log = { error: vi.fn<(error: Error) => void>() };
+      const runtime = createRuntime({ model, options, renderer, log });
+
+      expect(() => {
+        runtime.send({ type: 'pointer.down', position: [0, 0] });
+      }).toThrow(primaryFailure);
+
+      expect(log.error).toHaveBeenNthCalledWith(1, teardownFailure);
+      expect(log.error).toHaveBeenNthCalledWith(2, primaryFailure);
+      expect(log.error).toHaveBeenCalledTimes(2);
+    });
+
+    it('normalizes a non-Error throw before logging and rethrowing it', () => {
+      const renderer = createFakeRenderer();
+      renderer.render.mockImplementationOnce(() => {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- simulating a non-Error throw on purpose
+        throw 'boom';
+      });
+      const log = { error: vi.fn<(error: Error) => void>() };
+      const runtime = createRuntime({ model, options, renderer, log });
+
+      expect(() => {
+        runtime.send({ type: 'pointer.down', position: [0, 0] });
+      }).toThrow(Error);
+      expect(log.error).toHaveBeenCalledTimes(1);
+      const loggedError = log.error.mock.calls[0]?.[0];
+      expect(loggedError).toBeInstanceOf(Error);
+      expect(loggedError?.message).toContain('boom');
+    });
+  });
+
+  describe('reentrancy and disposal mid-batch', () => {
+    it('drops whatever remains of a batch once disposal happens mid-batch', () => {
+      const runtime = createRuntime({
+        model,
+        options,
+        renderer: createFakeRenderer(),
+      });
+      const emitted = recordEmitted(runtime);
+      let didSelectFire = false;
+
+      runtime.on('start', () => {
+        // Re-entrant, queued behind the current batch (same mechanism the
+        // existing reentrancy test above exercises) — but this time,
+        // disposal happens before it can ever be observed.
+        runtime.send({ type: 'pointer.up', position: [100, 0] });
+        runtime.dispose();
+      });
+      runtime.on('select', () => {
+        didSelectFire = true;
+      });
+
+      runtime.send({ type: 'pointer.down', position: [0, 0] });
+
+      expect(didSelectFire).toBe(false);
+      expect(emitted).toEqual(['start']);
+    });
+  });
 });

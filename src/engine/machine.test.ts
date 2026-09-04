@@ -112,7 +112,7 @@ describe('navigationMachine', () => {
     expect(host.current.name).toBe('startup');
   });
 
-  it('ignores a second down while a gesture is already in progress, in both startup and expert (the pointer source is the primary guard; the machine covers it defensively too)', () => {
+  it('ignores a second down while a gesture is already in progress, in startup, expert and novice alike (the pointer source is the primary guard; the machine covers it defensively too, objective 15)', () => {
     const host = startHost();
 
     host.send('down', { position: [0, 0] });
@@ -124,6 +124,12 @@ describe('navigationMachine', () => {
     const afterExpert = host.current;
     host.send('down', { position: [5, 5] });
     expect(host.current).toEqual(afterExpert);
+
+    host.send('up', { position: [100, 0] });
+    openNovice(host);
+    const afterNovice = host.current;
+    host.send('down', { position: [5, 5] });
+    expect(host.current).toEqual(afterNovice);
   });
 
   it('ignores stray movement or release input while idle', () => {
@@ -271,23 +277,115 @@ describe('navigationMachine', () => {
 
       host.send('move', { position: [100, 0] });
       expect(host.current.name).toBe('expert');
-      expect(vi.getTimerCount()).toBe(0);
+      // The startup dwell is gone, replaced by expert's own mid-gesture
+      // dwell (objective 14): still exactly one timer, never zero or two.
+      expect(vi.getTimerCount()).toBe(1);
     });
+  });
 
-    it('declines a dwell that arrives after startup has been left, as a silent no-op', () => {
-      const host = startHost();
+  describe('expert phase: dwelling into novice or canceling (objective 14)', () => {
+    it('switches to novice rooted at the menu a mid-expert dwell recognizes', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const opened: unknown[] = [];
+      host.on('open', ({ data }) => {
+        opened.push(data);
+      });
+
       host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
+      host.send('move', { position: [100, 0] }); // Crosses the threshold, onto "right"
       expect(host.current.name).toBe('expert');
-      const afterExpert = host.current;
-
-      const opened = vi.fn<() => void>();
-      host.on('open', opened);
 
       host.send('dwell');
 
-      expect(host.current).toEqual(afterExpert);
+      expect(host.current.name).toBe('novice');
+      const data = host.current.name === 'novice' ? host.current.data : null;
+      const rightMenu = (submenuModel as unknown as { items: unknown[] })
+        .items[0];
+      expect(data?.menu).toBe(rightMenu);
+      expect(data?.menuCenter).toEqual([100, 0]);
+      expect(data?.active).toBeNull();
+
+      expect(opened).toHaveLength(1);
+      const event = opened[0] as {
+        mode: string;
+        menu: unknown;
+        menuCenter: number[];
+      };
+      expect(event.mode).toBe('novice');
+      expect(event.menu).toBe(rightMenu);
+      expect(event.menuCenter).toEqual([100, 0]);
+    });
+
+    it('accumulates the expert stroke into the lower stroke when switching to novice', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('dwell');
+
+      const data = host.current.name === 'novice' ? host.current.data : null;
+      expect(data?.upperStroke).toEqual([[100, 0]]);
+      expect(data?.lowerStroke).toEqual([
+        [0, 0],
+        [100, 0],
+      ]);
+    });
+
+    it('cancels the expert attempt, without ever selecting, when the dwell recognizes no menu but the root', () => {
+      const host = startHost(); // The plain, leaf-only fixture model: every dwell recognizes the root.
+      const selected = vi.fn<() => void>();
+      host.on('select', selected);
+      const opened = vi.fn<() => void>();
+      host.on('open', opened);
+      let cancelData:
+        { active: unknown; menu: unknown; mode: string } | undefined;
+      host.on('cancel', ({ data }) => {
+        cancelData = data;
+      });
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      expect(host.current.name).toBe('expert');
+
+      host.send('dwell');
+
+      expect(host.current.name).toBe('idle');
       expect(opened).not.toHaveBeenCalled();
+      expect(selected).not.toHaveBeenCalled();
+      expect(cancelData?.mode).toBe('expert');
+      expect(cancelData?.active).toBeNull();
+      expect(cancelData?.menu).toBeNull();
+    });
+
+    it('restarts the mid-expert dwell on significant movement rather than firing early', () => {
+      using _timers = fakeTimers();
+      const host = startHost();
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] }); // Enters expert, arms the dwell
+      expect(vi.getTimerCount()).toBe(1);
+
+      vi.advanceTimersByTime(options.noviceDwellingTime - 10);
+      host.send('move', { position: [200, 0] }); // Significant: restarts it
+      vi.advanceTimersByTime(10);
+
+      expect(host.current.name).toBe('expert'); // Would have fired here without the reset.
+
+      vi.advanceTimersByTime(options.noviceDwellingTime - 10);
+      expect(host.current.name).toBe('idle'); // Fires noviceDwellingTime after the second move instead.
+    });
+
+    it('leaves a pending mid-expert dwell untouched by insignificant movement', () => {
+      using _timers = fakeTimers();
+      const host = startHost();
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      vi.advanceTimersByTime(options.noviceDwellingTime - 10);
+      host.send('move', { position: [102, 0] }); // Insignificant (<5px): must not reset it
+      vi.advanceTimersByTime(10);
+
+      expect(host.current.name).toBe('idle');
     });
   });
 
