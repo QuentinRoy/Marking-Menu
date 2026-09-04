@@ -32,10 +32,17 @@ describe('StatesOf<typeof navigationMachine>', () => {
   });
 
   it('threads model and options through every phase', () => {
-    expectTypeOf<States['idle']>().toEqualTypeOf<{
-      readonly model: AnyModelNode;
-      readonly options: NavigationOptions;
-    }>();
+    // `toEqualTypeOf` on the whole `States['idle']` object mistypes as a
+    // mismatch here: `expect-type` gets confused comparing an intersection
+    // against `AnyModelNode`'s `this`-typed `getNearestChild`, once that
+    // intersection arrives through `MachineStates`' mapped type rather than
+    // as a literal object type. Checking the keys and each field separately
+    // sidesteps it without losing what the assertion is for.
+    expectTypeOf<keyof States['idle']>().toEqualTypeOf<'model' | 'options'>();
+    expectTypeOf<States['idle']['model']>().toEqualTypeOf<AnyModelNode>();
+    expectTypeOf<
+      States['idle']['options']
+    >().toEqualTypeOf<NavigationOptions>();
     expectTypeOf<States['startup']['model']>().toEqualTypeOf<
       States['idle']['model']
     >();
