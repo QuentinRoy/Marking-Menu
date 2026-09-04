@@ -151,12 +151,6 @@ export default defineConfig([
     },
     rules: {
       ...vitest.configs.recommended.rules,
-      // Rxjs-marbles' `m.expect(...)` is this suite's second assertion entry
-      // point alongside the ambient `expect`; the rule can't infer that statically.
-      'vitest/expect-expect': [
-        'error',
-        { assertFunctionNames: ['expect', 'm.expect'] },
-      ],
       // Describe() is called with an imported function reference in some
       // files; the rule can't resolve the import to confirm it's a function.
       'vitest/valid-title': ['error', { allowArguments: true }],

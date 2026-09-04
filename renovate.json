@@ -21,7 +21,7 @@
       "groupName": "build"
     },
     {
-      "matchPackageNames": ["/vitest/", "rxjs-marbles"],
+      "matchPackageNames": ["/vitest/"],
       "groupName": "test"
     },
     {
