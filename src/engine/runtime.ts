@@ -1,5 +1,7 @@
 import type { MarkingMenuEventEmitter } from '../events.js';
+import type { MarkingMenuLogger } from '../marking-menu.js';
 import type { AnyModelNode } from '../types.js';
+import { noOp } from '../utils.js';
 import type { LayoutView } from './layout-view.js';
 import {
   navigationMachine,
@@ -7,6 +9,13 @@ import {
   type NavigationOptions,
 } from './machine.js';
 import type { LayoutRenderer } from './renderer.js';
+
+const defaultLogger: MarkingMenuLogger = {
+  error: console?.error?.bind(console) ?? noOp,
+};
+
+const toError = (value: unknown): Error =>
+  value instanceof Error ? value : new Error(String(value));
 
 /**
 All an input source needs of the runtime: no events, no model.
@@ -47,10 +56,12 @@ export function createRuntime<M extends AnyModelNode>({
   model,
   options,
   renderer,
+  log = defaultLogger,
 }: {
   model: M;
   options: NavigationOptions;
   renderer: LayoutRenderer<M>;
+  log?: MarkingMenuLogger;
 }): NavigationRuntime<M> {
   const target = new EventTarget();
   // One registration per (type, listener) pair, in registration order, so
@@ -64,11 +75,39 @@ export function createRuntime<M extends AnyModelNode>({
 
   const host = navigationMachine.start({ model, options });
 
+  /**
+   An internal failure (an invariant violation surfacing while reacting to
+   the machine's own `layout`/`feedback` outputs, never a consumer's fault)
+   tears the controller down through the same path as `dispose()`, logs it,
+   then rethrows so it still escapes the pointer listener or dwell timer
+   that triggered it. A teardown failure while unwinding is itself logged
+   and suppressed: the original error is the one that keeps propagating.
+   */
+  const handleInternalFailure = (error: unknown): never => {
+    const normalized = toError(error);
+    try {
+      dispose();
+    } catch (teardownError) {
+      log.error(toError(teardownError));
+    }
+
+    log.error(normalized);
+    throw normalized;
+  };
+
   const offLayout = host.on('layout', ({ data }) => {
-    renderer.render(data as unknown as LayoutView<M>);
+    try {
+      renderer.render(data as unknown as LayoutView<M>);
+    } catch (error) {
+      handleInternalFailure(error);
+    }
   });
   const offFeedback = host.on('feedback', ({ data }) => {
-    renderer.showFeedback(data);
+    try {
+      renderer.showFeedback(data);
+    } catch (error) {
+      handleInternalFailure(error);
+    }
   });
   const offPublic = publicOutputs.map((name) =>
     host.on(name, ({ data }) => {

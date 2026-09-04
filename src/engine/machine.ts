@@ -80,6 +80,10 @@ type NavigationPhaseFields<Menu, Active> = {
   };
   expert: {
     readonly stroke: readonly Point[];
+    // Same role as novice's own `dwellAnchor`: the last position significant
+    // movement was measured from, compared by reference in the residency's
+    // `restart` predicate below.
+    readonly dwellAnchor: Point;
   };
   novice: {
     readonly menu: Menu;
@@ -331,7 +335,7 @@ export const navigationMachine = machine({
     }) {
       const newStroke = [...stroke, position];
       return dist(origin, position) >= options.movementsThreshold
-        ? { model, options, stroke: newStroke }
+        ? { model, options, stroke: newStroke, dwellAnchor: position }
         : skip();
     },
 
@@ -356,10 +360,51 @@ export const navigationMachine = machine({
       dwellAnchor: origin,
     }),
 
-    'expert -move> expert': ({ fromData, inputData }) => ({
-      ...fromData,
-      stroke: [...fromData.stroke, inputData.position],
-    }),
+    'expert -move> expert'({ fromData, inputData: { position } }) {
+      const { dwellAnchor, options } = fromData;
+      return {
+        ...fromData,
+        stroke: [...fromData.stroke, position],
+        // A fresh reference only on significant movement, same rationale as
+        // novice's own `dwellAnchor` update below.
+        dwellAnchor:
+          dist(dwellAnchor, position) >= options.movementsThreshold
+            ? position
+            : dwellAnchor,
+      };
+    },
+
+    // Mid-expert dwell recognizes the stroke drawn so far as a menu, not a
+    // leaf: a non-root match switches to novice rooted there. Anything else
+    // (no match, or the root itself) falls through to the unconditional
+    // row below, which cancels the expert attempt outright rather than
+    // waiting for a release that recognition already knows will fail.
+    'expert -dwell> novice'({ fromData: { model, options, stroke }, skip }) {
+      const menu = recognizeMarkingMenuStroke(stroke, model, {
+        maxDepth: -1,
+        requireMenu: true,
+      });
+      if (menu === null || menu.isRoot) {
+        return skip();
+      }
+
+      const position = stroke.at(-1) as Point;
+      return {
+        model,
+        options,
+        menu,
+        menuCenter: position,
+        active: null,
+        upperStroke: [position],
+        lowerStroke: stroke,
+        dwellAnchor: [...position],
+      };
+    },
+
+    // The row above declined: no menu was recognized, or it was the root.
+    'expert -dwell> idle'({ fromData: { model, options } }) {
+      return { model, options };
+    },
 
     'novice -move> novice'({ fromData, inputData: { position } }) {
       const { menuCenter, options, menu, dwellAnchor } = fromData;
@@ -453,6 +498,16 @@ export const navigationMachine = machine({
       restart: false,
     },
 
+    expert: {
+      run: ({ toData, send }) =>
+        armDwellTimer(toData.options.noviceDwellingTime, send),
+      // Same rationale as novice's own submenu-dwell residency: only a
+      // self-transition that carries `dwellAnchor` forward to a new position,
+      // i.e. significant movement, restarts the pending dwell.
+      restart: ({ fromData, toData }) =>
+        fromData.dwellAnchor !== toData.dwellAnchor,
+    },
+
     novice: {
       run: ({ toData, send }) =>
         armDwellTimer(toData.options.submenuOpeningDelay, send),
@@ -495,6 +550,32 @@ export const navigationMachine = machine({
 
     'expert -move> expert'({ inputData, emit }) {
       emitNullActiveMove(emit, 'expert', inputData.position);
+    },
+
+    // Same shape as `'startup -dwell> novice'`'s own `open`: the row above
+    // already confirmed the recognized menu is eligible, so this action only
+    // ever announces one.
+    'expert -dwell> novice'({ fromData, toData, emit }) {
+      emit(
+        'open',
+        openEvent({
+          position: fromData.stroke.at(-1) as Point,
+          menu: toData.menu,
+          menuCenter: toData.menuCenter,
+        }),
+      );
+    },
+
+    // No selection was ever attempted: the dwell fired before a release,
+    // and recognition already found nothing worth switching to.
+    'expert -dwell> idle'({ fromData, emit }) {
+      const { stroke } = fromData;
+      const position = stroke.at(-1) as Point;
+      emit('feedback', { stroke, canceled: true });
+      emit(
+        'cancel',
+        cancelEvent({ mode: 'expert', position, active: null, menu: null }),
+      );
     },
 
     // Same shape as `'startup -dwell> novice'`'s own `open`, one recursion
