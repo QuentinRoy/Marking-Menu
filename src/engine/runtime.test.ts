@@ -212,7 +212,7 @@ describe('createRuntime', () => {
   });
 
   describe('internal failure', () => {
-    it('tears down, logs, then rethrows, when reacting to the machine own layout output fails', () => {
+    it('tears down, logs, then rethrows when the layout output fails', () => {
       const renderer = createFakeRenderer();
       const failure = new Error('boom');
       renderer.render.mockImplementationOnce(() => {
@@ -236,7 +236,7 @@ describe('createRuntime', () => {
       }).toThrow('disposed');
     });
 
-    it('tears down, logs, then rethrows, when reacting to the machine own feedback output fails', () => {
+    it('tears down, logs, then rethrows when the feedback output fails', () => {
       const renderer = createFakeRenderer();
       const failure = new Error('boom');
       renderer.showFeedback.mockImplementationOnce(() => {
@@ -254,7 +254,7 @@ describe('createRuntime', () => {
       expect(log.error).toHaveBeenCalledExactlyOnceWith(failure);
     });
 
-    it('logs and suppresses a teardown failure while unwinding a primary failure, and rethrows only the original', () => {
+    it('suppresses a teardown failure while unwinding a primary one, rethrows the original', () => {
       const renderer = createFakeRenderer();
       const primaryFailure = new Error('primary');
       const teardownFailure = new Error('teardown');
@@ -296,7 +296,7 @@ describe('createRuntime', () => {
   });
 
   describe('reentrancy and disposal mid-batch', () => {
-    it('drops whatever remains of a batch once disposal happens mid-batch', () => {
+    it('drops the rest of a batch once disposal happens mid-batch', () => {
       const runtime = createRuntime({
         model,
         options,

@@ -112,7 +112,8 @@ describe('navigationMachine', () => {
     expect(host.current.name).toBe('startup');
   });
 
-  it('ignores a second down while a gesture is already in progress, in startup, expert and novice alike (the pointer source is the primary guard; the machine covers it defensively too)', () => {
+  // The pointer source is the primary guard; the machine covers it defensively too.
+  it('ignores a second down mid-gesture, in startup, expert, and novice alike', () => {
     const host = startHost();
 
     host.send('down', { position: [0, 0] });
@@ -284,7 +285,7 @@ describe('navigationMachine', () => {
   });
 
   describe('expert phase: dwelling into novice or canceling', () => {
-    it('switches to novice rooted at the menu a mid-expert dwell recognizes', () => {
+    it('switches to novice rooted at the recognized menu', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       const opened: unknown[] = [];
       host.on('open', ({ data }) => {
@@ -331,7 +332,7 @@ describe('navigationMachine', () => {
       ]);
     });
 
-    it('cancels the expert attempt, without ever selecting, when the dwell recognizes no menu but the root', () => {
+    it('cancels the expert attempt when the dwell recognizes only the root', () => {
       const host = startHost(); // The plain, leaf-only fixture model: every dwell recognizes the root.
       const selected = vi.fn<() => void>();
       host.on('select', selected);
@@ -357,7 +358,7 @@ describe('navigationMachine', () => {
       expect(cancelData?.menu).toBeNull();
     });
 
-    it('restarts the mid-expert dwell on significant movement rather than firing early', () => {
+    it('restarts the mid-expert dwell on significant movement', () => {
       using _timers = fakeTimers();
       const host = startHost();
 

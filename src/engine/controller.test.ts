@@ -210,7 +210,7 @@ describe('createController', () => {
     }).not.toThrow();
   });
 
-  it('is also disposable through [Symbol.dispose](), terminal and idempotent the same way as dispose()', () => {
+  it('is also disposable through [Symbol.dispose](), same as dispose()', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
@@ -244,7 +244,7 @@ describe('createController', () => {
     expect(parent.style.getPropertyValue('touch-action')).toBe('');
   });
 
-  it('does not restore touch-action while a second controller on the same parent still holds its own claim', () => {
+  it('keeps touch-action while another controller on the parent still holds a claim', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const first = createController({ items, parent });
@@ -259,7 +259,7 @@ describe('createController', () => {
     expect(parent.style.getPropertyValue('touch-action')).toBe('');
   });
 
-  it('does not let a throwing consumer listener affect the controller: the gesture proceeds and remaining listeners still run', () => {
+  it('isolates a throwing consumer listener: the gesture proceeds and other listeners still run', () => {
     using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
@@ -1126,7 +1126,7 @@ describe('createController', () => {
       { id: 'up', label: 'Up' },
     ] as const;
 
-    it('switches to novice, rooted at the menu the dwell recognizes, once an expert gesture pauses on a submenu', () => {
+    it('switches to novice, rooted at the menu the dwell recognizes', () => {
       using _canvases = stubbedCanvasContexts();
       using _timers = fakeTimers();
       const parent = createParent();
@@ -1168,7 +1168,7 @@ describe('createController', () => {
       controller.dispose();
     });
 
-    it('cancels the expert attempt, without ever selecting, when the dwell recognizes no menu but the root', () => {
+    it('cancels the expert attempt when the dwell recognizes only the root', () => {
       using _canvases = stubbedCanvasContexts();
       using _timers = fakeTimers();
       const parent = createParent();
