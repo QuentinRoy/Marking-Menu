@@ -11,6 +11,7 @@ import type {
   MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
   MarkingMenuConfig,
+  MarkingMenuController,
   MarkingMenuEvent,
   MarkingMenuEventBase,
   MarkingMenuEventEmitter,
@@ -22,7 +23,6 @@ import type {
   MarkingMenuModel,
   MarkingMenuModelItem,
   MarkingMenuMoveEvent,
-  MarkingMenuNotification,
   MarkingMenuOpenEvent,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
@@ -47,6 +47,7 @@ export type PublicSurface = [
   MarkingMenuCancelEvent<AnyModelNode>,
   MarkingMenuChangeEvent<AnyModelNode>,
   MarkingMenuConfig,
+  MarkingMenuController<AnyModelNode>,
   MarkingMenuEvent<AnyModelNode>,
   MarkingMenuEventBase,
   MarkingMenuEventEmitter<AnyModelNode>,
@@ -58,7 +59,6 @@ export type PublicSurface = [
   MarkingMenuModel<MarkingMenuInput>,
   MarkingMenuModelItem,
   MarkingMenuMoveEvent<AnyModelNode>,
-  MarkingMenuNotification,
   MarkingMenuOpenEvent<AnyModelNode>,
   MarkingMenuSelectEvent<AnyModelNode>,
   MarkingMenuStartEvent,
@@ -73,28 +73,19 @@ export type PublicSurface = [
 
 declare const parent: HTMLElement;
 
-const menu$ = createMarkingMenu({
+const mm = createMarkingMenu({
   items: [{ id: 'right', label: 'Right' }],
   parent,
 });
-menu$.subscribe((selection) => {
-  const { id, isLeaf } = selection;
+mm.on('select', (event) => {
+  const { id, isLeaf } = event.selection;
   const idIsNarrowed: 'right' = id;
   console.log(idIsNarrowed, isLeaf);
 });
-
-const notifications$ = createMarkingMenu({
-  items: [{ id: 'right', label: 'Right' }],
-  parent,
-  notifySteps: true,
+mm.on('open', (event) => {
+  console.log(event.menu.items.length);
 });
-notifications$.subscribe((n) => {
-  if (n.type === 'open') {
-    console.log(n.menu.items.length);
-  }
-
-  console.log(n.type, n.mode);
-});
+mm.dispose();
 
 // Duplicate ids must be a compile error at the consumer call site too.
 // @ts-expect-error -- two items share the id 'dup'.

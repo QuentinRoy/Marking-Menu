@@ -1,4 +1,3 @@
-import type { Observable } from 'rxjs';
 import { describe, expectTypeOf, it } from 'vitest';
 import { createMarkingMenu, type MarkingMenuLogger } from './marking-menu.js';
 import type { MarkingMenuItemInput } from './types.js';
@@ -8,14 +7,7 @@ import type { MarkingMenuItemInput } from './types.js';
  `createMarkingMenu`'s public surface. They are checked by `tsc`, not run.
  */
 
-/**
-The element type of an `Observable`.
-*/
-type Value<O> = O extends Observable<infer T> ? T : never;
-
 declare const parent: HTMLElement;
-// eslint-disable-next-line unicorn/consistent-boolean-name -- mirrors the public `notifySteps` config field.
-declare const notifySteps: boolean;
 
 describe('createMarkingMenu', () => {
   it('rejects sibling items sharing the same id', () => {
@@ -29,55 +21,23 @@ describe('createMarkingMenu', () => {
     });
   });
 
-  it('returns an observable on the leaf selections by default', () => {
-    const menu$ = createMarkingMenu({
+  it('exposes select events typed on the exact literal item ids', () => {
+    const mm = createMarkingMenu({
       items: [{ id: 'right', label: 'Right' }],
       parent,
     });
-    expectTypeOf<Value<typeof menu$>['id']>().toEqualTypeOf<'right'>();
-    expectTypeOf<Value<typeof menu$>['isLeaf']>().toEqualTypeOf<true>();
+    mm.on('select', (event) => {
+      expectTypeOf(event.selection.id).toEqualTypeOf<'right'>();
+      expectTypeOf(event.selection.isLeaf).toEqualTypeOf<true>();
+    });
   });
 
-  it('returns typed selections for an item list built at runtime', () => {
+  it('widens item types for a list built at runtime', () => {
     const items: MarkingMenuItemInput[] = [{ label: 'Right' }];
-    const menu$ = createMarkingMenu({ items, parent });
-
-    expectTypeOf<Value<typeof menu$>>().not.toBeNever();
-    expectTypeOf<Value<typeof menu$>['label']>().toEqualTypeOf<string>();
-  });
-
-  it('returns an observable of notifications when notifySteps is true', () => {
-    const menu$ = createMarkingMenu({
-      items: [{ id: 'right', label: 'Right' }],
-      parent,
-      notifySteps: true,
+    const mm = createMarkingMenu({ items, parent });
+    mm.on('select', (event) => {
+      expectTypeOf(event.selection.label).toEqualTypeOf<string>();
     });
-    expectTypeOf<Value<typeof menu$>['type']>().toEqualTypeOf<
-      'start' | 'draw' | 'open' | 'move' | 'change' | 'select' | 'cancel'
-    >();
-    expectTypeOf<
-      Extract<Value<typeof menu$>, { type: 'select' }>['mode']
-    >().toEqualTypeOf<'startup' | 'novice' | 'expert'>();
-    expectTypeOf<
-      Extract<Value<typeof menu$>, { type: 'cancel' }>['mode']
-    >().toEqualTypeOf<'startup' | 'novice' | 'expert'>();
-  });
-
-  it('distributes over a widened notifySteps instead of collapsing to one branch', () => {
-    const menu$ = createMarkingMenu({
-      items: [{ id: 'right', label: 'Right' }],
-      parent,
-      notifySteps,
-    });
-    // Both branches survive: a leaf (has `id`) and a notification (has `type`).
-    // `keyof` the whole union would only give keys common to every member
-    // (none, here), hence `Extract` instead of `toHaveProperty`.
-    expectTypeOf<
-      Extract<Value<typeof menu$>, { id: string }>
-    >().not.toBeNever();
-    expectTypeOf<
-      Extract<Value<typeof menu$>, { type: string }>
-    >().not.toBeNever();
   });
 
   it('accepts a logger overriding only `error`', () => {

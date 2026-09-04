@@ -12,21 +12,42 @@ import type { TypedEventListener } from '../typed-event-emitter.js';
 import type { AnyModelNode, MarkingMenuInput } from '../types.js';
 import { noOp } from '../utils.js';
 import { createPointerSource, type PointerSource } from './pointer-source.js';
-import { createRenderer } from './renderer.js';
+import { createRenderer, type RendererOptions } from './renderer.js';
 import { createRuntime, type NavigationRuntime } from './runtime.js';
 
-export type EngineConfig = MarkingMenuInput & {
-  readonly parent: HTMLElement;
-  readonly movementsThreshold?: number;
-  readonly noviceDwellingTime?: number;
-  readonly minSelectionDist?: number;
-  readonly minMenuSelectionDist?: number;
-  readonly submenuOpeningDelay?: number;
-  /**
-  Override the default logger used to report internal failures.
-  */
-  readonly log?: Partial<MarkingMenuLogger>;
-};
+export type EngineConfig = MarkingMenuInput &
+  Omit<RendererOptions, 'parent'> & {
+    /**
+    The parent node.
+    */
+    readonly parent: HTMLElement;
+    /**
+     The minimum distance between two points to be considered a significant
+     movement, switching startup to expert mode and breaking the submenu
+     dwelling delay.
+     */
+    readonly movementsThreshold?: number;
+    /**
+    The dwelling time required to trigger novice mode (and open the menu).
+    */
+    readonly noviceDwellingTime?: number;
+    /**
+    The minimum distance from the center to select an item.
+    */
+    readonly minSelectionDist?: number;
+    /**
+    The minimum distance from the center to open a sub-menu.
+    */
+    readonly minMenuSelectionDist?: number;
+    /**
+    The dwelling delay before opening a sub-menu.
+    */
+    readonly submenuOpeningDelay?: number;
+    /**
+    Override the default logger used to report internal failures.
+    */
+    readonly log?: Partial<MarkingMenuLogger>;
+  };
 
 const defaultLogger: MarkingMenuLogger = {
   error: console?.error?.bind(console) ?? noOp,
@@ -65,9 +86,6 @@ type EventName<Config extends EngineConfig> = keyof EventMap<Config> & string;
  are derived from the literal config. A non-generic constructor would widen
  the model to `MarkingMenuModel<EngineConfig>` and leave a cast as the only
  bridge back.
-
- Not reachable from `createMarkingMenu` until the cutover ticket
- (https://github.com/QuentinRoy/Marking-Menu/issues/184).
  */
 class Controller<Config extends EngineConfig> implements MarkingMenuController<
   MarkingMenuModel<Config>
@@ -81,9 +99,10 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     // inference would pick up the `Config & ValidateInput<Config>` parameter
     // type as `Input`, and `MarkingMenuModel` of that is a different type.
     const model = createModel<Config>(config);
-    const renderer = createRenderer<MarkingMenuModel<Config>>({
-      parent: config.parent,
-    });
+    // `config` structurally satisfies `RendererOptions`: it carries every
+    // styling option `EngineConfig` intersects in, plus fields the renderer
+    // ignores (`items`, the machine options, `log`).
+    const renderer = createRenderer<MarkingMenuModel<Config>>(config);
     this.#runtime = createRuntime<MarkingMenuModel<Config>>({
       model,
       options: {

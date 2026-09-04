@@ -50,18 +50,27 @@ export const offset = (
 };
 
 /**
-The gesture surface's bounding box, in viewport coordinates.
+The bounding box of the element matching `selector`, in viewport coordinates.
 */
-export const surfaceBoundingBox = async (
+export const boundingBoxOf = async (
   page: Page,
+  selector: string,
 ): Promise<{ x: number; y: number; width: number; height: number }> => {
-  const box = await page.locator('#surface').boundingBox();
+  const box = await page.locator(selector).boundingBox();
   if (!box) {
-    throw new TypeError('#surface has no bounding box.');
+    throw new TypeError(`${selector} has no bounding box.`);
   }
 
   return box;
 };
+
+/**
+The gesture surface's bounding box, in viewport coordinates.
+*/
+export const surfaceBoundingBox = async (
+  page: Page,
+): Promise<{ x: number; y: number; width: number; height: number }> =>
+  boundingBoxOf(page, '#surface');
 
 /**
 The center of the gesture surface, in viewport coordinates.

@@ -37,11 +37,6 @@ function toastMessage(message) {
 }
 
 // Toast the marking menu's selections.
-mm.subscribe({
-  next(selection) {
-    toastMessage(selection.label);
-  },
-  error(error) {
-    console.error(error);
-  },
+mm.on('select', (event) => {
+  toastMessage(event.selection.label);
 });
