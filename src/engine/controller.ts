@@ -99,7 +99,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     // inference would pick up the `Config & ValidateInput<Config>` parameter
     // type as `Input`, and `MarkingMenuModel` of that is a different type.
     const model = createModel<Config>(config);
-    // `config` structurally satisfies `RendererOptions` — it carries every
+    // `config` structurally satisfies `RendererOptions`: it carries every
     // styling option `EngineConfig` intersects in, plus fields the renderer
     // ignores (`items`, the machine options, `log`).
     const renderer = createRenderer<MarkingMenuModel<Config>>(config);

@@ -13,8 +13,8 @@ type DisposalTestGlobal = {
 };
 
 /**
- Drives a controller directly against its own detached surface — the same
- approach `multiple-controllers.spec.ts` uses — since this test needs the
+ Drives a controller directly against its own detached surface, the same
+ approach `multiple-controllers.spec.ts` uses, since this test needs the
  controller's own handle to call `dispose()` on, not just the fixture's
  projected `#log`.
  */
@@ -108,8 +108,8 @@ test('disposal at the browser boundary: pointer input and pending work produce n
     beforeDispose.eventCount,
   );
 
-  // Pointer input arriving after disposal — including the release of the
-  // gesture that was in progress — must produce no further public events or
+  // Pointer input arriving after disposal, including the release of the
+  // gesture that was in progress, must produce no further public events or
   // visual mutations.
   await moveTo(page, offset(center, 0, 40));
   await releaseAt(page);

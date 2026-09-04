@@ -85,8 +85,8 @@ test('commit → render → dispatch ordering: a listener observes the complete 
       });
     });
 
-    // `select`: the transition back to idle — closing the menu, resetting
-    // the cursor — is part of the same commit as the selection itself, so
+    // `select`: closing the menu and resetting the cursor (the transition
+    // back to idle) is part of the same commit as the selection itself, so
     // both must already be reflected by the time this listener runs.
     mm.on('select', () => {
       observations.push({
