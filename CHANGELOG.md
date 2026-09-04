@@ -1,5 +1,143 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Stop assigning generated positional IDs to menu items. Items without a
+  caller-provided ID now expose `id: undefined`; provide an explicit ID when an
+  item must be addressed by ID. Positional identity is available separately as
+  the library-assigned `key` property.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Rename `getChildrenByName()` to `getChildrenByLabel()` on emitted menu items.
+
+- [#233](https://github.com/QuentinRoy/Marking-Menu/pull/233) [`ab83b8b`](https://github.com/QuentinRoy/Marking-Menu/commit/ab83b8bede215758236a79640d956dfa8b80470e) - `createMarkingMenu` no longer returns an RxJS `Observable`. It returns an
+  already-active controller: listen with `controller.on(type, listener)` and
+  stop the menu with `controller.dispose()` (or `[Symbol.dispose]()`, for
+  `using`).
+
+  Six events replace the old notification stream: `start`, `open`, `move`,
+  `change`, `select`, and `cancel`. `move` now fires in every mode, so `draw`
+  is gone; `cancel`'s `selection` field is renamed `active`, and is always
+  present. Where you used to do this:
+
+  ```js
+  const subscription = createMarkingMenu({ items, parent }).subscribe(
+    (selection) => console.log(selection.label),
+  );
+  subscription.unsubscribe();
+  ```
+
+  do this instead:
+
+  ```js
+  const menu = createMarkingMenu({ items, parent });
+  menu.on('select', (event) => console.log(event.selection.label));
+  menu.dispose();
+  ```
+
+  `notifySteps`, `MarkingMenuNotification`, `exportNotification`, and the
+  conditional result type it produced are gone along with it: every controller
+  now dispatches the full event set, so a consumer who only wants selections
+  listens for `select` and ignores the rest.
+
+- [#144](https://github.com/QuentinRoy/Marking-Menu/pull/144) [`1580c6e`](https://github.com/QuentinRoy/Marking-Menu/commit/1580c6e1b4e4a5e5d877d7047e4262c011684229) - Ship a single ES module entry point at `dist/index.js`. Remove the UMD
+  artifact, including its CommonJS, AMD, and `window.MarkingMenu` loading paths,
+  and remove the former `marking-menu.mjs` entry point. Browser consumers must
+  now load the package as an ES module.
+
+- [#145](https://github.com/QuentinRoy/Marking-Menu/pull/145) [`4c70277`](https://github.com/QuentinRoy/Marking-Menu/commit/4c702773c5acd65ffbbf024af5ced37e54ac3b02) - Return `null` from `getNearestChild()` when an emitted menu item has no
+  sub-items, instead of throwing.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Return `null` instead of `undefined` from `getChild()` when no direct sub-item
+  has the requested ID. Calling `getChild()` on a leaf now also returns `null`
+  instead of throwing.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Replace the `isLeaf()` method on emitted menu items with an `isLeaf` boolean
+  property.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Replace the `isRoot()` method on emitted menu items with an `isRoot` boolean
+  property.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Rename the menu item `name` property to `label`.
+
+- [#227](https://github.com/QuentinRoy/Marking-Menu/pull/227) [`1efeece`](https://github.com/QuentinRoy/Marking-Menu/commit/1efeece5c301460bd9fe87d0245a4211482f78b0) - Return `null` instead of `undefined` from the root's `parent` property.
+  Items' `parent` is now precisely typed: for a model built from a literal
+  menu description, it resolves to the exact ancestor node instead of a loose
+  one. `AnyModelNode`, `MarkingMenuModelItem` and `ModelRoot` gain the field
+  in their types, so any code implementing or mocking one of them needs to
+  supply it.
+
+- [#145](https://github.com/QuentinRoy/Marking-Menu/pull/145) [`4c70277`](https://github.com/QuentinRoy/Marking-Menu/commit/4c702773c5acd65ffbbf024af5ced37e54ac3b02) - Raise the browser build target to Chrome and Edge 111, Firefox 114, and
+  Safari and iOS 16.4 or newer.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Replace the default `MarkingMenu` export with the named `createMarkingMenu`
+  export. Update imports and calls accordingly:
+
+  ```js
+  import { createMarkingMenu } from 'marking-menu';
+
+  const menu$ = createMarkingMenu({ items, parent });
+  ```
+
+- [#188](https://github.com/QuentinRoy/Marking-Menu/pull/188) [`fe933d7`](https://github.com/QuentinRoy/Marking-Menu/commit/fe933d7845cb268dddf1ea29ecccf4c7e0f223f7) - Narrow `MarkingMenuLogger` to `error`, now taking a single `Error` argument
+  rather than varargs of `unknown`. Errors are normalized before reaching it, so
+  a handler typed to expect an `Error` can be passed directly. `info`, `warn`
+  and `debug` become optional and ignored, since nothing in the library ever
+  called them. `console` still satisfies the type, and `log` can still be
+  overridden partially. Three things break: a logger whose `error` expects
+  something other than (or in addition to) an `Error`, a logger whose `error`
+  declares two or more required parameters, and any code that imported
+  `MarkingMenuLogger` to call `.info()`, `.warn()` or `.debug()` on it.
+
+- [#129](https://github.com/QuentinRoy/Marking-Menu/pull/129) [`25c0a37`](https://github.com/QuentinRoy/Marking-Menu/commit/25c0a371f30676fa730f1854a793c6502e30058d) - Remove the string shorthand for menu items. Every menu item must now be an
+  object.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Pass a single configuration object to `createMarkingMenu` instead of using
+  positional arguments: `createMarkingMenu({ items, parent, ...options })`.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Expose sub-items of emitted selection items as `items` instead of `children`.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Define submenus with `items` instead of `children`.
+
+- [#145](https://github.com/QuentinRoy/Marking-Menu/pull/145) [`4c70277`](https://github.com/QuentinRoy/Marking-Menu/commit/4c702773c5acd65ffbbf024af5ced37e54ac3b02) - Rename the `subMenuOpeningDelay` configuration option to
+  `submenuOpeningDelay`.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Require caller-provided item IDs to be unique across the entire menu tree.
+  Duplicate literal IDs are rejected by TypeScript, and duplicate IDs in
+  dynamically built menus throw when the menu is created.
+
+### Minor Changes
+
+- [#234](https://github.com/QuentinRoy/Marking-Menu/pull/234) [`fc86a4e`](https://github.com/QuentinRoy/Marking-Menu/commit/fc86a4e7bf42a0f8ec8d1712452a480b74b78a9d) - `rxjs` is gone: not a dependency, not a peer dependency, not a runtime
+  import. Events reach you through the controller's plain `on`/`dispose` API
+  with nothing to install or pin a compatible version of.
+
+- [#189](https://github.com/QuentinRoy/Marking-Menu/pull/189) [`bffd5aa`](https://github.com/QuentinRoy/Marking-Menu/commit/bffd5aa840c29a61f854fb144d1b922c1ef7bb99) - Export the public event classes and typed, listen-only emitter facade that
+  the upcoming native event-based API will use: `MarkingMenuStartEvent`,
+  `MarkingMenuOpenEvent`, `MarkingMenuMoveEvent`, `MarkingMenuChangeEvent`,
+  `MarkingMenuSelectEvent`, `MarkingMenuCancelEvent`, their shared
+  `MarkingMenuEventBase`, the `MarkingMenuEventMap`/`MarkingMenuEvent` types, and
+  `MarkingMenuEventEmitter`.
+
+  These events are plain classes, not DOM `Event`s: this library has no DOM
+  target, bubbling, or default action to prevent, so there is none of that
+  machinery to carry around. `MarkingMenuEventEmitter` is listen-only: `on`/`off`
+  narrowed per event name, with no listener options (once/signal/capture) and no
+  `dispatch`/`emit` in the type at all.
+
+- [#150](https://github.com/QuentinRoy/Marking-Menu/pull/150) [`c7ad8ad`](https://github.com/QuentinRoy/Marking-Menu/commit/c7ad8adf834abe13cf3f1d76504b499e4ea3a186) - Migrate drag handling to Pointer Events with pointer capture, explicit gesture cancellation, reliable touch-action management, and complete listener and inner-observable teardown.
+
+- [#147](https://github.com/QuentinRoy/Marking-Menu/pull/147) [`9c46198`](https://github.com/QuentinRoy/Marking-Menu/commit/9c46198a9730f314c70828f756508320babb7367) - Ship TypeScript type declarations. Emitted selections are typed from the items
+  passed to `createMarkingMenu()`, so their `id` and `label` narrow to the exact
+  values described, instead of being `unknown`.
+
+### Patch Changes
+
+- [#147](https://github.com/QuentinRoy/Marking-Menu/pull/147) [`9c46198`](https://github.com/QuentinRoy/Marking-Menu/commit/9c46198a9730f314c70828f756508320babb7367) - Remove the `raf-schd` dependency, replaced with an equivalent internal
+  implementation. No behavior change; `raf-schd` just no longer shows up in
+  consumers' `node_modules` or dependency audits.
+
 All notable changes to this project will be documented in this file. Entries are generated from [Changesets](https://github.com/changesets/changesets) — see `.changeset/README.md` for how to add one.
 
 ### [0.10.1](https://github.com/QuentinRoy/Marking-Menu/compare/v0.10.0...v0.10.1) (2026-07-22)
