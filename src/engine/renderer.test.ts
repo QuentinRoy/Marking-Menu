@@ -24,26 +24,40 @@ const otherModel = createModel({
   ],
 });
 
-// The two stroke layers are told apart by their line width, the one drawing
+// The canvas layers are told apart by their line width, the one drawing
 // property `drawPoint` leaves alone, so the stacking tests below have to
-// configure the two widths differently.
+// configure all three widths differently.
 const upperStrokeWidth = 7;
 const lowerStrokeWidth = 3;
+const feedbackStrokeWidth = 5;
 
-type Layer = 'lower' | 'menu' | 'upper';
+type Layer = 'lower' | 'menu' | 'upper' | 'feedback';
+
+const layerByStrokeWidth = new Map<number | undefined, Layer>([
+  [upperStrokeWidth, 'upper'],
+  [lowerStrokeWidth, 'lower'],
+  [feedbackStrokeWidth, 'feedback'],
+]);
 
 /**
 Name every child of `parent` by the layer it belongs to, in paint order.
 */
-const layerOrder = (parent: HTMLElement): Layer[] =>
-  [...parent.children].map((child) => {
-    if (!(child instanceof HTMLCanvasElement)) {
-      return 'menu';
-    }
+const layerOrder = (parent: HTMLElement): Array<Layer | undefined> =>
+  [...parent.children].map((child) =>
+    child instanceof HTMLCanvasElement
+      ? layerByStrokeWidth.get(canvasContext(child).lineWidth)
+      : 'menu',
+  );
 
-    return canvasContext(child).lineWidth === upperStrokeWidth
-      ? 'upper'
-      : 'lower';
+/**
+A renderer whose three canvas layers are individually identifiable.
+*/
+const createStackingRenderer = (parent: HTMLElement) =>
+  createRenderer<typeof model>({
+    parent,
+    strokeWidth: upperStrokeWidth,
+    lowerStrokeWidth,
+    gestureFeedbackStrokeWidth: feedbackStrokeWidth,
   });
 
 describe('createRenderer', () => {
@@ -263,11 +277,7 @@ describe('createRenderer', () => {
     using _timers = fakeTimers();
 
     const parent = document.createElement('div');
-    const renderer = createRenderer<typeof model>({
-      parent,
-      strokeWidth: upperStrokeWidth,
-      lowerStrokeWidth,
-    });
+    const renderer = createStackingRenderer(parent);
 
     renderer.render({
       cursor: 'none',
@@ -293,11 +303,7 @@ describe('createRenderer', () => {
     using _timers = fakeTimers();
 
     const parent = document.createElement('div');
-    const renderer = createRenderer<typeof model>({
-      parent,
-      strokeWidth: upperStrokeWidth,
-      lowerStrokeWidth,
-    });
+    const renderer = createStackingRenderer(parent);
     const upperStroke: Point[] = [
       [0, 0],
       [10, 0],
@@ -329,6 +335,43 @@ describe('createRenderer', () => {
     vi.advanceTimersToNextFrame();
 
     expect(layerOrder(parent)).toEqual(['lower', 'menu', 'upper']);
+
+    renderer.dispose();
+  });
+
+  it('keeps a completed-gesture trace in front of a menu that opens before it expires', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+
+    const parent = document.createElement('div');
+    const renderer = createStackingRenderer(parent);
+
+    renderer.showFeedback({
+      stroke: [
+        [0, 0],
+        [10, 0],
+      ],
+      canceled: false,
+    });
+    // Well inside the default feedback duration, so the trace is still up
+    // when the next gesture opens its menu.
+    vi.advanceTimersByTime(334);
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model, center: [0, 0], activeKey: null },
+      upperStroke: [
+        [0, 0],
+        [10, 0],
+      ],
+      lowerStroke: [
+        [0, 0],
+        [5, 5],
+      ],
+    });
+    vi.advanceTimersToNextFrame();
+
+    expect(layerOrder(parent)).toEqual(['lower', 'menu', 'feedback', 'upper']);
 
     renderer.dispose();
   });

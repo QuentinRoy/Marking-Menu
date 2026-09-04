@@ -197,14 +197,14 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
    upper stroke and its origin marker go in front of it, so the marker
    stays visible and the line is not cut where it crosses an item.
 
-   The completed-gesture feedback belongs in front of the menu too, which
-   it gets for free: `showFeedback` only ever runs once the menu is gone,
-   and appends its own canvas.
+   A completed-gesture trace belongs in front of the menu as well. It
+   outlives the gesture that produced it, so a menu opened before it fades
+   is appended after it and would cover it.
 
    Nothing in the stylesheet sets any of this, and each canvas and the menu
-   land wherever the view first asked for them, so sibling order is all
-   that holds it. Every render re-asserts that order, moving an element
-   only when it is out of place.
+   land wherever they were first needed, so sibling order is all that holds
+   it. Every render re-asserts that order, moving an element only when it
+   is out of place.
    */
   function restack(): void {
     const menuElement = menuHandle?.menu.element;
@@ -220,6 +220,14 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
     const upper = upperStroke.element();
     if (upper !== null && !isPaintedBefore(menuElement, upper)) {
       menuElement.after(upper);
+    }
+
+    // After the upper stroke, so a live gesture still draws over a fading
+    // trace of the previous one.
+    for (const trace of gestureFeedback.elements()) {
+      if (!isPaintedBefore(menuElement, trace)) {
+        menuElement.after(trace);
+      }
     }
   }
 
