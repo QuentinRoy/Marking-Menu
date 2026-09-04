@@ -1,8 +1,8 @@
 import {
+  canvasContext,
   fakeTimers,
   queryCanvasContext,
   stubbedCanvasContexts,
-  type MockContext,
 } from '../__fixtures__/canvas.js';
 import { createModel } from '../model.js';
 import type { Point } from '../utils.js';
@@ -25,21 +25,25 @@ const otherModel = createModel({
 });
 
 // The two stroke layers are told apart by their line width, the one drawing
-// property `drawPoint` leaves alone.
+// property `drawPoint` leaves alone, so the stacking tests below have to
+// configure the two widths differently.
 const upperStrokeWidth = 7;
 const lowerStrokeWidth = 3;
+
+type Layer = 'lower' | 'menu' | 'upper';
 
 /**
 Name every child of `parent` by the layer it belongs to, in paint order.
 */
-const layerOrder = (parent: HTMLElement): string[] =>
+const layerOrder = (parent: HTMLElement): Layer[] =>
   [...parent.children].map((child) => {
     if (!(child instanceof HTMLCanvasElement)) {
       return 'menu';
     }
 
-    const context = (child.getContext as unknown as () => MockContext)();
-    return context.lineWidth === upperStrokeWidth ? 'upper' : 'lower';
+    return canvasContext(child).lineWidth === upperStrokeWidth
+      ? 'upper'
+      : 'lower';
   });
 
 describe('createRenderer', () => {
