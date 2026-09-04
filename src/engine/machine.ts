@@ -64,47 +64,27 @@ export type NavigationInput = {
 }[PointerInputName];
 
 /**
- The boundary view of the machine's current phase: what `layout-view.ts`
- projects from. Kept as a plain discriminated union, independent of
- totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
+ The fields each machine phase itself carries, before `NavigationState` tags
+ a `phase` discriminant onto them or `MachineStates` adds its own `model`/
+ `options`: the one place either lists a phase's fields, so the two can never
+ list them differently. Parameterized over the menu/active node types since
+ the two need different projections of them: `NavigationState` its caller's
+ own `ModelMenus<M>`/`ModelItems<M>`, `MachineStates` the file's erased
+ `AnyModelNode` (see the module comment above).
  */
-export type NavigationState<M extends AnyModelNode> =
-  | { readonly phase: 'idle' }
-  | {
-      readonly phase: 'startup';
-      readonly origin: Point;
-      readonly stroke: readonly Point[];
-    }
-  | { readonly phase: 'expert'; readonly stroke: readonly Point[] }
-  | {
-      readonly phase: 'novice';
-      readonly menu: ModelMenus<M>;
-      readonly menuCenter: Point;
-      readonly active: ModelItems<M> | null;
-      readonly upperStroke: readonly Point[];
-      readonly lowerStroke: readonly Point[];
-      readonly dwellAnchor: Point;
-    };
-
-type MachineStates = {
-  idle: { readonly model: AnyModelNode; readonly options: NavigationOptions };
+type NavigationPhaseFields<Menu, Active> = {
+  idle: Record<never, never>;
   startup: {
-    readonly model: AnyModelNode;
-    readonly options: NavigationOptions;
     readonly origin: Point;
     readonly stroke: readonly Point[];
   };
   expert: {
-    readonly model: AnyModelNode;
-    readonly options: NavigationOptions;
     readonly stroke: readonly Point[];
   };
   novice: {
-    readonly model: AnyModelNode;
-    readonly options: NavigationOptions;
-    readonly menu: AnyModelNode;
+    readonly menu: Menu;
     readonly menuCenter: Point;
-    readonly active: AnyModelNode | null;
+    readonly active: Active | null;
     readonly upperStroke: readonly Point[];
     readonly lowerStroke: readonly Point[];
     // The last position significant movement was measured from: distinct
@@ -113,6 +93,24 @@ type MachineStates = {
     // residency; see its `restart` predicate below.
     readonly dwellAnchor: Point;
   };
+};
+
+/**
+ The boundary view of the machine's current phase: what `layout-view.ts`
+ projects from. Kept as a plain discriminated union, independent of
+ totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
+ */
+export type NavigationState<M extends AnyModelNode> = {
+  [K in keyof NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>]: {
+    readonly phase: K;
+  } & NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>[K];
+}[keyof NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>];
+
+type MachineStates = {
+  [K in keyof NavigationPhaseFields<AnyModelNode, AnyModelNode>]: {
+    readonly model: AnyModelNode;
+    readonly options: NavigationOptions;
+  } & NavigationPhaseFields<AnyModelNode, AnyModelNode>[K];
 };
 
 /**
