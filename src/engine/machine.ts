@@ -451,7 +451,11 @@ export const navigationMachine = machine({
       return {
         ...fromData,
         active,
-        upperStroke: [...fromData.upperStroke, position],
+        // Replaced, never appended to: novice feedback is the straight
+        // segment from the menu's center to the pointer, not the path taken
+        // to get there. Startup and expert accumulate instead, since their
+        // stroke is the mark being drawn.
+        upperStroke: [menuCenter, position],
         // A fresh reference only when movement is significant: the
         // submenu-dwell residency's `restart` predicate below compares this
         // by reference, so an unchanged anchor must stay the same object.
