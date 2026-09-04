@@ -68,9 +68,9 @@ export type NavigationInput = {
  a `phase` discriminant onto them or `MachineStates` adds its own `model`/
  `options`: the one place either lists a phase's fields, so the two can never
  list them differently. Parameterized over the menu/active node types since
- the two need different projections of them: `NavigationState` its caller's
- own `ModelMenus<M>`/`ModelItems<M>`, `MachineStates` the file's erased
- `AnyModelNode` (see the module comment above).
+ the two need different projections of them: `NavigationState` gets its
+ caller's own `ModelMenus<M>`/`ModelItems<M>`, `MachineStates` the file's
+ erased `AnyModelNode` (see the module comment above).
  */
 type NavigationPhaseFields<Menu, Active> = {
   idle: Record<never, never>;
