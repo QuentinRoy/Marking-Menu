@@ -42,16 +42,26 @@ export type NavigationOptions = {
   readonly submenuOpeningDelay: number;
 };
 
+type MachineInputs = {
+  down: { readonly position: Point };
+  move: { readonly position: Point };
+  up: { readonly position: Point };
+  cancel: { readonly position: Point };
+  dwell: undefined;
+  dispose: undefined;
+};
+
+type PointerInputName = 'down' | 'move' | 'up' | 'cancel';
+
 /**
  The boundary input shape `pointer-source.ts` sends: unrelated to the
  machine's own (shorter) input vocabulary, so that layer never has to know
- about it.
+ about it. Derived from `MachineInputs`' pointer-ish keys, tagged with a
+ `pointer.` prefix, rather than restated: the two can never drift apart.
  */
-export type NavigationInput =
-  | { readonly type: 'pointer.down'; readonly position: Point }
-  | { readonly type: 'pointer.move'; readonly position: Point }
-  | { readonly type: 'pointer.up'; readonly position: Point }
-  | { readonly type: 'pointer.cancel'; readonly position: Point };
+export type NavigationInput = {
+  [K in PointerInputName]: { readonly type: `pointer.${K}` } & MachineInputs[K];
+}[PointerInputName];
 
 /**
  The boundary view of the machine's current phase: what `layout-view.ts`
@@ -76,16 +86,7 @@ export type NavigationState<M extends AnyModelNode> =
       readonly dwellAnchor: Point;
     };
 
-type NavigationInputs = {
-  down: { readonly position: Point };
-  move: { readonly position: Point };
-  up: { readonly position: Point };
-  cancel: { readonly position: Point };
-  dwell: undefined;
-  dispose: undefined;
-};
-
-type NavigationStates = {
+type MachineStates = {
   idle: { readonly model: AnyModelNode; readonly options: NavigationOptions };
   startup: {
     readonly model: AnyModelNode;
@@ -116,7 +117,7 @@ type NavigationStates = {
 
 /**
  The layout announcement's payload: `LayoutView<AnyModelNode>` with the same
- erasure applied to its own `menu.model`, for the same reason `NavigationStates`
+ erasure applied to its own `menu.model`, for the same reason `MachineStates`
  erases `novice.menu`.
  */
 export type NavigationLayoutAnnouncement = {
@@ -135,7 +136,7 @@ export type NavigationFeedbackAnnouncement = {
   readonly canceled: boolean;
 };
 
-type NavigationOutputs = {
+type MachineOutputs = {
   start: MarkingMenuStartEvent;
   move: MarkingMenuMoveEvent<AnyModelNode>;
   open: MarkingMenuOpenEvent<AnyModelNode>;
@@ -154,8 +155,8 @@ type NavigationOutputs = {
  one of `NavigationState`'s variants field-for-field, `model`/`options` aside.
  */
 function toNavigationState(
-  to: keyof NavigationStates,
-  toData: NavigationStates[keyof NavigationStates],
+  to: keyof MachineStates,
+  toData: MachineStates[keyof MachineStates],
 ): NavigationState<AnyModelNode> {
   return { phase: to, ...toData } as unknown as NavigationState<AnyModelNode>;
 }
@@ -288,7 +289,7 @@ function armDwellTimer(
  only it has.
  */
 function terminationContext(
-  fromData: NavigationStates['startup' | 'expert' | 'novice'],
+  fromData: MachineStates['startup' | 'expert' | 'novice'],
   position: Point,
 ): {
   readonly stroke: readonly Point[];
@@ -308,9 +309,9 @@ function terminationContext(
 }
 
 export const navigationMachine = machine({
-  inputs: type<NavigationInputs>(),
-  states: type<NavigationStates>(),
-  outputs: type<NavigationOutputs>(),
+  inputs: type<MachineInputs>(),
+  states: type<MachineStates>(),
+  outputs: type<MachineOutputs>(),
 
   initial: 'idle',
 
