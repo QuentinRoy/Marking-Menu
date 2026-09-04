@@ -1,4 +1,5 @@
 import {
+  canvasContext,
   fakeTimers,
   queryCanvasContext,
   stubbedCanvasContexts,
@@ -13,6 +14,51 @@ const model = createModel({
     { id: 'b', label: 'B' },
   ],
 });
+
+// A distinct model reference, which is all it takes for the renderer to
+// recreate the menu element rather than patch it.
+const otherModel = createModel({
+  items: [
+    { id: 'a', label: 'A' },
+    { id: 'b', label: 'B' },
+  ],
+});
+
+// The canvas layers are told apart by their line width, the one drawing
+// property `drawPoint` leaves alone, so the stacking tests below have to
+// configure all three widths differently.
+const upperStrokeWidth = 7;
+const lowerStrokeWidth = 3;
+const feedbackStrokeWidth = 5;
+
+type Layer = 'lower' | 'menu' | 'upper' | 'feedback';
+
+const layerByStrokeWidth = new Map<number | undefined, Layer>([
+  [upperStrokeWidth, 'upper'],
+  [lowerStrokeWidth, 'lower'],
+  [feedbackStrokeWidth, 'feedback'],
+]);
+
+/**
+Name every child of `parent` by the layer it belongs to, in paint order.
+*/
+const layerOrder = (parent: HTMLElement): Array<Layer | undefined> =>
+  [...parent.children].map((child) =>
+    child instanceof HTMLCanvasElement
+      ? layerByStrokeWidth.get(canvasContext(child).lineWidth)
+      : 'menu',
+  );
+
+/**
+A renderer whose three canvas layers are individually identifiable.
+*/
+const createStackingRenderer = (parent: HTMLElement) =>
+  createRenderer<typeof model>({
+    parent,
+    strokeWidth: upperStrokeWidth,
+    lowerStrokeWidth,
+    gestureFeedbackStrokeWidth: feedbackStrokeWidth,
+  });
 
 describe('createRenderer', () => {
   it('skips the redraw when the upper stroke is reference-equal to the previous frame', () => {
@@ -222,6 +268,110 @@ describe('createRenderer', () => {
     const selected = queryCanvasContext(parent);
     expect(selected.strokeStyle).toBe('#00ff00');
     expect(selected.lineWidth).toBe(5);
+
+    renderer.dispose();
+  });
+
+  it('paints the lower stroke behind the open menu and the upper stroke in front of it', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+
+    const parent = document.createElement('div');
+    const renderer = createStackingRenderer(parent);
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model, center: [0, 0], activeKey: null },
+      upperStroke: [
+        [0, 0],
+        [10, 0],
+      ],
+      lowerStroke: [
+        [0, 0],
+        [5, 5],
+      ],
+    });
+    vi.advanceTimersToNextFrame();
+
+    expect(layerOrder(parent)).toEqual(['lower', 'menu', 'upper']);
+
+    renderer.dispose();
+  });
+
+  it('restores the order when a submenu replaces the menu element', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+
+    const parent = document.createElement('div');
+    const renderer = createStackingRenderer(parent);
+    const upperStroke: Point[] = [
+      [0, 0],
+      [10, 0],
+    ];
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model, center: [0, 0], activeKey: null },
+      upperStroke,
+      lowerStroke: [
+        [0, 0],
+        [5, 5],
+      ],
+    });
+    vi.advanceTimersToNextFrame();
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model: otherModel, center: [10, 0], activeKey: null },
+      // Reference-equal, so the layer skips its redraw: the upper stroke
+      // must still be moved back in front of the recreated menu.
+      upperStroke,
+      lowerStroke: [
+        [0, 0],
+        [5, 5],
+        [10, 0],
+      ],
+    });
+    vi.advanceTimersToNextFrame();
+
+    expect(layerOrder(parent)).toEqual(['lower', 'menu', 'upper']);
+
+    renderer.dispose();
+  });
+
+  it('keeps a completed-gesture trace in front of a menu that opens before it expires', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+
+    const parent = document.createElement('div');
+    const renderer = createStackingRenderer(parent);
+
+    renderer.showFeedback({
+      stroke: [
+        [0, 0],
+        [10, 0],
+      ],
+      canceled: false,
+    });
+    // Well inside the default feedback duration, so the trace is still up
+    // when the next gesture opens its menu.
+    vi.advanceTimersByTime(334);
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model, center: [0, 0], activeKey: null },
+      upperStroke: [
+        [0, 0],
+        [10, 0],
+      ],
+      lowerStroke: [
+        [0, 0],
+        [5, 5],
+      ],
+    });
+    vi.advanceTimersToNextFrame();
+
+    expect(layerOrder(parent)).toEqual(['lower', 'menu', 'feedback', 'upper']);
 
     renderer.dispose();
   });

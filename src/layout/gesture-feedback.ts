@@ -20,6 +20,11 @@ export type GestureFeedback = {
   */
   show: (stroke: readonly Point[], options?: { canceled?: boolean }) => void;
   /**
+  The canvases of the traces still showing, so callers can place them among
+  their siblings.
+  */
+  elements: () => readonly HTMLCanvasElement[];
+  /**
   Immediately remove any shown feedback.
   */
   remove: () => void;
@@ -88,5 +93,8 @@ export function createGestureFeedback({
     strokeTimeoutEntries = [];
   };
 
-  return { show, remove };
+  const elements = () =>
+    strokeTimeoutEntries.map(({ canvas }) => canvas.element);
+
+  return { show, elements, remove };
 }

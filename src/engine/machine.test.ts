@@ -2,7 +2,11 @@ import { fakeTimers } from '../__fixtures__/canvas.js';
 import { createModel } from '../model.js';
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
 import type * as RecognizeModule from '../recognizer/recognize-mm-stroke.js';
-import { navigationMachine } from './machine.js';
+import {
+  navigationMachine,
+  type NavigationFeedbackAnnouncement,
+  type NavigationLayoutAnnouncement,
+} from './machine.js';
 
 // Wraps the real recognizer rather than replacing it: every existing test
 // keeps exercising genuine recognition geometry, and only the tests that
@@ -89,6 +93,32 @@ const recordEmitted = (host: ReturnType<typeof startHost>): string[] => {
   }
 
   return emitted;
+};
+
+/**
+Record every layout announcement a host makes, in order.
+*/
+const recordLayouts = (
+  host: ReturnType<typeof startHost>,
+): NavigationLayoutAnnouncement[] => {
+  const layouts: NavigationLayoutAnnouncement[] = [];
+  host.on('layout', ({ data }) => {
+    layouts.push(data);
+  });
+  return layouts;
+};
+
+/**
+Record every feedback announcement a host makes, in order.
+*/
+const recordFeedback = (
+  host: ReturnType<typeof startHost>,
+): NavigationFeedbackAnnouncement[] => {
+  const feedback: NavigationFeedbackAnnouncement[] = [];
+  host.on('feedback', ({ data }) => {
+    feedback.push(data);
+  });
+  return feedback;
 };
 
 describe('navigationMachine', () => {
@@ -325,7 +355,7 @@ describe('navigationMachine', () => {
       host.send('dwell');
 
       const data = host.current.name === 'novice' ? host.current.data : null;
-      expect(data?.upperStroke).toEqual([[100, 0]]);
+      expect(data?.lastPosition).toEqual([100, 0]);
       expect(data?.lowerStroke).toEqual([
         [0, 0],
         [100, 0],
@@ -612,7 +642,7 @@ describe('navigationMachine', () => {
       expect(event.position).toEqual([100, 0]);
     });
 
-    it('accumulates the prior stroke into the lower stroke and restarts the upper stroke from the new centre', () => {
+    it('accumulates the prior stroke into the lower stroke and restarts from the new center', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
 
       openNovice(host);
@@ -620,7 +650,7 @@ describe('navigationMachine', () => {
       host.send('dwell');
 
       const data = host.current.name === 'novice' ? host.current.data : null;
-      expect(data?.upperStroke).toEqual([[100, 0]]);
+      expect(data?.lastPosition).toEqual([100, 0]);
       expect(data?.lowerStroke).toEqual([
         [0, 0],
         [0, 0],
@@ -735,6 +765,85 @@ describe('navigationMachine', () => {
       // to be the very same reference the residency's `restart` predicate
       // compares against.
       expect(vi.getTimerCount()).toBe(1);
+    });
+  });
+
+  describe('the strokes it announces to the layout', () => {
+    it('reduces the novice upper stroke to the menu center and the last position, whatever path the pointer took between them', () => {
+      const host = startHost();
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+      host.send('move', { position: [30, 20] });
+      host.send('move', { position: [100, 0] });
+
+      expect(layouts.at(-1)?.upperStroke).toEqual([
+        [0, 0],
+        [100, 0],
+      ]);
+    });
+
+    it('keeps accumulating the startup and expert stroke point by point', () => {
+      const host = startHost();
+      const layouts = recordLayouts(host);
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [1, 0] }); // Below the threshold: still startup.
+      host.send('move', { position: [100, 0] }); // Crosses it: expert.
+      host.send('move', { position: [100, 40] });
+
+      expect(layouts.at(-1)?.upperStroke).toEqual([
+        [0, 0],
+        [1, 0],
+        [100, 0],
+        [100, 40],
+      ]);
+    });
+
+    it("folds the parent menu's straight segment, not the pointer's path, into the lower stroke when a submenu opens", () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+      host.send('move', { position: [30, 20] });
+      host.send('move', { position: [100, 0] });
+      host.send('dwell');
+
+      expect(layouts.at(-1)?.lowerStroke).toEqual([
+        [0, 0],
+        [0, 0],
+        [100, 0],
+      ]);
+      // The fresh submenu has had no move yet, so its segment is still a
+      // single point drawn twice.
+      expect(layouts.at(-1)?.upperStroke).toEqual([
+        [100, 0],
+        [100, 0],
+      ]);
+    });
+
+    it('announces a completed novice gesture as one straight segment per menu level', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const feedback = recordFeedback(host);
+
+      openNovice(host);
+      host.send('move', { position: [30, 20] });
+      host.send('move', { position: [100, 0] });
+      host.send('dwell'); // Opens the "right" submenu, centered on [100, 0].
+      host.send('move', { position: [70, -60] });
+      host.send('move', { position: [100, -100] });
+      host.send('up', { position: [100, -100] });
+
+      // Each menu center repeats where one level's segment ends and the
+      // next begins, and the release position repeats the last move.
+      expect(feedback.at(-1)?.stroke).toEqual([
+        [0, 0],
+        [0, 0],
+        [100, 0],
+        [100, 0],
+        [100, -100],
+        [100, -100],
+      ]);
     });
   });
 });

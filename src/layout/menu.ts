@@ -50,6 +50,10 @@ export type MenuLayoutModel = {
  */
 export type Menu = {
   /**
+  The menu's root element, so callers can place it among its siblings.
+  */
+  element: HTMLElement;
+  /**
   Mark the item with the given id as active (or none if nullish).
   */
   setActive: (itemId: string | number | null) => void;
@@ -168,5 +172,5 @@ export function createMenu({
   };
 
   // Create the interface.
-  return { setActive, remove };
+  return { element: main, setActive, remove };
 }

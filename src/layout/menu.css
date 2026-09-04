@@ -25,6 +25,10 @@
   /* Using transform to make .marking-menu a stacking context and confine
      z-ordered children in the document's z-stack. */
   transform: translate(0px, 0px);
+  /* No z-index here on purpose: the menu sits between the two stroke
+     canvases, above the lower stroke and below both the upper one and the
+     completed-gesture feedback. The renderer keeps it there by ordering
+     the siblings itself, so a z-index here would break that. */
 }
 
 .marking-menu-item {

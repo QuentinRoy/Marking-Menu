@@ -17,7 +17,7 @@ import type {
   ModelMenus,
 } from '../types.js';
 import { dist, toPolar, type Point } from '../utils.js';
-import { projectLayout } from './layout-view.js';
+import { noviceUpperStroke, projectLayout } from './layout-view.js';
 
 /*
  The navigation machine, declared as a totorobot definition rather than a
@@ -89,7 +89,11 @@ type NavigationPhaseFields<Menu, Active> = {
     readonly menu: Menu;
     readonly menuCenter: Point;
     readonly active: Active | null;
-    readonly upperStroke: readonly Point[];
+    // Where the pointer is now. The upper stroke novice mode draws is the
+    // straight segment from `menuCenter` to here, so the machine keeps the
+    // endpoint rather than the segment: `noviceUpperStroke` builds it for
+    // the three places that need it.
+    readonly lastPosition: Point;
     readonly lowerStroke: readonly Point[];
     // The last position significant movement was measured from: distinct
     // from `menuCenter`, which stays fixed for the life of this menu. Only a
@@ -299,9 +303,9 @@ function terminationContext(
   readonly active: AnyModelNode | null;
 } {
   if ('lowerStroke' in fromData) {
-    const { lowerStroke, upperStroke, menu, active } = fromData;
+    const { lowerStroke, menu, active } = fromData;
     return {
-      stroke: [...lowerStroke, ...upperStroke, position],
+      stroke: [...lowerStroke, ...noviceUpperStroke(fromData), position],
       menu,
       active,
     };
@@ -390,7 +394,7 @@ export const navigationMachine = machine({
       menu: model,
       menuCenter: origin,
       active: null,
-      upperStroke: [origin],
+      lastPosition: origin,
       lowerStroke: stroke,
       dwellAnchor: origin,
     }),
@@ -430,7 +434,7 @@ export const navigationMachine = machine({
         menu,
         menuCenter: position,
         active: null,
-        upperStroke: [position],
+        lastPosition: position,
         lowerStroke: stroke,
         dwellAnchor: [...position],
       };
@@ -451,7 +455,7 @@ export const navigationMachine = machine({
       return {
         ...fromData,
         active,
-        upperStroke: [...fromData.upperStroke, position],
+        lastPosition: position,
         // A fresh reference only when movement is significant: the
         // submenu-dwell residency's `restart` predicate below compares this
         // by reference, so an unchanged anchor must stay the same object.
@@ -466,19 +470,10 @@ export const navigationMachine = machine({
     // that submenu: a genuine phase change, even though the destination is
     // named `novice` too. Anything else declines, and since no other row is
     // declared for (novice, dwell), the dwell is silently dropped.
-    'novice -dwell> novice'({
-      fromData: {
-        active,
-        menuCenter,
-        upperStroke,
-        lowerStroke,
-        options,
-        model,
-      },
-      skip,
-    }) {
-      const position = upperStroke.at(-1) as Point;
-      const { radius } = toPolar(position, menuCenter);
+    'novice -dwell> novice'({ fromData, skip }) {
+      const { active, menuCenter, lastPosition, lowerStroke, options, model } =
+        fromData;
+      const { radius } = toPolar(lastPosition, menuCenter);
       if (
         active === null ||
         active.isLeaf ||
@@ -491,16 +486,18 @@ export const navigationMachine = machine({
         model,
         options,
         menu: active,
-        menuCenter: position,
+        menuCenter: lastPosition,
         active: null,
-        upperStroke: [position],
-        lowerStroke: [...lowerStroke, ...upperStroke],
-        // A fresh reference, deliberately never `position` itself: opening a
-        // submenu must always restart the residency for the new menu, and
-        // `position` is `upperStroke.at(-1)`. With no wobble between the
-        // move that armed this dwell and the dwell itself, that is the very
-        // same reference `fromData.dwellAnchor` already holds.
-        dwellAnchor: [...position],
+        lastPosition,
+        // The parent menu's own segment becomes part of the trail left
+        // behind the new one.
+        lowerStroke: [...lowerStroke, ...noviceUpperStroke(fromData)],
+        // A fresh reference, deliberately never `lastPosition` itself:
+        // opening a submenu must always restart the residency for the new
+        // menu, and with no wobble between the move that armed this dwell
+        // and the dwell itself, `lastPosition` is the very same reference
+        // `fromData.dwellAnchor` already holds.
+        dwellAnchor: [...lastPosition],
       };
     },
 

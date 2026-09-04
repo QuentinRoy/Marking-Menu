@@ -16,6 +16,23 @@ export type LayoutView<M extends AnyModelNode> = {
   readonly lowerStroke: readonly Point[] | null;
 };
 
+/**
+ The segment novice mode draws on top of the open menu: from the menu's
+ center to the pointer, never the path the pointer took to get there.
+ Startup and expert keep their whole traced stroke instead, which is the
+ mark being drawn. The machine stores only `lastPosition` and builds the
+ segment here, so the two can never disagree.
+ */
+export function noviceUpperStroke({
+  menuCenter,
+  lastPosition,
+}: {
+  readonly menuCenter: Point;
+  readonly lastPosition: Point;
+}): readonly [Point, Point] {
+  return [menuCenter, lastPosition];
+}
+
 export function projectLayout<M extends AnyModelNode>(
   state: NavigationState<M>,
 ): LayoutView<M> {
@@ -52,7 +69,7 @@ export function projectLayout<M extends AnyModelNode>(
           activeKey:
             (state.active as { readonly key: string } | null)?.key ?? null,
         },
-        upperStroke: state.upperStroke,
+        upperStroke: noviceUpperStroke(state),
         lowerStroke: state.lowerStroke,
       };
     }

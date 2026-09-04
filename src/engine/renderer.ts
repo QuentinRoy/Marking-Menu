@@ -47,6 +47,7 @@ function createStrokeLayer({
     stroke: readonly Point[] | null,
     options?: { drawStartPoint?: boolean },
   ) => void;
+  element: () => HTMLCanvasElement | null;
   dispose: () => void;
 } {
   let canvas: StrokeCanvas | null = null;
@@ -75,12 +76,24 @@ function createStrokeLayer({
         draw(stroke, shouldDrawStartPoint);
       }
     },
+    element: () => canvas?.element ?? null,
     dispose() {
       draw.cancel();
       canvas?.remove();
       canvas = null;
     },
   };
+}
+
+/**
+ Whether `node` is painted before `other`. The two are always siblings under
+ the renderer's parent, never nested, so `compareDocumentPosition` returns
+ exactly one of the two ordering flags and nothing has to be masked off.
+ */
+function isPaintedBefore(node: Node, other: Node): boolean {
+  return (
+    node.compareDocumentPosition(other) === Node.DOCUMENT_POSITION_FOLLOWING
+  );
 }
 
 export type RendererOptions = {
@@ -178,6 +191,46 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
     },
   });
 
+  /**
+   The paint order the novice feedback depends on: the lower stroke, which
+   records movement made before the menu opened, goes behind the menu; the
+   upper stroke and its origin marker go in front of it, so the marker
+   stays visible and the line is not cut where it crosses an item.
+
+   A completed-gesture trace belongs in front of the menu as well. It
+   outlives the gesture that produced it, so a menu opened before it fades
+   is appended after it and would cover it.
+
+   Nothing in the stylesheet sets any of this, and each canvas and the menu
+   land wherever they were first needed, so sibling order is all that holds
+   it. Every render re-asserts that order, moving an element only when it
+   is out of place.
+   */
+  function restack(): void {
+    const menuElement = menuHandle?.menu.element;
+    if (menuElement === undefined) {
+      return;
+    }
+
+    const lower = lowerStroke.element();
+    if (lower !== null && !isPaintedBefore(lower, menuElement)) {
+      menuElement.before(lower);
+    }
+
+    const upper = upperStroke.element();
+    if (upper !== null && !isPaintedBefore(menuElement, upper)) {
+      menuElement.after(upper);
+    }
+
+    // After the upper stroke, so a live gesture still draws over a fading
+    // trace of the previous one.
+    for (const trace of gestureFeedback.elements()) {
+      if (!isPaintedBefore(menuElement, trace)) {
+        menuElement.after(trace);
+      }
+    }
+  }
+
   return {
     render(view) {
       parent.style.cursor = view.cursor === 'default' ? ownCursor : view.cursor;
@@ -222,6 +275,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
 
       upperStroke.sync(view.upperStroke, { drawStartPoint: isNoviceMode });
       lowerStroke.sync(view.lowerStroke);
+      restack();
     },
     showFeedback(effect) {
       gestureFeedback.show(effect.stroke, { canceled: effect.canceled });
