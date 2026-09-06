@@ -214,7 +214,7 @@ describe('createModel', () => {
       ],
     });
     expect(menu.getMinAngularGap()).toBe(45);
-    expect(menu.items[1]?.getMinAngularGap()).toBe(45);
+    expect(menu.items[1].getMinAngularGap()).toBe(45);
   });
 
   it('reports no gap for a level with fewer than two items', () => {
@@ -222,7 +222,7 @@ describe('createModel', () => {
       items: [{ label: 'Only one', items: [{ label: 'Sub 1' }] }],
     });
     expect(menu.getMinAngularGap()).toBe(Infinity);
-    expect(menu.items[0]?.getMinAngularGap()).toBe(Infinity);
+    expect(menu.items[0].getMinAngularGap()).toBe(Infinity);
   });
 
   it('freezes the item lists, at every level', () => {
