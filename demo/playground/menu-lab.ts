@@ -3,21 +3,17 @@ import {
   createStrokeCanvas,
   type StrokeCanvas,
 } from '../../src/layout/stroke.js';
-import { createModel } from '../../src/model.js';
 import {
   analyzeMarkingMenuStroke,
   type MarkingMenuStrokeAnalysis,
 } from '../../src/recognizer/recognize-mm-stroke.js';
 import { strokeLength } from '../../src/recognizer/stroke-length.js';
 import { radiansToDegrees, type Point } from '../../src/utils.js';
-import {
-  toMarkingMenuItems,
-  type BuilderItem,
-  type ItemPath,
-} from './menu-config.js';
+import type { BuilderItem, ItemPath } from './menu-config.js';
+import { buildModel, nodeAt, type BuilderModelNode } from './model.js';
 
 /*
- The live half of the builder page: a menu built from the current items, laid
+ The live half of the playground: a menu built from the current items, laid
  out and drawn exactly as the shipped library draws it, that you can click
  into (to preview a sub-menu's own layout) and draw on (to test what the
  recognizer makes of a stroke). The two are independent: clicking only
@@ -25,27 +21,6 @@ import {
  top level, resetting the shown level to match before the stroke starts so
  what's on screen matches what's being tested.
  */
-
-const buildModel = (items: readonly BuilderItem[]) =>
-  createModel({ items: toMarkingMenuItems(items) });
-
-type BuilderModel = ReturnType<typeof buildModel>;
-type BuilderModelItem = BuilderModel['items'][number];
-type BuilderModelNode = BuilderModel | BuilderModelItem;
-
-const nodeAt = (model: BuilderModel, path: ItemPath): BuilderModelNode => {
-  let node: BuilderModelNode = model;
-  for (const index of path) {
-    const next: BuilderModelItem | undefined = node.items[index];
-    if (next === undefined) {
-      return model;
-    }
-
-    node = next;
-  }
-
-  return node;
-};
 
 const labelAt = (items: readonly BuilderItem[], path: ItemPath): string => {
   let level = items;
@@ -78,8 +53,11 @@ const localPoint = (event: PointerEvent, surface: HTMLElement): Point => {
   return [event.clientX - rect.left, event.clientY - rect.top];
 };
 
+const labelOf = (node: { readonly isRoot: boolean }): string =>
+  'label' in node && typeof node.label === 'string' ? node.label : '';
+
 /**
- The recognizer sandbox's controls.
+ The menu lab's controls.
  */
 export type MenuLab = {
   /**
@@ -208,9 +186,6 @@ export function createMenuLab({
       cornerCanvas.drawPoint(point);
     }
   };
-
-  const labelOf = (node: { readonly isRoot: boolean }): string =>
-    'label' in node && typeof node.label === 'string' ? node.label : '';
 
   const reportResult = (
     analysis: MarkingMenuStrokeAnalysis<BuilderModelNode>,

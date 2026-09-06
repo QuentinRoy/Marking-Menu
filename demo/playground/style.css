@@ -11,6 +11,12 @@ body {
   margin: 0;
 }
 
+/* The demo's own accent color (see its GitHub corner icon): kept here
+   instead of a browser-default blue, so the two pages read as one site. */
+a {
+  color: inherit;
+}
+
 header {
   border-bottom: 1px solid #ddd;
   padding: 1em 1.5em;
@@ -29,22 +35,34 @@ header p {
 
 main {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.5em;
   padding: 1.5em;
 }
 
 #tree-editor {
-  flex: 0 0 22em;
+  flex: 1 1 22em;
   max-height: calc(100vh - 10em);
   overflow-y: auto;
 }
 
+/* Roughly where the two columns' combined min-width wraps the tree editor
+   onto its own row (see #tree-editor and #menu-lab): once it is a full-width
+   row above the preview rather than a side column, a tall scroll area pushes
+   the preview further down than it needs to. */
+@media (max-width: 50em) {
+  #tree-editor {
+    max-height: 20em;
+  }
+}
+
 #menu-lab {
   display: flex;
-  flex: 1 1 auto;
+  /* Matches .menu-lab-surface's own min-width: below it, the menu can no
+     longer draw its full circle, so the row wraps instead of squeezing it. */
+  flex: 1 1 26em;
   flex-direction: column;
   gap: 0.75em;
-  min-width: 0;
 }
 
 .item-list {
@@ -102,8 +120,9 @@ button:hover {
 .menu-lab-crumb {
   background: none;
   border: none;
-  color: #2563eb;
+  color: #1f1f1f;
   padding: 0.1em 0.2em;
+  text-decoration: underline;
 }
 
 .menu-lab-crumb:disabled {
@@ -115,6 +134,10 @@ button:hover {
   background: #fafafa;
   border: 1px solid #ddd;
   height: 30em;
+  /* Room for the menu's fixed-size circle (item labels reach roughly 13em
+     from the center on every side) to draw without spilling past this box. */
+  min-width: 26em;
+  overflow: hidden;
   position: relative;
   touch-action: none;
 }
@@ -122,6 +145,11 @@ button:hover {
 .menu-lab-menu-layer {
   inset: 0;
   position: absolute;
+  /* The library's own stylesheet (menu.css) sizes item labels for its
+     default font; this page's own sans-serif is taller at the same size and
+     crops them, so the menu itself is drawn in the browser's plain default
+     instead, the same as the demo page. */
+  font-family: initial;
 }
 
 .menu-lab-result {

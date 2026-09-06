@@ -34,7 +34,7 @@ if (
   !(treeContainer instanceof HTMLElement) ||
   !(labContainer instanceof HTMLElement)
 ) {
-  throw new TypeError('Builder page is missing #tree-editor or #menu-lab.');
+  throw new TypeError('Playground page is missing #tree-editor or #menu-lab.');
 }
 
 const loadFromHash = (): readonly BuilderItem[] => {

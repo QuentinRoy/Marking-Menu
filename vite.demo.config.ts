@@ -8,14 +8,18 @@ export default defineConfig(({ command }) => ({
   build: {
     emptyOutDir: true,
     outDir: path.resolve(import.meta.dirname, 'demo-dist'),
-    // Multi-page build: the demo at the root, and the builder page (see
-    // `demo/builder`) alongside it. Vite only bundles `demo/index.html` by
-    // default; nested pages need spelling out here, though the dev server
-    // already serves `demo/builder/index.html` at `/builder/` without it.
+    // Multi-page build: the demo at the root, and the playground page (see
+    // `demo/playground`) alongside it. Vite only bundles `demo/index.html`
+    // by default; nested pages need spelling out here, though the dev
+    // server already serves `demo/playground/index.html` at `/playground/`
+    // without it.
     rolldownOptions: {
       input: {
         main: path.resolve(import.meta.dirname, 'demo/index.html'),
-        builder: path.resolve(import.meta.dirname, 'demo/builder/index.html'),
+        playground: path.resolve(
+          import.meta.dirname,
+          'demo/playground/index.html',
+        ),
       },
     },
   },

@@ -43,6 +43,15 @@ h1 {
   width: auto;
 }
 
+#instructions .help a {
+  color: inherit;
+  /* #main sits on top of #instructions to catch a gesture started anywhere
+     on the page; without its own stacking position, this link would sit
+     under it and never receive a click. */
+  position: relative;
+  z-index: 1;
+}
+
 #toast-wrapper {
   pointer-events: none;
   position: fixed;
