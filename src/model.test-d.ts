@@ -112,11 +112,6 @@ describe('createModel', () => {
     expectTypeOf(menu.getMaxBreadth()).toEqualTypeOf<number>();
   });
 
-  it('always resolves the minimum angular gap to a number', () => {
-    expectTypeOf(menu.items[0].getMinAngularGap()).toEqualTypeOf<number>();
-    expectTypeOf(menu.getMinAngularGap()).toEqualTypeOf<number>();
-  });
-
   it('does not need `as const` to narrow', () => {
     // The `const` type parameter narrows the description on its own: the
     // literal above is a plain object literal, and this one is too.

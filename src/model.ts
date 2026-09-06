@@ -352,7 +352,9 @@ abstract class MarkingMenuNode {
 
   /**
    Find the smallest angular gap between neighboring items, at this level or
-   any level below it.
+   any level below it. Feeds the recognizer's corner threshold; deliberately
+   left off the public {@link ModelItem}/{@link ModelRoot} types, the same
+   way {@link createModel} is left off `index.ts`.
 
    @returns The smallest gap, in degrees, or `Infinity` if no level has two
    or more items to have a gap between.
