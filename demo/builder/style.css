@@ -1,0 +1,132 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  color: #1f1f1f;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  margin: 0;
+}
+
+header {
+  border-bottom: 1px solid #ddd;
+  padding: 1em 1.5em;
+}
+
+header h1 {
+  font-size: 1.4em;
+  margin: 0 0 0.3em;
+}
+
+header p {
+  color: #444;
+  margin: 0 0 0.5em;
+  max-width: 60em;
+}
+
+main {
+  display: flex;
+  gap: 1.5em;
+  padding: 1.5em;
+}
+
+#tree-editor {
+  flex: 0 0 22em;
+  max-height: calc(100vh - 10em);
+  overflow-y: auto;
+}
+
+#menu-lab {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.75em;
+  min-width: 0;
+}
+
+.item-list {
+  list-style: none;
+  margin: 0;
+  padding-left: 1.25em;
+}
+
+#tree-editor > .item-list {
+  padding-left: 0;
+}
+
+.item-row {
+  margin-bottom: 0.4em;
+}
+
+.item-controls {
+  align-items: center;
+  display: flex;
+  gap: 0.4em;
+}
+
+.item-label {
+  flex: 1 1 auto;
+  min-width: 4em;
+  padding: 0.3em 0.4em;
+}
+
+.item-angle {
+  width: 4.5em;
+  padding: 0.3em 0.4em;
+}
+
+.item-add-row {
+  margin: 0.4em 0;
+}
+
+button {
+  background: #f2f2f2;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0.3em 0.6em;
+}
+
+button:hover {
+  background: #e6e6e6;
+}
+
+.menu-lab-breadcrumb {
+  color: #444;
+  font-size: 0.9em;
+}
+
+.menu-lab-crumb {
+  background: none;
+  border: none;
+  color: #2563eb;
+  padding: 0.1em 0.2em;
+}
+
+.menu-lab-crumb:disabled {
+  color: inherit;
+  cursor: default;
+}
+
+.menu-lab-surface {
+  background: #fafafa;
+  border: 1px solid #ddd;
+  height: 30em;
+  position: relative;
+  touch-action: none;
+}
+
+.menu-lab-menu-layer {
+  inset: 0;
+  position: absolute;
+}
+
+.menu-lab-result {
+  background: #f2f2f2;
+  border-radius: 4px;
+  font-family: monospace;
+  padding: 0.6em 0.8em;
+}
