@@ -184,6 +184,17 @@ export const findItem = <N extends AnyModelNode>({
   > | null;
 
 /**
+ Read the smallest angular gap between neighboring items anywhere in `model`.
+
+ Every concrete model node carries this, but it stays off {@link
+ AnyModelNode} on purpose: it exists to feed the corner threshold below, not
+ as something a caller of the library has a reason to read. The cast is
+ sound by construction for that same reason.
+ */
+const getMinAngularGap = (model: AnyModelNode): number =>
+  (model as unknown as { getMinAngularGap(): number }).getMinAngularGap();
+
+/**
  Recognize the item selected by a marking menu stroke.
 
  @param stroke - A list of points.
@@ -233,11 +244,11 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
 
   const maxDepth =
     maxDepthOption < 0 ? model.getMaxDepth() + maxDepthOption : maxDepthOption;
-  const maxMenuBreadth = model.getMaxBreadth();
+  const minAngularGap = getMinAngularGap(model);
   const length = strokeLength(stroke);
   const expectedSegmentLength = length / maxDepth;
   const sensitivity = 0.75;
-  const angleThreshold = 360 / maxMenuBreadth / 2 / sensitivity;
+  const angleThreshold = minAngularGap / 2 / sensitivity;
   const articulationPoints = getStrokeArticulationPoints(stroke, {
     expectedSegmentLength,
     angleThreshold,
