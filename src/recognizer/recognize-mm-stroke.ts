@@ -19,6 +19,13 @@ type StrokeSegment = {
 };
 
 /**
+ A {@link StrokeSegment} still carrying the two points it was measured
+ between, kept only where a caller needs to draw the segment rather than just
+ walk the model with it.
+ */
+type LocatedStrokeSegment = StrokeSegment & { points: Segment };
+
+/**
  Join the consecutive points of `points` into segments.
 
  @param points - A list of points.
@@ -184,6 +191,68 @@ export const findItem = <N extends AnyModelNode>({
   > | null;
 
 /**
+ Resolve a (possibly negative) `maxDepth` option against a model.
+
+ @param model - The model the depth is resolved against.
+ @param maxDepthOption - The requested depth. A negative value counts back
+ from the model's own maximum depth.
+ @returns The resolved, non-negative depth.
+ */
+const resolveMaxDepth = (
+  model: AnyModelNode,
+  maxDepthOption: number,
+): number =>
+  maxDepthOption < 0 ? model.getMaxDepth() + maxDepthOption : maxDepthOption;
+
+/**
+ Cut a stroke into the segments a marking-menu walk is attempted against:
+ find its articulation points, then join them pairwise, dropping segments too
+ short to be a deliberate move. Shared by {@link recognizeMarkingMenuStroke}
+ and {@link analyzeMarkingMenuStroke} so the two can never disagree on the
+ threshold or segments a stroke produced.
+
+ @param stroke - A list of points.
+ @param model - The model the stroke is recognized against, for its breadth.
+ @param maxDepth - The already-resolved maximum menu depth to walk.
+ @returns The threshold and segmentation the stroke was cut into.
+ */
+const cutStroke = (
+  stroke: readonly Point[],
+  model: AnyModelNode,
+  maxDepth: number,
+): {
+  angleThreshold: number;
+  expectedSegmentLength: number;
+  articulationPoints: Point[];
+  segments: LocatedStrokeSegment[];
+} => {
+  const maxMenuBreadth = model.getMaxBreadth();
+  const length = strokeLength(stroke);
+  const expectedSegmentLength = length / maxDepth;
+  const sensitivity = 0.75;
+  const angleThreshold = 360 / maxMenuBreadth / 2 / sensitivity;
+  const articulationPoints = getStrokeArticulationPoints(stroke, {
+    expectedSegmentLength,
+    angleThreshold,
+  });
+  const minSegmentSize = expectedSegmentLength / 3;
+  // Get the segments of the marking menus.
+  const segments = pointsToSegments(articulationPoints)
+    // Change the representation of the segment to include its length.
+    .map((seg) => ({ points: seg, length: dist(...seg) }))
+    // Remove the segments that are too small.
+    .filter((seg) => seg.length > minSegmentSize)
+    // Add each segment's angle, keeping its points for callers that draw it.
+    .map((seg) => ({ ...seg, angle: segmentAngle(...seg.points) }));
+  return {
+    angleThreshold,
+    expectedSegmentLength,
+    articulationPoints,
+    segments,
+  };
+};
+
+/**
  Recognize the item selected by a marking menu stroke.
 
  @param stroke - A list of points.
@@ -231,30 +300,8 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
     throw new Error('The result cannot be both a leaf and a menu');
   }
 
-  const maxDepth =
-    maxDepthOption < 0 ? model.getMaxDepth() + maxDepthOption : maxDepthOption;
-  const maxMenuBreadth = model.getMaxBreadth();
-  const length = strokeLength(stroke);
-  const expectedSegmentLength = length / maxDepth;
-  const sensitivity = 0.75;
-  const angleThreshold = 360 / maxMenuBreadth / 2 / sensitivity;
-  const articulationPoints = getStrokeArticulationPoints(stroke, {
-    expectedSegmentLength,
-    angleThreshold,
-  });
-  const minSegmentSize = expectedSegmentLength / 3;
-  // Get the segments of the marking menus.
-  const segments = pointsToSegments(articulationPoints)
-    // Change the representation of the segment to include its length.
-    .map((seg) => ({ points: seg, length: dist(...seg) }))
-    // Remove the segments that are too small.
-    .filter((seg) => seg.length > minSegmentSize)
-    // Change again the representation of the segment to include its length but not its
-    // its points anymore.
-    .map((seg) => ({
-      angle: segmentAngle(...seg.points),
-      length: seg.length,
-    }));
+  const maxDepth = resolveMaxDepth(model, maxDepthOption);
+  const { segments } = cutStroke(stroke, model, maxDepth);
   const path = findItem({ model, segments, maxDepth });
   // Paths are never empty, so the item is only nullish when the path is.
   const item = path?.at(-1) ?? null;
@@ -277,4 +324,77 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
   }
 
   return item;
+}
+
+/**
+ What a stroke recognition attempt did, on top of the item it landed on: the
+ threshold applied, the corners found, and the pieces the stroke was cut into.
+ Meant for a caller that displays this rather than just acting on the result
+ (see {@link analyzeMarkingMenuStroke}).
+ */
+export type MarkingMenuStrokeAnalysis<N extends AnyModelNode> = {
+  /**
+  The angle, in degrees, past which a bend in the stroke counts as a corner.
+  */
+  readonly angleThreshold: number;
+  /**
+  The segment length the stroke was expected to divide into, given its total
+  length and the depth walked.
+  */
+  readonly expectedSegmentLength: number;
+  /**
+  The points along the stroke recognized as corners, start and end included.
+  */
+  readonly articulationPoints: readonly Point[];
+  /**
+  The pieces the stroke was cut into between corners, each with the two
+  points it spans, its length, and its angle. Short pieces between corners
+  are already dropped, but a menu deeper than this list is long is walked by
+  further dividing the longest piece, which invents a piece with no point of
+  its own to draw; `path` still reflects that division, this list does not.
+  */
+  readonly segments: readonly LocatedStrokeSegment[];
+  /**
+  The path the stroke was walked down, or `null` if it does not lead
+  anywhere in the model.
+  */
+  readonly path: NonEmptyArray<ModelNodes<N>> | null;
+};
+
+/**
+ Recognize a marking menu stroke like {@link recognizeMarkingMenuStroke},
+ while also reporting the threshold, corners and pieces the recognition
+ relied on, for a caller that wants to show that reasoning rather than just
+ use its outcome.
+
+ @param stroke - A list of points.
+ @param model - The model to recognize the stroke against.
+ @param options - Additional options.
+ @param options.maxDepth - The maximum menu depth to walk. If negative,
+ start from the maximum depth of the model.
+ @returns The full analysis of the recognition attempt.
+ */
+export function analyzeMarkingMenuStroke<N extends AnyModelNode>(
+  stroke: readonly Point[],
+  model: N,
+  options?: { maxDepth?: number },
+): MarkingMenuStrokeAnalysis<N> {
+  const maxDepth = resolveMaxDepth(
+    model,
+    options?.maxDepth ?? model.getMaxDepth(),
+  );
+  const {
+    angleThreshold,
+    expectedSegmentLength,
+    articulationPoints,
+    segments,
+  } = cutStroke(stroke, model, maxDepth);
+  const path = findItem({ model, segments, maxDepth });
+  return {
+    angleThreshold,
+    expectedSegmentLength,
+    articulationPoints,
+    segments,
+    path,
+  };
 }
