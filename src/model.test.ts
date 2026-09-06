@@ -192,6 +192,39 @@ describe('createModel', () => {
     expect(menu.getMaxBreadth()).toBe(0);
   });
 
+  it('finds the smallest angular gap of an evenly spaced menu', () => {
+    const menu = createModel({ items: fourItems });
+    expect(menu.getMinAngularGap()).toBe(90);
+  });
+
+  it('finds the smallest angular gap across every level, not just the top one', () => {
+    const menu = createModel({
+      items: [
+        { label: 'Right' },
+        {
+          label: 'Bottom',
+          items: [
+            { label: 'Sub 1' },
+            { label: 'Sub 2' },
+            { label: 'Sub 3' },
+            { label: 'Sub 4' },
+            { label: 'Sub 5' },
+          ],
+        },
+      ],
+    });
+    expect(menu.getMinAngularGap()).toBe(45);
+    expect(menu.items[1]?.getMinAngularGap()).toBe(45);
+  });
+
+  it('reports no gap for a level with fewer than two items', () => {
+    const menu = createModel({
+      items: [{ label: 'Only one', items: [{ label: 'Sub 1' }] }],
+    });
+    expect(menu.getMinAngularGap()).toBe(Infinity);
+    expect(menu.items[0]?.getMinAngularGap()).toBe(Infinity);
+  });
+
   it('freezes the item lists, at every level', () => {
     const menu = createModel({
       items: [{ id: 'menu', label: 'Menu', items: [{ label: 'Sub 1' }] }],

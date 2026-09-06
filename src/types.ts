@@ -75,6 +75,11 @@ type MenuNode<Items extends readonly unknown[]> = {
   The maximum breadth of the menu below this node.
   */
   getMaxBreadth(): IfLeaf<IsLeaf<Items>, 0, number>;
+  /**
+   The smallest angular gap between neighboring items, at this node or any
+   node below it, or `Infinity` if none has two or more items.
+   */
+  getMinAngularGap(): number;
 };
 
 /**
@@ -144,7 +149,8 @@ type GenericNodeKeys =
   | 'items'
   | 'getNearestChild'
   | 'getMaxDepth'
-  | 'getMaxBreadth';
+  | 'getMaxBreadth'
+  | 'getMinAngularGap';
 
 /**
  The shape of a model node — root or item — for callers that walk the model
@@ -191,6 +197,7 @@ export interface AnyModelNode {
   getNearestChild(angle: number): this['items'][number] | null;
   getMaxDepth(): number;
   getMaxBreadth(): number;
+  getMinAngularGap(): number;
 }
 
 /**

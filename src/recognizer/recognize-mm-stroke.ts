@@ -233,11 +233,11 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
 
   const maxDepth =
     maxDepthOption < 0 ? model.getMaxDepth() + maxDepthOption : maxDepthOption;
-  const maxMenuBreadth = model.getMaxBreadth();
+  const minAngularGap = model.getMinAngularGap();
   const length = strokeLength(stroke);
   const expectedSegmentLength = length / maxDepth;
   const sensitivity = 0.75;
-  const angleThreshold = 360 / maxMenuBreadth / 2 / sensitivity;
+  const angleThreshold = minAngularGap / 2 / sensitivity;
   const articulationPoints = getStrokeArticulationPoints(stroke, {
     expectedSegmentLength,
     angleThreshold,

@@ -6,7 +6,7 @@ import type {
   ModelItem,
   ModelRoot,
 } from './types.js';
-import { deltaAngle, type EmptyTuple, type IsTuple } from './utils.js';
+import { deltaAngle, mod, type EmptyTuple, type IsTuple } from './utils.js';
 
 /*
  The marking menu model.
@@ -348,6 +348,32 @@ abstract class MarkingMenuNode {
     }
 
     return breadth;
+  }
+
+  /**
+   Find the smallest angular gap between neighboring items, at this level or
+   any level below it.
+
+   @returns The smallest gap, in degrees, or `Infinity` if no level has two
+   or more items to have a gap between.
+   */
+  getMinAngularGap(): number {
+    let minGap = Infinity;
+    if (this.#items.length >= 2) {
+      const angles = this.#items
+        .map((item) => item.angle)
+        .toSorted((a, b) => a - b);
+      for (const [index, angle] of angles.entries()) {
+        const next = angles[(index + 1) % angles.length] ?? angle;
+        minGap = Math.min(minGap, mod(next - angle, 360));
+      }
+    }
+
+    for (const item of this.#items) {
+      minGap = Math.min(minGap, item.getMinAngularGap());
+    }
+
+    return minGap;
   }
 }
 
