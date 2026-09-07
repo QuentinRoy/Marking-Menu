@@ -46,6 +46,7 @@ type MockModel = ModelItem<string | undefined, string, readonly MockModel[]> & {
   parent: MockModel | null;
   getMaxDepth: Mock<() => number>;
   getMaxBreadth: Mock<() => number>;
+  getMinAngularGap: Mock<() => number>;
   getNearestChild: Mock<(childAngle?: number) => MockModel>;
 };
 
@@ -84,6 +85,7 @@ const createMockModel = (
       isRoot: false,
       getMaxDepth: vi.fn(() => 0),
       getMaxBreadth: vi.fn(() => 0),
+      getMinAngularGap: vi.fn(() => 360 / breadth),
       getNearestChild: vi.fn<(childAngle?: number) => MockModel>(),
       requestedAngle,
     };
@@ -95,6 +97,7 @@ const createMockModel = (
       requestedAngle,
       getMaxDepth: vi.fn(() => depth),
       getMaxBreadth: vi.fn(() => breadth),
+      getMinAngularGap: vi.fn(() => 360 / breadth),
       isLeaf: false,
       getNearestChild: vi.fn((childAngle?: number) =>
         createMockModel(depth - 1, breadth, childAngle, m),
