@@ -53,6 +53,19 @@ export const IDLE_RESULT: GestureResult = {
 };
 
 /**
+ A drawing weight from the page's own tokens. A canvas takes a number, not a
+ length, so these are declared unitless.
+
+ @param name - The custom property to read.
+ @returns Its value as a number.
+ */
+function size(name: string): number {
+  return Number(
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim(),
+  );
+}
+
+/**
  Draw a finished gesture: the stroke as it was made and, when the overlay is
  on, the pieces the recognizer cut it into and the corners it cut them at.
 
@@ -90,9 +103,10 @@ function drawGesture({
     return canvas;
   };
 
-  add({ lineColor: token('--color-stroke-trace'), lineWidth: 2 }).drawStroke(
-    stroke,
-  );
+  add({
+    lineColor: token('--color-stroke-trace'),
+    lineWidth: size('--stroke-trace-width'),
+  }).drawStroke(stroke);
   if (!showDiagnostics) {
     return canvases;
   }
@@ -100,7 +114,7 @@ function drawGesture({
   // Two canvases, used in turn, so that consecutive pieces stay told apart
   // where they meet.
   const pieces = [token('--color-mark'), token('--color-piece-alt')].map(
-    (lineColor) => add({ lineColor, lineWidth: 3 }),
+    (lineColor) => add({ lineColor, lineWidth: size('--stroke-piece-width') }),
   );
   for (const [index, segment] of analysis.segments.entries()) {
     pieces[index % pieces.length]?.drawStroke(segment.points);
@@ -109,7 +123,7 @@ function drawGesture({
   const corners = add({
     lineColor: 'transparent',
     pointColor: token('--color-ink'),
-    pointRadius: 4.5,
+    pointRadius: size('--stroke-corner-radius'),
   });
   for (const point of analysis.articulationPoints) {
     corners.drawPoint(point);
@@ -276,8 +290,8 @@ export function LiveSurface({
       // dependencies so a change of scheme rebuilds the menu with the new
       // ones.
       strokeColor: token('--color-stroke-live'),
-      strokeWidth: 2,
-      strokeStartPointRadius: 6,
+      strokeWidth: size('--stroke-trace-width'),
+      strokeStartPointRadius: size('--stroke-origin-radius'),
       lowerStrokeColor: token('--color-stroke-lower'),
       // The library removes a completed trace on a timer, one canvas per
       // gesture; the overlay below draws the same stroke and owns its own
@@ -359,7 +373,7 @@ export function LiveSurface({
   }, [clearOverlay, colorScheme, model, showDiagnostics]);
 
   return (
-    <div className="bg-surface relative min-h-[340px] flex-1 cursor-crosshair overflow-hidden [background-image:radial-gradient(var(--color-dot)_1px,transparent_1px)] [background-size:22px_22px] min-[621px]:min-h-0">
+    <div className="bg-surface dot-grid wide:min-h-0 relative min-h-85 flex-1 cursor-crosshair overflow-hidden">
       <div ref={menuParentRef} className="absolute inset-0" />
       <div ref={overlayRef} className="pointer-events-none absolute inset-0" />
     </div>

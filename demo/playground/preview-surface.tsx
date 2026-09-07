@@ -90,10 +90,10 @@ export function PreviewSurface({
     <div
       ref={surfaceRef}
       onPointerDown={onClick}
-      className="bg-surface relative min-h-[340px] flex-1 overflow-hidden [background-image:radial-gradient(var(--color-dot)_1px,transparent_1px)] [background-size:22px_22px] min-[621px]:min-h-0"
+      className="bg-surface dot-grid wide:min-h-0 relative min-h-85 flex-1 overflow-hidden"
     >
       <div ref={menuParentRef} className="absolute inset-0" />
-      <span className="text-quietest pointer-events-none absolute bottom-4 left-5 font-mono text-[11.5px]">
+      <span className="text-quietest text-meta pointer-events-none absolute bottom-4 left-5 font-mono">
         click an item with a sub-menu to go a level deeper
       </span>
     </div>

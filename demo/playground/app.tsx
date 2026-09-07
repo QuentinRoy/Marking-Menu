@@ -157,16 +157,16 @@ export function App() {
   const focusedCount = nodeAt(applied.model, focusPath).items.length;
 
   return (
-    <div className="flex min-h-dvh flex-col items-stretch min-[621px]:h-dvh min-[621px]:flex-row min-[621px]:overflow-hidden">
-      <aside className="border-rule bg-paper flex flex-col gap-[18px] border-b px-[22px] pt-[22px] pb-[18px] min-[621px]:min-h-0 min-[621px]:max-w-[420px] min-[621px]:min-w-[288px] min-[621px]:flex-[1_1_320px] min-[621px]:overflow-y-auto min-[621px]:border-r min-[621px]:border-b-0">
+    <div className="wide:h-dvh wide:flex-row wide:overflow-hidden flex min-h-dvh flex-col items-stretch">
+      <aside className="border-rule bg-paper wide:min-h-0 wide:max-w-105 wide:min-w-72 wide:shrink wide:grow wide:basis-80 wide:overflow-y-auto wide:border-r wide:border-b-0 flex flex-col gap-4.5 border-b px-5.5 pt-5.5 pb-4.5">
         <div className="flex flex-col gap-1.5">
-          <span className="text-quieter font-mono text-[11px] tracking-[0.08em] uppercase">
+          <span className="text-quieter text-eyebrow tracking-eyebrow font-mono uppercase">
             marking-menu
           </span>
-          <h1 className="m-0 text-[21px] font-semibold tracking-[-0.01em]">
+          <h1 className="text-title tracking-title m-0 font-semibold">
             Playground
           </h1>
-          <p className="text-quiet m-0 text-[13.5px] leading-6 text-pretty">
+          <p className="text-quiet text-lede m-0 leading-6 text-pretty">
             Edit the menu, then use it: hold to open it and draw to an item, or
             draw the mark straight away. The readout tells you what the
             recognizer made of each gesture.
@@ -175,9 +175,7 @@ export function App() {
 
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-xs font-semibold tracking-[0.02em]">
-              Items
-            </span>
+            <span className="text-xs font-semibold tracking-wide">Items</span>
             <Button
               variant="ghost"
               size="xs"
@@ -203,7 +201,7 @@ export function App() {
           />
           <div
             role="status"
-            className="text-mark min-h-[1.5em] font-mono text-[11.5px] leading-normal"
+            className="text-mark text-meta min-h-4.5 font-mono leading-normal"
           >
             {status}
           </div>
@@ -230,7 +228,7 @@ export function App() {
           setMode(next);
           setResult(IDLE_RESULT);
         }}
-        className="flex min-h-0 flex-col gap-0 min-[621px]:min-w-[320px] min-[621px]:flex-[4_1_320px]"
+        className="wide:min-w-80 wide:shrink wide:grow-4 wide:basis-80 flex min-h-0 flex-col gap-0"
       >
         <div className="border-rule-soft flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-5 py-3">
           <TabsList>
@@ -249,14 +247,14 @@ export function App() {
             ))}
           </TabsList>
           {isLive && (
-            <div className="text-quieter flex items-center gap-4 font-mono text-[11.5px]">
+            <div className="text-quieter text-meta flex items-center gap-4 font-mono">
               <label className="flex cursor-pointer items-center gap-1.5 select-none">
                 <Checkbox
                   checked={showDiagnostics}
                   onCheckedChange={(next) => {
                     setShowDiagnostics(next === true);
                   }}
-                  className="size-[13px]"
+                  className="size-3.5"
                 />
                 Recognizer
               </label>
@@ -274,7 +272,7 @@ export function App() {
           />
           <Footer metrics={result.metrics}>
             {result.steps === null ? (
-              <span className="font-mono text-[13px] font-medium text-pretty">
+              <span className="text-chip font-mono font-medium text-pretty">
                 {result.message}
               </span>
             ) : (
@@ -313,9 +311,9 @@ function Footer({
   children: ReactNode;
 }) {
   return (
-    <div className="border-rule-soft bg-paper flex min-h-[52px] flex-wrap items-center justify-between gap-5 border-t px-5 py-3.5">
+    <div className="border-rule-soft bg-paper flex min-h-13 flex-wrap items-center justify-between gap-5 border-t px-5 py-3.5">
       <div className="flex flex-wrap items-center gap-0.5">{children}</div>
-      <span className="text-quieter font-mono text-[11.5px] whitespace-nowrap">
+      <span className="text-quieter text-meta font-mono whitespace-nowrap">
         {metrics}
       </span>
     </div>
@@ -344,17 +342,15 @@ function Path({
     const isLink = !isCurrent && !step.isLeaf;
     return (
       <span key={step.path.join('-')} className="flex items-center gap-0.5">
-        {index > 0 && (
-          <span className="text-edge-soft px-1 text-[13px]">›</span>
-        )}
+        {index > 0 && <span className="text-edge-soft text-chip px-1">›</span>}
         <button
           type="button"
           disabled={!isLink}
           title={step.isLeaf ? 'A leaf item, nothing to preview' : undefined}
           className={
             isLink
-              ? 'text-quiet decoration-edge-soft hover:text-ink cursor-pointer rounded-[3px] px-1.5 py-0.5 font-mono text-[13px] underline underline-offset-[3px]'
-              : 'text-ink rounded-[3px] px-1.5 py-0.5 font-mono text-[13px] font-medium'
+              ? 'text-quiet decoration-edge-soft hover:text-ink text-chip cursor-pointer rounded-sm px-1.5 py-0.5 font-mono underline underline-offset-2'
+              : 'text-ink text-chip rounded-sm px-1.5 py-0.5 font-mono font-medium'
           }
           onClick={() => {
             onSelect(step.path);
@@ -370,11 +366,11 @@ function Path({
 function Legend({ showDiagnostics }: { showDiagnostics: boolean }) {
   const entries = showDiagnostics
     ? ([
-        ['stroke', 'bg-edge-soft rounded-[1px]'],
-        ['pieces', 'bg-mark rounded-[1px]'],
+        ['stroke', 'bg-edge-soft rounded-xs'],
+        ['pieces', 'bg-mark rounded-xs'],
         ['corners', 'bg-ink rounded-full'],
       ] as const)
-    : ([['stroke', 'bg-edge-soft rounded-[1px]']] as const);
+    : ([['stroke', 'bg-edge-soft rounded-xs']] as const);
   return entries.map(([label, dot]) => (
     <span key={label} className="flex items-center gap-1.5 whitespace-nowrap">
       <span className={`size-2 shrink-0 ${dot}`} />

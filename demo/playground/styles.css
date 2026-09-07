@@ -113,6 +113,54 @@
   --color-code-string: oklch(0.45 0.09 155);
   --color-code-literal: oklch(0.5 0.13 25);
   --color-code-punctuation: #8a8a91;
+
+  /* The wash behind selected text, in the editor and out of it. */
+  --color-selection: color-mix(in oklch, var(--color-mark) 18%, transparent);
+
+  /* The width below which the panel and the gesture surface stop sitting
+     side by side and stack instead. */
+  --breakpoint-wide: 38.75rem;
+
+  /* The type sizes this page asks for that the default scale has no name
+     for. Everything else uses `text-xs` and up. */
+  --text-eyebrow: 0.6875rem;
+  --text-meta: 0.71875rem;
+  --text-code: 0.78125rem;
+  --text-chip: 0.8125rem;
+  --text-lede: 0.84375rem;
+  --text-title: 1.3125rem;
+
+  --tracking-eyebrow: 0.08em;
+  --tracking-title: -0.01em;
+
+  /* Smaller than `rounded-sm`: enough to take the edge off a legend dot. */
+  --radius-xs: calc(var(--radius) - 4px);
+
+  /* The ring around the editor when its content is not a menu. */
+  --shadow-invalid: 0 0 0 calc(var(--spacing) * 0.75)
+    color-mix(in oklch, var(--color-mark) 12%, transparent);
+
+  /* The gesture surface's dot grid. */
+  --dot-grid-gap: calc(var(--spacing) * 5.5);
+  --dot-grid-dot: 1px;
+
+  /* The weights the gesture overlay draws with, read by `live-surface.tsx`.
+     A canvas takes numbers rather than lengths, so these are unitless
+     pixels; they sit here so that the whole overlay, colour and weight, is
+     described in one place. */
+  --stroke-trace-width: 2;
+  --stroke-piece-width: 3;
+  --stroke-corner-radius: 4.5;
+  --stroke-origin-radius: 6;
+}
+
+/* The gesture surface's ground, shared by both modes. */
+@utility dot-grid {
+  background-image: radial-gradient(
+    var(--color-dot) var(--dot-grid-dot),
+    transparent var(--dot-grid-dot)
+  );
+  background-size: var(--dot-grid-gap) var(--dot-grid-gap);
 }
 
 /* Dark mode is the same page with the palette turned over: every colour the
@@ -188,8 +236,8 @@
    and the angles, stays untouched. `:root` out-specifies the stylesheet the
    library injects into the head at runtime. */
 :root .marking-menu {
-  --item-font-size: 15px;
-  --item-height: 22px;
+  --item-font-size: var(--text-sm);
+  --item-height: calc(var(--spacing) * 5.5);
 
   font-family: var(--font-sans);
 }
@@ -202,8 +250,8 @@
    that would stay light on a dark panel, plus the type. */
 .cm-editor.cm-editor {
   height: 100%;
-  font-size: 12.5px;
-  line-height: 1.65;
+  font-size: var(--text-code);
+  line-height: var(--leading-relaxed);
 }
 
 .cm-editor.cm-focused {
@@ -238,7 +286,7 @@
 .cm-editor.cm-editor .cm-selectionBackground,
 .cm-editor.cm-focused .cm-selectionBackground,
 .cm-editor.cm-editor ::selection {
-  background: color-mix(in oklch, var(--color-mark) 18%, transparent);
+  background: var(--color-selection);
 }
 
 .cm-editor.cm-editor .cm-matchingBracket,
@@ -255,7 +303,7 @@
   border-radius: var(--radius-md);
   background: var(--color-popover);
   color: var(--color-popover-foreground);
-  font-size: 12px;
+  font-size: var(--text-xs);
 }
 
 .cm-tooltip.cm-tooltip .cm-tooltip-arrow::before {
@@ -299,21 +347,21 @@
 .cm-editor.cm-editor .cm-lintRange {
   background-image: none;
   text-decoration: underline wavy var(--color-mark);
-  text-underline-offset: 3px;
+  text-underline-offset: calc(var(--spacing) * 0.75);
 }
 
 /* The lint tooltip pads each of its rows; the hover's section has no padding
    of its own, so it is given the same and the two read alike when they are
    stacked in one tooltip. */
 .cm-tooltip.cm-tooltip .cm6-json-schema-hover {
-  padding: 3px 8px;
+  padding: calc(var(--spacing) * 0.75) calc(var(--spacing) * 2);
 }
 
 /* The type, set apart from the prose above it. */
 .cm-tooltip.cm-tooltip .cm6-json-schema-hover--code-wrapper {
-  margin-top: 5px;
+  margin-top: calc(var(--spacing) * 1.25);
   border-top: 1px solid var(--color-rule);
-  padding-top: 5px;
+  padding-top: calc(var(--spacing) * 1.25);
   color: var(--color-quiet);
   font-family: var(--font-mono);
 }
@@ -325,5 +373,5 @@
 }
 
 .cm-tooltip.cm-tooltip .cm6-json-schema-hover--description p + p {
-  margin-top: 3px;
+  margin-top: calc(var(--spacing) * 0.75);
 }

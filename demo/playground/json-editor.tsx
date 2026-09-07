@@ -215,10 +215,8 @@ export function JsonEditor({
     <div
       ref={hostRef}
       className={cn(
-        'bg-background min-h-[120px] flex-1 overflow-auto rounded-[5px] border',
-        invalid
-          ? 'border-mark shadow-[0_0_0_3px_color-mix(in_oklch,var(--color-mark)_12%,transparent)]'
-          : 'border-input',
+        'bg-background min-h-30 flex-1 overflow-auto rounded-md border',
+        invalid ? 'border-mark shadow-invalid' : 'border-input',
       )}
     />
   );
