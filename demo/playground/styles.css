@@ -163,8 +163,10 @@
   }
 
   /* `src/layout/menu.css` exposes exactly these four for a page to restyle
-     the menu with; the geometry stays the library's. */
-  .marking-menu {
+     the menu with; the geometry stays the library's. `:root` is there only
+     to out-specify that stylesheet, which the library injects into the head
+     at runtime and which would otherwise win the tie on document order. */
+  :root .marking-menu {
     --item-background: #26262c;
     --item-color: #c9c9cf;
     --active-item-background: #43434c;
@@ -178,11 +180,18 @@
   }
 }
 
-/* The library's own stylesheet (`src/layout/menu.css`) sizes item labels for
-   the browser's default font; Public Sans is taller at the same size and
-   crops them, so the menu keeps the default, as the demo page does. */
-.menu-layer {
-  font-family: initial;
+/* `src/layout/menu.css` draws a label at `--item-font-size` inside a box of
+   `--item-height`, both 20px by default, and clips the overflow: an ascender
+   or a descender is cut off at that ratio whatever the font. Both are the
+   library's to set from a page, so the label is given room here rather than
+   the menu being left to crop. The geometry the menu is read by, its radius
+   and the angles, stays untouched. `:root` out-specifies the stylesheet the
+   library injects into the head at runtime. */
+:root .marking-menu {
+  --item-font-size: 15px;
+  --item-height: 22px;
+
+  font-family: var(--font-sans);
 }
 
 /* CodeMirror ships its own theme; only the parts that clash with the panel
@@ -252,9 +261,12 @@
   border-left-color: var(--color-mark);
 }
 
-.cm-lintRange-error {
-  /* The default is a background image of a wavy line; recolor it to the
-     page's accent rather than the browser red. */
+/* CodeMirror underlines a diagnostic with a wavy line baked into a
+   background image, in a red of its own. The page draws its own underline in
+   the accent instead, so the background one has to go: `.cm-editor` is there
+   to out-specify the rule CodeMirror injects at runtime, which would
+   otherwise win on document order alone. */
+.cm-editor .cm-lintRange {
   background-image: none;
   text-decoration: underline wavy var(--color-mark);
   text-underline-offset: 3px;

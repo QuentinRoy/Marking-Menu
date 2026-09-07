@@ -150,7 +150,9 @@ h1 {
     fill: rgb(226, 226, 230);
   }
 
-  .marking-menu {
+  /* `:root` out-specifies the stylesheet the library injects into the head
+     at runtime, which would otherwise win the tie on document order. */
+  :root .marking-menu {
     --item-background: #26262c;
     --item-color: #c9c9cf;
     --active-item-background: #43434c;

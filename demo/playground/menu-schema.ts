@@ -24,30 +24,47 @@ export const menuSchema = {
   required: ['items'],
   additionalProperties: false,
   properties: {
-    items: { $ref: '#/$defs/items' },
+    // 2020-12 lets `$ref` keep its siblings, so each use of a definition can
+    // say what it means where it is used, and the editor shows that on hover.
+    items: {
+      $ref: '#/$defs/items',
+      description:
+        'The top level of the menu: what a gesture started anywhere on the surface chooses between.',
+    },
   },
   $defs: {
     items: {
       type: 'array',
+      title: 'Menu level',
       description:
-        "A level's items, laid out clockwise from the right at a fixed angle each.",
+        'One level of the menu. Items are laid out clockwise starting to the right, evenly spread: 90 degrees apart up to four items, 45 degrees apart beyond that. The order here is the order around the circle.',
       items: { $ref: '#/$defs/item' },
     },
     item: {
       type: 'object',
+      title: 'Menu item',
+      description:
+        'One item of a level. An item with sub-items of its own opens a sub-menu; an item without is a leaf, and selecting it ends the gesture.',
       required: ['label'],
       additionalProperties: false,
       properties: {
         id: {
           type: 'string',
+          title: 'Identifier',
           description:
-            'An identifier of your own, unique across the whole menu. The library never generates one, and only reports it back.',
+            'An identifier of your own, unique across the whole menu. The library never generates one: it only carries it back to you on the selection event, so you can tell which item was chosen without matching on the label. Optional.',
         },
         label: {
           type: 'string',
-          description: 'The text the item is drawn with.',
+          title: 'Label',
+          description:
+            'The text drawn on the item, and what a selection reports back. Required.',
         },
-        items: { $ref: '#/$defs/items' },
+        items: {
+          $ref: '#/$defs/items',
+          description:
+            "The item's own sub-menu, opened by dwelling on the item or by drawing through it. Leave it out for a leaf.",
+        },
       },
     },
   },
@@ -137,4 +154,89 @@ export function validateMenuSource(source: string): MenuSourceResult {
   // the one place the two meet. `menu-schema.test-d.ts` is what keeps the
   // claim true as the library's input type changes.
   return { ok: true, menu: value as MarkingMenuInput };
+}
+
+/* -------------------------------------------------------------------------- *
+ * Annotations
+ * -------------------------------------------------------------------------- */
+
+/**
+ The schema as a plain tree, for walking. `as const` gives the type-level
+ test literal types, which is the wrong shape for a recursive walk.
+ */
+type SchemaNode = {
+  readonly $ref?: string;
+  readonly type?: string;
+  readonly title?: string;
+  readonly description?: string;
+  readonly properties?: Readonly<Record<string, SchemaNode>>;
+  readonly items?: SchemaNode;
+};
+
+const schemaTree = menuSchema as unknown as SchemaNode & {
+  readonly $defs: Readonly<Record<string, SchemaNode>>;
+};
+
+const DEFS_PREFIX = '#/$defs/';
+
+/**
+ Follow a node's `$ref`, if it has one. Every reference in this schema is a
+ local one into `$defs`, so nothing has to be fetched or cached.
+ */
+function deref(node: SchemaNode): SchemaNode {
+  if (node.$ref?.startsWith(DEFS_PREFIX) !== true) {
+    return node;
+  }
+
+  return schemaTree.$defs[node.$ref.slice(DEFS_PREFIX.length)] ?? node;
+}
+
+/**
+ What the schema says about the value at a JSON pointer.
+ */
+export type SchemaAnnotation = {
+  readonly title: string | undefined;
+  readonly description: string | undefined;
+  readonly type: string | undefined;
+};
+
+/**
+ Look up the schema for a position in the document, and report what it says
+ about it.
+
+ The editor's own schema library loses `title` and `description` on its way
+ into a property of an array item reached through a `$ref`, which is every
+ item of every menu level here. This walks the schema directly instead, so
+ the editor can show what the schema actually says.
+
+ A description written beside a `$ref` wins over the one on the definition it
+ points at: 2020-12 allows those siblings so that a definition can say what
+ it means at each place it is used.
+
+ @param pointer - A JSON pointer into the document, e.g. `#/items/0/label`.
+ @returns The annotation, or `null` if the pointer leads nowhere in the
+ schema.
+ */
+export function annotationAt(pointer: string): SchemaAnnotation | null {
+  let node: SchemaNode = schemaTree;
+  for (const step of pointer.replace(/^#\/?/v, '').split('/')) {
+    if (step === '') {
+      continue;
+    }
+
+    const here = deref(node);
+    const next = /^\d+$/v.test(step) ? here.items : here.properties?.[step];
+    if (next === undefined) {
+      return null;
+    }
+
+    node = next;
+  }
+
+  const target = deref(node);
+  return {
+    title: node.title ?? target.title,
+    description: node.description ?? target.description,
+    type: target.type,
+  };
 }

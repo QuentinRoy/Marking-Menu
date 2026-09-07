@@ -46,7 +46,8 @@ The readout before any gesture, and after one too short to count.
 */
 export const IDLE_RESULT: GestureResult = {
   steps: null,
-  message: 'Press and hold to open the menu, or flick straight to an item.',
+  message:
+    'Press and hold to open the menu, then draw to an item; or draw the mark straight away.',
   metrics: '',
 };
 
@@ -282,11 +283,8 @@ export function LiveSurface({
 
   return (
     <div className="bg-surface relative min-h-[340px] flex-1 cursor-crosshair overflow-hidden [background-image:radial-gradient(var(--color-dot)_1px,transparent_1px)] [background-size:22px_22px] min-[621px]:min-h-0">
-      <div ref={menuParentRef} className="menu-layer absolute inset-0" />
+      <div ref={menuParentRef} className="absolute inset-0" />
       <div ref={overlayRef} className="pointer-events-none absolute inset-0" />
-      <span className="text-quietest pointer-events-none absolute bottom-4 left-5 font-mono text-[11.5px]">
-        press &amp; hold to open · flick to select
-      </span>
     </div>
   );
 }

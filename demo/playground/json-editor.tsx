@@ -5,6 +5,7 @@ import {
   completionKeymap,
 } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { json, jsonLanguage, jsonParseLinter } from '@codemirror/lang-json';
 import {
   bracketMatching,
   HighlightStyle,
@@ -12,14 +13,21 @@ import {
   indentUnit,
   syntaxHighlighting,
 } from '@codemirror/language';
+import { linter } from '@codemirror/lint';
 import { EditorState } from '@codemirror/state';
-import { EditorView, keymap } from '@codemirror/view';
+import { EditorView, hoverTooltip, keymap } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 import { cn } from 'cn';
-import { jsonSchema } from 'codemirror-json-schema';
+import {
+  handleRefresh,
+  jsonCompletion,
+  jsonSchemaHover,
+  jsonSchemaLinter,
+  stateExtensions,
+} from 'codemirror-json-schema';
 import type { JSONSchema7 } from 'json-schema';
 import { useEffect, useRef } from 'react';
-import { menuSchema } from './menu-schema.js';
+import { annotationAt, menuSchema } from './menu-schema.js';
 
 // Two mismatches, neither of them real. The schema is `as const` so
 // `menu-schema.test-d.ts` can read its literal types, while this signature
@@ -49,6 +57,29 @@ const highlightStyle = HighlightStyle.define([
   },
 ]);
 
+/**
+ What the tooltip says about whatever is under the pointer, read from the
+ schema rather than from the sub-schema the hover resolved: see
+ {@link annotationAt} for why the two differ.
+
+ @param data - What the hover resolved for the position.
+ @param data.pointer - The JSON pointer to the position in the document.
+ @returns The tooltip's prose and its type line.
+ */
+function hoverTexts({ pointer }: { pointer: string }): {
+  message: string;
+  typeInfo: string;
+} {
+  const annotation = annotationAt(pointer);
+  const heading =
+    annotation?.title === undefined ? '' : `**${annotation.title}**`;
+  const body = annotation?.description ?? '';
+  return {
+    message: [heading, body].filter(Boolean).join('\n\n'),
+    typeInfo: annotation?.type ?? '',
+  };
+}
+
 const extensions = [
   history(),
   indentOnInput(),
@@ -65,9 +96,16 @@ const extensions = [
   ]),
   EditorView.lineWrapping,
   EditorView.contentAttributes.of({ 'aria-label': 'Menu items, as JSON' }),
-  // Squiggles, completion and hover, all driven by the same schema the
-  // status line validates against.
-  jsonSchema(editorSchema),
+  // What `codemirror-json-schema`'s own `jsonSchema()` bundles, spelled out
+  // so the hover can be given its text (see `hoverTexts`). Squiggles,
+  // completion and hover are all driven by the same schema the status line
+  // validates against.
+  json(),
+  linter(jsonParseLinter()),
+  linter(jsonSchemaLinter(), { needsRefresh: handleRefresh }),
+  jsonLanguage.data.of({ autocomplete: jsonCompletion() }),
+  hoverTooltip(jsonSchemaHover({ getHoverTexts: hoverTexts })),
+  stateExtensions(editorSchema),
 ];
 
 /**

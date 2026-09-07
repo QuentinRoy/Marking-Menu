@@ -167,9 +167,9 @@ export function App() {
             Playground
           </h1>
           <p className="text-quiet m-0 text-[13.5px] leading-6 text-pretty">
-            Edit the menu, then use it: press and hold to open it, or flick
-            straight to an item. The readout tells you what the recognizer made
-            of each gesture.
+            Edit the menu, then use it: hold to open it and draw to an item, or
+            draw the mark straight away. The readout tells you what the
+            recognizer made of each gesture.
           </p>
         </div>
 
@@ -234,8 +234,19 @@ export function App() {
       >
         <div className="border-rule-soft flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-5 py-3">
           <TabsList>
-            <TabsTrigger value="live">Live</TabsTrigger>
-            <TabsTrigger value="preview">Preview</TabsTrigger>
+            {/* shadcn's dark treatment for the selected tab is a 30%
+                overlay, which all but disappears against this list; the
+                raised look of the light theme is restored here rather than
+                in the vendored component. */}
+            {(['live', 'preview'] as const).map((value) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="dark:data-[state=active]:border-border dark:data-[state=active]:bg-accent capitalize"
+              >
+                {value}
+              </TabsTrigger>
+            ))}
           </TabsList>
           {isLive && (
             <div className="text-quieter flex items-center gap-4 font-mono text-[11.5px]">
