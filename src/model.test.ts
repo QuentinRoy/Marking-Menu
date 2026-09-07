@@ -116,6 +116,74 @@ describe('createModel', () => {
     ]);
   });
 
+  it('keeps stated angles at every level', () => {
+    const menu = createModel({
+      items: [
+        {
+          angle: 45,
+          label: 'Parent',
+          items: [
+            { angle: 20, label: 'First' },
+            { label: 'Free' },
+            { angle: 140, label: 'Last' },
+          ],
+        },
+        { label: 'Other' },
+      ],
+    });
+
+    expect(menu.items.map((item) => item.angle)).toEqual([45, 225]);
+    expect(menu.items[0].items.map((item) => item.angle)).toEqual([
+      20, 80, 140,
+    ]);
+  });
+
+  it('spreads free items across each stated-angle gap', () => {
+    const menu = createModel({
+      items: [
+        { angle: 0, label: 'First' },
+        { label: 'Second' },
+        { label: 'Third' },
+        { angle: 180, label: 'Fourth' },
+        { label: 'Fifth' },
+      ],
+    });
+
+    expect(menu.items.map((item) => item.angle)).toEqual([
+      0, 60, 120, 180, 270,
+    ]);
+  });
+
+  it('rotates an even circle around one stated angle', () => {
+    const menu = createModel({
+      items: [
+        { label: 'First' },
+        { label: 'Second' },
+        { angle: 90, label: 'Third' },
+        { label: 'Fourth' },
+      ],
+    });
+
+    expect(menu.items.map((item) => item.angle)).toEqual([270, 0, 90, 180]);
+  });
+
+  it('wraps stated angles while keeping listing order clockwise', () => {
+    const menu = createModel({
+      items: [
+        { angle: 270, label: 'First' },
+        { label: 'Second' },
+        { angle: 0, label: 'Third' },
+        { angle: 90, label: 'Fourth' },
+      ],
+    });
+
+    expect(menu.items.map((item) => item.angle)).toEqual([270, 315, 0, 90]);
+    for (const item of menu.items) {
+      expect(item.angle).toBeGreaterThanOrEqual(0);
+      expect(item.angle).toBeLessThan(360);
+    }
+  });
+
   it('keeps the ids and the labels of the items, at every level', () => {
     const menu = createModel({
       items: [
@@ -327,6 +395,38 @@ describe('createModel', () => {
       menu.items[0].label = 'Mutated';
     }).toThrow(TypeError);
     expect(menu.items[0].label).toBe('Right');
+  });
+
+  it.each([NaN, Infinity, -Infinity])(
+    'rejects the non-finite angle %p',
+    (angle) => {
+      expect(() =>
+        createModel({ items: [{ angle, label: 'Invalid' }] }),
+      ).toThrow(/angles must be finite/v);
+    },
+  );
+
+  it('rejects two items at the same angle', () => {
+    expect(() =>
+      createModel({
+        items: [
+          { angle: 0, label: 'First' },
+          { angle: 360, label: 'Second' },
+        ],
+      }),
+    ).toThrow(/different angles/v);
+  });
+
+  it('rejects stated angles that need more than one turn', () => {
+    expect(() =>
+      createModel({
+        items: [
+          { angle: 0, label: 'First' },
+          { angle: 270, label: 'Second' },
+          { angle: 180, label: 'Third' },
+        ],
+      }),
+    ).toThrow(/more than one full turn/v);
   });
 
   it('rejects two items sharing the same id', () => {

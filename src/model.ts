@@ -439,6 +439,83 @@ class MarkingMenuRoot extends MarkingMenuNode {
   }
 }
 
+const normalizeAngle = (angle: number): number => mod(angle, 360);
+
+const getItemAngles = (
+  inputs: readonly MarkingMenuItemInput[],
+): readonly number[] => {
+  const stated = inputs.flatMap((input, index) => {
+    if (input.angle === undefined) {
+      return [];
+    }
+
+    if (!Number.isFinite(input.angle)) {
+      throw new TypeError('Menu item angles must be finite numbers.');
+    }
+
+    return [{ angle: normalizeAngle(input.angle), index }];
+  });
+
+  if (stated.length === 0) {
+    const angleStep = 360 / inputs.length;
+    return inputs.map((_, index) => index * angleStep);
+  }
+
+  if (stated.length === 1) {
+    const [item] = stated;
+    if (item === undefined) {
+      throw new Error('Expected one stated angle.');
+    }
+
+    const angleStep = 360 / inputs.length;
+    return inputs.map((_, index) =>
+      normalizeAngle(item.angle + (index - item.index) * angleStep),
+    );
+  }
+
+  const [firstItem, ...otherItems] = stated;
+  if (firstItem === undefined) {
+    throw new Error('Expected at least one stated angle.');
+  }
+
+  const unwrapped = [firstItem];
+  let previousAngle = firstItem.angle;
+  for (const item of otherItems) {
+    const { angle: itemAngle } = item;
+    let angle = itemAngle;
+    while (angle <= previousAngle) {
+      angle += 360;
+    }
+
+    if (angle >= firstItem.angle + 360) {
+      throw new Error(
+        angle === firstItem.angle + 360
+          ? 'Menu items at a level must have different angles.'
+          : 'Menu item angles at a level cannot span more than one full turn.',
+      );
+    }
+
+    unwrapped.push({ ...item, angle });
+    previousAngle = angle;
+  }
+
+  const angles: number[] = [];
+  for (const [index, item] of unwrapped.entries()) {
+    const next = unwrapped[index + 1] ?? {
+      angle: firstItem.angle + 360,
+      index: firstItem.index + inputs.length,
+    };
+    const angleStep = (next.angle - item.angle) / (next.index - item.index);
+    for (let offset = 0; offset < next.index - item.index; offset++) {
+      angles[(item.index + offset) % inputs.length] = normalizeAngle(
+        item.angle + offset * angleStep,
+      );
+    }
+  }
+
+  return angles;
+};
+
 /**
  Build the (frozen) item list of one menu level.
 
@@ -459,7 +536,7 @@ const createItems = (
   seenIds: Set<string> = new Set(),
   baseKey?: string,
 ): readonly MarkingMenuItem[] => {
-  const angleStep = 360 / inputs.length;
+  const angles = getItemAngles(inputs);
   return Object.freeze(
     inputs.map((input, index) => {
       if (input.id !== undefined) {
@@ -477,7 +554,7 @@ const createItems = (
       return new MarkingMenuItem({
         id: input.id,
         label: input.label,
-        angle: index * angleStep,
+        angle: angles[index] ?? 0,
         key,
         parent,
         items: (self) =>
@@ -494,7 +571,7 @@ const createItems = (
 
  @param input - The description of the menu.
  @returns The root of the model.
- @throws If two items share the same id.
+ @throws If two items share an id, or a level has invalid angles.
  */
 export function createModel<const Input extends MarkingMenuInput>(
   input: Input & ValidateInput<Input>,

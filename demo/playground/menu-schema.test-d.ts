@@ -12,10 +12,9 @@ import { menuSchema } from './menu-schema.js';
  completion for a menu the library no longer accepts, nor stay silent about a
  field it has grown. It is checked by `tsc`, not run.
 
- The angle of issue #43 is the case this exists for: adding one to
- `MarkingMenuItemInput` fails the key assertion below until this schema has
- one too, and with it the shape check a shared link goes through (see
- `demo/menu-config.ts`).
+ Adding a field to `MarkingMenuItemInput` fails the key assertion below until
+ the schema describes it too. The shape check then carries it through shared
+ links in `demo/menu-config.ts`.
  */
 
 /**

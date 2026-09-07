@@ -16,23 +16,32 @@ import { createRandom } from './random.js';
  `createModel`, so it measures the layout currently used by the library.
  */
 
-type EvenItem = { label: string; items?: EvenItem[] };
+type CorpusItem = { angle?: number; label: string; items?: CorpusItem[] };
 
 /**
  The items of a menu whose levels have the given item counts, from the top
  level down: `[4, 8]` builds a 4-item top level whose items each open an
  8-item submenu.
  */
-const buildLevels = (breadths: readonly number[]): EvenItem[] => {
+const buildLevels = (
+  breadths: readonly number[],
+  statedAngles: ReadonlyArray<ReadonlyArray<number | undefined>>,
+): CorpusItem[] => {
   const [breadth, ...rest] = breadths;
   if (breadth === undefined) {
     return [];
   }
 
-  return Array.from({ length: breadth }, (_, index) => ({
-    label: `item-${index}`,
-    ...(rest.length > 0 && { items: buildLevels(rest) }),
-  }));
+  return Array.from({ length: breadth }, (_, index) => {
+    const angle = statedAngles[0]?.[index];
+    return {
+      ...(angle !== undefined && { angle }),
+      label: `item-${index}`,
+      ...(rest.length > 0 && {
+        items: buildLevels(rest, statedAngles.slice(1)),
+      }),
+    };
+  });
 };
 
 /**
@@ -40,8 +49,10 @@ const buildLevels = (breadths: readonly number[]): EvenItem[] => {
  many items, laid out however `createModel` lays out a plain item list of
  that size.
  */
-export const buildMenu = (breadths: readonly number[]) =>
-  createModel({ items: buildLevels(breadths) });
+export const buildMenu = (
+  breadths: readonly number[],
+  statedAngles: ReadonlyArray<ReadonlyArray<number | undefined>> = [],
+) => createModel({ items: buildLevels(breadths, statedAngles) });
 
 /**
  The generic shape {@link randomPath} walks: any node exposing its
@@ -85,6 +96,8 @@ const randomPath = (
  @param options - Configuration options.
  @param options.breadths - One entry per level, from the top down: how many
  items that level holds.
+ @param options.statedAngles - Optional per-level item angles. Each nested
+ list follows that level's item order.
  @param options.trials - How many random paths to try.
  @param options.wobble - The wobble to generate strokes with. Defaults to the
  calibrated one.
@@ -93,16 +106,18 @@ const randomPath = (
  */
 export function measureAccuracy({
   breadths,
+  statedAngles,
   trials,
   wobble,
   seed = 0,
 }: {
   breadths: readonly number[];
+  statedAngles?: ReadonlyArray<ReadonlyArray<number | undefined>>;
   trials: number;
   wobble?: Wobble;
   seed?: number;
 }): number {
-  const model = buildMenu(breadths);
+  const model = buildMenu(breadths, statedAngles);
   const random = createRandom(seed);
   let recognized = 0;
   for (let trial = 0; trial < trials; trial++) {
