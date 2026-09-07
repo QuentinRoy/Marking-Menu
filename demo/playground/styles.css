@@ -204,6 +204,16 @@
   }
 }
 
+/* `menu.css` sets no font, so the menu inherits the host page's. That makes
+   it read in Public Sans here and in the browser's default on the demo page,
+   which is the library behaving the same way in two places rather than a
+   difference worth having: this page exists to judge the menu, not to dress
+   it. `initial` hands it back the font it would get on a page that set none,
+   so the two pages show the same thing. */
+:root .marking-menu {
+  font-family: initial;
+}
+
 @layer base {
   body {
     @apply bg-background text-foreground font-sans antialiased;
