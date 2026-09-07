@@ -55,9 +55,16 @@ function createStrokeLayer({
 
   const draw = rafThrottle(
     (stroke: readonly Point[], shouldDrawStartPoint: boolean) => {
+      // Strokes arrive in client coordinates, straight from the pointer; a
+      // canvas draws relative to its own top-left, which is the parent's.
+      // Converting here rather than in `sync` keeps that method's reference
+      // check comparing the array the caller passed, and picks up a parent
+      // that has since moved or scrolled.
+      const rect = parent.getBoundingClientRect();
+      const local = stroke.map((point) => toLocalPoint(point, rect));
       canvas?.clear();
-      canvas?.drawStroke(stroke);
-      const [start] = stroke;
+      canvas?.drawStroke(local);
+      const [start] = local;
       if (shouldDrawStartPoint && start !== undefined) {
         canvas?.drawPoint(start);
       }
@@ -247,9 +254,9 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
         if (menuHandle?.model !== view.menu.model) {
           menuHandle?.menu.remove();
           // `LayoutView.menu.center` is in client coordinates; the menu
-          // layout wants it relative to `parent`. This is the one
-          // DOM-dependent conversion the projector deliberately leaves to
-          // the renderer.
+          // layout wants it relative to `parent`. The projector is
+          // DOM-free, so every such conversion is the renderer's to make
+          // (see `createStrokeLayer` and `showFeedback` for the others).
           const cbr = parent.getBoundingClientRect();
           menuHandle = {
             model: view.menu.model,
@@ -278,7 +285,11 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
       restack();
     },
     showFeedback(effect) {
-      gestureFeedback.show(effect.stroke, { canceled: effect.canceled });
+      const rect = parent.getBoundingClientRect();
+      gestureFeedback.show(
+        effect.stroke.map((point) => toLocalPoint(point, rect)),
+        { canceled: effect.canceled },
+      );
     },
     dispose() {
       parent.style.cursor = ownCursor;
