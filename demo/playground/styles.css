@@ -286,6 +286,13 @@
   border-left-color: var(--color-mark);
 }
 
+/* Which schema found the fault, which `codemirror-json-schema` fills with the
+   schema's own title. There is only one schema here, so it names itself on
+   every diagnostic, twice over when a position has two. */
+.cm-tooltip.cm-tooltip .cm-diagnosticSource {
+  display: none;
+}
+
 /* CodeMirror underlines a diagnostic with a wavy line baked into a
    background image, in a red of its own; the page draws its own underline in
    the accent instead, so the background one has to go. */
@@ -295,12 +302,28 @@
   text-underline-offset: 3px;
 }
 
-/* The hover's own wrapper, which sets a code block apart from the prose
-   above it. */
-.cm6-json-schema-hover--code-wrapper {
-  margin-top: 4px;
+/* The lint tooltip pads each of its rows; the hover's section has no padding
+   of its own, so it is given the same and the two read alike when they are
+   stacked in one tooltip. */
+.cm-tooltip.cm-tooltip .cm6-json-schema-hover {
+  padding: 3px 8px;
+}
+
+/* The type, set apart from the prose above it. */
+.cm-tooltip.cm-tooltip .cm6-json-schema-hover--code-wrapper {
+  margin-top: 5px;
   border-top: 1px solid var(--color-rule);
-  padding-top: 4px;
+  padding-top: 5px;
   color: var(--color-quiet);
   font-family: var(--font-mono);
+}
+
+/* markdown-it wraps the prose in paragraphs, whose default margins would
+   space a two-line tooltip out like an article. */
+.cm-tooltip.cm-tooltip .cm6-json-schema-hover p {
+  margin: 0;
+}
+
+.cm-tooltip.cm-tooltip .cm6-json-schema-hover--description p + p {
+  margin-top: 3px;
 }

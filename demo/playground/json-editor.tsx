@@ -21,6 +21,7 @@ import { cn } from 'cn';
 import {
   handleRefresh,
   jsonCompletion,
+  jsonPointerForPosition,
   jsonSchemaHover,
   jsonSchemaLinter,
   stateExtensions,
@@ -80,6 +81,34 @@ function hoverTexts({ pointer }: { pointer: string }): {
   };
 }
 
+/**
+ The schema hover, silenced where the schema has nothing to say.
+
+ `jsonSchemaHover` always produces a tooltip, so a position the schema does
+ not describe, a property it does not allow among them, rendered as an empty
+ box: two section rules with nothing between them, stacked under whatever
+ diagnostic was already there.
+
+ @param view - The editor.
+ @param pos - The position hovered.
+ @param side - Which side of `pos` the pointer is on.
+ @returns The tooltip, or `null` where there is nothing to show.
+ */
+function schemaHover(
+  view: EditorView,
+  pos: number,
+  side: -1 | 1,
+): ReturnType<ReturnType<typeof jsonSchemaHover>> | null {
+  const pointer = jsonPointerForPosition(view.state, pos, side, 'json4');
+  if (annotationAt(pointer) === null) {
+    return null;
+  }
+
+  return hoverSource(view, pos, side);
+}
+
+const hoverSource = jsonSchemaHover({ getHoverTexts: hoverTexts });
+
 const extensions = [
   history(),
   indentOnInput(),
@@ -104,7 +133,7 @@ const extensions = [
   linter(jsonParseLinter()),
   linter(jsonSchemaLinter(), { needsRefresh: handleRefresh }),
   jsonLanguage.data.of({ autocomplete: jsonCompletion() }),
-  hoverTooltip(jsonSchemaHover({ getHoverTexts: hoverTexts })),
+  hoverTooltip(schemaHover),
   stateExtensions(editorSchema),
 ];
 
