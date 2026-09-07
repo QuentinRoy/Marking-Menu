@@ -417,6 +417,18 @@ describe('createModel', () => {
     ).toThrow(/different angles/v);
   });
 
+  it('rejects a repeated non-first angle', () => {
+    expect(() =>
+      createModel({
+        items: [
+          { angle: 10, label: 'First' },
+          { angle: 50, label: 'Second' },
+          { angle: 50, label: 'Third' },
+        ],
+      }),
+    ).toThrow(/different angles/v);
+  });
+
   it('rejects stated angles that need more than one turn', () => {
     expect(() =>
       createModel({

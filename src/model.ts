@@ -482,6 +482,10 @@ const getItemAngles = (
   let previousAngle = firstItem.angle;
   for (const item of otherItems) {
     const { angle: itemAngle } = item;
+    if (itemAngle === normalizeAngle(previousAngle)) {
+      throw new Error('Menu items at a level must have different angles.');
+    }
+
     let angle = itemAngle;
     while (angle <= previousAngle) {
       angle += 360;
@@ -489,9 +493,7 @@ const getItemAngles = (
 
     if (angle >= firstItem.angle + 360) {
       throw new Error(
-        angle === firstItem.angle + 360
-          ? 'Menu items at a level must have different angles.'
-          : 'Menu item angles at a level cannot span more than one full turn.',
+        'Menu item angles at a level cannot span more than one full turn.',
       );
     }
 
