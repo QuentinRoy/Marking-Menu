@@ -22,6 +22,10 @@ export type MarkingMenuItemInput = {
   */
   readonly label: string;
   /**
+  The item's optional clockwise angle in degrees, measured from the right.
+  */
+  readonly angle?: number | undefined;
+  /**
   The item's sub-items, if any.
   */
   readonly items?: readonly MarkingMenuItemInput[] | undefined;

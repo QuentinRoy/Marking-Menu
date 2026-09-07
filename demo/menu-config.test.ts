@@ -4,7 +4,7 @@ import { readMenuConfig, writeMenuConfig } from './menu-config.js';
 
 const menu: MarkingMenuInput = {
   items: [
-    { id: 'a', label: 'A', items: [{ label: 'A1' }] },
+    { angle: 45, id: 'a', label: 'A', items: [{ angle: 90, label: 'A1' }] },
     { label: 'Wait, (really) @ home?' },
   ],
 };
@@ -35,5 +35,13 @@ describe('readMenuConfig / writeMenuConfig', () => {
 
   it('reads no menu from JSON of the wrong shape', () => {
     expect(readMenuConfig('?config=%7B%22items%22%3A%5B4%5D%7D')).toBeNull();
+  });
+
+  it('rejects a non-finite item angle', () => {
+    expect(
+      readMenuConfig(
+        '?config=%7B%22items%22%3A%5B%7B%22label%22%3A%22A%22%2C%22angle%22%3A1e999%7D%5D%7D',
+      ),
+    ).toBeNull();
   });
 });

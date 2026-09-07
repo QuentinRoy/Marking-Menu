@@ -10,10 +10,8 @@ import type { MarkingMenuInput } from '../../src/types.js';
  It is not published with the package, hence no `$id`: there is no URL it
  could be fetched from.
 
- It has no `angle`, because the library has none: `src/model.ts` lays every
- item out at `index * (items.length > 4 ? 45 : 90)`. Per-item angles are
- issue #43; `menu-schema.test-d.ts` fails the moment the input type grows a
- field this schema does not have.
+ The schema mirrors every field in `MarkingMenuInput`.
+ `menu-schema.test-d.ts` fails when the input type and schema differ.
  */
 export const menuSchema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -37,7 +35,7 @@ export const menuSchema = {
       type: 'array',
       title: 'Menu level',
       description:
-        'One level of the menu. Items are laid out clockwise starting to the right, evenly spread: 90 degrees apart up to four items, 45 degrees apart beyond that. The order here is the order around the circle.',
+        'One level of the menu. Items appear clockwise in the order listed here.',
       items: { $ref: '#/$defs/item' },
     },
     item: {
@@ -59,6 +57,12 @@ export const menuSchema = {
           title: 'Label',
           description:
             'The text drawn on the item, and what a selection reports back. Required.',
+        },
+        angle: {
+          type: 'number',
+          title: 'Angle',
+          description:
+            'A clockwise angle in degrees from the right. Optional. Items without one fill the gaps between stated angles.',
         },
         items: {
           $ref: '#/$defs/items',

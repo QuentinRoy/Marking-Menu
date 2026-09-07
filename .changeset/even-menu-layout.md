@@ -4,5 +4,4 @@
 
 Lay out each menu level evenly around the full circle to prevent unused
 directions and overlapping items. This moves items in 5-item, 6-item, and
-7-item menus. To preserve existing layout, wait for #244 and set each
-item's `angle` explicitly.
+7-item menus. Set an item's `angle` to preserve its existing position.
