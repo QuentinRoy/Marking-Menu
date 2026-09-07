@@ -228,20 +228,6 @@
   }
 }
 
-/* `src/layout/menu.css` draws a label at `--item-font-size` inside a box of
-   `--item-height`, both 20px by default, and clips the overflow: an ascender
-   or a descender is cut off at that ratio whatever the font. Both are the
-   library's to set from a page, so the label is given room here rather than
-   the menu being left to crop. The geometry the menu is read by, its radius
-   and the angles, stays untouched. `:root` out-specifies the stylesheet the
-   library injects into the head at runtime. */
-:root .marking-menu {
-  --item-font-size: var(--text-sm);
-  --item-height: calc(var(--spacing) * 5.5);
-
-  font-family: var(--font-sans);
-}
-
 /* CodeMirror injects its own stylesheet into the document head at runtime,
    after this one, so a rule of equal specificity loses on document order
    alone. Every selector below is therefore doubled, or qualified, to
