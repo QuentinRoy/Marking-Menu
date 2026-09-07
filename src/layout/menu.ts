@@ -106,8 +106,14 @@ const template = (
     // this and I could not be bothered fixing it.
     elt.style.setProperty('--cosine', `${Math.cos(-radAngle)}`);
     elt.style.setProperty('--sine', `${Math.sin(-radAngle)}`);
-    elt.innerHTML += '<div class="marking-menu-line"></div>';
-    elt.innerHTML += `<div class="marking-menu-label">${item.label}</div>`;
+    const lineElt = doc.createElement('div');
+    lineElt.className = 'marking-menu-line';
+    elt.append(lineElt);
+
+    const labelElt = doc.createElement('div');
+    labelElt.className = 'marking-menu-label';
+    labelElt.textContent = item.label;
+    elt.append(labelElt);
     main.append(elt);
   }
 
