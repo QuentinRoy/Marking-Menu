@@ -7,12 +7,14 @@ import { type Mock } from 'vitest';
 import type { ModelItem } from '../types.js';
 import type { Point } from '../utils.js';
 import {
+  analyzeMarkingMenuStroke,
   divideLongestSegment,
   findItem,
   pointsToSegments,
   recognizeMarkingMenuStroke,
   walkModel,
 } from './recognize-mm-stroke.js';
+import { strokeLength } from './stroke-length.js';
 
 const STROKES_PATH = path.resolve(
   import.meta.dirname,
@@ -44,6 +46,7 @@ type MockModel = ModelItem<string | undefined, string, readonly MockModel[]> & {
   parent: MockModel | null;
   getMaxDepth: Mock<() => number>;
   getMaxBreadth: Mock<() => number>;
+  getMinAngularGap: Mock<() => number>;
   getNearestChild: Mock<(childAngle?: number) => MockModel>;
 };
 
@@ -82,6 +85,7 @@ const createMockModel = (
       isRoot: false,
       getMaxDepth: vi.fn(() => 0),
       getMaxBreadth: vi.fn(() => 0),
+      getMinAngularGap: vi.fn(() => 360 / breadth),
       getNearestChild: vi.fn<(childAngle?: number) => MockModel>(),
       requestedAngle,
     };
@@ -93,6 +97,7 @@ const createMockModel = (
       requestedAngle,
       getMaxDepth: vi.fn(() => depth),
       getMaxBreadth: vi.fn(() => breadth),
+      getMinAngularGap: vi.fn(() => 360 / breadth),
       isLeaf: false,
       getNearestChild: vi.fn((childAngle?: number) =>
         createMockModel(depth - 1, breadth, childAngle, m),
@@ -381,5 +386,77 @@ describe('recognizeMarkingMenuStroke', () => {
         requireLeaf: true,
       });
     }).toThrow('The result cannot be both a leaf and a menu');
+  });
+});
+
+describe('analyzeMarkingMenuStroke', () => {
+  it('finds the same path recognizeMarkingMenuStroke would', async () => {
+    const stroke = await readStroke([225, 0, 135].join('-'));
+    const model = createMockModel(3);
+
+    // Mock items are recreated on every `getNearestChild` call (see
+    // `createMockModel`), so the two calls below never share item instances.
+    // `requestedAngle` is what each level was actually reached with, and is
+    // what the other "recognizes real 3 levels strokes" tests already key
+    // off of to compare paths for that same reason.
+    const analysis = analyzeMarkingMenuStroke(stroke, model);
+    const recognized = recognizeMarkingMenuStroke(stroke, model, {
+      requireMenu: false,
+      requireLeaf: false,
+    });
+
+    expect(analysis.path?.at(-1)?.requestedAngle).toBe(
+      recognized?.requestedAngle,
+    );
+    expect(analysis.path?.at(-1)?.parent?.requestedAngle).toBe(
+      recognized?.parent?.requestedAngle,
+    );
+    expect(analysis.path?.at(-1)?.parent?.parent?.requestedAngle).toBe(
+      recognized?.parent?.parent?.requestedAngle,
+    );
+  });
+
+  it('derives the angle threshold from the model breadth', async () => {
+    const stroke = await readStroke(90);
+    const model = createMockModel(1, 8);
+
+    const { angleThreshold } = analyzeMarkingMenuStroke(stroke, model);
+
+    expect(angleThreshold).toBeCloseTo(360 / 8 / 2 / 0.75);
+  });
+
+  it('derives the expected segment length from the stroke length and depth', async () => {
+    const stroke = await readStroke(90);
+    const model = createMockModel(1);
+
+    const { expectedSegmentLength } = analyzeMarkingMenuStroke(stroke, model);
+
+    expect(expectedSegmentLength).toBeCloseTo(strokeLength(stroke) / 1);
+  });
+
+  it('reports articulation points bounding the whole stroke', async () => {
+    const stroke = await readStroke([225, 0, 135].join('-'));
+    const model = createMockModel(3);
+
+    const { articulationPoints } = analyzeMarkingMenuStroke(stroke, model);
+
+    expect(articulationPoints[0]).toEqual(stroke[0]);
+    expect(articulationPoints.at(-1)).toEqual(stroke.at(-1));
+  });
+
+  it('reports segments as a subsequence of the corners joined pairwise', async () => {
+    const stroke = await readStroke([225, 0, 135].join('-'));
+    const model = createMockModel(3);
+
+    const { articulationPoints, segments } = analyzeMarkingMenuStroke(
+      stroke,
+      model,
+    );
+    const everyPossibleSegment = pointsToSegments([...articulationPoints]);
+
+    expect(segments.length).toBeGreaterThan(0);
+    for (const segment of segments) {
+      expect(everyPossibleSegment).toContainEqual(segment.points);
+    }
   });
 });

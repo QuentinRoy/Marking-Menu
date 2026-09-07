@@ -63,13 +63,25 @@ export type Menu = {
   remove: () => void;
 };
 
-// Identify corner items as these may be styled differently.
-const CORNER_ITEM_CLASSES: Record<number, string> = {
-  45: 'bottom-right-item',
-  135: 'bottom-left-item',
-  225: 'top-left-item',
-  315: 'top-right-item',
-};
+// Items may be styled differently near a corner, so the connecting line meets
+// the label squarely. Which corner applies depends on the quadrant the item's
+// angle falls in, not on any exact angle: an axis-aligned angle (0, 90, 180,
+// 270) sits between two quadrants and gets no corner class.
+const CORNER_ITEM_CLASSES = [
+  'bottom-right-item',
+  'bottom-left-item',
+  'top-left-item',
+  'top-right-item',
+];
+
+function getCornerClass(angle: number): string | undefined {
+  const normalizedAngle = ((angle % 360) + 360) % 360;
+  if (normalizedAngle % 90 === 0) {
+    return undefined;
+  }
+
+  return CORNER_ITEM_CLASSES[Math.floor(normalizedAngle / 90)];
+}
 
 const template = (
   { items, center }: { items: readonly MenuLayoutItem[]; center: Point },
@@ -84,7 +96,7 @@ const template = (
     elt.className = 'marking-menu-item';
     elt.dataset.itemId = item.key;
     elt.style.setProperty('--angle', `${item.angle}deg`);
-    const cornerClass = CORNER_ITEM_CLASSES[item.angle];
+    const cornerClass = getCornerClass(item.angle);
     if (cornerClass !== undefined) {
       elt.classList.add(cornerClass);
     }

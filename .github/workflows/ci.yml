@@ -71,7 +71,7 @@ jobs:
     # doesn't exist". Renovate groups the two into one PR (see the `playwright`
     # group in renovate.json), so bump them together if you touch either by
     # hand.
-    container: mcr.microsoft.com/playwright:v1.62.0-noble
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1

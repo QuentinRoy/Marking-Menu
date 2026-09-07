@@ -1,6 +1,16 @@
 import { createModel } from './model.js';
 import type { MarkingMenuItemInput } from './types.js';
 
+/*
+ `getMinAngularGap` is a real method of every model node, but it is
+ deliberately absent from the public `AnyModelNode`/`ModelItem` types (see
+ `recognize-mm-stroke.ts`, its only caller), so it does not show up on
+ `createModel`'s return type either. The cast reaches it anyway to test the
+ computation directly.
+ */
+const getMinAngularGap = (node: unknown): number =>
+  (node as { getMinAngularGap(): number }).getMinAngularGap();
+
 const fourItems = [
   { id: 'right', label: 'Right' },
   { id: 'bottom', label: 'Bottom' },
@@ -190,6 +200,39 @@ describe('createModel', () => {
     expect(menu.getChildrenByLabel('Anything')).toEqual([]);
     expect(menu.getMaxDepth()).toBe(0);
     expect(menu.getMaxBreadth()).toBe(0);
+  });
+
+  it('finds the smallest angular gap of an evenly spaced menu', () => {
+    const menu = createModel({ items: fourItems });
+    expect(getMinAngularGap(menu)).toBe(90);
+  });
+
+  it('finds the smallest angular gap across every level, not just the top one', () => {
+    const menu = createModel({
+      items: [
+        { label: 'Right' },
+        {
+          label: 'Bottom',
+          items: [
+            { label: 'Sub 1' },
+            { label: 'Sub 2' },
+            { label: 'Sub 3' },
+            { label: 'Sub 4' },
+            { label: 'Sub 5' },
+          ],
+        },
+      ],
+    });
+    expect(getMinAngularGap(menu)).toBe(45);
+    expect(getMinAngularGap(menu.items[1])).toBe(45);
+  });
+
+  it('reports no gap for a level with fewer than two items', () => {
+    const menu = createModel({
+      items: [{ label: 'Only one', items: [{ label: 'Sub 1' }] }],
+    });
+    expect(getMinAngularGap(menu)).toBe(Infinity);
+    expect(getMinAngularGap(menu.items[0])).toBe(Infinity);
   });
 
   it('freezes the item lists, at every level', () => {

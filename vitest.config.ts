@@ -11,8 +11,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     // Test files are being migrated from .js to .ts; match both until the
-    // migration completes.
-    include: ['src/**/*.test.{js,ts}'],
+    // migration completes. The playground page (see `demo/playground`) has
+    // tests of its own; coverage below stays scoped to `src`, so demo code
+    // never moves the thresholds.
+    include: ['src/**/*.test.{js,ts}', 'demo/**/*.test.ts'],
     // Run the type level tests (`*.test-d.ts`) alongside the runtime ones.
     typecheck: { enabled: true },
     coverage: {
