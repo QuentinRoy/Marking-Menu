@@ -36,7 +36,7 @@ function observed<T extends Observation['type']>(
   return observation as Extract<Observation, { type: T }>;
 }
 
-// Beyond the default `minSelectionDist` (40px): far enough to select item
+// Beyond the default `deadZoneRadius` (40px): far enough to select item
 // "a" unambiguously, the same margin `mouse.spec.ts` uses for its own
 // selections.
 const SELECT_RADIUS = 100;

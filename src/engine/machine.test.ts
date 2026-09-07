@@ -56,8 +56,7 @@ const submenuModel = createModel({
 const options = {
   movementsThreshold: 5,
   noviceDwellingTime: 300,
-  minSelectionDist: 40,
-  minMenuSelectionDist: 80,
+  deadZoneRadius: 40,
   submenuOpeningDelay: 200,
 };
 
@@ -421,7 +420,7 @@ describe('navigationMachine', () => {
   });
 
   describe('novice phase: pointing at items', () => {
-    it('stays inactive while the pointer is within minSelectionDist of the menu center (objective 5)', () => {
+    it('stays inactive while the pointer is within the dead zone (objective 5)', () => {
       const host = startHost();
       const moved = vi.fn<(event: { active: unknown }) => void>();
       host.on('move', ({ data }) => {
@@ -442,7 +441,7 @@ describe('navigationMachine', () => {
       expect(changed).not.toHaveBeenCalled();
     });
 
-    it('activates the nearest item by angle once beyond minSelectionDist, and distinguishes a changed nearest item from continued pointing at the same one (objective 6)', () => {
+    it('activates the nearest item by angle once past the dead zone, and distinguishes a changed nearest item from continued pointing at the same one (objective 6)', () => {
       const host = startHost();
       const moved: unknown[] = [];
       host.on('move', ({ data }) => {
@@ -606,7 +605,7 @@ describe('navigationMachine', () => {
   });
 
   describe('novice phase: dwelling into a submenu (objectives 9, 11)', () => {
-    it('opens the submenu when the dwell fires beyond minMenuSelectionDist on a non-leaf active item', () => {
+    it('opens the submenu when the dwell fires on a non-leaf active item', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       const opened: unknown[] = [];
       host.on('open', ({ data }) => {
@@ -614,7 +613,7 @@ describe('navigationMachine', () => {
       });
 
       openNovice(host);
-      host.send('move', { position: [100, 0] }); // Beyond minMenuSelectionDist (80), activates "right"
+      host.send('move', { position: [100, 0] }); // Past the dead zone, activates "right"
       const submenu =
         host.current.name === 'novice' ? host.current.data.active : null;
       expect(submenu).not.toBeNull();
@@ -658,23 +657,22 @@ describe('navigationMachine', () => {
       ]);
     });
 
-    it('does not open when dwelling within minMenuSelectionDist, even on a non-leaf active item', () => {
+    it('opens the submenu just past the dead zone', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       openNovice(host);
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
-      // Beyond minSelectionDist (40) so "right" is active, but within
-      // minMenuSelectionDist (80).
-      host.send('move', { position: [50, 0] });
-      const rootMenu =
-        host.current.name === 'novice' ? host.current.data.menu : null;
+      // Just past the dead zone (40): activation and dwelling share it.
+      host.send('move', { position: [41, 0] });
+      const submenu =
+        host.current.name === 'novice' ? host.current.data.active : null;
 
       host.send('dwell');
 
-      expect(opened).not.toHaveBeenCalled();
+      expect(opened).toHaveBeenCalledTimes(1);
       expect(host.current.name === 'novice' && host.current.data.menu).toBe(
-        rootMenu,
+        submenu,
       );
     });
 
@@ -697,7 +695,7 @@ describe('navigationMachine', () => {
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
-      host.send('move', { position: [10, 0] }); // Within minSelectionDist: active stays null
+      host.send('move', { position: [10, 0] }); // Within the dead zone: active stays null
       host.send('dwell');
 
       expect(opened).not.toHaveBeenCalled();

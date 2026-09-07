@@ -37,8 +37,7 @@ import { noviceUpperStroke, projectLayout } from './layout-view.js';
 export type NavigationOptions = {
   readonly movementsThreshold: number;
   readonly noviceDwellingTime: number;
-  readonly minSelectionDist: number;
-  readonly minMenuSelectionDist: number;
+  readonly deadZoneRadius: number;
   readonly submenuOpeningDelay: number;
 };
 
@@ -449,9 +448,7 @@ export const navigationMachine = machine({
       const { menuCenter, options, menu, dwellAnchor } = fromData;
       const { azymuth, radius } = toPolar(position, menuCenter);
       const active =
-        radius < options.minSelectionDist
-          ? null
-          : menu.getNearestChild(azymuth);
+        radius < options.deadZoneRadius ? null : menu.getNearestChild(azymuth);
       return {
         ...fromData,
         active,
@@ -466,19 +463,14 @@ export const navigationMachine = machine({
       };
     },
 
-    // Pausing beyond `minMenuSelectionDist` on a non-leaf active item opens
-    // that submenu: a genuine phase change, even though the destination is
-    // named `novice` too. Anything else declines, and since no other row is
-    // declared for (novice, dwell), the dwell is silently dropped.
+    // Pausing on a non-leaf active item opens that submenu: a genuine phase
+    // change, even though the destination is named `novice` too. Anything
+    // else declines, and since no other row is declared for (novice, dwell),
+    // the dwell is silently dropped. No distance test of its own: an item
+    // is active only past the dead zone, and that is the only threshold.
     'novice -dwell> novice'({ fromData, skip }) {
-      const { active, menuCenter, lastPosition, lowerStroke, options, model } =
-        fromData;
-      const { radius } = toPolar(lastPosition, menuCenter);
-      if (
-        active === null ||
-        active.isLeaf ||
-        radius <= options.minMenuSelectionDist
-      ) {
+      const { active, lastPosition, lowerStroke, options, model } = fromData;
+      if (active === null || active.isLeaf) {
         return skip();
       }
 
@@ -614,9 +606,9 @@ export const navigationMachine = machine({
     },
 
     // Same shape as `'startup -dwell> novice'`'s own `open`, one recursion
-    // level down: the row above already declined the input unless the
-    // dwell landed beyond `minMenuSelectionDist` on a non-leaf, so an
-    // eligible submenu is all this action ever announces.
+    // level down: the row above already declined the input unless the dwell
+    // landed on a non-leaf active item, so an eligible submenu is all this
+    // action ever announces.
     'novice -dwell> novice'({ toData, emit }) {
       emit(
         'open',

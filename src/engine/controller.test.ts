@@ -667,7 +667,7 @@ describe('createController', () => {
       items,
       parent,
       noviceDwellingTime: 100,
-      minSelectionDist: 40,
+      deadZoneRadius: 40,
     });
 
     const canceled = voidMock<[MarkingMenuCancelEvent<AnyModelNode>]>();
@@ -723,7 +723,7 @@ describe('createController', () => {
       ],
       parent,
       noviceDwellingTime: 100,
-      minSelectionDist: 40,
+      deadZoneRadius: 40,
     });
 
     const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
@@ -763,7 +763,7 @@ describe('createController', () => {
       items,
       parent,
       noviceDwellingTime: 100,
-      minSelectionDist: 40,
+      deadZoneRadius: 40,
     });
 
     const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
@@ -802,7 +802,7 @@ describe('createController', () => {
     const menuBefore = parent.querySelector('.marking-menu');
     expect(menuBefore).not.toBeNull();
 
-    // Still within `minSelectionDist`, so the active item stays null and the
+    // Still within `deadZoneRadius`, so the active item stays null and the
     // menu identity is unchanged: no DOM to patch, but a render pass still
     // runs.
     parent.dispatchEvent(pointer('pointermove', { clientX: 1, clientY: 0 }));
@@ -813,7 +813,7 @@ describe('createController', () => {
     controller.dispose();
   });
 
-  it('activates no item while the pointer stays within minSelectionDist of the menu center', () => {
+  it('activates no item while the pointer stays within the dead zone', () => {
     using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
@@ -821,7 +821,7 @@ describe('createController', () => {
       items,
       parent,
       noviceDwellingTime: 100,
-      minSelectionDist: 40,
+      deadZoneRadius: 40,
     });
 
     const moved = voidMock<[MarkingMenuMoveEvent<AnyModelNode>]>();
@@ -843,7 +843,7 @@ describe('createController', () => {
     controller.dispose();
   });
 
-  it('activates the nearest item by angle once beyond minSelectionDist, patching the DOM without recreating the menu, and distinguishes continued pointing at the same item from moving to a new one', () => {
+  it('activates the nearest item by angle once past the dead zone, patching the DOM without recreating the menu, and distinguishes continued pointing at the same item from moving to a new one', () => {
     using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
@@ -851,7 +851,7 @@ describe('createController', () => {
       items,
       parent,
       noviceDwellingTime: 100,
-      minSelectionDist: 40,
+      deadZoneRadius: 40,
     });
 
     const moved = vi.fn<() => void>();
@@ -908,7 +908,7 @@ describe('createController', () => {
       items,
       parent,
       noviceDwellingTime: 100,
-      minSelectionDist: 40,
+      deadZoneRadius: 40,
     });
 
     const seen: string[] = [];
@@ -990,7 +990,7 @@ describe('createController', () => {
       { id: 'up', label: 'Up' },
     ] as const;
 
-    it('dispatches open for the submenu and recreates the menu DOM for it, once the pointer dwells beyond minMenuSelectionDist on it', () => {
+    it('dispatches open for the submenu and recreates the menu DOM for it, once the pointer dwells past the dead zone on it', () => {
       using _canvases = stubbedCanvasContexts();
       using _timers = fakeTimers();
       const parent = createParent();
@@ -998,8 +998,7 @@ describe('createController', () => {
         items: submenuItems,
         parent,
         noviceDwellingTime: 100,
-        minSelectionDist: 40,
-        minMenuSelectionDist: 80,
+        deadZoneRadius: 40,
         submenuOpeningDelay: 100,
       });
 
@@ -1012,7 +1011,7 @@ describe('createController', () => {
       vi.advanceTimersByTime(100);
       const rootMenuDom = parent.querySelector('.marking-menu');
 
-      // Beyond minMenuSelectionDist (80) on "right", a submenu.
+      // Past the dead zone on "right", a submenu.
       parent.dispatchEvent(
         pointer('pointermove', { clientX: 100, clientY: 0 }),
       );
@@ -1035,8 +1034,7 @@ describe('createController', () => {
         items: submenuItems,
         parent,
         noviceDwellingTime: 100,
-        minSelectionDist: 40,
-        minMenuSelectionDist: 80,
+        deadZoneRadius: 40,
         submenuOpeningDelay: 100,
       });
 
@@ -1072,8 +1070,7 @@ describe('createController', () => {
         items: submenuItems,
         parent,
         noviceDwellingTime: 100,
-        minSelectionDist: 40,
-        minMenuSelectionDist: 80,
+        deadZoneRadius: 40,
         submenuOpeningDelay: 100,
       });
 
@@ -1096,7 +1093,7 @@ describe('createController', () => {
       vi.advanceTimersByTime(100); // Opens the submenu, centered at [100, 0]
       const submenu = openedMenu;
 
-      // Released back at the submenu's own centre: within minSelectionDist,
+      // Released back at the submenu's own centre: within the dead zone,
       // so nothing is active there.
       parent.dispatchEvent(pointer('pointerup', { clientX: 100, clientY: 0 }));
 
