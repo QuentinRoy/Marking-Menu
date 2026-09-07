@@ -16,9 +16,12 @@
 :root {
   color-scheme: light dark;
 
-  /* The library's own defaults, named so the pages have something to pass. */
+  /* The library's own defaults, named so the pages have something to pass,
+     and so the playground can redraw a finished mark in the same weight the
+     menu drew it in. */
   --stroke-color: #000000;
   --lower-stroke-color: #777777;
+  --stroke-width: 4;
 }
 
 @media (prefers-color-scheme: dark) {

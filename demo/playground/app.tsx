@@ -66,7 +66,9 @@ export function App() {
   const [status, setStatus] = useState('');
   const [mode, setMode] = useState('live');
   const [focusPath, setFocusPath] = useState<readonly number[]>([]);
-  const [showDiagnostics, setShowDiagnostics] = useState(true);
+  // Off to begin with: the mark as the menu drew it is what a reader wants
+  // to see first; the breakdown is for when they ask how it was read.
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const [result, setResult] = useState<GestureResult>(IDLE_RESULT);
   const [copied, setCopied] = useState(false);
 
@@ -250,15 +252,15 @@ export function App() {
             <div className="text-quieter text-meta flex items-center gap-4 font-mono">
               <label className="flex cursor-pointer items-center gap-1.5 select-none">
                 <Checkbox
-                  checked={showDiagnostics}
+                  checked={showBreakdown}
                   onCheckedChange={(next) => {
-                    setShowDiagnostics(next === true);
+                    setShowBreakdown(next === true);
                   }}
                   className="size-3.5 [&_svg]:size-3"
                 />
-                Recognizer
+                Breakdown
               </label>
-              <Legend showDiagnostics={showDiagnostics} />
+              {showBreakdown && <Legend />}
             </div>
           )}
         </div>
@@ -267,7 +269,7 @@ export function App() {
           <LiveSurface
             menu={applied.menu}
             model={applied.model}
-            showDiagnostics={showDiagnostics}
+            showBreakdown={showBreakdown}
             onResult={setResult}
           />
           <Footer metrics={result.metrics}>
@@ -363,14 +365,17 @@ function Path({
   });
 }
 
-function Legend({ showDiagnostics }: { showDiagnostics: boolean }) {
-  const entries = showDiagnostics
-    ? ([
-        ['stroke', 'bg-edge-soft rounded-xs'],
-        ['pieces', 'bg-mark rounded-xs'],
-        ['corners', 'bg-ink rounded-full'],
-      ] as const)
-    : ([['stroke', 'bg-edge-soft rounded-xs']] as const);
+/**
+ What each colour on the surface means, which is only worth saying while the
+ breakdown is drawn: without it the only thing on screen is the mark itself.
+ The swatches are the colours the overlay draws with (see `live-surface.tsx`).
+ */
+function Legend() {
+  const entries = [
+    ['stroke', 'bg-stroke-trace rounded-xs'],
+    ['pieces', 'bg-mark rounded-xs'],
+    ['corners', 'bg-ink rounded-full'],
+  ] as const;
   return entries.map(([label, dot]) => (
     <span key={label} className="flex items-center gap-1.5 whitespace-nowrap">
       <span className={`size-2 shrink-0 ${dot}`} />

@@ -80,19 +80,16 @@ function size(name: string): number {
  @param options.overlay - The layer the canvases go in.
  @param options.stroke - The gesture, in coordinates local to `overlay`.
  @param options.analysis - What the recognizer made of that gesture.
- @param options.showDiagnostics - Whether to draw the pieces and corners too.
  @returns The canvases drawn, for the caller to remove.
  */
 function drawGesture({
   overlay,
   stroke,
   analysis,
-  showDiagnostics,
 }: {
   overlay: HTMLElement;
   stroke: readonly Point[];
   analysis: MarkingMenuStrokeAnalysis<MenuModel>;
-  showDiagnostics: boolean;
 }): StrokeCanvas[] {
   const style = getComputedStyle(document.documentElement);
   const token = (name: string) => style.getPropertyValue(name).trim();
@@ -103,13 +100,11 @@ function drawGesture({
     return canvas;
   };
 
+  // The mark as the menu drew it, dimmed so the pieces read on top of it.
   add({
     lineColor: token('--color-stroke-trace'),
-    lineWidth: size('--stroke-trace-width'),
+    lineWidth: size('--stroke-width'),
   }).drawStroke(stroke);
-  if (!showDiagnostics) {
-    return canvases;
-  }
 
   // Two canvases, used in turn, so that consecutive pieces stay told apart
   // where they meet.
@@ -170,7 +165,7 @@ function decidedBy(mode: MarkingMenuMode, wasInterrupted: boolean): string {
 export function LiveSurface({
   menu,
   model,
-  showDiagnostics,
+  showBreakdown,
   onResult,
 }: {
   menu: MarkingMenuInput;
@@ -178,7 +173,7 @@ export function LiveSurface({
   /**
   Whether to draw the pieces and corners the recognizer worked from.
   */
-  showDiagnostics: boolean;
+  showBreakdown: boolean;
   onResult: (result: GestureResult) => void;
 }) {
   const colorScheme = useColorScheme();
@@ -193,9 +188,9 @@ export function LiveSurface({
   const recognizedRef = useRef<readonly Point[] | null>(null);
   // Read at event time rather than closed over, so a re-render does not tear
   // the live menu down mid-gesture.
-  const latestRef = useRef({ model, showDiagnostics, onResult });
+  const latestRef = useRef({ model, showBreakdown, onResult });
   useEffect(() => {
-    latestRef.current = { model, showDiagnostics, onResult };
+    latestRef.current = { model, showBreakdown, onResult };
   });
 
   const clearOverlay = useCallback(() => {
@@ -213,12 +208,7 @@ export function LiveSurface({
     ) => {
       const overlay = overlayRef.current;
       if (overlay !== null) {
-        canvasesRef.current = drawGesture({
-          overlay,
-          stroke,
-          analysis,
-          showDiagnostics: latestRef.current.showDiagnostics,
-        });
+        canvasesRef.current = drawGesture({ overlay, stroke, analysis });
       }
     };
 
@@ -264,7 +254,10 @@ export function LiveSurface({
 
       recognizedRef.current = stroke;
       const analysis = analyzeMarkingMenuStroke(stroke, current);
-      draw(stroke, analysis);
+      if (showBreakdown) {
+        draw(stroke, analysis);
+      }
+
       report({
         ...outcome,
         metrics: [
@@ -293,11 +286,12 @@ export function LiveSurface({
       // of scheme rebuilds the menu with the other pair.
       strokeColor: token('--stroke-color'),
       lowerStrokeColor: token('--lower-stroke-color'),
-      // The library removes a completed trace on a timer, one canvas per
-      // gesture; the overlay this file draws afterwards covers the same
-      // stroke and owns its own canvases, so the library's copy is switched
-      // off rather than drawn twice over.
-      gestureFeedbackDuration: 0,
+      // With the breakdown off the page draws nothing at all, so the library
+      // keeps its own completed-gesture trace and what is on screen is the
+      // technique untouched. With it on, the overlay covers that same
+      // stroke, so the library's copy is switched off rather than drawn
+      // twice over.
+      ...(showBreakdown && { gestureFeedbackDuration: 0 }),
     });
 
     // A gesture the pointer never finished: the library announces `cancel`
@@ -350,9 +344,8 @@ export function LiveSurface({
       });
       controller.dispose();
       clearOverlay();
-      strokeRef.current = [];
     };
-  }, [clearOverlay, colorScheme, menu]);
+  }, [clearOverlay, colorScheme, menu, showBreakdown]);
 
   // Turning the overlay off, or back on, redraws the gesture already on
   // screen rather than waiting for the next one. Only a gesture the
@@ -365,13 +358,16 @@ export function LiveSurface({
     }
 
     clearOverlay();
+    if (!showBreakdown) {
+      return;
+    }
+
     canvasesRef.current = drawGesture({
       overlay,
       stroke,
       analysis: analyzeMarkingMenuStroke(stroke, model),
-      showDiagnostics,
     });
-  }, [clearOverlay, colorScheme, model, showDiagnostics]);
+  }, [clearOverlay, colorScheme, model, showBreakdown]);
 
   return (
     <div className="bg-surface dot-grid wide:min-h-0 relative min-h-85 flex-1 cursor-crosshair overflow-hidden">

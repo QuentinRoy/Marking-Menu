@@ -97,6 +97,7 @@
   --color-edge-soft: #c9c9cc;
   --color-mark: oklch(0.55 0.13 25);
   --color-dot: #e9e9e5;
+  /* The mark, dimmed under the breakdown so the pieces read on top of it. */
   --color-stroke-trace: rgb(23 23 26 / 0.22);
   --color-piece-alt: #4b4b52;
 
@@ -141,9 +142,9 @@
   /* The weights the gesture overlay draws with, read by `live-surface.tsx`.
      A canvas takes numbers rather than lengths, so these are unitless
      pixels; they sit here so that the whole overlay, colour and weight, is
-     described in one place. The menu's own stroke is not among them: that
-     one is the library's to style, and this page leaves it alone. */
-  --stroke-trace-width: 2;
+     described in one place. The mark itself is drawn at `--stroke-width`,
+     the menu's own (see `color-scheme.css`), so that with the breakdown off
+     what is left on screen is the stroke as the menu drew it. */
   --stroke-piece-width: 3;
   --stroke-corner-radius: 4.5;
 }
