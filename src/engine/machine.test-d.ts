@@ -84,8 +84,7 @@ describe('StatesOf<typeof navigationMachine>', () => {
       options: {
         movementsThreshold: 5,
         noviceDwellingTime: 1,
-        minSelectionDist: 40,
-        minMenuSelectionDist: 80,
+        deadZoneRadius: 40,
         submenuOpeningDelay: 1,
       },
     });

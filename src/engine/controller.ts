@@ -32,13 +32,10 @@ export type EngineConfig = MarkingMenuInput &
     */
     readonly noviceDwellingTime?: number;
     /**
-    The minimum distance from the center to select an item.
-    */
-    readonly minSelectionDist?: number;
-    /**
-    The minimum distance from the center to open a sub-menu.
-    */
-    readonly minMenuSelectionDist?: number;
+     The radius around the menu center within which no item is active. Past
+     it an item becomes active, and dwelling on it opens its sub-menu.
+     */
+    readonly deadZoneRadius?: number;
     /**
     The dwelling delay before opening a sub-menu.
     */
@@ -108,9 +105,8 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       options: {
         movementsThreshold: config.movementsThreshold ?? 5,
         noviceDwellingTime: config.noviceDwellingTime ?? 1000 / 3,
-        minSelectionDist: config.minSelectionDist ?? 40,
-        minMenuSelectionDist: config.minMenuSelectionDist ?? 80,
-        submenuOpeningDelay: config.submenuOpeningDelay ?? 100,
+        deadZoneRadius: config.deadZoneRadius ?? 40,
+        submenuOpeningDelay: config.submenuOpeningDelay ?? 1000 / 3,
       },
       renderer,
       log: { ...defaultLogger, ...config.log },

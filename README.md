@@ -80,13 +80,12 @@ See [item layout](#item-layout) for angles. TypeScript infers event and item typ
 
 Pass options alongside `items` and `parent`. Distances use pixels; delays use milliseconds.
 
-| Option                 | Default    | Purpose                                                                                  |
-| ---------------------- | ---------- | ---------------------------------------------------------------------------------------- |
-| `noviceDwellingTime`   | `1000 / 3` | Pause before showing the menu.                                                           |
-| `submenuOpeningDelay`  | `100`      | Pause before opening a submenu.                                                          |
-| `movementsThreshold`   | `5`        | Movement needed to start a gesture without opening the menu, or restart a submenu pause. |
-| `minSelectionDist`     | `40`       | Minimum distance from the menu center to select an item.                                 |
-| `minMenuSelectionDist` | `80`       | Minimum distance from the menu center to open a submenu.                                 |
+| Option                | Default    | Purpose                                                                                  |
+| --------------------- | ---------- | ---------------------------------------------------------------------------------------- |
+| `noviceDwellingTime`  | `1000 / 3` | Pause before showing the menu.                                                           |
+| `submenuOpeningDelay` | `1000 / 3` | Pause before opening a submenu.                                                          |
+| `movementsThreshold`  | `5`        | Movement needed to start a gesture without opening the menu, or restart a submenu pause. |
+| `deadZoneRadius`      | `40`       | Distance from the menu center past which an item becomes active.                         |
 
 Use `log: { error: handler }` to handle internal errors; the default is `console.error`. Invalid menu definitions throw during construction.
 

@@ -13,13 +13,12 @@ import {
 } from '../helpers/gestures.js';
 import { waitForLogEntry } from '../helpers/log.js';
 
-// The fixture uses the library's defaults: minSelectionDist 40,
-// minMenuSelectionDist 80, movementsThreshold 5, noviceDwellingTime ~333ms.
+// The fixture uses the library's defaults: deadZoneRadius 40,
+// movementsThreshold 5, noviceDwellingTime and submenuOpeningDelay ~333ms.
 // Radii below are chosen with enough margin from those thresholds to be
 // unambiguous rather than to probe the thresholds themselves (that's the
 // unit suites' job).
 const SELECT_RADIUS = 100;
-const NON_LEAF_HOVER_RADIUS = 60; // Between 40 (selection) and 80 (submenu).
 const TINY_RADIUS = 3; // Below the 5px movements threshold.
 
 test('novice mode: dwelling opens the menu, lays out every item, and a release selects', async ({
@@ -232,18 +231,18 @@ test('novice center cancellation: releasing at the center cancels without select
   expect(log.some((entry) => entry.type === 'select')).toBe(false);
 });
 
-test('novice non-leaf cancellation: releasing over a submenu item (not far enough to open it) cancels', async ({
+test('novice non-leaf cancellation: releasing over a submenu item before the dwell opens it cancels', async ({
   page,
 }) => {
   const center = await surfaceCenter(page);
   await pressAt(page, center);
   await waitForMenuOpen(page);
 
-  // Between the 40px selection radius and the 80px submenu-opening radius:
-  // far enough to be "active" over `Others...`, not far enough to open it.
+  // `Others...` becomes active, and the release lands well inside the
+  // submenu-opening delay, so the menu never advances.
   await moveTo(
     page,
-    offset(center, TOP_LEVEL_ITEMS.others.angle, NON_LEAF_HOVER_RADIUS),
+    offset(center, TOP_LEVEL_ITEMS.others.angle, SELECT_RADIUS),
   );
   await releaseAt(page);
 
