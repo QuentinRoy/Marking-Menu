@@ -441,10 +441,13 @@ class MarkingMenuRoot extends MarkingMenuNode {
 
 const normalizeAngle = (angle: number): number => mod(angle, 360);
 
-const getItemAngles = (
+type StatedItemAngle = { angle: number; index: number };
+type StatedItemAngles = [StatedItemAngle, ...StatedItemAngle[]];
+
+const collectStatedAngles = (
   inputs: readonly MarkingMenuItemInput[],
-): readonly number[] => {
-  const stated = inputs.flatMap((input, index) => {
+): StatedItemAngle[] =>
+  inputs.flatMap((input, index) => {
     if (input.angle === undefined) {
       return [];
     }
@@ -456,29 +459,26 @@ const getItemAngles = (
     return [{ angle: normalizeAngle(input.angle), index }];
   });
 
-  if (stated.length === 0) {
-    const angleStep = 360 / inputs.length;
-    return inputs.map((_, index) => index * angleStep);
-  }
+const spreadEvenly = (itemCount: number): number[] => {
+  const angleStep = 360 / itemCount;
+  return Array.from({ length: itemCount }, (_, index) => index * angleStep);
+};
 
-  if (stated.length === 1) {
-    const [item] = stated;
-    if (item === undefined) {
-      throw new Error('Expected one stated angle.');
-    }
+const rotateAroundOne = (
+  itemCount: number,
+  item: StatedItemAngle,
+): number[] => {
+  const angleStep = 360 / itemCount;
+  return Array.from({ length: itemCount }, (_, index) =>
+    normalizeAngle(item.angle + (index - item.index) * angleStep),
+  );
+};
 
-    const angleStep = 360 / inputs.length;
-    return inputs.map((_, index) =>
-      normalizeAngle(item.angle + (index - item.index) * angleStep),
-    );
-  }
-
-  const [firstItem, ...otherItems] = stated;
-  if (firstItem === undefined) {
-    throw new Error('Expected at least one stated angle.');
-  }
-
-  const unwrapped = [firstItem];
+const unwrapStatedAngles = (
+  firstItem: StatedItemAngle,
+  otherItems: readonly StatedItemAngle[],
+): StatedItemAngles => {
+  const unwrapped: StatedItemAngles = [firstItem];
   let previousAngle = firstItem.angle;
   for (const item of otherItems) {
     const { angle: itemAngle } = item;
@@ -501,21 +501,47 @@ const getItemAngles = (
     previousAngle = angle;
   }
 
+  return unwrapped;
+};
+
+const interpolateGaps = (
+  itemCount: number,
+  statedItems: Readonly<StatedItemAngles>,
+): number[] => {
+  const [firstItem] = statedItems;
   const angles: number[] = [];
-  for (const [index, item] of unwrapped.entries()) {
-    const next = unwrapped[index + 1] ?? {
+  for (const [index, item] of statedItems.entries()) {
+    const next = statedItems[index + 1] ?? {
       angle: firstItem.angle + 360,
-      index: firstItem.index + inputs.length,
+      index: firstItem.index + itemCount,
     };
     const angleStep = (next.angle - item.angle) / (next.index - item.index);
     for (let offset = 0; offset < next.index - item.index; offset++) {
-      angles[(item.index + offset) % inputs.length] = normalizeAngle(
+      angles[(item.index + offset) % itemCount] = normalizeAngle(
         item.angle + offset * angleStep,
       );
     }
   }
 
   return angles;
+};
+
+const getItemAngles = (
+  inputs: readonly MarkingMenuItemInput[],
+): readonly number[] => {
+  const [firstItem, ...otherItems] = collectStatedAngles(inputs);
+  if (firstItem === undefined) {
+    return spreadEvenly(inputs.length);
+  }
+
+  if (otherItems.length === 0) {
+    return rotateAroundOne(inputs.length, firstItem);
+  }
+
+  return interpolateGaps(
+    inputs.length,
+    unwrapStatedAngles(firstItem, otherItems),
+  );
 };
 
 /**
