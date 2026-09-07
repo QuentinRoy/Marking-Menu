@@ -234,9 +234,6 @@ export type MarkingMenuModel<Input extends MarkingMenuInput> = NodeAt<
  * Implementation
  * -------------------------------------------------------------------------- */
 
-const getAngleRange = (items: readonly unknown[]): number =>
-  items.length > 4 ? 45 : 90;
-
 /**
  The behavior shared by the root of the menu and its items.
 
@@ -462,7 +459,7 @@ const createItems = (
   seenIds: Set<string> = new Set(),
   baseKey?: string,
 ): readonly MarkingMenuItem[] => {
-  const angleRange = getAngleRange(inputs);
+  const angleStep = 360 / inputs.length;
   return Object.freeze(
     inputs.map((input, index) => {
       if (input.id !== undefined) {
@@ -480,7 +477,7 @@ const createItems = (
       return new MarkingMenuItem({
         id: input.id,
         label: input.label,
-        angle: index * angleRange,
+        angle: index * angleStep,
         key,
         parent,
         items: (self) =>

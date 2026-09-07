@@ -10,14 +10,10 @@ import { createRandom } from './random.js';
  `../generated-stroke-corpus.test.ts`), kept in its own file so the test
  file stays focused on the calibration and the assertions.
 
- A list of counts is an angle configuration as much as a single count is:
- `createModel` spaces each level by that level's own count (see
- `getAngleRange` in `../../model.ts`), so `[4, 8]` walks a 90-degree-spaced
- top level into a 45-degree-spaced submenu, a spacing no single uniform
- breadth produces. The menus are built with `createModel` itself, rather
- than from any hardcoded angle table, so a change to how `createModel` lays
- a level out changes what this corpus measures on its next run, with
- nothing here to update by hand.
+ A list of counts maps to a distinct collection of angles: `createModel`
+ spaces each level from its own item count. `[4, 8]` starts 90 degrees apart
+ and enters a 45-degree submenu. The corpus builds menus through
+ `createModel`, so it measures the layout currently used by the library.
  */
 
 type EvenItem = { label: string; items?: EvenItem[] };
