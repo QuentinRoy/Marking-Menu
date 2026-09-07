@@ -10,11 +10,18 @@ import {
   analyzeMarkingMenuStroke,
   divideLongestSegment,
   findItem,
+  MINIMUM_RESOLVABLE_ANGLE,
   pointsToSegments,
   recognizeMarkingMenuStroke,
   walkModel,
 } from './recognize-mm-stroke.js';
 import { strokeLength } from './stroke-length.js';
+
+describe('MINIMUM_RESOLVABLE_ANGLE', () => {
+  it('matches the narrowest calibrated menu spacing', () => {
+    expect(MINIMUM_RESOLVABLE_ANGLE).toBe(45);
+  });
+});
 
 const STROKES_PATH = path.resolve(
   import.meta.dirname,
