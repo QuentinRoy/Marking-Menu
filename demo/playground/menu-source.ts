@@ -4,31 +4,6 @@ import type {
 } from '../../src/types.js';
 
 /**
- The demo's own eight-direction menu (see `demo/script.js`), used whenever
- the address carries no menu of its own to restore.
- */
-export const DEFAULT_MENU: MarkingMenuInput = {
-  items: [
-    { label: 'Right' },
-    { label: 'Down-Right' },
-    {
-      label: 'Others...',
-      items: [
-        { label: 'Sub Right' },
-        { label: 'Sub Down' },
-        { label: 'Sub Left' },
-        { label: 'Sub Up' },
-      ],
-    },
-    { label: 'Down-Left' },
-    { label: 'Left' },
-    { label: 'Up-Left' },
-    { label: 'Up' },
-    { label: 'Up-Right' },
-  ],
-};
-
-/**
  Print a menu as the editor shows it: leaves on one line each, so a level
  reads as a list, and sub-menus opened up, so the tree is visible.
 

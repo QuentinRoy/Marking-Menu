@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_MENU } from '../menu-config.js';
 import { validateMenuSource } from './menu-schema.js';
-import { DEFAULT_MENU, formatMenu } from './menu-source.js';
+import { formatMenu } from './menu-source.js';
 
 describe('validateMenuSource', () => {
   it('accepts the menu the page opens on', () => {

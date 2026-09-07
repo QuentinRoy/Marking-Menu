@@ -1,5 +1,6 @@
 import { createMarkingMenu } from 'marking-menu';
-import { readMenuConfig } from './menu-config.js';
+import { DEFAULT_MENU, readMenuConfig } from './menu-config.js';
+import { token } from './tokens.js';
 
 function element(selector: string): HTMLElement {
   const found = document.querySelector(selector);
@@ -12,31 +13,10 @@ function element(selector: string): HTMLElement {
 
 const toastElement = element('#toast');
 
-// The demo's own menu, with a sub-menu at the bottom, unless the address
-// names one: `?config=` carries a menu built in the playground (see
-// `demo/playground`), so a link can show the menu it was built for.
-const defaultMenu = {
-  items: [
-    { label: 'Right' },
-    { label: 'Down-Right' },
-    {
-      label: 'Others...',
-      items: [
-        { label: 'Sub Right' },
-        { label: 'Sub Down' },
-        { label: 'Sub Left' },
-        { label: 'Sub Up' },
-      ],
-    },
-    { label: 'Down-Left' },
-    { label: 'Left' },
-    { label: 'Up-Left' },
-    { label: 'Up' },
-    { label: 'Up-Right' },
-  ],
-};
-
-const items = readMenuConfig(location.search) ?? defaultMenu;
+// The address may name a menu: `?config=` carries one built in the
+// playground (see `demo/playground`), so a link can show the menu it was
+// built for. Failing that, the page opens on the shared default.
+const items = readMenuConfig(location.search) ?? DEFAULT_MENU;
 
 /**
  Build the menu, taking its stroke colours from the page's own custom
@@ -49,12 +29,11 @@ const items = readMenuConfig(location.search) ?? defaultMenu;
  @returns The new menu, already listening.
  */
 function openMenu() {
-  const style = getComputedStyle(document.documentElement);
   const menu = createMarkingMenu({
     ...items,
     parent: element('#main'),
-    strokeColor: style.getPropertyValue('--stroke-color').trim(),
-    lowerStrokeColor: style.getPropertyValue('--lower-stroke-color').trim(),
+    strokeColor: token('--stroke-color'),
+    lowerStrokeColor: token('--lower-stroke-color'),
   });
   menu.on('select', (event) => {
     toastMessage(event.selection.label);

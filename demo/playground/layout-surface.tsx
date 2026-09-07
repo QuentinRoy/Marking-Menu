@@ -3,6 +3,7 @@ import { createMenu } from '../../src/layout/menu.js';
 import { segmentAngle } from '../../src/recognizer/recognize-mm-stroke.js';
 import { dist, type Point } from '../../src/utils.js';
 import { nodeAt, type MenuModel } from './menu-model.js';
+import { useLatest } from './use-latest.js';
 
 /*
  The other half of the page: one level of the menu, laid out by the library
@@ -27,10 +28,7 @@ export function LayoutSurface({
 }) {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const menuParentRef = useRef<HTMLDivElement | null>(null);
-  const latestRef = useRef({ model, focusPath, onFocus });
-  useEffect(() => {
-    latestRef.current = { model, focusPath, onFocus };
-  });
+  const latestRef = useLatest({ model, focusPath, onFocus });
 
   useEffect(() => {
     const surface = surfaceRef.current;
@@ -90,10 +88,10 @@ export function LayoutSurface({
     <div
       ref={surfaceRef}
       onPointerDown={onClick}
-      className="bg-surface dot-grid wide:min-h-0 relative min-h-85 flex-1 overflow-hidden"
+      className="relative min-h-85 flex-1 overflow-hidden bg-surface dot-grid wide:min-h-0"
     >
       <div ref={menuParentRef} className="absolute inset-0" />
-      <span className="text-quietest text-meta pointer-events-none absolute bottom-4 left-5 font-mono">
+      <span className="pointer-events-none absolute bottom-4 left-5 font-mono text-meta text-quietest">
         click an item with a sub-menu to go a level deeper
       </span>
     </div>

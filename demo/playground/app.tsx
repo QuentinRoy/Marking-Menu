@@ -6,7 +6,11 @@ import {
   type ReactNode,
 } from 'react';
 import type { MarkingMenuInput } from '../../src/types.js';
-import { readMenuConfig, writeMenuConfig } from '../menu-config.js';
+import {
+  DEFAULT_MENU,
+  readMenuConfig,
+  writeMenuConfig,
+} from '../menu-config.js';
 import { Button } from './components/ui/button.js';
 import { Checkbox } from './components/ui/checkbox.js';
 import {
@@ -30,7 +34,7 @@ import {
   type MenuStep,
 } from './menu-model.js';
 import { validateMenuSource } from './menu-schema.js';
-import { DEFAULT_MENU, formatMenu } from './menu-source.js';
+import { formatMenu } from './menu-source.js';
 
 const REPOSITORY_URL = 'https://github.com/QuentinRoy/Marking-Menu';
 
@@ -39,6 +43,19 @@ const REPOSITORY_URL = 'https://github.com/QuentinRoy/Marking-Menu';
 const COPIED_FEEDBACK_MS = 1600;
 
 type Applied = { menu: MarkingMenuInput; model: MenuModel };
+
+/**
+The two things the right pane can show, and the names its tabs go by.
+*/
+const MODES = ['live', 'layout'] as const;
+type Mode = (typeof MODES)[number];
+
+function isMode(value: string): value is Mode {
+  // Widened first: `includes` on the literal tuple would only accept a value
+  // already known to be one of its members, which is the question being asked.
+  const names: readonly string[] = MODES;
+  return names.includes(value);
+}
 
 /**
  The menu the page opens on: the one the address names, or the demo's own.
@@ -64,7 +81,7 @@ export function App() {
   const [applied, setApplied] = useState<Applied>(initialMenu);
   const [source, setSource] = useState(() => formatMenu(applied.menu));
   const [status, setStatus] = useState('');
-  const [mode, setMode] = useState('live');
+  const [mode, setMode] = useState<Mode>('live');
   const [focusPath, setFocusPath] = useState<readonly number[]>([]);
   // Off to begin with: the mark as the menu drew it is what a reader wants
   // to see first; the breakdown is for when they ask how it was read.
@@ -159,16 +176,16 @@ export function App() {
   const focusedCount = nodeAt(applied.model, focusPath).items.length;
 
   return (
-    <div className="wide:h-dvh wide:flex-row wide:overflow-hidden flex min-h-dvh flex-col items-stretch">
-      <aside className="border-rule bg-paper wide:min-h-0 wide:max-w-105 wide:min-w-72 wide:shrink wide:grow wide:basis-80 wide:overflow-y-auto wide:border-r wide:border-b-0 flex flex-col gap-4.5 border-b px-5.5 pt-5.5 pb-4.5">
+    <div className="flex min-h-dvh flex-col items-stretch wide:h-dvh wide:flex-row wide:overflow-hidden">
+      <aside className="flex flex-col gap-4.5 border-b border-rule bg-paper px-5.5 pt-5.5 pb-4.5 wide:min-h-0 wide:max-w-105 wide:min-w-72 wide:shrink wide:grow wide:basis-80 wide:overflow-y-auto wide:border-r wide:border-b-0">
         <div className="flex flex-col gap-1.5">
-          <span className="text-quieter text-eyebrow tracking-eyebrow font-mono uppercase">
+          <span className="font-mono text-eyebrow tracking-eyebrow text-quieter uppercase">
             marking-menu
           </span>
-          <h1 className="text-title tracking-title m-0 font-semibold">
+          <h1 className="m-0 text-title font-semibold tracking-title">
             Playground
           </h1>
-          <p className="text-quiet text-lede m-0 leading-6 text-pretty">
+          <p className="m-0 text-lede leading-6 text-pretty text-quiet">
             Edit the menu, then use it: hold to open it and draw to an item, or
             draw the mark straight away. The readout tells you what the
             recognizer made of each gesture.
@@ -203,7 +220,7 @@ export function App() {
           />
           <div
             role="status"
-            className="text-mark text-meta min-h-4.5 font-mono leading-normal"
+            className="min-h-4.5 font-mono text-meta leading-normal text-mark"
           >
             {status}
           </div>
@@ -227,29 +244,34 @@ export function App() {
       <Tabs
         value={mode}
         onValueChange={(next) => {
-          setMode(next);
+          // Radix types a tab's value as a plain string; the triggers below
+          // are the only ones on this list, so anything else is impossible.
+          if (isMode(next)) {
+            setMode(next);
+          }
+
           setResult(IDLE_RESULT);
         }}
-        className="wide:min-w-80 wide:shrink wide:grow-4 wide:basis-80 flex min-h-0 flex-col gap-0"
+        className="flex min-h-0 flex-col gap-0 wide:min-w-80 wide:shrink wide:grow-4 wide:basis-80"
       >
-        <div className="border-rule-soft flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-rule-soft px-5 py-3">
           <TabsList>
             {/* shadcn's dark treatment for the selected tab is a 30%
                 overlay, which all but disappears against this list; the
                 raised look of the light theme is restored here rather than
                 in the vendored component. */}
-            {(['live', 'layout'] as const).map((value) => (
+            {MODES.map((value) => (
               <TabsTrigger
                 key={value}
                 value={value}
-                className="dark:data-[state=active]:border-border dark:data-[state=active]:bg-accent capitalize"
+                className="capitalize dark:data-[state=active]:border-border dark:data-[state=active]:bg-accent"
               >
                 {value}
               </TabsTrigger>
             ))}
           </TabsList>
           {isLive && (
-            <div className="text-quieter text-meta flex items-center gap-4 font-mono">
+            <div className="flex items-center gap-4 font-mono text-meta text-quieter">
               <label className="flex cursor-pointer items-center gap-1.5 select-none">
                 <Checkbox
                   checked={showBreakdown}
@@ -274,7 +296,7 @@ export function App() {
           />
           <Footer metrics={result.metrics}>
             {result.steps === null ? (
-              <span className="text-chip font-mono font-medium text-pretty">
+              <span className="font-mono text-chip font-medium text-pretty">
                 {result.message}
               </span>
             ) : (
@@ -313,9 +335,9 @@ function Footer({
   children: ReactNode;
 }) {
   return (
-    <div className="border-rule-soft bg-paper flex min-h-13 flex-wrap items-center justify-between gap-5 border-t px-5 py-3.5">
+    <div className="flex min-h-13 flex-wrap items-center justify-between gap-5 border-t border-rule-soft bg-paper px-5 py-3.5">
       <div className="flex flex-wrap items-center gap-0.5">{children}</div>
-      <span className="text-quieter text-meta font-mono whitespace-nowrap">
+      <span className="font-mono text-meta whitespace-nowrap text-quieter">
         {metrics}
       </span>
     </div>
@@ -344,7 +366,7 @@ function Path({
     const isLink = !isCurrent && !step.isLeaf;
     return (
       <span key={step.path.join('-')} className="flex items-center gap-0.5">
-        {index > 0 && <span className="text-edge-soft text-chip px-1">›</span>}
+        {index > 0 && <span className="px-1 text-chip text-edge-soft">›</span>}
         <button
           type="button"
           disabled={!isLink}
@@ -353,8 +375,8 @@ function Path({
           }
           className={
             isLink
-              ? 'text-quiet decoration-edge-soft hover:text-ink text-chip cursor-pointer rounded-sm px-1.5 py-0.5 font-mono underline underline-offset-2'
-              : 'text-ink text-chip rounded-sm px-1.5 py-0.5 font-mono font-medium'
+              ? 'cursor-pointer rounded-sm px-1.5 py-0.5 font-mono text-chip text-quiet underline decoration-edge-soft underline-offset-2 hover:text-ink'
+              : 'rounded-sm px-1.5 py-0.5 font-mono text-chip font-medium text-ink'
           }
           onClick={() => {
             onSelect(step.path);

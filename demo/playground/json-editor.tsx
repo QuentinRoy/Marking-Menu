@@ -215,7 +215,7 @@ export function JsonEditor({
     <div
       ref={hostRef}
       className={cn(
-        'bg-background min-h-30 flex-1 overflow-auto rounded-md border',
+        'min-h-30 flex-1 overflow-auto rounded-md border bg-background',
         invalid ? 'border-mark shadow-invalid' : 'border-input',
       )}
     />

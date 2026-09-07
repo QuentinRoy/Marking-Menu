@@ -13,6 +13,7 @@ import {
 import { strokeLength } from '../../src/recognizer/stroke-length.js';
 import type { MarkingMenuInput } from '../../src/types.js';
 import { toLocalPoint, type Point } from '../../src/utils.js';
+import { token, tokenNumber } from '../tokens.js';
 import {
   pathOfKey,
   stepsAlong,
@@ -20,6 +21,7 @@ import {
   type MenuStep,
 } from './menu-model.js';
 import { useColorScheme } from './use-color-scheme.js';
+import { useLatest } from './use-latest.js';
 
 /*
  The live half of the page: the shipped marking menu, on a surface of its
@@ -53,19 +55,6 @@ export const IDLE_RESULT: GestureResult = {
 };
 
 /**
- A drawing weight from the page's own tokens. A canvas takes a number, not a
- length, so these are declared unitless.
-
- @param name - The custom property to read.
- @returns Its value as a number.
- */
-function size(name: string): number {
-  return Number(
-    getComputedStyle(document.documentElement).getPropertyValue(name).trim(),
-  );
-}
-
-/**
  Draw a finished gesture: the stroke as it was made and, when the overlay is
  on, the pieces the recognizer cut it into and the corners it cut them at.
 
@@ -91,8 +80,6 @@ function drawGesture({
   stroke: readonly Point[];
   analysis: MarkingMenuStrokeAnalysis<MenuModel>;
 }): StrokeCanvas[] {
-  const style = getComputedStyle(document.documentElement);
-  const token = (name: string) => style.getPropertyValue(name).trim();
   const canvases: StrokeCanvas[] = [];
   const add = (options: Omit<StrokeCanvasOptions, 'parent'>) => {
     const canvas = createStrokeCanvas({ parent: overlay, ...options });
@@ -103,13 +90,14 @@ function drawGesture({
   // The mark as the menu drew it, dimmed so the pieces read on top of it.
   add({
     lineColor: token('--color-stroke-trace'),
-    lineWidth: size('--stroke-width'),
+    lineWidth: tokenNumber('--stroke-width'),
   }).drawStroke(stroke);
 
   // Two canvases, used in turn, so that consecutive pieces stay told apart
   // where they meet.
   const pieces = [token('--color-mark'), token('--color-piece-alt')].map(
-    (lineColor) => add({ lineColor, lineWidth: size('--stroke-piece-width') }),
+    (lineColor) =>
+      add({ lineColor, lineWidth: tokenNumber('--stroke-piece-width') }),
   );
   for (const [index, segment] of analysis.segments.entries()) {
     pieces[index % pieces.length]?.drawStroke(segment.points);
@@ -118,7 +106,7 @@ function drawGesture({
   const corners = add({
     lineColor: 'transparent',
     pointColor: token('--color-ink'),
-    pointRadius: size('--stroke-corner-radius'),
+    pointRadius: tokenNumber('--stroke-corner-radius'),
   });
   for (const point of analysis.articulationPoints) {
     corners.drawPoint(point);
@@ -186,12 +174,7 @@ export function LiveSurface({
   // the overlay may be redrawn from; `null` after a gesture it had no part
   // in (see {@link didRecognize}).
   const recognizedRef = useRef<readonly Point[] | null>(null);
-  // Read at event time rather than closed over, so a re-render does not tear
-  // the live menu down mid-gesture.
-  const latestRef = useRef({ model, showBreakdown, onResult });
-  useEffect(() => {
-    latestRef.current = { model, showBreakdown, onResult };
-  });
+  const latestRef = useLatest({ model, showBreakdown, onResult });
 
   const clearOverlay = useCallback(() => {
     for (const canvas of canvasesRef.current) {
@@ -270,8 +253,6 @@ export function LiveSurface({
       });
     };
 
-    const style = getComputedStyle(document.documentElement);
-    const token = (name: string) => style.getPropertyValue(name).trim();
     const controller = createMarkingMenu({
       parent: menuParent,
       ...menu,
@@ -345,7 +326,7 @@ export function LiveSurface({
       controller.dispose();
       clearOverlay();
     };
-  }, [clearOverlay, colorScheme, menu, showBreakdown]);
+  }, [clearOverlay, colorScheme, latestRef, menu, showBreakdown]);
 
   // Turning the overlay off, or back on, redraws the gesture already on
   // screen rather than waiting for the next one. Only a gesture the
@@ -370,7 +351,7 @@ export function LiveSurface({
   }, [clearOverlay, colorScheme, model, showBreakdown]);
 
   return (
-    <div className="bg-surface dot-grid wide:min-h-0 relative min-h-85 flex-1 cursor-crosshair overflow-hidden">
+    <div className="relative min-h-85 flex-1 cursor-crosshair overflow-hidden bg-surface dot-grid wide:min-h-0">
       <div ref={menuParentRef} className="absolute inset-0" />
       <div ref={overlayRef} className="pointer-events-none absolute inset-0" />
     </div>

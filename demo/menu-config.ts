@@ -23,6 +23,31 @@ The query parameter both pages read a menu from.
 */
 export const CONFIG_PARAM = 'config';
 
+/**
+ The eight-direction menu, with a sub-menu at the bottom, that either page
+ opens on when the address carries no menu of its own.
+ */
+export const DEFAULT_MENU: MarkingMenuInput = {
+  items: [
+    { label: 'Right' },
+    { label: 'Down-Right' },
+    {
+      label: 'Others...',
+      items: [
+        { label: 'Sub Right' },
+        { label: 'Sub Down' },
+        { label: 'Sub Left' },
+        { label: 'Sub Up' },
+      ],
+    },
+    { label: 'Down-Left' },
+    { label: 'Left' },
+    { label: 'Up-Left' },
+    { label: 'Up' },
+    { label: 'Up-Right' },
+  ],
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

@@ -6,6 +6,12 @@ import type { MarkingMenuInput } from '../../src/types.js';
  layout, the breadcrumb and the recognizer's readout off it. It is the same
  call `createMarkingMenu` makes internally, so what the page shows and what a
  gesture does can never drift apart.
+
+ `createModel` is not on `src/index.ts`, and is not meant to be: a menu built
+ for someone else's project never holds a model of its own. This page is not
+ someone else's project. It ships from this repository, alongside the code it
+ reaches for, so it takes the internal path here and everywhere else it needs
+ one, rather than widening what the package promises.
  */
 
 const build = (menu: MarkingMenuInput) => createModel(menu);

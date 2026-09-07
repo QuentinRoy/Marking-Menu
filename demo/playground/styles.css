@@ -216,7 +216,7 @@
 
 @layer base {
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background font-sans text-foreground antialiased;
   }
 
   /* Tailwind's preflight leaves a button with the platform's arrow, and the
