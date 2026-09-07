@@ -77,7 +77,9 @@ test('novice mode: a gesture prevents the browser pointer default', async ({
   await releaseAt(page);
 });
 
-test('novice mode: drawing does not select incidental text', async ({ page }) => {
+test('novice mode: drawing does not select incidental text', async ({
+  page,
+}) => {
   const center = await surfaceCenter(page);
   await page.locator('#surface').evaluate((surface) => {
     const text = document.createElement('span');
