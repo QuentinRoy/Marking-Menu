@@ -45,14 +45,9 @@ import { measureAccuracy } from './__fixtures__/stroke-corpus.js';
  levels compounds three independent per-level draws, which is why its
  accuracy sits below one level's for both breadths.
 
- Item counts of 5, 6 and 7 use the library's current, crowded layout rather
- than an evenly spaced one (see issue #43), and a menu whose levels hold
- different counts is an angle configuration of its own: `createModel` spaces
- each level by that level's own count, so `[4, 8]` walks a 90-degree-spaced
- top level into a 45-degree-spaced submenu, a spacing no single uniform
- breadth produces. Both are swept and reported below for later work to
- compare against, but neither is held to a floor of their own: stating an
- item's own angle doesn't exist yet either, and that is what issue #43 adds.
+ Menus with 3, 5, 6, and 7 items are also evenly spaced. Their one-level
+ accuracy stays at or above 98%, so the corpus holds that floor alongside the
+ existing 4- and 8-item calibration checks.
  */
 
 describe('generated stroke corpus', () => {
@@ -73,13 +68,9 @@ describe('generated stroke corpus', () => {
     );
   });
 
-  describe('sweeping item counts the library does not yet lay out evenly', () => {
-    // These counts share their layout's 45-degree step with the 8-item menu
-    // above (see `getAngleRange` in `../model.ts`), so a sane implementation
-    // scores in the same ballpark; nothing here pins that down as a
-    // requirement, only reports it.
+  describe('menus newly laid out evenly', () => {
     it.each([3, 5, 6, 7])(
-      'reports an accuracy for a %i-item, 1 level menu',
+      'recognizes a %i-item, 1 level menu at or above 98%',
       (breadth) => {
         const accuracy = measureAccuracy({
           breadths: [breadth],
@@ -87,8 +78,7 @@ describe('generated stroke corpus', () => {
           seed: breadth * 1000,
         });
 
-        expect(accuracy).toBeGreaterThan(0);
-        expect(accuracy).toBeLessThanOrEqual(1);
+        expect(accuracy).toBeGreaterThanOrEqual(0.98);
       },
     );
   });

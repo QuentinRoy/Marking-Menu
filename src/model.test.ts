@@ -24,7 +24,81 @@ describe('createModel', () => {
     expect(menu.items.map((item) => item.angle)).toEqual([0, 90, 180, 270]);
   });
 
-  it('lays out more than four items every 45 degrees', () => {
+  it('spreads three items evenly around the circle', () => {
+    const menu = createModel({
+      items: [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }],
+    });
+    expect(menu.items.map((item) => item.angle)).toEqual([0, 120, 240]);
+  });
+
+  it('spreads five items evenly around the circle', () => {
+    const menu = createModel({
+      items: [
+        { label: 'One' },
+        { label: 'Two' },
+        { label: 'Three' },
+        { label: 'Four' },
+        { label: 'Five' },
+      ],
+    });
+    expect(menu.items.map((item) => item.angle)).toEqual([
+      0, 72, 144, 216, 288,
+    ]);
+  });
+
+  it.each([
+    { count: 6, angles: [0, 60, 120, 180, 240, 300] },
+    {
+      count: 7,
+      angles: [
+        0, 51.42857142857143, 102.85714285714286, 154.28571428571428,
+        205.71428571428572, 257.14285714285717, 308.57142857142856,
+      ],
+    },
+  ])('spreads $count items evenly around the circle', ({ count, angles }) => {
+    const menu = createModel({
+      items: Array.from({ length: count }, (_, index) => ({
+        label: `Item ${index}`,
+      })),
+    });
+    expect(menu.items.map((item) => item.angle)).toEqual(angles);
+  });
+
+  it('keeps angles below 360 degrees for a nine-item level', () => {
+    const menu = createModel({
+      items: Array.from({ length: 9 }, (_, index) => ({
+        label: `Item ${index}`,
+      })),
+    });
+    expect(menu.items.map((item) => item.angle)).toEqual([
+      0, 40, 80, 120, 160, 200, 240, 280, 320,
+    ]);
+  });
+
+  it('spaces each level from its own item count', () => {
+    const menu = createModel({
+      items: [
+        {
+          label: 'Parent',
+          items: [
+            { label: 'One' },
+            { label: 'Two' },
+            { label: 'Three' },
+            { label: 'Four' },
+            { label: 'Five' },
+          ],
+        },
+        { label: 'Second' },
+        { label: 'Third' },
+      ],
+    });
+    expect(menu.items.map((item) => item.angle)).toEqual([0, 120, 240]);
+    expect(menu.items[0].items.map((item) => item.angle)).toEqual([
+      0, 72, 144, 216, 288,
+    ]);
+  });
+
+  it('lays out eight items every 45 degrees', () => {
     const menu = createModel({
       items: [
         { label: 'Sub 1' },
@@ -33,10 +107,12 @@ describe('createModel', () => {
         { label: 'Sub 4' },
         { label: 'Sub 5' },
         { label: 'Sub 6' },
+        { label: 'Sub 7' },
+        { label: 'Sub 8' },
       ],
     });
     expect(menu.items.map((item) => item.angle)).toEqual([
-      0, 45, 90, 135, 180, 225,
+      0, 45, 90, 135, 180, 225, 270, 315,
     ]);
   });
 
@@ -223,8 +299,8 @@ describe('createModel', () => {
         },
       ],
     });
-    expect(getMinAngularGap(menu)).toBe(45);
-    expect(getMinAngularGap(menu.items[1])).toBe(45);
+    expect(getMinAngularGap(menu)).toBe(72);
+    expect(getMinAngularGap(menu.items[1])).toBe(72);
   });
 
   it('reports no gap for a level with fewer than two items', () => {
@@ -247,7 +323,7 @@ describe('createModel', () => {
   it('does not let the items be mutated', () => {
     const menu = createModel({ items: [{ id: 'right', label: 'Right' }] });
     expect(() => {
-      // @ts-expect-error -- exactly what is being checked at runtime.
+      // @ts-expect-error, exactly what is being checked at runtime.
       menu.items[0].label = 'Mutated';
     }).toThrow(TypeError);
     expect(menu.items[0].label).toBe('Right');
@@ -295,7 +371,7 @@ describe('createModel', () => {
     expect(dynamic).toEqual(literal);
     expect(dynamic.getChild('right')?.angle).toBe(0);
     expect(dynamic.getChild('unknown')).toBeNull();
-    expect(dynamic.getNearestChild(90)?.label).toBe('Bottom');
+    expect(dynamic.getNearestChild(90)?.label).toBe('Right');
     expect(dynamic.getMaxDepth()).toBe(2);
   });
 });
