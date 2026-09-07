@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2024", "ESNext.Disposable", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    // The demo page resolves `marking-menu` through the import map in
+    // `demo/index.html`, so the specifier has to survive to the browser; this
+    // is what gives the compiler its types, mirroring the dev-server alias in
+    // `vite.demo.config.ts`.
+    "paths": { "marking-menu": ["../src/index.ts"] }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

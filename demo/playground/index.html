@@ -2,30 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta content="width=device-width" name="viewport" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
     <title>Marking Menu Playground</title>
-    <link href="./style.css" rel="stylesheet" />
-    <script type="module" src="./main.ts"></script>
+    <script type="module" src="./main.tsx"></script>
     <meta
-      content="Build a marking menu with controls, try it out, and share what you get as a link."
+      content="Edit a marking menu as JSON, use it, and see what the recognizer made of each gesture."
       name="description"
     />
   </head>
 
   <body>
-    <header>
-      <h1>Marking Menu Playground</h1>
-      <p>
-        Add items, set an angle or leave it free, then draw a stroke on the menu
-        to see what the recognizer makes of it. The address updates as you go,
-        so you can send someone the exact menu you're looking at.
-      </p>
-      <a href="../">Back to the demo</a>
-    </header>
-
-    <main>
-      <section id="tree-editor" aria-label="Menu items"></section>
-      <section id="menu-lab" aria-label="Preview and recognizer"></section>
-    </main>
+    <div id="root"></div>
   </body>
 </html>

@@ -1,4 +1,6 @@
 import path from 'node:path';
+import tailwind from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 const importMapDependencies = new Set(['marking-menu']);
@@ -24,6 +26,10 @@ export default defineConfig(({ command }) => ({
     },
   },
   plugins: [
+    // Both only ever see the playground page (see `demo/playground`): the
+    // demo itself has no JSX and no Tailwind directive.
+    react(),
+    tailwind(),
     {
       // Only externalize for the production build: the demo's import map
       // (see demo/index.html) is what resolves these specifiers in the

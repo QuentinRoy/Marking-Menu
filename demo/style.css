@@ -114,3 +114,53 @@ h1 {
     animation: octocat-wave 560ms ease-in-out;
   }
 }
+
+/* Dark mode. The library exposes the menu's own four colours as custom
+   properties (see src/layout/menu.css), so the menu follows the page rather
+   than staying light on a dark background. The stroke is not one of them: it
+   is drawn on a canvas from options, so `script.ts` reads these two. */
+:root {
+  color-scheme: light dark;
+
+  --stroke-color: #000000;
+  --lower-stroke-color: #777777;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #0f0f11;
+    color: rgb(226, 226, 230);
+  }
+
+  #instructions .title {
+    color: rgb(38, 38, 42);
+  }
+
+  #instructions .help {
+    color: rgb(226, 226, 230);
+  }
+
+  #toast {
+    background-color: rgba(236, 236, 238, 0.85);
+    color: #0f0f11;
+  }
+
+  .github-corner svg {
+    color: #0f0f11;
+    fill: rgb(226, 226, 230);
+  }
+
+  .marking-menu {
+    --item-background: #26262c;
+    --item-color: #c9c9cf;
+    --active-item-background: #43434c;
+    --active-item-color: #ffffff;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --stroke-color: rgb(236, 236, 238);
+    --lower-stroke-color: #6a6a74;
+  }
+}
