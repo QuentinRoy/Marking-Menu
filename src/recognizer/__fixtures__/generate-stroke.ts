@@ -3,9 +3,8 @@ import { degreesToRadians, type Point } from '../../utils.js';
 import { createRandom } from './random.js';
 
 /*
- A test-only stroke generator, shared by the generated stroke corpus (see
- `../generated-stroke-corpus.test.ts`) and by `scripts/generate-stroke.ts`,
- the CLI that dumps one stroke for manual inspection.
+ A test-only stroke generator, used by the generated stroke corpus (see
+ `../generated-stroke-corpus.test.ts`).
 
  A stroke drawn through a set of directions with no noise at all is a
  straight polyline that lands dead center of every target every time, no

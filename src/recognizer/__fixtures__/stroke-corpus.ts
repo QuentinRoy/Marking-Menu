@@ -7,8 +7,8 @@ import { createRandom } from './random.js';
  Builds a menu from a list of per-level item counts, draws a stroke for a
  random path through it, and reports how often the intended leaf comes
  back. This is the sweep the generated stroke corpus runs (see
- `../generated-stroke-corpus.test.ts`); kept here, apart from the test file,
- so both it and `scripts/generate-stroke.ts` can reuse it.
+ `../generated-stroke-corpus.test.ts`), kept in its own file so the test
+ file stays focused on the calibration and the assertions.
 
  A list of counts is an angle configuration as much as a single count is:
  `createModel` spaces each level by that level's own count (see

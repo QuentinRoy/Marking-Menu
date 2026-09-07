@@ -27,7 +27,6 @@
     "e2e": "yarn build && yarn e2e:build && yarn e2e:test",
     "e2e:build": "vite build --config e2e/vite.config.ts",
     "e2e:test": "playwright test --config e2e/playwright.config.ts",
-    "stroke:generate": "node scripts/generate-stroke.ts",
     "prepare": "yarn build",
     "changeset": "changeset",
     "lint": "eslint .",
