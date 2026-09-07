@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import type { MarkingMenuMode } from '../../src/events.js';
 import {
   createStrokeCanvas,
   type StrokeCanvas,
@@ -117,6 +118,41 @@ function drawGesture({
   return canvases;
 }
 
+/**
+ Whether the library reached this outcome by recognizing the stroke.
+
+ It does so for an expert gesture, and for a startup one that moved at all.
+ It does not for a novice release, which hit-tests the item the open menu
+ already had highlighted, nor for a gesture the pointer interrupted (see the
+ termination actions in `src/engine/machine.ts`). Novice mode does not even
+ keep the path drawn inside the open menu: what reaches termination is the
+ movement made before the menu opened, then its centre and the last point.
+
+ @param mode - The mode the gesture ended in.
+ @param wasInterrupted - Whether the pointer was cancelled outright.
+ @returns Whether stroke recognition decided the outcome.
+ */
+function didRecognize(mode: MarkingMenuMode, wasInterrupted: boolean): boolean {
+  return !wasInterrupted && mode !== 'novice';
+}
+
+/**
+ What settled a gesture the recognizer had no part in, for the readout.
+
+ @param mode - The mode the gesture ended in.
+ @param wasInterrupted - Whether the pointer was cancelled outright.
+ @returns A phrase naming what decided.
+ */
+function decidedBy(mode: MarkingMenuMode, wasInterrupted: boolean): string {
+  if (wasInterrupted) {
+    return 'interrupted, nothing recognized';
+  }
+
+  return mode === 'novice'
+    ? 'chosen from the open menu, not recognized'
+    : 'nothing recognized';
+}
+
 export function LiveSurface({
   menu,
   model,
@@ -136,6 +172,11 @@ export function LiveSurface({
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const canvasesRef = useRef<StrokeCanvas[]>([]);
   const strokeRef = useRef<Point[]>([]);
+  const interruptedRef = useRef(false);
+  // The last stroke the recognizer actually ran on, which is the only one
+  // the overlay may be redrawn from; `null` after a gesture it had no part
+  // in (see {@link didRecognize}).
+  const recognizedRef = useRef<readonly Point[] | null>(null);
   // Read at event time rather than closed over, so a re-render does not tear
   // the live menu down mid-gesture.
   const latestRef = useRef({ model, showDiagnostics, onResult });
@@ -180,7 +221,7 @@ export function LiveSurface({
 
     const finish = (
       position: Point,
-      mode: string,
+      mode: MarkingMenuMode,
       outcome: { steps: readonly MenuStep[] | null; message: string },
     ) => {
       const { model: current, onResult: report } = latestRef.current;
@@ -192,9 +233,27 @@ export function LiveSurface({
         return;
       }
 
+      const depth = outcome.steps?.length ?? 0;
+      const wasInterrupted = interruptedRef.current;
+      recognizedRef.current = null;
+      if (!didRecognize(mode, wasInterrupted)) {
+        // Nothing is drawn and no piece, corner or threshold is quoted: the
+        // overlay is a picture of a recognition that did not happen, and the
+        // stroke it would be drawn from is not one the library kept.
+        report({
+          ...outcome,
+          metrics: [
+            mode,
+            `depth ${depth}`,
+            decidedBy(mode, wasInterrupted),
+          ].join(' · '),
+        });
+        return;
+      }
+
+      recognizedRef.current = stroke;
       const analysis = analyzeMarkingMenuStroke(stroke, current);
       draw(stroke, analysis);
-      const depth = outcome.steps?.length ?? 0;
       report({
         ...outcome,
         metrics: [
@@ -226,7 +285,21 @@ export function LiveSurface({
       gestureFeedbackDuration: 0,
     });
 
+    // A gesture the pointer never finished: the library announces `cancel`
+    // without recognizing anything, and the event says no more than any
+    // other cancel does. Captured, so the flag is set before the library's
+    // own listener runs and dispatches that event.
+    const onPointerCancel = () => {
+      interruptedRef.current = true;
+    };
+
+    menuParent.addEventListener('pointercancel', onPointerCancel, {
+      capture: true,
+    });
+
     controller.on('start', (event) => {
+      interruptedRef.current = false;
+      recognizedRef.current = null;
       clearOverlay();
       strokeRef.current = [local(event.position)];
       latestRef.current.onResult({
@@ -257,6 +330,9 @@ export function LiveSurface({
     });
 
     return () => {
+      menuParent.removeEventListener('pointercancel', onPointerCancel, {
+        capture: true,
+      });
       controller.dispose();
       clearOverlay();
       strokeRef.current = [];
@@ -264,11 +340,12 @@ export function LiveSurface({
   }, [clearOverlay, colorScheme, menu]);
 
   // Turning the overlay off, or back on, redraws the gesture already on
-  // screen rather than waiting for the next one.
+  // screen rather than waiting for the next one. Only a gesture the
+  // recognizer ran on has anything to redraw.
   useEffect(() => {
     const overlay = overlayRef.current;
-    const stroke = strokeRef.current;
-    if (overlay === null || stroke.length < 2) {
+    const stroke = recognizedRef.current;
+    if (overlay === null || stroke === null || stroke.length < 2) {
       return;
     }
 
