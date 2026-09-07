@@ -13,7 +13,7 @@ import { strokeLength } from './stroke-length.js';
 /**
  A segment of a marking-menu stroke, described by its length and angle.
  */
-type StrokeSegment = {
+export type StrokeSegment = {
   length: number;
   angle: number;
 };
@@ -23,7 +23,7 @@ type StrokeSegment = {
  between, kept only where a caller needs to draw the segment rather than just
  walk the model with it.
  */
-type LocatedStrokeSegment = StrokeSegment & { points: Segment };
+export type LocatedStrokeSegment = StrokeSegment & { points: Segment };
 
 /**
  Join the consecutive points of `points` into segments.
@@ -202,20 +202,6 @@ const getMinAngularGap = (model: AnyModelNode): number =>
   (model as unknown as { getMinAngularGap(): number }).getMinAngularGap();
 
 /**
- Resolve a (possibly negative) `maxDepth` option against a model.
-
- @param model - The model the depth is resolved against.
- @param maxDepthOption - The requested depth. A negative value counts back
- from the model's own maximum depth.
- @returns The resolved, non-negative depth.
- */
-const resolveMaxDepth = (
-  model: AnyModelNode,
-  maxDepthOption: number,
-): number =>
-  maxDepthOption < 0 ? model.getMaxDepth() + maxDepthOption : maxDepthOption;
-
-/**
  Cut a stroke into the segments a marking-menu walk is attempted against:
  find its articulation points, then join them pairwise, dropping segments too
  short to be a deliberate move. Shared by {@link recognizeMarkingMenuStroke}
@@ -311,7 +297,8 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
     throw new Error('The result cannot be both a leaf and a menu');
   }
 
-  const maxDepth = resolveMaxDepth(model, maxDepthOption);
+  const maxDepth =
+    maxDepthOption < 0 ? model.getMaxDepth() + maxDepthOption : maxDepthOption;
   const { segments } = cutStroke(stroke, model, maxDepth);
   const path = findItem({ model, segments, maxDepth });
   // Paths are never empty, so the item is only nullish when the path is.
@@ -380,20 +367,13 @@ export type MarkingMenuStrokeAnalysis<N extends AnyModelNode> = {
 
  @param stroke - A list of points.
  @param model - The model to recognize the stroke against.
- @param options - Additional options.
- @param options.maxDepth - The maximum menu depth to walk. If negative,
- start from the maximum depth of the model.
  @returns The full analysis of the recognition attempt.
  */
 export function analyzeMarkingMenuStroke<N extends AnyModelNode>(
   stroke: readonly Point[],
   model: N,
-  options?: { maxDepth?: number },
 ): MarkingMenuStrokeAnalysis<N> {
-  const maxDepth = resolveMaxDepth(
-    model,
-    options?.maxDepth ?? model.getMaxDepth(),
-  );
+  const maxDepth = model.getMaxDepth();
   const {
     angleThreshold,
     expectedSegmentLength,
