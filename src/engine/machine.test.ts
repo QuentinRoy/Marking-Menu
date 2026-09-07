@@ -657,7 +657,7 @@ describe('navigationMachine', () => {
       ]);
     });
 
-    it('opens the submenu anywhere past the dead zone, without a second, farther threshold', () => {
+    it('opens the submenu just past the dead zone', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       openNovice(host);
       const opened = vi.fn<() => void>();

@@ -85,7 +85,7 @@ Pass options alongside `items` and `parent`. Distances use pixels; delays use mi
 | `noviceDwellingTime`  | `1000 / 3` | Pause before showing the menu.                                                           |
 | `submenuOpeningDelay` | `1000 / 3` | Pause before opening a submenu.                                                          |
 | `movementsThreshold`  | `5`        | Movement needed to start a gesture without opening the menu, or restart a submenu pause. |
-| `deadZoneRadius`      | `40`       | Distance from the menu center past which an item becomes active.                         |
+| `deadZoneRadius`      | `40`       | Distance from the menu center past which an item becomes active and can open a submenu.  |
 
 Use `log: { error: handler }` to handle internal errors; the default is `console.error`. Invalid menu definitions throw during construction.
 

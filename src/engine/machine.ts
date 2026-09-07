@@ -467,7 +467,7 @@ export const navigationMachine = machine({
     // change, even though the destination is named `novice` too. Anything
     // else declines, and since no other row is declared for (novice, dwell),
     // the dwell is silently dropped. No distance test of its own: an item
-    // is active only past the dead zone, the one threshold there is.
+    // is active only past the dead zone, and that is the only threshold.
     'novice -dwell> novice'({ fromData, skip }) {
       const { active, lastPosition, lowerStroke, options, model } = fromData;
       if (active === null || active.isLeaf) {

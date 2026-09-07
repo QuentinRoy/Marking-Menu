@@ -17,7 +17,8 @@ import { waitForLogEntry } from '../helpers/log.js';
 // movementsThreshold 5, noviceDwellingTime and submenuOpeningDelay ~333ms.
 // Radii below are chosen with enough margin from those thresholds to be
 // unambiguous rather than to probe the thresholds themselves (that's the
-// unit suites' job).
+// unit suites' job). Tests that must resolve before a pause elapses race
+// the delay itself, the way the startup cases below do.
 const SELECT_RADIUS = 100;
 const TINY_RADIUS = 3; // Below the 5px movements threshold.
 
@@ -255,6 +256,9 @@ test('novice non-leaf cancellation: releasing over a submenu item before the dwe
   });
   expect(last?.selectionId).toBeUndefined();
   expect(log.some((entry) => entry.type === 'select')).toBe(false);
+  // Only the root menu opened: had the release lost its race with the
+  // submenu delay, `Others...` would have opened too.
+  expect(log.filter((entry) => entry.type === 'open')).toHaveLength(1);
 });
 
 test('pointer capture: releasing outside the gesture surface still completes recognition', async ({
