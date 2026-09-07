@@ -3,6 +3,7 @@ import {
   fakeTimers,
   queryCanvasContext,
   stubbedCanvasContexts,
+  type MockContext,
 } from '../__fixtures__/canvas.js';
 import { createModel } from '../model.js';
 import type { Point } from '../utils.js';
@@ -59,6 +60,31 @@ const createStackingRenderer = (parent: HTMLElement) =>
     lowerStrokeWidth,
     gestureFeedbackStrokeWidth: feedbackStrokeWidth,
   });
+
+/**
+ A parent placed away from the viewport's top-left, which is what tells a
+ stroke drawn in client coordinates apart from one drawn in the parent's.
+ */
+const offsetParent = (left: number, top: number): HTMLDivElement => {
+  const parent = document.createElement('div');
+  parent.getBoundingClientRect = () =>
+    ({ left, top, width: 400, height: 300 }) as unknown as DOMRect;
+  return parent;
+};
+
+/**
+ The points a context was asked to draw the stroke's path through, in order.
+ Calls stop at the `stroke()` that ends the line: the origin marker drawn
+ after it moves the pen too, and that is not part of the line.
+ */
+const pathPoints = (context: MockContext): unknown[] => {
+  const calls = context.mock.methodCalls;
+  const lineEnd = calls.findIndex((call) => call.method === 'stroke');
+  return calls
+    .slice(0, lineEnd === -1 ? calls.length : lineEnd)
+    .filter((call) => call.method === 'moveTo' || call.method === 'lineTo')
+    .map((call) => call.args);
+};
 
 describe('createRenderer', () => {
   it('skips the redraw when the upper stroke is reference-equal to the previous frame', () => {
@@ -268,6 +294,58 @@ describe('createRenderer', () => {
     const selected = queryCanvasContext(parent);
     expect(selected.strokeStyle).toBe('#00ff00');
     expect(selected.lineWidth).toBe(5);
+
+    renderer.dispose();
+  });
+
+  it('draws a stroke relative to a parent that is not at the viewport origin', () => {
+    using _canvases = stubbedCanvasContexts();
+    using _timers = fakeTimers();
+
+    const parent = offsetParent(200, 50);
+    const renderer = createRenderer({ parent, strokeStartPointRadius: 4 });
+
+    renderer.render({
+      cursor: 'none',
+      menu: null,
+      upperStroke: [
+        [220, 60],
+        [260, 90],
+      ],
+      lowerStroke: null,
+    });
+    vi.advanceTimersToNextFrame();
+
+    const context = queryCanvasContext(parent);
+    expect(pathPoints(context)).toEqual([
+      [20, 10],
+      [60, 40],
+    ]);
+    // The origin marker is placed in the same space as the line it starts.
+    const arcCall = context.mock.methodCalls.find((c) => c.method === 'arc');
+    expect(arcCall?.args.slice(0, 2)).toEqual([20, 10]);
+
+    renderer.dispose();
+  });
+
+  it('draws a completed-gesture trace relative to that same parent', () => {
+    using _canvases = stubbedCanvasContexts();
+
+    const parent = offsetParent(200, 50);
+    const renderer = createRenderer({ parent });
+
+    renderer.showFeedback({
+      stroke: [
+        [220, 60],
+        [260, 90],
+      ],
+      canceled: false,
+    });
+
+    expect(pathPoints(queryCanvasContext(parent))).toEqual([
+      [20, 10],
+      [60, 40],
+    ]);
 
     renderer.dispose();
   });
