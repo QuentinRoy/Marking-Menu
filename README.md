@@ -67,11 +67,57 @@ reliable. The previous inline value and priority are restored once every
 controller sharing that parent has been disposed, unless the application
 changed the property in the meantime.
 
-- `items`: `Array` of `{ label, angle?, items? }`. The list of the menu's items. If `items` is provided, the item is a submenu. Each level supports up to 8 items, with at least 45 degrees between neighbors. The first item is on the right; the rest are laid out clockwise.
+- `items`: `Array` of `{ label, angle?, items? }`. The list of the menu's items. If `items` is provided, the item is a submenu. Items remain in listed clockwise order. Each level needs at least 45 degrees between neighboring items.
 
-- `angle`: Optional clockwise angle in degrees from the right. Items without an `angle` are spaced evenly between the stated angles.
+- `angle`: Optional clockwise angle in degrees from the right.
 
 - `parent`: `HTMLElement`. The container of the menu.
+
+#### Item angles
+
+`0` degrees points right, `90` points down, `180` points left, and `270` points up. When two or more items state an angle, their values must follow the item's clockwise list order. The sequence can wrap once through `0`, such as `270`, `0`, `90`.
+
+Items without an `angle` keep their place in the list and divide the gap between the stated angles around them. [Build a menu in the playground](https://quentinroy.github.io/Marking-Menu/playground/) to try a layout.
+
+With no stated angles, items spread evenly around the circle, starting at the right:
+
+```js
+[
+  { label: 'First' },
+  { label: 'Second' },
+  { label: 'Third' },
+  { label: 'Fourth' },
+];
+```
+
+The items land at `0`, `90`, `180`, and `270` degrees.
+
+With one stated angle, the same even layout rotates around that item:
+
+```js
+[
+  { label: 'First' },
+  { label: 'Second' },
+  { angle: 90, label: 'Third' },
+  { label: 'Fourth' },
+];
+```
+
+The items land at `270`, `0`, `90`, and `180` degrees.
+
+With several stated angles, free items divide each gap independently:
+
+```js
+[
+  { angle: 0, label: 'First' },
+  { label: 'Second' },
+  { label: 'Third' },
+  { angle: 180, label: 'Fourth' },
+  { label: 'Fifth' },
+];
+```
+
+The items land at `0`, `60`, `120`, `180`, and `270` degrees.
 
 The controller dispatches six events during a gesture: `start`, `open`, `move`, `change`, `select`, and `cancel`. Listen with `controller.on(type, listener)`, matching `off` to remove a listener. When you're done with the menu, call `controller.dispose()` (or use it with `using`, where your toolchain supports Explicit Resource Management) to stop listening for pointer input and release the DOM resources it created.
 

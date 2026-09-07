@@ -2,6 +2,6 @@
 'marking-menu': major
 ---
 
-Lay out each menu level evenly around the full circle to prevent unused
-directions and overlapping items. This moves items in 5-item, 6-item, and
-7-item menus. Set an item's `angle` to preserve its existing position.
+5-, 6-, and 7-item menus now position items evenly around the circle. The
+upgrade raises no error and does not fail builds, but a learned gesture can
+select a different item. Set each item's `angle` to keep its existing direction.
