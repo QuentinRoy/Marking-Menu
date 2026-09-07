@@ -1,3 +1,14 @@
+/* A label is sized by its content and padded around it, and the layout adds
+   that padding back to place it (see `--item-box-width` below). A host reset
+   that makes everything `border-box`, as Tailwind's preflight and normalize
+   both do, would take the padding out of the label instead, dropping its
+   text off centre and its box off position. The menu states the box model
+   its own arithmetic assumes rather than inheriting one. */
+.marking-menu,
+.marking-menu * {
+  box-sizing: content-box;
+}
+
 .marking-menu {
   --item-width: 120px;
   --item-height: 20px;

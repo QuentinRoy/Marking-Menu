@@ -254,7 +254,7 @@ export function App() {
                   onCheckedChange={(next) => {
                     setShowDiagnostics(next === true);
                   }}
-                  className="size-3.5"
+                  className="size-3.5 [&_svg]:size-3"
                 />
                 Recognizer
               </label>
