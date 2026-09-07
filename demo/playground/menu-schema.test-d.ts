@@ -23,8 +23,8 @@ import { menuSchema } from './menu-schema.js';
  cannot follow a `$ref` into the schema it is deriving, so the recursion is
  closed by hand in {@link SchemaItem}, which is what that `$ref` says anyway.
  */
-type ItemSchema = Omit<typeof menuSchema.definitions.item, 'properties'> & {
-  properties: Omit<typeof menuSchema.definitions.item.properties, 'items'>;
+type ItemSchema = Omit<typeof menuSchema.$defs.item, 'properties'> & {
+  properties: Omit<typeof menuSchema.$defs.item.properties, 'items'>;
 };
 
 type SchemaItem = FromSchema<ItemSchema> & {

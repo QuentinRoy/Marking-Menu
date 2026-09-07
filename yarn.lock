@@ -1064,6 +1064,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hyperjump/json-schema-formats@npm:^1.0.2":
+  version: 1.0.6
+  resolution: "@hyperjump/json-schema-formats@npm:1.0.6"
+  dependencies:
+    "@hyperjump/uri": "npm:^1.3.2"
+    idn-hostname: "npm:^15.1.2"
+  checksum: 10c0/cda9f2ddbffe93a5591f0c18faaecdeabdbf46328ca25b3a85aaa9d1a5c0569326fab5a9f801ec79cde232252aef78a22a52814bba17e7563a35d2407f8a40f9
+  languageName: node
+  linkType: hard
+
+"@hyperjump/uri@npm:^1.3.2":
+  version: 1.3.6
+  resolution: "@hyperjump/uri@npm:1.3.6"
+  checksum: 10c0/5f641790232e2ea840b066174ca4dbb1d31fbfe66a49189d47cd45f860db82bde28d9aa59ae24b65fb9fa0685f991202da8e33b21fdb34d4e58ad36a46293b74
+  languageName: node
+  linkType: hard
+
 "@ianvs/prettier-plugin-sort-imports@npm:^4.7.1":
   version: 4.7.1
   resolution: "@ianvs/prettier-plugin-sort-imports@npm:4.7.1"
@@ -2848,6 +2865,13 @@ __metadata:
   version: 5.1.2
   resolution: "@sagold/json-pointer@npm:5.1.2"
   checksum: 10c0/6e82162852c824ecd5f41a4252a4514565f6e1d154488bb85b9ab1b7c4a483ef64fcbb9b0776762ae4cde63a65e232f5293583721e5742650ebaeb220f795245
+  languageName: node
+  linkType: hard
+
+"@sagold/json-pointer@npm:^7.2.1":
+  version: 7.2.1
+  resolution: "@sagold/json-pointer@npm:7.2.1"
+  checksum: 10c0/e87896aaf63f61bcb61f0739747c60a185f964cefa8f3ba1d49d6e3c497933a19258c0e332e610028475c9f2f3896d2cb1530c3ba0ad3eb91a67b4a8c54d97f6
   languageName: node
   linkType: hard
 
@@ -5302,6 +5326,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-copy@npm:^4.0.4":
+  version: 4.1.1
+  resolution: "fast-copy@npm:4.1.1"
+  checksum: 10c0/e3faed6802b77cad753be49ab4f74d6ef0e39669701a254efc32dca93b40ca399012aae228f2bbd6848c07410d1270fde5729d3dfdaad1625e92853d0570cbe8
+  languageName: node
+  linkType: hard
+
 "fast-deep-equal@npm:^3.1.1, fast-deep-equal@npm:^3.1.3":
   version: 3.1.3
   resolution: "fast-deep-equal@npm:3.1.3"
@@ -5711,6 +5742,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"idn-hostname@npm:^15.1.2":
+  version: 15.1.18
+  resolution: "idn-hostname@npm:15.1.18"
+  dependencies:
+    punycode: "npm:^2.3.1"
+  checksum: 10c0/47d1cb6e0ab44a397c042eedf509dac1673959c52e78c9a58237c50a83540051ebecafef7929a0dabfd134b85f55a7b8a263d986d4d4807673d050d192e6829c
+  languageName: node
+  linkType: hard
+
 "ignore@npm:^5.2.0, ignore@npm:^5.3.2":
   version: 5.3.2
   resolution: "ignore@npm:5.3.2"
@@ -5930,6 +5970,20 @@ __metadata:
   version: 3.0.1
   resolution: "json-buffer@npm:3.0.1"
   checksum: 10c0/0d1c91569d9588e7eef2b49b59851f297f3ab93c7b35c7c221e288099322be6b562767d11e4821da500f3219542b9afd2e54c5dc573107c1126ed1080f8e96d7
+  languageName: node
+  linkType: hard
+
+"json-schema-library@npm:^11.6.2":
+  version: 11.6.2
+  resolution: "json-schema-library@npm:11.6.2"
+  dependencies:
+    "@hyperjump/json-schema-formats": "npm:^1.0.2"
+    "@sagold/json-pointer": "npm:^7.2.1"
+    fast-copy: "npm:^4.0.4"
+    fast-deep-equal: "npm:^3.1.3"
+    uri-js: "npm:^4.4.1"
+    valid-url: "npm:^1.0.9"
+  checksum: 10c0/768ef10c74e34f1fd374dea87605edc8a2a747760a8a46bec9f698cde12a39a49ef7f4c0468284a510f66681e6cc16bf2fe19e0c7dfdbf7d85e825cfd1e678ce
   languageName: node
   linkType: hard
 
@@ -6507,7 +6561,7 @@ __metadata:
     eslint-plugin-react-hooks: "npm:^7.1.1"
     jsdom: "npm:^30.0.1"
     json-schema: "npm:^0.4.0"
-    json-schema-library: "npm:^9.3.5"
+    json-schema-library: "npm:^11.6.2"
     json-schema-to-ts: "npm:^3.1.1"
     lucide-react: "npm:^1.41.0"
     prettier: "npm:^3.9.6"
@@ -8856,7 +8910,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uri-js@npm:^4.2.2":
+"uri-js@npm:^4.2.2, uri-js@npm:^4.4.1":
   version: 4.4.1
   resolution: "uri-js@npm:4.4.1"
   dependencies:

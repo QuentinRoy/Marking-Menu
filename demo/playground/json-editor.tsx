@@ -21,9 +21,13 @@ import type { JSONSchema7 } from 'json-schema';
 import { useEffect, useRef } from 'react';
 import { menuSchema } from './menu-schema.js';
 
-// The schema is `as const` so `menu-schema.test-d.ts` can read its literal
-// types; the editor's own signature wants it mutable, and nothing here
-// writes to it.
+// Two mismatches, neither of them real. The schema is `as const` so
+// `menu-schema.test-d.ts` can read its literal types, while this signature
+// wants it mutable, and nothing here writes to it; and it is 2020-12 while
+// `codemirror-json-schema` types its parameter as draft-07. The validator
+// underneath resolves `#/$defs/...` as the plain JSON pointer it is, so the
+// squiggles agree with the status line, which validates the same document
+// against a real 2020-12 draft.
 const editorSchema = menuSchema as unknown as JSONSchema7;
 
 /*

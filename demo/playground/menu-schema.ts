@@ -1,4 +1,4 @@
-import { Draft07, type JsonError } from 'json-schema-library';
+import { compileSchema, draft2020, type JsonError } from 'json-schema-library';
 import type { MarkingMenuInput } from '../../src/types.js';
 
 /*
@@ -8,8 +8,7 @@ import type { MarkingMenuInput } from '../../src/types.js';
  under it.
 
  It is not published with the package, hence no `$id`: there is no URL it
- could be fetched from. Draft-07 is the dialect both `json-schema-library`
- (the validator below) and `codemirror-json-schema` speak.
+ could be fetched from.
 
  It has no `angle`, because the library has none: `src/model.ts` lays every
  item out at `index * (items.length > 4 ? 45 : 90)`. Per-item angles are
@@ -17,10 +16,7 @@ import type { MarkingMenuInput } from '../../src/types.js';
  field this schema does not have.
  */
 export const menuSchema = {
-  // The draft-07 dialect is identified by this exact URI: it is a name, not
-  // an address to fetch.
-  // eslint-disable-next-line unicorn/prefer-https
-  $schema: 'http://json-schema.org/draft-07/schema#',
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
   title: 'Marking menu',
   description:
     'The description of a marking menu, as passed to createMarkingMenu.',
@@ -28,14 +24,14 @@ export const menuSchema = {
   required: ['items'],
   additionalProperties: false,
   properties: {
-    items: { $ref: '#/definitions/items' },
+    items: { $ref: '#/$defs/items' },
   },
-  definitions: {
+  $defs: {
     items: {
       type: 'array',
       description:
         "A level's items, laid out clockwise from the right at a fixed angle each.",
-      items: { $ref: '#/definitions/item' },
+      items: { $ref: '#/$defs/item' },
     },
     item: {
       type: 'object',
@@ -51,13 +47,13 @@ export const menuSchema = {
           type: 'string',
           description: 'The text the item is drawn with.',
         },
-        items: { $ref: '#/definitions/items' },
+        items: { $ref: '#/$defs/items' },
       },
     },
   },
 } as const;
 
-const draft = new Draft07(menuSchema);
+const schemaNode = compileSchema(menuSchema, { drafts: [draft2020] });
 
 /**
  What {@link validateMenuSource} made of the editor's text: either the menu
@@ -132,7 +128,7 @@ export function validateMenuSource(source: string): MenuSourceResult {
     return { ok: false, message: `Invalid JSON: ${detail}` };
   }
 
-  const [first] = draft.validate(value);
+  const [first] = schemaNode.validate(value).errors;
   if (first !== undefined) {
     return { ok: false, message: describe(first, value) };
   }
