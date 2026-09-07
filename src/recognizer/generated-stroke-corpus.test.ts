@@ -22,52 +22,53 @@ import { measureAccuracy } from './__fixtures__/stroke-corpus.js';
  4-item gaps, and visibly, but not catastrophically, worse on the narrow,
  8-item ones.
 
- Measured at freeze time, 1000 trials per configuration (the assertions below
- run 500, which is enough to hold a floor without slowing the suite down):
+ The generator and the menus it is measured against are both fully
+ deterministic: the same breadths, trial count and seed always produce the
+ same points and walk the same paths, on any machine. There is no real
+ run-to-run noise to tolerate here, so the assertions below check a tight
+ band around the measured accuracy rather than a bare floor. A floor alone
+ only catches too much wobble; it would wave through a wobble quietly
+ turned down toward zero, which would show up here as suspiciously perfect
+ scores rather than failures. Measured (and asserted) at 500 trials per
+ configuration:
 
-   breadth  depth  accuracy
-   4        1      100.0%
-   4        3       98.9%
-   8        1       88.8%
-   8        3       78.3%
+   breadths   accuracy
+   [4]        100.0%
+   [4, 4, 4]   99.2%
+   [8]         90.4%
+   [8, 8, 8]   78.8%
 
  The gap between the two breadths is exactly the effect a fixed amount of
  hand wobble should have: the recognizer's corner threshold is half the
  menu's smallest angular gap, so the same wobble eats a much bigger share of
- an 8-item menu's 45-degree gap than a 4-item menu's 90-degree one. Depth 3
- compounds three independent per-level draws, which is why its accuracy sits
- below depth 1's for both breadths.
+ an 8-item menu's 45-degree gap than a 4-item menu's 90-degree one. Three
+ levels compounds three independent per-level draws, which is why its
+ accuracy sits below one level's for both breadths.
 
- The assertions below hold the two even menus to a floor comfortably under
- those measurements, so the suite tolerates ordinary run-to-run noise without
- tolerating a real regression. Item counts of 5, 6 and 7 use the library's
- current, crowded layout rather than an evenly spaced one (see issue #43).
- They are swept and reported here for later work to compare against, but
- are not held to a floor of their own.
-
- "Angle configurations" here means breadth and depth, since stating an
- item's own angle doesn't exist yet: that lands in issue #43, and the menus
- it produces will sweep through the same `measureAccuracy` this file uses.
+ Item counts of 5, 6 and 7 use the library's current, crowded layout rather
+ than an evenly spaced one (see issue #43), and a menu whose levels hold
+ different counts is an angle configuration of its own: `createModel` spaces
+ each level by that level's own count, so `[4, 8]` walks a 90-degree-spaced
+ top level into a 45-degree-spaced submenu, a spacing no single uniform
+ breadth produces. Both are swept and reported below for later work to
+ compare against, but neither is held to a floor of their own: stating an
+ item's own angle doesn't exist yet either, and that is what issue #43 adds.
  */
 
 describe('generated stroke corpus', () => {
   describe('menus the library already lays out evenly', () => {
     it.each([
-      { breadth: 4, depth: 1, floor: 0.97 },
-      { breadth: 4, depth: 3, floor: 0.9 },
-      { breadth: 8, depth: 1, floor: 0.75 },
-      { breadth: 8, depth: 3, floor: 0.55 },
+      { breadths: [4], accuracy: 1, seed: 4001 },
+      { breadths: [4, 4, 4], accuracy: 0.992, seed: 4003 },
+      { breadths: [8], accuracy: 0.904, seed: 8001 },
+      { breadths: [8, 8, 8], accuracy: 0.788, seed: 8003 },
     ])(
-      'recognizes $breadth items, $depth level(s) deep, at least $floor of the time',
-      ({ breadth, depth, floor }) => {
-        const accuracy = measureAccuracy({
-          breadth,
-          depth,
-          trials: 500,
-          seed: breadth * 1000 + depth,
-        });
+      'recognizes $breadths close to the calibrated $accuracy',
+      ({ breadths, accuracy, seed }) => {
+        const measured = measureAccuracy({ breadths, trials: 500, seed });
 
-        expect(accuracy).toBeGreaterThanOrEqual(floor);
+        expect(measured).toBeGreaterThanOrEqual(accuracy - 0.02);
+        expect(measured).toBeLessThanOrEqual(accuracy + 0.02);
       },
     );
   });
@@ -81,8 +82,7 @@ describe('generated stroke corpus', () => {
       'reports an accuracy for a %i-item, 1 level menu',
       (breadth) => {
         const accuracy = measureAccuracy({
-          breadth,
-          depth: 1,
+          breadths: [breadth],
           trials: 500,
           seed: breadth * 1000,
         });
@@ -91,5 +91,23 @@ describe('generated stroke corpus', () => {
         expect(accuracy).toBeLessThanOrEqual(1);
       },
     );
+  });
+
+  describe('sweeping angle configurations across levels', () => {
+    it.each([
+      { breadths: [4, 8] },
+      { breadths: [8, 4] },
+      { breadths: [8, 5] },
+      { breadths: [5, 6, 7] },
+    ])('reports an accuracy for a $breadths menu', ({ breadths }) => {
+      const accuracy = measureAccuracy({
+        breadths,
+        trials: 500,
+        seed: Number(breadths.join('')),
+      });
+
+      expect(accuracy).toBeGreaterThan(0);
+      expect(accuracy).toBeLessThanOrEqual(1);
+    });
   });
 });

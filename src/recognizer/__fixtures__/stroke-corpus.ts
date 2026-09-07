@@ -4,35 +4,48 @@ import { generateStroke, type Wobble } from './generate-stroke.js';
 import { createRandom } from './random.js';
 
 /*
- Builds evenly spaced menus of any breadth and depth, draws a stroke for a
- random path through one, and reports how often the intended leaf comes back.
- This is the sweep the generated stroke corpus runs (see
+ Builds a menu from a list of per-level item counts, draws a stroke for a
+ random path through it, and reports how often the intended leaf comes
+ back. This is the sweep the generated stroke corpus runs (see
  `../generated-stroke-corpus.test.ts`); kept here, apart from the test file,
  so both it and `scripts/generate-stroke.ts` can reuse it.
 
- The menus are built with `createModel` itself, from a plain item list with
- no angle stated, rather than from any hardcoded angle table. A change to how
- `createModel` lays a level out changes what this corpus measures on its next
- run, with nothing here to update by hand.
+ A list of counts is an angle configuration as much as a single count is:
+ `createModel` spaces each level by that level's own count (see
+ `getAngleRange` in `../../model.ts`), so `[4, 8]` walks a 90-degree-spaced
+ top level into a 45-degree-spaced submenu, a spacing no single uniform
+ breadth produces. The menus are built with `createModel` itself, rather
+ than from any hardcoded angle table, so a change to how `createModel` lays
+ a level out changes what this corpus measures on its next run, with
+ nothing here to update by hand.
  */
 
 type EvenItem = { label: string; items?: EvenItem[] };
 
-const buildLevel = (breadth: number, depth: number): EvenItem[] =>
-  Array.from({ length: breadth }, (_, index) => ({
+/**
+ The items of a menu whose levels have the given item counts, from the top
+ level down: `[4, 8]` builds a 4-item top level whose items each open an
+ 8-item submenu.
+ */
+const buildLevels = (breadths: readonly number[]): EvenItem[] => {
+  const [breadth, ...rest] = breadths;
+  if (breadth === undefined) {
+    return [];
+  }
+
+  return Array.from({ length: breadth }, (_, index) => ({
     label: `item-${index}`,
-    ...(depth > 1 && { items: buildLevel(breadth, depth - 1) }),
+    ...(rest.length > 0 && { items: buildLevels(rest) }),
   }));
+};
 
 /**
- An evenly spaced menu, `breadth` items per level, `depth` levels deep.
-
- No explicit return type: `createModel` is generic, and naming its return
- type as `ReturnType<typeof createModel>` collapses to `any` rather than the
- concrete type this specific, non-generic call actually produces.
+ A menu with one level per entry of `breadths`, each level holding that
+ many items, laid out however `createModel` lays out a plain item list of
+ that size.
  */
-export const buildMenu = (breadth: number, depth: number) =>
-  createModel({ items: buildLevel(breadth, depth) });
+export const buildMenu = (breadths: readonly number[]) =>
+  createModel({ items: buildLevels(breadths) });
 
 /**
  The generic shape {@link randomPath} walks: any node exposing its
@@ -70,12 +83,12 @@ const randomPath = (
 };
 
 /**
- The fraction of `trials` generated strokes recognized as the exact leaf they
- were drawn for, on an evenly spaced menu of the given breadth and depth.
+ The fraction of `trials` generated strokes recognized as the exact leaf
+ they were drawn for, on a menu with the given per-level item counts.
 
  @param options - Configuration options.
- @param options.breadth - The number of items per level.
- @param options.depth - The number of levels.
+ @param options.breadths - One entry per level, from the top down: how many
+ items that level holds.
  @param options.trials - How many random paths to try.
  @param options.wobble - The wobble to generate strokes with. Defaults to the
  calibrated one.
@@ -83,23 +96,21 @@ const randomPath = (
  call with the same arguments always reports the same accuracy.
  */
 export function measureAccuracy({
-  breadth,
-  depth,
+  breadths,
   trials,
   wobble,
   seed = 0,
 }: {
-  breadth: number;
-  depth: number;
+  breadths: readonly number[];
   trials: number;
   wobble?: Wobble;
   seed?: number;
 }): number {
-  const model = buildMenu(breadth, depth);
+  const model = buildMenu(breadths);
   const random = createRandom(seed);
   let recognized = 0;
   for (let trial = 0; trial < trials; trial++) {
-    const { angles, leaf } = randomPath(model, depth, random);
+    const { angles, leaf } = randomPath(model, breadths.length, random);
     const stroke = generateStroke({
       angles,
       seed: random() * 0x7f_ff_ff_ff,
