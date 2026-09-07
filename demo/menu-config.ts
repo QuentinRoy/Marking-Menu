@@ -57,9 +57,11 @@ function asItem(value: unknown): MarkingMenuItemInput | null {
     return null;
   }
 
-  const { id, label, items } = value;
+  const { angle, id, label, items } = value;
   if (
     typeof label !== 'string' ||
+    (angle !== undefined &&
+      (typeof angle !== 'number' || !Number.isFinite(angle))) ||
     (id !== undefined && typeof id !== 'string')
   ) {
     return null;
@@ -71,6 +73,7 @@ function asItem(value: unknown): MarkingMenuItemInput | null {
   }
 
   return {
+    ...(angle !== undefined && { angle }),
     ...(id !== undefined && { id }),
     label,
     ...(items !== undefined && { items: nested }),

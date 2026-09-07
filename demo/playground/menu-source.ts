@@ -32,6 +32,9 @@ function formatItem(item: MarkingMenuItemInput, indent: string): string {
   const fields = [
     ...(item.id === undefined ? [] : [`"id": ${JSON.stringify(item.id)}`]),
     `"label": ${JSON.stringify(item.label)}`,
+    ...(item.angle === undefined
+      ? []
+      : [`"angle": ${JSON.stringify(item.angle)}`]),
   ];
   if (item.items === undefined) {
     return `{ ${fields.join(', ')} }`;

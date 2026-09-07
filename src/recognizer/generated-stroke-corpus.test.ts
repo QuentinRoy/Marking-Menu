@@ -100,4 +100,18 @@ describe('generated stroke corpus', () => {
       expect(accuracy).toBeLessThanOrEqual(1);
     });
   });
+
+  it('recognizes a menu with stated and free angles at or above 80%', () => {
+    const accuracy = measureAccuracy({
+      breadths: [4, 5],
+      statedAngles: [
+        [0, undefined, 180, undefined],
+        [0, undefined, 90, undefined, 270],
+      ],
+      trials: 500,
+      seed: 244,
+    });
+
+    expect(accuracy).toBeGreaterThanOrEqual(0.8);
+  });
 });

@@ -16,9 +16,19 @@ describe('validateMenuSource', () => {
     expect(validateMenuSource(source).ok).toBe(true);
   });
 
-  it('rejects a property the library has no use for', () => {
+  it('accepts an item with an angle', () => {
     const result = validateMenuSource(
       '{ "items": [{ "label": "Right", "angle": 45 }] }',
+    );
+    expect(result).toEqual({
+      ok: true,
+      menu: { items: [{ angle: 45, label: 'Right' }] },
+    });
+  });
+
+  it('rejects an unknown item property', () => {
+    const result = validateMenuSource(
+      '{ "items": [{ "label": "Right", "unknown": true }] }',
     );
     expect(result.ok).toBe(false);
   });
