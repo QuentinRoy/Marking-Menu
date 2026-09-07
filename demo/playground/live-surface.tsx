@@ -230,9 +230,6 @@ export function LiveSurface({
     const local = (position: Point): Point =>
       toLocalPoint(position, menuParent.getBoundingClientRect());
 
-    const style = getComputedStyle(document.documentElement);
-    const token = (name: string) => style.getPropertyValue(name).trim();
-
     const finish = (
       position: Point,
       mode: MarkingMenuMode,
@@ -283,19 +280,14 @@ export function LiveSurface({
     const controller = createMarkingMenu({
       parent: menuParent,
       ...menu,
-      // Everything the machine is timed by stays at the library's own
-      // defaults: the point of this page is what the shipped menu does.
-      // The colours are options rather than CSS, so they are read from the
-      // page's own tokens here, and `colorScheme` is in this effect's
-      // dependencies so a change of scheme rebuilds the menu with the new
-      // ones.
-      strokeColor: token('--color-stroke-live'),
-      strokeWidth: size('--stroke-trace-width'),
-      strokeStartPointRadius: size('--stroke-origin-radius'),
-      lowerStrokeColor: token('--color-stroke-lower'),
+      // Nothing here styles or times the menu: the point of this page is
+      // what the shipped one looks like and does. The single exception is
+      // below, and it is not a matter of looks.
+      //
       // The library removes a completed trace on a timer, one canvas per
-      // gesture; the overlay below draws the same stroke and owns its own
-      // canvases, so the library's copy is switched off rather than raced.
+      // gesture; the overlay this file draws afterwards covers the same
+      // stroke and owns its own canvases, so the library's copy is switched
+      // off rather than drawn twice over.
       gestureFeedbackDuration: 0,
     });
 
@@ -351,7 +343,7 @@ export function LiveSurface({
       clearOverlay();
       strokeRef.current = [];
     };
-  }, [clearOverlay, colorScheme, menu]);
+  }, [clearOverlay, menu]);
 
   // Turning the overlay off, or back on, redraws the gesture already on
   // screen rather than waiting for the next one. Only a gesture the

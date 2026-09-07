@@ -14,9 +14,9 @@ function subscribe(onChange: () => void): () => void {
  The colour scheme the page is being shown in.
 
  Almost everything on the page follows `prefers-color-scheme` in CSS alone.
- The live menu is the exception: the library takes its stroke colours as
- options, read once when the menu is created, so something has to say when
- they are stale.
+ The recognizer overlay is the exception: it is painted onto a canvas, which
+ keeps no link to the colours it was painted with, so something has to say
+ when a gesture already on screen needs drawing again.
 
  @returns `'dark'` or `'light'`, changing when the reader's preference does.
  */

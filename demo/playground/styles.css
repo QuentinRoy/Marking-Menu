@@ -101,11 +101,6 @@
   --color-stroke-trace: rgb(23 23 26 / 0.22);
   --color-piece-alt: #4b4b52;
 
-  /* The live menu's own strokes. The library takes these as options, not as
-     CSS, so `live-surface.tsx` reads them from here. */
-  --color-stroke-live: rgb(23 23 26 / 0.35);
-  --color-stroke-lower: #c9c9cc;
-
   /* The JSON editor's syntax colors. They are named here, rather than baked
      into a CodeMirror highlight style, so one style serves both schemes
      (see `json-editor.tsx`). */
@@ -147,11 +142,11 @@
   /* The weights the gesture overlay draws with, read by `live-surface.tsx`.
      A canvas takes numbers rather than lengths, so these are unitless
      pixels; they sit here so that the whole overlay, colour and weight, is
-     described in one place. */
+     described in one place. The menu's own stroke is not among them: that
+     one is the library's to style, and this page leaves it alone. */
   --stroke-trace-width: 2;
   --stroke-piece-width: 3;
   --stroke-corner-radius: 4.5;
-  --stroke-origin-radius: 6;
 }
 
 /* The gesture surface's ground, shared by both modes. */
@@ -201,24 +196,11 @@
     --color-dot: #232328;
     --color-stroke-trace: rgb(236 236 238 / 0.28);
     --color-piece-alt: #b4b4bd;
-    --color-stroke-live: rgb(236 236 238 / 0.4);
-    --color-stroke-lower: #4c4c55;
 
     --color-code-property: #d5d5db;
     --color-code-string: oklch(0.78 0.12 155);
     --color-code-literal: oklch(0.75 0.14 25);
     --color-code-punctuation: #71717b;
-  }
-
-  /* `src/layout/menu.css` exposes exactly these four for a page to restyle
-     the menu with; the geometry stays the library's. `:root` is there only
-     to out-specify that stylesheet, which the library injects into the head
-     at runtime and which would otherwise win the tie on document order. */
-  :root .marking-menu {
-    --item-background: #26262c;
-    --item-color: #c9c9cf;
-    --active-item-background: #43434c;
-    --active-item-color: #ffffff;
   }
 }
 
