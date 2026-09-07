@@ -194,9 +194,13 @@
   font-family: var(--font-sans);
 }
 
-/* CodeMirror ships its own theme; only the parts that clash with the panel
-   are overridden. */
-.cm-editor {
+/* CodeMirror injects its own stylesheet into the document head at runtime,
+   after this one, so a rule of equal specificity loses on document order
+   alone. Every selector below is therefore doubled, or qualified, to
+   out-specify it: overrides here were silently doing nothing otherwise. Its
+   theme is written for a light editor, so what is overridden is the parts
+   that would stay light on a dark panel, plus the type. */
+.cm-editor.cm-editor {
   height: 100%;
   font-size: 12.5px;
   line-height: 1.65;
@@ -206,49 +210,65 @@
   outline: none;
 }
 
-.cm-scroller {
+.cm-editor.cm-editor .cm-scroller {
   font-family: var(--font-mono);
+  line-height: inherit;
 }
 
-.cm-gutters {
+.cm-editor.cm-editor .cm-gutters {
   background: transparent;
   border-right: 1px solid var(--color-rule);
   color: var(--color-edge-soft);
 }
 
-.cm-activeLine,
-.cm-activeLineGutter {
+.cm-editor.cm-editor .cm-activeLine,
+.cm-editor.cm-editor .cm-activeLineGutter {
   background: transparent;
 }
 
-/* CodeMirror's own defaults are written for a light editor; these are the
-   few that would stay light on a dark panel. */
-.cm-editor .cm-content {
+.cm-editor.cm-editor .cm-content {
   caret-color: var(--color-ink);
 }
 
-.cm-editor .cm-cursor,
-.cm-editor .cm-dropCursor {
+.cm-editor.cm-editor .cm-cursor,
+.cm-editor.cm-editor .cm-dropCursor {
   border-left-color: var(--color-ink);
 }
 
-.cm-editor .cm-selectionBackground,
+.cm-editor.cm-editor .cm-selectionBackground,
 .cm-editor.cm-focused .cm-selectionBackground,
-.cm-editor ::selection {
+.cm-editor.cm-editor ::selection {
   background: color-mix(in oklch, var(--color-mark) 18%, transparent);
 }
 
-.cm-editor .cm-matchingBracket,
+.cm-editor.cm-editor .cm-matchingBracket,
 .cm-editor.cm-focused .cm-matchingBracket {
   outline: 1px solid var(--color-edge-soft);
   background: transparent;
   color: inherit;
 }
 
-.cm-tooltip {
+/* Tooltips are portalled out of `.cm-editor`, so they are qualified by
+   repeating their own class rather than by an ancestor. */
+.cm-tooltip.cm-tooltip {
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--color-popover);
+  color: var(--color-popover-foreground);
+  font-size: 12px;
+}
+
+.cm-tooltip.cm-tooltip .cm-tooltip-arrow::before {
+  border-top-color: var(--color-border);
+  border-bottom-color: var(--color-border);
+}
+
+.cm-tooltip.cm-tooltip .cm-tooltip-arrow::after {
+  border-top-color: var(--color-popover);
+  border-bottom-color: var(--color-popover);
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul > li {
   color: var(--color-popover-foreground);
 }
 
@@ -257,17 +277,30 @@
   color: var(--color-accent-foreground);
 }
 
-.cm-diagnostic {
+.cm-tooltip.cm-completionInfo {
+  background: var(--color-popover);
+  color: var(--color-popover-foreground);
+}
+
+.cm-tooltip.cm-tooltip .cm-diagnostic {
   border-left-color: var(--color-mark);
 }
 
 /* CodeMirror underlines a diagnostic with a wavy line baked into a
-   background image, in a red of its own. The page draws its own underline in
-   the accent instead, so the background one has to go: `.cm-editor` is there
-   to out-specify the rule CodeMirror injects at runtime, which would
-   otherwise win on document order alone. */
-.cm-editor .cm-lintRange {
+   background image, in a red of its own; the page draws its own underline in
+   the accent instead, so the background one has to go. */
+.cm-editor.cm-editor .cm-lintRange {
   background-image: none;
   text-decoration: underline wavy var(--color-mark);
   text-underline-offset: 3px;
+}
+
+/* The hover's own wrapper, which sets a code block apart from the prose
+   above it. */
+.cm6-json-schema-hover--code-wrapper {
+  margin-top: 4px;
+  border-top: 1px solid var(--color-rule);
+  padding-top: 4px;
+  color: var(--color-quiet);
+  font-family: var(--font-mono);
 }
