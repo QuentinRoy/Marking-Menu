@@ -1,0 +1,364 @@
+@import 'tailwindcss';
+@import '../color-scheme.css';
+
+/* Self-hosted so the page has no third-party font request. Latin subset
+   only, which is all its copy and any label typed into the editor needs;
+   the licences sit next to the files in `fonts/`. */
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('./fonts/public-sans-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+
+/* The shadcn/ui components in `components/ui` read these names, so the
+   palette is retheméd here rather than in each component. */
+:root {
+  --radius: 0.3125rem;
+
+  --background: #ffffff;
+  --foreground: #17171a;
+  --card: #ffffff;
+  --card-foreground: #17171a;
+  --popover: #ffffff;
+  --popover-foreground: #17171a;
+  --primary: #17171a;
+  --primary-foreground: #fbfbfa;
+  --secondary: #f2f2ef;
+  --secondary-foreground: #17171a;
+  --muted: #f2f2ef;
+  --muted-foreground: #56565c;
+  --accent: #efefec;
+  --accent-foreground: #17171a;
+  --destructive: oklch(0.55 0.13 25);
+  --border: #dcdcd8;
+  --input: #dcdcd8;
+  --ring: #b8b8bb;
+}
+
+@theme inline {
+  --font-sans: 'Public Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+}
+
+/* The page's own palette, on top of the shadcn names: the shades the layout
+   needs that no component variable stands for. */
+@theme {
+  --color-ink: #17171a;
+  --color-ink-soft: #2f2f34;
+  --color-paper: #fbfbfa;
+  --color-surface: #fdfdfc;
+  --color-quiet: #56565c;
+  --color-quieter: #63636a;
+  --color-quietest: #6f6f76;
+  --color-rule: #e6e6e4;
+  --color-rule-soft: #eeeeec;
+  --color-edge-soft: #c9c9cc;
+  --color-mark: oklch(0.55 0.13 25);
+  --color-dot: #e9e9e5;
+  /* The mark, dimmed under the breakdown so the pieces read on top of it. */
+  --color-stroke-trace: rgb(23 23 26 / 0.22);
+  --color-piece-alt: #4b4b52;
+
+  /* The JSON editor's syntax colors. They are named here, rather than baked
+     into a CodeMirror highlight style, so one style serves both schemes
+     (see `json-editor.tsx`). */
+  --color-code-property: #2f2f34;
+  --color-code-string: oklch(0.45 0.09 155);
+  --color-code-literal: oklch(0.5 0.13 25);
+  --color-code-punctuation: #8a8a91;
+
+  /* The wash behind selected text, in the editor and out of it. */
+  --color-selection: color-mix(in oklch, var(--color-mark) 18%, transparent);
+
+  /* The width below which the panel and the gesture surface stop sitting
+     side by side and stack instead. */
+  --breakpoint-wide: 38.75rem;
+
+  /* The type sizes this page asks for that the default scale has no name
+     for. Everything else uses `text-xs` and up. */
+  --text-eyebrow: 0.6875rem;
+  --text-meta: 0.71875rem;
+  --text-code: 0.78125rem;
+  --text-chip: 0.8125rem;
+  --text-lede: 0.84375rem;
+  --text-title: 1.3125rem;
+
+  --tracking-eyebrow: 0.08em;
+  --tracking-title: -0.01em;
+
+  /* Smaller than `rounded-sm`: enough to take the edge off a legend dot. */
+  --radius-xs: calc(var(--radius) - 4px);
+
+  /* The ring around the editor when its content is not a menu. */
+  --shadow-invalid: 0 0 0 calc(var(--spacing) * 0.75)
+    color-mix(in oklch, var(--color-mark) 12%, transparent);
+
+  /* The gesture surface's dot grid. */
+  --dot-grid-gap: calc(var(--spacing) * 5.5);
+  --dot-grid-dot: 1px;
+
+  /* The weights the gesture overlay draws with, read by `live-surface.tsx`.
+     A canvas takes numbers rather than lengths, so these are unitless
+     pixels; they sit here so that the whole overlay, colour and weight, is
+     described in one place. The mark itself is drawn at `--stroke-width`,
+     the menu's own (see `color-scheme.css`), so that with the breakdown off
+     what is left on screen is the stroke as the menu drew it. */
+  --stroke-piece-width: 3;
+  --stroke-corner-radius: 4.5;
+}
+
+/* The gesture surface's ground, shared by both modes. */
+@utility dot-grid {
+  background-image: radial-gradient(
+    var(--color-dot) var(--dot-grid-dot),
+    transparent var(--dot-grid-dot)
+  );
+  background-size: var(--dot-grid-gap) var(--dot-grid-gap);
+}
+
+/* Dark mode is the same page with the palette turned over: every colour the
+   layout uses is one of the variables above, plus the four the library's own
+   stylesheet exposes for the menu itself. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f0f11;
+    --foreground: #ececee;
+    --card: #141417;
+    --card-foreground: #ececee;
+    --popover: #141417;
+    --popover-foreground: #ececee;
+    --primary: #ececee;
+    --primary-foreground: #0f0f11;
+    --secondary: #1c1c20;
+    --secondary-foreground: #ececee;
+    --muted: #1c1c20;
+    --muted-foreground: #a0a0a8;
+    --accent: #232328;
+    --accent-foreground: #ececee;
+    --destructive: oklch(0.68 0.16 25);
+    --border: #2e2e34;
+    --input: #2e2e34;
+    --ring: #55555e;
+
+    --color-ink: #ececee;
+    --color-ink-soft: #c9c9cf;
+    --color-paper: #131316;
+    --color-surface: #0f0f11;
+    --color-quiet: #a0a0a8;
+    --color-quieter: #8c8c95;
+    --color-quietest: #7c7c86;
+    --color-rule: #26262b;
+    --color-rule-soft: #202024;
+    --color-edge-soft: #4c4c55;
+    --color-mark: oklch(0.72 0.15 25);
+    --color-dot: #232328;
+    --color-stroke-trace: rgb(236 236 238 / 0.28);
+    --color-piece-alt: #b4b4bd;
+
+    --color-code-property: #d5d5db;
+    --color-code-string: oklch(0.78 0.12 155);
+    --color-code-literal: oklch(0.75 0.14 25);
+    --color-code-punctuation: #71717b;
+  }
+}
+
+/* `menu.css` sets no font, so the menu inherits the host page's. That makes
+   it read in Public Sans here and in the browser's default on the demo page,
+   which is the library behaving the same way in two places rather than a
+   difference worth having: this page exists to judge the menu, not to dress
+   it. `initial` hands it back the font it would get on a page that set none,
+   so the two pages show the same thing. */
+:root .marking-menu {
+  font-family: initial;
+}
+
+@layer base {
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  /* Tailwind's preflight leaves a button with the platform's arrow, and the
+     shadcn components take it as they find it. This page's own controls, the
+     path chips and the breakdown's label, use the hand, so the rest follow
+     rather than the page being of two minds about what is clickable. One
+     that cannot be clicked keeps the arrow. */
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* CodeMirror injects its own stylesheet into the document head at runtime,
+   after this one, so a rule of equal specificity loses on document order
+   alone. Every selector below is therefore doubled, or qualified, to
+   out-specify it: overrides here were silently doing nothing otherwise. Its
+   theme is written for a light editor, so what is overridden is the parts
+   that would stay light on a dark panel, plus the type. */
+.cm-editor.cm-editor {
+  height: 100%;
+  font-size: var(--text-code);
+  line-height: var(--leading-relaxed);
+}
+
+.cm-editor.cm-focused {
+  outline: none;
+}
+
+.cm-editor.cm-editor .cm-scroller {
+  font-family: var(--font-mono);
+  line-height: inherit;
+}
+
+.cm-editor.cm-editor .cm-gutters {
+  background: transparent;
+  border-right: 1px solid var(--color-rule);
+  color: var(--color-edge-soft);
+}
+
+.cm-editor.cm-editor .cm-activeLine,
+.cm-editor.cm-editor .cm-activeLineGutter {
+  background: transparent;
+}
+
+.cm-editor.cm-editor .cm-content {
+  caret-color: var(--color-ink);
+}
+
+.cm-editor.cm-editor .cm-cursor,
+.cm-editor.cm-editor .cm-dropCursor {
+  border-left-color: var(--color-ink);
+}
+
+.cm-editor.cm-editor .cm-selectionBackground,
+.cm-editor.cm-focused .cm-selectionBackground,
+.cm-editor.cm-editor ::selection {
+  background: var(--color-selection);
+}
+
+.cm-editor.cm-editor .cm-matchingBracket,
+.cm-editor.cm-focused .cm-matchingBracket {
+  outline: 1px solid var(--color-edge-soft);
+  background: transparent;
+  color: inherit;
+}
+
+/* Tooltips are portalled out of `.cm-editor`, so they are qualified by
+   repeating their own class rather than by an ancestor. */
+.cm-tooltip.cm-tooltip {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-popover);
+  color: var(--color-popover-foreground);
+  font-size: var(--text-xs);
+}
+
+.cm-tooltip.cm-tooltip .cm-tooltip-arrow::before {
+  border-top-color: var(--color-border);
+  border-bottom-color: var(--color-border);
+}
+
+.cm-tooltip.cm-tooltip .cm-tooltip-arrow::after {
+  border-top-color: var(--color-popover);
+  border-bottom-color: var(--color-popover);
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul > li {
+  color: var(--color-popover-foreground);
+}
+
+.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: var(--color-accent);
+  color: var(--color-accent-foreground);
+}
+
+.cm-tooltip.cm-completionInfo {
+  background: var(--color-popover);
+  color: var(--color-popover-foreground);
+}
+
+.cm-tooltip.cm-tooltip .cm-diagnostic {
+  border-left-color: var(--color-mark);
+}
+
+/* Which schema found the fault, which `codemirror-json-schema` fills with the
+   schema's own title. There is only one schema here, so it names itself on
+   every diagnostic, twice over when a position has two. */
+.cm-tooltip.cm-tooltip .cm-diagnosticSource {
+  display: none;
+}
+
+/* CodeMirror underlines a diagnostic with a wavy line baked into a
+   background image, in a red of its own; the page draws its own underline in
+   the accent instead, so the background one has to go. */
+.cm-editor.cm-editor .cm-lintRange {
+  background-image: none;
+  text-decoration: underline wavy var(--color-mark);
+  text-underline-offset: calc(var(--spacing) * 0.75);
+}
+
+/* The lint tooltip pads each of its rows; the hover's section has no padding
+   of its own, so it is given the same and the two read alike when they are
+   stacked in one tooltip. */
+.cm-tooltip.cm-tooltip .cm6-json-schema-hover {
+  padding: calc(var(--spacing) * 0.75) calc(var(--spacing) * 2);
+}
+
+/* The type, set apart from the prose above it. */
+.cm-tooltip.cm-tooltip .cm6-json-schema-hover--code-wrapper {
+  margin-top: calc(var(--spacing) * 1.25);
+  border-top: 1px solid var(--color-rule);
+  padding-top: calc(var(--spacing) * 1.25);
+  color: var(--color-quiet);
+  font-family: var(--font-mono);
+}
+
+/* markdown-it wraps the prose in paragraphs, whose default margins would
+   space a two-line tooltip out like an article. */
+.cm-tooltip.cm-tooltip .cm6-json-schema-hover p {
+  margin: 0;
+}
+
+.cm-tooltip.cm-tooltip .cm6-json-schema-hover--description p + p {
+  margin-top: calc(var(--spacing) * 0.75);
+}

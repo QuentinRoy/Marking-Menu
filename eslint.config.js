@@ -2,6 +2,7 @@ import vitest from '@vitest/eslint-plugin';
 import eslintConfigXo from 'eslint-config-xo';
 import importX from 'eslint-plugin-import-x';
 import playwright from 'eslint-plugin-playwright';
+import reactHooks from 'eslint-plugin-react-hooks';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig([
@@ -15,6 +16,10 @@ export default defineConfig([
       // typechecked by scripts/smoke-test.ts against the published package,
       // not against source, so type-aware linting doesn't apply to it.
       'smoke-test/**',
+      // Vendored shadcn/ui components, kept byte for byte as the registry
+      // serves them so the next copy is a plain overwrite. `.prettierignore`
+      // leaves them alone for the same reason.
+      'demo/playground/components/ui/**',
     ],
   },
   ...eslintConfigXo({
@@ -122,6 +127,19 @@ export default defineConfig([
       // No project preview image exists yet to use as og:image; og:title,
       // og:type, and og:url are already set above.
       '@html-eslint/require-open-graph-protocol': 'off',
+    },
+  },
+  {
+    // The playground page (see `demo/playground`) is the only React in the
+    // repo; the library itself is framework-free.
+    files: ['demo/playground/**/*.{ts,tsx}'],
+    extends: [reactHooks.configs.flat.recommended],
+  },
+  {
+    // Tailwind's own at-rules, which the CSS plugin does not know.
+    files: ['demo/playground/styles.css'],
+    rules: {
+      'css/no-invalid-at-rules': 'off',
     },
   },
   {

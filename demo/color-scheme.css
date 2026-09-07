@@ -1,0 +1,42 @@
+/*
+ What the two pages have to agree on to draw the same menu in the reader's
+ own colour scheme. Light mode adds nothing: the library's own values are
+ already right on a light page, and this file only answers for the dark one,
+ which the library has none for.
+
+ The menu's item colours it reads from CSS itself (see `src/layout/menu.css`
+ for the four it exposes), so they are simply set below. Its stroke it does
+ not: that is drawn on a canvas from options passed at construction, so both
+ pages read `--stroke-color` and `--lower-stroke-color` and hand them to
+ `createMarkingMenu` (see `demo/script.ts` and
+ `demo/playground/live-surface.tsx`), and both rebuild the menu when the
+ scheme changes, since the library reads them only once.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* The library's own defaults, named so the pages have something to pass,
+     and so the playground can redraw a finished mark in the same weight the
+     menu drew it in. */
+  --stroke-color: #000000;
+  --lower-stroke-color: #777777;
+  --stroke-width: 4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --stroke-color: rgb(236 236 238);
+    --lower-stroke-color: #6a6a74;
+  }
+
+  /* `:root` is there only to out-specify `menu.css`, which the library
+     injects into the head at runtime and which would otherwise win the tie
+     on document order. */
+  :root .marking-menu {
+    --item-background: #26262c;
+    --item-color: #c9c9cf;
+    --active-item-background: #43434c;
+    --active-item-color: #ffffff;
+  }
+}
