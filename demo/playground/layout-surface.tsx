@@ -16,7 +16,7 @@ import { nodeAt, type MenuModel } from './menu-model.js';
 // not by which element sits underneath it.
 const MIN_SELECTION_DIST_PX = 20;
 
-export function PreviewSurface({
+export function LayoutSurface({
   model,
   focusPath,
   onFocus,

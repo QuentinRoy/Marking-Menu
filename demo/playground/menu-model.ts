@@ -3,7 +3,7 @@ import type { MarkingMenuInput } from '../../src/types.js';
 
 /*
  The page builds the library's own model from the edited menu, and reads the
- preview, the breadcrumb and the recognizer's readout off it. It is the same
+ layout, the breadcrumb and the recognizer's readout off it. It is the same
  call `createMarkingMenu` makes internally, so what the page shows and what a
  gesture does can never drift apart.
  */

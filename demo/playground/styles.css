@@ -218,6 +218,15 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
+
+  /* Tailwind's preflight leaves a button with the platform's arrow, and the
+     shadcn components take it as they find it. This page's own controls, the
+     path chips and the breakdown's label, use the hand, so the rest follow
+     rather than the page being of two minds about what is clickable. One
+     that cannot be clicked keeps the arrow. */
+  button:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 /* CodeMirror injects its own stylesheet into the document head at runtime,

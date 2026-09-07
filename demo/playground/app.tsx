@@ -16,6 +16,7 @@ import {
   TabsTrigger,
 } from './components/ui/tabs.js';
 import { JsonEditor } from './json-editor.js';
+import { LayoutSurface } from './layout-surface.js';
 import {
   IDLE_RESULT,
   LiveSurface,
@@ -30,7 +31,6 @@ import {
 } from './menu-model.js';
 import { validateMenuSource } from './menu-schema.js';
 import { DEFAULT_MENU, formatMenu } from './menu-source.js';
-import { PreviewSurface } from './preview-surface.js';
 
 const REPOSITORY_URL = 'https://github.com/QuentinRoy/Marking-Menu';
 
@@ -94,7 +94,7 @@ export function App() {
 
     setStatus('');
     setApplied({ menu: parsed.menu, model: built.model });
-    // A different menu is a different tree: the level the preview was
+    // A different menu is a different tree: the level the layout was
     // looking at is not necessarily there any more.
     setFocusPath([]);
     setResult(IDLE_RESULT);
@@ -150,9 +150,9 @@ export function App() {
     }, COPIED_FEEDBACK_MS);
   };
 
-  const showPreviewAt = (path: readonly number[]) => {
+  const showLayoutAt = (path: readonly number[]) => {
     setFocusPath(path);
-    setMode('preview');
+    setMode('layout');
   };
 
   const isLive = mode === 'live';
@@ -238,7 +238,7 @@ export function App() {
                 overlay, which all but disappears against this list; the
                 raised look of the light theme is restored here rather than
                 in the vendored component. */}
-            {(['live', 'preview'] as const).map((value) => (
+            {(['live', 'layout'] as const).map((value) => (
               <TabsTrigger
                 key={value}
                 value={value}
@@ -278,13 +278,13 @@ export function App() {
                 {result.message}
               </span>
             ) : (
-              <Path steps={result.steps} onSelect={showPreviewAt} />
+              <Path steps={result.steps} onSelect={showLayoutAt} />
             )}
           </Footer>
         </TabsContent>
 
-        <TabsContent value="preview" className="flex min-h-0 flex-1 flex-col">
-          <PreviewSurface
+        <TabsContent value="layout" className="flex min-h-0 flex-1 flex-col">
+          <LayoutSurface
             model={applied.model}
             focusPath={focusPath}
             onFocus={setFocusPath}
@@ -324,7 +324,7 @@ function Footer({
 
 /**
  A path through the menu, one clickable step at a time. The recognized path
- doubles as a way into the preview: you look at a level by having drawn your
+ doubles as a way into the layout: you look at a level by having drawn your
  way into it.
  */
 function Path({
@@ -348,7 +348,9 @@ function Path({
         <button
           type="button"
           disabled={!isLink}
-          title={step.isLeaf ? 'A leaf item, nothing to preview' : undefined}
+          title={
+            step.isLeaf ? 'A leaf item, it has no level to show' : undefined
+          }
           className={
             isLink
               ? 'text-quiet decoration-edge-soft hover:text-ink text-chip cursor-pointer rounded-sm px-1.5 py-0.5 font-mono underline underline-offset-2'
