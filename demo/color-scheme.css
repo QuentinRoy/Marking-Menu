@@ -1,0 +1,29 @@
+/*
+ What the two pages have to agree on to draw the same menu in the reader's
+ own colour scheme.
+
+ The menu's item colours are custom properties the library reads itself (see
+ `src/layout/menu.css`), but its stroke is drawn on a canvas from options
+ passed at construction, so neither page can leave those to a stylesheet:
+ both read the two below and hand them to `createMarkingMenu` (see
+ `demo/script.ts` and `demo/playground/live-surface.tsx`), and both rebuild
+ the menu when the scheme changes, since the library reads them only once.
+
+ In light mode they are the library's own defaults, so what the pages add is
+ only the dark pair, which the library has no answer for: its `#000` stroke
+ is invisible on a dark page.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --stroke-color: #000000;
+  --lower-stroke-color: #777777;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --stroke-color: rgb(236 236 238);
+    --lower-stroke-color: #6a6a74;
+  }
+}

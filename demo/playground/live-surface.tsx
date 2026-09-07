@@ -277,13 +277,22 @@ export function LiveSurface({
       });
     };
 
+    const style = getComputedStyle(document.documentElement);
+    const token = (name: string) => style.getPropertyValue(name).trim();
     const controller = createMarkingMenu({
       parent: menuParent,
       ...menu,
-      // Nothing here styles or times the menu: the point of this page is
-      // what the shipped one looks like and does. The single exception is
-      // below, and it is not a matter of looks.
+      // Nothing here times the menu or touches its layout: the point of this
+      // page is what the shipped one looks like and does. Two exceptions.
       //
+      // The stroke colours are options rather than CSS, so the library
+      // cannot follow the reader's scheme on its own and its `#000` default
+      // is invisible on a dark page. These are the demo page's own two
+      // values (see `demo/style.css`), which in light mode are the library's
+      // defaults; `colorScheme` is in this effect's dependencies so a change
+      // of scheme rebuilds the menu with the other pair.
+      strokeColor: token('--stroke-color'),
+      lowerStrokeColor: token('--lower-stroke-color'),
       // The library removes a completed trace on a timer, one canvas per
       // gesture; the overlay this file draws afterwards covers the same
       // stroke and owns its own canvases, so the library's copy is switched
@@ -343,7 +352,7 @@ export function LiveSurface({
       clearOverlay();
       strokeRef.current = [];
     };
-  }, [clearOverlay, menu]);
+  }, [clearOverlay, colorScheme, menu]);
 
   // Turning the overlay off, or back on, redraws the gesture already on
   // screen rather than waiting for the next one. Only a gesture the

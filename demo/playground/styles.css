@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '../color-scheme.css';
 
 /* Self-hosted so the page has no third-party font request. Latin subset
    only, which is all its copy and any label typed into the editor needs;
@@ -30,8 +31,6 @@
 /* The shadcn/ui components in `components/ui` read these names, so the
    palette is retheméd here rather than in each component. */
 :root {
-  color-scheme: light dark;
-
   --radius: 0.3125rem;
 
   --background: #ffffff;

@@ -1,3 +1,5 @@
+@import './color-scheme.css';
+
 body,
 html {
   height: 100%;
@@ -116,23 +118,16 @@ h1 {
 }
 
 /* Dark mode. Every colour it needs is named here and used below, so the two
-   schemes differ by this block alone.
-
-   The library exposes the menu's own four colours as custom properties (see
-   src/layout/menu.css), so the menu follows the page rather than staying
-   light on a dark background. The stroke is not one of them: it is drawn on
-   a canvas from options, so `script.ts` reads `--stroke-color` and
-   `--lower-stroke-color` itself. */
+   schemes differ by this block alone. The stroke's two are shared with the
+   playground page instead (see `color-scheme.css`, imported above), since
+   both pages have to pass them to the library rather than leave them to a
+   stylesheet. */
 :root {
-  color-scheme: light dark;
-
   --page: #ffffff;
   --ink: rgb(31, 31, 31);
   --title-ink: rgb(236, 236, 236);
   --toast-background: rgba(0, 0, 0, 0.8);
   --toast-ink: white;
-  --stroke-color: #000000;
-  --lower-stroke-color: #777777;
   --menu-item-background: #f2f2f2;
   --menu-item-ink: #333333;
   --menu-active-item-background: #d9d9d9;
@@ -146,8 +141,6 @@ h1 {
     --title-ink: rgb(38, 38, 42);
     --toast-background: rgba(236, 236, 238, 0.85);
     --toast-ink: #0f0f11;
-    --stroke-color: rgb(236, 236, 238);
-    --lower-stroke-color: #6a6a74;
     --menu-item-background: #26262c;
     --menu-item-ink: #c9c9cf;
     --menu-active-item-background: #43434c;
