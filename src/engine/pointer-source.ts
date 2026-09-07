@@ -45,6 +45,7 @@ export function createPointerSource({
       return;
     }
 
+    event.preventDefault();
     activePointerId = event.pointerId;
     parent.setPointerCapture(event.pointerId);
     runtime.send({ type: 'pointer.down', position: toPosition(event) });

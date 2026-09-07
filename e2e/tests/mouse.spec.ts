@@ -52,6 +52,31 @@ test('novice mode: dwelling opens the menu, lays out every item, and a release s
   ).toBe(true);
 });
 
+test('novice mode: a gesture prevents the browser pointer default', async ({
+  page,
+}) => {
+  const center = await surfaceCenter(page);
+  await page.evaluate(() => {
+    document.addEventListener(
+      'pointerdown',
+      (event) => {
+        document.documentElement.dataset.pointerDefaultPrevented = String(
+          event.defaultPrevented,
+        );
+      },
+      { once: true },
+    );
+  });
+
+  await pressAt(page, center);
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-pointer-default-prevented',
+    'true',
+  );
+  await waitForMenuOpen(page);
+  await releaseAt(page);
+});
+
 test('expert mode: a quick decisive stroke selects without ever opening a menu', async ({
   page,
 }) => {
