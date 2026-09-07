@@ -1,3 +1,4 @@
+import { MINIMUM_RESOLVABLE_ANGLE } from './recognizer/recognize-mm-stroke.js';
 import type {
   LiteralId,
   MarkingMenuInput,
@@ -234,6 +235,19 @@ export type MarkingMenuModel<Input extends MarkingMenuInput> = NodeAt<
  * Implementation
  * -------------------------------------------------------------------------- */
 
+const getTightestSpacing = (angles: readonly number[]): number => {
+  if (angles.length < 2) {
+    return Infinity;
+  }
+
+  const sorted = angles.toSorted((a, b) => a - b);
+  return Math.min(
+    ...sorted.map((angle, index) =>
+      mod((sorted[(index + 1) % sorted.length] ?? angle) - angle, 360),
+    ),
+  );
+};
+
 /**
  The behavior shared by the root of the menu and its items.
 
@@ -355,18 +369,9 @@ abstract class MarkingMenuNode {
 
    @returns The smallest gap, in degrees, or `Infinity` if no level has two
    or more items to have a gap between.
-   */
+  */
   getMinAngularGap(): number {
-    let minGap = Infinity;
-    if (this.#items.length >= 2) {
-      const angles = this.#items
-        .map((item) => item.angle)
-        .toSorted((a, b) => a - b);
-      for (const [index, angle] of angles.entries()) {
-        const next = angles[(index + 1) % angles.length] ?? angle;
-        minGap = Math.min(minGap, mod(next - angle, 360));
-      }
-    }
+    let minGap = getTightestSpacing(this.#items.map((item) => item.angle));
 
     for (const item of this.#items) {
       minGap = Math.min(minGap, item.getMinAngularGap());
@@ -544,6 +549,18 @@ const getItemAngles = (
   );
 };
 
+const assertResolvableAngles = (
+  angles: readonly number[],
+  level: string,
+): void => {
+  const spacing = getTightestSpacing(angles);
+  if (spacing < MINIMUM_RESOLVABLE_ANGLE) {
+    throw new RangeError(
+      `Menu level ${level} has ${spacing} degrees between items, but the recognizer needs at least ${MINIMUM_RESOLVABLE_ANGLE}. Increase the gap or remove items.`,
+    );
+  }
+};
+
 /**
  Build the (frozen) item list of one menu level.
 
@@ -564,7 +581,15 @@ const createItems = (
   seenIds: Set<string> = new Set(),
   baseKey?: string,
 ): readonly MarkingMenuItem[] => {
+  const level =
+    baseKey === undefined
+      ? 'root'
+      : `root > ${baseKey
+          .split('-')
+          .map((index) => Number(index) + 1)
+          .join(' > ')}`;
   const angles = getItemAngles(inputs);
+  assertResolvableAngles(angles, level);
   return Object.freeze(
     inputs.map((input, index) => {
       if (input.id !== undefined) {

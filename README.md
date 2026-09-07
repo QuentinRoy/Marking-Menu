@@ -67,7 +67,9 @@ reliable. The previous inline value and priority are restored once every
 controller sharing that parent has been disposed, unless the application
 changed the property in the meantime.
 
-- `items`: `Array` of `{ label, items? }`. The list of the menu's items. If `items` is provided, the item will be considered as a sub-menu (nested `items` has the same form as the top-level list). Currently, `createMarkingMenu` supports up to 8 items per level. The first item is on the right and the followings are layed out clockwise.
+- `items`: `Array` of `{ label, angle?, items? }`. The list of the menu's items. If `items` is provided, the item is a submenu. Each level supports up to 8 items, with at least 45 degrees between neighbors. The first item is on the right; the rest are laid out clockwise.
+
+- `angle`: Optional clockwise angle in degrees from the right. Items without an `angle` are spaced evenly between the stated angles.
 
 - `parent`: `HTMLElement`. The container of the menu.
 

@@ -45,6 +45,11 @@ import { measureAccuracy } from './__fixtures__/stroke-corpus.js';
  levels compounds three independent per-level draws, which is why its
  accuracy sits below one level's for both breadths.
 
+ The 8-item menu is the narrowest layout that remains reliable: 45-degree
+ spacing measures 90.4% accuracy. A 9-item menu, with 40-degree spacing,
+ measures 61.2% with the same corpus setup. The recognizer therefore
+ publishes 45 degrees as its smallest resolvable angle.
+
  Menus with 3, 5, 6, and 7 items are also evenly spaced. Their one-level
  accuracy stays at or above 98%, so the corpus holds that floor alongside the
  existing 4- and 8-item calibration checks.

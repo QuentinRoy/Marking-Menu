@@ -11,6 +11,11 @@ import { getStrokeArticulationPoints } from './articulation-points.js';
 import { strokeLength } from './stroke-length.js';
 
 /**
+ The smallest gap, in degrees, that the calibrated recognizer can resolve.
+ */
+export const MINIMUM_RESOLVABLE_ANGLE = 45;
+
+/**
  A segment of a marking-menu stroke, described by its length and angle.
  */
 export type StrokeSegment = {

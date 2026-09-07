@@ -64,15 +64,45 @@ describe('createModel', () => {
     expect(menu.items.map((item) => item.angle)).toEqual(angles);
   });
 
-  it('keeps angles below 360 degrees for a nine-item level', () => {
-    const menu = createModel({
-      items: Array.from({ length: 9 }, (_, index) => ({
-        label: `Item ${index}`,
-      })),
-    });
-    expect(menu.items.map((item) => item.angle)).toEqual([
-      0, 40, 80, 120, 160, 200, 240, 280, 320,
-    ]);
+  it.each([1, 2, 3, 4, 5, 6, 7, 8])(
+    'builds the supported %i-item layout',
+    (count) => {
+      expect(() =>
+        createModel({
+          items: Array.from({ length: count }, (_, index) => ({
+            label: `Item ${index}`,
+          })),
+        }),
+      ).not.toThrow();
+    },
+  );
+
+  it('rejects an evenly spaced level tighter than the recognizer can resolve', () => {
+    expect(() =>
+      createModel({
+        items: Array.from({ length: 9 }, (_, index) => ({
+          label: `Item ${index}`,
+        })),
+      }),
+    ).toThrow(
+      /level root has 40 degrees between items.*Increase the gap or remove items/v,
+    );
+  });
+
+  it('names a crowded nested level and its spacing', () => {
+    expect(() =>
+      createModel({
+        items: [
+          {
+            label: 'Parent',
+            items: [
+              { angle: 0, label: 'First' },
+              { angle: 40, label: 'Second' },
+            ],
+          },
+        ],
+      }),
+    ).toThrow(/level root > 1 has 40 degrees between items/v);
   });
 
   it('spaces each level from its own item count', () => {
