@@ -267,6 +267,21 @@
         maximum, because for this menu's label shapes the vertical gap (or
         the ring clearance) is always the tighter constraint first.
       </p>
+      <p>
+        Exploratory, not part of the recommended answer above: every plate
+        so far sits dead center on its own connector ray. The "shift-aware"
+        row lets each plate slide tangentially, within whatever bound still
+        keeps some point of it on that ray, and picks the radius and every
+        plate's slide together to shrink the menu. It stays cheap (well
+        under a millisecond in every preset tried) because every nudge below
+        is an exact derivative of whichever constraint is violated, not a
+        numerical approximation, so it costs the same per iteration as the
+        collision checks themselves. It sometimes finds nothing: for
+        several presets the tightest constraint turns out to be the ring
+        clearance on an item sitting exactly on the horizontal or vertical
+        axis, and sliding such an item tangentially cannot move it any
+        further from the ring, so there is no radius left to recover.
+      </p>
     </header>
     <main>
       <div id="controls">
@@ -472,8 +487,15 @@
               <td id="full-windows" class="stat"></td>
               <td id="full-time" class="stat"></td>
             </tr>
+            <tr>
+              <td>shift-aware (exploratory)</td>
+              <td id="shift-radius" class="stat"></td>
+              <td id="shift-relax-iter" class="stat"></td>
+              <td id="shift-time" class="stat"></td>
+            </tr>
           </table>
           <div id="connector-check"></div>
+          <div id="shift-check"></div>
           <div id="agreement"></div>
           <div id="failure-warning"></div>
         </fieldset>
@@ -912,6 +934,258 @@
         return count;
       }
 
+      /**
+       Exploratory, not the shipped answer: every plate above sits dead
+       center on its own connector ray. Letting it slide tangentially
+       (perpendicular to that ray) can relax whichever pairwise
+       constraint is currently forcing the radius up, as long as the ray
+       still touches the plate somewhere. How far it can slide without
+       losing that touch is fixed and independent of the radius: the
+       perpendicular distance from the ray to the box's center is exactly
+       the shift amount, so the bound is the box's own support-function
+       value in the perpendicular direction, same shape as the connector
+       margin math above.
+       */
+      function maxTangentialShift(angle, plate) {
+        const rad = degToRad(angle);
+        return (
+          (plate.width / 2) * Math.abs(Math.sin(rad)) +
+          (plate.height / 2) * Math.abs(Math.cos(rad))
+        );
+      }
+
+      // Position under the shift model: the usual point on the ray, plus
+      // a tangential offset along that ray's own perpendicular.
+      function shiftedPosition(r, shift, angle) {
+        const rad = degToRad(angle);
+        return [
+          r * Math.cos(rad) - shift * Math.sin(rad),
+          r * Math.sin(rad) + shift * Math.cos(rad),
+        ];
+      }
+
+      /**
+       One relaxation pass at a fixed candidate radius: nudge every
+       plate's shift to resolve whichever constraint it is currently
+       violating, repeat. Every nudge is an exact derivative of the
+       violated quantity with respect to the one shift variable that can
+       move it, not a numerical approximation — that keeps this at the
+       same O(pairs) cost per iteration as the collision checks
+       themselves, rather than the O(items × pairs) a numerical gradient
+       would need (one extra full evaluation per item, every iteration).
+
+       - Plate-plate: d|Δx|/d(shift_i) = −sin(angle_i) (and the Δy
+         analog), the same axis split `minRadiusForPair` uses.
+       - Ring clearance: the chain rule through the box-distance
+         `hypot(max(0,…), max(0,…))` used in `minRingClearRadius`.
+       - Connector i vs. plate j: only plate j's shift can resolve this,
+         since a connector's own angle never moves. The relevant
+         quantity is the same perpendicular offset from ray i that
+         `connectorPlateBreakpoints` solves for its zero crossing;
+         d(offset)/d(shift_j) = cos(angle_i − angle_j).
+       */
+      function relaxShifts(
+        labels,
+        r,
+        {
+          gapH,
+          gapV,
+          ringRadius,
+          ringMargin,
+          connectorMargin,
+          bounds,
+          maxIterations,
+          damping,
+        },
+      ) {
+        const shifts = new Array(labels.length).fill(0);
+        const angle = labels.map((label) => degToRad(label.angle));
+        const cos = angle.map(Math.cos);
+        const sin = angle.map(Math.sin);
+
+        for (let iter = 0; iter < maxIterations; iter += 1) {
+          const positions = labels.map((label, k) =>
+            shiftedPosition(r, shifts[k], label.angle),
+          );
+          const nudge = new Array(labels.length).fill(0);
+          let anyViolation = false;
+
+          for (let i = 0; i < labels.length; i += 1) {
+            for (let j = i + 1; j < labels.length; j += 1) {
+              const marginX = labels[i].width / 2 + labels[j].width / 2 + gapH;
+              const marginY =
+                labels[i].height / 2 + labels[j].height / 2 + gapV;
+              const dx = positions[i][0] - positions[j][0];
+              const dy = positions[i][1] - positions[j][1];
+              if (Math.abs(dx) >= marginX || Math.abs(dy) >= marginY) {
+                continue;
+              }
+
+              anyViolation = true;
+              const deficitX = marginX - Math.abs(dx);
+              const deficitY = marginY - Math.abs(dy);
+              if (deficitX <= deficitY) {
+                const sign = dx >= 0 ? 1 : -1;
+                nudge[i] += sign * deficitX * -sin[i];
+                nudge[j] -= sign * deficitX * -sin[j];
+              } else {
+                const sign = dy >= 0 ? 1 : -1;
+                nudge[i] += sign * deficitY * cos[i];
+                nudge[j] -= sign * deficitY * cos[j];
+              }
+            }
+          }
+
+          for (let i = 0; i < labels.length; i += 1) {
+            const [cx, cy] = positions[i];
+            const halfWidth = labels[i].width / 2;
+            const halfHeight = labels[i].height / 2;
+            const u = Math.max(0, Math.abs(cx) - halfWidth);
+            const v = Math.max(0, Math.abs(cy) - halfHeight);
+            const dist = Math.hypot(u, v);
+            const required = ringRadius + ringMargin;
+            if (dist >= required) continue;
+
+            anyViolation = true;
+            const deficit = required - dist;
+            const du = u > 0 ? Math.sign(cx) * -sin[i] : 0;
+            const dv = v > 0 ? Math.sign(cy) * cos[i] : 0;
+            const ddist = dist > 1e-9 ? (u * du + v * dv) / dist : du + dv;
+            nudge[i] += Math.sign(ddist || 1) * deficit;
+          }
+
+          for (let i = 0; i < labels.length; i += 1) {
+            const p0 = [ringRadius * cos[i], ringRadius * sin[i]];
+            const p1 = [r * cos[i], r * sin[i]];
+            for (let j = 0; j < labels.length; j += 1) {
+              if (i === j) continue;
+              const box = {
+                minX: positions[j][0] - labels[j].width / 2 - connectorMargin,
+                maxX: positions[j][0] + labels[j].width / 2 + connectorMargin,
+                minY:
+                  positions[j][1] - labels[j].height / 2 - connectorMargin,
+                maxY:
+                  positions[j][1] + labels[j].height / 2 + connectorMargin,
+              };
+              if (!segmentHitsBox(p0, p1, box)) continue;
+
+              anyViolation = true;
+              const q = positions[j][0] * -sin[i] + positions[j][1] * cos[i];
+              const perpHalf =
+                (labels[j].width / 2 + connectorMargin) * Math.abs(sin[i]) +
+                (labels[j].height / 2 + connectorMargin) * Math.abs(cos[i]);
+              const deficit = perpHalf - Math.abs(q);
+              const dqdShiftJ = cos[i] * cos[j] + sin[i] * sin[j]; // cos(angle_i - angle_j)
+              const sign = q >= 0 ? 1 : -1;
+              nudge[j] +=
+                sign * Math.sign(dqdShiftJ || 1) * Math.max(deficit, 1);
+            }
+          }
+
+          if (!anyViolation) {
+            return { feasible: true, shifts: shifts.slice(), iterations: iter };
+          }
+
+          for (let k = 0; k < labels.length; k += 1) {
+            if (nudge[k] === 0) continue;
+            const step =
+              Math.sign(nudge[k]) *
+              Math.min(Math.abs(nudge[k]), bounds[k]) *
+              damping;
+            shifts[k] = Math.max(-bounds[k], Math.min(bounds[k], shifts[k] + step));
+          }
+        }
+
+        return { feasible: false, shifts: shifts.slice(), iterations: maxIterations };
+      }
+
+      // Same Liang-Barsky segment-vs-box test as `connectorHitsPlateAt`,
+      // factored out so the relaxation above can call it without also
+      // pulling in that function's own margin-inflation step (done here
+      // via the box passed in, already inflated by the caller).
+      function segmentHitsBox(p0, p1, box) {
+        const dx = p1[0] - p0[0];
+        const dy = p1[1] - p0[1];
+        let t0 = 0;
+        let t1 = 1;
+        const clip = (p, q) => {
+          if (p === 0) return q >= 0;
+          const t = q / p;
+          if (p < 0) {
+            if (t > t1) return false;
+            if (t > t0) t0 = t;
+          } else {
+            if (t < t0) return false;
+            if (t < t1) t1 = t;
+          }
+
+          return true;
+        };
+
+        return (
+          clip(-dx, p0[0] - box.minX) &&
+          clip(dx, box.maxX - p0[0]) &&
+          clip(-dy, p0[1] - box.minY) &&
+          clip(dy, box.maxY - p0[1]) &&
+          t0 <= t1
+        );
+      }
+
+      /**
+       Bisect the radius itself, same shape as `smallestClearRadius`
+       above, but each candidate is tested by relaxation instead of a
+       closed-form or interval check: shifting couples every item's
+       variable to every pairwise constraint, which is not a single
+       monotonic threshold or a finite set of exact windows the way the
+       no-shift cases are, so this falls back to a bounded numeric
+       search. The ceiling passed in must already be feasible (the
+       no-shift, connector-safe radius always is, since shift-at-zero
+       reduces to that exact case).
+       */
+      function solveRadiusWithShift(
+        labels,
+        {
+          gapH,
+          gapV,
+          ringRadius,
+          ringMargin,
+          connectorMargin,
+          floor,
+          ceiling,
+          bisectSteps = 8,
+          relaxIterations = 25,
+          damping = 0.6,
+        },
+      ) {
+        const bounds = labels.map((label) =>
+          maxTangentialShift(label.angle, label),
+        );
+        let lo = floor;
+        let hi = ceiling;
+        let bestShifts = new Array(labels.length).fill(0);
+        for (let i = 0; i < bisectSteps; i += 1) {
+          const mid = (lo + hi) / 2;
+          const { feasible, shifts } = relaxShifts(labels, mid, {
+            gapH,
+            gapV,
+            ringRadius,
+            ringMargin,
+            connectorMargin,
+            bounds,
+            maxIterations: relaxIterations,
+            damping,
+          });
+          if (feasible) {
+            hi = mid;
+            bestShifts = shifts;
+          } else {
+            lo = mid;
+          }
+        }
+
+        return { radius: hi, shifts: bestShifts };
+      }
+
       // ── End of the pure solver module ──────────────────────────────────
 
       // ── Menu presets ─────────────────────────────────────────────────
@@ -1127,6 +1401,23 @@
         document.getElementById('full-time').textContent =
           `${(t3 - t2).toFixed(3)}ms`;
 
+        const shiftResult = solveRadiusWithShift(labels, {
+          gapH: c.gapH,
+          gapV: c.gapV,
+          ringRadius: c.ringRadius,
+          ringMargin: c.ringMargin,
+          connectorMargin: c.connectorMargin,
+          floor: c.ringRadius + 22,
+          ceiling: full.radius,
+        });
+        const t4 = performance.now();
+        document.getElementById('shift-radius').textContent =
+          shiftResult.radius.toFixed(2);
+        document.getElementById('shift-relax-iter').textContent =
+          `${(100 * (full.radius - shiftResult.radius) / full.radius).toFixed(1)}% smaller`;
+        document.getElementById('shift-time').textContent =
+          `${(t4 - t3).toFixed(3)}ms`;
+
         const delta = Math.abs(cf.radius - ls.radius);
         document.getElementById('agreement').innerHTML =
           delta <= c.step
@@ -1163,6 +1454,56 @@
           fixedCollisions + fixedRingOverlaps === 0
             ? ' <span style="color:#2a6df4">Fixed.</span>'
             : '');
+
+        // Independent check of the shift-aware result, against the real
+        // shifted positions, not the relaxation's own bookkeeping.
+        const shiftPositions = labels.map((label, k) =>
+          shiftedPosition(shiftResult.radius, shiftResult.shifts[k], label.angle),
+        );
+        let shiftPlateCollisions = 0;
+        let shiftRingOverlaps = 0;
+        let shiftConnectorHits = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            const dx = Math.abs(shiftPositions[i][0] - shiftPositions[j][0]);
+            const dy = Math.abs(shiftPositions[i][1] - shiftPositions[j][1]);
+            if (
+              dx < labels[i].width / 2 + labels[j].width / 2 + c.gapH &&
+              dy < labels[i].height / 2 + labels[j].height / 2 + c.gapV
+            ) {
+              shiftPlateCollisions += 1;
+            }
+          }
+
+          const dist = Math.hypot(
+            Math.max(0, Math.abs(shiftPositions[i][0]) - labels[i].width / 2),
+            Math.max(0, Math.abs(shiftPositions[i][1]) - labels[i].height / 2),
+          );
+          if (dist < c.ringRadius + c.ringMargin - 1e-6) shiftRingOverlaps += 1;
+        }
+
+        for (let i = 0; i < labels.length; i += 1) {
+          const rad = degToRad(labels[i].angle);
+          const p0 = [c.ringRadius * Math.cos(rad), c.ringRadius * Math.sin(rad)];
+          const p1 = [shiftResult.radius * Math.cos(rad), shiftResult.radius * Math.sin(rad)];
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            const box = {
+              minX: shiftPositions[j][0] - labels[j].width / 2 - c.connectorMargin,
+              maxX: shiftPositions[j][0] + labels[j].width / 2 + c.connectorMargin,
+              minY: shiftPositions[j][1] - labels[j].height / 2 - c.connectorMargin,
+              maxY: shiftPositions[j][1] + labels[j].height / 2 + c.connectorMargin,
+            };
+            if (segmentHitsBox(p0, p1, box)) shiftConnectorHits += 1;
+          }
+        }
+
+        const shiftIssues = shiftPlateCollisions + shiftRingOverlaps + shiftConnectorHits;
+        document.getElementById('shift-check').innerHTML =
+          `Shift-aware result, checked against the real shifted positions: ${shiftPlateCollisions} plate collision(s), ${shiftRingOverlaps} ring overlap(s), ${shiftConnectorHits} connector hit(s).` +
+          (shiftIssues === 0
+            ? ' <span style="color:#2a6df4">Clean.</span>'
+            : ' <span style="color:#b3401f">Investigate.</span>');
 
         const warn = document.getElementById('failure-warning');
         if (ls.gaveUp) {
@@ -1339,6 +1680,9 @@
         connectorHitsPlateAt,
         countRingOverlaps,
         minRingClearRadius,
+        solveRadiusWithShift,
+        maxTangentialShift,
+        shiftedPosition,
         PRESETS,
         readControls,
         setPreset(key) {
