@@ -14,6 +14,7 @@
         --accent: #2a6df4;
         --closed-form: #2a6df4;
         --linear-scan: #de6c52;
+        --shift-aware: #1f9e6e;
         --ring: #f2f2f2;
         --plate-bg: #fff;
         font-family:
@@ -151,6 +152,18 @@
         background: #bbb;
         transform-origin: 0 50%;
       }
+      .connector.shift-aware {
+        background: var(--shift-aware);
+        opacity: 0.6;
+      }
+      .shift-dot {
+        position: absolute;
+        width: 5px;
+        height: 5px;
+        margin: -2.5px 0 0 -2.5px;
+        border-radius: 50%;
+        background: var(--shift-aware);
+      }
       .plate {
         position: absolute;
         left: 50%;
@@ -168,7 +181,7 @@
         border-color: var(--closed-form);
       }
       .plate.linear-scan {
-        border-color: var(--linear-scan);
+        border-color: transparent;
         background: transparent;
         color: transparent;
       }
@@ -178,6 +191,10 @@
         inset: -1px;
         border: 1px dashed var(--linear-scan);
         border-radius: 8px;
+      }
+      .plate.shift-aware {
+        border-color: var(--shift-aware);
+        background: color-mix(in srgb, var(--shift-aware) 10%, white);
       }
       #measure-pool {
         position: absolute;
@@ -446,18 +463,18 @@
           <legend>Legend</legend>
           <div>
             <span class="legend-swatch" style="background: var(--closed-form)"></span
-            >closed form
+            >connector-safe (recommended)
           </div>
           <div>
             <span
               class="legend-swatch"
               style="border: 1px dashed var(--linear-scan)"
             ></span
-            >linear scan (dashed)
+            >linear scan (plates-only reference)
           </div>
           <div>
-            <span class="legend-swatch" style="background: #1a1a1a"></span
-            >connector-safe (drawn plates)
+            <span class="legend-swatch" style="background: var(--shift-aware)"></span
+            >shift-aware (exploratory)
           </div>
         </fieldset>
         <fieldset>
@@ -1512,10 +1529,10 @@
           warn.innerHTML = '';
         }
 
-        drawStage(labels, c, full.radius, ls.radius);
+        drawStage(labels, c, full.radius, ls.radius, shiftResult);
       }
 
-      function drawStage(labels, c, cfRadius, lsRadius) {
+      function drawStage(labels, c, cfRadius, lsRadius, shiftResult) {
         stage.innerHTML = '';
 
         const addRing = (radius, fill) => {
@@ -1531,7 +1548,7 @@
         addRing(c.ringInner, '#fff');
         stage.append(Object.assign(document.createElement('div'), { className: 'center-dot' }));
 
-        for (const label of labels) {
+        labels.forEach((label, k) => {
           const rad = degToRad(label.angle);
           const cos = Math.cos(rad);
           const sin = Math.sin(rad);
@@ -1543,7 +1560,18 @@
           connector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
           stage.append(connector);
 
-          const place = (radius, cls, useMeasured) => {
+          // The shift-aware connector never changes angle, only length —
+          // it is the same ray, just possibly shorter or longer. Drawn
+          // second so it is visible against the recommended connector
+          // when the two radii differ.
+          const shiftConnLen = Math.max(0, shiftResult.radius - c.ringRadius + 8);
+          const shiftConnector = document.createElement('div');
+          shiftConnector.className = 'connector shift-aware';
+          shiftConnector.style.width = `${shiftConnLen}px`;
+          shiftConnector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
+          stage.append(shiftConnector);
+
+          const place = (radius, cls, useMeasured, x, y) => {
             const el = document.createElement('div');
             el.className = `plate ${cls}`;
             if (useMeasured) {
@@ -1557,17 +1585,22 @@
             }
 
             el.textContent = label.label;
-            const cx = CENTER + radius * cos;
-            const cy = CENTER + radius * sin;
-            el.style.left = `${cx}px`;
-            el.style.top = `${cy}px`;
+            el.style.left = `${CENTER + x}px`;
+            el.style.top = `${CENTER + y}px`;
             el.style.transform = 'translate(-50%, -50%)';
             stage.append(el);
           };
 
-          place(cfRadius, 'closed-form', false);
-          place(lsRadius, 'linear-scan', true);
-        }
+          place(cfRadius, 'closed-form', false, cfRadius * cos, cfRadius * sin);
+          place(lsRadius, 'linear-scan', true, lsRadius * cos, lsRadius * sin);
+
+          const [shiftX, shiftY] = shiftedPosition(
+            shiftResult.radius,
+            shiftResult.shifts[k],
+            label.angle,
+          );
+          place(shiftResult.radius, 'shift-aware', true, shiftX, shiftY);
+        });
       }
 
       function buildPresetButtons() {
