@@ -243,13 +243,15 @@
         repeated measurement and simulated browser zoom.
       </p>
       <p>
-        Neither solver above checks one thing a plate must also respect: not
-        covering a different item's connector. A radius that clears every
-        pair of plates can still let a wide plate sit across a neighbor's
-        line from the ring. The "Long labels" preset shows it happening; the
-        third solver, "connector-safe", finds the exact radius windows where
-        that happens and pushes past them, still without scanning — see the
-        Solve panel.
+        Neither solver above checks two things a plate must also respect: not
+        covering a different item's connector, and not sitting on top of the
+        ring itself. A radius that clears every pair of plates can still let
+        a wide plate sit across a neighbor's connector line, or dip inside
+        the ring's own selection area. The "Long labels" and "Manual angles"
+        presets show both happening; the third solver, "connector-safe",
+        raises the floor to clear the ring under every item, then finds the
+        exact radius windows where a connector would be covered and pushes
+        past them, still without scanning. See the Solve panel.
       </p>
     </header>
     <main>
@@ -746,22 +748,72 @@
         return r;
       }
 
+      // Exact minimum distance from the origin to an axis-aligned box
+      // (clamp each axis to the box's own extent, then take the
+      // magnitude of what's left over — 0 if the origin is inside).
+      function distanceFromOriginToBox(cx, cy, halfWidth, halfHeight) {
+        const dx = Math.max(0, Math.abs(cx) - halfWidth);
+        const dy = Math.max(0, Math.abs(cy) - halfHeight);
+        return Math.hypot(dx, dy);
+      }
+
+      /**
+       The smallest radius at which one plate's box clears the ring
+       entirely (its distance from the origin reaches `ringRadius`), so a
+       plate never sits on top of the ring or the selection area it
+       draws. Unlike the connector case, this genuinely is a single
+       threshold: `|r cosθ| − W` and `|r sinθ| − H` are each
+       non-decreasing in `r` once positive, so the box's distance from
+       the origin is non-decreasing in `r` too, and bisection finds the
+       exact crossing safely. A per-item constraint, not a pairwise one —
+       cheaper than either collision check above.
+       */
+      function minRingClearRadius(ringRadius, angle, plate) {
+        const rad = degToRad(angle);
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const halfWidth = plate.width / 2;
+        const halfHeight = plate.height / 2;
+        const clears = (r) =>
+          distanceFromOriginToBox(r * cos, r * sin, halfWidth, halfHeight) >=
+          ringRadius;
+
+        let lo = 0;
+        let hi = ringRadius + halfWidth + halfHeight + 1000;
+        if (clears(lo)) return lo;
+        for (let iter = 0; iter < 60; iter += 1) {
+          const mid = (lo + hi) / 2;
+          if (clears(mid)) hi = mid;
+          else lo = mid;
+        }
+
+        return hi;
+      }
+
       /**
        The solve this ticket actually recommends shipping: the plate-plate
-       floor from `solveRadiusDirect`, pushed further out past every
-       connector-plate forbidden window. Still no scanning with a fixed
-       step — every window boundary is an exact root, and the menu-sized
-       loop below is over pairs and intervals, not candidate radii.
+       floor from `solveRadiusDirect`, raised to also clear the ring under
+       every item, then pushed further out past every connector-plate
+       forbidden window. Still no scanning with a fixed step — every
+       window boundary is an exact root, and the menu-sized loop below is
+       over pairs and intervals, not candidate radii.
        */
       function solveRadiusWithConnectors(
         labels,
         { gapH, gapV, minRadius, ringRadius, connectorMargin },
       ) {
-        const plateFloor = solveRadiusDirect(labels, {
+        const plateOnlyFloor = solveRadiusDirect(labels, {
           gapH,
           gapV,
           minRadius,
         }).radius;
+        const ringFloor = Math.max(
+          minRadius,
+          ...labels.map((label) =>
+            minRingClearRadius(ringRadius, label.angle, label),
+          ),
+        );
+        const plateFloor = Math.max(plateOnlyFloor, ringFloor);
         const sentinel = plateFloor * 20 + 5000;
         const forbidden = [];
         for (let i = 0; i < labels.length; i += 1) {
@@ -781,9 +833,28 @@
 
         return {
           radius: smallestClearRadius(plateFloor, forbidden),
-          plateFloor,
+          plateOnlyFloor,
+          ringFloor,
           forbiddenCount: forbidden.length,
         };
+      }
+
+      // Live check used only to report violations in the results panel
+      // (the solver above is what prevents them); not part of the solve.
+      function countRingOverlaps(labels, radius, ringRadius) {
+        let count = 0;
+        for (const label of labels) {
+          const rad = degToRad(label.angle);
+          const dist = distanceFromOriginToBox(
+            radius * Math.cos(rad),
+            radius * Math.sin(rad),
+            label.width / 2,
+            label.height / 2,
+          );
+          if (dist < ringRadius - CLEARANCE_EPSILON) count += 1;
+        }
+
+        return count;
       }
 
       // Live check used only to report collisions in the results panel
@@ -1038,9 +1109,20 @@
           c.ringRadius,
           c.connectorMargin,
         );
+        const naiveRingOverlaps = countRingOverlaps(
+          labels,
+          cf.radius,
+          c.ringRadius,
+        );
+        const fixedRingOverlaps = countRingOverlaps(
+          labels,
+          full.radius,
+          c.ringRadius,
+        );
         document.getElementById('connector-check').innerHTML =
-          `At the plates-only radius: ${naiveCollisions} connector/plate collision(s). At the connector-safe radius: ${fixedCollisions}.` +
-          (naiveCollisions > 0 && fixedCollisions === 0
+          `At the plates-only radius: ${naiveCollisions} connector/plate collision(s), ${naiveRingOverlaps} plate(s) on top of the ring. At the connector-safe radius: ${fixedCollisions}, ${fixedRingOverlaps}.` +
+          (naiveCollisions + naiveRingOverlaps > 0 &&
+          fixedCollisions + fixedRingOverlaps === 0
             ? ' <span style="color:#2a6df4">Fixed.</span>'
             : '');
 
@@ -1216,6 +1298,8 @@
         solveRadiusWithConnectors,
         countConnectorCollisions,
         connectorHitsPlateAt,
+        countRingOverlaps,
+        minRingClearRadius,
         PRESETS,
         readControls,
         setPreset(key) {
