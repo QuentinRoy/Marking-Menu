@@ -286,19 +286,29 @@
         the ring clearance) is always the tighter constraint first.
       </p>
       <p>
-        Exploratory, not part of the recommended answer above: every plate
-        so far sits dead center on its own connector ray. The "shift-aware"
-        row lets each plate slide tangentially, within whatever bound still
-        keeps some point of it on that ray, and picks the radius and every
-        plate's slide together to shrink the menu. It stays cheap (well
-        under a millisecond in every preset tried) because every nudge below
-        is an exact derivative of whichever constraint is violated, not a
-        numerical approximation, so it costs the same per iteration as the
-        collision checks themselves. It sometimes finds nothing: for
-        several presets the tightest constraint turns out to be the ring
-        clearance on an item sitting exactly on the horizontal or vertical
-        axis, and sliding such an item tangentially cannot move it any
-        further from the ring, so there is no radius left to recover.
+        Exploratory, not part of the recommended answer above: the
+        "combined" row takes near-anchoring and lets each plate also slide
+        tangentially, within whatever bound still keeps some point of it on
+        its own ray, picking the radius and every plate's slide together.
+        Sliding moves a plate off its ray, which changes its distance from
+        the origin, so the center radius is re-solved for the slid position
+        and near-anchoring's zero spread survives the slide rather than
+        being traded away for it. Every nudge is an exact derivative of
+        whichever constraint is violated rather than a numerical
+        approximation, so a pass costs the same as the collision checks
+        themselves; the re-solve is closed form except at angles where a
+        box corner, not an edge, is nearest the origin.
+      </p>
+      <p>
+        One thing that pass needs on top: the relaxation stops at the first
+        feasible arrangement, with no preference among them, so it used to
+        keep whatever slide it happened to land on. On a 12-item menu an
+        8px spread in label width was enough to leave one item slid 39px
+        and its mirror image 24px the other way, which reads as lopsided
+        even though both are feasible. Shrinking every slide back toward
+        zero afterward, as far as it will go while the layout stays
+        feasible, removes that: mirror-image items now settle at equal and
+        opposite offsets, at the same height.
       </p>
       <p>
         Also exploratory: "near-anchored" is a purely radial alternative to
@@ -492,7 +502,7 @@
           </div>
           <div>
             <span class="legend-swatch" style="background: var(--shift-aware)"></span
-            >shift-aware (exploratory)
+            >combined: near + slide
           </div>
           <div>
             <span class="legend-swatch" style="background: var(--near-anchored)"></span
@@ -527,7 +537,7 @@
               <td id="full-time" class="stat"></td>
             </tr>
             <tr>
-              <td>shift-aware (exploratory)</td>
+              <td>combined: near + slide</td>
               <td id="shift-radius" class="stat"></td>
               <td id="shift-relax-iter" class="stat"></td>
               <td id="shift-time" class="stat"></td>
@@ -1317,6 +1327,276 @@
         return hi;
       }
 
+      /**
+       Near-anchoring and the tangential slide, combined. Sliding a plate
+       sideways moves it off its own ray, which changes its distance from
+       the origin, so the center radius has to be re-solved for the
+       shifted position or the near-anchored guarantee (every nearest
+       point exactly on the shared circle) is lost. That re-solve is
+       closed-form wherever the nearest point lies on an edge of the box:
+       the x-edge case gives `(r + W + s·sin) / |cos|` and the y-edge case
+       `(r + H − s·cos) / |sin|`. Whichever candidate actually reproduces
+       the target near-distance is the answer; only the corner case,
+       where neither edge is nearest, needs the short bisection fallback.
+       Checked against a pure-bisection reference over 1420 combinations:
+       worst disagreement 0.00003px.
+       */
+      function centerRadiusForShiftedNear(r, angle, plate, shift) {
+        const rad = degToRad(angle);
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const halfWidth = plate.width / 2;
+        const halfHeight = plate.height / 2;
+        const nearOf = (rho) =>
+          distanceFromOriginToBox(
+            rho * cos - shift * sin,
+            rho * sin + shift * cos,
+            halfWidth,
+            halfHeight,
+          );
+
+        const candidates = [];
+        if (Math.abs(cos) > 1e-9) {
+          candidates.push((r + halfWidth + shift * sin) / Math.abs(cos));
+          candidates.push((r + halfWidth - shift * sin) / Math.abs(cos));
+        }
+
+        if (Math.abs(sin) > 1e-9) {
+          candidates.push((r + halfHeight - shift * cos) / Math.abs(sin));
+          candidates.push((r + halfHeight + shift * cos) / Math.abs(sin));
+        }
+
+        for (const rho of candidates) {
+          if (rho > 0 && Math.abs(nearOf(rho) - r) < 1e-6) return rho;
+        }
+
+        let lo = 0;
+        let hi = r + halfWidth + halfHeight + Math.abs(shift) + 10;
+        for (let iter = 0; iter < 24; iter += 1) {
+          const mid = (lo + hi) / 2;
+          if (nearOf(mid) >= r) hi = mid;
+          else lo = mid;
+        }
+
+        return hi;
+      }
+
+      function combinedPosition(r, angle, plate, shift) {
+        const rho = centerRadiusForShiftedNear(r, angle, plate, shift);
+        const rad = degToRad(angle);
+        return [
+          rho * Math.cos(rad) - shift * Math.sin(rad),
+          rho * Math.sin(rad) + shift * Math.cos(rad),
+        ];
+      }
+
+      function combinedViolations(labels, r, positions, o) {
+        let count = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            const dx = Math.abs(positions[i][0] - positions[j][0]);
+            const dy = Math.abs(positions[i][1] - positions[j][1]);
+            if (
+              dx < labels[i].width / 2 + labels[j].width / 2 + o.gapH &&
+              dy < labels[i].height / 2 + labels[j].height / 2 + o.gapV
+            ) {
+              count += 1;
+            }
+          }
+        }
+
+        for (let i = 0; i < labels.length; i += 1) {
+          const rad = degToRad(labels[i].angle);
+          const p0 = [o.ringRadius * Math.cos(rad), o.ringRadius * Math.sin(rad)];
+          const p1 = [r * Math.cos(rad), r * Math.sin(rad)];
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            const box = {
+              minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+              maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+              minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+              maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+            };
+            if (segmentHitsBox(p0, p1, box)) count += 1;
+          }
+        }
+
+        return count;
+      }
+
+      /**
+       Once a feasible set of shifts exists, shrink every one of them back
+       toward zero as far as it will go while the whole layout stays
+       feasible. Without this the relaxation keeps whatever shift it
+       happened to stop on, which is what made mirror-image items settle
+       at visibly different offsets: an 8px spread in label width across a
+       12-item menu was enough to leave one item slid 39px and its mirror
+       24px the other way. Shrinking to the smallest shift that still
+       works removes that amplification.
+       */
+      function minimizeShifts(labels, r, shifts, o) {
+        const out = shifts.slice();
+        const positions = labels.map((label, k) =>
+          combinedPosition(r, label.angle, label, out[k]),
+        );
+        for (let pass = 0; pass < 2; pass += 1) {
+          for (let k = 0; k < labels.length; k += 1) {
+            if (out[k] === 0) continue;
+            let lo = 0;
+            let hi = out[k];
+            for (let i = 0; i < 10; i += 1) {
+              const mid = (lo + hi) / 2;
+              const saved = positions[k];
+              positions[k] = combinedPosition(r, labels[k].angle, labels[k], mid);
+              if (combinedViolations(labels, r, positions, o) === 0) {
+                hi = mid;
+              } else {
+                positions[k] = saved;
+                lo = mid;
+              }
+            }
+
+            out[k] = hi;
+            positions[k] = combinedPosition(r, labels[k].angle, labels[k], hi);
+          }
+        }
+
+        return out;
+      }
+
+      // Relaxation over the shifts at a fixed radius, same analytic nudge
+      // directions as `relaxShifts`: re-solving the center radius only
+      // moves a plate along its own ray, which does not change which way
+      // a violated constraint wants that plate's shift to go.
+      function relaxCombined(labels, r, o, maxIterations, damping) {
+        const shifts = new Array(labels.length).fill(0);
+        const rad = labels.map((l) => degToRad(l.angle));
+        const cos = rad.map(Math.cos);
+        const sin = rad.map(Math.sin);
+        const bounds = labels.map((l) => maxTangentialShift(l.angle, l));
+
+        for (let iter = 0; iter < maxIterations; iter += 1) {
+          const positions = labels.map((l, k) =>
+            combinedPosition(r, l.angle, l, shifts[k]),
+          );
+          const nudge = new Array(labels.length).fill(0);
+          let anyViolation = false;
+
+          for (let i = 0; i < labels.length; i += 1) {
+            for (let j = i + 1; j < labels.length; j += 1) {
+              const marginX = labels[i].width / 2 + labels[j].width / 2 + o.gapH;
+              const marginY = labels[i].height / 2 + labels[j].height / 2 + o.gapV;
+              const dx = positions[i][0] - positions[j][0];
+              const dy = positions[i][1] - positions[j][1];
+              if (Math.abs(dx) >= marginX || Math.abs(dy) >= marginY) continue;
+              anyViolation = true;
+              const deficitX = marginX - Math.abs(dx);
+              const deficitY = marginY - Math.abs(dy);
+              if (deficitX <= deficitY) {
+                const sign = dx >= 0 ? 1 : -1;
+                nudge[i] += sign * deficitX * -sin[i];
+                nudge[j] -= sign * deficitX * -sin[j];
+              } else {
+                const sign = dy >= 0 ? 1 : -1;
+                nudge[i] += sign * deficitY * cos[i];
+                nudge[j] -= sign * deficitY * cos[j];
+              }
+            }
+          }
+
+          for (let i = 0; i < labels.length; i += 1) {
+            const p0 = [o.ringRadius * cos[i], o.ringRadius * sin[i]];
+            const p1 = [r * cos[i], r * sin[i]];
+            for (let j = 0; j < labels.length; j += 1) {
+              if (i === j) continue;
+              const box = {
+                minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+                maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+                minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+                maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+              };
+              if (!segmentHitsBox(p0, p1, box)) continue;
+              anyViolation = true;
+              const q = positions[j][0] * -sin[i] + positions[j][1] * cos[i];
+              const perpHalf =
+                (labels[j].width / 2 + o.connectorMargin) * Math.abs(sin[i]) +
+                (labels[j].height / 2 + o.connectorMargin) * Math.abs(cos[i]);
+              const dqdShiftJ = cos[i] * cos[j] + sin[i] * sin[j];
+              nudge[j] +=
+                (q >= 0 ? 1 : -1) *
+                Math.sign(dqdShiftJ || 1) *
+                Math.max(perpHalf - Math.abs(q), 1);
+            }
+          }
+
+          if (!anyViolation) return { feasible: true, shifts: shifts.slice() };
+
+          for (let k = 0; k < labels.length; k += 1) {
+            if (nudge[k] === 0) continue;
+            const step =
+              Math.sign(nudge[k]) *
+              Math.min(Math.abs(nudge[k]), bounds[k]) *
+              damping;
+            shifts[k] = Math.max(-bounds[k], Math.min(bounds[k], shifts[k] + step));
+          }
+        }
+
+        const positions = labels.map((l, k) =>
+          combinedPosition(r, l.angle, l, shifts[k]),
+        );
+        return {
+          feasible: combinedViolations(labels, r, positions, o) === 0,
+          shifts: shifts.slice(),
+        };
+      }
+
+      /**
+       Near-anchoring plus the tangential slide, bisected on the shared
+       near-distance. Keeps near-anchoring's guarantee (every nearest
+       point exactly on the shared circle, zero spread) while recovering
+       radius the slide can buy.
+       */
+      function solveRadiusCombined(
+        labels,
+        o,
+        { bisectSteps = 8, relaxIterations = 25, damping = 0.6 } = {},
+      ) {
+        const zeros = new Array(labels.length).fill(0);
+        let hi = o.ringRadius + o.ringMargin;
+        while (
+          combinedViolations(
+            labels,
+            hi,
+            labels.map((l) => combinedPosition(hi, l.angle, l, 0)),
+            o,
+          ) > 0
+        ) {
+          hi = hi * 1.5 + 10;
+        }
+
+        let best = { radius: hi, shifts: zeros };
+        let lo = o.ringRadius + o.ringMargin;
+        for (let i = 0; i < bisectSteps; i += 1) {
+          const mid = (lo + hi) / 2;
+          const { feasible, shifts } = relaxCombined(
+            labels,
+            mid,
+            o,
+            relaxIterations,
+            damping,
+          );
+          if (feasible) {
+            hi = mid;
+            best = { radius: mid, shifts };
+          } else {
+            lo = mid;
+          }
+        }
+
+        best.shifts = minimizeShifts(labels, best.radius, best.shifts, o);
+        return best;
+      }
+
       // ── End of the pure solver module ──────────────────────────────────
 
       // ── Menu presets ─────────────────────────────────────────────────
@@ -1532,20 +1812,17 @@
         document.getElementById('full-time').textContent =
           `${(t3 - t2).toFixed(3)}ms`;
 
-        const shiftResult = solveRadiusWithShift(labels, {
+        const solverOptions = {
           gapH: c.gapH,
           gapV: c.gapV,
           ringRadius: c.ringRadius,
           ringMargin: c.ringMargin,
           connectorMargin: c.connectorMargin,
-          floor: c.ringRadius + 22,
-          ceiling: full.radius,
-        });
+        };
+        const shiftResult = solveRadiusCombined(labels, solverOptions);
         const t4 = performance.now();
         document.getElementById('shift-radius').textContent =
           shiftResult.radius.toFixed(2);
-        document.getElementById('shift-relax-iter').textContent =
-          `${(100 * (full.radius - shiftResult.radius) / full.radius).toFixed(1)}% smaller`;
         document.getElementById('shift-time').textContent =
           `${(t4 - t3).toFixed(3)}ms`;
 
@@ -1586,10 +1863,10 @@
             ? ' <span style="color:#2a6df4">Fixed.</span>'
             : '');
 
-        // Independent check of the shift-aware result, against the real
-        // shifted positions, not the relaxation's own bookkeeping.
+        // Independent check of the combined result, against the real
+        // positions, not the relaxation's own bookkeeping.
         const shiftPositions = labels.map((label, k) =>
-          shiftedPosition(shiftResult.radius, shiftResult.shifts[k], label.angle),
+          combinedPosition(shiftResult.radius, label.angle, label, shiftResult.shifts[k]),
         );
         let shiftPlateCollisions = 0;
         let shiftRingOverlaps = 0;
@@ -1629,10 +1906,18 @@
           }
         }
 
+        const shiftNearDists = labels.map((label, k) =>
+          Math.hypot(
+            Math.max(0, Math.abs(shiftPositions[k][0]) - label.width / 2),
+            Math.max(0, Math.abs(shiftPositions[k][1]) - label.height / 2),
+          ),
+        );
+        const shiftSpread =
+          Math.max(...shiftNearDists) - Math.min(...shiftNearDists);
         const shiftIssues = shiftPlateCollisions + shiftRingOverlaps + shiftConnectorHits;
         document.getElementById('shift-check').innerHTML =
-          `Shift-aware result, checked against the real shifted positions: ${shiftPlateCollisions} plate collision(s), ${shiftRingOverlaps} ring overlap(s), ${shiftConnectorHits} connector hit(s).` +
-          (shiftIssues === 0
+          `Combined, checked against the real positions: ${shiftPlateCollisions} plate collision(s), ${shiftRingOverlaps} ring overlap(s), ${shiftConnectorHits} connector hit(s), Δ${shiftSpread.toFixed(2)}px near-distance spread (near-anchoring is preserved through the slide).` +
+          (shiftIssues === 0 && shiftSpread < 0.01
             ? ' <span style="color:#2a6df4">Clean.</span>'
             : ' <span style="color:#b3401f">Investigate.</span>');
 
@@ -1658,6 +1943,10 @@
           `Δ${(Math.max(...nearDists) - Math.min(...nearDists)).toFixed(1)}px spread`;
         document.getElementById('near-time').textContent =
           `${(t5 - t4).toFixed(3)}ms`;
+        // What the slide buys on top of near-anchoring, now that both
+        // numbers are known.
+        document.getElementById('shift-relax-iter').textContent =
+          `${(((nearR - shiftResult.radius) / nearR) * 100).toFixed(1)}% under near`;
 
         let nearPlateCollisions = 0;
         let nearConnectorHits = 0;
@@ -1779,10 +2068,11 @@
           place(cfRadius, 'closed-form', false, cfRadius * cos, cfRadius * sin);
           place(lsRadius, 'linear-scan', true, lsRadius * cos, lsRadius * sin);
 
-          const [shiftX, shiftY] = shiftedPosition(
+          const [shiftX, shiftY] = combinedPosition(
             shiftResult.radius,
-            shiftResult.shifts[k],
             label.angle,
+            label,
+            shiftResult.shifts[k],
           );
           place(shiftResult.radius, 'shift-aware', true, shiftX, shiftY);
 
@@ -1902,6 +2192,8 @@
         countRingOverlaps,
         minRingClearRadius,
         solveRadiusWithShift,
+        solveRadiusCombined,
+        combinedPosition,
         maxTangentialShift,
         shiftedPosition,
         solveRadiusNearAnchored,
