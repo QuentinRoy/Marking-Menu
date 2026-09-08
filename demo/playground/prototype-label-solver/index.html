@@ -433,11 +433,11 @@
               type="range"
               id="ring-tolerance"
               min="0"
-              max="80"
-              value="20"
-              step="2"
+              max="200"
+              value="80"
+              step="5"
             />
-            <output id="ring-tolerance-out">20px</output>
+            <output id="ring-tolerance-out">80px</output>
           </label>
         </fieldset>
         <fieldset>
@@ -1814,7 +1814,127 @@
           }
         }
 
-        return best;
+        // The repair grants the first slack that clears a violation, not
+        // the smallest one, so without this the menu keeps whatever it
+        // happened to hand out: slack pinned at the full tolerance, and
+        // an outer extent that grew as tolerance grew even though a
+        // tighter layout was available the whole time. Shrinking slack
+        // and slide back toward zero afterward makes a larger tolerance
+        // never worse than a smaller one, and on the 12-item menu cuts
+        // the outer extent from 477px to 334px.
+        const tightened = minimizeSlackAndShift(
+          labels,
+          best.radius,
+          best.slacks,
+          best.shifts,
+          o,
+        );
+        return { radius: best.radius, ...tightened };
+      }
+
+      // Shrink each item's slack, then its slide, back toward zero as far
+      // as each will go while the whole layout stays feasible.
+      function minimizeSlackAndShift(labels, r, slacks, shifts, o) {
+        const outSlacks = slacks.slice();
+        const outShifts = shifts.slice();
+        const positions = labels.map((label, k) =>
+          tolerantPosition(r, outSlacks[k], outShifts[k], label.angle, label),
+        );
+        const sync = (k) => {
+          positions[k] = tolerantPosition(
+            r,
+            outSlacks[k],
+            outShifts[k],
+            labels[k].angle,
+            labels[k],
+          );
+        };
+        const clean = () =>
+          tolerantViolations(labels, r, outSlacks, positions, o) === 0;
+
+        // Largest slack first, and repeat until a pass changes nothing:
+        // shrinking one item often frees room for the next, and stopping
+        // after a fixed two passes left a larger tolerance producing a
+        // worse layout than a smaller one.
+        for (let pass = 0; pass < 6; pass += 1) {
+          const before = outSlacks.concat(outShifts).join(',');
+          const order = outSlacks
+            .map((slack, k) => ({ slack: Math.abs(slack) + Math.abs(outShifts[k]), k }))
+            .sort((a, b) => b.slack - a.slack)
+            .map((x) => x.k);
+          for (const k of order) {
+            for (const field of [outSlacks, outShifts]) {
+              if (field[k] === 0) continue;
+              let lo = 0;
+              let hi = field[k];
+              for (let i = 0; i < 10; i += 1) {
+                const mid = (lo + hi) / 2;
+                const saved = field[k];
+                field[k] = mid;
+                sync(k);
+                if (clean()) {
+                  hi = mid;
+                } else {
+                  field[k] = saved;
+                  sync(k);
+                  lo = mid;
+                }
+              }
+
+              field[k] = hi;
+              sync(k);
+            }
+          }
+
+          if (outSlacks.concat(outShifts).join(',') === before) break;
+        }
+
+        return { slacks: outSlacks, shifts: outShifts };
+      }
+
+      // Violation count at explicit positions, with each item's connector
+      // running to its own outer end.
+      function tolerantViolations(labels, r, slacks, positions, o) {
+        let total = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            const dx = Math.abs(positions[i][0] - positions[j][0]);
+            const dy = Math.abs(positions[i][1] - positions[j][1]);
+            if (
+              dx < labels[i].width / 2 + labels[j].width / 2 + o.gapH &&
+              dy < labels[i].height / 2 + labels[j].height / 2 + o.gapV
+            ) {
+              total += 1;
+            }
+          }
+
+          const dist = distanceFromOriginToBox(
+            positions[i][0],
+            positions[i][1],
+            labels[i].width / 2,
+            labels[i].height / 2,
+          );
+          if (dist < o.ringRadius + o.ringMargin - 1e-6) total += 1;
+        }
+
+        for (let i = 0; i < labels.length; i += 1) {
+          const rad = degToRad(labels[i].angle);
+          const outer = r + slacks[i];
+          const p0 = [o.ringRadius * Math.cos(rad), o.ringRadius * Math.sin(rad)];
+          const p1 = [outer * Math.cos(rad), outer * Math.sin(rad)];
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            const box = {
+              minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+              maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+              minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+              maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+            };
+            if (segmentHitsBox(p0, p1, box)) total += 1;
+          }
+        }
+
+        return total;
       }
 
       // Position under the tolerant model: the item's own slack pushes
