@@ -1651,7 +1651,7 @@
        20px tolerance cut the extent by 32%, while 150px cut the radius
        far more but the extent only 20%.
        */
-      function solveRadiusTolerant(
+      function solveAtTolerance(
         labels,
         o,
         { bisectSteps = 8, relaxIterations = 25, damping = 0.6 } = {},
@@ -1773,19 +1773,26 @@
               target = next.k;
             }
 
-            let lo = layout.slacks[target];
-            let hi = tolerance;
+            // Climb from the current slack in doubling steps rather than
+            // bisecting [current, tolerance]. Bisecting made the first
+            // probe half the tolerance, so a generous tolerance committed
+            // to a large slack immediately and the layout never recovered:
+            // the same menu came out worse at tolerance 150 than at 20.
+            // Climbing takes an identical path for every tolerance until
+            // the smaller one runs out, which is what makes a larger
+            // tolerance reliably no worse than a smaller one.
+            const base = Math.max(1, tolerance / 64);
             let found = null;
-            for (let i = 0; i < 8; i += 1) {
-              const mid = (lo + hi) / 2;
-              layout.slacks[target] = mid;
+            for (
+              let step = base;
+              step <= tolerance + 1e-9 && found === null;
+              step *= 2
+            ) {
+              const trial = Math.min(tolerance, layout.slacks[target] + step);
+              layout.slacks[target] = trial;
               layout.sync(target);
-              if (layout.count() < before) {
-                found = mid;
-                hi = mid;
-              } else {
-                lo = mid;
-              }
+              if (layout.count() < before) found = trial;
+              if (trial >= tolerance - 1e-9) break;
             }
 
             layout.slacks[target] = found ?? tolerance;
@@ -1799,37 +1806,88 @@
           };
         }
 
+        // Score by the menu's actual outer extent, not by the radius.
+        // The smallest radius is not the smallest menu: a tighter radius
+        // forces slack, and slack pushes the outermost corner further out
+        // than a slightly looser radius would.
+        const extentOf = (radius, slacks, shifts) => {
+          let extent = 0;
+          for (let k = 0; k < labels.length; k += 1) {
+            const [x, y] = tolerantPosition(
+              radius,
+              slacks[k],
+              shifts[k],
+              labels[k].angle,
+              labels[k],
+            );
+            const halfWidth = labels[k].width / 2;
+            const halfHeight = labels[k].height / 2;
+            for (const [cx, cy] of [
+              [x - halfWidth, y - halfHeight],
+              [x + halfWidth, y - halfHeight],
+              [x - halfWidth, y + halfHeight],
+              [x + halfWidth, y + halfHeight],
+            ]) {
+              extent = Math.max(extent, Math.hypot(cx, cy));
+            }
+          }
+
+          return extent;
+        };
+
         let hi = o.ringRadius + o.ringMargin;
-        while (!attempt(hi).feasible) hi = hi * 1.5 + 10;
+        let top = attempt(hi);
+        while (!top.feasible) {
+          hi = hi * 1.5 + 10;
+          top = attempt(hi);
+        }
+
+        // Smallest feasible radius, by bisection. Kept cheap: no
+        // minimization inside the loop.
+        const ceiling = hi;
         let lo = o.ringRadius + o.ringMargin;
-        let best = { radius: hi, shifts: zeros.slice(), slacks: zeros.slice() };
+        let floorResult = top;
         for (let i = 0; i < bisectSteps; i += 1) {
           const mid = (lo + hi) / 2;
           const res = attempt(mid);
           if (res.feasible) {
             hi = mid;
-            best = { radius: mid, shifts: res.shifts, slacks: res.slacks };
+            floorResult = res;
           } else {
             lo = mid;
           }
         }
 
-        // The repair grants the first slack that clears a violation, not
-        // the smallest one, so without this the menu keeps whatever it
-        // happened to hand out: slack pinned at the full tolerance, and
-        // an outer extent that grew as tolerance grew even though a
-        // tighter layout was available the whole time. Shrinking slack
-        // and slide back toward zero afterward makes a larger tolerance
-        // never worse than a smaller one, and on the 12-item menu cuts
-        // the outer extent from 477px to 334px.
-        const tightened = minimizeSlackAndShift(
-          labels,
-          best.radius,
-          best.slacks,
-          best.shifts,
-          o,
-        );
-        return { radius: best.radius, ...tightened };
+        // Then sample across [smallest feasible, unconstrained] and keep
+        // whichever scores best. Bisecting alone only ever visits radii at
+        // or below the smallest feasible one, so the roomier arrangement
+        // that needs no slack at all was never in the running: a larger
+        // tolerance would dive to a tighter radius and come out with a
+        // bigger menu than a smaller tolerance produced.
+        // Two candidates are enough now that the repair path no longer
+        // depends on how generous the tolerance is: the smallest feasible
+        // radius, and the unconstrained one that needs no slack at all.
+        // Sampling the range between them cost several times as much and
+        // changed nothing.
+        let best = null;
+        const candidates = ceiling > hi + 1 ? [hi, ceiling] : [hi];
+        for (const radius of candidates) {
+          const res = radius === hi ? floorResult : attempt(radius);
+          if (!res.feasible) continue;
+          const tightened = minimizeSlackAndShift(
+            labels,
+            radius,
+            res.slacks,
+            res.shifts,
+            o,
+          );
+          const extent = extentOf(radius, tightened.slacks, tightened.shifts);
+          if (best === null || extent < best.extent) {
+            best = { radius, ...tightened, extent };
+          }
+        }
+
+        return { radius: best.radius, slacks: best.slacks, shifts: best.shifts };
       }
 
       // Shrink each item's slack, then its slide, back toward zero as far
@@ -1935,6 +1993,60 @@
         }
 
         return total;
+      }
+
+      /**
+       Tolerance alone does not behave monotonically: a larger budget
+       changes which radius the bisection settles on, which changes every
+       downstream choice, so a roomier budget could still come out with a
+       bigger menu than a tighter one. Tuning the search did not fix that
+       (three separate attempts made it worse), because the landscape is
+       not convex and there is no local rule that makes a bigger budget
+       always land better.
+
+       So make it structural rather than heuristic: solve at a fixed
+       ladder of budgets, clipped to the one asked for, and keep whichever
+       result is actually smallest. Raising the requested tolerance can
+       then only add candidates, never remove any, so the answer can never
+       get worse. The cost is one solve per rung.
+       */
+      function solveRadiusTolerant(labels, o, tuning = {}) {
+        const requested = o.ringDistanceTolerance ?? 0;
+        const rungs = [0, 15, 45, 135, 405].filter((t) => t < requested);
+        rungs.push(requested);
+
+        let best = null;
+        for (const tolerance of rungs) {
+          const res = solveAtTolerance(
+            labels,
+            { ...o, ringDistanceTolerance: tolerance },
+            tuning,
+          );
+          let extent = 0;
+          for (let k = 0; k < labels.length; k += 1) {
+            const [x, y] = tolerantPosition(
+              res.radius,
+              res.slacks[k],
+              res.shifts[k],
+              labels[k].angle,
+              labels[k],
+            );
+            const halfWidth = labels[k].width / 2;
+            const halfHeight = labels[k].height / 2;
+            for (const [cx, cy] of [
+              [x - halfWidth, y - halfHeight],
+              [x + halfWidth, y - halfHeight],
+              [x - halfWidth, y + halfHeight],
+              [x + halfWidth, y + halfHeight],
+            ]) {
+              extent = Math.max(extent, Math.hypot(cx, cy));
+            }
+          }
+
+          if (best === null || extent < best.extent) best = { ...res, extent };
+        }
+
+        return best;
       }
 
       // Position under the tolerant model: the item's own slack pushes
