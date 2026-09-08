@@ -253,6 +253,20 @@
         exact radius windows where a connector would be covered and pushes
         past them, still without scanning. See the Solve panel.
       </p>
+      <p>
+        Four separate clearances feed the solve, and they are easy to mix up
+        because two of them share a word: the plate-plate gaps set how far
+        two <em>different</em> plates must stay from each other (horizontal
+        and vertical are separate because the plates are wider than they are
+        tall, so a pair stacked vertically needs much less slack than a pair
+        side by side); the plate-ring clearance sets how far every plate
+        stays from the ring, and did not exist as its own knob until now:
+        the earlier version placed plates with zero clearance, right up
+        against the ring's edge. Try "Plate&ndash;plate horizontal gap"
+        alone on the default preset: it does nothing up to its slider
+        maximum, because for this menu's label shapes the vertical gap (or
+        the ring clearance) is always the tighter constraint first.
+      </p>
     </header>
     <main>
       <div id="controls">
@@ -261,31 +275,7 @@
           <div class="btn-row" id="preset-buttons"></div>
         </fieldset>
         <fieldset>
-          <legend>Solver inputs (read once per open)</legend>
-          <label class="row">
-            <span>Horizontal gap</span>
-            <input
-              type="range"
-              id="gap-h"
-              min="0"
-              max="40"
-              value="14"
-              step="1"
-            />
-            <output id="gap-h-out">14px</output>
-          </label>
-          <label class="row">
-            <span>Vertical gap</span>
-            <input
-              type="range"
-              id="gap-v"
-              min="0"
-              max="40"
-              value="7"
-              step="1"
-            />
-            <output id="gap-v-out">7px</output>
-          </label>
+          <legend>Label sizing</legend>
           <label class="row">
             <span>Label min-width</span>
             <input
@@ -310,8 +300,35 @@
             />
             <output id="max-width-out">none</output>
           </label>
+        </fieldset>
+        <fieldset>
+          <legend>Clearances (read once per open)</legend>
           <label class="row">
-            <span>Connector clearance</span>
+            <span>Plate&ndash;plate horizontal gap</span>
+            <input
+              type="range"
+              id="gap-h"
+              min="0"
+              max="40"
+              value="14"
+              step="1"
+            />
+            <output id="gap-h-out">14px</output>
+          </label>
+          <label class="row">
+            <span>Plate&ndash;plate vertical gap</span>
+            <input
+              type="range"
+              id="gap-v"
+              min="0"
+              max="40"
+              value="7"
+              step="1"
+            />
+            <output id="gap-v-out">7px</output>
+          </label>
+          <label class="row">
+            <span>Plate&ndash;connector clearance</span>
             <input
               type="range"
               id="connector-margin"
@@ -321,6 +338,18 @@
               step="1"
             />
             <output id="connector-margin-out">2px</output>
+          </label>
+          <label class="row">
+            <span>Plate&ndash;ring clearance</span>
+            <input
+              type="range"
+              id="ring-margin"
+              min="0"
+              max="24"
+              value="8"
+              step="1"
+            />
+            <output id="ring-margin-out">8px</output>
           </label>
         </fieldset>
         <fieldset>
@@ -758,28 +787,30 @@
       }
 
       /**
-       The smallest radius at which one plate's box clears the ring
-       entirely (its distance from the origin reaches `ringRadius`), so a
-       plate never sits on top of the ring or the selection area it
-       draws. Unlike the connector case, this genuinely is a single
-       threshold: `|r cosθ| − W` and `|r sinθ| − H` are each
-       non-decreasing in `r` once positive, so the box's distance from
-       the origin is non-decreasing in `r` too, and bisection finds the
-       exact crossing safely. A per-item constraint, not a pairwise one —
-       cheaper than either collision check above.
+       The smallest radius at which one plate's box clears the ring by at
+       least `ringMargin` (its distance from the origin reaches
+       `ringRadius + ringMargin`), so a plate never sits on top of the
+       ring or the selection area it draws, with real breathing room
+       rather than a bare touch. Unlike the connector case, this
+       genuinely is a single threshold: `|r cosθ| − W` and `|r sinθ| − H`
+       are each non-decreasing in `r` once positive, so the box's
+       distance from the origin is non-decreasing in `r` too, and
+       bisection finds the exact crossing safely. A per-item constraint,
+       not a pairwise one — cheaper than either collision check above.
        */
-      function minRingClearRadius(ringRadius, angle, plate) {
+      function minRingClearRadius(ringRadius, ringMargin, angle, plate) {
         const rad = degToRad(angle);
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);
         const halfWidth = plate.width / 2;
         const halfHeight = plate.height / 2;
+        const required = ringRadius + ringMargin;
         const clears = (r) =>
           distanceFromOriginToBox(r * cos, r * sin, halfWidth, halfHeight) >=
-          ringRadius;
+          required;
 
         let lo = 0;
-        let hi = ringRadius + halfWidth + halfHeight + 1000;
+        let hi = required + halfWidth + halfHeight + 1000;
         if (clears(lo)) return lo;
         for (let iter = 0; iter < 60; iter += 1) {
           const mid = (lo + hi) / 2;
@@ -800,7 +831,7 @@
        */
       function solveRadiusWithConnectors(
         labels,
-        { gapH, gapV, minRadius, ringRadius, connectorMargin },
+        { gapH, gapV, minRadius, ringRadius, ringMargin, connectorMargin },
       ) {
         const plateOnlyFloor = solveRadiusDirect(labels, {
           gapH,
@@ -810,7 +841,7 @@
         const ringFloor = Math.max(
           minRadius,
           ...labels.map((label) =>
-            minRingClearRadius(ringRadius, label.angle, label),
+            minRingClearRadius(ringRadius, ringMargin, label.angle, label),
           ),
         );
         const plateFloor = Math.max(plateOnlyFloor, ringFloor);
@@ -841,7 +872,7 @@
 
       // Live check used only to report violations in the results panel
       // (the solver above is what prevents them); not part of the solve.
-      function countRingOverlaps(labels, radius, ringRadius) {
+      function countRingOverlaps(labels, radius, ringRadius, ringMargin) {
         let count = 0;
         for (const label of labels) {
           const rad = degToRad(label.angle);
@@ -851,7 +882,7 @@
             label.width / 2,
             label.height / 2,
           );
-          if (dist < ringRadius - CLEARANCE_EPSILON) count += 1;
+          if (dist < ringRadius + ringMargin - CLEARANCE_EPSILON) count += 1;
         }
 
         return count;
@@ -977,6 +1008,7 @@
         step: document.getElementById('step'),
         maxIter: document.getElementById('max-iter'),
         connectorMargin: document.getElementById('connector-margin'),
+        ringMargin: document.getElementById('ring-margin'),
       };
 
       function readControls() {
@@ -990,6 +1022,7 @@
           step: Number(controls.step.value),
           maxIter: Number(controls.maxIter.value),
           connectorMargin: Number(controls.connectorMargin.value),
+          ringMargin: Number(controls.ringMargin.value),
         };
       }
 
@@ -1009,6 +1042,8 @@
         document.getElementById('max-iter-out').textContent = c.maxIter;
         document.getElementById('connector-margin-out').textContent =
           `${c.connectorMargin}px`;
+        document.getElementById('ring-margin-out').textContent =
+          `${c.ringMargin}px`;
       }
 
       // Measures each plate's own natural box once — clamp(min, content,
@@ -1070,6 +1105,7 @@
         const full = solveRadiusWithConnectors(labels, {
           ...solverInput,
           ringRadius: c.ringRadius,
+          ringMargin: c.ringMargin,
           connectorMargin: c.connectorMargin,
         });
         const t3 = performance.now();
@@ -1113,11 +1149,13 @@
           labels,
           cf.radius,
           c.ringRadius,
+          c.ringMargin,
         );
         const fixedRingOverlaps = countRingOverlaps(
           labels,
           full.radius,
           c.ringRadius,
+          c.ringMargin,
         );
         document.getElementById('connector-check').innerHTML =
           `At the plates-only radius: ${naiveCollisions} connector/plate collision(s), ${naiveRingOverlaps} plate(s) on top of the ring. At the connector-safe radius: ${fixedCollisions}, ${fixedRingOverlaps}.` +
@@ -1247,6 +1285,7 @@
             gapV: c.gapV,
             minRadius: c.ringRadius + 22,
             ringRadius: c.ringRadius,
+            ringMargin: c.ringMargin,
             connectorMargin: c.connectorMargin,
           });
           radii.push(radius);
