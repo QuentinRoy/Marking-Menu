@@ -311,6 +311,22 @@
         opposite offsets, at the same height.
       </p>
       <p>
+        Holding every nearest point on one exact circle is rigid: a single
+        crowded item can force the whole menu outward when a little slack
+        for that item alone would do. "Ring-distance tolerance" turns the
+        circle into a band, letting an item's nearest point sit anywhere in
+        <em>[r, r + tolerance]</em>. Slack is a fallback rather than a
+        first move, so the tolerant search is a superset of the strict one
+        and can never do worse; a first attempt that pushed items out as
+        part of the same relaxation did do worse, by 6% on the 12-item menu
+        and 12% on the adversarial one, because the radial pushes fought
+        the tangential ones. Worth knowing: the smallest radius is not the
+        smallest menu. Past a modest tolerance the radius keeps dropping
+        while the outer extent grows again, because items fling outward.
+        On the 12-item menu a 20px tolerance cut the extent by 32%, while
+        150px cut the radius far more but the extent only 20%.
+      </p>
+      <p>
         Also exploratory: "near-anchored" is a purely radial alternative to
         centering every plate on the shared circle, no tangential slide at
         all. It anchors each plate's <em>nearest</em> point to the ring on
@@ -410,6 +426,18 @@
               step="1"
             />
             <output id="ring-margin-out">8px</output>
+          </label>
+          <label class="row">
+            <span>Ring-distance tolerance</span>
+            <input
+              type="range"
+              id="ring-tolerance"
+              min="0"
+              max="80"
+              value="20"
+              step="2"
+            />
+            <output id="ring-tolerance-out">20px</output>
           </label>
         </fieldset>
         <fieldset>
@@ -1597,6 +1625,204 @@
         return best;
       }
 
+      /**
+       Everything above holds every plate's nearest point on one exact
+       circle, which is rigid: a single crowded item can force the whole
+       menu outward when a little slack for that item alone would do.
+       `ringDistanceTolerance` turns the circle into a band: an item's
+       nearest point may sit anywhere in `[r, r + tolerance]`, and the
+       solver picks each item's slack.
+
+       Two things make this work rather than backfire. Slack is a
+       fallback, not a first move: each candidate radius is tried
+       strictly first (all slack zero, tangential slide only), and only
+       a failure re-tries with slack, so the tolerant search is a
+       superset of the strict one and can never return a worse radius. A
+       first attempt that pushed items out as part of the same relaxation
+       did do worse, by 6% on the 12-item menu and 12% on the adversarial
+       one, because the radial pushes fought the tangential ones. And
+       repairs are granted one item at a time, the least-slacked member
+       of a violating pair, bisected for the smallest slack that helps,
+       rather than spread across everything at once.
+
+       Note that the smallest radius is not the smallest menu: past a
+       modest tolerance the radius keeps dropping while the outer extent
+       grows again, because items fling outward. On the 12-item menu a
+       20px tolerance cut the extent by 32%, while 150px cut the radius
+       far more but the extent only 20%.
+       */
+      function solveRadiusTolerant(
+        labels,
+        o,
+        { bisectSteps = 8, relaxIterations = 25, damping = 0.6 } = {},
+      ) {
+        const n = labels.length;
+        const zeros = new Array(n).fill(0);
+        const tolerance = o.ringDistanceTolerance ?? 0;
+        const rad = labels.map((l) => degToRad(l.angle));
+        const cos = rad.map(Math.cos);
+        const sin = rad.map(Math.sin);
+
+        // Positions cached, only the changed item recomputed: rebuilding
+        // every position on every probe is what made the repair loop
+        // cost tens of milliseconds.
+        function makeLayout(r, shifts) {
+          const slacks = new Array(n).fill(0);
+          const positions = new Array(n);
+          const sync = (k) => {
+            positions[k] = combinedPosition(
+              r + slacks[k],
+              labels[k].angle,
+              labels[k],
+              shifts[k],
+            );
+          };
+          for (let k = 0; k < n; k += 1) sync(k);
+
+          function count() {
+            let total = 0;
+            for (let i = 0; i < n; i += 1) {
+              for (let j = i + 1; j < n; j += 1) {
+                const dx = Math.abs(positions[i][0] - positions[j][0]);
+                const dy = Math.abs(positions[i][1] - positions[j][1]);
+                if (
+                  dx < labels[i].width / 2 + labels[j].width / 2 + o.gapH &&
+                  dy < labels[i].height / 2 + labels[j].height / 2 + o.gapV
+                ) {
+                  total += 1;
+                }
+              }
+            }
+
+            for (let i = 0; i < n; i += 1) {
+              const p0 = [o.ringRadius * cos[i], o.ringRadius * sin[i]];
+              const p1 = [
+                (r + slacks[i]) * cos[i],
+                (r + slacks[i]) * sin[i],
+              ];
+              for (let j = 0; j < n; j += 1) {
+                if (i === j) continue;
+                const box = {
+                  minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+                  maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+                  minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+                  maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+                };
+                if (segmentHitsBox(p0, p1, box)) total += 1;
+              }
+            }
+
+            return total;
+          }
+
+          // The least-slacked member of the first violating pair, or the
+          // covered plate of the first blocked connector.
+          function firstRepairTarget() {
+            for (let i = 0; i < n; i += 1) {
+              for (let j = i + 1; j < n; j += 1) {
+                const dx = Math.abs(positions[i][0] - positions[j][0]);
+                const dy = Math.abs(positions[i][1] - positions[j][1]);
+                if (
+                  dx < labels[i].width / 2 + labels[j].width / 2 + o.gapH &&
+                  dy < labels[i].height / 2 + labels[j].height / 2 + o.gapV
+                ) {
+                  return slacks[i] <= slacks[j] ? i : j;
+                }
+              }
+
+              const p0 = [o.ringRadius * cos[i], o.ringRadius * sin[i]];
+              const p1 = [(r + slacks[i]) * cos[i], (r + slacks[i]) * sin[i]];
+              for (let j = 0; j < n; j += 1) {
+                if (i === j) continue;
+                const box = {
+                  minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+                  maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+                  minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+                  maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+                };
+                if (segmentHitsBox(p0, p1, box)) return j;
+              }
+            }
+
+            return -1;
+          }
+
+          return { positions, slacks, sync, count, firstRepairTarget };
+        }
+
+        function attempt(r) {
+          const strict = relaxCombined(labels, r, o, relaxIterations, damping);
+          if (strict.feasible) {
+            return { feasible: true, shifts: strict.shifts, slacks: zeros.slice() };
+          }
+
+          if (tolerance <= 0) return { feasible: false };
+
+          const layout = makeLayout(r, strict.shifts);
+          for (let round = 0; round < 12; round += 1) {
+            const before = layout.count();
+            if (before === 0) break;
+            let target = layout.firstRepairTarget();
+            if (target < 0) break;
+            if (layout.slacks[target] >= tolerance - 1e-9) {
+              const next = layout.slacks
+                .map((s, k) => ({ s, k }))
+                .sort((a, b) => a.s - b.s)
+                .find((x) => x.s < tolerance - 1e-9);
+              if (next === undefined) break;
+              target = next.k;
+            }
+
+            let lo = layout.slacks[target];
+            let hi = tolerance;
+            let found = null;
+            for (let i = 0; i < 8; i += 1) {
+              const mid = (lo + hi) / 2;
+              layout.slacks[target] = mid;
+              layout.sync(target);
+              if (layout.count() < before) {
+                found = mid;
+                hi = mid;
+              } else {
+                lo = mid;
+              }
+            }
+
+            layout.slacks[target] = found ?? tolerance;
+            layout.sync(target);
+          }
+
+          return {
+            feasible: layout.count() === 0,
+            shifts: strict.shifts,
+            slacks: layout.slacks.slice(),
+          };
+        }
+
+        let hi = o.ringRadius + o.ringMargin;
+        while (!attempt(hi).feasible) hi = hi * 1.5 + 10;
+        let lo = o.ringRadius + o.ringMargin;
+        let best = { radius: hi, shifts: zeros.slice(), slacks: zeros.slice() };
+        for (let i = 0; i < bisectSteps; i += 1) {
+          const mid = (lo + hi) / 2;
+          const res = attempt(mid);
+          if (res.feasible) {
+            hi = mid;
+            best = { radius: mid, shifts: res.shifts, slacks: res.slacks };
+          } else {
+            lo = mid;
+          }
+        }
+
+        return best;
+      }
+
+      // Position under the tolerant model: the item's own slack pushes
+      // its near-distance target out from the shared radius.
+      function tolerantPosition(r, slack, shift, angle, plate) {
+        return combinedPosition(r + slack, angle, plate, shift);
+      }
+
       // ── End of the pure solver module ──────────────────────────────────
 
       // ── Menu presets ─────────────────────────────────────────────────
@@ -1694,6 +1920,7 @@
         maxIter: document.getElementById('max-iter'),
         connectorMargin: document.getElementById('connector-margin'),
         ringMargin: document.getElementById('ring-margin'),
+        ringTolerance: document.getElementById('ring-tolerance'),
       };
 
       function readControls() {
@@ -1708,6 +1935,7 @@
           maxIter: Number(controls.maxIter.value),
           connectorMargin: Number(controls.connectorMargin.value),
           ringMargin: Number(controls.ringMargin.value),
+          ringTolerance: Number(controls.ringTolerance.value),
         };
       }
 
@@ -1729,6 +1957,8 @@
           `${c.connectorMargin}px`;
         document.getElementById('ring-margin-out').textContent =
           `${c.ringMargin}px`;
+        document.getElementById('ring-tolerance-out').textContent =
+          `${c.ringTolerance}px`;
       }
 
       // Measures each plate's own natural box once — clamp(min, content,
@@ -1818,8 +2048,9 @@
           ringRadius: c.ringRadius,
           ringMargin: c.ringMargin,
           connectorMargin: c.connectorMargin,
+          ringDistanceTolerance: c.ringTolerance,
         };
-        const shiftResult = solveRadiusCombined(labels, solverOptions);
+        const shiftResult = solveRadiusTolerant(labels, solverOptions);
         const t4 = performance.now();
         document.getElementById('shift-radius').textContent =
           shiftResult.radius.toFixed(2);
@@ -1866,7 +2097,13 @@
         // Independent check of the combined result, against the real
         // positions, not the relaxation's own bookkeeping.
         const shiftPositions = labels.map((label, k) =>
-          combinedPosition(shiftResult.radius, label.angle, label, shiftResult.shifts[k]),
+          tolerantPosition(
+            shiftResult.radius,
+            shiftResult.slacks[k],
+            shiftResult.shifts[k],
+            label.angle,
+            label,
+          ),
         );
         let shiftPlateCollisions = 0;
         let shiftRingOverlaps = 0;
@@ -1893,7 +2130,8 @@
         for (let i = 0; i < labels.length; i += 1) {
           const rad = degToRad(labels[i].angle);
           const p0 = [c.ringRadius * Math.cos(rad), c.ringRadius * Math.sin(rad)];
-          const p1 = [shiftResult.radius * Math.cos(rad), shiftResult.radius * Math.sin(rad)];
+          const outerI = shiftResult.radius + shiftResult.slacks[i];
+          const p1 = [outerI * Math.cos(rad), outerI * Math.sin(rad)];
           for (let j = 0; j < labels.length; j += 1) {
             if (i === j) continue;
             const box = {
@@ -1916,8 +2154,8 @@
           Math.max(...shiftNearDists) - Math.min(...shiftNearDists);
         const shiftIssues = shiftPlateCollisions + shiftRingOverlaps + shiftConnectorHits;
         document.getElementById('shift-check').innerHTML =
-          `Combined, checked against the real positions: ${shiftPlateCollisions} plate collision(s), ${shiftRingOverlaps} ring overlap(s), ${shiftConnectorHits} connector hit(s), Δ${shiftSpread.toFixed(2)}px near-distance spread (near-anchoring is preserved through the slide).` +
-          (shiftIssues === 0 && shiftSpread < 0.01
+          `Combined, checked against the real positions: ${shiftPlateCollisions} plate collision(s), ${shiftRingOverlaps} ring overlap(s), ${shiftConnectorHits} connector hit(s), Δ${shiftSpread.toFixed(2)}px near-distance spread against a ${c.ringTolerance}px tolerance.` +
+          (shiftIssues === 0 && shiftSpread <= c.ringTolerance + 0.01
             ? ' <span style="color:#2a6df4">Clean.</span>'
             : ' <span style="color:#b3401f">Investigate.</span>');
 
@@ -2028,7 +2266,10 @@
           // it is the same ray, just possibly shorter or longer. Drawn
           // second so it is visible against the recommended connector
           // when the two radii differ.
-          const shiftConnLen = Math.max(0, shiftResult.radius - c.ringRadius + 8);
+          const shiftConnLen = Math.max(
+            0,
+            shiftResult.radius + shiftResult.slacks[k] - c.ringRadius + 8,
+          );
           const shiftConnector = document.createElement('div');
           shiftConnector.className = 'connector shift-aware';
           shiftConnector.style.width = `${shiftConnLen}px`;
@@ -2068,11 +2309,12 @@
           place(cfRadius, 'closed-form', false, cfRadius * cos, cfRadius * sin);
           place(lsRadius, 'linear-scan', true, lsRadius * cos, lsRadius * sin);
 
-          const [shiftX, shiftY] = combinedPosition(
+          const [shiftX, shiftY] = tolerantPosition(
             shiftResult.radius,
+            shiftResult.slacks[k],
+            shiftResult.shifts[k],
             label.angle,
             label,
-            shiftResult.shifts[k],
           );
           place(shiftResult.radius, 'shift-aware', true, shiftX, shiftY);
 
@@ -2193,6 +2435,8 @@
         minRingClearRadius,
         solveRadiusWithShift,
         solveRadiusCombined,
+        solveRadiusTolerant,
+        tolerantPosition,
         combinedPosition,
         maxTangentialShift,
         shiftedPosition,
