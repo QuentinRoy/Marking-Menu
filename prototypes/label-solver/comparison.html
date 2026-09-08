@@ -1,0 +1,2694 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>PROTOTYPE — marking-menu label layout comparison</title>
+    <style>
+      :root {
+        color: #202020;
+        background: #f3f0e9;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        width: min(1560px, 100%);
+        margin: 0 auto;
+        padding: 36px 28px 72px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 900px;
+        margin-bottom: 12px;
+        font-size: clamp(30px, 4vw, 52px);
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+      }
+
+      h2 {
+        font-size: 18px;
+      }
+
+      h3 {
+        margin-bottom: 6px;
+        font-size: 15px;
+      }
+
+      .question {
+        max-width: 900px;
+        color: #5c584f;
+        font-size: 18px;
+        line-height: 1.55;
+      }
+
+      .prototype-note {
+        display: inline-block;
+        margin-bottom: 16px;
+        border: 1px solid #a44d35;
+        border-radius: 999px;
+        padding: 5px 10px;
+        color: #873d29;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .panel {
+        margin-top: 24px;
+        border: 1px solid #d2cdc1;
+        border-radius: 14px;
+        background: #fffdf8;
+        padding: 18px;
+        box-shadow: 0 8px 26px rgb(44 37 25 / 7%);
+      }
+
+      .controls,
+      .preset-row,
+      .action-row,
+      .walkthrough-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .controls-spaced {
+        margin-top: 12px;
+      }
+
+      button,
+      select,
+      label.toggle {
+        min-height: 36px;
+        border: 1px solid #bdb6a8;
+        border-radius: 8px;
+        background: white;
+        padding: 7px 11px;
+        color: inherit;
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      button:hover,
+      button.active {
+        border-color: #725ee8;
+        background: #f0edff;
+      }
+
+      button.primary {
+        border-color: #725ee8;
+        background: #725ee8;
+        color: white;
+      }
+
+      label.toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .walkthrough-copy {
+        min-height: 48px;
+        margin: 12px 0 0;
+        color: #5c584f;
+      }
+
+      .review-instructions,
+      .review-status {
+        color: #5c584f;
+        line-height: 1.5;
+      }
+
+      .focused-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .focused-grid .stage {
+        height: 500px;
+      }
+
+      .focused-grid .solver-card.selected {
+        border-color: #725ee8;
+        box-shadow: 0 0 0 2px rgb(114 94 232 / 20%);
+      }
+
+      .focused-grid .solver-card > .status {
+        margin: 0;
+        border-top: 1px solid #e6e1d8;
+        padding: 11px 14px 13px;
+        line-height: 1.45;
+      }
+
+      .decision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 16px;
+      }
+
+      .decision {
+        border: 1px solid #e0dbd0;
+        border-radius: 10px;
+        padding: 14px;
+      }
+
+      .decision p {
+        min-height: 42px;
+        margin-bottom: 10px;
+        color: #5c584f;
+        font-size: 13px;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      button:disabled:hover {
+        border-color: #bdb6a8;
+        background: white;
+      }
+
+      button.primary:disabled,
+      button.primary:disabled:hover {
+        border-color: #d2cdc1;
+        background: #eee9df;
+        color: #6c675e;
+      }
+
+      .review-result {
+        margin-top: 14px;
+        border-radius: 10px;
+        background: #f0edff;
+        padding: 12px 14px;
+      }
+
+      .review-result:empty {
+        display: none;
+      }
+
+      details.workbench {
+        margin-top: 24px;
+      }
+
+      details.workbench > summary {
+        cursor: pointer;
+        color: #5c584f;
+        font-weight: 700;
+      }
+
+      .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .solver-card {
+        min-width: 0;
+        border: 1px solid #d2cdc1;
+        border-radius: 14px;
+        background: white;
+        overflow: hidden;
+      }
+
+      .solver-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 13px 14px;
+        border-bottom: 1px solid #e6e1d8;
+      }
+
+      .status {
+        color: #5c584f;
+        font-size: 12px;
+      }
+
+      .status.invalid {
+        color: #b12e28;
+        font-weight: 700;
+      }
+
+      .stage {
+        position: relative;
+        height: 420px;
+        overflow: hidden;
+        background:
+          linear-gradient(#eee9df 1px, transparent 1px),
+          linear-gradient(90deg, #eee9df 1px, transparent 1px), #faf8f3;
+        background-size: 24px 24px;
+      }
+
+      .layout-layer {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+      }
+
+      .ring {
+        position: absolute;
+        border: 2px solid #8e887d;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 76%);
+        transform: translate(-50%, -50%);
+      }
+
+      .connector {
+        position: absolute;
+        height: 3px;
+        background: #777065;
+        transform-origin: 0 50%;
+      }
+
+      .plate {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: #e9e6df;
+        padding: 4px 8px;
+        color: #292722;
+        font-size: 13px;
+        line-height: 20px;
+        white-space: nowrap;
+        transform: translate(-50%, -50%);
+      }
+
+      .plate::before {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #725ee8;
+        content: '';
+        transform: translate(-50%, -50%);
+      }
+
+      .plate span {
+        position: relative;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 12px;
+        margin: 0;
+        padding: 13px 14px;
+        border-top: 1px solid #e6e1d8;
+        font-size: 12px;
+      }
+
+      .metric {
+        min-width: 0;
+      }
+
+      .metric dt {
+        overflow: hidden;
+        color: #777065;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .metric dd {
+        margin: 2px 0 0;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+
+      .vote-row {
+        display: flex;
+        gap: 6px;
+        padding: 0 14px 14px;
+      }
+
+      .vote-row button {
+        min-height: 30px;
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+
+      .state-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      pre {
+        max-height: 360px;
+        overflow: auto;
+        border-radius: 10px;
+        background: #25231f;
+        padding: 14px;
+        color: #f3f0e9;
+        font:
+          12px/1.45 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .table-scroll {
+        overflow-x: auto;
+      }
+
+      .failures-heading {
+        margin-top: 18px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e6e1d8;
+        padding: 8px;
+        text-align: left;
+        font-variant-numeric: tabular-nums;
+      }
+
+      #measure-pool {
+        position: fixed;
+        top: -10000px;
+        left: -10000px;
+        visibility: hidden;
+      }
+
+      #measure-pool .plate {
+        position: static;
+        display: inline-grid;
+        transform: none;
+      }
+
+      @media (max-width: 1080px) {
+        .comparison-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stage {
+          height: 480px;
+        }
+      }
+
+      @media (max-width: 720px) {
+        main {
+          padding: 24px 14px 48px;
+        }
+
+        .state-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .focused-grid,
+        .decision-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <meta
+      content="Throwaway prototype for comparing marking-menu label layout algorithms."
+      name="description"
+    />
+  </head>
+  <body>
+    <main>
+      <span class="prototype-note">Throwaway prototype</span>
+      <h1>How much algorithm do these labels actually need?</h1>
+      <p class="question">
+        This page tests whether a larger layout algorithm earns its maintenance
+        cost. Every solver receives the same measured plates and fixed
+        directions. Invalid geometry loses immediately. Among valid results,
+        prefer the smallest algorithm unless a larger one produces a clear,
+        recurring visual improvement.
+      </p>
+
+      <section class="panel" aria-labelledby="walkthrough-title">
+        <h2 id="walkthrough-title">Blind simplicity review</h2>
+        <div id="walkthrough-tabs" class="walkthrough-tabs"></div>
+        <p id="walkthrough-copy" class="walkthrough-copy">Loading case…</p>
+        <p class="review-instructions">
+          Compare only the drawings. First choose the layout whose labels are
+          easiest to associate with their directions. Then choose the layout
+          that looks best as a whole: readable, compact, and well distributed.
+          Solver names, measurements, and implementation cost appear only after
+          both answers are recorded.
+        </p>
+        <p class="review-instructions">
+          The review first asks whether greedy compaction improves on a shared
+          radius, then whether global search improves on greedy compaction.
+          Global search should ship only if it wins clearly and repeatedly.
+        </p>
+        <div class="action-row">
+          <button id="load-walkthrough" type="button">Restart this case</button>
+          <button id="next-walkthrough" type="button" class="primary" disabled>
+            Next case
+          </button>
+          <button id="download-reviews" type="button">
+            Download review JSON
+          </button>
+        </div>
+        <div id="focused-grid" class="focused-grid"></div>
+        <div class="decision-grid">
+          <section class="decision">
+            <h3>1. Label association</h3>
+            <p>Which layout makes each label's direction most obvious?</p>
+            <div class="action-row">
+              <button
+                type="button"
+                data-pair-choice="left"
+                data-pair-criterion="association"
+              >
+                Layout A
+              </button>
+              <button
+                type="button"
+                data-pair-choice="tie"
+                data-pair-criterion="association"
+              >
+                No difference
+              </button>
+              <button
+                type="button"
+                data-pair-choice="right"
+                data-pair-criterion="association"
+              >
+                Layout B
+              </button>
+            </div>
+          </section>
+          <section class="decision">
+            <h3>2. Overall layout</h3>
+            <p>
+              If association is acceptable, which complete menu looks more
+              readable, compact, and well distributed?
+            </p>
+            <div class="action-row">
+              <button
+                type="button"
+                data-pair-choice="left"
+                data-pair-criterion="appearance"
+                disabled
+              >
+                Layout A
+              </button>
+              <button
+                type="button"
+                data-pair-choice="tie"
+                data-pair-criterion="appearance"
+                disabled
+              >
+                No difference
+              </button>
+              <button
+                type="button"
+                data-pair-choice="right"
+                data-pair-criterion="appearance"
+                disabled
+              >
+                Layout B
+              </button>
+            </div>
+          </section>
+        </div>
+        <div id="review-result" class="review-result"></div>
+        <p id="review-status" class="review-status">No reviews recorded.</p>
+      </section>
+
+      <details class="workbench">
+        <summary>Open the full algorithm workbench</summary>
+        <section class="panel" aria-labelledby="controls-title">
+          <h2 id="controls-title">Free play</h2>
+          <div id="preset-row" class="preset-row"></div>
+          <div class="controls controls-spaced">
+            <label class="toggle">
+              <input id="blind-mode" type="checkbox" checked />
+              Hide solver names
+            </label>
+            <button id="reveal" type="button">Reveal names</button>
+            <button id="run-batch" type="button">Run full corpus</button>
+            <button id="run-performance" type="button">
+              Benchmark global solver
+            </button>
+            <button id="copy-result" type="button">Copy current result</button>
+            <button id="download-batch" type="button">
+              Download batch JSON
+            </button>
+          </div>
+        </section>
+
+        <section id="comparison-grid" class="comparison-grid"></section>
+
+        <section class="panel" aria-labelledby="batch-title">
+          <h2 id="batch-title">Batch results</h2>
+          <p id="batch-summary">
+            Run the corpus to compare validity, size, and work.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Solver</th>
+                  <th>Valid</th>
+                  <th>Median contact</th>
+                  <th>Worst contact</th>
+                  <th>Median max shift</th>
+                  <th>Median outer extent</th>
+                  <th>Median work</th>
+                  <th>Worst work</th>
+                  <th>Median time</th>
+                  <th>95th time</th>
+                  <th>Worst time</th>
+                </tr>
+              </thead>
+              <tbody id="batch-body"></tbody>
+            </table>
+          </div>
+          <h3 class="failures-heading">Global solver timing</h3>
+          <p id="performance-summary">
+            Run the isolated benchmark to measure fresh solver inputs without
+            rendering the other algorithms.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Case</th>
+                  <th>Items</th>
+                  <th>Median</th>
+                  <th>95th</th>
+                  <th>Worst</th>
+                  <th>Valid</th>
+                  <th>Repeatable</th>
+                </tr>
+              </thead>
+              <tbody id="performance-body"></tbody>
+            </table>
+          </div>
+          <h3 class="failures-heading">Validation failures</h3>
+          <ul id="batch-failures">
+            <li>Run the corpus to inspect rejected layouts.</li>
+          </ul>
+        </section>
+
+        <section class="panel state-grid" aria-labelledby="state-title">
+          <div>
+            <h2 id="state-title">Current measured input</h2>
+            <pre id="input-state"></pre>
+          </div>
+          <div>
+            <h2>Full solver output</h2>
+            <pre id="output-state"></pre>
+          </div>
+        </section>
+      </details>
+    </main>
+
+    <div id="measure-pool" aria-hidden="true"></div>
+
+    <script>
+      const Geometry = (() => {
+        const EPSILON = 1e-7;
+        const preparedInputs = new WeakMap();
+        const radians = (degrees) => (degrees * Math.PI) / 180;
+        const direction = (angle) => {
+          const a = radians(angle);
+          return {
+            u: [Math.cos(a), Math.sin(a)],
+            v: [-Math.sin(a), Math.cos(a)],
+          };
+        };
+        const normalize = (angle) => ((angle % 360) + 360) % 360;
+        const prepare = (input) => {
+          const cached = preparedInputs.get(input);
+          if (cached) return cached;
+          const directions = input.plates.map((plate) =>
+            direction(plate.angle),
+          );
+          const starts = directions.map(({ u }) => [
+            input.ringRadius * u[0],
+            input.ringRadius * u[1],
+          ]);
+          const sectors = new Array(input.plates.length);
+          if (input.plates.length >= 2) {
+            const order = input.plates
+              .map((plate, item) => ({
+                item,
+                angle: normalize(plate.angle),
+              }))
+              .sort((a, b) => a.angle - b.angle || a.item - b.item);
+            for (const [index, entry] of order.entries()) {
+              const previous = order[(index - 1 + order.length) % order.length];
+              const next = order[(index + 1) % order.length];
+              sectors[entry.item] = {
+                angle: entry.angle,
+                before: normalize(entry.angle - previous.angle) / 2,
+                after: normalize(next.angle - entry.angle) / 2,
+              };
+            }
+          }
+          const prepared = { directions, sectors, starts };
+          preparedInputs.set(input, prepared);
+          return prepared;
+        };
+        const distanceToBox = (x, y, width, height) =>
+          Math.hypot(
+            Math.max(0, Math.abs(x) - width / 2),
+            Math.max(0, Math.abs(y) - height / 2),
+          );
+        const rayBoxContact = (center, plate, ray) => {
+          const min = [
+            center[0] - plate.width / 2,
+            center[1] - plate.height / 2,
+          ];
+          const max = [
+            center[0] + plate.width / 2,
+            center[1] + plate.height / 2,
+          ];
+          let enter = 0;
+          let exit = Infinity;
+          for (const axis of [0, 1]) {
+            if (Math.abs(ray[axis]) < EPSILON) {
+              if (min[axis] > 0 || max[axis] < 0) return null;
+            } else {
+              const a = min[axis] / ray[axis];
+              const b = max[axis] / ray[axis];
+              enter = Math.max(enter, Math.min(a, b));
+              exit = Math.min(exit, Math.max(a, b));
+            }
+          }
+          return exit + EPSILON < enter || exit < 0 ? null : enter;
+        };
+        const rayBoxInterval = (input, plate, item, margin) => {
+          const { u } = prepare(input).directions[item];
+          const minX = plate._minX - margin;
+          const maxX = plate._maxX + margin;
+          const minY = plate._minY - margin;
+          const maxY = plate._maxY + margin;
+          let enter = -Infinity;
+          let exit = Infinity;
+          if (Math.abs(u[0]) < EPSILON) {
+            if (minX > 0 || maxX < 0) return null;
+          } else {
+            const a = minX / u[0];
+            const b = maxX / u[0];
+            enter = Math.max(enter, Math.min(a, b));
+            exit = Math.min(exit, Math.max(a, b));
+          }
+          if (Math.abs(u[1]) < EPSILON) {
+            if (minY > 0 || maxY < 0) return null;
+          } else {
+            const a = minY / u[1];
+            const b = maxY / u[1];
+            enter = Math.max(enter, Math.min(a, b));
+            exit = Math.min(exit, Math.max(a, b));
+          }
+          return enter <= exit + EPSILON ? [enter, exit] : null;
+        };
+        const connectorHitsPlate = (connector, plate, margin) => {
+          const minX = plate._minX - margin;
+          const maxX = plate._maxX + margin;
+          const minY = plate._minY - margin;
+          const maxY = plate._maxY + margin;
+          if (
+            connector._connectorMaxX < minX - EPSILON ||
+            connector._connectorMinX > maxX + EPSILON ||
+            connector._connectorMaxY < minY - EPSILON ||
+            connector._connectorMinY > maxY + EPSILON
+          )
+            return false;
+          let enter = 0;
+          let exit = 1;
+          if (Math.abs(connector._connectorDeltaX) < EPSILON) {
+            if (
+              connector._connectorStartX < minX ||
+              connector._connectorStartX > maxX
+            )
+              return false;
+          } else {
+            const a =
+              (minX - connector._connectorStartX) / connector._connectorDeltaX;
+            const b =
+              (maxX - connector._connectorStartX) / connector._connectorDeltaX;
+            enter = Math.max(enter, Math.min(a, b));
+            exit = Math.min(exit, Math.max(a, b));
+          }
+          if (Math.abs(connector._connectorDeltaY) < EPSILON) {
+            if (
+              connector._connectorStartY < minY ||
+              connector._connectorStartY > maxY
+            )
+              return false;
+          } else {
+            const a =
+              (minY - connector._connectorStartY) / connector._connectorDeltaY;
+            const b =
+              (maxY - connector._connectorStartY) / connector._connectorDeltaY;
+            enter = Math.max(enter, Math.min(a, b));
+            exit = Math.min(exit, Math.max(a, b));
+          }
+          return enter <= exit + EPSILON;
+        };
+        const start = (input, item) => prepare(input).starts[item];
+        const conflicts = (input, first, second) => {
+          const separateX =
+            first._maxX + input.clearances.plateHorizontal <=
+              second._minX + EPSILON ||
+            second._maxX + input.clearances.plateHorizontal <=
+              first._minX + EPSILON;
+          const separateY =
+            first._maxY + input.clearances.plateVertical <=
+              second._minY + EPSILON ||
+            second._maxY + input.clearances.plateVertical <=
+              first._minY + EPSILON;
+          if (!separateX && !separateY) return true;
+          const margin = input.clearances.plateToConnector;
+          return (
+            connectorHitsPlate(first, second, margin) ||
+            connectorHitsPlate(second, first, margin)
+          );
+        };
+        const halfDistance = (plate) => {
+          const { u } = direction(plate.angle);
+          return Math.min(
+            Math.abs(u[0]) < EPSILON
+              ? Infinity
+              : plate.width / 2 / Math.abs(u[0]),
+            Math.abs(u[1]) < EPSILON
+              ? Infinity
+              : plate.height / 2 / Math.abs(u[1]),
+          );
+        };
+        const insideAssociationSector = (input, item, x, y) => {
+          if (input.plates.length < 2) return true;
+          const sector = prepare(input).sectors[item];
+          const centerAngle = normalize((Math.atan2(y, x) * 180) / Math.PI);
+          const delta = ((centerAngle - sector.angle + 540) % 360) - 180;
+          return (
+            delta >= -sector.before - EPSILON && delta <= sector.after + EPSILON
+          );
+        };
+        const makeCandidate = (input, item, radial, tangent) => {
+          const plate = input.plates[item];
+          const { u, v } = prepare(input).directions[item];
+          const x = radial * u[0] + tangent * v[0];
+          const y = radial * u[1] + tangent * v[1];
+          const contactRadius = rayBoxContact([x, y], plate, u);
+          if (
+            contactRadius === null ||
+            contactRadius < input.ringRadius ||
+            !insideAssociationSector(input, item, x, y) ||
+            distanceToBox(x, y, plate.width, plate.height) <
+              input.ringRadius + input.clearances.plateToRing - EPSILON
+          )
+            return null;
+          const connectorStart = prepare(input).starts[item];
+          return {
+            item,
+            x,
+            y,
+            radial,
+            tangent,
+            contactRadius,
+            contact: [contactRadius * u[0], contactRadius * u[1]],
+            _minX: x - plate.width / 2,
+            _maxX: x + plate.width / 2,
+            _minY: y - plate.height / 2,
+            _maxY: y + plate.height / 2,
+            _connectorStartX: connectorStart[0],
+            _connectorStartY: connectorStart[1],
+            _connectorDeltaX: contactRadius * u[0] - connectorStart[0],
+            _connectorDeltaY: contactRadius * u[1] - connectorStart[1],
+            _connectorMinX: Math.min(connectorStart[0], contactRadius * u[0]),
+            _connectorMaxX: Math.max(connectorStart[0], contactRadius * u[0]),
+            _connectorMinY: Math.min(connectorStart[1], contactRadius * u[1]),
+            _connectorMaxY: Math.max(connectorStart[1], contactRadius * u[1]),
+          };
+        };
+        const isValid = (input, layout) => {
+          if (
+            layout.length !== input.plates.length ||
+            layout.some((plate) => plate === null)
+          )
+            return false;
+          for (let i = 0; i < layout.length; i += 1) {
+            for (let j = i + 1; j < layout.length; j += 1) {
+              if (conflicts(input, layout[i], layout[j])) return false;
+            }
+          }
+          return true;
+        };
+        return {
+          direction,
+          distanceToBox,
+          halfDistance,
+          makeCandidate,
+          rayBoxInterval,
+          conflicts,
+          isValid,
+          start,
+        };
+      })();
+
+      const Metrics = (() => {
+        const whitespace = (a, pa, b, pb) =>
+          Math.hypot(
+            Math.max(0, Math.abs(a.x - b.x) - (pa.width + pb.width) / 2),
+            Math.max(0, Math.abs(a.y - b.y) - (pa.height + pb.height) / 2),
+          );
+        const calculate = (input, plates) => {
+          if (plates.length === 0)
+            return {
+              maxContact: 0,
+              totalContact: 0,
+              maxShift: 0,
+              totalShift: 0,
+              minWhitespace: 0,
+              gapVariation: 0,
+              nearExtent: 0,
+              outerExtent: 0,
+              meanConnectorLength: 0,
+              totalConnectorLength: 0,
+            };
+          const order = input.plates
+            .map((plate, item) => ({
+              angle: ((plate.angle % 360) + 360) % 360,
+              item,
+            }))
+            .sort((a, b) => a.angle - b.angle);
+          const gaps = order.map((entry, index) => {
+            const next = order[(index + 1) % order.length];
+            return whitespace(
+              plates[entry.item],
+              input.plates[entry.item],
+              plates[next.item],
+              input.plates[next.item],
+            );
+          });
+          let nearExtent = 0;
+          let outerExtent = 0;
+          for (const [item, plate] of plates.entries()) {
+            const source = input.plates[item];
+            nearExtent = Math.max(
+              nearExtent,
+              Geometry.distanceToBox(
+                plate.x,
+                plate.y,
+                source.width,
+                source.height,
+              ),
+            );
+            for (const x of [
+              plate.x - source.width / 2,
+              plate.x + source.width / 2,
+            ]) {
+              for (const y of [
+                plate.y - source.height / 2,
+                plate.y + source.height / 2,
+              ])
+                outerExtent = Math.max(outerExtent, Math.hypot(x, y));
+            }
+          }
+          const contacts = plates.map((plate) => plate.contactRadius);
+          const shifts = plates.map((plate) => Math.abs(plate.tangent));
+          const connectorLengths = contacts.map(
+            (contact) => contact - input.ringRadius,
+          );
+          return {
+            maxContact: Math.max(...contacts),
+            totalContact: contacts.reduce((sum, value) => sum + value, 0),
+            maxShift: Math.max(...shifts),
+            totalShift: shifts.reduce((sum, value) => sum + value, 0),
+            minWhitespace: Math.min(...gaps),
+            gapVariation: Math.max(...gaps) - Math.min(...gaps),
+            nearExtent,
+            outerExtent,
+            meanConnectorLength:
+              connectorLengths.reduce((sum, value) => sum + value, 0) /
+              connectorLengths.length,
+            totalConnectorLength: connectorLengths.reduce(
+              (sum, value) => sum + value,
+              0,
+            ),
+          };
+        };
+        const score = (input, plates) => {
+          const m = calculate(input, plates);
+          return [
+            m.maxContact,
+            m.totalContact,
+            m.maxShift,
+            m.totalShift,
+            -m.minWhitespace,
+            m.gapVariation,
+          ];
+        };
+        const presentationScore = (input, plates) => {
+          const m = calculate(input, plates);
+          return [
+            m.maxShift,
+            m.totalShift,
+            -m.minWhitespace,
+            m.gapVariation,
+            m.totalContact,
+            m.maxContact,
+          ];
+        };
+        const compare = (a, b) => {
+          for (
+            let index = 0;
+            index < Math.max(a.length, b.length);
+            index += 1
+          ) {
+            const difference =
+              Math.round((a[index] ?? 0) * 1000) -
+              Math.round((b[index] ?? 0) * 1000);
+            if (difference !== 0) return difference;
+          }
+          return 0;
+        };
+        return { calculate, score, presentationScore, compare };
+      })();
+
+      const Solvers = (() => {
+        const shared = (input) => {
+          const first = Math.ceil(
+            input.ringRadius + input.clearances.plateToRing,
+          );
+          for (let contact = first; contact <= 4096; contact += 1) {
+            const plates = input.plates.map((plate, item) =>
+              Geometry.makeCandidate(
+                input,
+                item,
+                contact + Geometry.halfDistance(plate),
+                0,
+              ),
+            );
+            if (Geometry.isValid(input, plates))
+              return {
+                status: 'optimal',
+                plates,
+                work: contact - first + 1,
+                candidates: input.plates.length,
+                conflictChecks: 0,
+              };
+          }
+          return {
+            status: 'oversized',
+            plates: [],
+            work: 4096 - first + 1,
+            candidates: 0,
+            conflictChecks: 0,
+          };
+        };
+
+        const relaxed = (input) => {
+          const seed = shared(input);
+          if (seed.status === 'oversized') return seed;
+          let plates = seed.plates.map((plate) => ({
+            ...plate,
+            contact: [...plate.contact],
+          }));
+          let work = seed.work;
+          for (const step of [16, 8, 4, 2, 1]) {
+            let changed = true;
+            while (changed) {
+              changed = false;
+              for (let item = 0; item < plates.length; item += 1) {
+                const current = plates[item];
+                const moves = [
+                  [current.radial - step, current.tangent],
+                  [current.radial, current.tangent - step],
+                  [current.radial, current.tangent + step],
+                ];
+                for (const [radial, tangent] of moves) {
+                  const candidate = Geometry.makeCandidate(
+                    input,
+                    item,
+                    radial,
+                    tangent,
+                  );
+                  work += 1;
+                  if (candidate === null) continue;
+                  const trial = plates.slice();
+                  trial[item] = candidate;
+                  if (
+                    Geometry.isValid(input, trial) &&
+                    Metrics.compare(
+                      Metrics.score(input, trial),
+                      Metrics.score(input, plates),
+                    ) < 0
+                  ) {
+                    plates = trial;
+                    changed = true;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          return {
+            status: 'feasible',
+            plates,
+            work,
+            candidates: work,
+            conflictChecks: work,
+          };
+        };
+
+        const buildDomains = (input, baseline, resolution, prior) =>
+          input.plates.map((plate, item) => {
+            const seen = new Set();
+            const candidates = [];
+            const add = (candidate) => {
+              if (
+                candidate === null ||
+                candidate.contactRadius >
+                  baseline.plates[0].contactRadius + 1e-7
+              )
+                return;
+              const key = `${Math.round(candidate.x * 1000)},${Math.round(candidate.y * 1000)}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                candidates.push(candidate);
+              }
+            };
+            const base = prior?.[item];
+            const tangentLimit =
+              (plate.width / 2) *
+                Math.abs(Geometry.direction(plate.angle).u[1]) +
+              (plate.height / 2) *
+                Math.abs(Geometry.direction(plate.angle).u[0]);
+            if (base) {
+              for (const dr of [-1, -0.5, 0, 0.5, 1]) {
+                for (const dt of [-1, -0.5, 0, 0.5, 1])
+                  add(
+                    Geometry.makeCandidate(
+                      input,
+                      item,
+                      base.radial + dr * resolution,
+                      base.tangent + dt * resolution,
+                    ),
+                  );
+              }
+            } else {
+              const min = input.ringRadius + Geometry.halfDistance(plate);
+              const max = baseline.plates[item].radial + tangentLimit * 0.8;
+              const tangentFractions = [-0.8, -0.4, 0, 0.4, 0.8];
+              for (let radial = min; radial <= max; radial += resolution) {
+                for (const fraction of tangentFractions)
+                  add(
+                    Geometry.makeCandidate(
+                      input,
+                      item,
+                      radial,
+                      tangentLimit * 0.8 * fraction,
+                    ),
+                  );
+              }
+            }
+            add(baseline.plates[item]);
+            return candidates.sort((a, b) =>
+              Metrics.compare(
+                [a.contactRadius, Math.abs(a.tangent)],
+                [b.contactRadius, Math.abs(b.tangent)],
+              ),
+            );
+          });
+
+        const search = (input, domains, seed, nodeLimit, options = {}) => {
+          const score = options.score ?? Metrics.score;
+          const maxContact = options.maxContact ?? Infinity;
+          const contactLowerBound = options.contactLowerBound ?? true;
+          const candidateId = Symbol('candidateId');
+          let candidateCount = 0;
+          for (const domain of domains) {
+            for (const candidate of domain) {
+              Object.defineProperty(candidate, candidateId, {
+                value: candidateCount,
+              });
+              candidateCount += 1;
+            }
+          }
+          const initialDomains = domains.map((domain) =>
+            domain.filter(
+              (candidate) => candidate.contactRadius <= maxContact + 1e-7,
+            ),
+          );
+          const envelopes = initialDomains.map((domain, item) => {
+            const source = input.plates[item];
+            const start = Geometry.start(input, item);
+            const envelope = {
+              plate: {
+                minX: Infinity,
+                maxX: -Infinity,
+                minY: Infinity,
+                maxY: -Infinity,
+              },
+              connector: {
+                minX: Infinity,
+                maxX: -Infinity,
+                minY: Infinity,
+                maxY: -Infinity,
+              },
+            };
+            for (const candidate of domain) {
+              envelope.plate.minX = Math.min(
+                envelope.plate.minX,
+                candidate.x - source.width / 2,
+              );
+              envelope.plate.maxX = Math.max(
+                envelope.plate.maxX,
+                candidate.x + source.width / 2,
+              );
+              envelope.plate.minY = Math.min(
+                envelope.plate.minY,
+                candidate.y - source.height / 2,
+              );
+              envelope.plate.maxY = Math.max(
+                envelope.plate.maxY,
+                candidate.y + source.height / 2,
+              );
+              envelope.connector.minX = Math.min(
+                envelope.connector.minX,
+                start[0],
+                candidate.contact[0],
+              );
+              envelope.connector.maxX = Math.max(
+                envelope.connector.maxX,
+                start[0],
+                candidate.contact[0],
+              );
+              envelope.connector.minY = Math.min(
+                envelope.connector.minY,
+                start[1],
+                candidate.contact[1],
+              );
+              envelope.connector.maxY = Math.max(
+                envelope.connector.maxY,
+                start[1],
+                candidate.contact[1],
+              );
+            }
+            return envelope;
+          });
+          const overlaps = (first, second, marginX, marginY) =>
+            first.maxX + marginX >= second.minX &&
+            second.maxX + marginX >= first.minX &&
+            first.maxY + marginY >= second.minY &&
+            second.maxY + marginY >= first.minY;
+          const potentialConflicts = Array.from(
+            { length: domains.length },
+            () => new Uint8Array(domains.length),
+          );
+          for (let first = 0; first < domains.length; first += 1) {
+            for (let second = first + 1; second < domains.length; second += 1) {
+              const plateConflict = overlaps(
+                envelopes[first].plate,
+                envelopes[second].plate,
+                input.clearances.plateHorizontal,
+                input.clearances.plateVertical,
+              );
+              const firstConnectorConflict = overlaps(
+                envelopes[first].connector,
+                envelopes[second].plate,
+                input.clearances.plateToConnector,
+                input.clearances.plateToConnector,
+              );
+              const secondConnectorConflict = overlaps(
+                envelopes[second].connector,
+                envelopes[first].plate,
+                input.clearances.plateToConnector,
+                input.clearances.plateToConnector,
+              );
+              if (
+                plateConflict ||
+                firstConnectorConflict ||
+                secondConnectorConflict
+              ) {
+                potentialConflicts[first][second] = 1;
+                potentialConflicts[second][first] = 1;
+              }
+            }
+          }
+          const rayEntries = new Float64Array(candidateCount * domains.length);
+          const rayExits = new Float64Array(candidateCount * domains.length);
+          rayEntries.fill(Infinity);
+          rayExits.fill(-Infinity);
+          for (const [plateItem, domain] of initialDomains.entries()) {
+            for (const candidate of domain) {
+              for (
+                let connectorItem = 0;
+                connectorItem < domains.length;
+                connectorItem += 1
+              ) {
+                if (!potentialConflicts[plateItem][connectorItem]) continue;
+                const interval = Geometry.rayBoxInterval(
+                  input,
+                  candidate,
+                  connectorItem,
+                  input.clearances.plateToConnector,
+                );
+                if (interval === null) continue;
+                const offset =
+                  candidate[candidateId] * domains.length + connectorItem;
+                rayEntries[offset] = interval[0];
+                rayExits[offset] = interval[1];
+              }
+            }
+          }
+          const candidateMayConflictWith = (candidate, item) => {
+            const envelope = envelopes[item];
+            const horizontal = input.clearances.plateHorizontal;
+            const vertical = input.clearances.plateVertical;
+            const connector = input.clearances.plateToConnector;
+            const plateOverlap =
+              candidate._maxX + horizontal >= envelope.plate.minX &&
+              envelope.plate.maxX + horizontal >= candidate._minX &&
+              candidate._maxY + vertical >= envelope.plate.minY &&
+              envelope.plate.maxY + vertical >= candidate._minY;
+            const ownConnectorOverlap =
+              candidate._connectorMaxX + connector >= envelope.plate.minX &&
+              envelope.plate.maxX + connector >= candidate._connectorMinX &&
+              candidate._connectorMaxY + connector >= envelope.plate.minY &&
+              envelope.plate.maxY + connector >= candidate._connectorMinY;
+            const otherConnectorOverlap =
+              envelope.connector.maxX + connector >= candidate._minX &&
+              candidate._maxX + connector >= envelope.connector.minX &&
+              envelope.connector.maxY + connector >= candidate._minY &&
+              candidate._maxY + connector >= envelope.connector.minY;
+            return plateOverlap || ownConnectorOverlap || otherConnectorOverlap;
+          };
+          const conflictRows = new Array(candidateCount);
+          let best = seed.slice();
+          let bestScore = score(input, best);
+          const selected = new Array(domains.length);
+          let nodes = 0;
+          let conflictChecks = 0;
+          let geometryChecks = 0;
+          let stopped = false;
+          const conflicts = (first, second) => {
+            if (!potentialConflicts[first.item][second.item]) return false;
+            const firstId = first[candidateId];
+            const secondId = second[candidateId];
+            const low = Math.min(firstId, secondId);
+            const high = Math.max(firstId, secondId);
+            const row =
+              conflictRows[low] ??
+              (conflictRows[low] = new Uint8Array(candidateCount));
+            const cached = row[high];
+            if (cached !== 0) return cached === 2;
+            geometryChecks += 1;
+            const separateX =
+              first._maxX + input.clearances.plateHorizontal <=
+                second._minX + 1e-7 ||
+              second._maxX + input.clearances.plateHorizontal <=
+                first._minX + 1e-7;
+            const separateY =
+              first._maxY + input.clearances.plateVertical <=
+                second._minY + 1e-7 ||
+              second._maxY + input.clearances.plateVertical <=
+                first._minY + 1e-7;
+            const firstRayOffset = secondId * domains.length + first.item;
+            const secondRayOffset = firstId * domains.length + second.item;
+            const firstConnectorHits =
+              rayEntries[firstRayOffset] <= first.contactRadius + 1e-7 &&
+              rayExits[firstRayOffset] + 1e-7 >= input.ringRadius;
+            const secondConnectorHits =
+              rayEntries[secondRayOffset] <= second.contactRadius + 1e-7 &&
+              rayExits[secondRayOffset] + 1e-7 >= input.ringRadius;
+            const result =
+              (!separateX && !separateY) ||
+              firstConnectorHits ||
+              secondConnectorHits;
+            row[high] = result ? 2 : 1;
+            return result;
+          };
+          const visit = (depth, availableDomains) => {
+            if (nodes >= nodeLimit) {
+              stopped = true;
+              return;
+            }
+            nodes += 1;
+            if (depth === domains.length) {
+              const candidateScore = score(input, selected);
+              if (Metrics.compare(candidateScore, bestScore) < 0) {
+                best = selected.slice();
+                bestScore = candidateScore;
+              }
+              return;
+            }
+            let item = -1;
+            let available = [];
+            let lowerMaxContact = 0;
+            let lowerTotalContact = 0;
+            for (const chosen of selected) {
+              if (chosen === undefined) continue;
+              lowerMaxContact = Math.max(lowerMaxContact, chosen.contactRadius);
+              lowerTotalContact += chosen.contactRadius;
+            }
+            for (let index = 0; index < domains.length; index += 1) {
+              if (selected[index] !== undefined) continue;
+              const choices = availableDomains[index];
+              if (choices.length === 0) return;
+              let minimumContact = Infinity;
+              for (const candidate of choices)
+                minimumContact = Math.min(
+                  minimumContact,
+                  candidate.contactRadius,
+                );
+              lowerMaxContact = Math.max(lowerMaxContact, minimumContact);
+              lowerTotalContact += minimumContact;
+              if (item < 0 || choices.length < available.length) {
+                item = index;
+                available = choices;
+              }
+            }
+            if (
+              contactLowerBound &&
+              Metrics.compare(
+                [lowerMaxContact, lowerTotalContact],
+                bestScore.slice(0, 2),
+              ) > 0
+            )
+              return;
+            for (const candidate of available) {
+              selected[item] = candidate;
+              const nextDomains = availableDomains.slice();
+              let feasible = true;
+              for (let index = 0; index < domains.length; index += 1) {
+                if (selected[index] !== undefined) continue;
+                if (!candidateMayConflictWith(candidate, index)) {
+                  nextDomains[index] = availableDomains[index];
+                  continue;
+                }
+                const choices = [];
+                for (const other of availableDomains[index]) {
+                  conflictChecks += 1;
+                  if (!conflicts(candidate, other)) choices.push(other);
+                }
+                if (choices.length === 0) {
+                  feasible = false;
+                  break;
+                }
+                nextDomains[index] = choices;
+              }
+              if (feasible) visit(depth + 1, nextDomains);
+              selected[item] = undefined;
+              if (stopped) return;
+            }
+          };
+          visit(0, initialDomains);
+          return {
+            plates: best,
+            work: nodes,
+            conflictChecks,
+            geometryChecks,
+            status: stopped ? 'feasible' : 'optimal',
+          };
+        };
+
+        const nodeLimitFor = (count, adaptive) =>
+          adaptive
+            ? count <= 8
+              ? 2000
+              : count <= 12
+                ? 1000
+                : 75
+            : count <= 8
+              ? 6000
+              : count <= 12
+                ? 3000
+                : 1200;
+
+        const candidate = (input, adaptive) => {
+          const baseline = shared(input);
+          if (baseline.status === 'oversized') return baseline;
+          const count = input.plates.length;
+          const initialResolution = 12;
+          let domains = buildDomains(input, baseline, initialResolution);
+          const nodeLimit = nodeLimitFor(count, adaptive);
+          let result = search(input, domains, baseline.plates, nodeLimit);
+          let totalWork = result.work;
+          let totalConflictChecks = result.conflictChecks;
+          let totalGeometryChecks = result.geometryChecks;
+          let stopped = result.status !== 'optimal';
+          if (adaptive) {
+            for (const resolution of [4, 1]) {
+              domains = buildDomains(
+                input,
+                baseline,
+                resolution,
+                result.plates,
+              );
+              result = search(input, domains, result.plates, nodeLimit);
+              totalWork += result.work;
+              totalConflictChecks += result.conflictChecks;
+              totalGeometryChecks += result.geometryChecks;
+              stopped ||= result.status !== 'optimal';
+            }
+          }
+          return {
+            ...result,
+            status: stopped ? 'feasible' : 'optimal',
+            work: totalWork,
+            conflictChecks: totalConflictChecks,
+            geometryChecks: totalGeometryChecks,
+            candidates: domains.reduce((sum, domain) => sum + domain.length, 0),
+          };
+        };
+
+        const presentation = (input, strict = candidate(input, true)) => {
+          if (strict.status === 'oversized') return strict;
+          const tolerance = 4;
+          const strictContact = Metrics.calculate(
+            input,
+            strict.plates,
+          ).maxContact;
+          const baseline = shared(input);
+          const nodeLimit = nodeLimitFor(input.plates.length, true);
+          const options = {
+            score: Metrics.presentationScore,
+            maxContact: strictContact + tolerance,
+            contactLowerBound: false,
+          };
+          let domains = buildDomains(input, baseline, 12).map((domain, item) =>
+            domain
+              .concat(
+                domain.some(
+                  (plate) =>
+                    Math.abs(plate.x - strict.plates[item].x) < 1e-7 &&
+                    Math.abs(plate.y - strict.plates[item].y) < 1e-7,
+                )
+                  ? []
+                  : [strict.plates[item]],
+              )
+              .sort((a, b) =>
+                Metrics.compare(
+                  [Math.abs(a.tangent), a.contactRadius],
+                  [Math.abs(b.tangent), b.contactRadius],
+                ),
+              ),
+          );
+          let result = search(
+            input,
+            domains,
+            strict.plates,
+            nodeLimit,
+            options,
+          );
+          let work = strict.work + result.work;
+          let conflictChecks = strict.conflictChecks + result.conflictChecks;
+          let geometryChecks =
+            (strict.geometryChecks ?? 0) + result.geometryChecks;
+          let stopped =
+            strict.status !== 'optimal' || result.status !== 'optimal';
+          for (const resolution of [4, 1]) {
+            domains = buildDomains(
+              input,
+              baseline,
+              resolution,
+              result.plates,
+            ).map((domain) =>
+              domain.sort((a, b) =>
+                Metrics.compare(
+                  [Math.abs(a.tangent), a.contactRadius],
+                  [Math.abs(b.tangent), b.contactRadius],
+                ),
+              ),
+            );
+            result = search(input, domains, result.plates, nodeLimit, options);
+            work += result.work;
+            conflictChecks += result.conflictChecks;
+            geometryChecks += result.geometryChecks;
+            stopped ||= result.status !== 'optimal';
+          }
+          return {
+            ...result,
+            status: stopped ? 'feasible' : 'optimal',
+            work,
+            strictWork: strict.work,
+            refinementWork: work - strict.work,
+            conflictChecks,
+            geometryChecks,
+            candidates: domains.reduce((sum, domain) => sum + domain.length, 0),
+            strictContact,
+            tolerance,
+          };
+        };
+
+        return {
+          shared: {
+            name: 'Shared radius',
+            cost: 'Small: one shared distance and a 1 px validity scan',
+            solve: shared,
+          },
+          relaxed: {
+            name: 'Greedy compaction',
+            cost: 'Small: shared radius plus a 53-line greedy pass in this prototype',
+            solve: relaxed,
+          },
+          finite: {
+            name: 'Global candidates (12px)',
+            solve: (input) => candidate(input, false),
+          },
+          adaptive: {
+            name: 'Adaptive global search',
+            cost: 'Large: candidate lattice and bounded branch-and-bound; PR #288 uses 886 solver lines plus a 275-line validator',
+            solve: (input) => candidate(input, true),
+          },
+          presentation: {
+            name: 'Adaptive + 4px tolerance',
+            solve: presentation,
+          },
+        };
+      })();
+
+      const Validator = (() => {
+        const EPSILON = 1e-7;
+        const direction = (angle) => {
+          const radians = (angle * Math.PI) / 180;
+          return [Math.cos(radians), Math.sin(radians)];
+        };
+        const start = (input, item) => {
+          const ray = direction(input.plates[item].angle);
+          return [input.ringRadius * ray[0], input.ringRadius * ray[1]];
+        };
+        const distanceToBox = (x, y, width, height) =>
+          Math.hypot(
+            Math.max(0, Math.abs(x) - width / 2),
+            Math.max(0, Math.abs(y) - height / 2),
+          );
+        const pointOnBoxBoundary = (point, center, width, height) => {
+          const x = Math.abs(point[0] - center[0]);
+          const y = Math.abs(point[1] - center[1]);
+          const onVertical =
+            Math.abs(x - width / 2) <= EPSILON && y <= height / 2 + EPSILON;
+          const onHorizontal =
+            Math.abs(y - height / 2) <= EPSILON && x <= width / 2 + EPSILON;
+          return onVertical || onHorizontal;
+        };
+        const segmentHitsBox = (from, to, center, halfWidth, halfHeight) => {
+          const min = [center[0] - halfWidth, center[1] - halfHeight];
+          const max = [center[0] + halfWidth, center[1] + halfHeight];
+          const delta = [to[0] - from[0], to[1] - from[1]];
+          let enter = 0;
+          let exit = 1;
+          for (const axis of [0, 1]) {
+            if (Math.abs(delta[axis]) <= EPSILON) {
+              if (
+                from[axis] < min[axis] - EPSILON ||
+                from[axis] > max[axis] + EPSILON
+              )
+                return false;
+            } else {
+              const first = (min[axis] - from[axis]) / delta[axis];
+              const second = (max[axis] - from[axis]) / delta[axis];
+              enter = Math.max(enter, Math.min(first, second));
+              exit = Math.min(exit, Math.max(first, second));
+            }
+          }
+          return enter <= exit + EPSILON;
+        };
+        const cross = (a, b, c) =>
+          (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+        const onSegment = (a, b, point) =>
+          Math.abs(cross(a, b, point)) <= EPSILON &&
+          point[0] >= Math.min(a[0], b[0]) - EPSILON &&
+          point[0] <= Math.max(a[0], b[0]) + EPSILON &&
+          point[1] >= Math.min(a[1], b[1]) - EPSILON &&
+          point[1] <= Math.max(a[1], b[1]) + EPSILON;
+        const segmentsIntersect = (a, b, c, d) => {
+          const abC = cross(a, b, c);
+          const abD = cross(a, b, d);
+          const cdA = cross(c, d, a);
+          const cdB = cross(c, d, b);
+          if (
+            ((abC > EPSILON && abD < -EPSILON) ||
+              (abC < -EPSILON && abD > EPSILON)) &&
+            ((cdA > EPSILON && cdB < -EPSILON) ||
+              (cdA < -EPSILON && cdB > EPSILON))
+          )
+            return true;
+          return (
+            (Math.abs(abC) <= EPSILON && onSegment(a, b, c)) ||
+            (Math.abs(abD) <= EPSILON && onSegment(a, b, d)) ||
+            (Math.abs(cdA) <= EPSILON && onSegment(c, d, a)) ||
+            (Math.abs(cdB) <= EPSILON && onSegment(c, d, b))
+          );
+        };
+        const rayError = (angle, point) => {
+          const ray = direction(angle);
+          return Math.abs(point[0] * ray[1] - point[1] * ray[0]);
+        };
+        const sameCycle = (expected, actual) => {
+          if (expected.length !== actual.length) return false;
+          for (let offset = 0; offset < expected.length; offset += 1) {
+            if (
+              expected.every(
+                (item, index) =>
+                  item === actual[(index + offset) % actual.length],
+              )
+            )
+              return true;
+          }
+          return false;
+        };
+        const validate = (input, result) => {
+          const failures = [];
+          if (result.status === 'oversized') return { valid: true, failures };
+          if (result.plates.length !== input.plates.length)
+            failures.push('plate count differs from input');
+          for (const [item, plate] of result.plates.entries()) {
+            const source = input.plates[item];
+            if (
+              ![
+                plate.x,
+                plate.y,
+                plate.radial,
+                plate.tangent,
+                plate.contactRadius,
+                ...plate.contact,
+              ].every(Number.isFinite)
+            )
+              failures.push(`plate ${item} has a non-finite coordinate`);
+            if (plate.item !== item)
+              failures.push(`plate ${item} changed item identity`);
+            if (rayError(source.angle, plate.contact) > 0.001)
+              failures.push(`connector ${item} left its fixed direction`);
+            const ray = direction(source.angle);
+            if (
+              plate.contact[0] * ray[0] + plate.contact[1] * ray[1] <
+              input.ringRadius - EPSILON
+            )
+              failures.push(`connector ${item} points into the ring`);
+            if (
+              !pointOnBoxBoundary(
+                plate.contact,
+                [plate.x, plate.y],
+                source.width,
+                source.height,
+              )
+            )
+              failures.push(`connector ${item} misses its plate`);
+            if (
+              distanceToBox(plate.x, plate.y, source.width, source.height) <
+              input.ringRadius + input.clearances.plateToRing - 0.001
+            )
+              failures.push(`plate ${item} enters the ring clearance`);
+          }
+          for (let i = 0; i < result.plates.length; i += 1) {
+            for (let j = i + 1; j < result.plates.length; j += 1) {
+              const first = result.plates[i];
+              const second = result.plates[j];
+              const a = input.plates[i];
+              const b = input.plates[j];
+              const separateX =
+                Math.abs(first.x - second.x) + EPSILON >=
+                (a.width + b.width) / 2 + input.clearances.plateHorizontal;
+              const separateY =
+                Math.abs(first.y - second.y) + EPSILON >=
+                (a.height + b.height) / 2 + input.clearances.plateVertical;
+              if (!separateX && !separateY)
+                failures.push(`plates ${i} and ${j} overlap`);
+              const margin = input.clearances.plateToConnector;
+              if (
+                segmentHitsBox(
+                  start(input, i),
+                  first.contact,
+                  [second.x, second.y],
+                  b.width / 2 + margin,
+                  b.height / 2 + margin,
+                )
+              )
+                failures.push(`connector ${i} interferes with plate ${j}`);
+              if (
+                segmentHitsBox(
+                  start(input, j),
+                  second.contact,
+                  [first.x, first.y],
+                  a.width / 2 + margin,
+                  a.height / 2 + margin,
+                )
+              )
+                failures.push(`connector ${j} interferes with plate ${i}`);
+              if (
+                segmentsIntersect(
+                  start(input, i),
+                  first.contact,
+                  start(input, j),
+                  second.contact,
+                )
+              )
+                failures.push(`connectors ${i} and ${j} cross`);
+            }
+          }
+          const expectedOrder = input.plates
+            .map((plate, item) => ({
+              item,
+              angle: ((plate.angle % 360) + 360) % 360,
+            }))
+            .sort((a, b) => a.angle - b.angle)
+            .map(({ item }) => item);
+          const actualOrder = result.plates
+            .map((plate, item) => ({
+              item,
+              angle:
+                (Math.atan2(plate.y, plate.x) + Math.PI * 2) % (Math.PI * 2),
+            }))
+            .sort((a, b) => a.angle - b.angle)
+            .map(({ item }) => item);
+          if (!sameCycle(expectedOrder, actualOrder))
+            failures.push('plate centers change the cyclic item order');
+          return { valid: failures.length === 0, failures };
+        };
+        return { validate };
+      })();
+
+      const even = (labels) =>
+        labels.map((label, index) => ({
+          label,
+          angle: (360 / labels.length) * index,
+        }));
+      const CORPUS = {
+        'even-4': {
+          label: 'Even 4',
+          items: even(['Open', 'Save a copy', 'Close', 'Preferences']),
+        },
+        'default-8': {
+          label: 'Default 8',
+          items: even([
+            'Right',
+            'Open recent project',
+            'Others…',
+            'Save a copy',
+            'Left',
+            'Command palette',
+            'Up',
+            'Preferences',
+          ]),
+        },
+        'alternating-12': {
+          label: 'Alternating 12',
+          items: even(
+            Array.from({ length: 12 }, (_, index) =>
+              index % 2 === 0
+                ? `Command ${index}`
+                : `A much longer command ${index}`,
+            ),
+          ),
+        },
+        'asymmetric-12': {
+          label: 'Asymmetric 12',
+          items: even([
+            'Run',
+            'Open the selected project in a new window',
+            'Cut',
+            'Copy',
+            'Paste',
+            'Rename',
+            'Move to trash',
+            'Info',
+            'Share',
+            'Tags',
+            'Duplicate',
+            'Compress',
+          ]),
+        },
+        'even-16': {
+          label: 'Even 16',
+          items: even(
+            Array.from(
+              { length: 16 },
+              (_, index) =>
+                `Action ${index + 1}${index % 4 === 0 ? ' with detail' : ''}`,
+            ),
+          ),
+        },
+        'upper-stress-20': {
+          label: 'Upper stress 20',
+          items: even(
+            Array.from(
+              { length: 20 },
+              (_, index) =>
+                `Action ${index + 1}${index % 5 === 0 ? ' with a longer label' : ''}`,
+            ),
+          ),
+        },
+        clustered: {
+          label: 'Clustered',
+          items: [
+            { label: 'Before boundary', angle: 338 },
+            { label: 'Near boundary', angle: 354 },
+            { label: 'After boundary', angle: 9 },
+            { label: 'Crowded right', angle: 33 },
+            { label: 'Lower left', angle: 142 },
+            { label: 'Upper left command', angle: 238 },
+          ],
+        },
+        symmetric: {
+          label: 'Symmetric',
+          items: even([
+            'One',
+            'Same width',
+            'Three',
+            'Same width',
+            'One',
+            'Same width',
+            'Three',
+            'Same width',
+          ]),
+        },
+        oversized: {
+          label: 'Oversized',
+          items: even(['X'.repeat(450), 'North', 'West', 'South']),
+        },
+      };
+
+      let seed = 267;
+      const random = () => {
+        seed = (seed * 1664525 + 1013904223) % 4294967296;
+        return seed / 4294967296;
+      };
+      for (const count of [4, 8, 12, 16, 20]) {
+        for (let fixture = 0; fixture < 2; fixture += 1) {
+          CORPUS[`seed-${count}-${fixture}`] = {
+            label: `Seeded ${count}.${fixture + 1}`,
+            items: even(
+              Array.from(
+                { length: count },
+                (_, index) =>
+                  'W'.repeat(3 + Math.floor(random() * 18)) + ` ${index + 1}`,
+              ),
+            ).map((item) => ({
+              ...item,
+              angle: item.angle + (random() - 0.5) * (180 / count),
+              testHeight: 28 + Math.floor(random() * 3) * 4,
+            })),
+          };
+        }
+      }
+
+      const REVIEW_CASES = [
+        {
+          key: 'even-4',
+          label: 'Four items',
+          copy: 'A small, common menu should not need an elaborate layout algorithm.',
+        },
+        {
+          key: 'default-8',
+          label: 'Eight items',
+          copy: 'Start with a menu that is easy to read. Check whether a more compact result still keeps every connector and plate association obvious.',
+        },
+        {
+          key: 'alternating-12',
+          label: 'Uneven crowd',
+          copy: 'Alternating widths expose global coupling. Moving one plate changes the room available to both of its neighbors and to connectors across the menu.',
+        },
+        {
+          key: 'asymmetric-12',
+          label: 'One long label',
+          copy: 'One unusually long label forces the complete layout to compensate. Watch whether that correction makes neighboring associations harder to read.',
+        },
+        {
+          key: 'even-16',
+          label: 'Sixteen-item stress',
+          copy: 'Sixteen items are a stress case, not the center of the decision. A larger algorithm should not win based only on this case.',
+        },
+      ];
+
+      const MATCHUPS = [
+        {
+          key: 'shared-greedy',
+          label: 'Shared radius vs. greedy',
+          solvers: ['shared', 'relaxed'],
+        },
+        {
+          key: 'greedy-global',
+          label: 'Greedy vs. global',
+          solvers: ['relaxed', 'adaptive'],
+        },
+      ];
+
+      const WALKTHROUGHS = MATCHUPS.flatMap((matchup) =>
+        REVIEW_CASES.map((reviewCase) => ({
+          ...reviewCase,
+          comparison: matchup.key,
+          comparisonLabel: matchup.label,
+          label: `${matchup.label} · ${reviewCase.label}`,
+          reviewKey: `${matchup.key}:${reviewCase.key}`,
+          solvers: matchup.solvers,
+        })),
+      );
+
+      const state = {
+        preset: 'default-8',
+        walkthrough: 0,
+        forceReveal: false,
+        votes: [],
+        focused: null,
+        focusedSolved: null,
+        reviews: {},
+        currentInput: null,
+        currentResults: null,
+        batch: null,
+        performance: null,
+      };
+
+      const measure = (items) => {
+        const pool = document.getElementById('measure-pool');
+        pool.replaceChildren();
+        const plates = items.map((item) => {
+          const element = document.createElement('div');
+          element.className = 'plate';
+          if (item.testHeight) element.style.minHeight = `${item.testHeight}px`;
+          const label = document.createElement('span');
+          label.textContent = item.label;
+          element.append(label);
+          pool.append(element);
+          const rect = element.getBoundingClientRect();
+          return {
+            angle: item.angle,
+            width: rect.width,
+            height: rect.height,
+            label: item.label,
+          };
+        });
+        return {
+          plates,
+          ringRadius: 80,
+          clearances: {
+            plateHorizontal: 14,
+            plateVertical: 7,
+            plateToRing: 12,
+            plateToConnector: 3,
+          },
+        };
+      };
+
+      const cloneInput = (input) => ({
+        ...input,
+        plates: input.plates.map((plate) => ({ ...plate })),
+        clearances: { ...input.clearances },
+      });
+
+      const repeatableState = (result) =>
+        JSON.stringify({
+          status: result.status,
+          plates: result.plates,
+          work: result.work,
+          candidates: result.candidates,
+          conflictChecks: result.conflictChecks,
+          geometryChecks: result.geometryChecks,
+        });
+
+      const solveCase = (key) => {
+        const input = measure(CORPUS[key].items);
+        const started = performance.now();
+        const results = [];
+        for (const [solverKey, solver] of Object.entries(Solvers)) {
+          const strict =
+            solverKey === 'presentation'
+              ? results.find((result) => result.key === 'adaptive')
+              : undefined;
+          const before = performance.now();
+          const result = solver.solve(input, strict);
+          const refinementElapsed = performance.now() - before;
+          const elapsed =
+            solverKey === 'presentation'
+              ? strict.elapsed + refinementElapsed
+              : refinementElapsed;
+          const repeated = solver.solve(input, strict);
+          const deterministic =
+            repeatableState(result) === repeatableState(repeated);
+          const validation = Validator.validate(input, result);
+          if (!deterministic) {
+            validation.valid = false;
+            validation.failures.push('repeated solve changed the result');
+          }
+          results.push({
+            key: solverKey,
+            name: solver.name,
+            ...result,
+            validation,
+            deterministic,
+            metrics:
+              result.status === 'oversized'
+                ? null
+                : Metrics.calculate(input, result.plates),
+            elapsed,
+            refinementElapsed,
+          });
+        }
+        const validContacts = results
+          .filter((result) => result.validation.valid && result.metrics)
+          .map((result) => result.metrics.maxContact);
+        const bestContact =
+          validContacts.length > 0 ? Math.min(...validContacts) : null;
+        for (const result of results) {
+          if (result.metrics)
+            result.metrics.contactRegret =
+              bestContact === null
+                ? null
+                : result.metrics.maxContact - bestContact;
+        }
+        return { key, input, results, elapsed: performance.now() - started };
+      };
+
+      const format = (value) =>
+        Number.isFinite(value) ? value.toFixed(1) : '—';
+
+      const renderLayout = (stage, input, result, scale) => {
+        const layer = document.createElement('div');
+        layer.className = 'layout-layer';
+        const ring = document.createElement('div');
+        ring.className = 'ring';
+        ring.style.width = `${input.ringRadius * 2 * scale}px`;
+        ring.style.height = `${input.ringRadius * 2 * scale}px`;
+        layer.append(ring);
+        if (result.status !== 'oversized') {
+          for (const [item, plate] of result.plates.entries()) {
+            const source = input.plates[item];
+            const start = Geometry.start(input, item);
+            const line = document.createElement('div');
+            const length = Math.hypot(
+              plate.contact[0] - start[0],
+              plate.contact[1] - start[1],
+            );
+            line.className = 'connector';
+            line.style.left = `${start[0] * scale}px`;
+            line.style.top = `${start[1] * scale}px`;
+            line.style.width = `${length * scale}px`;
+            line.style.transform = `translateY(-50%) rotate(${source.angle}deg)`;
+            layer.append(line);
+            const box = document.createElement('div');
+            box.className = 'plate';
+            box.style.left = `${plate.x * scale}px`;
+            box.style.top = `${plate.y * scale}px`;
+            box.style.width = `${source.width * scale}px`;
+            box.style.height = `${source.height * scale}px`;
+            box.style.padding = '0';
+            box.style.fontSize = `${Math.max(9, 13 * scale)}px`;
+            const label = document.createElement('span');
+            label.textContent = source.label;
+            box.append(label);
+            layer.append(box);
+          }
+        }
+        stage.append(layer);
+      };
+
+      const pairChoice = (choice) => {
+        if (choice === 'tie') return 'tie';
+        const index = choice === 'left' ? 0 : 1;
+        return state.focused.order[index];
+      };
+
+      const reviewTally = (comparison, criterion) => {
+        const matchup = MATCHUPS.find((entry) => entry.key === comparison);
+        const tally = {
+          [matchup.solvers[0]]: 0,
+          [matchup.solvers[1]]: 0,
+          tie: 0,
+        };
+        for (const review of Object.values(state.reviews)) {
+          if (review.comparison === comparison) tally[review[criterion]] += 1;
+        }
+        return tally;
+      };
+
+      const renderReviewStatus = () => {
+        const completed = Object.keys(state.reviews).length;
+        const summaries = MATCHUPS.map((matchup) => {
+          const association = reviewTally(matchup.key, 'association');
+          const appearance = reviewTally(matchup.key, 'appearance');
+          const [first, second] = matchup.solvers;
+          return (
+            `${matchup.label}: association ${Solvers[first].name} ${association[first]}, ` +
+            `${Solvers[second].name} ${association[second]}, ties ${association.tie}; ` +
+            `overall ${Solvers[first].name} ${appearance[first]}, ` +
+            `${Solvers[second].name} ${appearance[second]}, ties ${appearance.tie}.`
+          );
+        });
+        document.getElementById('review-status').textContent =
+          `${completed}/${WALKTHROUGHS.length} comparisons recorded. ${summaries.join(' ')}`;
+      };
+
+      const renderStatePanels = () => {
+        document.getElementById('input-state').textContent = JSON.stringify(
+          { case: state.preset, ...state.currentInput },
+          null,
+          2,
+        );
+        document.getElementById('output-state').textContent = JSON.stringify(
+          {
+            results: state.currentResults,
+            focusedReview: state.focused,
+            completedReviews: Object.values(state.reviews),
+            workbenchVotes: state.votes,
+            performanceBenchmark: state.performance,
+          },
+          null,
+          2,
+        );
+      };
+
+      const renderFocused = (solved) => {
+        const grid = document.getElementById('focused-grid');
+        grid.replaceChildren();
+        const pair = state.focused.order.map((key) =>
+          solved.results.find((result) => result.key === key),
+        );
+        const maximumOuter = Math.max(
+          160,
+          ...pair.map((result) => result.metrics?.outerExtent ?? 160),
+        );
+        const scale = Math.min(1, 200 / maximumOuter);
+        for (const [index, result] of pair.entries()) {
+          const side = index === 0 ? 'left' : 'right';
+          const card = document.createElement('article');
+          card.className = 'solver-card';
+          if (state.focused.association === side)
+            card.classList.add('selected');
+          const layoutName = `Layout ${index === 0 ? 'A' : 'B'}`;
+          const title = state.focused.completed
+            ? `${layoutName} — ${result.name}`
+            : layoutName;
+          const details = state.focused.completed
+            ? `<dl class="metrics">
+                <div class="metric"><dt>Contact extent C</dt><dd>${format(result.metrics?.maxContact)}</dd></div>
+                <div class="metric"><dt>Outer extent O</dt><dd>${format(result.metrics?.outerExtent)}</dd></div>
+                <div class="metric"><dt>Max sideways move</dt><dd>${format(result.metrics?.maxShift)}</dd></div>
+                <div class="metric"><dt>Neighbor whitespace</dt><dd>${format(result.metrics?.minWhitespace)}</dd></div>
+              </dl>
+              <p class="status">Implementation cost: ${Solvers[result.key].cost}</p>`
+            : '';
+          card.innerHTML = `
+            <div class="solver-heading"><div><h3>${title}</h3></div></div>
+            <div class="stage"></div>
+            ${details}
+          `;
+          renderLayout(
+            card.querySelector('.stage'),
+            solved.input,
+            result,
+            scale,
+          );
+          grid.append(card);
+        }
+
+        for (const button of document.querySelectorAll(
+          '[data-pair-criterion]',
+        )) {
+          const criterion = button.dataset.pairCriterion;
+          const choice = button.dataset.pairChoice;
+          button.classList.toggle(
+            'active',
+            state.focused[criterion] === choice,
+          );
+          button.disabled =
+            state.focused.completed ||
+            (criterion === 'appearance' && state.focused.association === null);
+        }
+
+        const result = document.getElementById('review-result');
+        if (state.focused.completed) {
+          const association = pairChoice(state.focused.association);
+          const appearance = pairChoice(state.focused.appearance);
+          const preferred = association === 'tie' ? appearance : association;
+          const label = (key) =>
+            key === 'tie' ? 'no difference' : Solvers[key].name;
+          result.textContent =
+            `Recorded. Association: ${label(association)}. ` +
+            `Overall layout: ${label(appearance)}. ` +
+            `Priority result: ${label(preferred)}.`;
+        } else {
+          result.textContent = '';
+        }
+        document.getElementById('next-walkthrough').disabled =
+          !state.focused.completed;
+        renderReviewStatus();
+      };
+
+      const chooseFocused = (criterion, choice) => {
+        if (
+          state.focused.completed ||
+          (criterion === 'appearance' && state.focused.association === null)
+        )
+          return;
+        state.focused[criterion] = choice;
+        if (
+          state.focused.association !== null &&
+          state.focused.appearance !== null
+        ) {
+          state.focused.completed = true;
+          const association = pairChoice(state.focused.association);
+          const appearance = pairChoice(state.focused.appearance);
+          state.reviews[state.focused.reviewKey] = {
+            reviewKey: state.focused.reviewKey,
+            comparison: state.focused.comparison,
+            case: state.focused.case,
+            order: state.focused.order.slice(),
+            association,
+            appearance,
+            priorityResult: association === 'tie' ? appearance : association,
+            layouts: state.focused.order.map((key) => {
+              const result = state.focusedSolved.results.find(
+                (candidate) => candidate.key === key,
+              );
+              return {
+                key,
+                status: result.status,
+                validation: result.validation,
+                metrics: result.metrics,
+                work: result.work,
+                elapsed: result.elapsed,
+              };
+            }),
+            startedAt: state.focused.startedAt,
+            completedAt: new Date().toISOString(),
+          };
+        }
+        renderFocused(state.focusedSolved);
+        renderStatePanels();
+      };
+
+      const beginFocused = (walkthrough) => {
+        const randomBit =
+          typeof crypto === 'undefined'
+            ? Math.random() >= 0.5
+            : (crypto.getRandomValues(new Uint32Array(1))[0] & 1) === 1;
+        state.preset = walkthrough.key;
+        state.forceReveal = false;
+        state.focused = {
+          reviewKey: walkthrough.reviewKey,
+          comparison: walkthrough.comparison,
+          case: walkthrough.key,
+          order: randomBit
+            ? walkthrough.solvers.slice()
+            : walkthrough.solvers.slice().reverse(),
+          association: null,
+          appearance: null,
+          completed: false,
+          startedAt: new Date().toISOString(),
+        };
+        const solved = solveCase(walkthrough.key);
+        state.focusedSolved = solved;
+        renderCurrent(solved);
+        renderFocused(solved);
+      };
+
+      const renderCurrent = (solved = solveCase(state.preset)) => {
+        state.currentInput = solved.input;
+        state.currentResults = solved.results;
+        const grid = document.getElementById('comparison-grid');
+        grid.replaceChildren();
+        const blind =
+          document.getElementById('blind-mode').checked && !state.forceReveal;
+        const maximumOuter = Math.max(
+          160,
+          ...solved.results.map((result) => result.metrics?.outerExtent ?? 160),
+        );
+        const scale = Math.min(1, 165 / maximumOuter);
+        for (const [index, result] of solved.results.entries()) {
+          const card = document.createElement('article');
+          card.className = 'solver-card';
+          const title = blind
+            ? `Layout ${String.fromCharCode(65 + index)}`
+            : result.name;
+          card.innerHTML = `
+            <div class="solver-heading"><div><h3>${title}</h3><div class="status ${result.validation.valid ? '' : 'invalid'}">${result.validation.valid ? `${result.status} · repeatable` : `${result.validation.failures.length} failures`}</div></div><div class="status">${format(result.elapsed)} ms</div></div>
+            <div class="stage"></div>
+            <dl class="metrics">
+              <div class="metric"><dt>Contact extent C</dt><dd>${format(result.metrics?.maxContact)}</dd></div>
+              <div class="metric"><dt>Contact regret</dt><dd>${format(result.metrics?.contactRegret)}</dd></div>
+              <div class="metric"><dt>Δ from strict C</dt><dd>${format(result.strictContact === undefined ? NaN : result.metrics?.maxContact - result.strictContact)}</dd></div>
+              <div class="metric"><dt>Near plate extent</dt><dd>${format(result.metrics?.nearExtent)}</dd></div>
+              <div class="metric"><dt>Outer extent O</dt><dd>${format(result.metrics?.outerExtent)}</dd></div>
+              <div class="metric"><dt>Mean connector</dt><dd>${format(result.metrics?.meanConnectorLength)}</dd></div>
+              <div class="metric"><dt>Max sideways move</dt><dd>${format(result.metrics?.maxShift)}</dd></div>
+              <div class="metric"><dt>Neighbor whitespace</dt><dd>${format(result.metrics?.minWhitespace)}</dd></div>
+              <div class="metric"><dt>Gap variation</dt><dd>${format(result.metrics?.gapVariation)}</dd></div>
+              <div class="metric"><dt>Search nodes / checks</dt><dd>${result.work} / ${result.conflictChecks}</dd></div>
+            </dl>
+            <div class="vote-row"><button data-vote="association">Clearest association</button><button data-vote="distribution">Best distribution</button></div>
+          `;
+          renderLayout(
+            card.querySelector('.stage'),
+            solved.input,
+            result,
+            scale,
+          );
+          for (const button of card.querySelectorAll('[data-vote]')) {
+            button.addEventListener('click', () => {
+              state.votes.push({
+                case: state.preset,
+                criterion: button.dataset.vote,
+                solver: result.key,
+                blind,
+                at: new Date().toISOString(),
+              });
+              button.classList.add('active');
+            });
+          }
+          grid.append(card);
+        }
+        renderStatePanels();
+        for (const button of document.querySelectorAll('#preset-row button'))
+          button.classList.toggle(
+            'active',
+            button.dataset.preset === state.preset,
+          );
+      };
+
+      const percentile = (values, fraction) =>
+        values.slice().sort((a, b) => a - b)[
+          Math.floor((values.length - 1) * fraction)
+        ] ?? 0;
+
+      const runPerformance = async () => {
+        const repetitions = 5;
+        const keys = Object.keys(CORPUS);
+        const summary = document.getElementById('performance-summary');
+        const body = document.getElementById('performance-body');
+        body.replaceChildren();
+        const cases = [];
+
+        for (const [index, key] of keys.entries()) {
+          summary.textContent = `Benchmarking ${index + 1}/${keys.length}: ${CORPUS[key].label}`;
+          const measureStarted = performance.now();
+          const measuredInput = measure(CORPUS[key].items);
+          const measurementElapsed = performance.now() - measureStarted;
+          const runs = [];
+          let reference = null;
+
+          for (let repetition = 0; repetition < repetitions; repetition += 1) {
+            const input = cloneInput(measuredInput);
+            const started = performance.now();
+            const result = Solvers.adaptive.solve(input);
+            const elapsed = performance.now() - started;
+            const validation = Validator.validate(input, result);
+            const signature = repeatableState(result);
+            if (reference === null) reference = signature;
+            runs.push({
+              repetition: repetition + 1,
+              elapsed,
+              valid: validation.valid,
+              failures: validation.failures,
+              repeatable: signature === reference,
+              status: result.status,
+              work: result.work,
+              candidates: result.candidates,
+              conflictChecks: result.conflictChecks,
+              geometryChecks: result.geometryChecks,
+              metrics:
+                result.status === 'oversized'
+                  ? null
+                  : Metrics.calculate(input, result.plates),
+            });
+          }
+
+          const times = runs.map((run) => run.elapsed);
+          const entry = {
+            key,
+            label: CORPUS[key].label,
+            items: measuredInput.plates.length,
+            measurementElapsed,
+            median: percentile(times, 0.5),
+            p95: percentile(times, 0.95),
+            worst: Math.max(...times),
+            valid: runs.every((run) => run.valid),
+            repeatable: runs.every((run) => run.repeatable),
+            runs,
+          };
+          cases.push(entry);
+
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${entry.label}</td><td>${entry.items}</td><td>${format(entry.median)} ms</td><td>${format(entry.p95)} ms</td><td>${format(entry.worst)} ms</td><td>${entry.valid ? 'yes' : 'no'}</td><td>${entry.repeatable ? 'yes' : 'no'}</td>`;
+          body.append(row);
+          await new Promise(requestAnimationFrame);
+        }
+
+        const allRuns = cases.flatMap((entry) => entry.runs);
+        const allTimes = allRuns.map((run) => run.elapsed);
+        const valid = allRuns.filter((run) => run.valid).length;
+        const repeatable = allRuns.filter((run) => run.repeatable).length;
+        state.performance = {
+          generatedAt: new Date().toISOString(),
+          solver: 'adaptive',
+          repetitions,
+          timingScope:
+            'solver only; fresh cloned input; DOM measurement excluded',
+          cases,
+          summary: {
+            runs: allRuns.length,
+            median: percentile(allTimes, 0.5),
+            p95: percentile(allTimes, 0.95),
+            worst: Math.max(...allTimes),
+            valid,
+            repeatable,
+            target: 50,
+            withinTarget: Math.max(...allTimes) <= 50,
+          },
+        };
+        const result = state.performance.summary;
+        const slowest = cases.slice().sort((a, b) => b.worst - a.worst)[0];
+        summary.textContent =
+          `${result.runs} isolated runs finished: median ${format(result.median)} ms, ` +
+          `95th ${format(result.p95)} ms, worst ${format(result.worst)} ms. ` +
+          `${valid}/${result.runs} valid and ${repeatable}/${result.runs} repeatable. ` +
+          `Slowest case: ${slowest.label} (${slowest.items} items). ` +
+          `The ~50 ms target ${result.withinTarget ? 'was met' : 'was not met'}; DOM label measurement is reported separately in the exported state.`;
+        renderStatePanels();
+      };
+
+      const runBatch = async () => {
+        const cases = [];
+        const keys = Object.keys(CORPUS);
+        const summary = document.getElementById('batch-summary');
+        for (const [index, key] of keys.entries()) {
+          summary.textContent = `Running ${index + 1}/${keys.length}: ${CORPUS[key].label}`;
+          cases.push(solveCase(key));
+          await new Promise(requestAnimationFrame);
+        }
+        state.batch = {
+          generatedAt: new Date().toISOString(),
+          seed: 267,
+          cases,
+          focusedReviews: Object.values(state.reviews),
+          workbenchVotes: state.votes.slice(),
+        };
+        const body = document.getElementById('batch-body');
+        body.replaceChildren();
+        for (const [solverKey, solver] of Object.entries(Solvers)) {
+          const results = cases.map((entry) =>
+            entry.results.find((result) => result.key === solverKey),
+          );
+          const valid = results.filter(
+            (result) => result.validation.valid,
+          ).length;
+          const contacts = results
+            .filter((result) => result.validation.valid && result.metrics)
+            .map((result) => result.metrics.maxContact);
+          const work = results.map((result) => result.work);
+          const times = results.map((result) => result.elapsed);
+          const shifts = results
+            .filter((result) => result.validation.valid && result.metrics)
+            .map((result) => result.metrics.maxShift);
+          const outerExtents = results
+            .filter((result) => result.validation.valid && result.metrics)
+            .map((result) => result.metrics.outerExtent);
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${solver.name}</td><td>${valid}/${results.length}</td><td>${format(percentile(contacts, 0.5))}</td><td>${format(contacts.length > 0 ? Math.max(...contacts) : NaN)}</td><td>${format(percentile(shifts, 0.5))}</td><td>${format(percentile(outerExtents, 0.5))}</td><td>${format(percentile(work, 0.5))}</td><td>${Math.max(...work)}</td><td>${format(percentile(times, 0.5))} ms</td><td>${format(percentile(times, 0.95))} ms</td><td>${format(Math.max(...times))} ms</td>`;
+          body.append(row);
+        }
+        const failures = document.getElementById('batch-failures');
+        failures.replaceChildren();
+        for (const entry of cases) {
+          for (const result of entry.results) {
+            if (result.validation.valid) continue;
+            const item = document.createElement('li');
+            item.textContent = `${CORPUS[entry.key].label} · ${result.name}: ${result.validation.failures.join('; ')}`;
+            failures.append(item);
+          }
+        }
+        if (failures.childElementCount === 0) {
+          const item = document.createElement('li');
+          item.textContent = 'No validation failures.';
+          failures.append(item);
+        }
+        const slowest = cases
+          .map((entry) => {
+            const result = entry.results.find(
+              (candidate) => candidate.key === 'adaptive',
+            );
+            return {
+              label: CORPUS[entry.key].label,
+              elapsed: result.elapsed,
+              work: result.work,
+              conflictChecks: result.conflictChecks,
+              geometryChecks: result.geometryChecks,
+              candidates: result.candidates,
+            };
+          })
+          .sort((a, b) => b.elapsed - a.elapsed)
+          .slice(0, 5)
+          .map(
+            (result) =>
+              `${result.label} ${format(result.elapsed)} ms ` +
+              `(${result.work} nodes, ${result.conflictChecks} lookups, ` +
+              `${result.geometryChecks} geometry checks, ${result.candidates} final candidates)`,
+          )
+          .join(', ');
+        summary.textContent = `${cases.length} cases finished. Slowest strict adaptive cases: ${slowest}. Results include measured inputs, every layout, validation failures, metrics, work counts, and recorded blind choices.`;
+      };
+
+      const download = (name, value) => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(
+          new Blob([JSON.stringify(value, null, 2)], {
+            type: 'application/json',
+          }),
+        );
+        link.download = name;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      };
+
+      const buildControls = () => {
+        const presets = document.getElementById('preset-row');
+        for (const [key, preset] of Object.entries(CORPUS)) {
+          if (key.startsWith('seed-')) continue;
+          const button = document.createElement('button');
+          button.textContent = preset.label;
+          button.dataset.preset = key;
+          button.addEventListener('click', () => {
+            state.preset = key;
+            state.forceReveal = false;
+            renderCurrent();
+          });
+          presets.append(button);
+        }
+        const tabs = document.getElementById('walkthrough-tabs');
+        for (const [index, walkthrough] of WALKTHROUGHS.entries()) {
+          const button = document.createElement('button');
+          button.textContent = walkthrough.label;
+          button.addEventListener('click', () => {
+            state.walkthrough = index;
+            renderWalkthrough();
+            beginFocused(walkthrough);
+          });
+          tabs.append(button);
+        }
+      };
+
+      const renderWalkthrough = () => {
+        const walkthrough = WALKTHROUGHS[state.walkthrough];
+        document.getElementById('walkthrough-copy').textContent =
+          `${walkthrough.comparisonLabel}. ${walkthrough.copy}`;
+        for (const [index, button] of document
+          .querySelectorAll('#walkthrough-tabs button')
+          .entries())
+          button.classList.toggle('active', index === state.walkthrough);
+      };
+
+      buildControls();
+      renderWalkthrough();
+      beginFocused(WALKTHROUGHS[state.walkthrough]);
+
+      for (const button of document.querySelectorAll('[data-pair-criterion]')) {
+        button.addEventListener('click', () =>
+          chooseFocused(
+            button.dataset.pairCriterion,
+            button.dataset.pairChoice,
+          ),
+        );
+      }
+
+      document.getElementById('blind-mode').addEventListener('change', () => {
+        state.forceReveal = false;
+        renderCurrent();
+      });
+      document.getElementById('reveal').addEventListener('click', () => {
+        state.forceReveal = true;
+        renderCurrent();
+      });
+      document
+        .getElementById('load-walkthrough')
+        .addEventListener('click', () => {
+          beginFocused(WALKTHROUGHS[state.walkthrough]);
+        });
+      document
+        .getElementById('next-walkthrough')
+        .addEventListener('click', () => {
+          state.walkthrough = (state.walkthrough + 1) % WALKTHROUGHS.length;
+          renderWalkthrough();
+          beginFocused(WALKTHROUGHS[state.walkthrough]);
+        });
+      document.getElementById('run-batch').addEventListener('click', runBatch);
+      document
+        .getElementById('run-performance')
+        .addEventListener('click', runPerformance);
+      document
+        .getElementById('download-reviews')
+        .addEventListener('click', () =>
+          download('label-layout-blind-review.json', {
+            generatedAt: new Date().toISOString(),
+            decisionRule:
+              'Association wins first. When association ties, use overall appearance. Prefer the smaller algorithm unless the larger one wins clearly and repeatedly.',
+            comparisons: MATCHUPS,
+            cases: REVIEW_CASES.map(({ key, label }) => ({ key, label })),
+            reviews: Object.values(state.reviews),
+          }),
+        );
+      document
+        .getElementById('copy-result')
+        .addEventListener('click', () =>
+          navigator.clipboard.writeText(
+            document.getElementById('output-state').textContent,
+          ),
+        );
+      document
+        .getElementById('download-batch')
+        .addEventListener('click', async () => {
+          if (state.batch === null) await runBatch();
+          download('label-layout-comparison.json', state.batch);
+        });
+    </script>
+  </body>
+</html>

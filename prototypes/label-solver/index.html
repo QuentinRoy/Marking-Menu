@@ -1,0 +1,2781 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PROTOTYPE — label placement solver (#267)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1a1a1a;
+        --quiet: #666;
+        --rule: #ddd;
+        --paper: #fafafa;
+        --accent: #2a6df4;
+        --closed-form: #2a6df4;
+        --linear-scan: #de6c52;
+        --shift-aware: #1f9e6e;
+        --near-anchored: #9b51e0;
+        --ring: #f2f2f2;
+        --plate-bg: #fff;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: var(--ink);
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+      }
+      header {
+        padding: 20px 24px 8px;
+        border-bottom: 1px solid var(--rule);
+        background: #fff;
+      }
+      header h1 {
+        font-size: 18px;
+        margin: 0 0 6px;
+      }
+      details.notes {
+        margin: 0 0 12px;
+      }
+      details.notes summary {
+        cursor: pointer;
+        font-size: 12px;
+        color: var(--accent);
+        margin-bottom: 6px;
+      }
+      header p {
+        max-width: 72ch;
+        color: var(--quiet);
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 0 0 12px;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 320px 1fr 340px;
+        gap: 0;
+        align-items: start;
+      }
+      #controls,
+      #results {
+        padding: 16px 20px;
+        font-size: 12.5px;
+      }
+      #controls {
+        border-right: 1px solid var(--rule);
+      }
+      #results {
+        border-left: 1px solid var(--rule);
+      }
+      fieldset {
+        border: none;
+        padding: 0;
+        margin: 0 0 16px;
+      }
+      legend {
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--quiet);
+        margin-bottom: 6px;
+        padding: 0;
+      }
+      label.row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+      }
+      label.row span:first-child {
+        flex: 1;
+      }
+      output {
+        font-variant-numeric: tabular-nums;
+        min-width: 3.5em;
+        text-align: right;
+        color: var(--quiet);
+      }
+      select,
+      button {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 1px solid var(--rule);
+        background: #fff;
+        border-radius: 6px;
+        padding: 5px 10px;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      button.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      #stage-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 560px;
+        overflow: auto;
+        padding: 20px;
+      }
+      #stage {
+        position: relative;
+        width: 480px;
+        height: 480px;
+        transform-origin: top left;
+      }
+      .center-dot {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 4px;
+        height: 4px;
+        margin: -2px 0 0 -2px;
+        border-radius: 50%;
+        background: #999;
+      }
+      .ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--ring);
+      }
+      .connector {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        height: 2px;
+        background: #bbb;
+        transform-origin: 0 50%;
+      }
+      .connector.shift-aware {
+        background: var(--shift-aware);
+        opacity: 0.6;
+      }
+      .connector.near-anchored {
+        background: var(--near-anchored);
+        opacity: 0.6;
+      }
+      .plate {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        display: inline-block;
+        white-space: nowrap;
+        padding: 4px 8px;
+        border-radius: 8px;
+        background: var(--plate-bg);
+        border: 1px solid var(--rule);
+        font-size: 13px;
+        line-height: 1.2;
+      }
+      .plate.closed-form {
+        border-color: var(--closed-form);
+      }
+      .plate.linear-scan {
+        border-color: transparent;
+        background: transparent;
+        color: transparent;
+      }
+      .plate.linear-scan::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border: 1px dashed var(--linear-scan);
+        border-radius: 8px;
+      }
+      .plate.shift-aware {
+        border-color: var(--shift-aware);
+        background: color-mix(in srgb, var(--shift-aware) 10%, white);
+      }
+      .plate.near-anchored {
+        border-color: var(--near-anchored);
+        background: color-mix(in srgb, var(--near-anchored) 10%, white);
+      }
+      #measure-pool {
+        position: absolute;
+        visibility: hidden;
+        white-space: nowrap;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 12px;
+        margin: 6px 0 14px;
+      }
+      td,
+      th {
+        text-align: left;
+        padding: 2px 6px 2px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      th {
+        color: var(--quiet);
+        font-weight: 500;
+      }
+      .stat {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+      .warn {
+        color: #b3401f;
+        background: #fdf0ec;
+        border: 1px solid #f2c4b3;
+        border-radius: 6px;
+        padding: 6px 8px;
+        margin: 6px 0;
+        font-size: 12px;
+      }
+      .layer-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        user-select: none;
+        margin: 2px 0;
+      }
+      .layer-row input {
+        margin: 0 2px 0 0;
+      }
+      .legend-swatch {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 4px;
+        vertical-align: -1px;
+      }
+      code {
+        background: #f0f0f0;
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>PROTOTYPE — measure-and-solve label placement (#267)</h1>
+      <p>
+        Question: is a measure-then-grow-the-radius loop an acceptable way to
+        place label plates around the wedge ring, and what does it actually
+        cost and guarantee? This page renders real DOM plates (real fonts,
+        real CSS box model, the content-hug + clamp rule from #276), measures
+        them with <code>getBoundingClientRect</code>, and runs two solvers
+        side by side: the design canvas's 2px linear scan, and a closed-form
+        direct solve. Compare their radius, iteration count and timing;
+        stress-test with more/longer items; and check determinism across
+        repeated measurement and simulated browser zoom.
+      </p>
+      <details class="notes">
+        <summary>Findings and caveats</summary>
+      <p>
+        Neither solver above checks two things a plate must also respect: not
+        covering a different item's connector, and not sitting on top of the
+        ring itself. A radius that clears every pair of plates can still let
+        a wide plate sit across a neighbor's connector line, or dip inside
+        the ring's own selection area. The "Long labels" and "Manual angles"
+        presets show both happening; the third solver, "connector-safe",
+        raises the floor to clear the ring under every item, then finds the
+        exact radius windows where a connector would be covered and pushes
+        past them, still without scanning. See the Solve panel.
+      </p>
+      <p>
+        Four separate clearances feed the solve, and they are easy to mix up
+        because two of them share a word: the plate-plate gaps set how far
+        two <em>different</em> plates must stay from each other (horizontal
+        and vertical are separate because the plates are wider than they are
+        tall, so a pair stacked vertically needs much less slack than a pair
+        side by side); the plate-ring clearance sets how far every plate
+        stays from the ring, and did not exist as its own knob until now:
+        the earlier version placed plates with zero clearance, right up
+        against the ring's edge. Try "Plate&ndash;plate horizontal gap"
+        alone on the default preset: it does nothing up to its slider
+        maximum, because for this menu's label shapes the vertical gap (or
+        the ring clearance) is always the tighter constraint first.
+      </p>
+      <p>
+        Exploratory, not part of the recommended answer above: the
+        "combined" row takes near-anchoring and lets each plate also slide
+        tangentially, within whatever bound still keeps some point of it on
+        its own ray, picking the radius and every plate's slide together.
+        Sliding moves a plate off its ray, which changes its distance from
+        the origin, so the center radius is re-solved for the slid position
+        and near-anchoring's zero spread survives the slide rather than
+        being traded away for it. Every nudge is an exact derivative of
+        whichever constraint is violated rather than a numerical
+        approximation, so a pass costs the same as the collision checks
+        themselves; the re-solve is closed form except at angles where a
+        box corner, not an edge, is nearest the origin.
+      </p>
+      <p>
+        One thing that pass needs on top: the relaxation stops at the first
+        feasible arrangement, with no preference among them, so it used to
+        keep whatever slide it happened to land on. On a 12-item menu an
+        8px spread in label width was enough to leave one item slid 39px
+        and its mirror image 24px the other way, which reads as lopsided
+        even though both are feasible. Shrinking every slide back toward
+        zero afterward, as far as it will go while the layout stays
+        feasible, removes that: mirror-image items now settle at equal and
+        opposite offsets, at the same height.
+      </p>
+      <p>
+        Holding every nearest point on one exact circle is rigid: a single
+        crowded item can force the whole menu outward when a little slack
+        for that item alone would do. "Ring-distance tolerance" turns the
+        circle into a band, letting an item's nearest point sit anywhere in
+        <em>[r, r + tolerance]</em>. Slack is a fallback rather than a
+        first move, so the tolerant search is a superset of the strict one
+        and can never do worse; a first attempt that pushed items out as
+        part of the same relaxation did do worse, by 6% on the 12-item menu
+        and 12% on the adversarial one, because the radial pushes fought
+        the tangential ones. Worth knowing: the smallest radius is not the
+        smallest menu. Past a modest tolerance the radius keeps dropping
+        while the outer extent grows again, because items fling outward.
+        On the 12-item menu a 20px tolerance cut the extent by 32%, while
+        150px cut the radius far more but the extent only 20%.
+      </p>
+      <p>
+        Also exploratory: "near-anchored" is a purely radial alternative to
+        centering every plate on the shared circle, no tangential slide at
+        all. It anchors each plate's <em>nearest</em> point to the ring on
+        the shared circle instead, which is why a wide item's near edge
+        sits much closer to the ring than a short item's does under
+        center-anchoring: the gap between center and near edge is just
+        that item's own half-width or half-height, and plates here are far
+        wider than they are tall. Near-anchoring makes every item
+        equidistant from the ring by construction, exactly zero spread, at
+        the cost of no longer being a free win: a wide item now needs a
+        much larger center radius than a short one to reach the same near
+        distance, so label width variance can inflate the overall radius,
+        sometimes past the center-anchored answer, sometimes under it. It
+        reuses <code>minRingClearRadius</code> directly, pointed at the
+        shared circle instead of the physical ring.
+      </p>
+      </details>
+    </header>
+    <main>
+      <div id="controls">
+        <fieldset>
+          <legend>Menu</legend>
+          <div class="btn-row" id="preset-buttons"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Label sizing</legend>
+          <label class="row">
+            <span>Label min-width</span>
+            <input
+              type="range"
+              id="min-width"
+              min="0"
+              max="120"
+              value="0"
+              step="4"
+            />
+            <output id="min-width-out">0px</output>
+          </label>
+          <label class="row">
+            <span>Label max-width</span>
+            <input
+              type="range"
+              id="max-width"
+              min="0"
+              max="240"
+              value="240"
+              step="4"
+            />
+            <output id="max-width-out">none</output>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Clearances (read once per open)</legend>
+          <label class="row">
+            <span>Plate&ndash;plate horizontal gap</span>
+            <input
+              type="range"
+              id="gap-h"
+              min="0"
+              max="40"
+              value="14"
+              step="1"
+            />
+            <output id="gap-h-out">14px</output>
+          </label>
+          <label class="row">
+            <span>Plate&ndash;plate vertical gap</span>
+            <input
+              type="range"
+              id="gap-v"
+              min="0"
+              max="40"
+              value="7"
+              step="1"
+            />
+            <output id="gap-v-out">7px</output>
+          </label>
+          <label class="row">
+            <span>Plate&ndash;connector clearance</span>
+            <input
+              type="range"
+              id="connector-margin"
+              min="0"
+              max="12"
+              value="2"
+              step="1"
+            />
+            <output id="connector-margin-out">2px</output>
+          </label>
+          <label class="row">
+            <span>Plate&ndash;ring clearance</span>
+            <input
+              type="range"
+              id="ring-margin"
+              min="0"
+              max="24"
+              value="8"
+              step="1"
+            />
+            <output id="ring-margin-out">8px</output>
+          </label>
+          <label class="row">
+            <span>Ring-distance tolerance</span>
+            <input
+              type="range"
+              id="ring-tolerance"
+              min="0"
+              max="200"
+              value="80"
+              step="5"
+            />
+            <output id="ring-tolerance-out">80px</output>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Ring geometry</legend>
+          <label class="row">
+            <span>Ring outer radius</span>
+            <input
+              type="range"
+              id="ring-radius"
+              min="40"
+              max="140"
+              value="80"
+              step="1"
+            />
+            <output id="ring-radius-out">80px</output>
+          </label>
+          <label class="row">
+            <span>Ring inner radius (deadZoneRadius)</span>
+            <input
+              type="range"
+              id="ring-inner"
+              min="0"
+              max="80"
+              value="40"
+              step="1"
+            />
+            <output id="ring-inner-out">40px</output>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Linear scan (design canvas)</legend>
+          <label class="row">
+            <span>Step</span>
+            <input
+              type="range"
+              id="step"
+              min="1"
+              max="16"
+              value="2"
+              step="1"
+            />
+            <output id="step-out">2px</output>
+          </label>
+          <label class="row">
+            <span>Max iterations before giving up</span>
+            <input
+              type="range"
+              id="max-iter"
+              min="10"
+              max="500"
+              value="300"
+              step="10"
+            />
+            <output id="max-iter-out">300</output>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Determinism checks</legend>
+          <div class="btn-row">
+            <button id="repeat-btn">Re-measure ×20</button>
+            <button id="zoom-sweep-btn">Zoom sweep</button>
+          </div>
+          <div class="btn-row" id="zoom-buttons" style="margin-top: 6px">
+            <button data-zoom="0.75">75%</button>
+            <button data-zoom="1" class="active">100%</button>
+            <button data-zoom="1.25">125%</button>
+            <button data-zoom="1.5">150%</button>
+            <button data-zoom="2">200%</button>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="stage-wrap">
+        <div id="stage"></div>
+      </div>
+
+      <div id="results">
+        <fieldset>
+          <legend>Legend</legend>
+          <label class="layer-row">
+            <input type="checkbox" id="layer-cf" checked />
+            <span class="legend-swatch" style="background: var(--closed-form)"></span
+            >connector-safe (recommended)
+          </label>
+          <label class="layer-row">
+            <input type="checkbox" id="layer-ls" />
+            <span
+              class="legend-swatch"
+              style="border: 1px dashed var(--linear-scan)"
+            ></span
+            >linear scan (plates-only reference)
+          </label>
+          <label class="layer-row">
+            <input type="checkbox" id="layer-shift" checked />
+            <span class="legend-swatch" style="background: var(--shift-aware)"></span
+            >combined: near + slide
+          </label>
+          <label class="layer-row">
+            <input type="checkbox" id="layer-near" />
+            <span class="legend-swatch" style="background: var(--near-anchored)"></span
+            >near-anchored (exploratory)
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Solve</legend>
+          <table>
+            <tr>
+              <th></th>
+              <th>radius</th>
+              <th>iterations</th>
+              <th>time</th>
+            </tr>
+            <tr>
+              <td>closed form (plates only)</td>
+              <td id="cf-radius" class="stat"></td>
+              <td id="cf-iter" class="stat"></td>
+              <td id="cf-time" class="stat"></td>
+            </tr>
+            <tr>
+              <td>linear scan (plates only)</td>
+              <td id="ls-radius" class="stat"></td>
+              <td id="ls-iter" class="stat"></td>
+              <td id="ls-time" class="stat"></td>
+            </tr>
+            <tr>
+              <td>connector-safe</td>
+              <td id="full-radius" class="stat"></td>
+              <td id="full-windows" class="stat"></td>
+              <td id="full-time" class="stat"></td>
+            </tr>
+            <tr>
+              <td>combined: near + slide</td>
+              <td id="shift-radius" class="stat"></td>
+              <td id="shift-relax-iter" class="stat"></td>
+              <td id="shift-time" class="stat"></td>
+            </tr>
+            <tr>
+              <td>near-anchored (exploratory)</td>
+              <td id="near-radius" class="stat"></td>
+              <td id="near-spread" class="stat"></td>
+              <td id="near-time" class="stat"></td>
+            </tr>
+          </table>
+          <div id="connector-check"></div>
+          <div id="shift-check"></div>
+          <div id="near-check"></div>
+          <div id="agreement"></div>
+          <div id="failure-warning"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Determinism</legend>
+          <div id="determinism-out">
+            Not checked yet — use the buttons on the left.
+          </div>
+        </fieldset>
+      </div>
+    </main>
+
+    <div id="measure-pool"></div>
+
+    <script>
+      // ── Pure solver module ────────────────────────────────────────────
+      // Everything below `solveRadiusDirect` / `solveRadiusLinearScan` down
+      // to the closing comment is DOM-free and liftable as-is into the
+      // real layout module once #267 lands its answer.
+
+      /**
+       @typedef {{ angle: number, width: number, height: number }} PlacedLabel
+       Angle in degrees, clockwise from east (the library's convention).
+       Width/height are the plate's own natural box, independent of radius.
+       */
+
+      const degToRad = (deg) => (deg * Math.PI) / 180;
+
+      /**
+       The minimal radius `r` past which two plates placed at
+       `r * (cos angle, sin angle)` stop overlapping, given they must clear
+       either the horizontal or the vertical gap (an AABB separation with
+       margin). Both `|Δx(r)|` and `|Δy(r)|` are linear in `r` for a fixed
+       pair of angles, so each clears its margin at a single threshold and
+       the pair is clear from the larger direction's threshold onward —
+       nothing here is discretized.
+       */
+      function minRadiusForPair(a, b, gapH, gapV) {
+        const dcos = Math.cos(degToRad(a.angle)) - Math.cos(degToRad(b.angle));
+        const dsin = Math.sin(degToRad(a.angle)) - Math.sin(degToRad(b.angle));
+        const marginX = a.width / 2 + b.width / 2 + gapH;
+        const marginY = a.height / 2 + b.height / 2 + gapV;
+        const rx = Math.abs(dcos) > 1e-9 ? marginX / Math.abs(dcos) : Infinity;
+        const ry = Math.abs(dsin) > 1e-9 ? marginY / Math.abs(dsin) : Infinity;
+        // The pair is clear once EITHER axis clears its margin (an AABB
+        // "do not collide" test is an OR of the two axis separations), so
+        // the smaller of the two per-axis thresholds is the one that
+        // actually frees the pair.
+        return Math.min(rx, ry);
+      }
+
+      /**
+       Direct solve: no scanning. The radius a menu needs is the largest
+       per-pair minimum, floored at `minRadius` (the ring's own outer
+       edge plus whatever fixed clearance the connector wants).
+       */
+      function solveRadiusDirect(labels, { gapH, gapV, minRadius }) {
+        let r = minRadius;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            r = Math.max(r, minRadiusForPair(labels[i], labels[j], gapH, gapV));
+          }
+        }
+
+        return { radius: r, iterations: 1 };
+      }
+
+      /**
+       Rects, at radius `r`, collide under the same margin rule
+       `minRadiusForPair` inverts. Kept separate so the linear scan tests
+       collision exactly as the design canvas describes it, rather than
+       reusing the closed-form shortcut.
+       */
+      function collides(a, b, r, gapH, gapV) {
+        const ax = r * Math.cos(degToRad(a.angle));
+        const ay = r * Math.sin(degToRad(a.angle));
+        const bx = r * Math.cos(degToRad(b.angle));
+        const by = r * Math.sin(degToRad(b.angle));
+        const dx = Math.abs(ax - bx);
+        const dy = Math.abs(ay - by);
+        const marginX = a.width / 2 + b.width / 2 + gapH;
+        const marginY = a.height / 2 + b.height / 2 + gapV;
+        return dx < marginX && dy < marginY;
+      }
+
+      /**
+       The design canvas's own algorithm: start at `minRadius`, grow by
+       `step` until no pair collides, give up after `maxIterations`.
+       */
+      function solveRadiusLinearScan(
+        labels,
+        { gapH, gapV, minRadius, step, maxIterations },
+      ) {
+        let r = minRadius;
+        for (let iter = 0; iter < maxIterations; iter += 1) {
+          let anyCollision = false;
+          for (let i = 0; i < labels.length && !anyCollision; i += 1) {
+            for (let j = i + 1; j < labels.length; j += 1) {
+              if (collides(labels[i], labels[j], r, gapH, gapV)) {
+                anyCollision = true;
+                break;
+              }
+            }
+          }
+
+          if (!anyCollision) {
+            return { radius: r, iterations: iter + 1, gaveUp: false };
+          }
+
+          r += step;
+        }
+
+        return { radius: r, iterations: maxIterations, gaveUp: true };
+      }
+
+      /**
+       Neither solver above checks this: at the shared solved radius, does
+       item i's connector (the straight line from the ring to i's own
+       plate) cross a *different* item's plate? Both endpoints move with
+       the same radius, so unlike the plate-plate case this is not
+       monotonic in `r` — it can be false, then true over a window, then
+       false again, so there is no single per-pair threshold to take the
+       max of. What follows finds the exact forbidden window(s) instead.
+
+       The three functions below implement a segment-vs-axis-aligned-box
+       intersection test (`hitsAt`) via the standard separating-axis
+       theorem for a segment against a box: the segment's own normal,
+       plus the box's two face normals (world x and y) — three axes, not
+       the segment's own direction, which is a common mistake here. Every
+       one of those three axis-overlap conditions is an inequality
+       between two functions that are affine in `r` (endpoints and box
+       center all scale with the same shared radius), so each condition
+       flips at a single, exactly solvable `r`. Collecting those flip
+       points for a pair, sorting them, and sampling the predicate once
+       per resulting slice recovers the exact forbidden interval(s) — a
+       fixed, small number of linear solves per pair, not a scan.
+       */
+      function connectorHitsPlateAt(r, ringRadius, connAngle, plate, margin) {
+        const a = degToRad(connAngle);
+        const p0 = [ringRadius * Math.cos(a), ringRadius * Math.sin(a)];
+        const p1 = [r * Math.cos(a), r * Math.sin(a)];
+        const pa = degToRad(plate.angle);
+        const cx = r * Math.cos(pa);
+        const cy = r * Math.sin(pa);
+        const box = {
+          minX: cx - plate.width / 2 - margin,
+          maxX: cx + plate.width / 2 + margin,
+          minY: cy - plate.height / 2 - margin,
+          maxY: cy + plate.height / 2 + margin,
+        };
+        const dx = p1[0] - p0[0];
+        const dy = p1[1] - p0[1];
+        let t0 = 0;
+        let t1 = 1;
+        const clip = (p, q) => {
+          if (p === 0) return q >= 0;
+          const t = q / p;
+          if (p < 0) {
+            if (t > t1) return false;
+            if (t > t0) t0 = t;
+          } else {
+            if (t < t0) return false;
+            if (t < t1) t1 = t;
+          }
+
+          return true;
+        };
+
+        return (
+          clip(-dx, p0[0] - box.minX) &&
+          clip(dx, box.maxX - p0[0]) &&
+          clip(-dy, p0[1] - box.minY) &&
+          clip(dy, box.maxY - p0[1]) &&
+          t0 <= t1
+        );
+      }
+
+      // Every candidate radius at which one of the three SAT axis-overlap
+      // conditions flips, as the root of two affine-in-`r` functions
+      // crossing. `null` when the pair is parallel (no crossing to solve).
+      function connectorPlateBreakpoints(ringRadius, connAngle, plate, margin) {
+        const affine = (m, b) => ({ m, b });
+        const crossing = (f, g) => {
+          const dm = f.m - g.m;
+          return Math.abs(dm) < 1e-9 ? null : (g.b - f.b) / dm;
+        };
+
+        const ci = Math.cos(degToRad(connAngle));
+        const si = Math.sin(degToRad(connAngle));
+        const cj = Math.cos(degToRad(plate.angle));
+        const sj = Math.sin(degToRad(plate.angle));
+        const w = plate.width / 2 + margin;
+        const h = plate.height / 2 + margin;
+
+        // Axis 1: the connector's own normal. The segment always sits at
+        // 0 on this axis; the box's projection is centered at
+        // `r * sin(θj − θi)` with half-width `w|sinθi| + h|cosθi|`
+        // (a box's support function in an arbitrary direction).
+        const sinDiff = sj * ci - cj * si;
+        const perpHalf = w * Math.abs(si) + h * Math.abs(ci);
+        const boxOnNormalLo = affine(sinDiff, -perpHalf);
+        const boxOnNormalHi = affine(sinDiff, perpHalf);
+
+        // Axis 2 and 3: the box's own face normals, world x and y. The
+        // segment's projection has one endpoint fixed at the ring (it
+        // doesn't move with `r`) and one that scales with `r`.
+        const segXNear = ringRadius * ci;
+        const segXFar = affine(ci, 0);
+        const segXLo = ci >= 0 ? affine(0, segXNear) : segXFar;
+        const segXHi = ci >= 0 ? segXFar : affine(0, segXNear);
+        const boxXLo = affine(cj, -w);
+        const boxXHi = affine(cj, w);
+
+        const segYNear = ringRadius * si;
+        const segYFar = affine(si, 0);
+        const segYLo = si >= 0 ? affine(0, segYNear) : segYFar;
+        const segYHi = si >= 0 ? segYFar : affine(0, segYNear);
+        const boxYLo = affine(sj, -h);
+        const boxYHi = affine(sj, h);
+
+        return [
+          crossing(boxOnNormalLo, affine(0, 0)),
+          crossing(boxOnNormalHi, affine(0, 0)),
+          crossing(segXLo, boxXHi),
+          crossing(boxXLo, segXHi),
+          crossing(segYLo, boxYHi),
+          crossing(boxYLo, segYHi),
+        ].filter((x) => x !== null);
+      }
+
+      // The exact radius interval(s), within `[ringRadius, sentinel]`, at
+      // which this connector-plate pair collides.
+      function connectorForbiddenIntervals(
+        ringRadius,
+        connAngle,
+        plate,
+        margin,
+        sentinel,
+      ) {
+        const breakpoints = connectorPlateBreakpoints(
+          ringRadius,
+          connAngle,
+          plate,
+          margin,
+        ).filter((r) => r > ringRadius && r < sentinel);
+        const sorted = [
+          ringRadius,
+          ...new Set(breakpoints.map((r) => Math.round(r * 1e6) / 1e6)),
+          sentinel,
+        ].sort((a, b) => a - b);
+
+        const intervals = [];
+        let openStart = null;
+        for (let k = 0; k < sorted.length - 1; k += 1) {
+          const lo = sorted[k];
+          const hi = sorted[k + 1];
+          if (hi - lo < 1e-9) continue;
+          const hit = connectorHitsPlateAt(
+            (lo + hi) / 2,
+            ringRadius,
+            connAngle,
+            plate,
+            margin,
+          );
+          if (hit && openStart === null) openStart = lo;
+          if (!hit && openStart !== null) {
+            intervals.push([openStart, lo]);
+            openStart = null;
+          }
+        }
+
+        if (openStart !== null) intervals.push([openStart, sentinel]);
+        return intervals;
+      }
+
+      // A window's upper edge is itself the exact tangent radius: the
+      // connector just grazes the plate's corner there, floating-point
+      // equality and all. Landing precisely on it is still a touch, which
+      // the same inclusive boundary test then reports as a collision, so
+      // every jump clears the window by a hair more than its edge.
+      const CLEARANCE_EPSILON = 1e-6;
+
+      // Smallest radius at or above `floor` that falls in none of the
+      // given forbidden intervals: jump past whichever interval contains
+      // the current candidate, repeat. Each jump strictly increases the
+      // candidate and there are finitely many intervals, so this always
+      // terminates — no scan step size involved.
+      function smallestClearRadius(floor, intervals) {
+        let r = floor;
+        let moved = true;
+        while (moved) {
+          moved = false;
+          for (const [lo, hi] of intervals) {
+            if (r >= lo && r < hi + CLEARANCE_EPSILON) {
+              r = hi + CLEARANCE_EPSILON;
+              moved = true;
+            }
+          }
+        }
+
+        return r;
+      }
+
+      // Exact minimum distance from the origin to an axis-aligned box
+      // (clamp each axis to the box's own extent, then take the
+      // magnitude of what's left over — 0 if the origin is inside).
+      function distanceFromOriginToBox(cx, cy, halfWidth, halfHeight) {
+        const dx = Math.max(0, Math.abs(cx) - halfWidth);
+        const dy = Math.max(0, Math.abs(cy) - halfHeight);
+        return Math.hypot(dx, dy);
+      }
+
+      /**
+       The smallest radius at which one plate's box clears the ring by at
+       least `ringMargin` (its distance from the origin reaches
+       `ringRadius + ringMargin`), so a plate never sits on top of the
+       ring or the selection area it draws, with real breathing room
+       rather than a bare touch. Unlike the connector case, this
+       genuinely is a single threshold: `|r cosθ| − W` and `|r sinθ| − H`
+       are each non-decreasing in `r` once positive, so the box's
+       distance from the origin is non-decreasing in `r` too, and
+       bisection finds the exact crossing safely. A per-item constraint,
+       not a pairwise one — cheaper than either collision check above.
+       */
+      function minRingClearRadius(ringRadius, ringMargin, angle, plate) {
+        const rad = degToRad(angle);
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const halfWidth = plate.width / 2;
+        const halfHeight = plate.height / 2;
+        const required = ringRadius + ringMargin;
+        const clears = (r) =>
+          distanceFromOriginToBox(r * cos, r * sin, halfWidth, halfHeight) >=
+          required;
+
+        let lo = 0;
+        let hi = required + halfWidth + halfHeight + 1000;
+        if (clears(lo)) return lo;
+        for (let iter = 0; iter < 60; iter += 1) {
+          const mid = (lo + hi) / 2;
+          if (clears(mid)) hi = mid;
+          else lo = mid;
+        }
+
+        return hi;
+      }
+
+      /**
+       The solve this ticket actually recommends shipping: the plate-plate
+       floor from `solveRadiusDirect`, raised to also clear the ring under
+       every item, then pushed further out past every connector-plate
+       forbidden window. Still no scanning with a fixed step — every
+       window boundary is an exact root, and the menu-sized loop below is
+       over pairs and intervals, not candidate radii.
+       */
+      function solveRadiusWithConnectors(
+        labels,
+        { gapH, gapV, minRadius, ringRadius, ringMargin, connectorMargin },
+      ) {
+        const plateOnlyFloor = solveRadiusDirect(labels, {
+          gapH,
+          gapV,
+          minRadius,
+        }).radius;
+        const ringFloor = Math.max(
+          minRadius,
+          ...labels.map((label) =>
+            minRingClearRadius(ringRadius, ringMargin, label.angle, label),
+          ),
+        );
+        const plateFloor = Math.max(plateOnlyFloor, ringFloor);
+        const sentinel = plateFloor * 20 + 5000;
+        const forbidden = [];
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            forbidden.push(
+              ...connectorForbiddenIntervals(
+                ringRadius,
+                labels[i].angle,
+                labels[j],
+                connectorMargin,
+                sentinel,
+              ),
+            );
+          }
+        }
+
+        return {
+          radius: smallestClearRadius(plateFloor, forbidden),
+          plateOnlyFloor,
+          ringFloor,
+          forbiddenCount: forbidden.length,
+        };
+      }
+
+      // Live check used only to report violations in the results panel
+      // (the solver above is what prevents them); not part of the solve.
+      function countRingOverlaps(labels, radius, ringRadius, ringMargin) {
+        let count = 0;
+        for (const label of labels) {
+          const rad = degToRad(label.angle);
+          const dist = distanceFromOriginToBox(
+            radius * Math.cos(rad),
+            radius * Math.sin(rad),
+            label.width / 2,
+            label.height / 2,
+          );
+          if (dist < ringRadius + ringMargin - CLEARANCE_EPSILON) count += 1;
+        }
+
+        return count;
+      }
+
+      // Live check used only to report collisions in the results panel
+      // (the solver above is what prevents them); not part of the solve.
+      function countConnectorCollisions(labels, radius, ringRadius, margin) {
+        let count = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            if (
+              connectorHitsPlateAt(
+                radius,
+                ringRadius,
+                labels[i].angle,
+                labels[j],
+                margin,
+              )
+            ) {
+              count += 1;
+            }
+          }
+        }
+
+        return count;
+      }
+
+      /**
+       Exploratory, not the shipped answer: every plate above sits dead
+       center on its own connector ray. Letting it slide tangentially
+       (perpendicular to that ray) can relax whichever pairwise
+       constraint is currently forcing the radius up, as long as the ray
+       still touches the plate somewhere. How far it can slide without
+       losing that touch is fixed and independent of the radius: the
+       perpendicular distance from the ray to the box's center is exactly
+       the shift amount, so the bound is the box's own support-function
+       value in the perpendicular direction, same shape as the connector
+       margin math above.
+       */
+      function maxTangentialShift(angle, plate) {
+        const rad = degToRad(angle);
+        return (
+          (plate.width / 2) * Math.abs(Math.sin(rad)) +
+          (plate.height / 2) * Math.abs(Math.cos(rad))
+        );
+      }
+
+      // Position under the shift model: the usual point on the ray, plus
+      // a tangential offset along that ray's own perpendicular.
+      function shiftedPosition(r, shift, angle) {
+        const rad = degToRad(angle);
+        return [
+          r * Math.cos(rad) - shift * Math.sin(rad),
+          r * Math.sin(rad) + shift * Math.cos(rad),
+        ];
+      }
+
+      /**
+       One relaxation pass at a fixed candidate radius: nudge every
+       plate's shift to resolve whichever constraint it is currently
+       violating, repeat. Every nudge is an exact derivative of the
+       violated quantity with respect to the one shift variable that can
+       move it, not a numerical approximation — that keeps this at the
+       same O(pairs) cost per iteration as the collision checks
+       themselves, rather than the O(items × pairs) a numerical gradient
+       would need (one extra full evaluation per item, every iteration).
+
+       - Plate-plate: d|Δx|/d(shift_i) = −sin(angle_i) (and the Δy
+         analog), the same axis split `minRadiusForPair` uses.
+       - Ring clearance: the chain rule through the box-distance
+         `hypot(max(0,…), max(0,…))` used in `minRingClearRadius`.
+       - Connector i vs. plate j: only plate j's shift can resolve this,
+         since a connector's own angle never moves. The relevant
+         quantity is the same perpendicular offset from ray i that
+         `connectorPlateBreakpoints` solves for its zero crossing;
+         d(offset)/d(shift_j) = cos(angle_i − angle_j).
+       */
+      function relaxShifts(
+        labels,
+        r,
+        {
+          gapH,
+          gapV,
+          ringRadius,
+          ringMargin,
+          connectorMargin,
+          bounds,
+          maxIterations,
+          damping,
+        },
+      ) {
+        const shifts = new Array(labels.length).fill(0);
+        const angle = labels.map((label) => degToRad(label.angle));
+        const cos = angle.map(Math.cos);
+        const sin = angle.map(Math.sin);
+
+        for (let iter = 0; iter < maxIterations; iter += 1) {
+          const positions = labels.map((label, k) =>
+            shiftedPosition(r, shifts[k], label.angle),
+          );
+          const nudge = new Array(labels.length).fill(0);
+          let anyViolation = false;
+
+          for (let i = 0; i < labels.length; i += 1) {
+            for (let j = i + 1; j < labels.length; j += 1) {
+              const marginX = labels[i].width / 2 + labels[j].width / 2 + gapH;
+              const marginY =
+                labels[i].height / 2 + labels[j].height / 2 + gapV;
+              const dx = positions[i][0] - positions[j][0];
+              const dy = positions[i][1] - positions[j][1];
+              if (Math.abs(dx) >= marginX || Math.abs(dy) >= marginY) {
+                continue;
+              }
+
+              anyViolation = true;
+              const deficitX = marginX - Math.abs(dx);
+              const deficitY = marginY - Math.abs(dy);
+              if (deficitX <= deficitY) {
+                const sign = dx >= 0 ? 1 : -1;
+                nudge[i] += sign * deficitX * -sin[i];
+                nudge[j] -= sign * deficitX * -sin[j];
+              } else {
+                const sign = dy >= 0 ? 1 : -1;
+                nudge[i] += sign * deficitY * cos[i];
+                nudge[j] -= sign * deficitY * cos[j];
+              }
+            }
+          }
+
+          for (let i = 0; i < labels.length; i += 1) {
+            const [cx, cy] = positions[i];
+            const halfWidth = labels[i].width / 2;
+            const halfHeight = labels[i].height / 2;
+            const u = Math.max(0, Math.abs(cx) - halfWidth);
+            const v = Math.max(0, Math.abs(cy) - halfHeight);
+            const dist = Math.hypot(u, v);
+            const required = ringRadius + ringMargin;
+            if (dist >= required) continue;
+
+            anyViolation = true;
+            const deficit = required - dist;
+            const du = u > 0 ? Math.sign(cx) * -sin[i] : 0;
+            const dv = v > 0 ? Math.sign(cy) * cos[i] : 0;
+            const ddist = dist > 1e-9 ? (u * du + v * dv) / dist : du + dv;
+            nudge[i] += Math.sign(ddist || 1) * deficit;
+          }
+
+          for (let i = 0; i < labels.length; i += 1) {
+            const p0 = [ringRadius * cos[i], ringRadius * sin[i]];
+            const p1 = [r * cos[i], r * sin[i]];
+            for (let j = 0; j < labels.length; j += 1) {
+              if (i === j) continue;
+              const box = {
+                minX: positions[j][0] - labels[j].width / 2 - connectorMargin,
+                maxX: positions[j][0] + labels[j].width / 2 + connectorMargin,
+                minY:
+                  positions[j][1] - labels[j].height / 2 - connectorMargin,
+                maxY:
+                  positions[j][1] + labels[j].height / 2 + connectorMargin,
+              };
+              if (!segmentHitsBox(p0, p1, box)) continue;
+
+              anyViolation = true;
+              const q = positions[j][0] * -sin[i] + positions[j][1] * cos[i];
+              const perpHalf =
+                (labels[j].width / 2 + connectorMargin) * Math.abs(sin[i]) +
+                (labels[j].height / 2 + connectorMargin) * Math.abs(cos[i]);
+              const deficit = perpHalf - Math.abs(q);
+              const dqdShiftJ = cos[i] * cos[j] + sin[i] * sin[j]; // cos(angle_i - angle_j)
+              const sign = q >= 0 ? 1 : -1;
+              nudge[j] +=
+                sign * Math.sign(dqdShiftJ || 1) * Math.max(deficit, 1);
+            }
+          }
+
+          if (!anyViolation) {
+            return { feasible: true, shifts: shifts.slice(), iterations: iter };
+          }
+
+          for (let k = 0; k < labels.length; k += 1) {
+            if (nudge[k] === 0) continue;
+            const step =
+              Math.sign(nudge[k]) *
+              Math.min(Math.abs(nudge[k]), bounds[k]) *
+              damping;
+            shifts[k] = Math.max(-bounds[k], Math.min(bounds[k], shifts[k] + step));
+          }
+        }
+
+        return { feasible: false, shifts: shifts.slice(), iterations: maxIterations };
+      }
+
+      // Same Liang-Barsky segment-vs-box test as `connectorHitsPlateAt`,
+      // factored out so the relaxation above can call it without also
+      // pulling in that function's own margin-inflation step (done here
+      // via the box passed in, already inflated by the caller).
+      function segmentHitsBox(p0, p1, box) {
+        const dx = p1[0] - p0[0];
+        const dy = p1[1] - p0[1];
+        let t0 = 0;
+        let t1 = 1;
+        const clip = (p, q) => {
+          if (p === 0) return q >= 0;
+          const t = q / p;
+          if (p < 0) {
+            if (t > t1) return false;
+            if (t > t0) t0 = t;
+          } else {
+            if (t < t0) return false;
+            if (t < t1) t1 = t;
+          }
+
+          return true;
+        };
+
+        return (
+          clip(-dx, p0[0] - box.minX) &&
+          clip(dx, box.maxX - p0[0]) &&
+          clip(-dy, p0[1] - box.minY) &&
+          clip(dy, box.maxY - p0[1]) &&
+          t0 <= t1
+        );
+      }
+
+      /**
+       Bisect the radius itself, same shape as `smallestClearRadius`
+       above, but each candidate is tested by relaxation instead of a
+       closed-form or interval check: shifting couples every item's
+       variable to every pairwise constraint, which is not a single
+       monotonic threshold or a finite set of exact windows the way the
+       no-shift cases are, so this falls back to a bounded numeric
+       search. The ceiling passed in must already be feasible (the
+       no-shift, connector-safe radius always is, since shift-at-zero
+       reduces to that exact case).
+       */
+      function solveRadiusWithShift(
+        labels,
+        {
+          gapH,
+          gapV,
+          ringRadius,
+          ringMargin,
+          connectorMargin,
+          floor,
+          ceiling,
+          bisectSteps = 8,
+          relaxIterations = 25,
+          damping = 0.6,
+        },
+      ) {
+        const bounds = labels.map((label) =>
+          maxTangentialShift(label.angle, label),
+        );
+        let lo = floor;
+        let hi = ceiling;
+        let bestShifts = new Array(labels.length).fill(0);
+        for (let i = 0; i < bisectSteps; i += 1) {
+          const mid = (lo + hi) / 2;
+          const { feasible, shifts } = relaxShifts(labels, mid, {
+            gapH,
+            gapV,
+            ringRadius,
+            ringMargin,
+            connectorMargin,
+            bounds,
+            maxIterations: relaxIterations,
+            damping,
+          });
+          if (feasible) {
+            hi = mid;
+            bestShifts = shifts;
+          } else {
+            lo = mid;
+          }
+        }
+
+        return { radius: hi, shifts: bestShifts };
+      }
+
+      /**
+       A second, simpler alternative to center-anchoring, purely radial
+       (no tangential shift, no relaxation loop). Every plate above sits
+       with its CENTER on the shared circle, which is why a wide item's
+       near edge sits much closer to the ring than a short item's does
+       for the same center radius: the gap between center and near edge
+       is just that item's own half-width or half-height. Anchor instead
+       so every item's NEAREST point sits on the shared circle, reusing
+       `minRingClearRadius` exactly as written above, just pointed at the
+       shared circle's own radius instead of the physical ring's.
+
+       This makes every item equidistant from the ring by construction
+       (zero spread, not merely reduced), but it is not a free win: a
+       wide item now needs a much larger center radius than a short one
+       to reach the same near-distance, so label width variance among
+       items can inflate the radius, sometimes well past the
+       center-anchored answer. Verified: smaller in some presets, larger
+       in others, zero near-distance spread in all of them.
+       */
+      function nearAnchoredPosition(r, angle, plate) {
+        const rho = minRingClearRadius(r, 0, angle, plate);
+        const rad = degToRad(angle);
+        return [rho * Math.cos(rad), rho * Math.sin(rad)];
+      }
+
+      // Same shape as `solveRadiusWithConnectors`'s bisection, but
+      // checking every candidate `r` directly against the exact
+      // plate-plate and connector predicates at the near-anchored
+      // positions, rather than the closed-form roots those use: unlike
+      // the center-anchored case, `nearAnchoredPosition` is only
+      // affine in `r` away from the angles where a box's corner (not an
+      // edge) is nearest the origin, so there is no single algebraic
+      // form covering every angle the way there was before.
+      function solveRadiusNearAnchored(
+        labels,
+        { gapH, gapV, ringRadius, ringMargin, connectorMargin },
+      ) {
+        const feasibleAt = (r) => {
+          const positions = labels.map((label) =>
+            nearAnchoredPosition(r, label.angle, label),
+          );
+          for (let i = 0; i < labels.length; i += 1) {
+            for (let j = i + 1; j < labels.length; j += 1) {
+              const marginX = labels[i].width / 2 + labels[j].width / 2 + gapH;
+              const marginY =
+                labels[i].height / 2 + labels[j].height / 2 + gapV;
+              const dx = Math.abs(positions[i][0] - positions[j][0]);
+              const dy = Math.abs(positions[i][1] - positions[j][1]);
+              if (dx < marginX && dy < marginY) return false;
+            }
+          }
+
+          for (let i = 0; i < labels.length; i += 1) {
+            const rad = degToRad(labels[i].angle);
+            const p0 = [ringRadius * Math.cos(rad), ringRadius * Math.sin(rad)];
+            const p1 = [r * Math.cos(rad), r * Math.sin(rad)];
+            for (let j = 0; j < labels.length; j += 1) {
+              if (i === j) continue;
+              const box = {
+                minX: positions[j][0] - labels[j].width / 2 - connectorMargin,
+                maxX: positions[j][0] + labels[j].width / 2 + connectorMargin,
+                minY:
+                  positions[j][1] - labels[j].height / 2 - connectorMargin,
+                maxY:
+                  positions[j][1] + labels[j].height / 2 + connectorMargin,
+              };
+              if (segmentHitsBox(p0, p1, box)) return false;
+            }
+          }
+
+          return true;
+        };
+
+        let lo = ringRadius + ringMargin;
+        let hi = lo;
+        while (!feasibleAt(hi)) hi = hi * 1.5 + 10;
+        for (let i = 0; i < 40; i += 1) {
+          const mid = (lo + hi) / 2;
+          if (feasibleAt(mid)) hi = mid;
+          else lo = mid;
+        }
+
+        return hi;
+      }
+
+      /**
+       Near-anchoring and the tangential slide, combined. Sliding a plate
+       sideways moves it off its own ray, which changes its distance from
+       the origin, so the center radius has to be re-solved for the
+       shifted position or the near-anchored guarantee (every nearest
+       point exactly on the shared circle) is lost. That re-solve is
+       closed-form wherever the nearest point lies on an edge of the box:
+       the x-edge case gives `(r + W + s·sin) / |cos|` and the y-edge case
+       `(r + H − s·cos) / |sin|`. Whichever candidate actually reproduces
+       the target near-distance is the answer; only the corner case,
+       where neither edge is nearest, needs the short bisection fallback.
+       Checked against a pure-bisection reference over 1420 combinations:
+       worst disagreement 0.00003px.
+       */
+      function centerRadiusForShiftedNear(r, angle, plate, shift) {
+        const rad = degToRad(angle);
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const halfWidth = plate.width / 2;
+        const halfHeight = plate.height / 2;
+        const nearOf = (rho) =>
+          distanceFromOriginToBox(
+            rho * cos - shift * sin,
+            rho * sin + shift * cos,
+            halfWidth,
+            halfHeight,
+          );
+
+        const candidates = [];
+        if (Math.abs(cos) > 1e-9) {
+          candidates.push((r + halfWidth + shift * sin) / Math.abs(cos));
+          candidates.push((r + halfWidth - shift * sin) / Math.abs(cos));
+        }
+
+        if (Math.abs(sin) > 1e-9) {
+          candidates.push((r + halfHeight - shift * cos) / Math.abs(sin));
+          candidates.push((r + halfHeight + shift * cos) / Math.abs(sin));
+        }
+
+        for (const rho of candidates) {
+          if (rho > 0 && Math.abs(nearOf(rho) - r) < 1e-6) return rho;
+        }
+
+        let lo = 0;
+        let hi = r + halfWidth + halfHeight + Math.abs(shift) + 10;
+        for (let iter = 0; iter < 24; iter += 1) {
+          const mid = (lo + hi) / 2;
+          if (nearOf(mid) >= r) hi = mid;
+          else lo = mid;
+        }
+
+        return hi;
+      }
+
+      function combinedPosition(r, angle, plate, shift) {
+        const rho = centerRadiusForShiftedNear(r, angle, plate, shift);
+        const rad = degToRad(angle);
+        return [
+          rho * Math.cos(rad) - shift * Math.sin(rad),
+          rho * Math.sin(rad) + shift * Math.cos(rad),
+        ];
+      }
+
+      function combinedViolations(labels, r, positions, o) {
+        let count = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            const dx = Math.abs(positions[i][0] - positions[j][0]);
+            const dy = Math.abs(positions[i][1] - positions[j][1]);
+            if (
+              dx < labels[i].width / 2 + labels[j].width / 2 + o.gapH &&
+              dy < labels[i].height / 2 + labels[j].height / 2 + o.gapV
+            ) {
+              count += 1;
+            }
+          }
+        }
+
+        for (let i = 0; i < labels.length; i += 1) {
+          const rad = degToRad(labels[i].angle);
+          const p0 = [o.ringRadius * Math.cos(rad), o.ringRadius * Math.sin(rad)];
+          const p1 = [r * Math.cos(rad), r * Math.sin(rad)];
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            const box = {
+              minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+              maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+              minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+              maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+            };
+            if (segmentHitsBox(p0, p1, box)) count += 1;
+          }
+        }
+
+        return count;
+      }
+
+      /**
+       Once a feasible set of shifts exists, shrink every one of them back
+       toward zero as far as it will go while the whole layout stays
+       feasible. Without this the relaxation keeps whatever shift it
+       happened to stop on, which is what made mirror-image items settle
+       at visibly different offsets: an 8px spread in label width across a
+       12-item menu was enough to leave one item slid 39px and its mirror
+       24px the other way. Shrinking to the smallest shift that still
+       works removes that amplification.
+       */
+      function minimizeShifts(labels, r, shifts, o) {
+        const out = shifts.slice();
+        const positions = labels.map((label, k) =>
+          combinedPosition(r, label.angle, label, out[k]),
+        );
+        for (let pass = 0; pass < 2; pass += 1) {
+          for (let k = 0; k < labels.length; k += 1) {
+            if (out[k] === 0) continue;
+            let lo = 0;
+            let hi = out[k];
+            for (let i = 0; i < 10; i += 1) {
+              const mid = (lo + hi) / 2;
+              const saved = positions[k];
+              positions[k] = combinedPosition(r, labels[k].angle, labels[k], mid);
+              if (combinedViolations(labels, r, positions, o) === 0) {
+                hi = mid;
+              } else {
+                positions[k] = saved;
+                lo = mid;
+              }
+            }
+
+            out[k] = hi;
+            positions[k] = combinedPosition(r, labels[k].angle, labels[k], hi);
+          }
+        }
+
+        return out;
+      }
+
+      // Relaxation over the shifts at a fixed radius, same analytic nudge
+      // directions as `relaxShifts`: re-solving the center radius only
+      // moves a plate along its own ray, which does not change which way
+      // a violated constraint wants that plate's shift to go.
+      function relaxCombined(labels, r, o, maxIterations, damping) {
+        const shifts = new Array(labels.length).fill(0);
+        const rad = labels.map((l) => degToRad(l.angle));
+        const cos = rad.map(Math.cos);
+        const sin = rad.map(Math.sin);
+        const bounds = labels.map((l) => maxTangentialShift(l.angle, l));
+
+        for (let iter = 0; iter < maxIterations; iter += 1) {
+          const positions = labels.map((l, k) =>
+            combinedPosition(r, l.angle, l, shifts[k]),
+          );
+          const nudge = new Array(labels.length).fill(0);
+          let anyViolation = false;
+
+          for (let i = 0; i < labels.length; i += 1) {
+            for (let j = i + 1; j < labels.length; j += 1) {
+              const marginX = labels[i].width / 2 + labels[j].width / 2 + o.gapH;
+              const marginY = labels[i].height / 2 + labels[j].height / 2 + o.gapV;
+              const dx = positions[i][0] - positions[j][0];
+              const dy = positions[i][1] - positions[j][1];
+              if (Math.abs(dx) >= marginX || Math.abs(dy) >= marginY) continue;
+              anyViolation = true;
+              const deficitX = marginX - Math.abs(dx);
+              const deficitY = marginY - Math.abs(dy);
+              if (deficitX <= deficitY) {
+                const sign = dx >= 0 ? 1 : -1;
+                nudge[i] += sign * deficitX * -sin[i];
+                nudge[j] -= sign * deficitX * -sin[j];
+              } else {
+                const sign = dy >= 0 ? 1 : -1;
+                nudge[i] += sign * deficitY * cos[i];
+                nudge[j] -= sign * deficitY * cos[j];
+              }
+            }
+          }
+
+          for (let i = 0; i < labels.length; i += 1) {
+            const p0 = [o.ringRadius * cos[i], o.ringRadius * sin[i]];
+            const p1 = [r * cos[i], r * sin[i]];
+            for (let j = 0; j < labels.length; j += 1) {
+              if (i === j) continue;
+              const box = {
+                minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+                maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+                minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+                maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+              };
+              if (!segmentHitsBox(p0, p1, box)) continue;
+              anyViolation = true;
+              const q = positions[j][0] * -sin[i] + positions[j][1] * cos[i];
+              const perpHalf =
+                (labels[j].width / 2 + o.connectorMargin) * Math.abs(sin[i]) +
+                (labels[j].height / 2 + o.connectorMargin) * Math.abs(cos[i]);
+              const dqdShiftJ = cos[i] * cos[j] + sin[i] * sin[j];
+              nudge[j] +=
+                (q >= 0 ? 1 : -1) *
+                Math.sign(dqdShiftJ || 1) *
+                Math.max(perpHalf - Math.abs(q), 1);
+            }
+          }
+
+          if (!anyViolation) return { feasible: true, shifts: shifts.slice() };
+
+          for (let k = 0; k < labels.length; k += 1) {
+            if (nudge[k] === 0) continue;
+            const step =
+              Math.sign(nudge[k]) *
+              Math.min(Math.abs(nudge[k]), bounds[k]) *
+              damping;
+            shifts[k] = Math.max(-bounds[k], Math.min(bounds[k], shifts[k] + step));
+          }
+        }
+
+        const positions = labels.map((l, k) =>
+          combinedPosition(r, l.angle, l, shifts[k]),
+        );
+        return {
+          feasible: combinedViolations(labels, r, positions, o) === 0,
+          shifts: shifts.slice(),
+        };
+      }
+
+      /**
+       Near-anchoring plus the tangential slide, bisected on the shared
+       near-distance. Keeps near-anchoring's guarantee (every nearest
+       point exactly on the shared circle, zero spread) while recovering
+       radius the slide can buy.
+       */
+      function solveRadiusCombined(
+        labels,
+        o,
+        { bisectSteps = 8, relaxIterations = 25, damping = 0.6 } = {},
+      ) {
+        const zeros = new Array(labels.length).fill(0);
+        let hi = o.ringRadius + o.ringMargin;
+        while (
+          combinedViolations(
+            labels,
+            hi,
+            labels.map((l) => combinedPosition(hi, l.angle, l, 0)),
+            o,
+          ) > 0
+        ) {
+          hi = hi * 1.5 + 10;
+        }
+
+        let best = { radius: hi, shifts: zeros };
+        let lo = o.ringRadius + o.ringMargin;
+        for (let i = 0; i < bisectSteps; i += 1) {
+          const mid = (lo + hi) / 2;
+          const { feasible, shifts } = relaxCombined(
+            labels,
+            mid,
+            o,
+            relaxIterations,
+            damping,
+          );
+          if (feasible) {
+            hi = mid;
+            best = { radius: mid, shifts };
+          } else {
+            lo = mid;
+          }
+        }
+
+        best.shifts = minimizeShifts(labels, best.radius, best.shifts, o);
+        return best;
+      }
+
+      /**
+       Everything above holds every plate's nearest point on one exact
+       circle, which is rigid: a single crowded item can force the whole
+       menu outward when a little slack for that item alone would do.
+       `ringDistanceTolerance` turns the circle into a band: an item's
+       nearest point may sit anywhere in `[r, r + tolerance]`, and the
+       solver picks each item's slack.
+
+       Two things make this work rather than backfire. Slack is a
+       fallback, not a first move: each candidate radius is tried
+       strictly first (all slack zero, tangential slide only), and only
+       a failure re-tries with slack, so the tolerant search is a
+       superset of the strict one and can never return a worse radius. A
+       first attempt that pushed items out as part of the same relaxation
+       did do worse, by 6% on the 12-item menu and 12% on the adversarial
+       one, because the radial pushes fought the tangential ones. And
+       repairs are granted one item at a time, the least-slacked member
+       of a violating pair, bisected for the smallest slack that helps,
+       rather than spread across everything at once.
+
+       Note that the smallest radius is not the smallest menu: past a
+       modest tolerance the radius keeps dropping while the outer extent
+       grows again, because items fling outward. On the 12-item menu a
+       20px tolerance cut the extent by 32%, while 150px cut the radius
+       far more but the extent only 20%.
+       */
+      function solveAtTolerance(
+        labels,
+        o,
+        { bisectSteps = 8, relaxIterations = 25, damping = 0.6 } = {},
+      ) {
+        const n = labels.length;
+        const zeros = new Array(n).fill(0);
+        const tolerance = o.ringDistanceTolerance ?? 0;
+        const rad = labels.map((l) => degToRad(l.angle));
+        const cos = rad.map(Math.cos);
+        const sin = rad.map(Math.sin);
+
+        // Positions cached, only the changed item recomputed: rebuilding
+        // every position on every probe is what made the repair loop
+        // cost tens of milliseconds.
+        function makeLayout(r, shifts) {
+          const slacks = new Array(n).fill(0);
+          const positions = new Array(n);
+          const sync = (k) => {
+            positions[k] = combinedPosition(
+              r + slacks[k],
+              labels[k].angle,
+              labels[k],
+              shifts[k],
+            );
+          };
+          for (let k = 0; k < n; k += 1) sync(k);
+
+          function count() {
+            let total = 0;
+            for (let i = 0; i < n; i += 1) {
+              for (let j = i + 1; j < n; j += 1) {
+                const dx = Math.abs(positions[i][0] - positions[j][0]);
+                const dy = Math.abs(positions[i][1] - positions[j][1]);
+                if (
+                  dx < labels[i].width / 2 + labels[j].width / 2 + o.gapH &&
+                  dy < labels[i].height / 2 + labels[j].height / 2 + o.gapV
+                ) {
+                  total += 1;
+                }
+              }
+            }
+
+            for (let i = 0; i < n; i += 1) {
+              const p0 = [o.ringRadius * cos[i], o.ringRadius * sin[i]];
+              const p1 = [
+                (r + slacks[i]) * cos[i],
+                (r + slacks[i]) * sin[i],
+              ];
+              for (let j = 0; j < n; j += 1) {
+                if (i === j) continue;
+                const box = {
+                  minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+                  maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+                  minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+                  maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+                };
+                if (segmentHitsBox(p0, p1, box)) total += 1;
+              }
+            }
+
+            return total;
+          }
+
+          // The least-slacked member of the first violating pair, or the
+          // covered plate of the first blocked connector.
+          function firstRepairTarget() {
+            for (let i = 0; i < n; i += 1) {
+              for (let j = i + 1; j < n; j += 1) {
+                const dx = Math.abs(positions[i][0] - positions[j][0]);
+                const dy = Math.abs(positions[i][1] - positions[j][1]);
+                if (
+                  dx < labels[i].width / 2 + labels[j].width / 2 + o.gapH &&
+                  dy < labels[i].height / 2 + labels[j].height / 2 + o.gapV
+                ) {
+                  return slacks[i] <= slacks[j] ? i : j;
+                }
+              }
+
+              const p0 = [o.ringRadius * cos[i], o.ringRadius * sin[i]];
+              const p1 = [(r + slacks[i]) * cos[i], (r + slacks[i]) * sin[i]];
+              for (let j = 0; j < n; j += 1) {
+                if (i === j) continue;
+                const box = {
+                  minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+                  maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+                  minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+                  maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+                };
+                if (segmentHitsBox(p0, p1, box)) return j;
+              }
+            }
+
+            return -1;
+          }
+
+          return { positions, slacks, sync, count, firstRepairTarget };
+        }
+
+        function attempt(r) {
+          const strict = relaxCombined(labels, r, o, relaxIterations, damping);
+          if (strict.feasible) {
+            return { feasible: true, shifts: strict.shifts, slacks: zeros.slice() };
+          }
+
+          if (tolerance <= 0) return { feasible: false };
+
+          const layout = makeLayout(r, strict.shifts);
+          for (let round = 0; round < 12; round += 1) {
+            const before = layout.count();
+            if (before === 0) break;
+            let target = layout.firstRepairTarget();
+            if (target < 0) break;
+            if (layout.slacks[target] >= tolerance - 1e-9) {
+              const next = layout.slacks
+                .map((s, k) => ({ s, k }))
+                .sort((a, b) => a.s - b.s)
+                .find((x) => x.s < tolerance - 1e-9);
+              if (next === undefined) break;
+              target = next.k;
+            }
+
+            // Climb from the current slack in doubling steps rather than
+            // bisecting [current, tolerance]. Bisecting made the first
+            // probe half the tolerance, so a generous tolerance committed
+            // to a large slack immediately and the layout never recovered:
+            // the same menu came out worse at tolerance 150 than at 20.
+            // Climbing takes an identical path for every tolerance until
+            // the smaller one runs out, which is what makes a larger
+            // tolerance reliably no worse than a smaller one.
+            const base = Math.max(1, tolerance / 64);
+            let found = null;
+            for (
+              let step = base;
+              step <= tolerance + 1e-9 && found === null;
+              step *= 2
+            ) {
+              const trial = Math.min(tolerance, layout.slacks[target] + step);
+              layout.slacks[target] = trial;
+              layout.sync(target);
+              if (layout.count() < before) found = trial;
+              if (trial >= tolerance - 1e-9) break;
+            }
+
+            layout.slacks[target] = found ?? tolerance;
+            layout.sync(target);
+          }
+
+          return {
+            feasible: layout.count() === 0,
+            shifts: strict.shifts,
+            slacks: layout.slacks.slice(),
+          };
+        }
+
+        // Score by the menu's actual outer extent, not by the radius.
+        // The smallest radius is not the smallest menu: a tighter radius
+        // forces slack, and slack pushes the outermost corner further out
+        // than a slightly looser radius would.
+        const extentOf = (radius, slacks, shifts) => {
+          let extent = 0;
+          for (let k = 0; k < labels.length; k += 1) {
+            const [x, y] = tolerantPosition(
+              radius,
+              slacks[k],
+              shifts[k],
+              labels[k].angle,
+              labels[k],
+            );
+            const halfWidth = labels[k].width / 2;
+            const halfHeight = labels[k].height / 2;
+            for (const [cx, cy] of [
+              [x - halfWidth, y - halfHeight],
+              [x + halfWidth, y - halfHeight],
+              [x - halfWidth, y + halfHeight],
+              [x + halfWidth, y + halfHeight],
+            ]) {
+              extent = Math.max(extent, Math.hypot(cx, cy));
+            }
+          }
+
+          return extent;
+        };
+
+        let hi = o.ringRadius + o.ringMargin;
+        let top = attempt(hi);
+        while (!top.feasible) {
+          hi = hi * 1.5 + 10;
+          top = attempt(hi);
+        }
+
+        // Smallest feasible radius, by bisection. Kept cheap: no
+        // minimization inside the loop.
+        const ceiling = hi;
+        let lo = o.ringRadius + o.ringMargin;
+        let floorResult = top;
+        for (let i = 0; i < bisectSteps; i += 1) {
+          const mid = (lo + hi) / 2;
+          const res = attempt(mid);
+          if (res.feasible) {
+            hi = mid;
+            floorResult = res;
+          } else {
+            lo = mid;
+          }
+        }
+
+        // Then sample across [smallest feasible, unconstrained] and keep
+        // whichever scores best. Bisecting alone only ever visits radii at
+        // or below the smallest feasible one, so the roomier arrangement
+        // that needs no slack at all was never in the running: a larger
+        // tolerance would dive to a tighter radius and come out with a
+        // bigger menu than a smaller tolerance produced.
+        // Two candidates are enough now that the repair path no longer
+        // depends on how generous the tolerance is: the smallest feasible
+        // radius, and the unconstrained one that needs no slack at all.
+        // Sampling the range between them cost several times as much and
+        // changed nothing.
+        let best = null;
+        const candidates = ceiling > hi + 1 ? [hi, ceiling] : [hi];
+        for (const radius of candidates) {
+          const res = radius === hi ? floorResult : attempt(radius);
+          if (!res.feasible) continue;
+          const tightened = minimizeSlackAndShift(
+            labels,
+            radius,
+            res.slacks,
+            res.shifts,
+            o,
+          );
+          const extent = extentOf(radius, tightened.slacks, tightened.shifts);
+          if (best === null || extent < best.extent) {
+            best = { radius, ...tightened, extent };
+          }
+        }
+
+        return { radius: best.radius, slacks: best.slacks, shifts: best.shifts };
+      }
+
+      // Shrink each item's slack, then its slide, back toward zero as far
+      // as each will go while the whole layout stays feasible.
+      function minimizeSlackAndShift(labels, r, slacks, shifts, o) {
+        const outSlacks = slacks.slice();
+        const outShifts = shifts.slice();
+        const positions = labels.map((label, k) =>
+          tolerantPosition(r, outSlacks[k], outShifts[k], label.angle, label),
+        );
+        const sync = (k) => {
+          positions[k] = tolerantPosition(
+            r,
+            outSlacks[k],
+            outShifts[k],
+            labels[k].angle,
+            labels[k],
+          );
+        };
+        const clean = () =>
+          tolerantViolations(labels, r, outSlacks, positions, o) === 0;
+
+        // Largest slack first, and repeat until a pass changes nothing:
+        // shrinking one item often frees room for the next, and stopping
+        // after a fixed two passes left a larger tolerance producing a
+        // worse layout than a smaller one.
+        for (let pass = 0; pass < 6; pass += 1) {
+          const before = outSlacks.concat(outShifts).join(',');
+          const order = outSlacks
+            .map((slack, k) => ({ slack: Math.abs(slack) + Math.abs(outShifts[k]), k }))
+            .sort((a, b) => b.slack - a.slack)
+            .map((x) => x.k);
+          for (const k of order) {
+            for (const field of [outSlacks, outShifts]) {
+              if (field[k] === 0) continue;
+              let lo = 0;
+              let hi = field[k];
+              for (let i = 0; i < 10; i += 1) {
+                const mid = (lo + hi) / 2;
+                const saved = field[k];
+                field[k] = mid;
+                sync(k);
+                if (clean()) {
+                  hi = mid;
+                } else {
+                  field[k] = saved;
+                  sync(k);
+                  lo = mid;
+                }
+              }
+
+              field[k] = hi;
+              sync(k);
+            }
+          }
+
+          if (outSlacks.concat(outShifts).join(',') === before) break;
+        }
+
+        return { slacks: outSlacks, shifts: outShifts };
+      }
+
+      // Violation count at explicit positions, with each item's connector
+      // running to its own outer end.
+      function tolerantViolations(labels, r, slacks, positions, o) {
+        let total = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            const dx = Math.abs(positions[i][0] - positions[j][0]);
+            const dy = Math.abs(positions[i][1] - positions[j][1]);
+            if (
+              dx < labels[i].width / 2 + labels[j].width / 2 + o.gapH &&
+              dy < labels[i].height / 2 + labels[j].height / 2 + o.gapV
+            ) {
+              total += 1;
+            }
+          }
+
+          const dist = distanceFromOriginToBox(
+            positions[i][0],
+            positions[i][1],
+            labels[i].width / 2,
+            labels[i].height / 2,
+          );
+          if (dist < o.ringRadius + o.ringMargin - 1e-6) total += 1;
+        }
+
+        for (let i = 0; i < labels.length; i += 1) {
+          const rad = degToRad(labels[i].angle);
+          const outer = r + slacks[i];
+          const p0 = [o.ringRadius * Math.cos(rad), o.ringRadius * Math.sin(rad)];
+          const p1 = [outer * Math.cos(rad), outer * Math.sin(rad)];
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            const box = {
+              minX: positions[j][0] - labels[j].width / 2 - o.connectorMargin,
+              maxX: positions[j][0] + labels[j].width / 2 + o.connectorMargin,
+              minY: positions[j][1] - labels[j].height / 2 - o.connectorMargin,
+              maxY: positions[j][1] + labels[j].height / 2 + o.connectorMargin,
+            };
+            if (segmentHitsBox(p0, p1, box)) total += 1;
+          }
+        }
+
+        return total;
+      }
+
+      /**
+       Tolerance alone does not behave monotonically: a larger budget
+       changes which radius the bisection settles on, which changes every
+       downstream choice, so a roomier budget could still come out with a
+       bigger menu than a tighter one. Tuning the search did not fix that
+       (three separate attempts made it worse), because the landscape is
+       not convex and there is no local rule that makes a bigger budget
+       always land better.
+
+       So make it structural rather than heuristic: solve at a fixed
+       ladder of budgets, clipped to the one asked for, and keep whichever
+       result is actually smallest. Raising the requested tolerance can
+       then only add candidates, never remove any, so the answer can never
+       get worse. The cost is one solve per rung.
+       */
+      function solveRadiusTolerant(labels, o, tuning = {}) {
+        const requested = o.ringDistanceTolerance ?? 0;
+        const rungs = [0, 15, 45, 135, 405].filter((t) => t < requested);
+        rungs.push(requested);
+
+        let best = null;
+        for (const tolerance of rungs) {
+          const res = solveAtTolerance(
+            labels,
+            { ...o, ringDistanceTolerance: tolerance },
+            tuning,
+          );
+          let extent = 0;
+          for (let k = 0; k < labels.length; k += 1) {
+            const [x, y] = tolerantPosition(
+              res.radius,
+              res.slacks[k],
+              res.shifts[k],
+              labels[k].angle,
+              labels[k],
+            );
+            const halfWidth = labels[k].width / 2;
+            const halfHeight = labels[k].height / 2;
+            for (const [cx, cy] of [
+              [x - halfWidth, y - halfHeight],
+              [x + halfWidth, y - halfHeight],
+              [x - halfWidth, y + halfHeight],
+              [x + halfWidth, y + halfHeight],
+            ]) {
+              extent = Math.max(extent, Math.hypot(cx, cy));
+            }
+          }
+
+          if (best === null || extent < best.extent) best = { ...res, extent };
+        }
+
+        return best;
+      }
+
+      // Position under the tolerant model: the item's own slack pushes
+      // its near-distance target out from the shared radius.
+      function tolerantPosition(r, slack, shift, angle, plate) {
+        return combinedPosition(r + slack, angle, plate, shift);
+      }
+
+      // ── End of the pure solver module ──────────────────────────────────
+
+      // ── Menu presets ─────────────────────────────────────────────────
+      const evenAngles = (n) =>
+        Array.from({ length: n }, (_, i) => (360 / n) * i);
+
+      const PRESETS = {
+        'default-8': {
+          label: 'Default demo (8, even)',
+          items: [
+            { label: 'Right', angle: 0 },
+            { label: 'Down-Right', angle: 45 },
+            { label: 'Others...', angle: 90 },
+            { label: 'Down-Left', angle: 135 },
+            { label: 'Left', angle: 180 },
+            { label: 'Up-Left', angle: 225 },
+            { label: 'Up', angle: 270 },
+            { label: 'Up-Right', angle: 315 },
+          ],
+        },
+        'manual-43': {
+          label: 'Manual angles (#43/#271)',
+          items: [0, 20, 90, 160, 180, 200, 270, 340].map((angle, i) => ({
+            angle,
+            label: [
+              'Right',
+              'Down-Right',
+              'Others...',
+              'Down-Left',
+              'Left',
+              'Up-Left',
+              'Up',
+              'Up-Right',
+            ][i],
+          })),
+        },
+        'long-8': {
+          label: 'Long labels (8, even)',
+          items: [
+            'Insert citation',
+            'Move to trash',
+            'Duplicate this section',
+            'Change background color',
+            'Export as PDF document',
+            'Share with collaborators',
+            'Undo last five actions',
+            'Open in a new window',
+          ].map((label, i, arr) => ({ label, angle: evenAngles(arr.length)[i] })),
+        },
+        'stress-12': {
+          label: 'Stress: 12 long items (#274)',
+          items: Array.from({ length: 12 }, (_, i) => ({
+            label: `Reasonably long menu item number ${i + 1}`,
+            angle: evenAngles(12)[i],
+          })),
+        },
+        'tiny-parent': {
+          label: 'Failure mode: crowded pair, tight gap',
+          items: [
+            { label: 'A very very long label indeed', angle: 0 },
+            { label: 'Another very very long label', angle: 8 },
+            { label: 'Short', angle: 180 },
+          ],
+        },
+        'adversarial-12': {
+          label: 'Adversarial: 12 items, 300°',
+          items: Array.from({ length: 12 }, (_, i) => ({
+            label: `Reasonably long menu item number ${i + 1}`,
+            // Packed into 300 of the available 360 degrees: the worst
+            // case tried for both plate-plate and connector-plate
+            // crowding, not just item count.
+            angle: (300 / 12) * i,
+          })),
+        },
+      };
+
+      // ── DOM glue ─────────────────────────────────────────────────────
+      const stage = document.getElementById('stage');
+      const measurePool = document.getElementById('measure-pool');
+      const stageWrap = document.getElementById('stage-wrap');
+      const CENTER = 240;
+
+      let currentPreset = 'default-8';
+      let zoom = 1;
+      let lastLabels = null;
+
+      const controls = {
+        gapH: document.getElementById('gap-h'),
+        gapV: document.getElementById('gap-v'),
+        minWidth: document.getElementById('min-width'),
+        maxWidth: document.getElementById('max-width'),
+        ringRadius: document.getElementById('ring-radius'),
+        ringInner: document.getElementById('ring-inner'),
+        step: document.getElementById('step'),
+        maxIter: document.getElementById('max-iter'),
+        connectorMargin: document.getElementById('connector-margin'),
+        ringMargin: document.getElementById('ring-margin'),
+        ringTolerance: document.getElementById('ring-tolerance'),
+      };
+
+      function readControls() {
+        return {
+          gapH: Number(controls.gapH.value),
+          gapV: Number(controls.gapV.value),
+          minWidth: Number(controls.minWidth.value),
+          maxWidth: Number(controls.maxWidth.value),
+          ringRadius: Number(controls.ringRadius.value),
+          ringInner: Number(controls.ringInner.value),
+          step: Number(controls.step.value),
+          maxIter: Number(controls.maxIter.value),
+          connectorMargin: Number(controls.connectorMargin.value),
+          ringMargin: Number(controls.ringMargin.value),
+          ringTolerance: Number(controls.ringTolerance.value),
+        };
+      }
+
+      function syncOutputs() {
+        const c = readControls();
+        document.getElementById('gap-h-out').textContent = `${c.gapH}px`;
+        document.getElementById('gap-v-out').textContent = `${c.gapV}px`;
+        document.getElementById('min-width-out').textContent =
+          `${c.minWidth}px`;
+        document.getElementById('max-width-out').textContent =
+          c.maxWidth >= 240 ? 'none' : `${c.maxWidth}px`;
+        document.getElementById('ring-radius-out').textContent =
+          `${c.ringRadius}px`;
+        document.getElementById('ring-inner-out').textContent =
+          `${c.ringInner}px`;
+        document.getElementById('step-out').textContent = `${c.step}px`;
+        document.getElementById('max-iter-out').textContent = c.maxIter;
+        document.getElementById('connector-margin-out').textContent =
+          `${c.connectorMargin}px`;
+        document.getElementById('ring-margin-out').textContent =
+          `${c.ringMargin}px`;
+        document.getElementById('ring-tolerance-out').textContent =
+          `${c.ringTolerance}px`;
+      }
+
+      // Measures each plate's own natural box once — clamp(min, content,
+      // max), per #276 — off in a hidden pool, independent of the radius
+      // it will eventually be placed at. This is the one DOM measurement
+      // pass the whole solve needs.
+      function measureLabels(items, minWidth, maxWidth) {
+        measurePool.innerHTML = '';
+        const nodes = items.map((item) => {
+          const el = document.createElement('div');
+          el.className = 'plate';
+          el.style.position = 'static';
+          el.style.left = '';
+          el.style.top = '';
+          el.style.minWidth = `${minWidth}px`;
+          el.style.maxWidth = maxWidth >= 240 ? 'none' : `${maxWidth}px`;
+          if (maxWidth < 240) {
+            el.style.overflow = 'hidden';
+            el.style.textOverflow = 'ellipsis';
+          }
+
+          el.textContent = item.label;
+          measurePool.append(el);
+          return el;
+        });
+
+        // Force layout once, batched, then read all boxes: N measurements,
+        // not N-per-candidate-radius.
+        const boxes = nodes.map((el) => el.getBoundingClientRect());
+        return items.map((item, i) => ({
+          angle: item.angle,
+          label: item.label,
+          width: boxes[i].width,
+          height: boxes[i].height,
+        }));
+      }
+
+      function render() {
+        const c = readControls();
+        const preset = PRESETS[currentPreset];
+        const labels = measureLabels(preset.items, c.minWidth, c.maxWidth);
+        lastLabels = labels;
+
+        const solverInput = {
+          gapH: c.gapH,
+          gapV: c.gapV,
+          minRadius: c.ringRadius + 22,
+        };
+
+        const t0 = performance.now();
+        const cf = solveRadiusDirect(labels, solverInput);
+        const t1 = performance.now();
+        const ls = solveRadiusLinearScan(labels, {
+          ...solverInput,
+          step: c.step,
+          maxIterations: c.maxIter,
+        });
+        const t2 = performance.now();
+        const full = solveRadiusWithConnectors(labels, {
+          ...solverInput,
+          ringRadius: c.ringRadius,
+          ringMargin: c.ringMargin,
+          connectorMargin: c.connectorMargin,
+        });
+        const t3 = performance.now();
+
+        document.getElementById('cf-radius').textContent =
+          cf.radius.toFixed(2);
+        document.getElementById('cf-iter').textContent = cf.iterations;
+        document.getElementById('cf-time').textContent =
+          `${(t1 - t0).toFixed(3)}ms`;
+        document.getElementById('ls-radius').textContent =
+          ls.radius.toFixed(2);
+        document.getElementById('ls-iter').textContent = ls.iterations;
+        document.getElementById('ls-time').textContent =
+          `${(t2 - t1).toFixed(3)}ms`;
+        document.getElementById('full-radius').textContent =
+          full.radius.toFixed(2);
+        document.getElementById('full-windows').textContent =
+          `${full.forbiddenCount} window(s)`;
+        document.getElementById('full-time').textContent =
+          `${(t3 - t2).toFixed(3)}ms`;
+
+        const solverOptions = {
+          gapH: c.gapH,
+          gapV: c.gapV,
+          ringRadius: c.ringRadius,
+          ringMargin: c.ringMargin,
+          connectorMargin: c.connectorMargin,
+          ringDistanceTolerance: c.ringTolerance,
+        };
+        const shiftResult = solveRadiusTolerant(labels, solverOptions);
+        const t4 = performance.now();
+        document.getElementById('shift-radius').textContent =
+          shiftResult.radius.toFixed(2);
+        document.getElementById('shift-time').textContent =
+          `${(t4 - t3).toFixed(3)}ms`;
+
+        const delta = Math.abs(cf.radius - ls.radius);
+        document.getElementById('agreement').innerHTML =
+          delta <= c.step
+            ? `<span style="color:#2a6df4">Agree</span> within one linear-scan step (Δ${delta.toFixed(2)}px — the scan can only stop on a step boundary, the closed form finds the exact minimum).`
+            : `<span style="color:#b3401f">Disagree by ${delta.toFixed(2)}px — investigate.</span>`;
+
+        const naiveCollisions = countConnectorCollisions(
+          labels,
+          cf.radius,
+          c.ringRadius,
+          c.connectorMargin,
+        );
+        const fixedCollisions = countConnectorCollisions(
+          labels,
+          full.radius,
+          c.ringRadius,
+          c.connectorMargin,
+        );
+        const naiveRingOverlaps = countRingOverlaps(
+          labels,
+          cf.radius,
+          c.ringRadius,
+          c.ringMargin,
+        );
+        const fixedRingOverlaps = countRingOverlaps(
+          labels,
+          full.radius,
+          c.ringRadius,
+          c.ringMargin,
+        );
+        document.getElementById('connector-check').innerHTML =
+          `At the plates-only radius: ${naiveCollisions} connector/plate collision(s), ${naiveRingOverlaps} plate(s) on top of the ring. At the connector-safe radius: ${fixedCollisions}, ${fixedRingOverlaps}.` +
+          (naiveCollisions + naiveRingOverlaps > 0 &&
+          fixedCollisions + fixedRingOverlaps === 0
+            ? ' <span style="color:#2a6df4">Fixed.</span>'
+            : '');
+
+        // Independent check of the combined result, against the real
+        // positions, not the relaxation's own bookkeeping.
+        const shiftPositions = labels.map((label, k) =>
+          tolerantPosition(
+            shiftResult.radius,
+            shiftResult.slacks[k],
+            shiftResult.shifts[k],
+            label.angle,
+            label,
+          ),
+        );
+        let shiftPlateCollisions = 0;
+        let shiftRingOverlaps = 0;
+        let shiftConnectorHits = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            const dx = Math.abs(shiftPositions[i][0] - shiftPositions[j][0]);
+            const dy = Math.abs(shiftPositions[i][1] - shiftPositions[j][1]);
+            if (
+              dx < labels[i].width / 2 + labels[j].width / 2 + c.gapH &&
+              dy < labels[i].height / 2 + labels[j].height / 2 + c.gapV
+            ) {
+              shiftPlateCollisions += 1;
+            }
+          }
+
+          const dist = Math.hypot(
+            Math.max(0, Math.abs(shiftPositions[i][0]) - labels[i].width / 2),
+            Math.max(0, Math.abs(shiftPositions[i][1]) - labels[i].height / 2),
+          );
+          if (dist < c.ringRadius + c.ringMargin - 1e-6) shiftRingOverlaps += 1;
+        }
+
+        for (let i = 0; i < labels.length; i += 1) {
+          const rad = degToRad(labels[i].angle);
+          const p0 = [c.ringRadius * Math.cos(rad), c.ringRadius * Math.sin(rad)];
+          const outerI = shiftResult.radius + shiftResult.slacks[i];
+          const p1 = [outerI * Math.cos(rad), outerI * Math.sin(rad)];
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            const box = {
+              minX: shiftPositions[j][0] - labels[j].width / 2 - c.connectorMargin,
+              maxX: shiftPositions[j][0] + labels[j].width / 2 + c.connectorMargin,
+              minY: shiftPositions[j][1] - labels[j].height / 2 - c.connectorMargin,
+              maxY: shiftPositions[j][1] + labels[j].height / 2 + c.connectorMargin,
+            };
+            if (segmentHitsBox(p0, p1, box)) shiftConnectorHits += 1;
+          }
+        }
+
+        const shiftNearDists = labels.map((label, k) =>
+          Math.hypot(
+            Math.max(0, Math.abs(shiftPositions[k][0]) - label.width / 2),
+            Math.max(0, Math.abs(shiftPositions[k][1]) - label.height / 2),
+          ),
+        );
+        const shiftSpread =
+          Math.max(...shiftNearDists) - Math.min(...shiftNearDists);
+        const shiftIssues = shiftPlateCollisions + shiftRingOverlaps + shiftConnectorHits;
+        document.getElementById('shift-check').innerHTML =
+          `Combined, checked against the real positions: ${shiftPlateCollisions} plate collision(s), ${shiftRingOverlaps} ring overlap(s), ${shiftConnectorHits} connector hit(s), Δ${shiftSpread.toFixed(2)}px near-distance spread against a ${c.ringTolerance}px tolerance.` +
+          (shiftIssues === 0 && shiftSpread <= c.ringTolerance + 0.01
+            ? ' <span style="color:#2a6df4">Clean.</span>'
+            : ' <span style="color:#b3401f">Investigate.</span>');
+
+        const nearR = solveRadiusNearAnchored(labels, {
+          gapH: c.gapH,
+          gapV: c.gapV,
+          ringRadius: c.ringRadius,
+          ringMargin: c.ringMargin,
+          connectorMargin: c.connectorMargin,
+        });
+        const t5 = performance.now();
+        const nearPositions = labels.map((label) =>
+          nearAnchoredPosition(nearR, label.angle, label),
+        );
+        const nearDists = labels.map((label, k) =>
+          Math.hypot(
+            Math.max(0, Math.abs(nearPositions[k][0]) - label.width / 2),
+            Math.max(0, Math.abs(nearPositions[k][1]) - label.height / 2),
+          ),
+        );
+        document.getElementById('near-radius').textContent = nearR.toFixed(2);
+        document.getElementById('near-spread').textContent =
+          `Δ${(Math.max(...nearDists) - Math.min(...nearDists)).toFixed(1)}px spread`;
+        document.getElementById('near-time').textContent =
+          `${(t5 - t4).toFixed(3)}ms`;
+        // What the slide buys on top of near-anchoring, now that both
+        // numbers are known.
+        document.getElementById('shift-relax-iter').textContent =
+          `${(((nearR - shiftResult.radius) / nearR) * 100).toFixed(1)}% under near`;
+
+        let nearPlateCollisions = 0;
+        let nearConnectorHits = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            const dx = Math.abs(nearPositions[i][0] - nearPositions[j][0]);
+            const dy = Math.abs(nearPositions[i][1] - nearPositions[j][1]);
+            if (
+              dx < labels[i].width / 2 + labels[j].width / 2 + c.gapH &&
+              dy < labels[i].height / 2 + labels[j].height / 2 + c.gapV
+            ) {
+              nearPlateCollisions += 1;
+            }
+          }
+        }
+
+        for (let i = 0; i < labels.length; i += 1) {
+          const rad = degToRad(labels[i].angle);
+          const p0 = [c.ringRadius * Math.cos(rad), c.ringRadius * Math.sin(rad)];
+          const p1 = [nearR * Math.cos(rad), nearR * Math.sin(rad)];
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            const box = {
+              minX: nearPositions[j][0] - labels[j].width / 2 - c.connectorMargin,
+              maxX: nearPositions[j][0] + labels[j].width / 2 + c.connectorMargin,
+              minY: nearPositions[j][1] - labels[j].height / 2 - c.connectorMargin,
+              maxY: nearPositions[j][1] + labels[j].height / 2 + c.connectorMargin,
+            };
+            if (segmentHitsBox(p0, p1, box)) nearConnectorHits += 1;
+          }
+        }
+
+        const nearIssues = nearPlateCollisions + nearConnectorHits;
+        document.getElementById('near-check').innerHTML =
+          `Near-anchored: every item's nearest point sits exactly on the shared circle by construction (0px spread always). ${nearPlateCollisions} plate collision(s), ${nearConnectorHits} connector hit(s) checked against the real positions.` +
+          (nearIssues === 0
+            ? ' <span style="color:#2a6df4">Clean.</span>'
+            : ' <span style="color:#b3401f">Investigate.</span>');
+
+        const warn = document.getElementById('failure-warning');
+        if (ls.gaveUp) {
+          warn.innerHTML = `<div class="warn">Linear scan gave up after ${c.maxIter} iterations without clearing every pair — this is the failure mode: a menu that never reaches a collision-free radius at this step/budget. Closed form still returns a number (${cf.radius.toFixed(0)}px), because it isn't scanning — but that radius can exceed the parent's bounds; nothing here clamps it.</div>`;
+        } else {
+          warn.innerHTML = '';
+        }
+
+        drawStage(labels, c, full.radius, ls.radius, shiftResult, nearR);
+      }
+
+      function drawStage(labels, c, cfRadius, lsRadius, shiftResult, nearR) {
+        stage.innerHTML = '';
+
+        // Menus can reach well past the stage's own box once the labels
+        // are long, and a clipped layout is impossible to judge. Scale
+        // the stage down to whatever the visible layers actually need.
+        let needed = c.ringRadius;
+        labels.forEach((label, k) => {
+          const candidates = [];
+          if (layerVisible('cf')) candidates.push([cfRadius, 0, 0]);
+          if (layerVisible('ls')) candidates.push([lsRadius, 0, 0]);
+          if (layerVisible('shift')) {
+            candidates.push([
+              shiftResult.radius,
+              shiftResult.slacks[k],
+              shiftResult.shifts[k],
+            ]);
+          }
+
+          if (layerVisible('near')) candidates.push([nearR, 0, 0]);
+          for (const [radius, slack, shift] of candidates) {
+            const [x, y] = tolerantPosition(
+              radius,
+              slack,
+              shift,
+              label.angle,
+              label,
+            );
+            needed = Math.max(
+              needed,
+              Math.hypot(Math.abs(x) + label.width / 2, Math.abs(y) + label.height / 2),
+            );
+          }
+        });
+
+        const fit = Math.min(1, (CENTER - 8) / needed);
+        stage.style.transform = fit < 1 ? `scale(${fit})` : '';
+        stage.style.transformOrigin = 'center center';
+
+        const addRing = (radius, fill) => {
+          const el = document.createElement('div');
+          el.className = 'ring';
+          el.style.width = `${radius * 2}px`;
+          el.style.height = `${radius * 2}px`;
+          el.style.background = fill;
+          stage.append(el);
+        };
+
+        addRing(c.ringRadius, 'var(--ring)');
+        addRing(c.ringInner, '#fff');
+        stage.append(Object.assign(document.createElement('div'), { className: 'center-dot' }));
+
+        labels.forEach((label, k) => {
+          const rad = degToRad(label.angle);
+          const cos = Math.cos(rad);
+          const sin = Math.sin(rad);
+
+          if (layerVisible('cf')) {
+            const connLen = Math.max(0, cfRadius - c.ringRadius + 8);
+            const connector = document.createElement('div');
+            connector.className = 'connector';
+            connector.style.width = `${connLen}px`;
+            connector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
+            stage.append(connector);
+          }
+
+          // The shift-aware connector never changes angle, only length —
+          // it is the same ray, just possibly shorter or longer. Drawn
+          // second so it is visible against the recommended connector
+          // when the two radii differ.
+          if (layerVisible('shift')) {
+            const shiftConnLen = Math.max(
+              0,
+              shiftResult.radius + shiftResult.slacks[k] - c.ringRadius + 8,
+            );
+            const shiftConnector = document.createElement('div');
+            shiftConnector.className = 'connector shift-aware';
+            shiftConnector.style.width = `${shiftConnLen}px`;
+            shiftConnector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
+            stage.append(shiftConnector);
+          }
+
+          // Near-anchored's own connector: same ray again, length set by
+          // the shared near-anchored radius rather than the recommended
+          // one.
+          if (layerVisible('near')) {
+            const nearConnLen = Math.max(0, nearR - c.ringRadius + 8);
+            const nearConnector = document.createElement('div');
+            nearConnector.className = 'connector near-anchored';
+            nearConnector.style.width = `${nearConnLen}px`;
+            nearConnector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
+            stage.append(nearConnector);
+          }
+
+          const place = (radius, cls, useMeasured, x, y) => {
+            const el = document.createElement('div');
+            el.className = `plate ${cls}`;
+            if (useMeasured) {
+              el.style.width = `${label.width}px`;
+              el.style.height = `${label.height}px`;
+              el.style.boxSizing = 'border-box';
+            } else {
+              el.style.minWidth = `${c.minWidth}px`;
+              el.style.maxWidth =
+                c.maxWidth >= 240 ? 'none' : `${c.maxWidth}px`;
+            }
+
+            el.textContent = label.label;
+            el.style.left = `${CENTER + x}px`;
+            el.style.top = `${CENTER + y}px`;
+            el.style.transform = 'translate(-50%, -50%)';
+            stage.append(el);
+          };
+
+          if (layerVisible('cf')) {
+            place(cfRadius, 'closed-form', false, cfRadius * cos, cfRadius * sin);
+          }
+
+          if (layerVisible('ls')) {
+            place(lsRadius, 'linear-scan', true, lsRadius * cos, lsRadius * sin);
+          }
+
+          if (layerVisible('shift')) {
+            const [shiftX, shiftY] = tolerantPosition(
+              shiftResult.radius,
+              shiftResult.slacks[k],
+              shiftResult.shifts[k],
+              label.angle,
+              label,
+            );
+            place(shiftResult.radius, 'shift-aware', true, shiftX, shiftY);
+          }
+
+          if (layerVisible('near')) {
+            const [nearX, nearY] = nearAnchoredPosition(nearR, label.angle, label);
+            place(nearR, 'near-anchored', true, nearX, nearY);
+          }
+        });
+      }
+
+      // Four solvers drawn at once turned the stage into soup, especially
+      // once tolerance let them sit at very different radii. Draw only
+      // the layers that are ticked.
+      function layerVisible(name) {
+        return document.getElementById(`layer-${name}`)?.checked ?? true;
+      }
+
+      function buildLayerToggles() {
+        for (const name of ['cf', 'ls', 'shift', 'near']) {
+          document
+            .getElementById(`layer-${name}`)
+            .addEventListener('change', render);
+        }
+      }
+
+      function buildPresetButtons() {
+        const container = document.getElementById('preset-buttons');
+        for (const [key, preset] of Object.entries(PRESETS)) {
+          const btn = document.createElement('button');
+          btn.textContent = preset.label;
+          btn.dataset.preset = key;
+          if (key === currentPreset) btn.classList.add('active');
+          btn.addEventListener('click', () => {
+            currentPreset = key;
+            for (const b of container.children) b.classList.remove('active');
+            btn.classList.add('active');
+            render();
+          });
+          container.append(btn);
+        }
+      }
+
+      function buildZoomButtons() {
+        const container = document.getElementById('zoom-buttons');
+        for (const btn of container.children) {
+          btn.addEventListener('click', () => {
+            zoom = Number(btn.dataset.zoom);
+            for (const b of container.children) b.classList.remove('active');
+            btn.classList.add('active');
+            // Chromium-only, non-standard `zoom`, applied page-wide so the
+            // hidden measurement pool is rescaled along with everything
+            // else and `measureLabels` picks up the change. This is a
+            // content-scale stand-in, not real OS/browser page zoom (see
+            // the resolution comment on #267 for why those are not the
+            // same thing) — treat results here as a bound, not a proof.
+            document.documentElement.style.zoom = String(zoom);
+            render();
+          });
+        }
+      }
+
+      for (const input of Object.values(controls)) {
+        input.addEventListener('input', () => {
+          syncOutputs();
+          render();
+        });
+      }
+
+      document.getElementById('repeat-btn').addEventListener('click', () => {
+        const c = readControls();
+        const preset = PRESETS[currentPreset];
+        const radii = [];
+        const widths = [];
+        for (let i = 0; i < 20; i += 1) {
+          const labels = measureLabels(preset.items, c.minWidth, c.maxWidth);
+          widths.push(labels.map((l) => l.width).join(','));
+          const { radius } = solveRadiusWithConnectors(labels, {
+            gapH: c.gapH,
+            gapV: c.gapV,
+            minRadius: c.ringRadius + 22,
+            ringRadius: c.ringRadius,
+            ringMargin: c.ringMargin,
+            connectorMargin: c.connectorMargin,
+          });
+          radii.push(radius);
+        }
+
+        const uniqueRadii = new Set(radii.map((r) => r.toFixed(6)));
+        const uniqueWidths = new Set(widths);
+        document.getElementById('determinism-out').innerHTML =
+          uniqueRadii.size === 1 && uniqueWidths.size === 1
+            ? `20/20 re-measurements identical: same plate widths, same solved radius (${radii[0].toFixed(2)}px). Deterministic under fixed zoom/DPR/fonts.`
+            : `Variation seen across 20 re-measurements: ${uniqueRadii.size} distinct radii, ${uniqueWidths.size} distinct width sets. See console for the raw values.`;
+        if (uniqueRadii.size > 1 || uniqueWidths.size > 1) {
+          console.log('label-solver determinism check', { radii, widths });
+        }
+      });
+
+      document.getElementById('zoom-sweep-btn').addEventListener('click', () => {
+        const c = readControls();
+        const preset = PRESETS[currentPreset];
+        const testZooms = [0.75, 1, 1.25, 1.5, 2];
+        const rows = testZooms.map((z) => {
+          document.documentElement.style.zoom = String(z);
+          const labels = measureLabels(preset.items, c.minWidth, c.maxWidth);
+          const { radius } = solveRadiusDirect(labels, {
+            gapH: c.gapH,
+            gapV: c.gapV,
+            minRadius: c.ringRadius + 22,
+          });
+          return `<tr><td>${z}×</td><td>${radius.toFixed(2)}px</td><td>${(radius / z).toFixed(2)}px</td></tr>`;
+        });
+        document.documentElement.style.zoom = '1';
+        document.getElementById('determinism-out').innerHTML =
+          `<div>Non-standard CSS <code>zoom</code> content-scale sweep (not real browser page zoom — see the resolution comment). Radius grows with scale but not perfectly proportionally: the collision gap is a fixed real length that does not scale, so it carries relatively less weight at high zoom.</div>` +
+          `<table><tr><th>scale</th><th>radius</th><th>radius/scale</th></tr>${rows.join('')}</table>`;
+        render();
+      });
+
+      buildPresetButtons();
+      buildLayerToggles();
+      buildZoomButtons();
+      syncOutputs();
+      render();
+
+      // Exposed for the zoom-sweep check driven from outside the page.
+      window.__labelSolverPrototype = {
+        render,
+        measureLabels,
+        solveRadiusDirect,
+        solveRadiusLinearScan,
+        solveRadiusWithConnectors,
+        countConnectorCollisions,
+        connectorHitsPlateAt,
+        countRingOverlaps,
+        minRingClearRadius,
+        solveRadiusWithShift,
+        solveRadiusCombined,
+        solveRadiusTolerant,
+        tolerantPosition,
+        combinedPosition,
+        maxTangentialShift,
+        shiftedPosition,
+        solveRadiusNearAnchored,
+        nearAnchoredPosition,
+        PRESETS,
+        readControls,
+        setPreset(key) {
+          currentPreset = key;
+          render();
+        },
+        getLastLabels: () => lastLabels,
+      };
+    </script>
+  </body>
+</html>
