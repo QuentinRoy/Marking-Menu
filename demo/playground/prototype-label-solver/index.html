@@ -35,6 +35,15 @@
         font-size: 18px;
         margin: 0 0 6px;
       }
+      details.notes {
+        margin: 0 0 12px;
+      }
+      details.notes summary {
+        cursor: pointer;
+        font-size: 12px;
+        color: var(--accent);
+        margin-bottom: 6px;
+      }
       header p {
         max-width: 72ch;
         color: var(--quiet);
@@ -231,6 +240,17 @@
         margin: 6px 0;
         font-size: 12px;
       }
+      .layer-row {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+        user-select: none;
+        margin: 2px 0;
+      }
+      .layer-row input {
+        margin: 0 2px 0 0;
+      }
       .legend-swatch {
         display: inline-block;
         width: 10px;
@@ -260,6 +280,8 @@
         stress-test with more/longer items; and check determinism across
         repeated measurement and simulated browser zoom.
       </p>
+      <details class="notes">
+        <summary>Findings and caveats</summary>
       <p>
         Neither solver above checks two things a plate must also respect: not
         covering a different item's connector, and not sitting on top of the
@@ -343,6 +365,7 @@
         reuses <code>minRingClearRadius</code> directly, pointed at the
         shared circle instead of the physical ring.
       </p>
+      </details>
     </header>
     <main>
       <div id="controls">
@@ -517,25 +540,29 @@
       <div id="results">
         <fieldset>
           <legend>Legend</legend>
-          <div>
+          <label class="layer-row">
+            <input type="checkbox" id="layer-cf" checked />
             <span class="legend-swatch" style="background: var(--closed-form)"></span
             >connector-safe (recommended)
-          </div>
-          <div>
+          </label>
+          <label class="layer-row">
+            <input type="checkbox" id="layer-ls" />
             <span
               class="legend-swatch"
               style="border: 1px dashed var(--linear-scan)"
             ></span
             >linear scan (plates-only reference)
-          </div>
-          <div>
+          </label>
+          <label class="layer-row">
+            <input type="checkbox" id="layer-shift" checked />
             <span class="legend-swatch" style="background: var(--shift-aware)"></span
             >combined: near + slide
-          </div>
-          <div>
+          </label>
+          <label class="layer-row">
+            <input type="checkbox" id="layer-near" />
             <span class="legend-swatch" style="background: var(--near-anchored)"></span
             >near-anchored (exploratory)
-          </div>
+          </label>
         </fieldset>
         <fieldset>
           <legend>Solve</legend>
@@ -2469,6 +2496,42 @@
       function drawStage(labels, c, cfRadius, lsRadius, shiftResult, nearR) {
         stage.innerHTML = '';
 
+        // Menus can reach well past the stage's own box once the labels
+        // are long, and a clipped layout is impossible to judge. Scale
+        // the stage down to whatever the visible layers actually need.
+        let needed = c.ringRadius;
+        labels.forEach((label, k) => {
+          const candidates = [];
+          if (layerVisible('cf')) candidates.push([cfRadius, 0, 0]);
+          if (layerVisible('ls')) candidates.push([lsRadius, 0, 0]);
+          if (layerVisible('shift')) {
+            candidates.push([
+              shiftResult.radius,
+              shiftResult.slacks[k],
+              shiftResult.shifts[k],
+            ]);
+          }
+
+          if (layerVisible('near')) candidates.push([nearR, 0, 0]);
+          for (const [radius, slack, shift] of candidates) {
+            const [x, y] = tolerantPosition(
+              radius,
+              slack,
+              shift,
+              label.angle,
+              label,
+            );
+            needed = Math.max(
+              needed,
+              Math.hypot(Math.abs(x) + label.width / 2, Math.abs(y) + label.height / 2),
+            );
+          }
+        });
+
+        const fit = Math.min(1, (CENTER - 8) / needed);
+        stage.style.transform = fit < 1 ? `scale(${fit})` : '';
+        stage.style.transformOrigin = 'center center';
+
         const addRing = (radius, fill) => {
           const el = document.createElement('div');
           el.className = 'ring';
@@ -2487,36 +2550,42 @@
           const cos = Math.cos(rad);
           const sin = Math.sin(rad);
 
-          const connLen = Math.max(0, cfRadius - c.ringRadius + 8);
-          const connector = document.createElement('div');
-          connector.className = 'connector';
-          connector.style.width = `${connLen}px`;
-          connector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
-          stage.append(connector);
+          if (layerVisible('cf')) {
+            const connLen = Math.max(0, cfRadius - c.ringRadius + 8);
+            const connector = document.createElement('div');
+            connector.className = 'connector';
+            connector.style.width = `${connLen}px`;
+            connector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
+            stage.append(connector);
+          }
 
           // The shift-aware connector never changes angle, only length —
           // it is the same ray, just possibly shorter or longer. Drawn
           // second so it is visible against the recommended connector
           // when the two radii differ.
-          const shiftConnLen = Math.max(
-            0,
-            shiftResult.radius + shiftResult.slacks[k] - c.ringRadius + 8,
-          );
-          const shiftConnector = document.createElement('div');
-          shiftConnector.className = 'connector shift-aware';
-          shiftConnector.style.width = `${shiftConnLen}px`;
-          shiftConnector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
-          stage.append(shiftConnector);
+          if (layerVisible('shift')) {
+            const shiftConnLen = Math.max(
+              0,
+              shiftResult.radius + shiftResult.slacks[k] - c.ringRadius + 8,
+            );
+            const shiftConnector = document.createElement('div');
+            shiftConnector.className = 'connector shift-aware';
+            shiftConnector.style.width = `${shiftConnLen}px`;
+            shiftConnector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
+            stage.append(shiftConnector);
+          }
 
           // Near-anchored's own connector: same ray again, length set by
           // the shared near-anchored radius rather than the recommended
           // one.
-          const nearConnLen = Math.max(0, nearR - c.ringRadius + 8);
-          const nearConnector = document.createElement('div');
-          nearConnector.className = 'connector near-anchored';
-          nearConnector.style.width = `${nearConnLen}px`;
-          nearConnector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
-          stage.append(nearConnector);
+          if (layerVisible('near')) {
+            const nearConnLen = Math.max(0, nearR - c.ringRadius + 8);
+            const nearConnector = document.createElement('div');
+            nearConnector.className = 'connector near-anchored';
+            nearConnector.style.width = `${nearConnLen}px`;
+            nearConnector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
+            stage.append(nearConnector);
+          }
 
           const place = (radius, cls, useMeasured, x, y) => {
             const el = document.createElement('div');
@@ -2538,21 +2607,45 @@
             stage.append(el);
           };
 
-          place(cfRadius, 'closed-form', false, cfRadius * cos, cfRadius * sin);
-          place(lsRadius, 'linear-scan', true, lsRadius * cos, lsRadius * sin);
+          if (layerVisible('cf')) {
+            place(cfRadius, 'closed-form', false, cfRadius * cos, cfRadius * sin);
+          }
 
-          const [shiftX, shiftY] = tolerantPosition(
-            shiftResult.radius,
-            shiftResult.slacks[k],
-            shiftResult.shifts[k],
-            label.angle,
-            label,
-          );
-          place(shiftResult.radius, 'shift-aware', true, shiftX, shiftY);
+          if (layerVisible('ls')) {
+            place(lsRadius, 'linear-scan', true, lsRadius * cos, lsRadius * sin);
+          }
 
-          const [nearX, nearY] = nearAnchoredPosition(nearR, label.angle, label);
-          place(nearR, 'near-anchored', true, nearX, nearY);
+          if (layerVisible('shift')) {
+            const [shiftX, shiftY] = tolerantPosition(
+              shiftResult.radius,
+              shiftResult.slacks[k],
+              shiftResult.shifts[k],
+              label.angle,
+              label,
+            );
+            place(shiftResult.radius, 'shift-aware', true, shiftX, shiftY);
+          }
+
+          if (layerVisible('near')) {
+            const [nearX, nearY] = nearAnchoredPosition(nearR, label.angle, label);
+            place(nearR, 'near-anchored', true, nearX, nearY);
+          }
         });
+      }
+
+      // Four solvers drawn at once turned the stage into soup, especially
+      // once tolerance let them sit at very different radii. Draw only
+      // the layers that are ticked.
+      function layerVisible(name) {
+        return document.getElementById(`layer-${name}`)?.checked ?? true;
+      }
+
+      function buildLayerToggles() {
+        for (const name of ['cf', 'ls', 'shift', 'near']) {
+          document
+            .getElementById(`layer-${name}`)
+            .addEventListener('change', render);
+        }
       }
 
       function buildPresetButtons() {
@@ -2650,6 +2743,7 @@
       });
 
       buildPresetButtons();
+      buildLayerToggles();
       buildZoomButtons();
       syncOutputs();
       render();
