@@ -242,6 +242,15 @@
         stress-test with more/longer items; and check determinism across
         repeated measurement and simulated browser zoom.
       </p>
+      <p>
+        Neither solver above checks one thing a plate must also respect: not
+        covering a different item's connector. A radius that clears every
+        pair of plates can still let a wide plate sit across a neighbor's
+        line from the ring. The "Long labels" preset shows it happening; the
+        third solver, "connector-safe", finds the exact radius windows where
+        that happens and pushes past them, still without scanning — see the
+        Solve panel.
+      </p>
     </header>
     <main>
       <div id="controls">
@@ -298,6 +307,18 @@
               step="4"
             />
             <output id="max-width-out">none</output>
+          </label>
+          <label class="row">
+            <span>Connector clearance</span>
+            <input
+              type="range"
+              id="connector-margin"
+              min="0"
+              max="12"
+              value="2"
+              step="1"
+            />
+            <output id="connector-margin-out">2px</output>
           </label>
         </fieldset>
         <fieldset>
@@ -388,6 +409,10 @@
             ></span
             >linear scan (dashed)
           </div>
+          <div>
+            <span class="legend-swatch" style="background: #1a1a1a"></span
+            >connector-safe (drawn plates)
+          </div>
         </fieldset>
         <fieldset>
           <legend>Solve</legend>
@@ -399,18 +424,25 @@
               <th>time</th>
             </tr>
             <tr>
-              <td>closed form</td>
+              <td>closed form (plates only)</td>
               <td id="cf-radius" class="stat"></td>
               <td id="cf-iter" class="stat"></td>
               <td id="cf-time" class="stat"></td>
             </tr>
             <tr>
-              <td>linear scan</td>
+              <td>linear scan (plates only)</td>
               <td id="ls-radius" class="stat"></td>
               <td id="ls-iter" class="stat"></td>
               <td id="ls-time" class="stat"></td>
             </tr>
+            <tr>
+              <td>connector-safe</td>
+              <td id="full-radius" class="stat"></td>
+              <td id="full-windows" class="stat"></td>
+              <td id="full-time" class="stat"></td>
+            </tr>
           </table>
+          <div id="connector-check"></div>
           <div id="agreement"></div>
           <div id="failure-warning"></div>
         </fieldset>
@@ -526,6 +558,258 @@
         return { radius: r, iterations: maxIterations, gaveUp: true };
       }
 
+      /**
+       Neither solver above checks this: at the shared solved radius, does
+       item i's connector (the straight line from the ring to i's own
+       plate) cross a *different* item's plate? Both endpoints move with
+       the same radius, so unlike the plate-plate case this is not
+       monotonic in `r` — it can be false, then true over a window, then
+       false again, so there is no single per-pair threshold to take the
+       max of. What follows finds the exact forbidden window(s) instead.
+
+       The three functions below implement a segment-vs-axis-aligned-box
+       intersection test (`hitsAt`) via the standard separating-axis
+       theorem for a segment against a box: the segment's own normal,
+       plus the box's two face normals (world x and y) — three axes, not
+       the segment's own direction, which is a common mistake here. Every
+       one of those three axis-overlap conditions is an inequality
+       between two functions that are affine in `r` (endpoints and box
+       center all scale with the same shared radius), so each condition
+       flips at a single, exactly solvable `r`. Collecting those flip
+       points for a pair, sorting them, and sampling the predicate once
+       per resulting slice recovers the exact forbidden interval(s) — a
+       fixed, small number of linear solves per pair, not a scan.
+       */
+      function connectorHitsPlateAt(r, ringRadius, connAngle, plate, margin) {
+        const a = degToRad(connAngle);
+        const p0 = [ringRadius * Math.cos(a), ringRadius * Math.sin(a)];
+        const p1 = [r * Math.cos(a), r * Math.sin(a)];
+        const pa = degToRad(plate.angle);
+        const cx = r * Math.cos(pa);
+        const cy = r * Math.sin(pa);
+        const box = {
+          minX: cx - plate.width / 2 - margin,
+          maxX: cx + plate.width / 2 + margin,
+          minY: cy - plate.height / 2 - margin,
+          maxY: cy + plate.height / 2 + margin,
+        };
+        const dx = p1[0] - p0[0];
+        const dy = p1[1] - p0[1];
+        let t0 = 0;
+        let t1 = 1;
+        const clip = (p, q) => {
+          if (p === 0) return q >= 0;
+          const t = q / p;
+          if (p < 0) {
+            if (t > t1) return false;
+            if (t > t0) t0 = t;
+          } else {
+            if (t < t0) return false;
+            if (t < t1) t1 = t;
+          }
+
+          return true;
+        };
+
+        return (
+          clip(-dx, p0[0] - box.minX) &&
+          clip(dx, box.maxX - p0[0]) &&
+          clip(-dy, p0[1] - box.minY) &&
+          clip(dy, box.maxY - p0[1]) &&
+          t0 <= t1
+        );
+      }
+
+      // Every candidate radius at which one of the three SAT axis-overlap
+      // conditions flips, as the root of two affine-in-`r` functions
+      // crossing. `null` when the pair is parallel (no crossing to solve).
+      function connectorPlateBreakpoints(ringRadius, connAngle, plate, margin) {
+        const affine = (m, b) => ({ m, b });
+        const crossing = (f, g) => {
+          const dm = f.m - g.m;
+          return Math.abs(dm) < 1e-9 ? null : (g.b - f.b) / dm;
+        };
+
+        const ci = Math.cos(degToRad(connAngle));
+        const si = Math.sin(degToRad(connAngle));
+        const cj = Math.cos(degToRad(plate.angle));
+        const sj = Math.sin(degToRad(plate.angle));
+        const w = plate.width / 2 + margin;
+        const h = plate.height / 2 + margin;
+
+        // Axis 1: the connector's own normal. The segment always sits at
+        // 0 on this axis; the box's projection is centered at
+        // `r * sin(θj − θi)` with half-width `w|sinθi| + h|cosθi|`
+        // (a box's support function in an arbitrary direction).
+        const sinDiff = sj * ci - cj * si;
+        const perpHalf = w * Math.abs(si) + h * Math.abs(ci);
+        const boxOnNormalLo = affine(sinDiff, -perpHalf);
+        const boxOnNormalHi = affine(sinDiff, perpHalf);
+
+        // Axis 2 and 3: the box's own face normals, world x and y. The
+        // segment's projection has one endpoint fixed at the ring (it
+        // doesn't move with `r`) and one that scales with `r`.
+        const segXNear = ringRadius * ci;
+        const segXFar = affine(ci, 0);
+        const segXLo = ci >= 0 ? affine(0, segXNear) : segXFar;
+        const segXHi = ci >= 0 ? segXFar : affine(0, segXNear);
+        const boxXLo = affine(cj, -w);
+        const boxXHi = affine(cj, w);
+
+        const segYNear = ringRadius * si;
+        const segYFar = affine(si, 0);
+        const segYLo = si >= 0 ? affine(0, segYNear) : segYFar;
+        const segYHi = si >= 0 ? segYFar : affine(0, segYNear);
+        const boxYLo = affine(sj, -h);
+        const boxYHi = affine(sj, h);
+
+        return [
+          crossing(boxOnNormalLo, affine(0, 0)),
+          crossing(boxOnNormalHi, affine(0, 0)),
+          crossing(segXLo, boxXHi),
+          crossing(boxXLo, segXHi),
+          crossing(segYLo, boxYHi),
+          crossing(boxYLo, segYHi),
+        ].filter((x) => x !== null);
+      }
+
+      // The exact radius interval(s), within `[ringRadius, sentinel]`, at
+      // which this connector-plate pair collides.
+      function connectorForbiddenIntervals(
+        ringRadius,
+        connAngle,
+        plate,
+        margin,
+        sentinel,
+      ) {
+        const breakpoints = connectorPlateBreakpoints(
+          ringRadius,
+          connAngle,
+          plate,
+          margin,
+        ).filter((r) => r > ringRadius && r < sentinel);
+        const sorted = [
+          ringRadius,
+          ...new Set(breakpoints.map((r) => Math.round(r * 1e6) / 1e6)),
+          sentinel,
+        ].sort((a, b) => a - b);
+
+        const intervals = [];
+        let openStart = null;
+        for (let k = 0; k < sorted.length - 1; k += 1) {
+          const lo = sorted[k];
+          const hi = sorted[k + 1];
+          if (hi - lo < 1e-9) continue;
+          const hit = connectorHitsPlateAt(
+            (lo + hi) / 2,
+            ringRadius,
+            connAngle,
+            plate,
+            margin,
+          );
+          if (hit && openStart === null) openStart = lo;
+          if (!hit && openStart !== null) {
+            intervals.push([openStart, lo]);
+            openStart = null;
+          }
+        }
+
+        if (openStart !== null) intervals.push([openStart, sentinel]);
+        return intervals;
+      }
+
+      // A window's upper edge is itself the exact tangent radius: the
+      // connector just grazes the plate's corner there, floating-point
+      // equality and all. Landing precisely on it is still a touch, which
+      // the same inclusive boundary test then reports as a collision, so
+      // every jump clears the window by a hair more than its edge.
+      const CLEARANCE_EPSILON = 1e-6;
+
+      // Smallest radius at or above `floor` that falls in none of the
+      // given forbidden intervals: jump past whichever interval contains
+      // the current candidate, repeat. Each jump strictly increases the
+      // candidate and there are finitely many intervals, so this always
+      // terminates — no scan step size involved.
+      function smallestClearRadius(floor, intervals) {
+        let r = floor;
+        let moved = true;
+        while (moved) {
+          moved = false;
+          for (const [lo, hi] of intervals) {
+            if (r >= lo && r < hi + CLEARANCE_EPSILON) {
+              r = hi + CLEARANCE_EPSILON;
+              moved = true;
+            }
+          }
+        }
+
+        return r;
+      }
+
+      /**
+       The solve this ticket actually recommends shipping: the plate-plate
+       floor from `solveRadiusDirect`, pushed further out past every
+       connector-plate forbidden window. Still no scanning with a fixed
+       step — every window boundary is an exact root, and the menu-sized
+       loop below is over pairs and intervals, not candidate radii.
+       */
+      function solveRadiusWithConnectors(
+        labels,
+        { gapH, gapV, minRadius, ringRadius, connectorMargin },
+      ) {
+        const plateFloor = solveRadiusDirect(labels, {
+          gapH,
+          gapV,
+          minRadius,
+        }).radius;
+        const sentinel = plateFloor * 20 + 5000;
+        const forbidden = [];
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            forbidden.push(
+              ...connectorForbiddenIntervals(
+                ringRadius,
+                labels[i].angle,
+                labels[j],
+                connectorMargin,
+                sentinel,
+              ),
+            );
+          }
+        }
+
+        return {
+          radius: smallestClearRadius(plateFloor, forbidden),
+          plateFloor,
+          forbiddenCount: forbidden.length,
+        };
+      }
+
+      // Live check used only to report collisions in the results panel
+      // (the solver above is what prevents them); not part of the solve.
+      function countConnectorCollisions(labels, radius, ringRadius, margin) {
+        let count = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            if (
+              connectorHitsPlateAt(
+                radius,
+                ringRadius,
+                labels[i].angle,
+                labels[j],
+                margin,
+              )
+            ) {
+              count += 1;
+            }
+          }
+        }
+
+        return count;
+      }
+
       // ── End of the pure solver module ──────────────────────────────────
 
       // ── Menu presets ─────────────────────────────────────────────────
@@ -590,6 +874,16 @@
             { label: 'Short', angle: 180 },
           ],
         },
+        'adversarial-12': {
+          label: 'Adversarial: 12 items, 300°',
+          items: Array.from({ length: 12 }, (_, i) => ({
+            label: `Reasonably long menu item number ${i + 1}`,
+            // Packed into 300 of the available 360 degrees: the worst
+            // case tried for both plate-plate and connector-plate
+            // crowding, not just item count.
+            angle: (300 / 12) * i,
+          })),
+        },
       };
 
       // ── DOM glue ─────────────────────────────────────────────────────
@@ -611,6 +905,7 @@
         ringInner: document.getElementById('ring-inner'),
         step: document.getElementById('step'),
         maxIter: document.getElementById('max-iter'),
+        connectorMargin: document.getElementById('connector-margin'),
       };
 
       function readControls() {
@@ -623,6 +918,7 @@
           ringInner: Number(controls.ringInner.value),
           step: Number(controls.step.value),
           maxIter: Number(controls.maxIter.value),
+          connectorMargin: Number(controls.connectorMargin.value),
         };
       }
 
@@ -640,6 +936,8 @@
           `${c.ringInner}px`;
         document.getElementById('step-out').textContent = `${c.step}px`;
         document.getElementById('max-iter-out').textContent = c.maxIter;
+        document.getElementById('connector-margin-out').textContent =
+          `${c.connectorMargin}px`;
       }
 
       // Measures each plate's own natural box once — clamp(min, content,
@@ -698,6 +996,12 @@
           maxIterations: c.maxIter,
         });
         const t2 = performance.now();
+        const full = solveRadiusWithConnectors(labels, {
+          ...solverInput,
+          ringRadius: c.ringRadius,
+          connectorMargin: c.connectorMargin,
+        });
+        const t3 = performance.now();
 
         document.getElementById('cf-radius').textContent =
           cf.radius.toFixed(2);
@@ -709,12 +1013,36 @@
         document.getElementById('ls-iter').textContent = ls.iterations;
         document.getElementById('ls-time').textContent =
           `${(t2 - t1).toFixed(3)}ms`;
+        document.getElementById('full-radius').textContent =
+          full.radius.toFixed(2);
+        document.getElementById('full-windows').textContent =
+          `${full.forbiddenCount} window(s)`;
+        document.getElementById('full-time').textContent =
+          `${(t3 - t2).toFixed(3)}ms`;
 
         const delta = Math.abs(cf.radius - ls.radius);
         document.getElementById('agreement').innerHTML =
           delta <= c.step
             ? `<span style="color:#2a6df4">Agree</span> within one linear-scan step (Δ${delta.toFixed(2)}px — the scan can only stop on a step boundary, the closed form finds the exact minimum).`
             : `<span style="color:#b3401f">Disagree by ${delta.toFixed(2)}px — investigate.</span>`;
+
+        const naiveCollisions = countConnectorCollisions(
+          labels,
+          cf.radius,
+          c.ringRadius,
+          c.connectorMargin,
+        );
+        const fixedCollisions = countConnectorCollisions(
+          labels,
+          full.radius,
+          c.ringRadius,
+          c.connectorMargin,
+        );
+        document.getElementById('connector-check').innerHTML =
+          `At the plates-only radius: ${naiveCollisions} connector/plate collision(s). At the connector-safe radius: ${fixedCollisions}.` +
+          (naiveCollisions > 0 && fixedCollisions === 0
+            ? ' <span style="color:#2a6df4">Fixed.</span>'
+            : '');
 
         const warn = document.getElementById('failure-warning');
         if (ls.gaveUp) {
@@ -723,7 +1051,7 @@
           warn.innerHTML = '';
         }
 
-        drawStage(labels, c, cf.radius, ls.radius);
+        drawStage(labels, c, full.radius, ls.radius);
       }
 
       function drawStage(labels, c, cfRadius, lsRadius) {
@@ -832,10 +1160,12 @@
         for (let i = 0; i < 20; i += 1) {
           const labels = measureLabels(preset.items, c.minWidth, c.maxWidth);
           widths.push(labels.map((l) => l.width).join(','));
-          const { radius } = solveRadiusDirect(labels, {
+          const { radius } = solveRadiusWithConnectors(labels, {
             gapH: c.gapH,
             gapV: c.gapV,
             minRadius: c.ringRadius + 22,
+            ringRadius: c.ringRadius,
+            connectorMargin: c.connectorMargin,
           });
           radii.push(radius);
         }
@@ -883,6 +1213,9 @@
         measureLabels,
         solveRadiusDirect,
         solveRadiusLinearScan,
+        solveRadiusWithConnectors,
+        countConnectorCollisions,
+        connectorHitsPlateAt,
         PRESETS,
         readControls,
         setPreset(key) {
