@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PROTOTYPE — label placement solver (#267)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #1a1a1a;
+        --quiet: #666;
+        --rule: #ddd;
+        --paper: #fafafa;
+        --accent: #2a6df4;
+        --closed-form: #2a6df4;
+        --linear-scan: #de6c52;
+        --ring: #f2f2f2;
+        --plate-bg: #fff;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: var(--ink);
+      }
+      body {
+        margin: 0;
+        background: var(--paper);
+      }
+      header {
+        padding: 20px 24px 8px;
+        border-bottom: 1px solid var(--rule);
+        background: #fff;
+      }
+      header h1 {
+        font-size: 18px;
+        margin: 0 0 6px;
+      }
+      header p {
+        max-width: 72ch;
+        color: var(--quiet);
+        font-size: 13px;
+        line-height: 1.5;
+        margin: 0 0 12px;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 320px 1fr 340px;
+        gap: 0;
+        align-items: start;
+      }
+      #controls,
+      #results {
+        padding: 16px 20px;
+        font-size: 12.5px;
+      }
+      #controls {
+        border-right: 1px solid var(--rule);
+      }
+      #results {
+        border-left: 1px solid var(--rule);
+      }
+      fieldset {
+        border: none;
+        padding: 0;
+        margin: 0 0 16px;
+      }
+      legend {
+        font-weight: 600;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--quiet);
+        margin-bottom: 6px;
+        padding: 0;
+      }
+      label.row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+      }
+      label.row span:first-child {
+        flex: 1;
+      }
+      output {
+        font-variant-numeric: tabular-nums;
+        min-width: 3.5em;
+        text-align: right;
+        color: var(--quiet);
+      }
+      select,
+      button {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        border: 1px solid var(--rule);
+        background: #fff;
+        border-radius: 6px;
+        padding: 5px 10px;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      button.active {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+      .btn-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      #stage-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 560px;
+        overflow: auto;
+        padding: 20px;
+      }
+      #stage {
+        position: relative;
+        width: 480px;
+        height: 480px;
+        transform-origin: top left;
+      }
+      .center-dot {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 4px;
+        height: 4px;
+        margin: -2px 0 0 -2px;
+        border-radius: 50%;
+        background: #999;
+      }
+      .ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--ring);
+      }
+      .connector {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        height: 2px;
+        background: #bbb;
+        transform-origin: 0 50%;
+      }
+      .plate {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        display: inline-block;
+        white-space: nowrap;
+        padding: 4px 8px;
+        border-radius: 8px;
+        background: var(--plate-bg);
+        border: 1px solid var(--rule);
+        font-size: 13px;
+        line-height: 1.2;
+      }
+      .plate.closed-form {
+        border-color: var(--closed-form);
+      }
+      .plate.linear-scan {
+        border-color: var(--linear-scan);
+        background: transparent;
+        color: transparent;
+      }
+      .plate.linear-scan::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border: 1px dashed var(--linear-scan);
+        border-radius: 8px;
+      }
+      #measure-pool {
+        position: absolute;
+        visibility: hidden;
+        white-space: nowrap;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 12px;
+        margin: 6px 0 14px;
+      }
+      td,
+      th {
+        text-align: left;
+        padding: 2px 6px 2px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      th {
+        color: var(--quiet);
+        font-weight: 500;
+      }
+      .stat {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+      }
+      .warn {
+        color: #b3401f;
+        background: #fdf0ec;
+        border: 1px solid #f2c4b3;
+        border-radius: 6px;
+        padding: 6px 8px;
+        margin: 6px 0;
+        font-size: 12px;
+      }
+      .legend-swatch {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        margin-right: 4px;
+        vertical-align: -1px;
+      }
+      code {
+        background: #f0f0f0;
+        padding: 1px 4px;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>PROTOTYPE — measure-and-solve label placement (#267)</h1>
+      <p>
+        Question: is a measure-then-grow-the-radius loop an acceptable way to
+        place label plates around the wedge ring, and what does it actually
+        cost and guarantee? This page renders real DOM plates (real fonts,
+        real CSS box model, the content-hug + clamp rule from #276), measures
+        them with <code>getBoundingClientRect</code>, and runs two solvers
+        side by side: the design canvas's 2px linear scan, and a closed-form
+        direct solve. Compare their radius, iteration count and timing;
+        stress-test with more/longer items; and check determinism across
+        repeated measurement and simulated browser zoom.
+      </p>
+    </header>
+    <main>
+      <div id="controls">
+        <fieldset>
+          <legend>Menu</legend>
+          <div class="btn-row" id="preset-buttons"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Solver inputs (read once per open)</legend>
+          <label class="row">
+            <span>Horizontal gap</span>
+            <input
+              type="range"
+              id="gap-h"
+              min="0"
+              max="40"
+              value="14"
+              step="1"
+            />
+            <output id="gap-h-out">14px</output>
+          </label>
+          <label class="row">
+            <span>Vertical gap</span>
+            <input
+              type="range"
+              id="gap-v"
+              min="0"
+              max="40"
+              value="7"
+              step="1"
+            />
+            <output id="gap-v-out">7px</output>
+          </label>
+          <label class="row">
+            <span>Label min-width</span>
+            <input
+              type="range"
+              id="min-width"
+              min="0"
+              max="120"
+              value="0"
+              step="4"
+            />
+            <output id="min-width-out">0px</output>
+          </label>
+          <label class="row">
+            <span>Label max-width</span>
+            <input
+              type="range"
+              id="max-width"
+              min="0"
+              max="240"
+              value="240"
+              step="4"
+            />
+            <output id="max-width-out">none</output>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Ring geometry</legend>
+          <label class="row">
+            <span>Ring outer radius</span>
+            <input
+              type="range"
+              id="ring-radius"
+              min="40"
+              max="140"
+              value="80"
+              step="1"
+            />
+            <output id="ring-radius-out">80px</output>
+          </label>
+          <label class="row">
+            <span>Ring inner radius (deadZoneRadius)</span>
+            <input
+              type="range"
+              id="ring-inner"
+              min="0"
+              max="80"
+              value="40"
+              step="1"
+            />
+            <output id="ring-inner-out">40px</output>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Linear scan (design canvas)</legend>
+          <label class="row">
+            <span>Step</span>
+            <input
+              type="range"
+              id="step"
+              min="1"
+              max="16"
+              value="2"
+              step="1"
+            />
+            <output id="step-out">2px</output>
+          </label>
+          <label class="row">
+            <span>Max iterations before giving up</span>
+            <input
+              type="range"
+              id="max-iter"
+              min="10"
+              max="500"
+              value="300"
+              step="10"
+            />
+            <output id="max-iter-out">300</output>
+          </label>
+        </fieldset>
+        <fieldset>
+          <legend>Determinism checks</legend>
+          <div class="btn-row">
+            <button id="repeat-btn">Re-measure ×20</button>
+            <button id="zoom-sweep-btn">Zoom sweep</button>
+          </div>
+          <div class="btn-row" id="zoom-buttons" style="margin-top: 6px">
+            <button data-zoom="0.75">75%</button>
+            <button data-zoom="1" class="active">100%</button>
+            <button data-zoom="1.25">125%</button>
+            <button data-zoom="1.5">150%</button>
+            <button data-zoom="2">200%</button>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="stage-wrap">
+        <div id="stage"></div>
+      </div>
+
+      <div id="results">
+        <fieldset>
+          <legend>Legend</legend>
+          <div>
+            <span class="legend-swatch" style="background: var(--closed-form)"></span
+            >closed form
+          </div>
+          <div>
+            <span
+              class="legend-swatch"
+              style="border: 1px dashed var(--linear-scan)"
+            ></span
+            >linear scan (dashed)
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Solve</legend>
+          <table>
+            <tr>
+              <th></th>
+              <th>radius</th>
+              <th>iterations</th>
+              <th>time</th>
+            </tr>
+            <tr>
+              <td>closed form</td>
+              <td id="cf-radius" class="stat"></td>
+              <td id="cf-iter" class="stat"></td>
+              <td id="cf-time" class="stat"></td>
+            </tr>
+            <tr>
+              <td>linear scan</td>
+              <td id="ls-radius" class="stat"></td>
+              <td id="ls-iter" class="stat"></td>
+              <td id="ls-time" class="stat"></td>
+            </tr>
+          </table>
+          <div id="agreement"></div>
+          <div id="failure-warning"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Determinism</legend>
+          <div id="determinism-out">
+            Not checked yet — use the buttons on the left.
+          </div>
+        </fieldset>
+      </div>
+    </main>
+
+    <div id="measure-pool"></div>
+
+    <script type="module">
+      // ── Pure solver module ────────────────────────────────────────────
+      // Everything below `solveRadiusDirect` / `solveRadiusLinearScan` down
+      // to the closing comment is DOM-free and liftable as-is into the
+      // real layout module once #267 lands its answer.
+
+      /**
+       @typedef {{ angle: number, width: number, height: number }} PlacedLabel
+       Angle in degrees, clockwise from east (the library's convention).
+       Width/height are the plate's own natural box, independent of radius.
+       */
+
+      const degToRad = (deg) => (deg * Math.PI) / 180;
+
+      /**
+       The minimal radius `r` past which two plates placed at
+       `r * (cos angle, sin angle)` stop overlapping, given they must clear
+       either the horizontal or the vertical gap (an AABB separation with
+       margin). Both `|Δx(r)|` and `|Δy(r)|` are linear in `r` for a fixed
+       pair of angles, so each clears its margin at a single threshold and
+       the pair is clear from the larger direction's threshold onward —
+       nothing here is discretized.
+       */
+      function minRadiusForPair(a, b, gapH, gapV) {
+        const dcos = Math.cos(degToRad(a.angle)) - Math.cos(degToRad(b.angle));
+        const dsin = Math.sin(degToRad(a.angle)) - Math.sin(degToRad(b.angle));
+        const marginX = a.width / 2 + b.width / 2 + gapH;
+        const marginY = a.height / 2 + b.height / 2 + gapV;
+        const rx = Math.abs(dcos) > 1e-9 ? marginX / Math.abs(dcos) : Infinity;
+        const ry = Math.abs(dsin) > 1e-9 ? marginY / Math.abs(dsin) : Infinity;
+        // The pair is clear once EITHER axis clears its margin (an AABB
+        // "do not collide" test is an OR of the two axis separations), so
+        // the smaller of the two per-axis thresholds is the one that
+        // actually frees the pair.
+        return Math.min(rx, ry);
+      }
+
+      /**
+       Direct solve: no scanning. The radius a menu needs is the largest
+       per-pair minimum, floored at `minRadius` (the ring's own outer
+       edge plus whatever fixed clearance the connector wants).
+       */
+      function solveRadiusDirect(labels, { gapH, gapV, minRadius }) {
+        let r = minRadius;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            r = Math.max(r, minRadiusForPair(labels[i], labels[j], gapH, gapV));
+          }
+        }
+
+        return { radius: r, iterations: 1 };
+      }
+
+      /**
+       Rects, at radius `r`, collide under the same margin rule
+       `minRadiusForPair` inverts. Kept separate so the linear scan tests
+       collision exactly as the design canvas describes it, rather than
+       reusing the closed-form shortcut.
+       */
+      function collides(a, b, r, gapH, gapV) {
+        const ax = r * Math.cos(degToRad(a.angle));
+        const ay = r * Math.sin(degToRad(a.angle));
+        const bx = r * Math.cos(degToRad(b.angle));
+        const by = r * Math.sin(degToRad(b.angle));
+        const dx = Math.abs(ax - bx);
+        const dy = Math.abs(ay - by);
+        const marginX = a.width / 2 + b.width / 2 + gapH;
+        const marginY = a.height / 2 + b.height / 2 + gapV;
+        return dx < marginX && dy < marginY;
+      }
+
+      /**
+       The design canvas's own algorithm: start at `minRadius`, grow by
+       `step` until no pair collides, give up after `maxIterations`.
+       */
+      function solveRadiusLinearScan(
+        labels,
+        { gapH, gapV, minRadius, step, maxIterations },
+      ) {
+        let r = minRadius;
+        for (let iter = 0; iter < maxIterations; iter += 1) {
+          let anyCollision = false;
+          for (let i = 0; i < labels.length && !anyCollision; i += 1) {
+            for (let j = i + 1; j < labels.length; j += 1) {
+              if (collides(labels[i], labels[j], r, gapH, gapV)) {
+                anyCollision = true;
+                break;
+              }
+            }
+          }
+
+          if (!anyCollision) {
+            return { radius: r, iterations: iter + 1, gaveUp: false };
+          }
+
+          r += step;
+        }
+
+        return { radius: r, iterations: maxIterations, gaveUp: true };
+      }
+
+      // ── End of the pure solver module ──────────────────────────────────
+
+      // ── Menu presets ─────────────────────────────────────────────────
+      const evenAngles = (n) =>
+        Array.from({ length: n }, (_, i) => (360 / n) * i);
+
+      const PRESETS = {
+        'default-8': {
+          label: 'Default demo (8, even)',
+          items: [
+            { label: 'Right', angle: 0 },
+            { label: 'Down-Right', angle: 45 },
+            { label: 'Others...', angle: 90 },
+            { label: 'Down-Left', angle: 135 },
+            { label: 'Left', angle: 180 },
+            { label: 'Up-Left', angle: 225 },
+            { label: 'Up', angle: 270 },
+            { label: 'Up-Right', angle: 315 },
+          ],
+        },
+        'manual-43': {
+          label: 'Manual angles (#43/#271)',
+          items: [0, 20, 90, 160, 180, 200, 270, 340].map((angle, i) => ({
+            angle,
+            label: [
+              'Right',
+              'Down-Right',
+              'Others...',
+              'Down-Left',
+              'Left',
+              'Up-Left',
+              'Up',
+              'Up-Right',
+            ][i],
+          })),
+        },
+        'long-8': {
+          label: 'Long labels (8, even)',
+          items: [
+            'Insert citation',
+            'Move to trash',
+            'Duplicate this section',
+            'Change background color',
+            'Export as PDF document',
+            'Share with collaborators',
+            'Undo last five actions',
+            'Open in a new window',
+          ].map((label, i, arr) => ({ label, angle: evenAngles(arr.length)[i] })),
+        },
+        'stress-12': {
+          label: 'Stress: 12 long items (#274)',
+          items: Array.from({ length: 12 }, (_, i) => ({
+            label: `Reasonably long menu item number ${i + 1}`,
+            angle: evenAngles(12)[i],
+          })),
+        },
+        'tiny-parent': {
+          label: 'Failure mode: crowded pair, tight gap',
+          items: [
+            { label: 'A very very long label indeed', angle: 0 },
+            { label: 'Another very very long label', angle: 8 },
+            { label: 'Short', angle: 180 },
+          ],
+        },
+      };
+
+      // ── DOM glue ─────────────────────────────────────────────────────
+      const stage = document.getElementById('stage');
+      const measurePool = document.getElementById('measure-pool');
+      const stageWrap = document.getElementById('stage-wrap');
+      const CENTER = 240;
+
+      let currentPreset = 'default-8';
+      let zoom = 1;
+      let lastLabels = null;
+
+      const controls = {
+        gapH: document.getElementById('gap-h'),
+        gapV: document.getElementById('gap-v'),
+        minWidth: document.getElementById('min-width'),
+        maxWidth: document.getElementById('max-width'),
+        ringRadius: document.getElementById('ring-radius'),
+        ringInner: document.getElementById('ring-inner'),
+        step: document.getElementById('step'),
+        maxIter: document.getElementById('max-iter'),
+      };
+
+      function readControls() {
+        return {
+          gapH: Number(controls.gapH.value),
+          gapV: Number(controls.gapV.value),
+          minWidth: Number(controls.minWidth.value),
+          maxWidth: Number(controls.maxWidth.value),
+          ringRadius: Number(controls.ringRadius.value),
+          ringInner: Number(controls.ringInner.value),
+          step: Number(controls.step.value),
+          maxIter: Number(controls.maxIter.value),
+        };
+      }
+
+      function syncOutputs() {
+        const c = readControls();
+        document.getElementById('gap-h-out').textContent = `${c.gapH}px`;
+        document.getElementById('gap-v-out').textContent = `${c.gapV}px`;
+        document.getElementById('min-width-out').textContent =
+          `${c.minWidth}px`;
+        document.getElementById('max-width-out').textContent =
+          c.maxWidth >= 240 ? 'none' : `${c.maxWidth}px`;
+        document.getElementById('ring-radius-out').textContent =
+          `${c.ringRadius}px`;
+        document.getElementById('ring-inner-out').textContent =
+          `${c.ringInner}px`;
+        document.getElementById('step-out').textContent = `${c.step}px`;
+        document.getElementById('max-iter-out').textContent = c.maxIter;
+      }
+
+      // Measures each plate's own natural box once — clamp(min, content,
+      // max), per #276 — off in a hidden pool, independent of the radius
+      // it will eventually be placed at. This is the one DOM measurement
+      // pass the whole solve needs.
+      function measureLabels(items, minWidth, maxWidth) {
+        measurePool.innerHTML = '';
+        const nodes = items.map((item) => {
+          const el = document.createElement('div');
+          el.className = 'plate';
+          el.style.position = 'static';
+          el.style.left = '';
+          el.style.top = '';
+          el.style.minWidth = `${minWidth}px`;
+          el.style.maxWidth = maxWidth >= 240 ? 'none' : `${maxWidth}px`;
+          if (maxWidth < 240) {
+            el.style.overflow = 'hidden';
+            el.style.textOverflow = 'ellipsis';
+          }
+
+          el.textContent = item.label;
+          measurePool.append(el);
+          return el;
+        });
+
+        // Force layout once, batched, then read all boxes: N measurements,
+        // not N-per-candidate-radius.
+        const boxes = nodes.map((el) => el.getBoundingClientRect());
+        return items.map((item, i) => ({
+          angle: item.angle,
+          label: item.label,
+          width: boxes[i].width,
+          height: boxes[i].height,
+        }));
+      }
+
+      function render() {
+        const c = readControls();
+        const preset = PRESETS[currentPreset];
+        const labels = measureLabels(preset.items, c.minWidth, c.maxWidth);
+        lastLabels = labels;
+
+        const solverInput = {
+          gapH: c.gapH,
+          gapV: c.gapV,
+          minRadius: c.ringRadius + 22,
+        };
+
+        const t0 = performance.now();
+        const cf = solveRadiusDirect(labels, solverInput);
+        const t1 = performance.now();
+        const ls = solveRadiusLinearScan(labels, {
+          ...solverInput,
+          step: c.step,
+          maxIterations: c.maxIter,
+        });
+        const t2 = performance.now();
+
+        document.getElementById('cf-radius').textContent =
+          cf.radius.toFixed(2);
+        document.getElementById('cf-iter').textContent = cf.iterations;
+        document.getElementById('cf-time').textContent =
+          `${(t1 - t0).toFixed(3)}ms`;
+        document.getElementById('ls-radius').textContent =
+          ls.radius.toFixed(2);
+        document.getElementById('ls-iter').textContent = ls.iterations;
+        document.getElementById('ls-time').textContent =
+          `${(t2 - t1).toFixed(3)}ms`;
+
+        const delta = Math.abs(cf.radius - ls.radius);
+        document.getElementById('agreement').innerHTML =
+          delta <= c.step
+            ? `<span style="color:#2a6df4">Agree</span> within one linear-scan step (Δ${delta.toFixed(2)}px — the scan can only stop on a step boundary, the closed form finds the exact minimum).`
+            : `<span style="color:#b3401f">Disagree by ${delta.toFixed(2)}px — investigate.</span>`;
+
+        const warn = document.getElementById('failure-warning');
+        if (ls.gaveUp) {
+          warn.innerHTML = `<div class="warn">Linear scan gave up after ${c.maxIter} iterations without clearing every pair — this is the failure mode: a menu that never reaches a collision-free radius at this step/budget. Closed form still returns a number (${cf.radius.toFixed(0)}px), because it isn't scanning — but that radius can exceed the parent's bounds; nothing here clamps it.</div>`;
+        } else {
+          warn.innerHTML = '';
+        }
+
+        drawStage(labels, c, cf.radius, ls.radius);
+      }
+
+      function drawStage(labels, c, cfRadius, lsRadius) {
+        stage.innerHTML = '';
+
+        const addRing = (radius, fill) => {
+          const el = document.createElement('div');
+          el.className = 'ring';
+          el.style.width = `${radius * 2}px`;
+          el.style.height = `${radius * 2}px`;
+          el.style.background = fill;
+          stage.append(el);
+        };
+
+        addRing(c.ringRadius, 'var(--ring)');
+        addRing(c.ringInner, '#fff');
+        stage.append(Object.assign(document.createElement('div'), { className: 'center-dot' }));
+
+        for (const label of labels) {
+          const rad = degToRad(label.angle);
+          const cos = Math.cos(rad);
+          const sin = Math.sin(rad);
+
+          const connLen = Math.max(0, cfRadius - c.ringRadius + 8);
+          const connector = document.createElement('div');
+          connector.className = 'connector';
+          connector.style.width = `${connLen}px`;
+          connector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
+          stage.append(connector);
+
+          const place = (radius, cls, useMeasured) => {
+            const el = document.createElement('div');
+            el.className = `plate ${cls}`;
+            if (useMeasured) {
+              el.style.width = `${label.width}px`;
+              el.style.height = `${label.height}px`;
+              el.style.boxSizing = 'border-box';
+            } else {
+              el.style.minWidth = `${c.minWidth}px`;
+              el.style.maxWidth =
+                c.maxWidth >= 240 ? 'none' : `${c.maxWidth}px`;
+            }
+
+            el.textContent = label.label;
+            const cx = CENTER + radius * cos;
+            const cy = CENTER + radius * sin;
+            el.style.left = `${cx}px`;
+            el.style.top = `${cy}px`;
+            el.style.transform = 'translate(-50%, -50%)';
+            stage.append(el);
+          };
+
+          place(cfRadius, 'closed-form', false);
+          place(lsRadius, 'linear-scan', true);
+        }
+      }
+
+      function buildPresetButtons() {
+        const container = document.getElementById('preset-buttons');
+        for (const [key, preset] of Object.entries(PRESETS)) {
+          const btn = document.createElement('button');
+          btn.textContent = preset.label;
+          btn.dataset.preset = key;
+          if (key === currentPreset) btn.classList.add('active');
+          btn.addEventListener('click', () => {
+            currentPreset = key;
+            for (const b of container.children) b.classList.remove('active');
+            btn.classList.add('active');
+            render();
+          });
+          container.append(btn);
+        }
+      }
+
+      function buildZoomButtons() {
+        const container = document.getElementById('zoom-buttons');
+        for (const btn of container.children) {
+          btn.addEventListener('click', () => {
+            zoom = Number(btn.dataset.zoom);
+            for (const b of container.children) b.classList.remove('active');
+            btn.classList.add('active');
+            // Chromium-only, non-standard `zoom`, applied page-wide so the
+            // hidden measurement pool is rescaled along with everything
+            // else and `measureLabels` picks up the change. This is a
+            // content-scale stand-in, not real OS/browser page zoom (see
+            // the resolution comment on #267 for why those are not the
+            // same thing) — treat results here as a bound, not a proof.
+            document.documentElement.style.zoom = String(zoom);
+            render();
+          });
+        }
+      }
+
+      for (const input of Object.values(controls)) {
+        input.addEventListener('input', () => {
+          syncOutputs();
+          render();
+        });
+      }
+
+      document.getElementById('repeat-btn').addEventListener('click', () => {
+        const c = readControls();
+        const preset = PRESETS[currentPreset];
+        const radii = [];
+        const widths = [];
+        for (let i = 0; i < 20; i += 1) {
+          const labels = measureLabels(preset.items, c.minWidth, c.maxWidth);
+          widths.push(labels.map((l) => l.width).join(','));
+          const { radius } = solveRadiusDirect(labels, {
+            gapH: c.gapH,
+            gapV: c.gapV,
+            minRadius: c.ringRadius + 22,
+          });
+          radii.push(radius);
+        }
+
+        const uniqueRadii = new Set(radii.map((r) => r.toFixed(6)));
+        const uniqueWidths = new Set(widths);
+        document.getElementById('determinism-out').innerHTML =
+          uniqueRadii.size === 1 && uniqueWidths.size === 1
+            ? `20/20 re-measurements identical: same plate widths, same solved radius (${radii[0].toFixed(2)}px). Deterministic under fixed zoom/DPR/fonts.`
+            : `Variation seen across 20 re-measurements: ${uniqueRadii.size} distinct radii, ${uniqueWidths.size} distinct width sets. See console for the raw values.`;
+        if (uniqueRadii.size > 1 || uniqueWidths.size > 1) {
+          console.log('label-solver determinism check', { radii, widths });
+        }
+      });
+
+      document.getElementById('zoom-sweep-btn').addEventListener('click', () => {
+        const c = readControls();
+        const preset = PRESETS[currentPreset];
+        const testZooms = [0.75, 1, 1.25, 1.5, 2];
+        const rows = testZooms.map((z) => {
+          document.documentElement.style.zoom = String(z);
+          const labels = measureLabels(preset.items, c.minWidth, c.maxWidth);
+          const { radius } = solveRadiusDirect(labels, {
+            gapH: c.gapH,
+            gapV: c.gapV,
+            minRadius: c.ringRadius + 22,
+          });
+          return `<tr><td>${z}×</td><td>${radius.toFixed(2)}px</td><td>${(radius / z).toFixed(2)}px</td></tr>`;
+        });
+        document.documentElement.style.zoom = '1';
+        document.getElementById('determinism-out').innerHTML =
+          `<div>Non-standard CSS <code>zoom</code> content-scale sweep (not real browser page zoom — see the resolution comment). Radius grows with scale but not perfectly proportionally: the collision gap is a fixed real length that does not scale, so it carries relatively less weight at high zoom.</div>` +
+          `<table><tr><th>scale</th><th>radius</th><th>radius/scale</th></tr>${rows.join('')}</table>`;
+        render();
+      });
+
+      buildPresetButtons();
+      buildZoomButtons();
+      syncOutputs();
+      render();
+
+      // Exposed for the zoom-sweep check driven from outside the page.
+      window.__labelSolverPrototype = {
+        render,
+        measureLabels,
+        solveRadiusDirect,
+        solveRadiusLinearScan,
+        PRESETS,
+        readControls,
+        setPreset(key) {
+          currentPreset = key;
+          render();
+        },
+        getLastLabels: () => lastLabels,
+      };
+    </script>
+  </body>
+</html>
