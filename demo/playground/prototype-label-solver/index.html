@@ -15,6 +15,7 @@
         --closed-form: #2a6df4;
         --linear-scan: #de6c52;
         --shift-aware: #1f9e6e;
+        --near-anchored: #9b51e0;
         --ring: #f2f2f2;
         --plate-bg: #fff;
         font-family:
@@ -156,13 +157,9 @@
         background: var(--shift-aware);
         opacity: 0.6;
       }
-      .shift-dot {
-        position: absolute;
-        width: 5px;
-        height: 5px;
-        margin: -2.5px 0 0 -2.5px;
-        border-radius: 50%;
-        background: var(--shift-aware);
+      .connector.near-anchored {
+        background: var(--near-anchored);
+        opacity: 0.6;
       }
       .plate {
         position: absolute;
@@ -195,6 +192,10 @@
       .plate.shift-aware {
         border-color: var(--shift-aware);
         background: color-mix(in srgb, var(--shift-aware) 10%, white);
+      }
+      .plate.near-anchored {
+        border-color: var(--near-anchored);
+        background: color-mix(in srgb, var(--near-anchored) 10%, white);
       }
       #measure-pool {
         position: absolute;
@@ -298,6 +299,23 @@
         clearance on an item sitting exactly on the horizontal or vertical
         axis, and sliding such an item tangentially cannot move it any
         further from the ring, so there is no radius left to recover.
+      </p>
+      <p>
+        Also exploratory: "near-anchored" is a purely radial alternative to
+        centering every plate on the shared circle, no tangential slide at
+        all. It anchors each plate's <em>nearest</em> point to the ring on
+        the shared circle instead, which is why a wide item's near edge
+        sits much closer to the ring than a short item's does under
+        center-anchoring: the gap between center and near edge is just
+        that item's own half-width or half-height, and plates here are far
+        wider than they are tall. Near-anchoring makes every item
+        equidistant from the ring by construction, exactly zero spread, at
+        the cost of no longer being a free win: a wide item now needs a
+        much larger center radius than a short one to reach the same near
+        distance, so label width variance can inflate the overall radius,
+        sometimes past the center-anchored answer, sometimes under it. It
+        reuses <code>minRingClearRadius</code> directly, pointed at the
+        shared circle instead of the physical ring.
       </p>
     </header>
     <main>
@@ -476,6 +494,10 @@
             <span class="legend-swatch" style="background: var(--shift-aware)"></span
             >shift-aware (exploratory)
           </div>
+          <div>
+            <span class="legend-swatch" style="background: var(--near-anchored)"></span
+            >near-anchored (exploratory)
+          </div>
         </fieldset>
         <fieldset>
           <legend>Solve</legend>
@@ -510,9 +532,16 @@
               <td id="shift-relax-iter" class="stat"></td>
               <td id="shift-time" class="stat"></td>
             </tr>
+            <tr>
+              <td>near-anchored (exploratory)</td>
+              <td id="near-radius" class="stat"></td>
+              <td id="near-spread" class="stat"></td>
+              <td id="near-time" class="stat"></td>
+            </tr>
           </table>
           <div id="connector-check"></div>
           <div id="shift-check"></div>
+          <div id="near-check"></div>
           <div id="agreement"></div>
           <div id="failure-warning"></div>
         </fieldset>
@@ -1203,6 +1232,91 @@
         return { radius: hi, shifts: bestShifts };
       }
 
+      /**
+       A second, simpler alternative to center-anchoring, purely radial
+       (no tangential shift, no relaxation loop). Every plate above sits
+       with its CENTER on the shared circle, which is why a wide item's
+       near edge sits much closer to the ring than a short item's does
+       for the same center radius: the gap between center and near edge
+       is just that item's own half-width or half-height. Anchor instead
+       so every item's NEAREST point sits on the shared circle, reusing
+       `minRingClearRadius` exactly as written above, just pointed at the
+       shared circle's own radius instead of the physical ring's.
+
+       This makes every item equidistant from the ring by construction
+       (zero spread, not merely reduced), but it is not a free win: a
+       wide item now needs a much larger center radius than a short one
+       to reach the same near-distance, so label width variance among
+       items can inflate the radius, sometimes well past the
+       center-anchored answer. Verified: smaller in some presets, larger
+       in others, zero near-distance spread in all of them.
+       */
+      function nearAnchoredPosition(r, angle, plate) {
+        const rho = minRingClearRadius(r, 0, angle, plate);
+        const rad = degToRad(angle);
+        return [rho * Math.cos(rad), rho * Math.sin(rad)];
+      }
+
+      // Same shape as `solveRadiusWithConnectors`'s bisection, but
+      // checking every candidate `r` directly against the exact
+      // plate-plate and connector predicates at the near-anchored
+      // positions, rather than the closed-form roots those use: unlike
+      // the center-anchored case, `nearAnchoredPosition` is only
+      // affine in `r` away from the angles where a box's corner (not an
+      // edge) is nearest the origin, so there is no single algebraic
+      // form covering every angle the way there was before.
+      function solveRadiusNearAnchored(
+        labels,
+        { gapH, gapV, ringRadius, ringMargin, connectorMargin },
+      ) {
+        const feasibleAt = (r) => {
+          const positions = labels.map((label) =>
+            nearAnchoredPosition(r, label.angle, label),
+          );
+          for (let i = 0; i < labels.length; i += 1) {
+            for (let j = i + 1; j < labels.length; j += 1) {
+              const marginX = labels[i].width / 2 + labels[j].width / 2 + gapH;
+              const marginY =
+                labels[i].height / 2 + labels[j].height / 2 + gapV;
+              const dx = Math.abs(positions[i][0] - positions[j][0]);
+              const dy = Math.abs(positions[i][1] - positions[j][1]);
+              if (dx < marginX && dy < marginY) return false;
+            }
+          }
+
+          for (let i = 0; i < labels.length; i += 1) {
+            const rad = degToRad(labels[i].angle);
+            const p0 = [ringRadius * Math.cos(rad), ringRadius * Math.sin(rad)];
+            const p1 = [r * Math.cos(rad), r * Math.sin(rad)];
+            for (let j = 0; j < labels.length; j += 1) {
+              if (i === j) continue;
+              const box = {
+                minX: positions[j][0] - labels[j].width / 2 - connectorMargin,
+                maxX: positions[j][0] + labels[j].width / 2 + connectorMargin,
+                minY:
+                  positions[j][1] - labels[j].height / 2 - connectorMargin,
+                maxY:
+                  positions[j][1] + labels[j].height / 2 + connectorMargin,
+              };
+              if (segmentHitsBox(p0, p1, box)) return false;
+            }
+          }
+
+          return true;
+        };
+
+        let lo = ringRadius + ringMargin;
+        let hi = lo;
+        while (!feasibleAt(hi)) hi = hi * 1.5 + 10;
+        for (let i = 0; i < 40; i += 1) {
+          const mid = (lo + hi) / 2;
+          if (feasibleAt(mid)) hi = mid;
+          else lo = mid;
+        }
+
+        return hi;
+      }
+
       // ── End of the pure solver module ──────────────────────────────────
 
       // ── Menu presets ─────────────────────────────────────────────────
@@ -1522,6 +1636,67 @@
             ? ' <span style="color:#2a6df4">Clean.</span>'
             : ' <span style="color:#b3401f">Investigate.</span>');
 
+        const nearR = solveRadiusNearAnchored(labels, {
+          gapH: c.gapH,
+          gapV: c.gapV,
+          ringRadius: c.ringRadius,
+          ringMargin: c.ringMargin,
+          connectorMargin: c.connectorMargin,
+        });
+        const t5 = performance.now();
+        const nearPositions = labels.map((label) =>
+          nearAnchoredPosition(nearR, label.angle, label),
+        );
+        const nearDists = labels.map((label, k) =>
+          Math.hypot(
+            Math.max(0, Math.abs(nearPositions[k][0]) - label.width / 2),
+            Math.max(0, Math.abs(nearPositions[k][1]) - label.height / 2),
+          ),
+        );
+        document.getElementById('near-radius').textContent = nearR.toFixed(2);
+        document.getElementById('near-spread').textContent =
+          `Δ${(Math.max(...nearDists) - Math.min(...nearDists)).toFixed(1)}px spread`;
+        document.getElementById('near-time').textContent =
+          `${(t5 - t4).toFixed(3)}ms`;
+
+        let nearPlateCollisions = 0;
+        let nearConnectorHits = 0;
+        for (let i = 0; i < labels.length; i += 1) {
+          for (let j = i + 1; j < labels.length; j += 1) {
+            const dx = Math.abs(nearPositions[i][0] - nearPositions[j][0]);
+            const dy = Math.abs(nearPositions[i][1] - nearPositions[j][1]);
+            if (
+              dx < labels[i].width / 2 + labels[j].width / 2 + c.gapH &&
+              dy < labels[i].height / 2 + labels[j].height / 2 + c.gapV
+            ) {
+              nearPlateCollisions += 1;
+            }
+          }
+        }
+
+        for (let i = 0; i < labels.length; i += 1) {
+          const rad = degToRad(labels[i].angle);
+          const p0 = [c.ringRadius * Math.cos(rad), c.ringRadius * Math.sin(rad)];
+          const p1 = [nearR * Math.cos(rad), nearR * Math.sin(rad)];
+          for (let j = 0; j < labels.length; j += 1) {
+            if (i === j) continue;
+            const box = {
+              minX: nearPositions[j][0] - labels[j].width / 2 - c.connectorMargin,
+              maxX: nearPositions[j][0] + labels[j].width / 2 + c.connectorMargin,
+              minY: nearPositions[j][1] - labels[j].height / 2 - c.connectorMargin,
+              maxY: nearPositions[j][1] + labels[j].height / 2 + c.connectorMargin,
+            };
+            if (segmentHitsBox(p0, p1, box)) nearConnectorHits += 1;
+          }
+        }
+
+        const nearIssues = nearPlateCollisions + nearConnectorHits;
+        document.getElementById('near-check').innerHTML =
+          `Near-anchored: every item's nearest point sits exactly on the shared circle by construction (0px spread always). ${nearPlateCollisions} plate collision(s), ${nearConnectorHits} connector hit(s) checked against the real positions.` +
+          (nearIssues === 0
+            ? ' <span style="color:#2a6df4">Clean.</span>'
+            : ' <span style="color:#b3401f">Investigate.</span>');
+
         const warn = document.getElementById('failure-warning');
         if (ls.gaveUp) {
           warn.innerHTML = `<div class="warn">Linear scan gave up after ${c.maxIter} iterations without clearing every pair — this is the failure mode: a menu that never reaches a collision-free radius at this step/budget. Closed form still returns a number (${cf.radius.toFixed(0)}px), because it isn't scanning — but that radius can exceed the parent's bounds; nothing here clamps it.</div>`;
@@ -1529,10 +1704,10 @@
           warn.innerHTML = '';
         }
 
-        drawStage(labels, c, full.radius, ls.radius, shiftResult);
+        drawStage(labels, c, full.radius, ls.radius, shiftResult, nearR);
       }
 
-      function drawStage(labels, c, cfRadius, lsRadius, shiftResult) {
+      function drawStage(labels, c, cfRadius, lsRadius, shiftResult, nearR) {
         stage.innerHTML = '';
 
         const addRing = (radius, fill) => {
@@ -1571,6 +1746,16 @@
           shiftConnector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
           stage.append(shiftConnector);
 
+          // Near-anchored's own connector: same ray again, length set by
+          // the shared near-anchored radius rather than the recommended
+          // one.
+          const nearConnLen = Math.max(0, nearR - c.ringRadius + 8);
+          const nearConnector = document.createElement('div');
+          nearConnector.className = 'connector near-anchored';
+          nearConnector.style.width = `${nearConnLen}px`;
+          nearConnector.style.transform = `rotate(${label.angle}deg) translateX(${c.ringRadius - 8}px)`;
+          stage.append(nearConnector);
+
           const place = (radius, cls, useMeasured, x, y) => {
             const el = document.createElement('div');
             el.className = `plate ${cls}`;
@@ -1600,6 +1785,9 @@
             label.angle,
           );
           place(shiftResult.radius, 'shift-aware', true, shiftX, shiftY);
+
+          const [nearX, nearY] = nearAnchoredPosition(nearR, label.angle, label);
+          place(nearR, 'near-anchored', true, nearX, nearY);
         });
       }
 
@@ -1716,6 +1904,8 @@
         solveRadiusWithShift,
         maxTangentialShift,
         shiftedPosition,
+        solveRadiusNearAnchored,
+        nearAnchoredPosition,
         PRESETS,
         readControls,
         setPreset(key) {
