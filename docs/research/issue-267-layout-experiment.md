@@ -57,17 +57,26 @@ The deterministic corpus contains 19 cases:
 
 The page can export the measured inputs, layouts, validation failures, metrics, work counts, timings, and blind choices as JSON.
 
+The primary screen is now a focused blind review of the two finalists: strict adaptive search and adaptive search with the 4 px presentation tolerance. Their left and right positions are randomized for each case. Solver names, measurements, and the result remain hidden until the reviewer records two separate choices in priority order:
+
+1. label association;
+2. distribution, unlocked only after association has been judged.
+
+Choices lock after both answers to prevent the reveal from changing the judgment. The review covers the familiar eight-item menu, alternating and asymmetric twelve-item menus, clustered manual angles, and the twenty-item stress case. It reports a running tally and exports each choice together with the hidden assignment and both layouts' measurements. The five-strategy comparison and full corpus remain available in a collapsed workbench.
+
+The tolerant solver now receives the exact strict result shown beside it and refines from that placement. Its reported work and time include both strict search and the added presentation-policy search. This removes duplicate strict solves from the comparison path and makes the relationship between the two finalists explicit. The tolerant policy still does more work by design; the blind review tests whether that added work produces a useful visual difference.
+
 ## Current run
 
 The following numbers are one browser run on the development machine. Timing is diagnostic rather than a stable benchmark.
 
 | Strategy                   | Valid | Median C | Worst C | Median max shift | Median outer extent | Median nodes | Worst nodes | Median time | 95th time | Worst time |
 | -------------------------- | ----: | -------: | ------: | ---------------: | ------------------: | -----------: | ----------: | ----------: | --------: | ---------: |
-| Shared radius              | 19/19 |    262.0 | 1,088.0 |              0.0 |               429.4 |          171 |         997 |      2.0 ms |   31.8 ms |    32.4 ms |
-| Tolerant relaxation        | 19/19 |    143.0 |   462.9 |             52.0 |               336.7 |          776 |       3,759 |     10.0 ms |   81.0 ms |    92.8 ms |
-| Global candidates (12 px)  | 19/19 |    132.4 |   356.0 |             44.9 |               369.5 |        1,200 |       3,000 |    169.5 ms |  850.5 ms | 1,008.3 ms |
-| Adaptive global candidates | 19/19 |    127.5 |   350.7 |             47.8 |               366.4 |        1,500 |       8,519 |    188.6 ms |  387.7 ms |   419.7 ms |
-| Adaptive + 4 px tolerance  | 19/19 |    129.5 |   346.0 |             37.8 |               347.2 |        6,374 |      17,519 |    221.3 ms |  458.1 ms |   484.4 ms |
+| Shared radius              | 19/19 |    262.0 | 1,088.0 |              0.0 |               429.4 |          171 |         997 |      1.0 ms |   18.7 ms |    21.8 ms |
+| Tolerant relaxation        | 19/19 |    143.0 |   462.9 |             52.0 |               336.7 |          776 |       3,759 |      6.9 ms |   59.7 ms |    61.5 ms |
+| Global candidates (12 px)  | 19/19 |    132.4 |   356.0 |             44.9 |               369.5 |        1,200 |       3,000 |    156.3 ms |  785.0 ms |   925.3 ms |
+| Adaptive global candidates | 19/19 |    127.5 |   350.7 |             47.8 |               366.4 |        1,500 |       8,519 |    169.6 ms |  351.0 ms |   373.1 ms |
+| Adaptive + 4 px tolerance  | 19/19 |    129.5 |   346.0 |             37.8 |               347.2 |        6,374 |      17,519 |    188.7 ms |  397.6 ms |   398.8 ms |
 
 All five strategies were repeatable and valid on the final run. Before candidate generation was constrained, all three original strategies that allow tangential movement changed the cyclic plate order on the same seeded 20-item case. Restricting every plate center to the angular sector halfway between its neighboring fixed directions eliminated those failures. This supports treating association as a feasible-domain constraint rather than expecting a distribution objective to repair it afterward.
 
@@ -87,12 +96,12 @@ No strategy is ready to select for production.
 
 Continuous polishing is deferred. The current results have not established that grid artifacts, rather than the objective and candidate domain, are the limiting problem.
 
-## Next experiment
+## Decision gate
 
-Before algorithm selection:
+The next step is no longer another solver variation. Complete the five-case blind review. For each case, the association choice is the result. Use distribution only when association is judged equal.
 
-1. Use the blind controls on the familiar, alternating, asymmetric, clustered, and upper-stress cases. Record association and distribution choices separately.
-2. Compare strict adaptive search directly with the 4 px tolerance policy. Confirm that the measured reduction in displacement and outer extent improves perceived association and distribution.
-3. Repeat timings over several runs after the solver ladder is final. Select the tolerant policy only if its visual results are preferred consistently enough to justify its additional work.
+Select the 4 px policy if it has no association losses and wins the priority result on at least three of the five cases. Select strict adaptive search if the tolerant policy loses association on any case or does not produce a consistent visible advantage. A close result means the extra presentation search has not justified itself; it does not call for another objective or more search variants.
+
+This is a design gate, not a statistical study. If the result depends on one uncertain choice, a second reviewer can repeat the same randomized comparison before selection. Repeat timings over several runs only after the visual choice is clear.
 
 Only after that decision should work move into `src`, gain production tests, integrate with the menu renderer, and close #267.

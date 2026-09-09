@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>PROTOTYPE — marking-menu label layout comparison</title>
     <style>
       :root {
@@ -95,6 +95,10 @@
         gap: 9px;
       }
 
+      .controls-spaced {
+        margin-top: 12px;
+      }
+
       button,
       select,
       label.toggle {
@@ -133,6 +137,86 @@
         min-height: 48px;
         margin: 12px 0 0;
         color: #5c584f;
+      }
+
+      .review-instructions,
+      .review-status {
+        color: #5c584f;
+        line-height: 1.5;
+      }
+
+      .focused-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .focused-grid .stage {
+        height: 500px;
+      }
+
+      .focused-grid .solver-card.selected {
+        border-color: #725ee8;
+        box-shadow: 0 0 0 2px rgb(114 94 232 / 20%);
+      }
+
+      .decision-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 16px;
+      }
+
+      .decision {
+        border: 1px solid #e0dbd0;
+        border-radius: 10px;
+        padding: 14px;
+      }
+
+      .decision p {
+        min-height: 42px;
+        margin-bottom: 10px;
+        color: #5c584f;
+        font-size: 13px;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      button:disabled:hover {
+        border-color: #bdb6a8;
+        background: white;
+      }
+
+      button.primary:disabled,
+      button.primary:disabled:hover {
+        border-color: #d2cdc1;
+        background: #eee9df;
+        color: #6c675e;
+      }
+
+      .review-result {
+        margin-top: 14px;
+        border-radius: 10px;
+        background: #f0edff;
+        padding: 12px 14px;
+      }
+
+      .review-result:empty {
+        display: none;
+      }
+
+      details.workbench {
+        margin-top: 24px;
+      }
+
+      details.workbench > summary {
+        cursor: pointer;
+        color: #5c584f;
+        font-weight: 700;
       }
 
       .comparison-grid {
@@ -296,6 +380,14 @@
         font-size: 13px;
       }
 
+      .table-scroll {
+        overflow-x: auto;
+      }
+
+      .failures-heading {
+        margin-top: 18px;
+      }
+
       th,
       td {
         border-bottom: 1px solid #e6e1d8;
@@ -335,8 +427,17 @@
         .state-grid {
           grid-template-columns: 1fr;
         }
+
+        .focused-grid,
+        .decision-grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
+    <meta
+      content="Throwaway prototype for comparing marking-menu label layout algorithms."
+      name="description"
+    />
   </head>
   <body>
     <main>
@@ -350,73 +451,154 @@
       </p>
 
       <section class="panel" aria-labelledby="walkthrough-title">
-        <h2 id="walkthrough-title">Guided comparisons</h2>
-        <div class="walkthrough-tabs" id="walkthrough-tabs"></div>
-        <p class="walkthrough-copy" id="walkthrough-copy"></p>
-        <div class="action-row">
-          <button class="primary" id="load-walkthrough">Load this case</button>
-          <button id="next-walkthrough">Next comparison</button>
-        </div>
-      </section>
-
-      <section class="panel" aria-labelledby="controls-title">
-        <h2 id="controls-title">Free play</h2>
-        <div class="preset-row" id="preset-row"></div>
-        <div class="controls" style="margin-top: 12px">
-          <label class="toggle">
-            <input id="blind-mode" type="checkbox" checked />
-            Hide solver names
-          </label>
-          <button id="reveal">Reveal names</button>
-          <button id="run-batch">Run full corpus</button>
-          <button id="copy-result">Copy current result</button>
-          <button id="download-batch">Download batch JSON</button>
-        </div>
-      </section>
-
-      <section class="comparison-grid" id="comparison-grid"></section>
-
-      <section class="panel" aria-labelledby="batch-title">
-        <h2 id="batch-title">Batch results</h2>
-        <p id="batch-summary">
-          Run the corpus to compare validity, size, and work.
+        <h2 id="walkthrough-title">Blind decision review</h2>
+        <div id="walkthrough-tabs" class="walkthrough-tabs"></div>
+        <p id="walkthrough-copy" class="walkthrough-copy">Loading case…</p>
+        <p class="review-instructions">
+          Compare only the drawings. First choose the layout whose labels are
+          easiest to associate with their directions. Then judge distribution.
+          Solver names and measurements appear only after both answers are
+          recorded.
         </p>
-        <div style="overflow-x: auto">
-          <table>
-            <thead>
-              <tr>
-                <th>Solver</th>
-                <th>Valid</th>
-                <th>Median contact</th>
-                <th>Worst contact</th>
-                <th>Median max shift</th>
-                <th>Median outer extent</th>
-                <th>Median work</th>
-                <th>Worst work</th>
-                <th>Median time</th>
-                <th>95th time</th>
-                <th>Worst time</th>
-              </tr>
-            </thead>
-            <tbody id="batch-body"></tbody>
-          </table>
+        <div class="action-row">
+          <button id="load-walkthrough" type="button">Restart this case</button>
+          <button id="next-walkthrough" type="button" class="primary" disabled>
+            Next case
+          </button>
+          <button id="download-reviews" type="button">
+            Download review JSON
+          </button>
         </div>
-        <h3 style="margin-top: 18px">Validation failures</h3>
-        <ul id="batch-failures">
-          <li>Run the corpus to inspect rejected layouts.</li>
-        </ul>
+        <div id="focused-grid" class="focused-grid"></div>
+        <div class="decision-grid">
+          <section class="decision">
+            <h3>1. Label association</h3>
+            <p>Which layout makes each label's direction most obvious?</p>
+            <div class="action-row">
+              <button
+                type="button"
+                data-pair-choice="left"
+                data-pair-criterion="association"
+              >
+                Layout A
+              </button>
+              <button
+                type="button"
+                data-pair-choice="tie"
+                data-pair-criterion="association"
+              >
+                No difference
+              </button>
+              <button
+                type="button"
+                data-pair-choice="right"
+                data-pair-criterion="association"
+              >
+                Layout B
+              </button>
+            </div>
+          </section>
+          <section class="decision">
+            <h3>2. Distribution</h3>
+            <p>
+              Ignoring association, which layout uses the surrounding space more
+              evenly?
+            </p>
+            <div class="action-row">
+              <button
+                type="button"
+                data-pair-choice="left"
+                data-pair-criterion="distribution"
+                disabled
+              >
+                Layout A
+              </button>
+              <button
+                type="button"
+                data-pair-choice="tie"
+                data-pair-criterion="distribution"
+                disabled
+              >
+                No difference
+              </button>
+              <button
+                type="button"
+                data-pair-choice="right"
+                data-pair-criterion="distribution"
+                disabled
+              >
+                Layout B
+              </button>
+            </div>
+          </section>
+        </div>
+        <div id="review-result" class="review-result"></div>
+        <p id="review-status" class="review-status">No reviews recorded.</p>
       </section>
 
-      <section class="panel state-grid" aria-labelledby="state-title">
-        <div>
-          <h2 id="state-title">Current measured input</h2>
-          <pre id="input-state"></pre>
-        </div>
-        <div>
-          <h2>Full solver output</h2>
-          <pre id="output-state"></pre>
-        </div>
-      </section>
+      <details class="workbench">
+        <summary>Open the full algorithm workbench</summary>
+        <section class="panel" aria-labelledby="controls-title">
+          <h2 id="controls-title">Free play</h2>
+          <div id="preset-row" class="preset-row"></div>
+          <div class="controls controls-spaced">
+            <label class="toggle">
+              <input id="blind-mode" type="checkbox" checked />
+              Hide solver names
+            </label>
+            <button id="reveal" type="button">Reveal names</button>
+            <button id="run-batch" type="button">Run full corpus</button>
+            <button id="copy-result" type="button">Copy current result</button>
+            <button id="download-batch" type="button">
+              Download batch JSON
+            </button>
+          </div>
+        </section>
+
+        <section id="comparison-grid" class="comparison-grid"></section>
+
+        <section class="panel" aria-labelledby="batch-title">
+          <h2 id="batch-title">Batch results</h2>
+          <p id="batch-summary">
+            Run the corpus to compare validity, size, and work.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Solver</th>
+                  <th>Valid</th>
+                  <th>Median contact</th>
+                  <th>Worst contact</th>
+                  <th>Median max shift</th>
+                  <th>Median outer extent</th>
+                  <th>Median work</th>
+                  <th>Worst work</th>
+                  <th>Median time</th>
+                  <th>95th time</th>
+                  <th>Worst time</th>
+                </tr>
+              </thead>
+              <tbody id="batch-body"></tbody>
+            </table>
+          </div>
+          <h3 class="failures-heading">Validation failures</h3>
+          <ul id="batch-failures">
+            <li>Run the corpus to inspect rejected layouts.</li>
+          </ul>
+        </section>
+
+        <section class="panel state-grid" aria-labelledby="state-title">
+          <div>
+            <h2 id="state-title">Current measured input</h2>
+            <pre id="input-state"></pre>
+          </div>
+          <div>
+            <h2>Full solver output</h2>
+            <pre id="output-state"></pre>
+          </div>
+        </section>
+      </details>
     </main>
 
     <div id="measure-pool" aria-hidden="true"></div>
@@ -989,8 +1171,7 @@
           };
         };
 
-        const presentation = (input) => {
-          const strict = candidate(input, true);
+        const presentation = (input, strict = candidate(input, true)) => {
           if (strict.status === 'oversized') return strict;
           const tolerance = 4;
           const strictContact = Metrics.calculate(
@@ -1056,6 +1237,8 @@
             ...result,
             status: stopped ? 'feasible' : 'optimal',
             work,
+            strictWork: strict.work,
+            refinementWork: work - strict.work,
             conflictChecks,
             candidates: domains.reduce((sum, domain) => sum + domain.length, 0),
             strictContact,
@@ -1418,9 +1601,19 @@
           copy: 'Alternating widths expose global coupling. Moving one plate changes the room available to both of its neighbors and to connectors across the menu.',
         },
         {
+          key: 'asymmetric-12',
+          label: 'One long label',
+          copy: 'One unusually long label forces the complete layout to compensate. Watch whether that correction makes neighboring associations harder to read.',
+        },
+        {
           key: 'clustered',
           label: 'Manual angles',
           copy: 'The fixed directions bunch around zero degrees. Compactness loses if it makes any label look attached to the wrong direction.',
+        },
+        {
+          key: 'upper-stress-20',
+          label: 'Twenty items',
+          copy: 'The intended capacity will grow beyond twelve items. This case checks whether either policy becomes visually noisy near the current experimental limit.',
         },
       ];
 
@@ -1429,6 +1622,9 @@
         walkthrough: 0,
         forceReveal: false,
         votes: [],
+        focused: null,
+        focusedSolved: null,
+        reviews: {},
         currentInput: null,
         currentResults: null,
         batch: null,
@@ -1476,11 +1672,20 @@
             candidates: result.candidates,
             conflictChecks: result.conflictChecks,
           });
-        const results = Object.entries(Solvers).map(([solverKey, solver]) => {
+        const results = [];
+        for (const [solverKey, solver] of Object.entries(Solvers)) {
+          const strict =
+            solverKey === 'presentation'
+              ? results.find((result) => result.key === 'adaptive')
+              : undefined;
           const before = performance.now();
-          const result = solver.solve(input);
-          const elapsed = performance.now() - before;
-          const repeated = solver.solve(input);
+          const result = solver.solve(input, strict);
+          const refinementElapsed = performance.now() - before;
+          const elapsed =
+            solverKey === 'presentation'
+              ? strict.elapsed + refinementElapsed
+              : refinementElapsed;
+          const repeated = solver.solve(input, strict);
           const deterministic =
             repeatableState(result) === repeatableState(repeated);
           const validation = Validator.validate(input, result);
@@ -1488,7 +1693,7 @@
             validation.valid = false;
             validation.failures.push('repeated solve changed the result');
           }
-          return {
+          results.push({
             key: solverKey,
             name: solver.name,
             ...result,
@@ -1499,8 +1704,9 @@
                 ? null
                 : Metrics.calculate(input, result.plates),
             elapsed,
-          };
-        });
+            refinementElapsed,
+          });
+        }
         const validContacts = results
           .filter((result) => result.validation.valid && result.metrics)
           .map((result) => result.metrics.maxContact);
@@ -1559,8 +1765,189 @@
         stage.append(layer);
       };
 
-      const renderCurrent = () => {
-        const solved = solveCase(state.preset);
+      const pairChoice = (choice) => {
+        if (choice === 'tie') return 'tie';
+        const index = choice === 'left' ? 0 : 1;
+        return state.focused.order[index];
+      };
+
+      const reviewTally = (criterion) => {
+        const tally = { adaptive: 0, presentation: 0, tie: 0 };
+        for (const review of Object.values(state.reviews))
+          tally[review[criterion]] += 1;
+        return tally;
+      };
+
+      const renderReviewStatus = () => {
+        const association = reviewTally('association');
+        const distribution = reviewTally('distribution');
+        const completed = Object.keys(state.reviews).length;
+        document.getElementById('review-status').textContent =
+          `${completed}/${WALKTHROUGHS.length} cases recorded. ` +
+          `Association — strict ${association.adaptive}, tolerant ${association.presentation}, no difference ${association.tie}. ` +
+          `Distribution — strict ${distribution.adaptive}, tolerant ${distribution.presentation}, no difference ${distribution.tie}.`;
+      };
+
+      const renderStatePanels = () => {
+        document.getElementById('input-state').textContent = JSON.stringify(
+          { case: state.preset, ...state.currentInput },
+          null,
+          2,
+        );
+        document.getElementById('output-state').textContent = JSON.stringify(
+          {
+            results: state.currentResults,
+            focusedReview: state.focused,
+            completedReviews: Object.values(state.reviews),
+            workbenchVotes: state.votes,
+          },
+          null,
+          2,
+        );
+      };
+
+      const renderFocused = (solved) => {
+        const grid = document.getElementById('focused-grid');
+        grid.replaceChildren();
+        const pair = state.focused.order.map((key) =>
+          solved.results.find((result) => result.key === key),
+        );
+        const maximumOuter = Math.max(
+          160,
+          ...pair.map((result) => result.metrics?.outerExtent ?? 160),
+        );
+        const scale = Math.min(1, 200 / maximumOuter);
+        for (const [index, result] of pair.entries()) {
+          const side = index === 0 ? 'left' : 'right';
+          const card = document.createElement('article');
+          card.className = 'solver-card';
+          if (state.focused.association === side)
+            card.classList.add('selected');
+          const layoutName = `Layout ${index === 0 ? 'A' : 'B'}`;
+          const title = state.focused.completed
+            ? `${layoutName} — ${result.name}`
+            : layoutName;
+          const details = state.focused.completed
+            ? `<dl class="metrics">
+                <div class="metric"><dt>Contact extent C</dt><dd>${format(result.metrics?.maxContact)}</dd></div>
+                <div class="metric"><dt>Outer extent O</dt><dd>${format(result.metrics?.outerExtent)}</dd></div>
+                <div class="metric"><dt>Max sideways move</dt><dd>${format(result.metrics?.maxShift)}</dd></div>
+                <div class="metric"><dt>Neighbor whitespace</dt><dd>${format(result.metrics?.minWhitespace)}</dd></div>
+              </dl>`
+            : '';
+          card.innerHTML = `
+            <div class="solver-heading"><div><h3>${title}</h3></div></div>
+            <div class="stage"></div>
+            ${details}
+          `;
+          renderLayout(
+            card.querySelector('.stage'),
+            solved.input,
+            result,
+            scale,
+          );
+          grid.append(card);
+        }
+
+        for (const button of document.querySelectorAll(
+          '[data-pair-criterion]',
+        )) {
+          const criterion = button.dataset.pairCriterion;
+          const choice = button.dataset.pairChoice;
+          button.classList.toggle(
+            'active',
+            state.focused[criterion] === choice,
+          );
+          button.disabled =
+            state.focused.completed ||
+            (criterion === 'distribution' &&
+              state.focused.association === null);
+        }
+
+        const result = document.getElementById('review-result');
+        if (state.focused.completed) {
+          const association = pairChoice(state.focused.association);
+          const distribution = pairChoice(state.focused.distribution);
+          const preferred = association === 'tie' ? distribution : association;
+          const label = (key) =>
+            key === 'tie' ? 'no difference' : Solvers[key].name;
+          result.textContent =
+            `Recorded. Association: ${label(association)}. ` +
+            `Distribution: ${label(distribution)}. ` +
+            `Priority result: ${label(preferred)}.`;
+        } else {
+          result.textContent = '';
+        }
+        document.getElementById('next-walkthrough').disabled =
+          !state.focused.completed;
+        renderReviewStatus();
+      };
+
+      const chooseFocused = (criterion, choice) => {
+        if (
+          state.focused.completed ||
+          (criterion === 'distribution' && state.focused.association === null)
+        )
+          return;
+        state.focused[criterion] = choice;
+        if (
+          state.focused.association !== null &&
+          state.focused.distribution !== null
+        ) {
+          state.focused.completed = true;
+          const association = pairChoice(state.focused.association);
+          const distribution = pairChoice(state.focused.distribution);
+          state.reviews[state.focused.case] = {
+            case: state.focused.case,
+            order: state.focused.order.slice(),
+            association,
+            distribution,
+            priorityResult: association === 'tie' ? distribution : association,
+            layouts: state.focused.order.map((key) => {
+              const result = state.focusedSolved.results.find(
+                (candidate) => candidate.key === key,
+              );
+              return {
+                key,
+                status: result.status,
+                validation: result.validation,
+                metrics: result.metrics,
+                work: result.work,
+                elapsed: result.elapsed,
+              };
+            }),
+            startedAt: state.focused.startedAt,
+            completedAt: new Date().toISOString(),
+          };
+        }
+        renderFocused(state.focusedSolved);
+        renderStatePanels();
+      };
+
+      const beginFocused = (key) => {
+        const randomBit =
+          typeof crypto === 'undefined'
+            ? Math.random() >= 0.5
+            : (crypto.getRandomValues(new Uint32Array(1))[0] & 1) === 1;
+        state.preset = key;
+        state.forceReveal = false;
+        state.focused = {
+          case: key,
+          order: randomBit
+            ? ['adaptive', 'presentation']
+            : ['presentation', 'adaptive'],
+          association: null,
+          distribution: null,
+          completed: false,
+          startedAt: new Date().toISOString(),
+        };
+        const solved = solveCase(key);
+        state.focusedSolved = solved;
+        renderCurrent(solved);
+        renderFocused(solved);
+      };
+
+      const renderCurrent = (solved = solveCase(state.preset)) => {
         state.currentInput = solved.input;
         state.currentResults = solved.results;
         const grid = document.getElementById('comparison-grid');
@@ -1615,16 +2002,7 @@
           }
           grid.append(card);
         }
-        document.getElementById('input-state').textContent = JSON.stringify(
-          { case: state.preset, ...solved.input },
-          null,
-          2,
-        );
-        document.getElementById('output-state').textContent = JSON.stringify(
-          { results: solved.results, votes: state.votes },
-          null,
-          2,
-        );
+        renderStatePanels();
         for (const button of document.querySelectorAll('#preset-row button'))
           button.classList.toggle(
             'active',
@@ -1650,7 +2028,8 @@
           generatedAt: new Date().toISOString(),
           seed: 267,
           cases,
-          votes: state.votes.slice(),
+          focusedReviews: Object.values(state.reviews),
+          workbenchVotes: state.votes.slice(),
         };
         const body = document.getElementById('batch-body');
         body.replaceChildren();
@@ -1727,6 +2106,7 @@
           button.addEventListener('click', () => {
             state.walkthrough = index;
             renderWalkthrough();
+            beginFocused(walkthrough.key);
           });
           tabs.append(button);
         }
@@ -1744,7 +2124,16 @@
 
       buildControls();
       renderWalkthrough();
-      renderCurrent();
+      beginFocused(WALKTHROUGHS[state.walkthrough].key);
+
+      for (const button of document.querySelectorAll('[data-pair-criterion]')) {
+        button.addEventListener('click', () =>
+          chooseFocused(
+            button.dataset.pairCriterion,
+            button.dataset.pairChoice,
+          ),
+        );
+      }
 
       document.getElementById('blind-mode').addEventListener('change', () => {
         state.forceReveal = false;
@@ -1757,17 +2146,25 @@
       document
         .getElementById('load-walkthrough')
         .addEventListener('click', () => {
-          state.preset = WALKTHROUGHS[state.walkthrough].key;
-          state.forceReveal = false;
-          renderCurrent();
+          beginFocused(WALKTHROUGHS[state.walkthrough].key);
         });
       document
         .getElementById('next-walkthrough')
         .addEventListener('click', () => {
           state.walkthrough = (state.walkthrough + 1) % WALKTHROUGHS.length;
           renderWalkthrough();
+          beginFocused(WALKTHROUGHS[state.walkthrough].key);
         });
       document.getElementById('run-batch').addEventListener('click', runBatch);
+      document
+        .getElementById('download-reviews')
+        .addEventListener('click', () =>
+          download('label-layout-blind-review.json', {
+            generatedAt: new Date().toISOString(),
+            cases: WALKTHROUGHS.map(({ key, label }) => ({ key, label })),
+            reviews: Object.values(state.reviews),
+          }),
+        );
       document
         .getElementById('copy-result')
         .addEventListener('click', () =>
