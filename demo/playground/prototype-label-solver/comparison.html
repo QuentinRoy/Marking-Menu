@@ -1,0 +1,1370 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PROTOTYPE — marking-menu label layout comparison</title>
+    <style>
+      :root {
+        color: #202020;
+        background: #f3f0e9;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        width: min(1560px, 100%);
+        margin: 0 auto;
+        padding: 36px 28px 72px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 900px;
+        margin-bottom: 12px;
+        font-size: clamp(30px, 4vw, 52px);
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+      }
+
+      h2 {
+        font-size: 18px;
+      }
+
+      h3 {
+        margin-bottom: 6px;
+        font-size: 15px;
+      }
+
+      .question {
+        max-width: 900px;
+        color: #5c584f;
+        font-size: 18px;
+        line-height: 1.55;
+      }
+
+      .prototype-note {
+        display: inline-block;
+        margin-bottom: 16px;
+        border: 1px solid #a44d35;
+        border-radius: 999px;
+        padding: 5px 10px;
+        color: #873d29;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .panel {
+        margin-top: 24px;
+        border: 1px solid #d2cdc1;
+        border-radius: 14px;
+        background: #fffdf8;
+        padding: 18px;
+        box-shadow: 0 8px 26px rgb(44 37 25 / 7%);
+      }
+
+      .controls,
+      .preset-row,
+      .action-row,
+      .walkthrough-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+      }
+
+      button,
+      select,
+      label.toggle {
+        min-height: 36px;
+        border: 1px solid #bdb6a8;
+        border-radius: 8px;
+        background: white;
+        padding: 7px 11px;
+        color: inherit;
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      button:hover,
+      button.active {
+        border-color: #725ee8;
+        background: #f0edff;
+      }
+
+      button.primary {
+        border-color: #725ee8;
+        background: #725ee8;
+        color: white;
+      }
+
+      label.toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .walkthrough-copy {
+        min-height: 48px;
+        margin: 12px 0 0;
+        color: #5c584f;
+      }
+
+      .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+      }
+
+      .solver-card {
+        min-width: 0;
+        border: 1px solid #d2cdc1;
+        border-radius: 14px;
+        background: white;
+        overflow: hidden;
+      }
+
+      .solver-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 13px 14px;
+        border-bottom: 1px solid #e6e1d8;
+      }
+
+      .status {
+        color: #5c584f;
+        font-size: 12px;
+      }
+
+      .status.invalid {
+        color: #b12e28;
+        font-weight: 700;
+      }
+
+      .stage {
+        position: relative;
+        height: 420px;
+        overflow: hidden;
+        background:
+          linear-gradient(#eee9df 1px, transparent 1px),
+          linear-gradient(90deg, #eee9df 1px, transparent 1px), #faf8f3;
+        background-size: 24px 24px;
+      }
+
+      .layout-layer {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+      }
+
+      .ring {
+        position: absolute;
+        border: 2px solid #8e887d;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 76%);
+        transform: translate(-50%, -50%);
+      }
+
+      .connector {
+        position: absolute;
+        height: 3px;
+        background: #777065;
+        transform-origin: 0 50%;
+      }
+
+      .plate {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: #e9e6df;
+        padding: 4px 8px;
+        color: #292722;
+        font-size: 13px;
+        line-height: 20px;
+        white-space: nowrap;
+        transform: translate(-50%, -50%);
+      }
+
+      .plate::before {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #725ee8;
+        content: '';
+        transform: translate(-50%, -50%);
+      }
+
+      .plate span {
+        position: relative;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px 12px;
+        margin: 0;
+        padding: 13px 14px;
+        border-top: 1px solid #e6e1d8;
+        font-size: 12px;
+      }
+
+      .metric {
+        min-width: 0;
+      }
+
+      .metric dt {
+        overflow: hidden;
+        color: #777065;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .metric dd {
+        margin: 2px 0 0;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+
+      .vote-row {
+        display: flex;
+        gap: 6px;
+        padding: 0 14px 14px;
+      }
+
+      .vote-row button {
+        min-height: 30px;
+        padding: 5px 8px;
+        font-size: 12px;
+      }
+
+      .state-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      pre {
+        max-height: 360px;
+        overflow: auto;
+        border-radius: 10px;
+        background: #25231f;
+        padding: 14px;
+        color: #f3f0e9;
+        font:
+          12px/1.45 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #e6e1d8;
+        padding: 8px;
+        text-align: left;
+        font-variant-numeric: tabular-nums;
+      }
+
+      #measure-pool {
+        position: fixed;
+        top: -10000px;
+        left: -10000px;
+        visibility: hidden;
+      }
+
+      #measure-pool .plate {
+        position: static;
+        display: inline-grid;
+        transform: none;
+      }
+
+      @media (max-width: 1080px) {
+        .comparison-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stage {
+          height: 480px;
+        }
+      }
+
+      @media (max-width: 720px) {
+        main {
+          padding: 24px 14px 48px;
+        }
+
+        .state-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="prototype-note">Throwaway prototype</span>
+      <h1>Which layout stays compact without losing the labels?</h1>
+      <p class="question">
+        This page compares complete menu layouts, not labels in isolation. Every
+        solver receives the same measured plates and fixed directions. Invalid
+        geometry loses immediately; among valid results, compare contact extent,
+        association, tangential movement, and distribution.
+      </p>
+
+      <section class="panel" aria-labelledby="walkthrough-title">
+        <h2 id="walkthrough-title">Guided comparisons</h2>
+        <div class="walkthrough-tabs" id="walkthrough-tabs"></div>
+        <p class="walkthrough-copy" id="walkthrough-copy"></p>
+        <div class="action-row">
+          <button class="primary" id="load-walkthrough">Load this case</button>
+          <button id="next-walkthrough">Next comparison</button>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="controls-title">
+        <h2 id="controls-title">Free play</h2>
+        <div class="preset-row" id="preset-row"></div>
+        <div class="controls" style="margin-top: 12px">
+          <label class="toggle">
+            <input id="blind-mode" type="checkbox" checked />
+            Hide solver names
+          </label>
+          <button id="reveal">Reveal names</button>
+          <button id="run-batch">Run full corpus</button>
+          <button id="copy-result">Copy current result</button>
+          <button id="download-batch">Download batch JSON</button>
+        </div>
+      </section>
+
+      <section class="comparison-grid" id="comparison-grid"></section>
+
+      <section class="panel" aria-labelledby="batch-title">
+        <h2 id="batch-title">Batch results</h2>
+        <p id="batch-summary">
+          Run the corpus to compare validity, size, and work.
+        </p>
+        <div style="overflow-x: auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Solver</th>
+                <th>Valid</th>
+                <th>Median contact</th>
+                <th>Worst contact</th>
+                <th>Median work</th>
+                <th>Worst work</th>
+              </tr>
+            </thead>
+            <tbody id="batch-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel state-grid" aria-labelledby="state-title">
+        <div>
+          <h2 id="state-title">Current measured input</h2>
+          <pre id="input-state"></pre>
+        </div>
+        <div>
+          <h2>Full solver output</h2>
+          <pre id="output-state"></pre>
+        </div>
+      </section>
+    </main>
+
+    <div id="measure-pool" aria-hidden="true"></div>
+
+    <script>
+      const Geometry = (() => {
+        const EPSILON = 1e-7;
+        const radians = (degrees) => (degrees * Math.PI) / 180;
+        const direction = (angle) => {
+          const a = radians(angle);
+          return {
+            u: [Math.cos(a), Math.sin(a)],
+            v: [-Math.sin(a), Math.cos(a)],
+          };
+        };
+        const distanceToBox = (x, y, width, height) =>
+          Math.hypot(
+            Math.max(0, Math.abs(x) - width / 2),
+            Math.max(0, Math.abs(y) - height / 2),
+          );
+        const rayBoxContact = (center, plate, ray) => {
+          const min = [
+            center[0] - plate.width / 2,
+            center[1] - plate.height / 2,
+          ];
+          const max = [
+            center[0] + plate.width / 2,
+            center[1] + plate.height / 2,
+          ];
+          let enter = 0;
+          let exit = Infinity;
+          for (const axis of [0, 1]) {
+            if (Math.abs(ray[axis]) < EPSILON) {
+              if (min[axis] > 0 || max[axis] < 0) return null;
+            } else {
+              const a = min[axis] / ray[axis];
+              const b = max[axis] / ray[axis];
+              enter = Math.max(enter, Math.min(a, b));
+              exit = Math.min(exit, Math.max(a, b));
+            }
+          }
+          return exit + EPSILON < enter || exit < 0 ? null : enter;
+        };
+        const segmentHitsBox = (start, end, center, halfWidth, halfHeight) => {
+          const min = [center[0] - halfWidth, center[1] - halfHeight];
+          const max = [center[0] + halfWidth, center[1] + halfHeight];
+          const delta = [end[0] - start[0], end[1] - start[1]];
+          let enter = 0;
+          let exit = 1;
+          for (const axis of [0, 1]) {
+            if (Math.abs(delta[axis]) < EPSILON) {
+              if (start[axis] < min[axis] || start[axis] > max[axis])
+                return false;
+            } else {
+              const a = (min[axis] - start[axis]) / delta[axis];
+              const b = (max[axis] - start[axis]) / delta[axis];
+              enter = Math.max(enter, Math.min(a, b));
+              exit = Math.min(exit, Math.max(a, b));
+            }
+          }
+          return enter <= exit + EPSILON;
+        };
+        const start = (input, item) => {
+          const { u } = direction(input.plates[item].angle);
+          return [input.ringRadius * u[0], input.ringRadius * u[1]];
+        };
+        const conflicts = (input, first, second) => {
+          const a = input.plates[first.item];
+          const b = input.plates[second.item];
+          const separateX =
+            Math.abs(first.x - second.x) + EPSILON >=
+            (a.width + b.width) / 2 + input.clearances.plateHorizontal;
+          const separateY =
+            Math.abs(first.y - second.y) + EPSILON >=
+            (a.height + b.height) / 2 + input.clearances.plateVertical;
+          if (!separateX && !separateY) return true;
+          const margin = input.clearances.plateToConnector;
+          return (
+            segmentHitsBox(
+              start(input, first.item),
+              first.contact,
+              [second.x, second.y],
+              b.width / 2 + margin,
+              b.height / 2 + margin,
+            ) ||
+            segmentHitsBox(
+              start(input, second.item),
+              second.contact,
+              [first.x, first.y],
+              a.width / 2 + margin,
+              a.height / 2 + margin,
+            )
+          );
+        };
+        const halfDistance = (plate) => {
+          const { u } = direction(plate.angle);
+          return Math.min(
+            Math.abs(u[0]) < EPSILON
+              ? Infinity
+              : plate.width / 2 / Math.abs(u[0]),
+            Math.abs(u[1]) < EPSILON
+              ? Infinity
+              : plate.height / 2 / Math.abs(u[1]),
+          );
+        };
+        const makeCandidate = (input, item, radial, tangent) => {
+          const plate = input.plates[item];
+          const { u, v } = direction(plate.angle);
+          const x = radial * u[0] + tangent * v[0];
+          const y = radial * u[1] + tangent * v[1];
+          const contactRadius = rayBoxContact([x, y], plate, u);
+          if (
+            contactRadius === null ||
+            contactRadius < input.ringRadius ||
+            distanceToBox(x, y, plate.width, plate.height) <
+              input.ringRadius + input.clearances.plateToRing - EPSILON
+          )
+            return null;
+          return {
+            item,
+            x,
+            y,
+            radial,
+            tangent,
+            contactRadius,
+            contact: [contactRadius * u[0], contactRadius * u[1]],
+          };
+        };
+        const isValid = (input, layout) => {
+          if (
+            layout.length !== input.plates.length ||
+            layout.some((plate) => plate === null)
+          )
+            return false;
+          for (let i = 0; i < layout.length; i += 1) {
+            for (let j = i + 1; j < layout.length; j += 1) {
+              if (conflicts(input, layout[i], layout[j])) return false;
+            }
+          }
+          return true;
+        };
+        return {
+          direction,
+          distanceToBox,
+          halfDistance,
+          makeCandidate,
+          conflicts,
+          isValid,
+          start,
+        };
+      })();
+
+      const Metrics = (() => {
+        const whitespace = (a, pa, b, pb) =>
+          Math.hypot(
+            Math.max(0, Math.abs(a.x - b.x) - (pa.width + pb.width) / 2),
+            Math.max(0, Math.abs(a.y - b.y) - (pa.height + pb.height) / 2),
+          );
+        const calculate = (input, plates) => {
+          if (plates.length === 0)
+            return {
+              maxContact: 0,
+              totalContact: 0,
+              maxShift: 0,
+              totalShift: 0,
+              minWhitespace: 0,
+              gapVariation: 0,
+              nearExtent: 0,
+              outerExtent: 0,
+            };
+          const order = input.plates
+            .map((plate, item) => ({
+              angle: ((plate.angle % 360) + 360) % 360,
+              item,
+            }))
+            .sort((a, b) => a.angle - b.angle);
+          const gaps = order.map((entry, index) => {
+            const next = order[(index + 1) % order.length];
+            return whitespace(
+              plates[entry.item],
+              input.plates[entry.item],
+              plates[next.item],
+              input.plates[next.item],
+            );
+          });
+          let nearExtent = 0;
+          let outerExtent = 0;
+          for (const [item, plate] of plates.entries()) {
+            const source = input.plates[item];
+            nearExtent = Math.max(
+              nearExtent,
+              Geometry.distanceToBox(
+                plate.x,
+                plate.y,
+                source.width,
+                source.height,
+              ),
+            );
+            for (const x of [
+              plate.x - source.width / 2,
+              plate.x + source.width / 2,
+            ]) {
+              for (const y of [
+                plate.y - source.height / 2,
+                plate.y + source.height / 2,
+              ])
+                outerExtent = Math.max(outerExtent, Math.hypot(x, y));
+            }
+          }
+          const contacts = plates.map((plate) => plate.contactRadius);
+          const shifts = plates.map((plate) => Math.abs(plate.tangent));
+          return {
+            maxContact: Math.max(...contacts),
+            totalContact: contacts.reduce((sum, value) => sum + value, 0),
+            maxShift: Math.max(...shifts),
+            totalShift: shifts.reduce((sum, value) => sum + value, 0),
+            minWhitespace: Math.min(...gaps),
+            gapVariation: Math.max(...gaps) - Math.min(...gaps),
+            nearExtent,
+            outerExtent,
+          };
+        };
+        const score = (input, plates) => {
+          const m = calculate(input, plates);
+          return [
+            m.maxContact,
+            m.totalContact,
+            m.maxShift,
+            m.totalShift,
+            -m.minWhitespace,
+            m.gapVariation,
+          ];
+        };
+        const compare = (a, b) => {
+          for (
+            let index = 0;
+            index < Math.max(a.length, b.length);
+            index += 1
+          ) {
+            const difference =
+              Math.round((a[index] ?? 0) * 1000) -
+              Math.round((b[index] ?? 0) * 1000);
+            if (difference !== 0) return difference;
+          }
+          return 0;
+        };
+        return { calculate, score, compare };
+      })();
+
+      const Solvers = (() => {
+        const shared = (input) => {
+          const first = Math.ceil(
+            input.ringRadius + input.clearances.plateToRing,
+          );
+          for (let contact = first; contact <= 4096; contact += 1) {
+            const plates = input.plates.map((plate, item) =>
+              Geometry.makeCandidate(
+                input,
+                item,
+                contact + Geometry.halfDistance(plate),
+                0,
+              ),
+            );
+            if (Geometry.isValid(input, plates))
+              return {
+                status: 'optimal',
+                plates,
+                work: contact - first + 1,
+                candidates: input.plates.length,
+              };
+          }
+          return {
+            status: 'oversized',
+            plates: [],
+            work: 4096 - first + 1,
+            candidates: 0,
+          };
+        };
+
+        const relaxed = (input) => {
+          const seed = shared(input);
+          if (seed.status === 'oversized') return seed;
+          let plates = seed.plates.map((plate) => ({
+            ...plate,
+            contact: [...plate.contact],
+          }));
+          let work = seed.work;
+          for (const step of [16, 8, 4, 2, 1]) {
+            let changed = true;
+            while (changed) {
+              changed = false;
+              for (let item = 0; item < plates.length; item += 1) {
+                const current = plates[item];
+                const moves = [
+                  [current.radial - step, current.tangent],
+                  [current.radial, current.tangent - step],
+                  [current.radial, current.tangent + step],
+                ];
+                for (const [radial, tangent] of moves) {
+                  const candidate = Geometry.makeCandidate(
+                    input,
+                    item,
+                    radial,
+                    tangent,
+                  );
+                  work += 1;
+                  if (candidate === null) continue;
+                  const trial = plates.slice();
+                  trial[item] = candidate;
+                  if (
+                    Geometry.isValid(input, trial) &&
+                    Metrics.compare(
+                      Metrics.score(input, trial),
+                      Metrics.score(input, plates),
+                    ) < 0
+                  ) {
+                    plates = trial;
+                    changed = true;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+          return { status: 'feasible', plates, work, candidates: work };
+        };
+
+        const buildDomains = (input, baseline, resolution, prior) =>
+          input.plates.map((plate, item) => {
+            const seen = new Set();
+            const candidates = [];
+            const add = (candidate) => {
+              if (
+                candidate === null ||
+                candidate.contactRadius >
+                  baseline.plates[0].contactRadius + 1e-7
+              )
+                return;
+              const key = `${Math.round(candidate.x * 1000)},${Math.round(candidate.y * 1000)}`;
+              if (!seen.has(key)) {
+                seen.add(key);
+                candidates.push(candidate);
+              }
+            };
+            const base = prior?.[item];
+            const tangentLimit =
+              (plate.width / 2) *
+                Math.abs(Geometry.direction(plate.angle).u[1]) +
+              (plate.height / 2) *
+                Math.abs(Geometry.direction(plate.angle).u[0]);
+            if (base) {
+              for (const dr of [-1, -0.5, 0, 0.5, 1]) {
+                for (const dt of [-1, -0.5, 0, 0.5, 1])
+                  add(
+                    Geometry.makeCandidate(
+                      input,
+                      item,
+                      base.radial + dr * resolution,
+                      base.tangent + dt * resolution,
+                    ),
+                  );
+              }
+            } else {
+              const min = input.ringRadius + Geometry.halfDistance(plate);
+              const max = baseline.plates[item].radial + tangentLimit * 0.8;
+              for (let radial = min; radial <= max; radial += resolution) {
+                for (const fraction of [-0.8, -0.4, 0, 0.4, 0.8])
+                  add(
+                    Geometry.makeCandidate(
+                      input,
+                      item,
+                      radial,
+                      tangentLimit * 0.8 * fraction,
+                    ),
+                  );
+              }
+            }
+            add(baseline.plates[item]);
+            return candidates.sort((a, b) =>
+              Metrics.compare(
+                [a.contactRadius, Math.abs(a.tangent)],
+                [b.contactRadius, Math.abs(b.tangent)],
+              ),
+            );
+          });
+
+        const search = (input, domains, seed, nodeLimit) => {
+          let best = seed.slice();
+          let bestScore = Metrics.score(input, best);
+          const selected = new Array(domains.length);
+          let nodes = 0;
+          let stopped = false;
+          const compatible = (candidate) =>
+            selected.every(
+              (chosen) =>
+                chosen === undefined ||
+                !Geometry.conflicts(input, candidate, chosen),
+            );
+          const visit = (depth) => {
+            if (nodes >= nodeLimit) {
+              stopped = true;
+              return;
+            }
+            nodes += 1;
+            if (depth === domains.length) {
+              const candidateScore = Metrics.score(input, selected);
+              if (Metrics.compare(candidateScore, bestScore) < 0) {
+                best = selected.slice();
+                bestScore = candidateScore;
+              }
+              return;
+            }
+            let item = -1;
+            let available = [];
+            for (let index = 0; index < domains.length; index += 1) {
+              if (selected[index] !== undefined) continue;
+              const choices = domains[index].filter(compatible);
+              if (choices.length === 0) return;
+              if (item < 0 || choices.length < available.length) {
+                item = index;
+                available = choices;
+              }
+            }
+            for (const candidate of available) {
+              selected[item] = candidate;
+              visit(depth + 1);
+              selected[item] = undefined;
+              if (stopped) return;
+            }
+          };
+          visit(0);
+          return {
+            plates: best,
+            work: nodes,
+            status: stopped ? 'feasible' : 'optimal',
+          };
+        };
+
+        const candidate = (input, adaptive) => {
+          const baseline = shared(input);
+          if (baseline.status === 'oversized') return baseline;
+          let domains = buildDomains(input, baseline, 12);
+          let result = search(input, domains, baseline.plates, 30000);
+          let totalWork = result.work;
+          if (adaptive && result.status === 'optimal') {
+            for (const resolution of [4, 1]) {
+              const additions = buildDomains(
+                input,
+                baseline,
+                resolution,
+                result.plates,
+              );
+              domains = domains.map((domain, item) => {
+                const seen = new Set(
+                  domain.map(
+                    (plate) =>
+                      `${Math.round(plate.x * 1000)},${Math.round(plate.y * 1000)}`,
+                  ),
+                );
+                return domain.concat(
+                  additions[item].filter(
+                    (plate) =>
+                      !seen.has(
+                        `${Math.round(plate.x * 1000)},${Math.round(plate.y * 1000)}`,
+                      ),
+                  ),
+                );
+              });
+              result = search(input, domains, result.plates, 30000);
+              totalWork += result.work;
+              if (result.status !== 'optimal') break;
+            }
+          }
+          return {
+            ...result,
+            work: totalWork,
+            candidates: domains.reduce((sum, domain) => sum + domain.length, 0),
+          };
+        };
+
+        return {
+          shared: { name: 'Shared radius', solve: shared },
+          relaxed: { name: 'Tolerant relaxation', solve: relaxed },
+          adaptive: {
+            name: 'Adaptive global candidates',
+            solve: (input) => candidate(input, true),
+          },
+        };
+      })();
+
+      const Validator = (() => {
+        const rayError = (angle, point) => {
+          const a = (angle * Math.PI) / 180;
+          return Math.abs(point[0] * Math.sin(a) - point[1] * Math.cos(a));
+        };
+        const validate = (input, result) => {
+          const failures = [];
+          if (result.status === 'oversized') return { valid: true, failures };
+          if (result.plates.length !== input.plates.length)
+            failures.push('plate count differs from input');
+          for (const [item, plate] of result.plates.entries()) {
+            const source = input.plates[item];
+            if (![plate.x, plate.y, ...plate.contact].every(Number.isFinite))
+              failures.push(`plate ${item} has a non-finite coordinate`);
+            if (rayError(source.angle, plate.contact) > 0.001)
+              failures.push(`connector ${item} left its fixed direction`);
+            if (
+              Geometry.distanceToBox(
+                plate.contact[0] - plate.x,
+                plate.contact[1] - plate.y,
+                source.width,
+                source.height,
+              ) > 0.001
+            )
+              failures.push(`connector ${item} misses its plate`);
+            if (
+              Geometry.distanceToBox(
+                plate.x,
+                plate.y,
+                source.width,
+                source.height,
+              ) <
+              input.ringRadius + input.clearances.plateToRing - 0.001
+            )
+              failures.push(`plate ${item} enters the ring clearance`);
+          }
+          for (let i = 0; i < result.plates.length; i += 1) {
+            for (let j = i + 1; j < result.plates.length; j += 1) {
+              if (Geometry.conflicts(input, result.plates[i], result.plates[j]))
+                failures.push(`items ${i} and ${j} interfere`);
+            }
+          }
+          return { valid: failures.length === 0, failures };
+        };
+        return { validate };
+      })();
+
+      const even = (labels) =>
+        labels.map((label, index) => ({
+          label,
+          angle: (360 / labels.length) * index,
+        }));
+      const CORPUS = {
+        'default-8': {
+          label: 'Default 8',
+          items: even([
+            'Right',
+            'Open recent project',
+            'Others…',
+            'Save a copy',
+            'Left',
+            'Command palette',
+            'Up',
+            'Preferences',
+          ]),
+        },
+        'alternating-12': {
+          label: 'Alternating 12',
+          items: even(
+            Array.from({ length: 12 }, (_, index) =>
+              index % 2 === 0
+                ? `Command ${index}`
+                : `A much longer command ${index}`,
+            ),
+          ),
+        },
+        'asymmetric-12': {
+          label: 'Asymmetric 12',
+          items: even([
+            'Run',
+            'Open the selected project in a new window',
+            'Cut',
+            'Copy',
+            'Paste',
+            'Rename',
+            'Move to trash',
+            'Info',
+            'Share',
+            'Tags',
+            'Duplicate',
+            'Compress',
+          ]),
+        },
+        'even-16': {
+          label: 'Even 16',
+          items: even(
+            Array.from(
+              { length: 16 },
+              (_, index) =>
+                `Action ${index + 1}${index % 4 === 0 ? ' with detail' : ''}`,
+            ),
+          ),
+        },
+        clustered: {
+          label: 'Clustered',
+          items: [
+            { label: 'Before boundary', angle: 338 },
+            { label: 'Near boundary', angle: 354 },
+            { label: 'After boundary', angle: 9 },
+            { label: 'Crowded right', angle: 33 },
+            { label: 'Lower left', angle: 142 },
+            { label: 'Upper left command', angle: 238 },
+          ],
+        },
+        symmetric: {
+          label: 'Symmetric',
+          items: even([
+            'One',
+            'Same width',
+            'Three',
+            'Same width',
+            'One',
+            'Same width',
+            'Three',
+            'Same width',
+          ]),
+        },
+        oversized: {
+          label: 'Oversized',
+          items: even(['X'.repeat(450), 'North', 'West', 'South']),
+        },
+      };
+
+      let seed = 267;
+      const random = () => {
+        seed = (seed * 1664525 + 1013904223) % 4294967296;
+        return seed / 4294967296;
+      };
+      for (const count of [8, 12, 16]) {
+        for (let fixture = 0; fixture < 2; fixture += 1) {
+          CORPUS[`seed-${count}-${fixture}`] = {
+            label: `Seeded ${count}.${fixture + 1}`,
+            items: even(
+              Array.from(
+                { length: count },
+                (_, index) =>
+                  'W'.repeat(3 + Math.floor(random() * 18)) + ` ${index + 1}`,
+              ),
+            ),
+          };
+        }
+      }
+
+      const WALKTHROUGHS = [
+        {
+          key: 'default-8',
+          label: 'Familiar menu',
+          copy: 'Start with a menu that is easy to read. Check whether a more compact result still keeps every connector and plate association obvious.',
+        },
+        {
+          key: 'alternating-12',
+          label: 'Uneven crowd',
+          copy: 'Alternating widths expose global coupling. Moving one plate changes the room available to both of its neighbors and to connectors across the menu.',
+        },
+        {
+          key: 'clustered',
+          label: 'Manual angles',
+          copy: 'The fixed directions bunch around zero degrees. Compactness loses if it makes any label look attached to the wrong direction.',
+        },
+      ];
+
+      const state = {
+        preset: 'default-8',
+        walkthrough: 0,
+        forceReveal: false,
+        votes: [],
+        currentInput: null,
+        currentResults: null,
+        batch: null,
+      };
+
+      const measure = (items) => {
+        const pool = document.getElementById('measure-pool');
+        pool.replaceChildren();
+        const plates = items.map((item) => {
+          const element = document.createElement('div');
+          element.className = 'plate';
+          const label = document.createElement('span');
+          label.textContent = item.label;
+          element.append(label);
+          pool.append(element);
+          const rect = element.getBoundingClientRect();
+          return {
+            angle: item.angle,
+            width: rect.width,
+            height: rect.height,
+            label: item.label,
+          };
+        });
+        return {
+          plates,
+          ringRadius: 80,
+          clearances: {
+            plateHorizontal: 14,
+            plateVertical: 7,
+            plateToRing: 12,
+            plateToConnector: 3,
+          },
+        };
+      };
+
+      const solveCase = (key) => {
+        const input = measure(CORPUS[key].items);
+        const started = performance.now();
+        const results = Object.entries(Solvers).map(([solverKey, solver]) => {
+          const before = performance.now();
+          const result = solver.solve(input);
+          const elapsed = performance.now() - before;
+          const validation = Validator.validate(input, result);
+          return {
+            key: solverKey,
+            name: solver.name,
+            ...result,
+            validation,
+            metrics:
+              result.status === 'oversized'
+                ? null
+                : Metrics.calculate(input, result.plates),
+            elapsed,
+          };
+        });
+        return { key, input, results, elapsed: performance.now() - started };
+      };
+
+      const format = (value) =>
+        Number.isFinite(value) ? value.toFixed(1) : '—';
+
+      const renderLayout = (stage, input, result, scale) => {
+        const layer = document.createElement('div');
+        layer.className = 'layout-layer';
+        const ring = document.createElement('div');
+        ring.className = 'ring';
+        ring.style.width = `${input.ringRadius * 2 * scale}px`;
+        ring.style.height = `${input.ringRadius * 2 * scale}px`;
+        layer.append(ring);
+        if (result.status !== 'oversized') {
+          for (const [item, plate] of result.plates.entries()) {
+            const source = input.plates[item];
+            const start = Geometry.start(input, item);
+            const line = document.createElement('div');
+            const length = Math.hypot(
+              plate.contact[0] - start[0],
+              plate.contact[1] - start[1],
+            );
+            line.className = 'connector';
+            line.style.left = `${start[0] * scale}px`;
+            line.style.top = `${start[1] * scale}px`;
+            line.style.width = `${length * scale}px`;
+            line.style.transform = `translateY(-50%) rotate(${source.angle}deg)`;
+            layer.append(line);
+            const box = document.createElement('div');
+            box.className = 'plate';
+            box.style.left = `${plate.x * scale}px`;
+            box.style.top = `${plate.y * scale}px`;
+            box.style.width = `${source.width * scale}px`;
+            box.style.height = `${source.height * scale}px`;
+            box.style.padding = '0';
+            box.style.fontSize = `${Math.max(9, 13 * scale)}px`;
+            const label = document.createElement('span');
+            label.textContent = source.label;
+            box.append(label);
+            layer.append(box);
+          }
+        }
+        stage.append(layer);
+      };
+
+      const renderCurrent = () => {
+        const solved = solveCase(state.preset);
+        state.currentInput = solved.input;
+        state.currentResults = solved.results;
+        const grid = document.getElementById('comparison-grid');
+        grid.replaceChildren();
+        const blind =
+          document.getElementById('blind-mode').checked && !state.forceReveal;
+        const maximumOuter = Math.max(
+          160,
+          ...solved.results.map((result) => result.metrics?.outerExtent ?? 160),
+        );
+        const scale = Math.min(1, 165 / maximumOuter);
+        for (const [index, result] of solved.results.entries()) {
+          const card = document.createElement('article');
+          card.className = 'solver-card';
+          const title = blind
+            ? `Layout ${String.fromCharCode(65 + index)}`
+            : result.name;
+          card.innerHTML = `
+            <div class="solver-heading"><div><h3>${title}</h3><div class="status ${result.validation.valid ? '' : 'invalid'}">${result.validation.valid ? result.status : `${result.validation.failures.length} failures`}</div></div><div class="status">${format(result.elapsed)} ms</div></div>
+            <div class="stage"></div>
+            <dl class="metrics">
+              <div class="metric"><dt>Contact extent C</dt><dd>${format(result.metrics?.maxContact)}</dd></div>
+              <div class="metric"><dt>Outer extent O</dt><dd>${format(result.metrics?.outerExtent)}</dd></div>
+              <div class="metric"><dt>Max sideways move</dt><dd>${format(result.metrics?.maxShift)}</dd></div>
+              <div class="metric"><dt>Neighbor whitespace</dt><dd>${format(result.metrics?.minWhitespace)}</dd></div>
+              <div class="metric"><dt>Gap variation</dt><dd>${format(result.metrics?.gapVariation)}</dd></div>
+              <div class="metric"><dt>Deterministic work</dt><dd>${result.work}</dd></div>
+            </dl>
+            <div class="vote-row"><button data-vote="association">Clearest association</button><button data-vote="distribution">Best distribution</button></div>
+          `;
+          renderLayout(
+            card.querySelector('.stage'),
+            solved.input,
+            result,
+            scale,
+          );
+          for (const button of card.querySelectorAll('[data-vote]')) {
+            button.addEventListener('click', () => {
+              state.votes.push({
+                case: state.preset,
+                criterion: button.dataset.vote,
+                solver: result.key,
+                blind,
+                at: new Date().toISOString(),
+              });
+              button.classList.add('active');
+            });
+          }
+          grid.append(card);
+        }
+        document.getElementById('input-state').textContent = JSON.stringify(
+          { case: state.preset, ...solved.input },
+          null,
+          2,
+        );
+        document.getElementById('output-state').textContent = JSON.stringify(
+          { results: solved.results, votes: state.votes },
+          null,
+          2,
+        );
+        for (const button of document.querySelectorAll('#preset-row button'))
+          button.classList.toggle(
+            'active',
+            button.dataset.preset === state.preset,
+          );
+      };
+
+      const percentile = (values, fraction) =>
+        values.slice().sort((a, b) => a - b)[
+          Math.floor((values.length - 1) * fraction)
+        ] ?? 0;
+
+      const runBatch = () => {
+        const cases = Object.keys(CORPUS).map(solveCase);
+        state.batch = {
+          generatedAt: new Date().toISOString(),
+          seed: 267,
+          cases,
+          votes: state.votes.slice(),
+        };
+        const body = document.getElementById('batch-body');
+        body.replaceChildren();
+        for (const [solverKey, solver] of Object.entries(Solvers)) {
+          const results = cases.map((entry) =>
+            entry.results.find((result) => result.key === solverKey),
+          );
+          const valid = results.filter(
+            (result) => result.validation.valid,
+          ).length;
+          const contacts = results
+            .filter((result) => result.metrics)
+            .map((result) => result.metrics.maxContact);
+          const work = results.map((result) => result.work);
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${solver.name}</td><td>${valid}/${results.length}</td><td>${format(percentile(contacts, 0.5))}</td><td>${format(Math.max(...contacts))}</td><td>${format(percentile(work, 0.5))}</td><td>${Math.max(...work)}</td>`;
+          body.append(row);
+        }
+        document.getElementById('batch-summary').textContent =
+          `${cases.length} cases finished. Results include measured inputs, every layout, validation failures, metrics, work counts, and recorded blind choices.`;
+      };
+
+      const download = (name, value) => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(
+          new Blob([JSON.stringify(value, null, 2)], {
+            type: 'application/json',
+          }),
+        );
+        link.download = name;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      };
+
+      const buildControls = () => {
+        const presets = document.getElementById('preset-row');
+        for (const [key, preset] of Object.entries(CORPUS)) {
+          if (key.startsWith('seed-')) continue;
+          const button = document.createElement('button');
+          button.textContent = preset.label;
+          button.dataset.preset = key;
+          button.addEventListener('click', () => {
+            state.preset = key;
+            state.forceReveal = false;
+            renderCurrent();
+          });
+          presets.append(button);
+        }
+        const tabs = document.getElementById('walkthrough-tabs');
+        for (const [index, walkthrough] of WALKTHROUGHS.entries()) {
+          const button = document.createElement('button');
+          button.textContent = walkthrough.label;
+          button.addEventListener('click', () => {
+            state.walkthrough = index;
+            renderWalkthrough();
+          });
+          tabs.append(button);
+        }
+      };
+
+      const renderWalkthrough = () => {
+        const walkthrough = WALKTHROUGHS[state.walkthrough];
+        document.getElementById('walkthrough-copy').textContent =
+          walkthrough.copy;
+        for (const [index, button] of document
+          .querySelectorAll('#walkthrough-tabs button')
+          .entries())
+          button.classList.toggle('active', index === state.walkthrough);
+      };
+
+      buildControls();
+      renderWalkthrough();
+      renderCurrent();
+
+      document.getElementById('blind-mode').addEventListener('change', () => {
+        state.forceReveal = false;
+        renderCurrent();
+      });
+      document.getElementById('reveal').addEventListener('click', () => {
+        state.forceReveal = true;
+        renderCurrent();
+      });
+      document
+        .getElementById('load-walkthrough')
+        .addEventListener('click', () => {
+          state.preset = WALKTHROUGHS[state.walkthrough].key;
+          state.forceReveal = false;
+          renderCurrent();
+        });
+      document
+        .getElementById('next-walkthrough')
+        .addEventListener('click', () => {
+          state.walkthrough = (state.walkthrough + 1) % WALKTHROUGHS.length;
+          renderWalkthrough();
+        });
+      document.getElementById('run-batch').addEventListener('click', runBatch);
+      document
+        .getElementById('copy-result')
+        .addEventListener('click', () =>
+          navigator.clipboard.writeText(
+            document.getElementById('output-state').textContent,
+          ),
+        );
+      document
+        .getElementById('download-batch')
+        .addEventListener('click', () => {
+          if (state.batch === null) runBatch();
+          download('label-layout-comparison.json', state.batch);
+        });
+    </script>
+  </body>
+</html>
