@@ -35,7 +35,9 @@
     "format:check": "prettier --check .",
     "package:lint": "publint",
     "package:types": "attw --pack . --profile esm-only",
-    "package:smoke-test": "node scripts/smoke-test.ts"
+    "package:smoke-test": "node scripts/smoke-test.ts",
+    "prototype:vector-stroke": "node prototypes/vector-stroke-surface/measure.ts",
+    "prototype:vector-stroke:report": "node prototypes/vector-stroke-surface/report.ts"
   },
   "files": [
     "dist"

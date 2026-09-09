@@ -1,2 +1,5 @@
 # Vendored shadcn/ui components, kept as the registry serves them.
 demo/playground/components/ui/
+
+# Throwaway prototype (issue #284); results are generated output.
+prototypes/vector-stroke-surface/results.json

@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PROTOTYPE — vector stroke surface (#284)</title>
+    <style>
+      body {
+        margin: 0;
+        font:
+          13px/1.4 ui-monospace,
+          monospace;
+        background: #fff;
+        color: #111;
+      }
+
+      header {
+        padding: 8px 12px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      h1 {
+        margin: 0 0 6px;
+        font-size: 14px;
+      }
+
+      button {
+        font: inherit;
+        margin: 0 4px 4px 0;
+      }
+
+      #out {
+        margin: 0;
+        padding: 8px 12px;
+        max-height: 220px;
+        overflow: auto;
+        white-space: pre;
+        border-bottom: 1px solid #ddd;
+      }
+
+      /* The stage is the coordinate space every probe lays itself out in.
+         Probes read/write absolute positions inside it, so nothing here may
+         scroll or shift. */
+      #stage {
+        position: relative;
+        width: 1000px;
+        height: 700px;
+      }
+
+      .parent {
+        position: absolute;
+        outline: 1px dashed #e6e6e6;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>PROTOTYPE — vector stroke surface (issue #284). Throwaway.</h1>
+      <div id="controls"></div>
+    </header>
+    <pre id="out"></pre>
+    <div id="stage"></div>
+
+    <script type="module">
+      const SVG_NS = 'http://www.w3.org/2000/svg';
+      const stage = document.querySelector('#stage');
+      const out = document.querySelector('#out');
+
+      const log = (...parts) => {
+        out.textContent += parts.join(' ') + '\n';
+        out.scrollTop = out.scrollHeight;
+      };
+
+      /* ------------------------------------------------------------------
+         Surfaces. The canvas one mirrors src/layout/stroke.ts; the svg one
+         is the candidate.
+         ------------------------------------------------------------------ */
+
+      function createCanvasSurface({
+        parent,
+        lineWidth = 4,
+        lineColor = '#000',
+        pointColor = lineColor,
+        pointRadius = 8,
+        ptSize = window.devicePixelRatio > 0 ? 1 / window.devicePixelRatio : 1,
+        widthPx,
+        heightPx,
+      }) {
+        const rect = parent.getBoundingClientRect();
+        const width = widthPx ?? rect.width;
+        const height = heightPx ?? rect.height;
+        const canvas = document.createElement('canvas');
+        canvas.width = width / ptSize;
+        canvas.height = height / ptSize;
+        Object.assign(canvas.style, {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: `${width}px`,
+          height: `${height}px`,
+          pointerEvents: 'none',
+        });
+        parent.append(canvas);
+        const ctx = canvas.getContext('2d');
+        ctx.scale(1 / ptSize, 1 / ptSize);
+
+        const setStrokeStyle = () => {
+          ctx.fillStyle = 'none';
+          ctx.lineJoin = 'round';
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = lineColor;
+          ctx.lineWidth = lineWidth;
+        };
+
+        return {
+          element: canvas,
+          clear: () => ctx.clearRect(0, 0, canvas.width, canvas.height),
+          drawStroke(stroke) {
+            ctx.save();
+            setStrokeStyle();
+            ctx.beginPath();
+            for (const [i, point] of stroke.entries()) {
+              if (i === 0) ctx.moveTo(...point);
+              else ctx.lineTo(...point);
+            }
+            ctx.stroke();
+            ctx.restore();
+          },
+          drawSegment(from, to) {
+            ctx.save();
+            setStrokeStyle();
+            ctx.beginPath();
+            ctx.moveTo(...from);
+            ctx.lineTo(...to);
+            ctx.stroke();
+            ctx.restore();
+          },
+          drawPoint([x, y]) {
+            ctx.save();
+            ctx.strokeStyle = 'none';
+            ctx.fillStyle = pointColor;
+            ctx.beginPath();
+            ctx.moveTo(x + pointRadius, y);
+            ctx.arc(x, y, pointRadius, 0, 360);
+            ctx.fill();
+            ctx.restore();
+          },
+          /* What #279's growth rule would cost: a new backing store, zeroed.
+             Split so the reallocation can be timed without the style writes
+             riding along. */
+          setBackingSize(nextWidth, nextHeight) {
+            canvas.width = nextWidth / ptSize;
+            canvas.height = nextHeight / ptSize;
+          },
+          applyStyleSize(nextWidth, nextHeight) {
+            canvas.style.width = `${nextWidth}px`;
+            canvas.style.height = `${nextHeight}px`;
+            ctx.scale(1 / ptSize, 1 / ptSize);
+          },
+          resize(nextWidth, nextHeight) {
+            this.setBackingSize(nextWidth, nextHeight);
+            this.applyStyleSize(nextWidth, nextHeight);
+          },
+          readPixel(x, y) {
+            return ctx.getImageData(x / ptSize, y / ptSize, 1, 1).data;
+          },
+          remove: () => canvas.remove(),
+        };
+      }
+
+      function createSvgSurface({
+        parent,
+        lineWidth = 4,
+        lineColor = '#000',
+        pointColor = lineColor,
+        pointRadius = 8,
+      }) {
+        const svg = document.createElementNS(SVG_NS, 'svg');
+        Object.assign(svg.style, {
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: '100%',
+          height: '100%',
+          /* The one line that lets ink leave the parent's box: the UA
+             stylesheet sets `overflow: hidden` on an outermost `<svg>`. */
+          overflow: 'visible',
+          pointerEvents: 'none',
+          display: 'block',
+        });
+        const path = document.createElementNS(SVG_NS, 'path');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', lineColor);
+        path.setAttribute('stroke-width', String(lineWidth));
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        svg.append(path);
+        parent.append(svg);
+
+        let point = null;
+
+        return {
+          element: svg,
+          path,
+          clear() {
+            path.removeAttribute('d');
+            point?.remove();
+            point = null;
+          },
+          setD: (d) => path.setAttribute('d', d),
+          drawStroke(stroke) {
+            path.setAttribute('d', toPathData(stroke));
+          },
+          drawPoint([x, y]) {
+            point ??= svg.appendChild(
+              document.createElementNS(SVG_NS, 'circle'),
+            );
+            point.setAttribute('cx', String(x));
+            point.setAttribute('cy', String(y));
+            point.setAttribute('r', String(pointRadius));
+            point.setAttribute('fill', pointColor);
+          },
+          remove: () => svg.remove(),
+        };
+      }
+
+      /* A one-point stroke is what `M x y` alone produces; the zero-length
+         `L` is what makes a round cap paint a dot. Both are measured. */
+      function toPathData(stroke, { closeSinglePoint = true } = {}) {
+        if (stroke.length === 0) return '';
+        const [[x0, y0]] = stroke;
+        let d = `M${x0} ${y0}`;
+        for (const [x, y] of stroke.slice(1)) d += `L${x} ${y}`;
+        if (stroke.length === 1 && closeSinglePoint) d += `L${x0} ${y0}`;
+        return d;
+      }
+
+      /* ------------------------------------------------------------------
+         Fixtures
+         ------------------------------------------------------------------ */
+
+      function makeStroke(count, { width, height }) {
+        const points = [];
+        const cx = width / 2;
+        const cy = height / 2;
+        const r0 = Math.min(width, height) * 0.04;
+        const r1 = Math.min(width, height) * 0.45;
+        for (let i = 0; i < count; i++) {
+          const t = count === 1 ? 0 : i / (count - 1);
+          const angle = t * Math.PI * 6;
+          const radius = r0 + (r1 - r0) * t;
+          points.push([
+            Math.round((cx + Math.cos(angle) * radius) * 100) / 100,
+            Math.round((cy + Math.sin(angle) * radius) * 100) / 100,
+          ]);
+        }
+        return points;
+      }
+
+      function resetStage() {
+        /* Top-layer elements are children of <body>, not of the stage. */
+        for (const open of document.querySelectorAll('[popover]'))
+          open.remove();
+        stage.replaceChildren();
+        stage.style.overflow = 'visible';
+        document.body.style.height = '';
+      }
+
+      function addParent({
+        left,
+        top,
+        width,
+        height,
+        overflow = 'visible',
+        into = stage,
+      }) {
+        const parent = document.createElement('div');
+        parent.className = 'parent';
+        Object.assign(parent.style, {
+          left: `${left}px`,
+          top: `${top}px`,
+          width: `${width}px`,
+          height: `${height}px`,
+          overflow,
+        });
+        into.append(parent);
+        return parent;
+      }
+
+      /* Every strategy hands back an element whose box coincides with the
+         parent's, so the surface is built the same way and its coordinates
+         stay parent-local. What differs is whether that element is still
+         inside the parent's layout, and inside its clip.
+
+         - `absolute` is what the library does today.
+         - `clip-margin` keeps the surface in the parent's box but wraps it in
+           an `overflow: clip` box, which is not a scroll container, with a
+           margin saying how far ink may escape.
+         - `fixed` and `popover` take the surface out of flow entirely: the
+           first against the viewport, the second into the top layer. */
+      function mountPoint({ parent, strategy, clipMargin = 300 }) {
+        if (strategy === 'absolute') return parent;
+
+        const rect = parent.getBoundingClientRect();
+        const host = document.createElement('div');
+        if (strategy === 'clip-margin') {
+          Object.assign(host.style, {
+            position: 'absolute',
+            inset: '0',
+            overflow: 'clip',
+            overflowClipMargin: `${clipMargin}px`,
+          });
+          parent.append(host);
+          return host;
+        }
+
+        Object.assign(host.style, {
+          position: 'fixed',
+          /* Before `left`/`top`, not after: `inset` is their shorthand and
+             would reset both to auto. A popover's UA style sets it. */
+          inset: 'auto',
+          left: `${rect.left}px`,
+          top: `${rect.top}px`,
+          width: `${rect.width}px`,
+          height: `${rect.height}px`,
+          margin: '0',
+          border: 'none',
+          padding: '0',
+          background: 'transparent',
+          /* The UA stylesheet gives a popover `overflow: auto`, which would
+             clip the very thing being tested. */
+          overflow: 'visible',
+          pointerEvents: 'none',
+        });
+        if (strategy === 'fixed') {
+          parent.append(host);
+          return host;
+        }
+
+        /* `manual`, not `auto`: an auto popover light-dismisses, closes on
+           Escape, and closes when another popover opens — all of which can
+           happen mid-gesture. */
+        host.popover = 'manual';
+        document.body.append(host);
+        host.showPopover();
+        return host;
+      }
+
+      /* ------------------------------------------------------------------
+         Probes. Each returns JSON, and leaves the stage in the state the
+         runner screenshots.
+         ------------------------------------------------------------------ */
+
+      /* An L-shaped stroke starting inside the parent and leaving it to the
+         right and downwards. The runner screenshots strictly outside the box. */
+      const escapingStroke = (width, height) => [
+        [width / 2, height / 2],
+        [width + 260, height / 2],
+        [width + 260, height + 180],
+      ];
+
+      const BOX = { left: 300, top: 200, width: 200, height: 150 };
+
+      function paintEscape({ surface, overflow, strategy = 'absolute' }) {
+        resetStage();
+        const parent = addParent({ ...BOX, overflow });
+        const host = mountPoint({ parent, strategy });
+        const stroke = escapingStroke(BOX.width, BOX.height);
+        if (surface === 'svg') {
+          createSvgSurface({ parent: host, lineColor: '#f00' }).drawStroke(
+            stroke,
+          );
+        } else {
+          createCanvasSurface({
+            parent: host,
+            lineColor: '#f00',
+            /* A canvas only escapes if its backing store reaches that far;
+               sized to the parent it clips the ink itself, whatever the
+               strategy does about the parent's box. */
+            ...(surface === 'canvas-window'
+              ? { widthPx: window.innerWidth, heightPx: window.innerHeight }
+              : {}),
+          }).drawStroke(stroke);
+        }
+        return {
+          surface,
+          overflow,
+          strategy,
+          box: BOX,
+          /* Strictly outside the parent's box, on the escaping leg. */
+          outside: {
+            x: BOX.left + BOX.width + 40,
+            y: BOX.top + BOX.height / 2 - 20,
+            width: 120,
+            height: 40,
+          },
+          inside: {
+            x: BOX.left + BOX.width / 2,
+            y: BOX.top + BOX.height / 2 - 20,
+            width: 60,
+            height: 40,
+          },
+        };
+      }
+
+      /* Does painting outside the box extend a scroll container? */
+      function scrollArea({ surface, strategy = 'absolute' }) {
+        resetStage();
+        const scroller = document.createElement('div');
+        Object.assign(scroller.style, {
+          position: 'absolute',
+          left: '20px',
+          top: '20px',
+          width: '400px',
+          height: '300px',
+          overflow: 'auto',
+          border: '1px solid #ccc',
+        });
+        const inner = document.createElement('div');
+        Object.assign(inner.style, {
+          position: 'relative',
+          width: '380px',
+          height: '280px',
+        });
+        scroller.append(inner);
+        stage.append(scroller);
+        const parent = addParent({
+          left: 60,
+          top: 60,
+          width: 200,
+          height: 150,
+          into: inner,
+        });
+
+        /* `clientWidth` is the tell that a scrollbar actually appeared: a
+           classic scrollbar takes its width out of the content box, so the
+           number shrinks. On a platform with overlay scrollbars it will not
+           move, and only the scroll extents show the growth. */
+        const measure = () => ({
+          scroller: {
+            scrollWidth: scroller.scrollWidth,
+            scrollHeight: scroller.scrollHeight,
+            clientWidth: scroller.clientWidth,
+            clientHeight: scroller.clientHeight,
+          },
+          document: {
+            scrollWidth: document.documentElement.scrollWidth,
+            scrollHeight: document.documentElement.scrollHeight,
+          },
+        });
+        const before = measure();
+
+        const stroke = escapingStroke(200, 150);
+        const half = 4 / 2;
+        const host = mountPoint({ parent, strategy });
+        if (surface === 'svg') {
+          createSvgSurface({ parent: host, lineColor: '#f00' }).drawStroke(
+            stroke,
+          );
+        } else if (surface === 'canvas') {
+          /* What #279 would do, at its smallest: a canvas exactly big enough
+             to hold the ink, half the stroke width included. Any growth rule
+             has to be at least this large, so the scroll growth this reports
+             is a lower bound, not a number picked to look bad. */
+          createCanvasSurface({
+            parent: host,
+            lineColor: '#f00',
+            widthPx: Math.ceil(Math.max(...stroke.map(([x]) => x)) + half),
+            heightPx: Math.ceil(Math.max(...stroke.map(([, y]) => y)) + half),
+          }).drawStroke(stroke);
+        } else {
+          /* Sized to the window once and never resized, which is the way to
+             keep a canvas incremental: nothing invalidates a backing store
+             that never changes size. `canvas-window` pins it at the parent's
+             origin the way the library does today; `canvas-window-anchored`
+             shifts it up and left so it covers the viewport around the
+             parent, which is what it takes to paint above and left of the
+             parent at all. */
+          const canvas = createCanvasSurface({
+            parent: host,
+            lineColor: '#f00',
+            widthPx: window.innerWidth,
+            heightPx: window.innerHeight,
+          });
+          if (surface === 'canvas-window-anchored') {
+            const rect = parent.getBoundingClientRect();
+            Object.assign(canvas.element.style, {
+              left: `${-rect.left}px`,
+              top: `${-rect.top}px`,
+            });
+          }
+
+          canvas.drawStroke(stroke);
+        }
+
+        return { surface, strategy, before, after: measure() };
+      }
+
+      /* Lay out one surface for a pixel-fidelity comparison. `caseName`
+         picks what is drawn; the runner screenshots `region` for each
+         surface and diffs the two images. */
+      const FIDELITY_BOX = { left: 100, top: 100, width: 300, height: 240 };
+
+      function fidelity({ surface, caseName }) {
+        resetStage();
+        const parent = addParent(FIDELITY_BOX);
+        const { width, height } = FIDELITY_BOX;
+        const centre = [width / 2, height / 2];
+        const strokes = {
+          polyline: makeStroke(40, { width, height }),
+          zigzag: [
+            [40, 40],
+            [140, 200],
+            [240, 40],
+            [260, 120],
+          ],
+          'single-point': [centre],
+          'two-point': [
+            [80, 120],
+            [220, 120],
+          ],
+          'start-marker': makeStroke(12, { width, height }),
+        };
+        const stroke = strokes[caseName];
+        const options = {
+          parent,
+          lineWidth: 8,
+          lineColor: '#000',
+          pointRadius: 14,
+        };
+        const drawn =
+          surface === 'svg'
+            ? createSvgSurface(options)
+            : createCanvasSurface(options);
+        if (caseName === 'single-point' && surface === 'svg') {
+          /* Both spellings, so the finding is about the spelling, not svg. */
+          drawn.setD(toPathData(stroke, { closeSinglePoint: false }));
+        } else {
+          drawn.drawStroke(stroke);
+        }
+        if (caseName === 'start-marker') drawn.drawPoint(stroke[0]);
+        return {
+          surface,
+          caseName,
+          region: {
+            x: FIDELITY_BOX.left,
+            y: FIDELITY_BOX.top,
+            width,
+            height,
+          },
+        };
+      }
+
+      /* The `M x y L x y` spelling, measured on its own. */
+      function singlePointDot({ surface }) {
+        resetStage();
+        const parent = addParent(FIDELITY_BOX);
+        const centre = [FIDELITY_BOX.width / 2, FIDELITY_BOX.height / 2];
+        const options = { parent, lineWidth: 8, lineColor: '#000' };
+        if (surface === 'svg') {
+          createSvgSurface(options).setD(toPathData([centre]));
+        } else {
+          createCanvasSurface(options).drawStroke([centre]);
+        }
+        return {
+          surface,
+          region: {
+            x: FIDELITY_BOX.left,
+            y: FIDELITY_BOX.top,
+            width: FIDELITY_BOX.width,
+            height: FIDELITY_BOX.height,
+          },
+        };
+      }
+
+      /* Three fading siblings, ordered by sibling position without z-index,
+         exactly like restack() in src/engine/renderer.ts. */
+      function restack({
+        surface,
+        order,
+        fade = false,
+        strategy = 'absolute',
+      }) {
+        resetStage();
+        const parentBox = addParent({
+          left: 100,
+          top: 100,
+          width: 400,
+          height: 300,
+        });
+        /* Paint order among siblings *inside* whatever holds them: moving the
+           menu and the strokes together into one top-layer element should
+           leave their order among themselves alone. */
+        const parent = mountPoint({ parent: parentBox, strategy });
+        const colors = { a: '#f00', b: '#0f0', c: '#00f' };
+        const made = new Map();
+        for (const name of ['a', 'b', 'c']) {
+          const options = {
+            parent,
+            lineWidth: 40,
+            lineColor: colors[name],
+          };
+          const drawn =
+            surface === 'svg'
+              ? createSvgSurface(options)
+              : createCanvasSurface(options);
+          drawn.drawStroke([
+            [60, 150],
+            [340, 150],
+          ]);
+          made.set(name, drawn);
+        }
+        /* Restack by sibling position, the way renderer.ts does. */
+        for (const name of order) parent.append(made.get(name).element);
+        /* Several fading at once, as createGestureFeedback allows — and the
+           front-most one among them, which is where a feedback trace sits.
+           A faded top sibling still composites over the one below, so the
+           sampled colour is a blend: what it must not be is the bottom
+           sibling's colour alone, or a different blend than the canvases
+           produce from the same order. */
+        if (fade) {
+          made.get(order.at(-1)).element.style.opacity = '0.25';
+          made.get(order.at(-2)).element.style.opacity = '0.5';
+        }
+
+        return {
+          surface,
+          order,
+          fade,
+          strategy,
+          sample: { x: 100 + 200, y: 100 + 150 },
+          expected: fade ? null : colors[order.at(-1)],
+        };
+      }
+
+      /* ------------------------------------------------------------------
+         Per-frame cost
+         ------------------------------------------------------------------ */
+
+      const PERF_BOX = { left: 40, top: 40, width: 800, height: 600 };
+
+      function makeVariant(
+        name,
+        parent,
+        { growEvery = 200, freezeEvery = 100 } = {},
+      ) {
+        const points = [];
+        /* Control: the accumulation every variant pays, and nothing else. */
+        if (name === 'none') {
+          return {
+            push: (point) => points.push(point),
+            forceGeometry() {},
+            remove() {},
+          };
+        }
+
+        if (name.startsWith('canvas')) {
+          let grown = 0;
+          const canvas = createCanvasSurface({
+            parent,
+            lineColor: '#000',
+            lineWidth: 4,
+            /* Sized once to the window, so it never has to grow — at the
+               price of a backing store the size of the viewport. */
+            ...(name === 'canvas-window-incremental'
+              ? { widthPx: window.innerWidth, heightPx: window.innerHeight }
+              : {}),
+          });
+          return {
+            push(point) {
+              points.push(point);
+              if (name === 'canvas-replay') {
+                canvas.clear();
+                canvas.drawStroke(points);
+                return;
+              }
+              /* Incremental: only the new segment, no clear. */
+              if (
+                name === 'canvas-incremental-growth' &&
+                points.length % growEvery === 0
+              ) {
+                /* #279's growth rule: a new backing store, zeroed, so the
+                   whole stroke has to be replayed on this frame. */
+                grown += 200;
+                canvas.resize(PERF_BOX.width + grown, PERF_BOX.height + grown);
+                canvas.drawStroke(points);
+                return;
+              }
+              if (points.length > 1) {
+                canvas.drawSegment(points.at(-2), point);
+              }
+            },
+            /* Canvas drawing is eager: the commands are already recorded by
+               the time `push` returns, so there is nothing to force. */
+            forceGeometry() {},
+            remove: canvas.remove,
+          };
+        }
+
+        const surface = createSvgSurface({
+          parent,
+          lineColor: '#000',
+          lineWidth: 4,
+        });
+        const makePath = () => {
+          const path = document.createElementNS(SVG_NS, 'path');
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', '#000');
+          path.setAttribute('stroke-width', '4');
+          path.setAttribute('stroke-linecap', 'round');
+          path.setAttribute('stroke-linejoin', 'round');
+          surface.element.prepend(path);
+          return path;
+        };
+
+        let d = '';
+        let frozen = null;
+        let sinceFreeze = 0;
+        /* svg-chunked state: the path being written, and every path made so
+           far, kept only so the element count can be reported. */
+        let chunk = null;
+        const chunks = [];
+        return {
+          push(point) {
+            points.push(point);
+            const [x, y] = point;
+            if (name === 'svg-rebuild') {
+              surface.setD(toPathData(points));
+              return;
+            }
+            if (name === 'svg-append') {
+              d += points.length === 1 ? `M${x} ${y}` : `L${x} ${y}`;
+              surface.setD(d);
+              return;
+            }
+            if (name === 'svg-chunked') {
+              /* Every chunk is its own path, written while it is the live one
+                 and never touched again. Nothing is ever rewritten, so the
+                 only thing that grows with the stroke is the element count. */
+              if (chunk === null) {
+                chunk = makePath();
+                chunks.push(chunk);
+                d = `M${x} ${y}`;
+              } else {
+                d += `L${x} ${y}`;
+              }
+              chunk.setAttribute('d', d);
+              sinceFreeze++;
+              if (sinceFreeze >= freezeEvery) {
+                /* The next chunk starts where this one ended, so the join is
+                   a shared vertex rather than a gap. */
+                chunk = makePath();
+                chunks.push(chunk);
+                d = `M${x} ${y}`;
+                sinceFreeze = 0;
+              }
+              return;
+            }
+            /* svg-split: a frozen path holds the committed points, a short
+               live path holds the recent ones. */
+            frozen ??= makePath();
+            d += points.length === 1 ? `M${x} ${y}` : `L${x} ${y}`;
+            sinceFreeze++;
+            if (sinceFreeze >= freezeEvery) {
+              frozen.setAttribute(
+                'd',
+                (frozen.getAttribute('d') ?? '') +
+                  (frozen.hasAttribute('d') ? d.replace(/^M/, 'L') : d),
+              );
+              d = `M${x} ${y}`;
+              sinceFreeze = 0;
+            }
+            surface.setD(d);
+          },
+          /* Setting `d` only marks the path dirty; this is what makes the
+             browser actually reparse the attribute. */
+          forceGeometry() {
+            surface.path.getBBox();
+            frozen?.getBBox();
+            /* Only the live chunk can be dirty; the finished ones were parsed
+               while they were live. */
+            chunk?.getBBox();
+          },
+          elements: () => (chunks.length === 0 ? 1 : chunks.length),
+          remove: surface.remove,
+        };
+      }
+
+      /* On the global so measure.ts can read the list instead of repeating it. */
+      globalThis.VARIANTS = [
+        'none',
+        'canvas-replay',
+        'canvas-incremental',
+        'canvas-window-incremental',
+        'canvas-incremental-growth',
+        'svg-rebuild',
+        'svg-append',
+        'svg-split',
+        'svg-chunked',
+      ];
+
+      function summarize(values) {
+        const sorted = [...values].sort((a, b) => a - b);
+        const at = (q) =>
+          sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))];
+        const total = values.reduce((a, b) => a + b, 0);
+        return {
+          total: round(total),
+          mean: round(total / values.length),
+          p50: round(at(0.5)),
+          p95: round(at(0.95)),
+          max: round(sorted.at(-1)),
+        };
+      }
+
+      const round = (n) => Math.round(n * 1000) / 1000;
+
+      function frameCost({ variant, count = 1200 }) {
+        resetStage();
+        const parent = addParent(PERF_BOX);
+        const surface = makeVariant(variant, parent);
+        const points = makeStroke(count, PERF_BOX);
+        const js = [];
+        const gaps = [];
+        let i = 0;
+        let previous;
+        return new Promise((resolve) => {
+          const step = (timestamp) => {
+            if (previous !== undefined) gaps.push(timestamp - previous);
+            previous = timestamp;
+            const t0 = performance.now();
+            surface.push(points[i]);
+            js.push(performance.now() - t0);
+            i++;
+            if (i < count) requestAnimationFrame(step);
+            else
+              resolve({
+                variant,
+                count,
+                js: summarize(js),
+                frameGap: summarize(gaps),
+                longFrames: {
+                  over17ms: gaps.filter((g) => g > 17).length,
+                  over34ms: gaps.filter((g) => g > 34).length,
+                },
+              });
+          };
+          requestAnimationFrame(step);
+        });
+      }
+
+      /* Per-frame timers are coarsened to 0.1-1ms depending on the engine,
+         which is the same order as the work being measured. Timing the whole
+         stroke in one synchronous run puts the total well clear of that
+         floor; `forceGeometry` adds the reparse a real frame would pay. */
+      function syncCost({ variant, count = 1200, forceGeometry = false }) {
+        resetStage();
+        const parent = addParent(PERF_BOX);
+        const surface = makeVariant(variant, parent);
+        const points = makeStroke(count, PERF_BOX);
+        const t0 = performance.now();
+        for (const point of points) {
+          surface.push(point);
+          if (forceGeometry) surface.forceGeometry();
+        }
+        const total = performance.now() - t0;
+        surface.remove();
+        return {
+          variant,
+          count,
+          forceGeometry,
+          totalMs: round(total),
+          perPointUs: round((total / count) * 1000),
+          elements: surface.elements?.() ?? 1,
+        };
+      }
+
+      /* Where the split's residual quadratic starts to bite: it rewrites the
+         frozen path every `freezeEvery` points, which is O(stroke) each time,
+         while the chunked variant never rewrites anything. Only the svg
+         variants run this long — `canvas-replay` at 20000 points takes
+         minutes in Firefox, and its shape is already established. */
+      function asymptotics({
+        variants = ['svg-append', 'svg-split', 'svg-chunked'],
+        counts = [5000, 10000, 20000],
+      } = {}) {
+        return variants.flatMap((variant) =>
+          counts.flatMap((count) =>
+            [false, true].map((forceGeometry) =>
+              syncCost({ variant, count, forceGeometry }),
+            ),
+          ),
+        );
+      }
+
+      function scaling({
+        variant,
+        counts = [200, 1200, 5000],
+        forceGeometry = false,
+      }) {
+        return {
+          variant,
+          forceGeometry,
+          runs: counts.map((count) =>
+            syncCost({ variant, count, forceGeometry }),
+          ),
+        };
+      }
+
+      /* #269 names `stroke` as a `::part()`. On a canvas only box
+         properties can be styled from outside; on a path, stroke color and
+         width should be ordinary CSS — including through a shadow boundary. */
+      function cssStyling() {
+        resetStage();
+        const host = document.createElement('div');
+        Object.assign(host.style, {
+          position: 'absolute',
+          left: '100px',
+          top: '100px',
+          width: '300px',
+          height: '240px',
+        });
+        stage.append(host);
+        const root = host.attachShadow({ mode: 'open' });
+        const holder = document.createElement('div');
+        holder.style.position = 'relative';
+        holder.style.width = '100%';
+        holder.style.height = '100%';
+        root.append(holder);
+        const surface = createSvgSurface({
+          parent: holder,
+          lineColor: '#000',
+          lineWidth: 4,
+        });
+        surface.path.setAttribute('part', 'stroke');
+        surface.drawStroke([
+          [40, 40],
+          [240, 200],
+        ]);
+        const sheet = document.createElement('style');
+        sheet.textContent =
+          'div::part(stroke) { stroke: rgb(0, 128, 255); stroke-width: 11px; }';
+        document.head.append(sheet);
+        const computed = getComputedStyle(surface.path);
+        const result = {
+          stroke: computed.stroke,
+          strokeWidth: computed.strokeWidth,
+          /* The presentation attributes the JavaScript options set, which
+             CSS is expected to win over. */
+          attributeStroke: surface.path.getAttribute('stroke'),
+          attributeStrokeWidth: surface.path.getAttribute('stroke-width'),
+        };
+        sheet.remove();
+        return result;
+      }
+
+      /* What setting canvas.width costs: a fresh, zeroed backing store. */
+      function growthCost({
+        cssWidth = 1600,
+        cssHeight = 1200,
+        steps = 8,
+        stepPx = 200,
+      } = {}) {
+        resetStage();
+        const parent = addParent({
+          left: 0,
+          top: 0,
+          width: cssWidth,
+          height: cssHeight,
+        });
+        const ptSize =
+          window.devicePixelRatio > 0 ? 1 / window.devicePixelRatio : 1;
+        const canvas = createCanvasSurface({
+          parent,
+          lineColor: '#000',
+          lineWidth: 4,
+        });
+        const stroke = makeStroke(1200, { width: cssWidth, height: cssHeight });
+        canvas.drawStroke(stroke);
+        const assign = [];
+        const assignAndRead = [];
+        /* Resizing costs three separable things, and lumping them together
+           credits the reallocation with work that belongs to the other two. */
+        const style = [];
+        const replay = [];
+        const assignAndReplay = [];
+        let wasZeroed = true;
+        for (let step = 1; step <= steps; step++) {
+          const width = cssWidth + step * stepPx;
+          const height = cssHeight + step * stepPx;
+          /* `canvas.width` alone, with the style assignments outside the
+             timer: setting the attribute is the part that reallocates. */
+          const t0 = performance.now();
+          canvas.setBackingSize(width, height);
+          const t1 = performance.now();
+          /* An engine may defer the allocation until something touches the
+             store. Reading a pixel back cannot be deferred — and it also
+             checks that the store really came back zeroed, which is what
+             forces the replay. */
+          const pixel = canvas.readPixel(width / 2, height / 2);
+          const t2 = performance.now();
+          wasZeroed &&= pixel.every((channel) => channel === 0);
+          canvas.applyStyleSize(width, height);
+          const t3 = performance.now();
+          canvas.drawStroke(stroke);
+          const t4 = performance.now();
+          assign.push(t1 - t0);
+          assignAndRead.push(t2 - t0);
+          style.push(t3 - t2);
+          replay.push(t4 - t3);
+          assignAndReplay.push(t4 - t0 - (t2 - t1));
+        }
+        const last = cssWidth + steps * stepPx;
+        return {
+          devicePixelRatio: window.devicePixelRatio,
+          backingStore: {
+            widthPx: Math.round(last / ptSize),
+            heightPx: Math.round((cssHeight + steps * stepPx) / ptSize),
+            megabytes: Math.round(
+              ((last / ptSize) * ((cssHeight + steps * stepPx) / ptSize) * 4) /
+                1048576,
+            ),
+          },
+          /* False would mean the replay this measures is unnecessary. */
+          wasZeroed,
+          assign: summarize(assign),
+          assignAndRead: summarize(assignAndRead),
+          style: summarize(style),
+          replay: summarize(replay),
+          assignAndReplay: summarize(assignAndReplay),
+        };
+      }
+
+      /* ------------------------------------------------------------------
+         Wiring
+         ------------------------------------------------------------------ */
+
+      const probes = {
+        paintEscape,
+        scrollArea,
+        fidelity,
+        singlePointDot,
+        restack,
+        frameCost,
+        syncCost,
+        scaling,
+        asymptotics,
+        cssStyling,
+        growthCost,
+        resetStage,
+        info: () => ({
+          userAgent: navigator.userAgent,
+          devicePixelRatio: window.devicePixelRatio,
+        }),
+      };
+      window.probes = probes;
+
+      const buttons = [
+        [
+          'overflow: svg',
+          () => paintEscape({ surface: 'svg', overflow: 'visible' }),
+        ],
+        [
+          'overflow: canvas',
+          () => paintEscape({ surface: 'canvas', overflow: 'visible' }),
+        ],
+        [
+          'contained: svg',
+          () => paintEscape({ surface: 'svg', overflow: 'hidden' }),
+        ],
+        ['scroll area: svg', () => scrollArea({ surface: 'svg' })],
+        ['scroll area: canvas', () => scrollArea({ surface: 'canvas' })],
+        [
+          'scroll area: canvas sized to the window',
+          () => scrollArea({ surface: 'canvas-window' }),
+        ],
+        ...['clip-margin', 'fixed', 'popover'].map((strategy) => [
+          `scroll area: window canvas, ${strategy}`,
+          () => scrollArea({ surface: 'canvas-window', strategy }),
+        ]),
+        ...['clip-margin', 'fixed', 'popover'].map((strategy) => [
+          `escape + contain: window canvas, ${strategy}`,
+          () =>
+            paintEscape({
+              surface: 'canvas-window',
+              overflow: 'hidden',
+              strategy,
+            }),
+        ]),
+        [
+          'restack inside a popover',
+          () =>
+            restack({
+              surface: 'svg',
+              order: ['a', 'b', 'c'],
+              strategy: 'popover',
+            }),
+        ],
+        [
+          'scroll area: window canvas, viewport-anchored',
+          () => scrollArea({ surface: 'canvas-window-anchored' }),
+        ],
+        [
+          'fidelity: canvas',
+          () => fidelity({ surface: 'canvas', caseName: 'polyline' }),
+        ],
+        [
+          'fidelity: svg',
+          () => fidelity({ surface: 'svg', caseName: 'polyline' }),
+        ],
+        [
+          'restack: svg',
+          () => restack({ surface: 'svg', order: ['a', 'b', 'c'] }),
+        ],
+        ['growth cost', () => growthCost()],
+        ['css styling of a path part', () => cssStyling()],
+        ...globalThis.VARIANTS.map((variant) => [
+          `frame cost: ${variant}`,
+          () => frameCost({ variant, count: 1200 }),
+        ]),
+        ...globalThis.VARIANTS.map((variant) => [
+          `scaling: ${variant}`,
+          () => scaling({ variant }),
+        ]),
+        ['asymptotics: svg variants to 20000 points', () => asymptotics()],
+      ];
+
+      const controls = document.querySelector('#controls');
+      for (const [label, run] of buttons) {
+        const button = document.createElement('button');
+        button.textContent = label;
+        button.addEventListener('click', async () => {
+          log(`--- ${label}`);
+          log(JSON.stringify(await run(), null, 2));
+        });
+        controls.append(button);
+      }
+
+      if (new URLSearchParams(location.search).has('probe')) {
+        document.querySelector('header').hidden = true;
+        out.hidden = true;
+      }
+
+      log(JSON.stringify(probes.info(), null, 2));
+    </script>
+  </body>
+</html>

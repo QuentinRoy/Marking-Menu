@@ -1,0 +1,4607 @@
+[
+  {
+    "engine": "chromium",
+    "info": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
+      "devicePixelRatio": 2
+    },
+    "escapes": [
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "overflow": "visible",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "clip-margin",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "clip-margin",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "fixed",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "fixed",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "popover",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "popover",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      }
+    ],
+    "scrollArea": [
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 522,
+            "scrollHeight": 392,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 1260,
+            "scrollHeight": 960,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window-anchored",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 1179,
+            "scrollHeight": 879,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "clip-margin",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 560,
+            "scrollHeight": 510,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "fixed",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "popover",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      }
+    ],
+    "fidelity": [
+      {
+        "caseName": "polyline",
+        "diff": {
+          "differing": 39,
+          "total": 288000,
+          "maxDiff": 56,
+          "bothPainted": 31,
+          "onePainted": 8,
+          "box": "290,99-523,411 of 600x480"
+        },
+        "canvasInk": 36637,
+        "svgInk": 36646
+      },
+      {
+        "caseName": "zigzag",
+        "diff": {
+          "differing": 3,
+          "total": 288000,
+          "maxDiff": 39,
+          "bothPainted": 3,
+          "onePainted": 0,
+          "box": "72,79-527,239 of 600x480"
+        },
+        "canvasInk": 15284,
+        "svgInk": 15279
+      },
+      {
+        "caseName": "two-point",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 0,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 4693,
+        "svgInk": 4693
+      },
+      {
+        "caseName": "single-point",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 0,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 0,
+        "svgInk": 0
+      },
+      {
+        "caseName": "start-marker",
+        "diff": {
+          "differing": 79,
+          "total": 288000,
+          "maxDiff": 47,
+          "bothPainted": 59,
+          "onePainted": 20,
+          "box": "262,56-321,372 of 600x480"
+        },
+        "canvasInk": 33463,
+        "svgInk": 33440
+      },
+      {
+        "caseName": "single-point (M…L)",
+        "diff": {
+          "differing": 218,
+          "total": 288000,
+          "maxDiff": 255,
+          "bothPainted": 0,
+          "onePainted": 218,
+          "box": "292,232-307,247 of 600x480"
+        },
+        "canvasInk": 0,
+        "svgInk": 213
+      }
+    ],
+    "restack": [
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "acb",
+        "fade": false,
+        "expected": "#0f0",
+        "topColour": "0,255,0"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "95,96,64"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": true,
+        "expected": null,
+        "topColour": "64,96,95"
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "95,96,64"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "acb",
+        "fade": false,
+        "expected": "#0f0",
+        "topColour": "0,255,0"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "95,95,63"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": true,
+        "expected": null,
+        "topColour": "63,95,95"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "popover",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "95,95,63"
+      }
+    ],
+    "cssStyling": {
+      "stroke": "rgb(0, 128, 255)",
+      "strokeWidth": "11px",
+      "attributeStroke": "#000",
+      "attributeStrokeWidth": "4"
+    },
+    "growthCost": {
+      "devicePixelRatio": 2,
+      "backingStore": {
+        "widthPx": 6400,
+        "heightPx": 5600,
+        "megabytes": 137
+      },
+      "wasZeroed": true,
+      "assign": {
+        "total": 5.2,
+        "mean": 0.65,
+        "p50": 0.8,
+        "p95": 1.1,
+        "max": 1.1
+      },
+      "assignAndRead": {
+        "total": 5.6,
+        "mean": 0.7,
+        "p50": 0.8,
+        "p95": 1.1,
+        "max": 1.1
+      },
+      "style": {
+        "total": 61.8,
+        "mean": 7.725,
+        "p50": 8.4,
+        "p95": 11.7,
+        "max": 11.7
+      },
+      "replay": {
+        "total": 1.7,
+        "mean": 0.213,
+        "p50": 0.2,
+        "p95": 0.3,
+        "max": 0.3
+      },
+      "assignAndReplay": {
+        "total": 68.7,
+        "mean": 8.587,
+        "p50": 9.3,
+        "p95": 12.9,
+        "max": 12.9
+      }
+    },
+    "frameCost": [
+      {
+        "variant": "none",
+        "count": 1200,
+        "js": {
+          "total": 4.3,
+          "mean": 0.004,
+          "p50": 0,
+          "p95": 0,
+          "max": 0.1
+        },
+        "frameGap": {
+          "total": 19982.5,
+          "mean": 16.666,
+          "p50": 16.7,
+          "p95": 16.7,
+          "max": 16.8
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-replay",
+        "count": 1200,
+        "js": {
+          "total": 70.3,
+          "mean": 0.059,
+          "p50": 0.1,
+          "p95": 0.1,
+          "max": 1.1
+        },
+        "frameGap": {
+          "total": 19982.5,
+          "mean": 16.666,
+          "p50": 16.7,
+          "p95": 16.7,
+          "max": 16.8
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-incremental",
+        "count": 1200,
+        "js": {
+          "total": 51.3,
+          "mean": 0.043,
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.3
+        },
+        "frameGap": {
+          "total": 19982.5,
+          "mean": 16.666,
+          "p50": 16.7,
+          "p95": 16.8,
+          "max": 16.8
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-window-incremental",
+        "count": 1200,
+        "js": {
+          "total": 44.6,
+          "mean": 0.037,
+          "p50": 0,
+          "p95": 0.1,
+          "max": 0.9
+        },
+        "frameGap": {
+          "total": 19982.5,
+          "mean": 16.666,
+          "p50": 16.7,
+          "p95": 16.7,
+          "max": 16.8
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-incremental-growth",
+        "count": 1200,
+        "js": {
+          "total": 101.5,
+          "mean": 0.085,
+          "p50": 0,
+          "p95": 0.1,
+          "max": 14.2
+        },
+        "frameGap": {
+          "total": 19982.6,
+          "mean": 16.666,
+          "p50": 16.7,
+          "p95": 16.7,
+          "max": 16.8
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-rebuild",
+        "count": 1200,
+        "js": {
+          "total": 418.6,
+          "mean": 0.349,
+          "p50": 0.3,
+          "p95": 0.8,
+          "max": 2.4
+        },
+        "frameGap": {
+          "total": 19982.6,
+          "mean": 16.666,
+          "p50": 16.7,
+          "p95": 16.7,
+          "max": 16.8
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-append",
+        "count": 1200,
+        "js": {
+          "total": 166.2,
+          "mean": 0.138,
+          "p50": 0.1,
+          "p95": 0.3,
+          "max": 1.3
+        },
+        "frameGap": {
+          "total": 19982.5,
+          "mean": 16.666,
+          "p50": 16.7,
+          "p95": 16.7,
+          "max": 16.8
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-split",
+        "count": 1200,
+        "js": {
+          "total": 72.7,
+          "mean": 0.061,
+          "p50": 0.1,
+          "p95": 0.2,
+          "max": 0.7
+        },
+        "frameGap": {
+          "total": 19982.5,
+          "mean": 16.666,
+          "p50": 16.7,
+          "p95": 16.7,
+          "max": 16.8
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 1200,
+        "js": {
+          "total": 81,
+          "mean": 0.068,
+          "p50": 0.1,
+          "p95": 0.2,
+          "max": 0.4
+        },
+        "frameGap": {
+          "total": 19982.5,
+          "mean": 16.666,
+          "p50": 16.7,
+          "p95": 16.8,
+          "max": 16.8
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      }
+    ],
+    "syncCost": [
+      {
+        "variant": "none",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "none",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0.1,
+            "perPointUs": 0.5,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 0.2,
+            "perPointUs": 0.167,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 0.4,
+            "perPointUs": 0.08,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "none",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "none",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 0.1,
+            "perPointUs": 0.083,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 0.3,
+            "perPointUs": 0.06,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-replay",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-replay",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 5.1,
+            "perPointUs": 25.5,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 58.9,
+            "perPointUs": 49.083,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 398,
+            "perPointUs": 79.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-replay",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-replay",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 1.6,
+            "perPointUs": 8,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 24.8,
+            "perPointUs": 20.667,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 397.7,
+            "perPointUs": 79.54,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-incremental",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0.2,
+            "perPointUs": 1,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 0.6,
+            "perPointUs": 0.5,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 4.1,
+            "perPointUs": 0.82,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-incremental",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 0.3,
+            "perPointUs": 1.5,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 1.2,
+            "perPointUs": 1,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 3.6,
+            "perPointUs": 0.72,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-window-incremental",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-window-incremental",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0.2,
+            "perPointUs": 1,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 1.2,
+            "perPointUs": 1,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 3.3,
+            "perPointUs": 0.66,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-window-incremental",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-window-incremental",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 0.3,
+            "perPointUs": 1.5,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 1.5,
+            "perPointUs": 1.25,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 3.3,
+            "perPointUs": 0.66,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental-growth",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 1.4,
+            "perPointUs": 7,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 20.7,
+            "perPointUs": 17.25,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 487.7,
+            "perPointUs": 97.54,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental-growth",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 1.7,
+            "perPointUs": 8.5,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 20.8,
+            "perPointUs": 17.333,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 486.1,
+            "perPointUs": 97.22,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-rebuild",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-rebuild",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 2.9,
+            "perPointUs": 14.5,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 104.2,
+            "perPointUs": 86.833,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 1676.6,
+            "perPointUs": 335.32,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-rebuild",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-rebuild",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 4.6,
+            "perPointUs": 23,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 108.1,
+            "perPointUs": 90.083,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 1778.5,
+            "perPointUs": 355.7,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-append",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-append",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0.9,
+            "perPointUs": 4.5,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 27.8,
+            "perPointUs": 23.167,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 476.6,
+            "perPointUs": 95.32,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-append",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-append",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 1.4,
+            "perPointUs": 7,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 17,
+            "perPointUs": 14.167,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 229.5,
+            "perPointUs": 45.9,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-split",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-split",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0.6,
+            "perPointUs": 3,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 3.3,
+            "perPointUs": 2.75,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 15.9,
+            "perPointUs": 3.18,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-split",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-split",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 1.2,
+            "perPointUs": 6,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 6.1,
+            "perPointUs": 5.083,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 29.8,
+            "perPointUs": 5.96,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-chunked",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-chunked",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0.6,
+            "perPointUs": 3,
+            "elements": 3
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 3.1,
+            "perPointUs": 2.583,
+            "elements": 13
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 12.6,
+            "perPointUs": 2.52,
+            "elements": 51
+          }
+        ]
+      },
+      {
+        "variant": "svg-chunked",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-chunked",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 1.4,
+            "perPointUs": 7,
+            "elements": 3
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 7,
+            "perPointUs": 5.833,
+            "elements": 13
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 30.9,
+            "perPointUs": 6.18,
+            "elements": 51
+          }
+        ]
+      }
+    ],
+    "asymptotics": [
+      {
+        "variant": "svg-append",
+        "count": 5000,
+        "forceGeometry": false,
+        "totalMs": 471.4,
+        "perPointUs": 94.28,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 5000,
+        "forceGeometry": true,
+        "totalMs": 220.2,
+        "perPointUs": 44.04,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 10000,
+        "forceGeometry": false,
+        "totalMs": 1894.5,
+        "perPointUs": 189.45,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 10000,
+        "forceGeometry": true,
+        "totalMs": 880.6,
+        "perPointUs": 88.06,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 20000,
+        "forceGeometry": false,
+        "totalMs": 7741.3,
+        "perPointUs": 387.065,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 20000,
+        "forceGeometry": true,
+        "totalMs": 10051.3,
+        "perPointUs": 502.565,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 5000,
+        "forceGeometry": false,
+        "totalMs": 20.9,
+        "perPointUs": 4.18,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 5000,
+        "forceGeometry": true,
+        "totalMs": 33.9,
+        "perPointUs": 6.78,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 10000,
+        "forceGeometry": false,
+        "totalMs": 45.7,
+        "perPointUs": 4.57,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 10000,
+        "forceGeometry": true,
+        "totalMs": 345.2,
+        "perPointUs": 34.52,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 20000,
+        "forceGeometry": false,
+        "totalMs": 125.4,
+        "perPointUs": 6.27,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 20000,
+        "forceGeometry": true,
+        "totalMs": 235.5,
+        "perPointUs": 11.775,
+        "elements": 1
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 5000,
+        "forceGeometry": false,
+        "totalMs": 12.6,
+        "perPointUs": 2.52,
+        "elements": 51
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 5000,
+        "forceGeometry": true,
+        "totalMs": 39.5,
+        "perPointUs": 7.9,
+        "elements": 51
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 10000,
+        "forceGeometry": false,
+        "totalMs": 24.4,
+        "perPointUs": 2.44,
+        "elements": 101
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 10000,
+        "forceGeometry": true,
+        "totalMs": 79.5,
+        "perPointUs": 7.95,
+        "elements": 101
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 20000,
+        "forceGeometry": false,
+        "totalMs": 51.4,
+        "perPointUs": 2.57,
+        "elements": 201
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 20000,
+        "forceGeometry": true,
+        "totalMs": 209.1,
+        "perPointUs": 10.455,
+        "elements": 201
+      }
+    ]
+  },
+  {
+    "engine": "firefox",
+    "info": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:155.0) Gecko/20100101 Firefox/155.0",
+      "devicePixelRatio": 2
+    },
+    "escapes": [
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "overflow": "visible",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "clip-margin",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "clip-margin",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "fixed",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "fixed",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "popover",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "popover",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      }
+    ],
+    "scrollArea": [
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 522,
+            "scrollHeight": 392,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 1260,
+            "scrollHeight": 960,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window-anchored",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 1179,
+            "scrollHeight": 879,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "clip-margin",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 560,
+            "scrollHeight": 510,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "fixed",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "popover",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      }
+    ],
+    "fidelity": [
+      {
+        "caseName": "polyline",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 0,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 36633,
+        "svgInk": 36633
+      },
+      {
+        "caseName": "zigzag",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 0,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 15284,
+        "svgInk": 15284
+      },
+      {
+        "caseName": "two-point",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 0,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 4693,
+        "svgInk": 4693
+      },
+      {
+        "caseName": "single-point",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 0,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 0,
+        "svgInk": 0
+      },
+      {
+        "caseName": "start-marker",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 1,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 33472,
+        "svgInk": 33472
+      },
+      {
+        "caseName": "single-point (M…L)",
+        "diff": {
+          "differing": 218,
+          "total": 288000,
+          "maxDiff": 255,
+          "bothPainted": 0,
+          "onePainted": 218,
+          "box": "292,232-307,247 of 600x480"
+        },
+        "canvasInk": 0,
+        "svgInk": 214
+      }
+    ],
+    "restack": [
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "acb",
+        "fade": false,
+        "expected": "#0f0",
+        "topColour": "0,255,0"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "94,95,64"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": true,
+        "expected": null,
+        "topColour": "64,95,94"
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "94,95,64"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "acb",
+        "fade": false,
+        "expected": "#0f0",
+        "topColour": "0,255,0"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "94,95,64"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": true,
+        "expected": null,
+        "topColour": "64,95,94"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "popover",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "94,95,64"
+      }
+    ],
+    "cssStyling": {
+      "stroke": "rgb(0, 128, 255)",
+      "strokeWidth": "11px",
+      "attributeStroke": "#000",
+      "attributeStrokeWidth": "4"
+    },
+    "growthCost": {
+      "devicePixelRatio": 2,
+      "backingStore": {
+        "widthPx": 6400,
+        "heightPx": 5600,
+        "megabytes": 137
+      },
+      "wasZeroed": true,
+      "assign": {
+        "total": 5,
+        "mean": 0.625,
+        "p50": 0,
+        "p95": 3,
+        "max": 3
+      },
+      "assignAndRead": {
+        "total": 6,
+        "mean": 0.75,
+        "p50": 0,
+        "p95": 3,
+        "max": 3
+      },
+      "style": {
+        "total": 0,
+        "mean": 0,
+        "p50": 0,
+        "p95": 0,
+        "max": 0
+      },
+      "replay": {
+        "total": 36,
+        "mean": 4.5,
+        "p50": 4,
+        "p95": 6,
+        "max": 6
+      },
+      "assignAndReplay": {
+        "total": 41,
+        "mean": 5.125,
+        "p50": 5,
+        "p95": 7,
+        "max": 7
+      }
+    },
+    "frameCost": [
+      {
+        "variant": "none",
+        "count": 1200,
+        "js": {
+          "total": 4,
+          "mean": 0.003,
+          "p50": 0,
+          "p95": 0,
+          "max": 1
+        },
+        "frameGap": {
+          "total": 10002.54,
+          "mean": 8.342,
+          "p50": 8.32,
+          "p95": 9.26,
+          "max": 17.3
+        },
+        "longFrames": {
+          "over17ms": 1,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-replay",
+        "count": 1200,
+        "js": {
+          "total": 2084,
+          "mean": 1.737,
+          "p50": 1,
+          "p95": 4,
+          "max": 17
+        },
+        "frameGap": {
+          "total": 10076.06,
+          "mean": 8.404,
+          "p50": 8.32,
+          "p95": 9.28,
+          "max": 32.74
+        },
+        "longFrames": {
+          "over17ms": 3,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-incremental",
+        "count": 1200,
+        "js": {
+          "total": 997,
+          "mean": 0.831,
+          "p50": 1,
+          "p95": 2,
+          "max": 5
+        },
+        "frameGap": {
+          "total": 10058.3,
+          "mean": 8.389,
+          "p50": 8.34,
+          "p95": 9.12,
+          "max": 33.34
+        },
+        "longFrames": {
+          "over17ms": 2,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-window-incremental",
+        "count": 1200,
+        "js": {
+          "total": 1201,
+          "mean": 1.001,
+          "p50": 1,
+          "p95": 2,
+          "max": 6
+        },
+        "frameGap": {
+          "total": 10000.74,
+          "mean": 8.341,
+          "p50": 8.34,
+          "p95": 8.96,
+          "max": 17.56
+        },
+        "longFrames": {
+          "over17ms": 1,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-incremental-growth",
+        "count": 1200,
+        "js": {
+          "total": 1616,
+          "mean": 1.347,
+          "p50": 1,
+          "p95": 3,
+          "max": 10
+        },
+        "frameGap": {
+          "total": 10015.72,
+          "mean": 8.353,
+          "p50": 8.34,
+          "p95": 9.1,
+          "max": 24.22
+        },
+        "longFrames": {
+          "over17ms": 1,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-rebuild",
+        "count": 1200,
+        "js": {
+          "total": 612,
+          "mean": 0.51,
+          "p50": 0,
+          "p95": 1,
+          "max": 5
+        },
+        "frameGap": {
+          "total": 10008.3,
+          "mean": 8.347,
+          "p50": 8.34,
+          "p95": 9.3,
+          "max": 17.48
+        },
+        "longFrames": {
+          "over17ms": 1,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-append",
+        "count": 1200,
+        "js": {
+          "total": 178,
+          "mean": 0.148,
+          "p50": 0,
+          "p95": 1,
+          "max": 4
+        },
+        "frameGap": {
+          "total": 10083.14,
+          "mean": 8.41,
+          "p50": 8.34,
+          "p95": 9.3,
+          "max": 24.98
+        },
+        "longFrames": {
+          "over17ms": 2,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-split",
+        "count": 1200,
+        "js": {
+          "total": 90,
+          "mean": 0.075,
+          "p50": 0,
+          "p95": 1,
+          "max": 3
+        },
+        "frameGap": {
+          "total": 10008.22,
+          "mean": 8.347,
+          "p50": 8.34,
+          "p95": 9.24,
+          "max": 16.84
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 1200,
+        "js": {
+          "total": 115,
+          "mean": 0.096,
+          "p50": 0,
+          "p95": 1,
+          "max": 4
+        },
+        "frameGap": {
+          "total": 10012.46,
+          "mean": 8.351,
+          "p50": 8.34,
+          "p95": 9.14,
+          "max": 16.66
+        },
+        "longFrames": {
+          "over17ms": 0,
+          "over34ms": 0
+        }
+      }
+    ],
+    "syncCost": [
+      {
+        "variant": "none",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "none",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 5,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 0.2,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "none",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "none",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 1,
+            "perPointUs": 0.833,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-replay",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-replay",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 82,
+            "perPointUs": 410,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 551,
+            "perPointUs": 459.167,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 6198,
+            "perPointUs": 1239.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-replay",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-replay",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 65,
+            "perPointUs": 325,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 553,
+            "perPointUs": 460.833,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 6218,
+            "perPointUs": 1243.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-incremental",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 3,
+            "perPointUs": 15,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 3,
+            "perPointUs": 2.5,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 14,
+            "perPointUs": 2.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-incremental",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 2,
+            "perPointUs": 10,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 5,
+            "perPointUs": 4.167,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 13,
+            "perPointUs": 2.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-window-incremental",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-window-incremental",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 2,
+            "perPointUs": 10,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 5,
+            "perPointUs": 4.167,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 13,
+            "perPointUs": 2.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-window-incremental",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-window-incremental",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 2,
+            "perPointUs": 10,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 5,
+            "perPointUs": 4.167,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 14,
+            "perPointUs": 2.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental-growth",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 2,
+            "perPointUs": 10,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 11,
+            "perPointUs": 9.167,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 64,
+            "perPointUs": 12.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental-growth",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 3,
+            "perPointUs": 15,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 12,
+            "perPointUs": 10,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 67,
+            "perPointUs": 13.4,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-rebuild",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-rebuild",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 4,
+            "perPointUs": 20,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 150,
+            "perPointUs": 125,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 2443,
+            "perPointUs": 488.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-rebuild",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-rebuild",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 10,
+            "perPointUs": 50,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 203,
+            "perPointUs": 169.167,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 3689,
+            "perPointUs": 737.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-append",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-append",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 5,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 22,
+            "perPointUs": 18.333,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 349,
+            "perPointUs": 69.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-append",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-append",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 6,
+            "perPointUs": 30,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 82,
+            "perPointUs": 68.333,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 1634,
+            "perPointUs": 326.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-split",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-split",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 5,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 2,
+            "perPointUs": 1.667,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 15,
+            "perPointUs": 3,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-split",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-split",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 5,
+            "perPointUs": 25,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 22,
+            "perPointUs": 18.333,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 108,
+            "perPointUs": 21.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-chunked",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-chunked",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 3
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 3,
+            "perPointUs": 2.5,
+            "elements": 13
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 13,
+            "perPointUs": 2.6,
+            "elements": 51
+          }
+        ]
+      },
+      {
+        "variant": "svg-chunked",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-chunked",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 5,
+            "perPointUs": 25,
+            "elements": 3
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 21,
+            "perPointUs": 17.5,
+            "elements": 13
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 96,
+            "perPointUs": 19.2,
+            "elements": 51
+          }
+        ]
+      }
+    ],
+    "asymptotics": [
+      {
+        "variant": "svg-append",
+        "count": 5000,
+        "forceGeometry": false,
+        "totalMs": 373,
+        "perPointUs": 74.6,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 5000,
+        "forceGeometry": true,
+        "totalMs": 1557,
+        "perPointUs": 311.4,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 10000,
+        "forceGeometry": false,
+        "totalMs": 1407,
+        "perPointUs": 140.7,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 10000,
+        "forceGeometry": true,
+        "totalMs": 7724,
+        "perPointUs": 772.4,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 20000,
+        "forceGeometry": false,
+        "totalMs": 5795,
+        "perPointUs": 289.75,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 20000,
+        "forceGeometry": true,
+        "totalMs": 33658,
+        "perPointUs": 1682.9,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 5000,
+        "forceGeometry": false,
+        "totalMs": 16,
+        "perPointUs": 3.2,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 5000,
+        "forceGeometry": true,
+        "totalMs": 106,
+        "perPointUs": 21.2,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 10000,
+        "forceGeometry": false,
+        "totalMs": 39,
+        "perPointUs": 3.9,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 10000,
+        "forceGeometry": true,
+        "totalMs": 274,
+        "perPointUs": 27.4,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 20000,
+        "forceGeometry": false,
+        "totalMs": 111,
+        "perPointUs": 5.55,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 20000,
+        "forceGeometry": true,
+        "totalMs": 773,
+        "perPointUs": 38.65,
+        "elements": 1
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 5000,
+        "forceGeometry": false,
+        "totalMs": 11,
+        "perPointUs": 2.2,
+        "elements": 51
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 5000,
+        "forceGeometry": true,
+        "totalMs": 93,
+        "perPointUs": 18.6,
+        "elements": 51
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 10000,
+        "forceGeometry": false,
+        "totalMs": 22,
+        "perPointUs": 2.2,
+        "elements": 101
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 10000,
+        "forceGeometry": true,
+        "totalMs": 199,
+        "perPointUs": 19.9,
+        "elements": 101
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 20000,
+        "forceGeometry": false,
+        "totalMs": 43,
+        "perPointUs": 2.15,
+        "elements": 201
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 20000,
+        "forceGeometry": true,
+        "totalMs": 458,
+        "perPointUs": 22.9,
+        "elements": 201
+      }
+    ]
+  },
+  {
+    "engine": "webkit",
+    "info": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Safari/605.1.15",
+      "devicePixelRatio": 2
+    },
+    "escapes": [
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "overflow": "visible",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "clip-margin",
+        "overflow": "visible",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "clip-margin",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 0,
+          "total": 19200,
+          "centre": "255,255,255"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "fixed",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "fixed",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "popover",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "popover",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "overflow": "visible",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "overflow": "hidden",
+        "outside": {
+          "ink": 1920,
+          "total": 19200,
+          "centre": "255,0,0"
+        },
+        "inside": {
+          "ink": 960,
+          "total": 9600,
+          "centre": "255,0,0"
+        }
+      }
+    ],
+    "scrollArea": [
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 522,
+            "scrollHeight": 392,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 1260,
+            "scrollHeight": 960,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window-anchored",
+        "strategy": "absolute",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 1179,
+            "scrollHeight": 879,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "clip-margin",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "fixed",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      },
+      {
+        "surface": "canvas-window",
+        "strategy": "popover",
+        "before": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        },
+        "after": {
+          "scroller": {
+            "scrollWidth": 400,
+            "scrollHeight": 300,
+            "clientWidth": 400,
+            "clientHeight": 300
+          },
+          "document": {
+            "scrollWidth": 1200,
+            "scrollHeight": 900
+          }
+        }
+      }
+    ],
+    "fidelity": [
+      {
+        "caseName": "polyline",
+        "diff": {
+          "differing": 38,
+          "total": 288000,
+          "maxDiff": 108,
+          "bothPainted": 37,
+          "onePainted": 1,
+          "box": "127,64-479,396 of 600x480"
+        },
+        "canvasInk": 36768,
+        "svgInk": 36657
+      },
+      {
+        "caseName": "zigzag",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 17,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 15296,
+        "svgInk": 15283
+      },
+      {
+        "caseName": "two-point",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 29,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 4696,
+        "svgInk": 4688
+      },
+      {
+        "caseName": "single-point",
+        "diff": {
+          "differing": 0,
+          "total": 288000,
+          "maxDiff": 0,
+          "bothPainted": 0,
+          "onePainted": 0,
+          "box": "none"
+        },
+        "canvasInk": 0,
+        "svgInk": 0
+      },
+      {
+        "caseName": "start-marker",
+        "diff": {
+          "differing": 13,
+          "total": 288000,
+          "maxDiff": 71,
+          "bothPainted": 13,
+          "onePainted": 0,
+          "box": "236,160-429,312 of 600x480"
+        },
+        "canvasInk": 33549,
+        "svgInk": 33473
+      },
+      {
+        "caseName": "single-point (M…L)",
+        "diff": {
+          "differing": 216,
+          "total": 288000,
+          "maxDiff": 255,
+          "bothPainted": 0,
+          "onePainted": 216,
+          "box": "292,232-307,247 of 600x480"
+        },
+        "canvasInk": 0,
+        "svgInk": 216
+      }
+    ],
+    "restack": [
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "acb",
+        "fade": false,
+        "expected": "#0f0",
+        "topColour": "0,255,0"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "95,96,64"
+      },
+      {
+        "surface": "svg",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": true,
+        "expected": null,
+        "topColour": "64,96,95"
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "svg",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "95,96,64"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "acb",
+        "fade": false,
+        "expected": "#0f0",
+        "topColour": "0,255,0"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "95,96,64"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "absolute",
+        "order": "cba",
+        "fade": true,
+        "expected": null,
+        "topColour": "64,96,95"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": false,
+        "expected": "#00f",
+        "topColour": "0,0,255"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "popover",
+        "order": "cba",
+        "fade": false,
+        "expected": "#f00",
+        "topColour": "255,0,0"
+      },
+      {
+        "surface": "canvas",
+        "strategy": "popover",
+        "order": "abc",
+        "fade": true,
+        "expected": null,
+        "topColour": "95,96,64"
+      }
+    ],
+    "cssStyling": {
+      "stroke": "rgb(0, 128, 255)",
+      "strokeWidth": "11px",
+      "attributeStroke": "#000",
+      "attributeStrokeWidth": "4"
+    },
+    "growthCost": {
+      "devicePixelRatio": 2,
+      "backingStore": {
+        "widthPx": 6400,
+        "heightPx": 5600,
+        "megabytes": 137
+      },
+      "wasZeroed": true,
+      "assign": {
+        "total": 1,
+        "mean": 0.125,
+        "p50": 0,
+        "p95": 1,
+        "max": 1
+      },
+      "assignAndRead": {
+        "total": 1,
+        "mean": 0.125,
+        "p50": 0,
+        "p95": 1,
+        "max": 1
+      },
+      "style": {
+        "total": 2,
+        "mean": 0.25,
+        "p50": 0,
+        "p95": 1,
+        "max": 1
+      },
+      "replay": {
+        "total": 2,
+        "mean": 0.25,
+        "p50": 0,
+        "p95": 1,
+        "max": 1
+      },
+      "assignAndReplay": {
+        "total": 5,
+        "mean": 0.625,
+        "p50": 0,
+        "p95": 2,
+        "max": 2
+      }
+    },
+    "frameCost": [
+      {
+        "variant": "none",
+        "count": 1200,
+        "js": {
+          "total": 4,
+          "mean": 0.003,
+          "p50": 0,
+          "p95": 0,
+          "max": 1
+        },
+        "frameGap": {
+          "total": 19979,
+          "mean": 16.663,
+          "p50": 17,
+          "p95": 18,
+          "max": 41
+        },
+        "longFrames": {
+          "over17ms": 100,
+          "over34ms": 1
+        }
+      },
+      {
+        "variant": "canvas-replay",
+        "count": 1200,
+        "js": {
+          "total": 417,
+          "mean": 0.348,
+          "p50": 0,
+          "p95": 1,
+          "max": 3
+        },
+        "frameGap": {
+          "total": 19983,
+          "mean": 16.666,
+          "p50": 17,
+          "p95": 18,
+          "max": 24
+        },
+        "longFrames": {
+          "over17ms": 86,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-incremental",
+        "count": 1200,
+        "js": {
+          "total": 135,
+          "mean": 0.113,
+          "p50": 0,
+          "p95": 1,
+          "max": 2
+        },
+        "frameGap": {
+          "total": 19979,
+          "mean": 16.663,
+          "p50": 17,
+          "p95": 18,
+          "max": 21
+        },
+        "longFrames": {
+          "over17ms": 95,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-window-incremental",
+        "count": 1200,
+        "js": {
+          "total": 137,
+          "mean": 0.114,
+          "p50": 0,
+          "p95": 1,
+          "max": 2
+        },
+        "frameGap": {
+          "total": 19979,
+          "mean": 16.663,
+          "p50": 17,
+          "p95": 18,
+          "max": 22
+        },
+        "longFrames": {
+          "over17ms": 82,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "canvas-incremental-growth",
+        "count": 1200,
+        "js": {
+          "total": 139,
+          "mean": 0.116,
+          "p50": 0,
+          "p95": 1,
+          "max": 2
+        },
+        "frameGap": {
+          "total": 19959,
+          "mean": 16.646,
+          "p50": 17,
+          "p95": 18,
+          "max": 22
+        },
+        "longFrames": {
+          "over17ms": 98,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-rebuild",
+        "count": 1200,
+        "js": {
+          "total": 625,
+          "mean": 0.521,
+          "p50": 1,
+          "p95": 1,
+          "max": 3
+        },
+        "frameGap": {
+          "total": 19979,
+          "mean": 16.663,
+          "p50": 17,
+          "p95": 18,
+          "max": 20
+        },
+        "longFrames": {
+          "over17ms": 103,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-append",
+        "count": 1200,
+        "js": {
+          "total": 298,
+          "mean": 0.248,
+          "p50": 0,
+          "p95": 1,
+          "max": 2
+        },
+        "frameGap": {
+          "total": 19970,
+          "mean": 16.656,
+          "p50": 17,
+          "p95": 18,
+          "max": 24
+        },
+        "longFrames": {
+          "over17ms": 121,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-split",
+        "count": 1200,
+        "js": {
+          "total": 118,
+          "mean": 0.098,
+          "p50": 0,
+          "p95": 1,
+          "max": 2
+        },
+        "frameGap": {
+          "total": 19983,
+          "mean": 16.666,
+          "p50": 17,
+          "p95": 18,
+          "max": 20
+        },
+        "longFrames": {
+          "over17ms": 118,
+          "over34ms": 0
+        }
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 1200,
+        "js": {
+          "total": 128,
+          "mean": 0.107,
+          "p50": 0,
+          "p95": 1,
+          "max": 2
+        },
+        "frameGap": {
+          "total": 19657,
+          "mean": 16.394,
+          "p50": 16,
+          "p95": 19,
+          "max": 25
+        },
+        "longFrames": {
+          "over17ms": 179,
+          "over34ms": 0
+        }
+      }
+    ],
+    "syncCost": [
+      {
+        "variant": "none",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "none",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 0.833,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "none",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "none",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "none",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 1,
+            "perPointUs": 0.2,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-replay",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-replay",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 4,
+            "perPointUs": 20,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 85,
+            "perPointUs": 70.833,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 1273,
+            "perPointUs": 254.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-replay",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-replay",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 2,
+            "perPointUs": 10,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 66,
+            "perPointUs": 55,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-replay",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 1260,
+            "perPointUs": 252,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-incremental",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 5,
+            "perPointUs": 1,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-incremental",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 1,
+            "perPointUs": 0.833,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 4,
+            "perPointUs": 0.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-window-incremental",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-window-incremental",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 0.833,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 3,
+            "perPointUs": 0.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-window-incremental",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-window-incremental",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 1,
+            "perPointUs": 0.833,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-window-incremental",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 4,
+            "perPointUs": 0.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental-growth",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 5,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 0.833,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 13,
+            "perPointUs": 2.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "canvas-incremental-growth",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 2,
+            "perPointUs": 1.667,
+            "elements": 1
+          },
+          {
+            "variant": "canvas-incremental-growth",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 20,
+            "perPointUs": 4,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-rebuild",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-rebuild",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 3,
+            "perPointUs": 15,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 109,
+            "perPointUs": 90.833,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 2094,
+            "perPointUs": 418.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-rebuild",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-rebuild",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 10,
+            "perPointUs": 50,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 178,
+            "perPointUs": 148.333,
+            "elements": 1
+          },
+          {
+            "variant": "svg-rebuild",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 2753,
+            "perPointUs": 550.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-append",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-append",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 5,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 34,
+            "perPointUs": 28.333,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 529,
+            "perPointUs": 105.8,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-append",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-append",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 6,
+            "perPointUs": 30,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 91,
+            "perPointUs": 75.833,
+            "elements": 1
+          },
+          {
+            "variant": "svg-append",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 1285,
+            "perPointUs": 257,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-split",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-split",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 0,
+            "perPointUs": 0,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 5,
+            "perPointUs": 4.167,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 23,
+            "perPointUs": 4.6,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-split",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-split",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 5,
+            "perPointUs": 25,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 35,
+            "perPointUs": 29.167,
+            "elements": 1
+          },
+          {
+            "variant": "svg-split",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 287,
+            "perPointUs": 57.4,
+            "elements": 1
+          }
+        ]
+      },
+      {
+        "variant": "svg-chunked",
+        "forceGeometry": false,
+        "runs": [
+          {
+            "variant": "svg-chunked",
+            "count": 200,
+            "forceGeometry": false,
+            "totalMs": 1,
+            "perPointUs": 5,
+            "elements": 3
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 1200,
+            "forceGeometry": false,
+            "totalMs": 4,
+            "perPointUs": 3.333,
+            "elements": 13
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 5000,
+            "forceGeometry": false,
+            "totalMs": 17,
+            "perPointUs": 3.4,
+            "elements": 51
+          }
+        ]
+      },
+      {
+        "variant": "svg-chunked",
+        "forceGeometry": true,
+        "runs": [
+          {
+            "variant": "svg-chunked",
+            "count": 200,
+            "forceGeometry": true,
+            "totalMs": 4,
+            "perPointUs": 20,
+            "elements": 3
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 1200,
+            "forceGeometry": true,
+            "totalMs": 26,
+            "perPointUs": 21.667,
+            "elements": 13
+          },
+          {
+            "variant": "svg-chunked",
+            "count": 5000,
+            "forceGeometry": true,
+            "totalMs": 105,
+            "perPointUs": 21,
+            "elements": 51
+          }
+        ]
+      }
+    ],
+    "asymptotics": [
+      {
+        "variant": "svg-append",
+        "count": 5000,
+        "forceGeometry": false,
+        "totalMs": 534,
+        "perPointUs": 106.8,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 5000,
+        "forceGeometry": true,
+        "totalMs": 1279,
+        "perPointUs": 255.8,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 10000,
+        "forceGeometry": false,
+        "totalMs": 2111,
+        "perPointUs": 211.1,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 10000,
+        "forceGeometry": true,
+        "totalMs": 4967,
+        "perPointUs": 496.7,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 20000,
+        "forceGeometry": false,
+        "totalMs": 8299,
+        "perPointUs": 414.95,
+        "elements": 1
+      },
+      {
+        "variant": "svg-append",
+        "count": 20000,
+        "forceGeometry": true,
+        "totalMs": 19415,
+        "perPointUs": 970.75,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 5000,
+        "forceGeometry": false,
+        "totalMs": 23,
+        "perPointUs": 4.6,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 5000,
+        "forceGeometry": true,
+        "totalMs": 290,
+        "perPointUs": 58,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 10000,
+        "forceGeometry": false,
+        "totalMs": 53,
+        "perPointUs": 5.3,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 10000,
+        "forceGeometry": true,
+        "totalMs": 940,
+        "perPointUs": 94,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 20000,
+        "forceGeometry": false,
+        "totalMs": 152,
+        "perPointUs": 7.6,
+        "elements": 1
+      },
+      {
+        "variant": "svg-split",
+        "count": 20000,
+        "forceGeometry": true,
+        "totalMs": 3330,
+        "perPointUs": 166.5,
+        "elements": 1
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 5000,
+        "forceGeometry": false,
+        "totalMs": 16,
+        "perPointUs": 3.2,
+        "elements": 51
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 5000,
+        "forceGeometry": true,
+        "totalMs": 111,
+        "perPointUs": 22.2,
+        "elements": 51
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 10000,
+        "forceGeometry": false,
+        "totalMs": 35,
+        "perPointUs": 3.5,
+        "elements": 101
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 10000,
+        "forceGeometry": true,
+        "totalMs": 219,
+        "perPointUs": 21.9,
+        "elements": 101
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 20000,
+        "forceGeometry": false,
+        "totalMs": 64,
+        "perPointUs": 3.2,
+        "elements": 201
+      },
+      {
+        "variant": "svg-chunked",
+        "count": 20000,
+        "forceGeometry": true,
+        "totalMs": 484,
+        "perPointUs": 24.2,
+        "elements": 201
+      }
+    ]
+  }
+]
