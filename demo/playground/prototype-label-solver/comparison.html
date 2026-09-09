@@ -520,6 +520,28 @@
               : plate.height / 2 / Math.abs(u[1]),
           );
         };
+        const insideAssociationSector = (input, item, x, y) => {
+          if (input.plates.length < 2) return true;
+          const normalize = (angle) => ((angle % 360) + 360) % 360;
+          const order = input.plates
+            .map((plate, index) => ({
+              item: index,
+              angle: normalize(plate.angle),
+            }))
+            .sort((a, b) => a.angle - b.angle || a.item - b.item);
+          const index = order.findIndex((entry) => entry.item === item);
+          const current = order[index].angle;
+          const previous = order[(index - 1 + order.length) % order.length];
+          const next = order[(index + 1) % order.length];
+          const previousGap = normalize(current - previous.angle);
+          const nextGap = normalize(next.angle - current);
+          const centerAngle = normalize((Math.atan2(y, x) * 180) / Math.PI);
+          const delta = ((centerAngle - current + 540) % 360) - 180;
+          return (
+            delta >= -previousGap / 2 - EPSILON &&
+            delta <= nextGap / 2 + EPSILON
+          );
+        };
         const makeCandidate = (input, item, radial, tangent) => {
           const plate = input.plates[item];
           const { u, v } = direction(plate.angle);
@@ -529,6 +551,7 @@
           if (
             contactRadius === null ||
             contactRadius < input.ringRadius ||
+            !insideAssociationSector(input, item, x, y) ||
             distanceToBox(x, y, plate.width, plate.height) <
               input.ringRadius + input.clearances.plateToRing - EPSILON
           )
@@ -957,7 +980,7 @@
       })();
 
       const Validator = (() => {
-        const EPSILON = 0.001;
+        const EPSILON = 1e-7;
         const direction = (angle) => {
           const radians = (angle * Math.PI) / 180;
           return [Math.cos(radians), Math.sin(radians)];
@@ -1272,7 +1295,11 @@
                 (_, index) =>
                   'W'.repeat(3 + Math.floor(random() * 18)) + ` ${index + 1}`,
               ),
-            ),
+            ).map((item) => ({
+              ...item,
+              angle: item.angle + (random() - 0.5) * (180 / count),
+              testHeight: 28 + Math.floor(random() * 3) * 4,
+            })),
           };
         }
       }
@@ -1311,6 +1338,7 @@
         const plates = items.map((item) => {
           const element = document.createElement('div');
           element.className = 'plate';
+          if (item.testHeight) element.style.minHeight = `${item.testHeight}px`;
           const label = document.createElement('span');
           label.textContent = item.label;
           element.append(label);
