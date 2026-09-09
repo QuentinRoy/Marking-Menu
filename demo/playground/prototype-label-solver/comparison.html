@@ -137,7 +137,7 @@
 
       .comparison-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 14px;
         margin-top: 18px;
       }
@@ -389,6 +389,8 @@
                 <th>Valid</th>
                 <th>Median contact</th>
                 <th>Worst contact</th>
+                <th>Median max shift</th>
+                <th>Median outer extent</th>
                 <th>Median work</th>
                 <th>Worst work</th>
                 <th>Median time</th>
@@ -683,6 +685,17 @@
             m.gapVariation,
           ];
         };
+        const presentationScore = (input, plates) => {
+          const m = calculate(input, plates);
+          return [
+            m.maxShift,
+            m.totalShift,
+            -m.minWhitespace,
+            m.gapVariation,
+            m.totalContact,
+            m.maxContact,
+          ];
+        };
         const compare = (a, b) => {
           for (
             let index = 0;
@@ -696,7 +709,7 @@
           }
           return 0;
         };
-        return { calculate, score, compare };
+        return { calculate, score, presentationScore, compare };
       })();
 
       const Solvers = (() => {
@@ -844,9 +857,12 @@
             );
           });
 
-        const search = (input, domains, seed, nodeLimit) => {
+        const search = (input, domains, seed, nodeLimit, options = {}) => {
+          const score = options.score ?? Metrics.score;
+          const maxContact = options.maxContact ?? Infinity;
+          const contactLowerBound = options.contactLowerBound ?? true;
           let best = seed.slice();
-          let bestScore = Metrics.score(input, best);
+          let bestScore = score(input, best);
           const selected = new Array(domains.length);
           let nodes = 0;
           let conflictChecks = 0;
@@ -866,7 +882,7 @@
             }
             nodes += 1;
             if (depth === domains.length) {
-              const candidateScore = Metrics.score(input, selected);
+              const candidateScore = score(input, selected);
               if (Metrics.compare(candidateScore, bestScore) < 0) {
                 best = selected.slice();
                 bestScore = candidateScore;
@@ -885,20 +901,25 @@
             }
             for (let index = 0; index < domains.length; index += 1) {
               if (selected[index] !== undefined) continue;
-              const choices = domains[index].filter(compatible);
+              const choices = domains[index].filter(
+                (candidate) =>
+                  candidate.contactRadius <= maxContact + 1e-7 &&
+                  compatible(candidate),
+              );
               if (choices.length === 0) return;
               availableByItem[index] = choices;
-              lowerMaxContact = Math.max(
-                lowerMaxContact,
-                choices[0].contactRadius,
+              const minimumContact = Math.min(
+                ...choices.map((candidate) => candidate.contactRadius),
               );
-              lowerTotalContact += choices[0].contactRadius;
+              lowerMaxContact = Math.max(lowerMaxContact, minimumContact);
+              lowerTotalContact += minimumContact;
               if (item < 0 || choices.length < available.length) {
                 item = index;
                 available = choices;
               }
             }
             if (
+              contactLowerBound &&
               Metrics.compare(
                 [lowerMaxContact, lowerTotalContact],
                 bestScore.slice(0, 2),
@@ -922,12 +943,8 @@
           };
         };
 
-        const candidate = (input, adaptive) => {
-          const baseline = shared(input);
-          if (baseline.status === 'oversized') return baseline;
-          let domains = buildDomains(input, baseline, 12);
-          const count = input.plates.length;
-          const nodeLimit = adaptive
+        const nodeLimitFor = (count, adaptive) =>
+          adaptive
             ? count <= 8
               ? 3000
               : count <= 12
@@ -938,6 +955,13 @@
               : count <= 12
                 ? 3000
                 : 1200;
+
+        const candidate = (input, adaptive) => {
+          const baseline = shared(input);
+          if (baseline.status === 'oversized') return baseline;
+          let domains = buildDomains(input, baseline, 12);
+          const count = input.plates.length;
+          const nodeLimit = nodeLimitFor(count, adaptive);
           let result = search(input, domains, baseline.plates, nodeLimit);
           let totalWork = result.work;
           let totalConflictChecks = result.conflictChecks;
@@ -965,6 +989,80 @@
           };
         };
 
+        const presentation = (input) => {
+          const strict = candidate(input, true);
+          if (strict.status === 'oversized') return strict;
+          const tolerance = 4;
+          const strictContact = Metrics.calculate(
+            input,
+            strict.plates,
+          ).maxContact;
+          const baseline = shared(input);
+          const nodeLimit = nodeLimitFor(input.plates.length, true);
+          const options = {
+            score: Metrics.presentationScore,
+            maxContact: strictContact + tolerance,
+            contactLowerBound: false,
+          };
+          let domains = buildDomains(input, baseline, 12).map((domain, item) =>
+            domain
+              .concat(
+                domain.some(
+                  (plate) =>
+                    Math.abs(plate.x - strict.plates[item].x) < 1e-7 &&
+                    Math.abs(plate.y - strict.plates[item].y) < 1e-7,
+                )
+                  ? []
+                  : [strict.plates[item]],
+              )
+              .sort((a, b) =>
+                Metrics.compare(
+                  [Math.abs(a.tangent), a.contactRadius],
+                  [Math.abs(b.tangent), b.contactRadius],
+                ),
+              ),
+          );
+          let result = search(
+            input,
+            domains,
+            strict.plates,
+            nodeLimit,
+            options,
+          );
+          let work = strict.work + result.work;
+          let conflictChecks = strict.conflictChecks + result.conflictChecks;
+          let stopped =
+            strict.status !== 'optimal' || result.status !== 'optimal';
+          for (const resolution of [4, 1]) {
+            domains = buildDomains(
+              input,
+              baseline,
+              resolution,
+              result.plates,
+            ).map((domain) =>
+              domain.sort((a, b) =>
+                Metrics.compare(
+                  [Math.abs(a.tangent), a.contactRadius],
+                  [Math.abs(b.tangent), b.contactRadius],
+                ),
+              ),
+            );
+            result = search(input, domains, result.plates, nodeLimit, options);
+            work += result.work;
+            conflictChecks += result.conflictChecks;
+            stopped ||= result.status !== 'optimal';
+          }
+          return {
+            ...result,
+            status: stopped ? 'feasible' : 'optimal',
+            work,
+            conflictChecks,
+            candidates: domains.reduce((sum, domain) => sum + domain.length, 0),
+            strictContact,
+            tolerance,
+          };
+        };
+
         return {
           shared: { name: 'Shared radius', solve: shared },
           relaxed: { name: 'Tolerant relaxation', solve: relaxed },
@@ -975,6 +1073,10 @@
           adaptive: {
             name: 'Adaptive global candidates',
             solve: (input) => candidate(input, true),
+          },
+          presentation: {
+            name: 'Adaptive + 4px tolerance',
+            solve: presentation,
           },
         };
       })();
@@ -1482,6 +1584,7 @@
             <dl class="metrics">
               <div class="metric"><dt>Contact extent C</dt><dd>${format(result.metrics?.maxContact)}</dd></div>
               <div class="metric"><dt>Contact regret</dt><dd>${format(result.metrics?.contactRegret)}</dd></div>
+              <div class="metric"><dt>Δ from strict C</dt><dd>${format(result.strictContact === undefined ? NaN : result.metrics?.maxContact - result.strictContact)}</dd></div>
               <div class="metric"><dt>Near plate extent</dt><dd>${format(result.metrics?.nearExtent)}</dd></div>
               <div class="metric"><dt>Outer extent O</dt><dd>${format(result.metrics?.outerExtent)}</dd></div>
               <div class="metric"><dt>Mean connector</dt><dd>${format(result.metrics?.meanConnectorLength)}</dd></div>
@@ -1563,8 +1666,14 @@
             .map((result) => result.metrics.maxContact);
           const work = results.map((result) => result.work);
           const times = results.map((result) => result.elapsed);
+          const shifts = results
+            .filter((result) => result.validation.valid && result.metrics)
+            .map((result) => result.metrics.maxShift);
+          const outerExtents = results
+            .filter((result) => result.validation.valid && result.metrics)
+            .map((result) => result.metrics.outerExtent);
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${solver.name}</td><td>${valid}/${results.length}</td><td>${format(percentile(contacts, 0.5))}</td><td>${format(contacts.length > 0 ? Math.max(...contacts) : NaN)}</td><td>${format(percentile(work, 0.5))}</td><td>${Math.max(...work)}</td><td>${format(percentile(times, 0.5))} ms</td><td>${format(percentile(times, 0.95))} ms</td><td>${format(Math.max(...times))} ms</td>`;
+          row.innerHTML = `<td>${solver.name}</td><td>${valid}/${results.length}</td><td>${format(percentile(contacts, 0.5))}</td><td>${format(contacts.length > 0 ? Math.max(...contacts) : NaN)}</td><td>${format(percentile(shifts, 0.5))}</td><td>${format(percentile(outerExtents, 0.5))}</td><td>${format(percentile(work, 0.5))}</td><td>${Math.max(...work)}</td><td>${format(percentile(times, 0.5))} ms</td><td>${format(percentile(times, 0.95))} ms</td><td>${format(Math.max(...times))} ms</td>`;
           body.append(row);
         }
         const failures = document.getElementById('batch-failures');
