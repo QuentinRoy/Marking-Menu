@@ -2,7 +2,7 @@
 
 ## Scope
 
-This record covers the experimental phase of [the issue #267 plan](../plans/issue-267-label-layout.md). It does not select or implement the production layout algorithm. The experiment is a throwaway comparison harness at [`demo/playground/prototype-label-solver/comparison.html`](../../demo/playground/prototype-label-solver/comparison.html).
+This record covers the experimental phase and algorithm decision for [the issue #267 plan](../plans/issue-267-label-layout.md). It does not implement the production layout algorithm. The experiment is a throwaway comparison harness at [`demo/playground/prototype-label-solver/comparison.html`](../../demo/playground/prototype-label-solver/comparison.html).
 
 The menu is static. Layout is computed once when the menu is created. Relayout, mutable labels, and adding items to an existing menu are outside the contract. The corpus includes menus from 4 to 20 items because the intended capacity will grow to at least 12, but its eventual upper bound is not fixed.
 
@@ -84,24 +84,36 @@ On the default eight-item case, contact extent changed from 123.0 for shared rad
 
 The batch initially used larger synchronous search budgets and could freeze the browser at 20 items. The harness now bounds work by item count and yields between fixtures. This is evidence that unrestricted global enumeration is not a suitable implementation strategy even though layout runs only once at creation.
 
-## Current conclusion
+## Blind review
 
-No strategy is ready to select for production.
+The five-case randomized blind review produced this result:
 
-- Shared radius is robust and very fast, but often much larger than necessary.
-- Relaxation is inexpensive and improves total connector length, but it does little for the worst contact radius on the familiar case and has a much worse corpus tail than candidate search.
-- Finite candidate search substantially improves `C`, but its cost grows quickly and adaptive refinement still finds a measurably smaller contact extent.
-- Strict adaptive candidates currently produce the best median `C`, but most searches stop at their deterministic budget and they can sacrifice full outer extent and tangential restraint.
-- The 4 px tolerance policy spends 2 px at the median, reduces median maximum tangential displacement by 10 px, and reduces median outer extent by 19.2 px compared with strict adaptive search. Its median time increases by 32.7 ms. This is the preferred policy to take into blind visual comparison.
+| Criterion    | Strict adaptive | 4 px tolerance | No difference |
+| ------------ | --------------: | -------------: | ------------: |
+| Association  |               0 |              0 |             5 |
+| Distribution |               3 |              0 |             2 |
 
-Continuous polishing is deferred. The current results have not established that grid artifacts, rather than the objective and candidate domain, are the limiting problem.
+Neither policy changed perceived label association. Strict adaptive search looked better distributed in three cases and tied in the other two. The 4 px policy did not win a case, so its additional presentation search did not produce a visible benefit.
 
-## Decision gate
+## Decision
 
-The next step is no longer another solver variation. Complete the five-case blind review. For each case, the association choice is the result. Use distribution only when association is judged equal.
+Use strict adaptive global candidate search for the production design. Keep these parts of the prototype contract:
 
-Select the 4 px policy if it has no association losses and wins the priority result on at least three of the five cases. Select strict adaptive search if the tolerant policy loses association on any case or does not produce a consistent visible advantage. A close result means the extra presentation search has not justified itself; it does not call for another objective or more search variants.
+- Treat association sectors, ring clearance, plate separation, connector clearance, cyclic order, finite output, and repeatability as hard constraints.
+- Solve the complete plate assignment jointly. Plate positions are not independent.
+- Minimize the maximum connector-contact radius first, then total connector-contact radius, tangential displacement, and distribution measures.
+- Use adaptive candidate refinement with a deterministic work limit.
+- Seed the search with the valid shared-radius layout and return only a validated incumbent when the work limit is reached.
+- Report an oversized layout explicitly instead of returning invalid geometry.
 
-This is a design gate, not a statistical study. If the result depends on one uncertain choice, a second reviewer can repeat the same randomized comparison before selection. Repeat timings over several runs only after the visual choice is clear.
+Do not add the 4 px tolerance stage or continuous polishing. Shared radius remains the correctness fallback, not the normal result. The relaxation and fixed-grid variants remain rejected alternatives.
 
-Only after that decision should work move into `src`, gain production tests, integrate with the menu renderer, and close #267.
+## Main-thread cost
+
+Strict adaptive search took 169.6 ms at the median, 351.0 ms at the 95th percentile, and 373.1 ms in the slowest recorded corpus case. These are prototype timings, not a production benchmark, but they are long enough to freeze the main thread visibly.
+
+Plan for the renderer to measure the final label plates on the main thread, then send the numeric plate dimensions, fixed directions, ring geometry, and clearances to a Web Worker. The worker returns plate positions and connector contacts. This keeps the bounded global search away from input handling and drawing. The static layout contract makes this split practical because the result is computed once when the menu is created and does not change afterward.
+
+Benchmark the selected solver alone in a production-shaped build. Keep the worker unless representative worst-case generation falls well below 50 ms. Worker communication does not replace the deterministic work limit or the shared-radius fallback.
+
+The remaining work belongs in `src`: implement the selected geometry module, add production tests, connect main-thread measurement to the worker, integrate the result with the renderer, and close #267 after that implementation is merged.

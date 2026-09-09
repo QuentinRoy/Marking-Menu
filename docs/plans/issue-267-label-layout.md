@@ -8,9 +8,15 @@ Choose and implement a deterministic algorithm that lays out a static marking me
 
 The layout must work for the current menu sizes and be tested at 12, 16, and the intended maximum item count. Supporting 12-item gesture recognition remains separate work under [issue #274](https://github.com/QuentinRoy/Marking-Menu/issues/274).
 
-## Correct the issue contract
+## Prototype decision
 
-Before choosing an algorithm, update #267 to reflect these decisions:
+The experiment selected strict adaptive global candidate search. All five blind comparisons judged label association equal. Strict adaptive search looked better distributed in three cases and tied in two; the 4 px compactness tolerance did not win a case. The production design should keep hard association sectors, joint assignment, adaptive refinement, a deterministic work limit, and the valid shared-radius fallback. It should not include the 4 px tolerance stage or continuous polishing.
+
+The prototype measured 169.6 ms at the median, 351.0 ms at the 95th percentile, and 373.1 ms in the slowest corpus case for strict adaptive search. Measure the label plates on the main thread, then run the numeric layout search in a Web Worker so menu creation does not freeze input or drawing. Confirm this split with an isolated production benchmark, but keep the worker unless representative worst-case generation falls well below 50 ms.
+
+## Corrected issue contract
+
+Issue #267 reflects these decisions:
 
 - Compute layout once during menu creation.
 - Do not observe size changes or relayout an existing menu.
