@@ -9,6 +9,65 @@ const createModel = (itemNb = 0): MenuLayoutModel => ({
   })),
 });
 
+// Evenly spread, so a solved layout has room to place every label without
+// forcing `oversized` at a realistic size.
+const createSpreadModel = (itemNb: number): MenuLayoutModel => ({
+  items: Array.from({ length: itemNb }, (_, i) => ({
+    label: `item-${i}-name`,
+    angle: (360 / itemNb) * i,
+    key: `item-${i}-key`,
+  })),
+});
+
+/**
+ JSDOM never lays elements out, so `offsetWidth`/`offsetHeight` are always
+ 0. Stub every element's to a fixed size for the duration of the block.
+ */
+const stubbedLabelSize = (width: number, height: number): Disposable => {
+  const widthSpy = vi
+    .spyOn(HTMLElement.prototype, 'offsetWidth', 'get')
+    .mockReturnValue(width);
+  const heightSpy = vi
+    .spyOn(HTMLElement.prototype, 'offsetHeight', 'get')
+    .mockReturnValue(height);
+  return {
+    [Symbol.dispose]() {
+      widthSpy.mockRestore();
+      heightSpy.mockRestore();
+    },
+  };
+};
+
+/**
+ The label-layout solver's ring radius and clearances aren't set from any
+ stylesheet under test (`?inline` CSS imports resolve to an empty string
+ here). Set them as inline style on `parent` instead, which `main`
+ inherits, exactly as it would inherit them from a real stylesheet.
+ */
+const withSolverConfig = (
+  parent: HTMLElement,
+  overrides: Partial<{
+    menuRadius: number;
+    horizontalGap: number;
+    verticalGap: number;
+    ringGap: number;
+    connectorGap: number;
+  }> = {},
+): void => {
+  const {
+    menuRadius = 80,
+    horizontalGap = 14,
+    verticalGap = 7,
+    ringGap = 12,
+    connectorGap = 3,
+  } = overrides;
+  parent.style.setProperty('--menu-radius', `${menuRadius}px`);
+  parent.style.setProperty('--item-horizontal-gap', `${horizontalGap}px`);
+  parent.style.setProperty('--item-vertical-gap', `${verticalGap}px`);
+  parent.style.setProperty('--item-ring-gap', `${ringGap}px`);
+  parent.style.setProperty('--item-connector-gap', `${connectorGap}px`);
+};
+
 describe('createMenu', () => {
   it('renders', () => {
     const div = document.createElement('div');
@@ -162,5 +221,84 @@ describe('createMenu', () => {
     expect(() => {
       menu.setActive(model.items[0]?.key ?? null);
     }).not.toThrow();
+  });
+
+  it('solves a conflict-free layout once labels can be measured', () => {
+    using _size = stubbedLabelSize(80, 20);
+    const div = document.createElement('div');
+    withSolverConfig(div);
+    createMenu({
+      parent: div,
+      model: createSpreadModel(8),
+      center: [30, 50],
+      doc: document,
+    });
+
+    const main = div.querySelector('.marking-menu');
+    expect(main?.classList.contains('solved')).toBe(true);
+    const items = [...div.querySelectorAll<HTMLElement>('.marking-menu-item')];
+    expect(items).toHaveLength(8);
+    for (const item of items) {
+      expect(item.style.getPropertyValue('--x')).not.toBe('');
+      expect(item.style.getPropertyValue('--y')).not.toBe('');
+      expect(item.style.getPropertyValue('--contact-radius')).not.toBe('');
+    }
+  });
+
+  it('leaves the fallback rendering unmodified when the solver reports the menu as oversized', () => {
+    using _size = stubbedLabelSize(120, 20);
+    const div = document.createElement('div');
+    withSolverConfig(div);
+    createMenu({
+      parent: div,
+      // Two items a fraction of a degree apart: no shared radius, however
+      // large, separates them within the solver's deterministic work limit.
+      model: {
+        items: [
+          { label: 'item-0-name', angle: 0, key: 'item-0-key' },
+          { label: 'item-1-name', angle: 0.3, key: 'item-1-key' },
+        ],
+      },
+      center: [30, 50],
+      doc: document,
+    });
+
+    const main = div.querySelector('.marking-menu');
+    expect(main?.classList.contains('solved')).toBe(false);
+    const items = [...div.querySelectorAll<HTMLElement>('.marking-menu-item')];
+    for (const item of items) {
+      expect(item.style.getPropertyValue('--x')).toBe('');
+    }
+  });
+
+  it('reads the ring radius and clearances from the CSS custom properties in scope', () => {
+    using _size = stubbedLabelSize(80, 20);
+    const narrowRing = document.createElement('div');
+    withSolverConfig(narrowRing, { menuRadius: 80 });
+    createMenu({
+      parent: narrowRing,
+      model: createSpreadModel(8),
+      center: [30, 50],
+      doc: document,
+    });
+
+    const wideRing = document.createElement('div');
+    withSolverConfig(wideRing, { menuRadius: 200 });
+    createMenu({
+      parent: wideRing,
+      model: createSpreadModel(8),
+      center: [30, 50],
+      doc: document,
+    });
+
+    const contactRadius = (parent: HTMLElement): number =>
+      // Trailing "px" needs stripping; `Number` alone can't do that.
+      // eslint-disable-next-line unicorn/prefer-number-coercion -- see above.
+      Number.parseFloat(
+        parent
+          .querySelector<HTMLElement>('.marking-menu-item')
+          ?.style.getPropertyValue('--contact-radius') ?? '',
+      );
+    expect(contactRadius(wideRing)).toBeGreaterThan(contactRadius(narrowRing));
   });
 });

@@ -1,4 +1,5 @@
-import { degreesToRadians, type Point } from '../utils.js';
+import { at, degreesToRadians, type Point } from '../utils.js';
+import { solveLabelLayout } from './label-layout.js';
 import menuStyles from './menu.css?inline';
 
 let hasInjectedStyles = false;
@@ -66,7 +67,10 @@ export type Menu = {
 // Items may be styled differently near a corner, so the connecting line meets
 // the label squarely. Which corner applies depends on the quadrant the item's
 // angle falls in, not on any exact angle: an axis-aligned angle (0, 90, 180,
-// 270) sits between two quadrants and gets no corner class.
+// 270) sits between two quadrants and gets no corner class. This stays keyed
+// on the angle alone, unaffected by the solved layout below: the connector
+// always approaches a plate along that same fixed direction, whatever
+// tangential offset the solver gave the plate.
 const CORNER_ITEM_CLASSES = [
   'bottom-right-item',
   'bottom-left-item',
@@ -120,6 +124,68 @@ const template = (
   return main;
 };
 
+function readPixels(style: CSSStyleDeclaration, property: string): number {
+  // `getPropertyValue` returns the raw declared value (e.g. "80px"); unlike
+  // `Number`, `parseFloat` strips that unit suffix instead of yielding NaN.
+  // eslint-disable-next-line unicorn/prefer-number-coercion -- see above.
+  return Number.parseFloat(style.getPropertyValue(property));
+}
+
+/**
+ Measure `main`'s rendered label boxes, solve their layout once, and apply
+ the result. If the solver reports the menu is oversized, leave `main` as
+ `template` built it: every label at the shared fixed radius `menu.css`
+ already renders unconditionally, still valid, just not conflict-free.
+ */
+function applySolvedLayout(
+  main: HTMLDivElement,
+  items: readonly MenuLayoutItem[],
+  doc: Document,
+): void {
+  const itemElements = [
+    ...main.querySelectorAll<HTMLElement>('.marking-menu-item'),
+  ];
+  const labelElements = itemElements.map((element) => {
+    const label = element.querySelector<HTMLElement>('.marking-menu-label');
+    if (label === null) {
+      throw new Error('Menu item element is missing its label.');
+    }
+
+    return label;
+  });
+  const plates = items.map((item, index) => ({
+    angle: item.angle,
+    width: at(labelElements, index).offsetWidth,
+    height: at(labelElements, index).offsetHeight,
+  }));
+
+  const style = (doc.defaultView ?? globalThis).getComputedStyle(main);
+  const result = solveLabelLayout({
+    plates,
+    ringRadius: readPixels(style, '--menu-radius'),
+    clearances: {
+      plateHorizontal: readPixels(style, '--item-horizontal-gap'),
+      plateVertical: readPixels(style, '--item-vertical-gap'),
+      plateToRing: readPixels(style, '--item-ring-gap'),
+      plateToConnector: readPixels(style, '--item-connector-gap'),
+    },
+  });
+  if (result.status === 'oversized') {
+    return;
+  }
+
+  main.classList.add('solved');
+  for (const [index, element] of itemElements.entries()) {
+    const plate = at(result.plates, index);
+    element.style.setProperty('--x', `${plate.x}px`);
+    element.style.setProperty('--y', `${plate.y}px`);
+    element.style.setProperty(
+      '--contact-radius',
+      `${Math.hypot(...plate.connectorContact)}px`,
+    );
+  }
+}
+
 /**
  Create the Menu display.
 
@@ -147,7 +213,12 @@ export function createMenu({
 
   // Create the DOM.
   const main = template({ items: model.items, center }, doc);
+  // Attach before measuring: a detached element's `offsetWidth`/`offsetHeight`
+  // are always 0. Everything from here through `applySolvedLayout` runs
+  // synchronously in this one call, so the unsolved layout is never
+  // painted: a browser only paints between tasks, never mid-function.
   parent.append(main);
+  applySolvedLayout(main, model.items, doc);
 
   // Clear any  active items.
   const clearActiveItems = () => {

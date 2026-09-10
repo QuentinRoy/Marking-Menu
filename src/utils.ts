@@ -90,6 +90,22 @@ export const angle = (
 };
 
 /**
+ Read `array[index]`, trusting the caller that `index` is in range.
+
+ `noUncheckedIndexedAccess` types every array access as possibly
+ `undefined`; use this at a call site where that index is already known
+ valid by construction (a modulo-wrapped cyclic index, or one array indexed
+ by another built from it) instead of a non-null assertion.
+
+ @param array - The array to read from.
+ @param index - An index already known to be within `array`'s bounds.
+ @returns The element at `index`.
+ */
+export function at<T>(array: readonly T[], index: number): T {
+  return array[index] as T;
+}
+
+/**
  Find the entry of `list` ranked highest by `comp`.
 
  @param list - A list of items.
