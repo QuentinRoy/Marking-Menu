@@ -5,6 +5,7 @@
     { "repo": "QuentinRoy/Marking-Menu", "disableThanks": true }
   ],
   "commit": false,
+  "format": false,
   "fixed": [],
   "linked": [],
   "access": "public",

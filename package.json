@@ -28,6 +28,7 @@
     "e2e:test": "playwright test --config e2e/playwright.config.ts",
     "prepare": "yarn build",
     "changeset": "changeset",
+    "changeset:version": "changeset version && prettier --write CHANGELOG.md package.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
