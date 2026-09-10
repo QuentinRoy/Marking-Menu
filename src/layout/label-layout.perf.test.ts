@@ -1,5 +1,5 @@
 import { at } from '../utils.js';
-import { default8ItemMenu } from './label-layout-corpus.js';
+import { default8ItemMenu } from './__fixtures__/label-layout-corpus.js';
 import { solveLabelLayout } from './label-layout.js';
 
 // Solver-only timing evidence for the issue's ~50ms P95 production gate, at

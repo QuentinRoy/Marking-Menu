@@ -1,4 +1,4 @@
-import type { LayoutInput } from './label-layout.js';
+import type { LayoutInput } from '../label-layout.js';
 
 // Named fixtures shared by the correctness and performance test files, kept
 // out of the published bundle (nothing under `src/index.ts` imports this
