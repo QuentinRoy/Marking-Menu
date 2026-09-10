@@ -12,6 +12,15 @@ const DEFAULT_CLEARANCES = {
   plateToConnector: 3,
 };
 
+const contentSizedPlates = (
+  items: ReadonlyArray<{ readonly angle: number; readonly label: string }>,
+) =>
+  items.map(({ angle, label }) => ({
+    angle,
+    height: 20,
+    width: 24 + label.length * 8,
+  }));
+
 function evenlySpaced(
   count: number,
   width: number,
@@ -92,6 +101,34 @@ export const clusteredAngles: LayoutInput = {
   clearances: DEFAULT_CLEARANCES,
 };
 
+// Valid manual angles create both the narrowest and widest wedge sectors.
+export const unevenSpacing: LayoutInput = {
+  plates: contentSizedPlates([
+    { angle: 0, label: 'Right' },
+    { angle: 45, label: 'Down-right' },
+    { angle: 90, label: 'Down' },
+    { angle: 270, label: 'Up' },
+  ]),
+  ringRadius: DEFAULT_RING_RADIUS,
+  clearances: DEFAULT_CLEARANCES,
+};
+
+// The canvas's 20-degree pairs bypass model validation to stress layout alone.
+export const twentyDegreePairs: LayoutInput = {
+  plates: [
+    { angle: 0, height: 20, width: 64 },
+    { angle: 20, height: 20, width: 104 },
+    { angle: 90, height: 20, width: 96 },
+    { angle: 160, height: 20, width: 96 },
+    { angle: 180, height: 20, width: 56 },
+    { angle: 200, height: 20, width: 80 },
+    { angle: 270, height: 20, width: 40 },
+    { angle: 340, height: 20, width: 88 },
+  ],
+  ringRadius: DEFAULT_RING_RADIUS,
+  clearances: DEFAULT_CLEARANCES,
+};
+
 // Items on both sides of the 0/360 degree wrap.
 export const boundaryCrossing: LayoutInput = {
   plates: [350, 10, 90, 180, 270].map((angle) => ({
@@ -106,20 +143,18 @@ export const boundaryCrossing: LayoutInput = {
 // The exact production defaults at today's real maximum item count, with
 // realistic varied label widths: the benchmark case.
 export const default8ItemMenu: LayoutInput = {
-  plates: [
-    'Open',
-    'Save a copy',
-    'Close',
-    'Preferences',
-    'Export as PDF',
-    'Print',
-    'Share',
-    'Recent documents',
-  ].map((label, index) => ({
-    angle: 45 * index,
-    width: 24 + label.length * 8,
-    height: 20,
-  })),
+  plates: contentSizedPlates(
+    [
+      'Open',
+      'Save a copy',
+      'Close',
+      'Preferences',
+      'Export as PDF',
+      'Print',
+      'Share',
+      'Recent documents',
+    ].map((label, index) => ({ angle: 45 * index, label })),
+  ),
   ringRadius: DEFAULT_RING_RADIUS,
   clearances: DEFAULT_CLEARANCES,
 };
@@ -135,6 +170,8 @@ export const corpus: Record<string, LayoutInput> = {
   oneExtremeWidth,
   asymmetricWidths,
   clusteredAngles,
+  unevenSpacing,
+  twentyDegreePairs,
   boundaryCrossing,
   default8ItemMenu,
 };

@@ -89,6 +89,27 @@ describe('createModel', () => {
     );
   });
 
+  it('accepts valid uneven item directions', () => {
+    const menu = createModel({
+      items: [0, 45, 90, 270].map((angle) => ({
+        angle,
+        label: `Item ${angle}`,
+      })),
+    });
+    expect(menu.items.map((item) => item.angle)).toEqual([0, 45, 90, 270]);
+  });
+
+  it('rejects the canvas manual directions before layout', () => {
+    expect(() =>
+      createModel({
+        items: [0, 20, 90, 160, 180, 200, 270, 340].map((angle) => ({
+          angle,
+          label: `Item ${angle}`,
+        })),
+      }),
+    ).toThrow(/20 degrees between items.*recognizer needs at least 45/v);
+  });
+
   it('names a crowded nested level and its spacing', () => {
     expect(() =>
       createModel({
