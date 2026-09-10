@@ -548,6 +548,9 @@
             </label>
             <button id="reveal" type="button">Reveal names</button>
             <button id="run-batch" type="button">Run full corpus</button>
+            <button id="run-performance" type="button">
+              Benchmark strict solver
+            </button>
             <button id="copy-result" type="button">Copy current result</button>
             <button id="download-batch" type="button">
               Download batch JSON
@@ -582,6 +585,27 @@
               <tbody id="batch-body"></tbody>
             </table>
           </div>
+          <h3 class="failures-heading">Strict adaptive timing</h3>
+          <p id="performance-summary">
+            Run the isolated benchmark to measure fresh solver inputs without
+            rendering the other algorithms.
+          </p>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Case</th>
+                  <th>Items</th>
+                  <th>Median</th>
+                  <th>95th</th>
+                  <th>Worst</th>
+                  <th>Valid</th>
+                  <th>Repeatable</th>
+                </tr>
+              </thead>
+              <tbody id="performance-body"></tbody>
+            </table>
+          </div>
           <h3 class="failures-heading">Validation failures</h3>
           <ul id="batch-failures">
             <li>Run the corpus to inspect rejected layouts.</li>
@@ -606,6 +630,7 @@
     <script>
       const Geometry = (() => {
         const EPSILON = 1e-7;
+        const preparedInputs = new WeakMap();
         const radians = (degrees) => (degrees * Math.PI) / 180;
         const direction = (angle) => {
           const a = radians(angle);
@@ -613,6 +638,39 @@
             u: [Math.cos(a), Math.sin(a)],
             v: [-Math.sin(a), Math.cos(a)],
           };
+        };
+        const normalize = (angle) => ((angle % 360) + 360) % 360;
+        const prepare = (input) => {
+          const cached = preparedInputs.get(input);
+          if (cached) return cached;
+          const directions = input.plates.map((plate) =>
+            direction(plate.angle),
+          );
+          const starts = directions.map(({ u }) => [
+            input.ringRadius * u[0],
+            input.ringRadius * u[1],
+          ]);
+          const sectors = new Array(input.plates.length);
+          if (input.plates.length >= 2) {
+            const order = input.plates
+              .map((plate, item) => ({
+                item,
+                angle: normalize(plate.angle),
+              }))
+              .sort((a, b) => a.angle - b.angle || a.item - b.item);
+            for (const [index, entry] of order.entries()) {
+              const previous = order[(index - 1 + order.length) % order.length];
+              const next = order[(index + 1) % order.length];
+              sectors[entry.item] = {
+                angle: entry.angle,
+                before: normalize(entry.angle - previous.angle) / 2,
+                after: normalize(next.angle - entry.angle) / 2,
+              };
+            }
+          }
+          const prepared = { directions, sectors, starts };
+          preparedInputs.set(input, prepared);
+          return prepared;
         };
         const distanceToBox = (x, y, width, height) =>
           Math.hypot(
@@ -642,55 +700,93 @@
           }
           return exit + EPSILON < enter || exit < 0 ? null : enter;
         };
-        const segmentHitsBox = (start, end, center, halfWidth, halfHeight) => {
-          const min = [center[0] - halfWidth, center[1] - halfHeight];
-          const max = [center[0] + halfWidth, center[1] + halfHeight];
-          const delta = [end[0] - start[0], end[1] - start[1]];
+        const rayBoxInterval = (input, plate, item, margin) => {
+          const { u } = prepare(input).directions[item];
+          const minX = plate._minX - margin;
+          const maxX = plate._maxX + margin;
+          const minY = plate._minY - margin;
+          const maxY = plate._maxY + margin;
+          let enter = -Infinity;
+          let exit = Infinity;
+          if (Math.abs(u[0]) < EPSILON) {
+            if (minX > 0 || maxX < 0) return null;
+          } else {
+            const a = minX / u[0];
+            const b = maxX / u[0];
+            enter = Math.max(enter, Math.min(a, b));
+            exit = Math.min(exit, Math.max(a, b));
+          }
+          if (Math.abs(u[1]) < EPSILON) {
+            if (minY > 0 || maxY < 0) return null;
+          } else {
+            const a = minY / u[1];
+            const b = maxY / u[1];
+            enter = Math.max(enter, Math.min(a, b));
+            exit = Math.min(exit, Math.max(a, b));
+          }
+          return enter <= exit + EPSILON ? [enter, exit] : null;
+        };
+        const connectorHitsPlate = (connector, plate, margin) => {
+          const minX = plate._minX - margin;
+          const maxX = plate._maxX + margin;
+          const minY = plate._minY - margin;
+          const maxY = plate._maxY + margin;
+          if (
+            connector._connectorMaxX < minX - EPSILON ||
+            connector._connectorMinX > maxX + EPSILON ||
+            connector._connectorMaxY < minY - EPSILON ||
+            connector._connectorMinY > maxY + EPSILON
+          )
+            return false;
           let enter = 0;
           let exit = 1;
-          for (const axis of [0, 1]) {
-            if (Math.abs(delta[axis]) < EPSILON) {
-              if (start[axis] < min[axis] || start[axis] > max[axis])
-                return false;
-            } else {
-              const a = (min[axis] - start[axis]) / delta[axis];
-              const b = (max[axis] - start[axis]) / delta[axis];
-              enter = Math.max(enter, Math.min(a, b));
-              exit = Math.min(exit, Math.max(a, b));
-            }
+          if (Math.abs(connector._connectorDeltaX) < EPSILON) {
+            if (
+              connector._connectorStartX < minX ||
+              connector._connectorStartX > maxX
+            )
+              return false;
+          } else {
+            const a =
+              (minX - connector._connectorStartX) / connector._connectorDeltaX;
+            const b =
+              (maxX - connector._connectorStartX) / connector._connectorDeltaX;
+            enter = Math.max(enter, Math.min(a, b));
+            exit = Math.min(exit, Math.max(a, b));
+          }
+          if (Math.abs(connector._connectorDeltaY) < EPSILON) {
+            if (
+              connector._connectorStartY < minY ||
+              connector._connectorStartY > maxY
+            )
+              return false;
+          } else {
+            const a =
+              (minY - connector._connectorStartY) / connector._connectorDeltaY;
+            const b =
+              (maxY - connector._connectorStartY) / connector._connectorDeltaY;
+            enter = Math.max(enter, Math.min(a, b));
+            exit = Math.min(exit, Math.max(a, b));
           }
           return enter <= exit + EPSILON;
         };
-        const start = (input, item) => {
-          const { u } = direction(input.plates[item].angle);
-          return [input.ringRadius * u[0], input.ringRadius * u[1]];
-        };
+        const start = (input, item) => prepare(input).starts[item];
         const conflicts = (input, first, second) => {
-          const a = input.plates[first.item];
-          const b = input.plates[second.item];
           const separateX =
-            Math.abs(first.x - second.x) + EPSILON >=
-            (a.width + b.width) / 2 + input.clearances.plateHorizontal;
+            first._maxX + input.clearances.plateHorizontal <=
+              second._minX + EPSILON ||
+            second._maxX + input.clearances.plateHorizontal <=
+              first._minX + EPSILON;
           const separateY =
-            Math.abs(first.y - second.y) + EPSILON >=
-            (a.height + b.height) / 2 + input.clearances.plateVertical;
+            first._maxY + input.clearances.plateVertical <=
+              second._minY + EPSILON ||
+            second._maxY + input.clearances.plateVertical <=
+              first._minY + EPSILON;
           if (!separateX && !separateY) return true;
           const margin = input.clearances.plateToConnector;
           return (
-            segmentHitsBox(
-              start(input, first.item),
-              first.contact,
-              [second.x, second.y],
-              b.width / 2 + margin,
-              b.height / 2 + margin,
-            ) ||
-            segmentHitsBox(
-              start(input, second.item),
-              second.contact,
-              [first.x, first.y],
-              a.width / 2 + margin,
-              a.height / 2 + margin,
-            )
+            connectorHitsPlate(first, second, margin) ||
+            connectorHitsPlate(second, first, margin)
           );
         };
         const halfDistance = (plate) => {
@@ -706,29 +802,16 @@
         };
         const insideAssociationSector = (input, item, x, y) => {
           if (input.plates.length < 2) return true;
-          const normalize = (angle) => ((angle % 360) + 360) % 360;
-          const order = input.plates
-            .map((plate, index) => ({
-              item: index,
-              angle: normalize(plate.angle),
-            }))
-            .sort((a, b) => a.angle - b.angle || a.item - b.item);
-          const index = order.findIndex((entry) => entry.item === item);
-          const current = order[index].angle;
-          const previous = order[(index - 1 + order.length) % order.length];
-          const next = order[(index + 1) % order.length];
-          const previousGap = normalize(current - previous.angle);
-          const nextGap = normalize(next.angle - current);
+          const sector = prepare(input).sectors[item];
           const centerAngle = normalize((Math.atan2(y, x) * 180) / Math.PI);
-          const delta = ((centerAngle - current + 540) % 360) - 180;
+          const delta = ((centerAngle - sector.angle + 540) % 360) - 180;
           return (
-            delta >= -previousGap / 2 - EPSILON &&
-            delta <= nextGap / 2 + EPSILON
+            delta >= -sector.before - EPSILON && delta <= sector.after + EPSILON
           );
         };
         const makeCandidate = (input, item, radial, tangent) => {
           const plate = input.plates[item];
-          const { u, v } = direction(plate.angle);
+          const { u, v } = prepare(input).directions[item];
           const x = radial * u[0] + tangent * v[0];
           const y = radial * u[1] + tangent * v[1];
           const contactRadius = rayBoxContact([x, y], plate, u);
@@ -740,6 +823,7 @@
               input.ringRadius + input.clearances.plateToRing - EPSILON
           )
             return null;
+          const connectorStart = prepare(input).starts[item];
           return {
             item,
             x,
@@ -748,6 +832,18 @@
             tangent,
             contactRadius,
             contact: [contactRadius * u[0], contactRadius * u[1]],
+            _minX: x - plate.width / 2,
+            _maxX: x + plate.width / 2,
+            _minY: y - plate.height / 2,
+            _maxY: y + plate.height / 2,
+            _connectorStartX: connectorStart[0],
+            _connectorStartY: connectorStart[1],
+            _connectorDeltaX: contactRadius * u[0] - connectorStart[0],
+            _connectorDeltaY: contactRadius * u[1] - connectorStart[1],
+            _connectorMinX: Math.min(connectorStart[0], contactRadius * u[0]),
+            _connectorMaxX: Math.max(connectorStart[0], contactRadius * u[0]),
+            _connectorMinY: Math.min(connectorStart[1], contactRadius * u[1]),
+            _connectorMaxY: Math.max(connectorStart[1], contactRadius * u[1]),
           };
         };
         const isValid = (input, layout) => {
@@ -768,6 +864,7 @@
           distanceToBox,
           halfDistance,
           makeCandidate,
+          rayBoxInterval,
           conflicts,
           isValid,
           start,
@@ -1018,8 +1115,9 @@
             } else {
               const min = input.ringRadius + Geometry.halfDistance(plate);
               const max = baseline.plates[item].radial + tangentLimit * 0.8;
+              const tangentFractions = [-0.8, -0.4, 0, 0.4, 0.8];
               for (let radial = min; radial <= max; radial += resolution) {
-                for (const fraction of [-0.8, -0.4, 0, 0.4, 0.8])
+                for (const fraction of tangentFractions)
                   add(
                     Geometry.makeCandidate(
                       input,
@@ -1043,21 +1141,211 @@
           const score = options.score ?? Metrics.score;
           const maxContact = options.maxContact ?? Infinity;
           const contactLowerBound = options.contactLowerBound ?? true;
+          const candidateId = Symbol('candidateId');
+          let candidateCount = 0;
+          for (const domain of domains) {
+            for (const candidate of domain) {
+              Object.defineProperty(candidate, candidateId, {
+                value: candidateCount,
+              });
+              candidateCount += 1;
+            }
+          }
+          const initialDomains = domains.map((domain) =>
+            domain.filter(
+              (candidate) => candidate.contactRadius <= maxContact + 1e-7,
+            ),
+          );
+          const envelopes = initialDomains.map((domain, item) => {
+            const source = input.plates[item];
+            const start = Geometry.start(input, item);
+            const envelope = {
+              plate: {
+                minX: Infinity,
+                maxX: -Infinity,
+                minY: Infinity,
+                maxY: -Infinity,
+              },
+              connector: {
+                minX: Infinity,
+                maxX: -Infinity,
+                minY: Infinity,
+                maxY: -Infinity,
+              },
+            };
+            for (const candidate of domain) {
+              envelope.plate.minX = Math.min(
+                envelope.plate.minX,
+                candidate.x - source.width / 2,
+              );
+              envelope.plate.maxX = Math.max(
+                envelope.plate.maxX,
+                candidate.x + source.width / 2,
+              );
+              envelope.plate.minY = Math.min(
+                envelope.plate.minY,
+                candidate.y - source.height / 2,
+              );
+              envelope.plate.maxY = Math.max(
+                envelope.plate.maxY,
+                candidate.y + source.height / 2,
+              );
+              envelope.connector.minX = Math.min(
+                envelope.connector.minX,
+                start[0],
+                candidate.contact[0],
+              );
+              envelope.connector.maxX = Math.max(
+                envelope.connector.maxX,
+                start[0],
+                candidate.contact[0],
+              );
+              envelope.connector.minY = Math.min(
+                envelope.connector.minY,
+                start[1],
+                candidate.contact[1],
+              );
+              envelope.connector.maxY = Math.max(
+                envelope.connector.maxY,
+                start[1],
+                candidate.contact[1],
+              );
+            }
+            return envelope;
+          });
+          const overlaps = (first, second, marginX, marginY) =>
+            first.maxX + marginX >= second.minX &&
+            second.maxX + marginX >= first.minX &&
+            first.maxY + marginY >= second.minY &&
+            second.maxY + marginY >= first.minY;
+          const potentialConflicts = Array.from(
+            { length: domains.length },
+            () => new Uint8Array(domains.length),
+          );
+          for (let first = 0; first < domains.length; first += 1) {
+            for (let second = first + 1; second < domains.length; second += 1) {
+              const plateConflict = overlaps(
+                envelopes[first].plate,
+                envelopes[second].plate,
+                input.clearances.plateHorizontal,
+                input.clearances.plateVertical,
+              );
+              const firstConnectorConflict = overlaps(
+                envelopes[first].connector,
+                envelopes[second].plate,
+                input.clearances.plateToConnector,
+                input.clearances.plateToConnector,
+              );
+              const secondConnectorConflict = overlaps(
+                envelopes[second].connector,
+                envelopes[first].plate,
+                input.clearances.plateToConnector,
+                input.clearances.plateToConnector,
+              );
+              if (
+                plateConflict ||
+                firstConnectorConflict ||
+                secondConnectorConflict
+              ) {
+                potentialConflicts[first][second] = 1;
+                potentialConflicts[second][first] = 1;
+              }
+            }
+          }
+          const rayEntries = new Float64Array(candidateCount * domains.length);
+          const rayExits = new Float64Array(candidateCount * domains.length);
+          rayEntries.fill(Infinity);
+          rayExits.fill(-Infinity);
+          for (const [plateItem, domain] of initialDomains.entries()) {
+            for (const candidate of domain) {
+              for (
+                let connectorItem = 0;
+                connectorItem < domains.length;
+                connectorItem += 1
+              ) {
+                if (!potentialConflicts[plateItem][connectorItem]) continue;
+                const interval = Geometry.rayBoxInterval(
+                  input,
+                  candidate,
+                  connectorItem,
+                  input.clearances.plateToConnector,
+                );
+                if (interval === null) continue;
+                const offset =
+                  candidate[candidateId] * domains.length + connectorItem;
+                rayEntries[offset] = interval[0];
+                rayExits[offset] = interval[1];
+              }
+            }
+          }
+          const candidateMayConflictWith = (candidate, item) => {
+            const envelope = envelopes[item];
+            const horizontal = input.clearances.plateHorizontal;
+            const vertical = input.clearances.plateVertical;
+            const connector = input.clearances.plateToConnector;
+            const plateOverlap =
+              candidate._maxX + horizontal >= envelope.plate.minX &&
+              envelope.plate.maxX + horizontal >= candidate._minX &&
+              candidate._maxY + vertical >= envelope.plate.minY &&
+              envelope.plate.maxY + vertical >= candidate._minY;
+            const ownConnectorOverlap =
+              candidate._connectorMaxX + connector >= envelope.plate.minX &&
+              envelope.plate.maxX + connector >= candidate._connectorMinX &&
+              candidate._connectorMaxY + connector >= envelope.plate.minY &&
+              envelope.plate.maxY + connector >= candidate._connectorMinY;
+            const otherConnectorOverlap =
+              envelope.connector.maxX + connector >= candidate._minX &&
+              candidate._maxX + connector >= envelope.connector.minX &&
+              envelope.connector.maxY + connector >= candidate._minY &&
+              candidate._maxY + connector >= envelope.connector.minY;
+            return plateOverlap || ownConnectorOverlap || otherConnectorOverlap;
+          };
+          const conflictRows = new Array(candidateCount);
           let best = seed.slice();
           let bestScore = score(input, best);
           const selected = new Array(domains.length);
           let nodes = 0;
           let conflictChecks = 0;
+          let geometryChecks = 0;
           let stopped = false;
-          const compatible = (candidate) => {
-            for (const chosen of selected) {
-              if (chosen === undefined) continue;
-              conflictChecks += 1;
-              if (Geometry.conflicts(input, candidate, chosen)) return false;
-            }
-            return true;
+          const conflicts = (first, second) => {
+            if (!potentialConflicts[first.item][second.item]) return false;
+            const firstId = first[candidateId];
+            const secondId = second[candidateId];
+            const low = Math.min(firstId, secondId);
+            const high = Math.max(firstId, secondId);
+            const row =
+              conflictRows[low] ??
+              (conflictRows[low] = new Uint8Array(candidateCount));
+            const cached = row[high];
+            if (cached !== 0) return cached === 2;
+            geometryChecks += 1;
+            const separateX =
+              first._maxX + input.clearances.plateHorizontal <=
+                second._minX + 1e-7 ||
+              second._maxX + input.clearances.plateHorizontal <=
+                first._minX + 1e-7;
+            const separateY =
+              first._maxY + input.clearances.plateVertical <=
+                second._minY + 1e-7 ||
+              second._maxY + input.clearances.plateVertical <=
+                first._minY + 1e-7;
+            const firstRayOffset = secondId * domains.length + first.item;
+            const secondRayOffset = firstId * domains.length + second.item;
+            const firstConnectorHits =
+              rayEntries[firstRayOffset] <= first.contactRadius + 1e-7 &&
+              rayExits[firstRayOffset] + 1e-7 >= input.ringRadius;
+            const secondConnectorHits =
+              rayEntries[secondRayOffset] <= second.contactRadius + 1e-7 &&
+              rayExits[secondRayOffset] + 1e-7 >= input.ringRadius;
+            const result =
+              (!separateX && !separateY) ||
+              firstConnectorHits ||
+              secondConnectorHits;
+            row[high] = result ? 2 : 1;
+            return result;
           };
-          const visit = (depth) => {
+          const visit = (depth, availableDomains) => {
             if (nodes >= nodeLimit) {
               stopped = true;
               return;
@@ -1073,7 +1361,6 @@
             }
             let item = -1;
             let available = [];
-            const availableByItem = [];
             let lowerMaxContact = 0;
             let lowerTotalContact = 0;
             for (const chosen of selected) {
@@ -1083,16 +1370,14 @@
             }
             for (let index = 0; index < domains.length; index += 1) {
               if (selected[index] !== undefined) continue;
-              const choices = domains[index].filter(
-                (candidate) =>
-                  candidate.contactRadius <= maxContact + 1e-7 &&
-                  compatible(candidate),
-              );
+              const choices = availableDomains[index];
               if (choices.length === 0) return;
-              availableByItem[index] = choices;
-              const minimumContact = Math.min(
-                ...choices.map((candidate) => candidate.contactRadius),
-              );
+              let minimumContact = Infinity;
+              for (const candidate of choices)
+                minimumContact = Math.min(
+                  minimumContact,
+                  candidate.contactRadius,
+                );
               lowerMaxContact = Math.max(lowerMaxContact, minimumContact);
               lowerTotalContact += minimumContact;
               if (item < 0 || choices.length < available.length) {
@@ -1108,19 +1393,38 @@
               ) > 0
             )
               return;
-            available = availableByItem[item];
             for (const candidate of available) {
               selected[item] = candidate;
-              visit(depth + 1);
+              const nextDomains = availableDomains.slice();
+              let feasible = true;
+              for (let index = 0; index < domains.length; index += 1) {
+                if (selected[index] !== undefined) continue;
+                if (!candidateMayConflictWith(candidate, index)) {
+                  nextDomains[index] = availableDomains[index];
+                  continue;
+                }
+                const choices = [];
+                for (const other of availableDomains[index]) {
+                  conflictChecks += 1;
+                  if (!conflicts(candidate, other)) choices.push(other);
+                }
+                if (choices.length === 0) {
+                  feasible = false;
+                  break;
+                }
+                nextDomains[index] = choices;
+              }
+              if (feasible) visit(depth + 1, nextDomains);
               selected[item] = undefined;
               if (stopped) return;
             }
           };
-          visit(0);
+          visit(0, initialDomains);
           return {
             plates: best,
             work: nodes,
             conflictChecks,
+            geometryChecks,
             status: stopped ? 'feasible' : 'optimal',
           };
         };
@@ -1128,10 +1432,10 @@
         const nodeLimitFor = (count, adaptive) =>
           adaptive
             ? count <= 8
-              ? 3000
+              ? 2000
               : count <= 12
-                ? 1500
-                : 500
+                ? 1000
+                : 75
             : count <= 8
               ? 6000
               : count <= 12
@@ -1141,12 +1445,14 @@
         const candidate = (input, adaptive) => {
           const baseline = shared(input);
           if (baseline.status === 'oversized') return baseline;
-          let domains = buildDomains(input, baseline, 12);
           const count = input.plates.length;
+          const initialResolution = 12;
+          let domains = buildDomains(input, baseline, initialResolution);
           const nodeLimit = nodeLimitFor(count, adaptive);
           let result = search(input, domains, baseline.plates, nodeLimit);
           let totalWork = result.work;
           let totalConflictChecks = result.conflictChecks;
+          let totalGeometryChecks = result.geometryChecks;
           let stopped = result.status !== 'optimal';
           if (adaptive) {
             for (const resolution of [4, 1]) {
@@ -1159,6 +1465,7 @@
               result = search(input, domains, result.plates, nodeLimit);
               totalWork += result.work;
               totalConflictChecks += result.conflictChecks;
+              totalGeometryChecks += result.geometryChecks;
               stopped ||= result.status !== 'optimal';
             }
           }
@@ -1167,6 +1474,7 @@
             status: stopped ? 'feasible' : 'optimal',
             work: totalWork,
             conflictChecks: totalConflictChecks,
+            geometryChecks: totalGeometryChecks,
             candidates: domains.reduce((sum, domain) => sum + domain.length, 0),
           };
         };
@@ -1212,6 +1520,8 @@
           );
           let work = strict.work + result.work;
           let conflictChecks = strict.conflictChecks + result.conflictChecks;
+          let geometryChecks =
+            (strict.geometryChecks ?? 0) + result.geometryChecks;
           let stopped =
             strict.status !== 'optimal' || result.status !== 'optimal';
           for (const resolution of [4, 1]) {
@@ -1231,6 +1541,7 @@
             result = search(input, domains, result.plates, nodeLimit, options);
             work += result.work;
             conflictChecks += result.conflictChecks;
+            geometryChecks += result.geometryChecks;
             stopped ||= result.status !== 'optimal';
           }
           return {
@@ -1240,6 +1551,7 @@
             strictWork: strict.work,
             refinementWork: work - strict.work,
             conflictChecks,
+            geometryChecks,
             candidates: domains.reduce((sum, domain) => sum + domain.length, 0),
             strictContact,
             tolerance,
@@ -1628,6 +1940,7 @@
         currentInput: null,
         currentResults: null,
         batch: null,
+        performance: null,
       };
 
       const measure = (items) => {
@@ -1661,17 +1974,25 @@
         };
       };
 
+      const cloneInput = (input) => ({
+        ...input,
+        plates: input.plates.map((plate) => ({ ...plate })),
+        clearances: { ...input.clearances },
+      });
+
+      const repeatableState = (result) =>
+        JSON.stringify({
+          status: result.status,
+          plates: result.plates,
+          work: result.work,
+          candidates: result.candidates,
+          conflictChecks: result.conflictChecks,
+          geometryChecks: result.geometryChecks,
+        });
+
       const solveCase = (key) => {
         const input = measure(CORPUS[key].items);
         const started = performance.now();
-        const repeatableState = (result) =>
-          JSON.stringify({
-            status: result.status,
-            plates: result.plates,
-            work: result.work,
-            candidates: result.candidates,
-            conflictChecks: result.conflictChecks,
-          });
         const results = [];
         for (const [solverKey, solver] of Object.entries(Solvers)) {
           const strict =
@@ -1800,6 +2121,7 @@
             focusedReview: state.focused,
             completedReviews: Object.values(state.reviews),
             workbenchVotes: state.votes,
+            performanceBenchmark: state.performance,
           },
           null,
           2,
@@ -2015,6 +2337,102 @@
           Math.floor((values.length - 1) * fraction)
         ] ?? 0;
 
+      const runPerformance = async () => {
+        const repetitions = 5;
+        const keys = Object.keys(CORPUS);
+        const summary = document.getElementById('performance-summary');
+        const body = document.getElementById('performance-body');
+        body.replaceChildren();
+        const cases = [];
+
+        for (const [index, key] of keys.entries()) {
+          summary.textContent = `Benchmarking ${index + 1}/${keys.length}: ${CORPUS[key].label}`;
+          const measureStarted = performance.now();
+          const measuredInput = measure(CORPUS[key].items);
+          const measurementElapsed = performance.now() - measureStarted;
+          const runs = [];
+          let reference = null;
+
+          for (let repetition = 0; repetition < repetitions; repetition += 1) {
+            const input = cloneInput(measuredInput);
+            const started = performance.now();
+            const result = Solvers.adaptive.solve(input);
+            const elapsed = performance.now() - started;
+            const validation = Validator.validate(input, result);
+            const signature = repeatableState(result);
+            if (reference === null) reference = signature;
+            runs.push({
+              repetition: repetition + 1,
+              elapsed,
+              valid: validation.valid,
+              failures: validation.failures,
+              repeatable: signature === reference,
+              status: result.status,
+              work: result.work,
+              candidates: result.candidates,
+              conflictChecks: result.conflictChecks,
+              geometryChecks: result.geometryChecks,
+              metrics:
+                result.status === 'oversized'
+                  ? null
+                  : Metrics.calculate(input, result.plates),
+            });
+          }
+
+          const times = runs.map((run) => run.elapsed);
+          const entry = {
+            key,
+            label: CORPUS[key].label,
+            items: measuredInput.plates.length,
+            measurementElapsed,
+            median: percentile(times, 0.5),
+            p95: percentile(times, 0.95),
+            worst: Math.max(...times),
+            valid: runs.every((run) => run.valid),
+            repeatable: runs.every((run) => run.repeatable),
+            runs,
+          };
+          cases.push(entry);
+
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${entry.label}</td><td>${entry.items}</td><td>${format(entry.median)} ms</td><td>${format(entry.p95)} ms</td><td>${format(entry.worst)} ms</td><td>${entry.valid ? 'yes' : 'no'}</td><td>${entry.repeatable ? 'yes' : 'no'}</td>`;
+          body.append(row);
+          await new Promise(requestAnimationFrame);
+        }
+
+        const allRuns = cases.flatMap((entry) => entry.runs);
+        const allTimes = allRuns.map((run) => run.elapsed);
+        const valid = allRuns.filter((run) => run.valid).length;
+        const repeatable = allRuns.filter((run) => run.repeatable).length;
+        state.performance = {
+          generatedAt: new Date().toISOString(),
+          solver: 'adaptive',
+          repetitions,
+          timingScope:
+            'solver only; fresh cloned input; DOM measurement excluded',
+          cases,
+          summary: {
+            runs: allRuns.length,
+            median: percentile(allTimes, 0.5),
+            p95: percentile(allTimes, 0.95),
+            worst: Math.max(...allTimes),
+            valid,
+            repeatable,
+            target: 50,
+            withinTarget: Math.max(...allTimes) <= 50,
+          },
+        };
+        const result = state.performance.summary;
+        const slowest = cases.slice().sort((a, b) => b.worst - a.worst)[0];
+        summary.textContent =
+          `${result.runs} isolated runs finished: median ${format(result.median)} ms, ` +
+          `95th ${format(result.p95)} ms, worst ${format(result.worst)} ms. ` +
+          `${valid}/${result.runs} valid and ${repeatable}/${result.runs} repeatable. ` +
+          `Slowest case: ${slowest.label} (${slowest.items} items). ` +
+          `The ~50 ms target ${result.withinTarget ? 'was met' : 'was not met'}; DOM label measurement is reported separately in the exported state.`;
+        renderStatePanels();
+      };
+
       const runBatch = async () => {
         const cases = [];
         const keys = Object.keys(CORPUS);
@@ -2070,7 +2488,30 @@
           item.textContent = 'No validation failures.';
           failures.append(item);
         }
-        summary.textContent = `${cases.length} cases finished. Results include measured inputs, every layout, validation failures, metrics, work counts, and recorded blind choices.`;
+        const slowest = cases
+          .map((entry) => {
+            const result = entry.results.find(
+              (candidate) => candidate.key === 'adaptive',
+            );
+            return {
+              label: CORPUS[entry.key].label,
+              elapsed: result.elapsed,
+              work: result.work,
+              conflictChecks: result.conflictChecks,
+              geometryChecks: result.geometryChecks,
+              candidates: result.candidates,
+            };
+          })
+          .sort((a, b) => b.elapsed - a.elapsed)
+          .slice(0, 5)
+          .map(
+            (result) =>
+              `${result.label} ${format(result.elapsed)} ms ` +
+              `(${result.work} nodes, ${result.conflictChecks} lookups, ` +
+              `${result.geometryChecks} geometry checks, ${result.candidates} final candidates)`,
+          )
+          .join(', ');
+        summary.textContent = `${cases.length} cases finished. Slowest strict adaptive cases: ${slowest}. Results include measured inputs, every layout, validation failures, metrics, work counts, and recorded blind choices.`;
       };
 
       const download = (name, value) => {
@@ -2156,6 +2597,9 @@
           beginFocused(WALKTHROUGHS[state.walkthrough].key);
         });
       document.getElementById('run-batch').addEventListener('click', runBatch);
+      document
+        .getElementById('run-performance')
+        .addEventListener('click', runPerformance);
       document
         .getElementById('download-reviews')
         .addEventListener('click', () =>
