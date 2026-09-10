@@ -7,6 +7,7 @@
     ":semanticCommitScopeDisabled",
     ":preserveSemverRanges"
   ],
+  "minimumReleaseAge": "1 day",
   "packageRules": [
     {
       "matchPackageNames": ["/changesets/"],

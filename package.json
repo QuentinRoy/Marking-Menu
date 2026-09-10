@@ -13,7 +13,6 @@
     }
   },
   "sideEffects": false,
-  "packageManager": "yarn@4.18.0",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
