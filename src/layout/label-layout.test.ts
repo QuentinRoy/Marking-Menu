@@ -74,4 +74,13 @@ describe('solveLabelLayout', () => {
       Math.max(...contacts) * input.plates.length,
     );
   });
+
+  it('keeps the canvas 20-degree pairs close to the ring', () => {
+    const result = solveLabelLayout(corpusFixtures.twentyDegreePairs);
+    expect(result.oversized).toBe(false);
+    const contacts = result.plates.map((plate) =>
+      Math.hypot(...plate.connectorContact),
+    );
+    expect(Math.max(...contacts) - Math.min(...contacts)).toBeLessThan(4);
+  });
 });

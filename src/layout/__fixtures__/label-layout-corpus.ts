@@ -12,6 +12,12 @@ const DEFAULT_CLEARANCES = {
   plateToConnector: 3,
 };
 
+const contentSizedPlate = (label: string, angle: number) => ({
+  angle,
+  height: 20,
+  width: 24 + label.length * 8,
+});
+
 function evenlySpaced(
   count: number,
   width: number,
@@ -99,11 +105,23 @@ export const unevenSpacing: LayoutInput = {
     { angle: 45, label: 'Down-right' },
     { angle: 90, label: 'Down' },
     { angle: 270, label: 'Up' },
-  ].map(({ label, angle }) => ({
-    angle,
-    height: 20,
-    width: 24 + label.length * 8,
-  })),
+  ].map(({ label, angle }) => contentSizedPlate(label, angle)),
+  ringRadius: DEFAULT_RING_RADIUS,
+  clearances: DEFAULT_CLEARANCES,
+};
+
+// The canvas's 20-degree pairs bypass model validation to stress layout alone.
+export const twentyDegreePairs: LayoutInput = {
+  plates: [
+    { angle: 0, label: 'Right' },
+    { angle: 20, label: 'Down-Right' },
+    { angle: 90, label: 'Others...' },
+    { angle: 160, label: 'Down-Left' },
+    { angle: 180, label: 'Left' },
+    { angle: 200, label: 'Up-Left' },
+    { angle: 270, label: 'Up' },
+    { angle: 340, label: 'Up-Right' },
+  ].map(({ label, angle }) => contentSizedPlate(label, angle)),
   ringRadius: DEFAULT_RING_RADIUS,
   clearances: DEFAULT_CLEARANCES,
 };
@@ -131,11 +149,7 @@ export const default8ItemMenu: LayoutInput = {
     'Print',
     'Share',
     'Recent documents',
-  ].map((label, index) => ({
-    angle: 45 * index,
-    width: 24 + label.length * 8,
-    height: 20,
-  })),
+  ].map((label, index) => contentSizedPlate(label, 45 * index)),
   ringRadius: DEFAULT_RING_RADIUS,
   clearances: DEFAULT_CLEARANCES,
 };
@@ -152,6 +166,7 @@ export const corpus: Record<string, LayoutInput> = {
   asymmetricWidths,
   clusteredAngles,
   unevenSpacing,
+  twentyDegreePairs,
   boundaryCrossing,
   default8ItemMenu,
 };
