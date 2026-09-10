@@ -86,18 +86,22 @@ The batch initially used larger synchronous search budgets and could freeze the 
 
 ## Blind review
 
-The five-case randomized blind review produced this result:
+Two randomized passes over the five representative cases produced these results:
 
-| Criterion    | Strict adaptive | 4 px tolerance | No difference |
-| ------------ | --------------: | -------------: | ------------: |
-| Association  |               0 |              0 |             5 |
-| Distribution |               3 |              0 |             2 |
+| Pass     | Criterion    | Strict adaptive | 4 px tolerance | No difference |
+| -------- | ------------ | --------------: | -------------: | ------------: |
+| First    | Association  |               0 |              0 |             5 |
+| First    | Distribution |               3 |              0 |             2 |
+| Second   | Association  |               1 |              0 |             4 |
+| Second   | Distribution |               2 |              1 |             2 |
+| Combined | Association  |               1 |              0 |             9 |
+| Combined | Distribution |               5 |              1 |             4 |
 
-Neither policy changed perceived label association. Strict adaptive search looked better distributed in three cases and tied in the other two. The 4 px policy did not win a case, so its additional presentation search did not produce a visible benefit.
+The tolerance policy never improved perceived association. Its single distribution win in the second pass was not consistent across the cases or the two passes. Strict adaptive search won five distribution judgments, lost one, and tied four. This is enough evidence to end the prototype selection: the tolerance stage does more work and permits a larger contact extent without providing a dependable visual improvement.
 
 ## Decision
 
-Use strict adaptive global candidate search for the production design. Keep these parts of the prototype contract:
+The prototype phase is complete. Use strict adaptive global candidate search for the production design. Keep these parts of the prototype contract:
 
 - Treat association sectors, ring clearance, plate separation, connector clearance, cyclic order, finite output, and repeatability as hard constraints.
 - Solve the complete plate assignment jointly. Plate positions are not independent.

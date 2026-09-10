@@ -10,7 +10,7 @@ The layout must work for the current menu sizes and be tested at 12, 16, and the
 
 ## Prototype decision
 
-The experiment selected strict adaptive global candidate search. All five blind comparisons judged label association equal. Strict adaptive search looked better distributed in three cases and tied in two; the 4 px compactness tolerance did not win a case. The production design should keep hard association sectors, joint assignment, adaptive refinement, a deterministic work limit, and the valid shared-radius fallback. It should not include the 4 px tolerance stage or continuous polishing.
+The experiment selected strict adaptive global candidate search. Across two randomized passes and ten judgments, the 4 px tolerance never improved perceived association. Strict adaptive search won five distribution judgments, lost one, and tied four. The tolerance did not provide a dependable visual improvement. The production design should keep hard association sectors, joint assignment, adaptive refinement, a deterministic work limit, and the valid shared-radius fallback. It should not include the 4 px tolerance stage or continuous polishing.
 
 After preserving the same candidate lattice and quality scores, the optimized prototype measured 11.2 ms at the median, 23.1 ms at the 95th percentile, and 38.2 ms in the slowest full-corpus case. Two consecutive isolated 95-run passes kept the 95th percentile below 39 ms and the worst result below 43 ms. Start with synchronous one-time layout during creation. Require a solver-only 95th percentile at or below roughly 50 ms on representative hardware, including the intended maximum item count.
 
