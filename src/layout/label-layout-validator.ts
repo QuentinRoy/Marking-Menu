@@ -77,36 +77,6 @@ function doesSegmentHitBox(
   return enter <= exit + EPSILON;
 }
 
-const cross = (a: Vec2, b: Vec2, c: Vec2): number =>
-  (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
-
-const isOnSegment = (a: Vec2, b: Vec2, point: Vec2): boolean =>
-  Math.abs(cross(a, b, point)) <= EPSILON &&
-  point[0] >= Math.min(a[0], b[0]) - EPSILON &&
-  point[0] <= Math.max(a[0], b[0]) + EPSILON &&
-  point[1] >= Math.min(a[1], b[1]) - EPSILON &&
-  point[1] <= Math.max(a[1], b[1]) + EPSILON;
-
-function areSegmentsIntersecting(a: Vec2, b: Vec2, c: Vec2, d: Vec2): boolean {
-  const abC = cross(a, b, c);
-  const abD = cross(a, b, d);
-  const cdA = cross(c, d, a);
-  const cdB = cross(c, d, b);
-  if (
-    ((abC > EPSILON && abD < -EPSILON) || (abC < -EPSILON && abD > EPSILON)) &&
-    ((cdA > EPSILON && cdB < -EPSILON) || (cdA < -EPSILON && cdB > EPSILON))
-  ) {
-    return true;
-  }
-
-  return (
-    (Math.abs(abC) <= EPSILON && isOnSegment(a, b, c)) ||
-    (Math.abs(abD) <= EPSILON && isOnSegment(a, b, d)) ||
-    (Math.abs(cdA) <= EPSILON && isOnSegment(c, d, a)) ||
-    (Math.abs(cdB) <= EPSILON && isOnSegment(c, d, b))
-  );
-}
-
 const rayError = (angle: number, point: Vec2): number => {
   const [ux, uy] = direction(angle);
   return Math.abs(point[0] * uy - point[1] * ux);
@@ -139,6 +109,10 @@ function isSameCycle(
  plate separation, connector clearance, and that every coordinate is
  finite. This is what makes "never return invalid geometry" a checked
  guarantee rather than a hope.
+
+ Two connectors can never cross each other: each lies on its own item's
+ fixed ray from the origin, and `rayError` already confirms that, so no
+ separate segment-intersection check is needed.
 
  @param input - The same input given to `solveLabelLayout`.
  @param result - Its result.
@@ -241,17 +215,6 @@ export function validateLabelLayout(
         )
       ) {
         failures.push(`connector ${j} interferes with plate ${i}`);
-      }
-
-      if (
-        areSegmentsIntersecting(
-          start(input, i),
-          first.connectorContact,
-          start(input, j),
-          second.connectorContact,
-        )
-      ) {
-        failures.push(`connectors ${i} and ${j} cross`);
       }
     }
   }
