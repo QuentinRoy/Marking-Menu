@@ -68,21 +68,21 @@ The tolerant solver now receives the exact strict result shown beside it and ref
 
 ## Current run
 
-The following numbers are one browser run on the development machine. Timing is diagnostic rather than a stable benchmark.
+The following numbers are one browser run on the development machine. Timing is diagnostic rather than a guarantee for other hardware.
 
 | Strategy                   | Valid | Median C | Worst C | Median max shift | Median outer extent | Median nodes | Worst nodes | Median time | 95th time | Worst time |
 | -------------------------- | ----: | -------: | ------: | ---------------: | ------------------: | -----------: | ----------: | ----------: | --------: | ---------: |
-| Shared radius              | 19/19 |    262.0 | 1,088.0 |              0.0 |               429.4 |          171 |         997 |      1.0 ms |   18.7 ms |    21.8 ms |
-| Tolerant relaxation        | 19/19 |    143.0 |   462.9 |             52.0 |               336.7 |          776 |       3,759 |      6.9 ms |   59.7 ms |    61.5 ms |
-| Global candidates (12 px)  | 19/19 |    132.4 |   356.0 |             44.9 |               369.5 |        1,200 |       3,000 |    156.3 ms |  785.0 ms |   925.3 ms |
-| Adaptive global candidates | 19/19 |    127.5 |   350.7 |             47.8 |               366.4 |        1,500 |       8,519 |    169.6 ms |  351.0 ms |   373.1 ms |
-| Adaptive + 4 px tolerance  | 19/19 |    129.5 |   346.0 |             37.8 |               347.2 |        6,374 |      17,519 |    188.7 ms |  397.6 ms |   398.8 ms |
+| Shared radius              | 19/19 |    262.0 | 1,088.0 |              0.0 |               429.4 |          171 |         997 |      0.7 ms |    4.7 ms |     6.1 ms |
+| Tolerant relaxation        | 19/19 |    143.0 |   462.9 |             52.0 |               336.7 |          776 |       3,759 |      5.6 ms |   39.1 ms |    49.7 ms |
+| Global candidates (12 px)  | 19/19 |    132.4 |   356.0 |             44.9 |               369.5 |        1,200 |       3,000 |     12.3 ms |   47.4 ms |    69.0 ms |
+| Adaptive global candidates | 19/19 |    127.5 |   350.7 |             47.8 |               366.4 |          765 |       6,000 |     11.2 ms |   23.1 ms |    38.2 ms |
+| Adaptive + 4 px tolerance  | 19/19 |    129.5 |   346.0 |             37.8 |               347.2 |        4,686 |      12,000 |     32.5 ms |   46.3 ms |    58.2 ms |
 
 All five strategies were repeatable and valid on the final run. Before candidate generation was constrained, all three original strategies that allow tangential movement changed the cyclic plate order on the same seeded 20-item case. Restricting every plate center to the angular sector halfway between its neighboring fixed directions eliminated those failures. This supports treating association as a feasible-domain constraint rather than expecting a distribution objective to repair it afterward.
 
 On the default eight-item case, contact extent changed from 123.0 for shared radius to 122.0 for relaxation, 102.6 for finite candidates, and 96.6 for adaptive candidates. The corresponding full-plate outer extents were 204.9, 205.1, 231.0, and 226.7. Candidate search therefore achieved a much smaller contact circle while producing a larger full footprint. The two notions of compactness measure different visual effects. The 4 px policy then used 1 px more contact extent than strict adaptive search, while reducing maximum tangential displacement from 38.4 to 33.4 px and outer extent from 226.7 to 221.2 px.
 
-The batch initially used larger synchronous search budgets and could freeze the browser at 20 items. The harness now bounds work by item count and yields between fixtures. This is evidence that unrestricted global enumeration is not a suitable implementation strategy even though layout runs only once at creation.
+The batch initially used larger synchronous search budgets and could freeze the browser at 20 items. The optimized prototype keeps the same candidate lattice and scoring, but caches fixed geometry, rejects impossible item pairs through bounding envelopes, computes ray-to-plate intervals once, memoizes exact candidate conflicts, and uses smaller deterministic work limits by item count. The strict solver's aggregate quality did not change: all 19 cases remained valid and repeatable, with the same median and worst contact extent, tangential shift, and outer extent. Unrestricted global enumeration remains unsuitable even though layout runs only once at creation.
 
 ## Blind review
 
@@ -110,10 +110,12 @@ Do not add the 4 px tolerance stage or continuous polishing. Shared radius remai
 
 ## Main-thread cost
 
-Strict adaptive search took 169.6 ms at the median, 351.0 ms at the 95th percentile, and 373.1 ms in the slowest recorded corpus case. These are prototype timings, not a production benchmark, but they are long enough to freeze the main thread visibly.
+Before optimization, strict adaptive search took 169.6 ms at the median, 351.0 ms at the 95th percentile, and 373.1 ms in the slowest corpus case. The optimized full-corpus run took 11.2 ms at the median, 23.1 ms at the 95th percentile, and 38.2 ms in the slowest case.
 
-Plan for the renderer to measure the final label plates on the main thread, then send the numeric plate dimensions, fixed directions, ring geometry, and clearances to a Web Worker. The worker returns plate positions and connector contacts. This keeps the bounded global search away from input handling and drawing. The static layout contract makes this split practical because the result is computed once when the menu is created and does not change afterward.
+The isolated benchmark solves fresh copies of all 19 inputs five times and excludes rendering. Two consecutive 95-run passes measured 12.1 ms median, 38.8 ms at the 95th percentile, and 42.2 ms worst, then 11.4 ms median, 27.1 ms at the 95th percentile, and 39.4 ms worst. All 190 results were valid and repeatable. Label measurement took roughly 0.4 to 1.2 ms in these runs and is reported separately.
 
-Benchmark the selected solver alone in a production-shaped build. Keep the worker unless representative worst-case generation falls well below 50 ms. Worker communication does not replace the deterministic work limit or the shared-radius fallback.
+Start with synchronous one-time layout during menu creation. Do not add a Web Worker or an asynchronous menu lifecycle based on the current evidence. The production acceptance gate is a solver-only 95th percentile at or below roughly 50 ms on representative hardware, including the intended maximum item count. Track the worst observation as a diagnostic because browser scheduling can create isolated timing spikes; keep the deterministic work limit as the actual solver bound.
 
-The remaining work belongs in `src`: implement the selected geometry module, add production tests, connect main-thread measurement to the worker, integrate the result with the renderer, and close #267 after that implementation is merged.
+If production-shaped profiling misses that gate, move the numeric search to a worker. That choice also requires a menu-ready event, a `start` operation so callers can construct and prepare a menu before opening it, and visible feedback when a menu opens before its layout is ready. These changes form one fallback design; do not add part of it while layout remains synchronous.
+
+The remaining work belongs in `src`: implement the selected geometry module, add production tests, integrate one-time main-thread measurement and solving with the renderer, run the production benchmark, and close #267 after that implementation is merged.

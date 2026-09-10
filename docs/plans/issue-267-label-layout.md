@@ -12,7 +12,9 @@ The layout must work for the current menu sizes and be tested at 12, 16, and the
 
 The experiment selected strict adaptive global candidate search. All five blind comparisons judged label association equal. Strict adaptive search looked better distributed in three cases and tied in two; the 4 px compactness tolerance did not win a case. The production design should keep hard association sectors, joint assignment, adaptive refinement, a deterministic work limit, and the valid shared-radius fallback. It should not include the 4 px tolerance stage or continuous polishing.
 
-The prototype measured 169.6 ms at the median, 351.0 ms at the 95th percentile, and 373.1 ms in the slowest corpus case for strict adaptive search. Measure the label plates on the main thread, then run the numeric layout search in a Web Worker so menu creation does not freeze input or drawing. Confirm this split with an isolated production benchmark, but keep the worker unless representative worst-case generation falls well below 50 ms.
+After preserving the same candidate lattice and quality scores, the optimized prototype measured 11.2 ms at the median, 23.1 ms at the 95th percentile, and 38.2 ms in the slowest full-corpus case. Two consecutive isolated 95-run passes kept the 95th percentile below 39 ms and the worst result below 43 ms. Start with synchronous one-time layout during creation. Require a solver-only 95th percentile at or below roughly 50 ms on representative hardware, including the intended maximum item count.
+
+Use a Web Worker only if the production-shaped benchmark misses that gate. An asynchronous solver also requires a menu-ready event, a `start` operation so callers can prepare the menu before opening it, and visible feedback when a menu opens before layout is ready. Treat those API and interface changes as one fallback design, not as independent additions.
 
 ## Corrected issue contract
 
@@ -183,19 +185,21 @@ Use this decision tree:
 - Ship the simpler shared-radius solver when the more complex solver provides no meaningful visual or compactness improvement.
 - Do not ship the tolerant relaxation by itself unless it can meet the same hard guarantees. Its main role is to show what visual improvement a heuristic can find.
 
-Set the production performance budget after the prototype reports the quality-versus-work curve on representative hardware. The one-time creation model removes the old one-frame reopening constraint, but menu creation must still avoid a noticeable synchronous pause.
+Use roughly 50 ms at the 95th percentile as the production solver budget. Measure the selected solver alone in a production-shaped build on representative hardware and at the intended maximum item count. Record worst-case timings as diagnostics, but keep deterministic work limits rather than wall-clock cutoffs so repeated inputs keep producing the same layout.
 
 ## Implement the selected module
 
 Move only the winning geometry into a deep module such as `src/layout/label-layout.ts`. Its interface accepts fixed angles, measured plate dimensions, ring geometry, and clearances, then returns plate positions and connector contacts. It must not read the document, measure elements, or know how the result is rendered.
 
-The menu renderer will act as a small adapter:
+The menu renderer will act as a small synchronous adapter:
 
 1. Create the label elements.
 2. Measure every final plate once.
 3. Call the layout module once.
 4. Apply the returned plate positions and connector geometry.
 5. Leave the layout unchanged until the menu is removed.
+
+If the production benchmark misses the performance gate, replace steps 3 and 4 with worker communication and add the ready, `start`, and not-ready interface described above.
 
 Document that callers must create the menu after the intended fonts and styles are available. A caller that changes them must recreate the menu.
 
@@ -216,8 +220,9 @@ Close #267 only after all of the following are complete:
 - The issue describes the one-time static layout contract.
 - The prototype branch remains available as the primary experimental evidence.
 - A decision record contains the corpus, measurements, visual comparisons, and rejected alternatives.
-- The chosen algorithm, guarantees, search limit, fallback, and oversized-layout behavior are documented.
+- The chosen algorithm, guarantees, search limit, fallback, oversized-layout behavior, and performance gate are documented.
 - The production module and renderer integration are merged with automated tests.
+- The production-shaped benchmark passes, or the worker and its complete asynchronous lifecycle are implemented.
 - The implementation pull request links to and closes #267.
 
 The final work leaves three artifacts: the throwaway prototype branch, a durable experiment and decision record, and the production layout module.
