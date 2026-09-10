@@ -1,10 +1,9 @@
-import { at, type Point } from '../utils.js';
-import type { LayoutInput, LayoutResult } from './label-layout.js';
+import { at, type Point } from '../../utils.js';
+import type { LayoutInput, LayoutResult } from '../label-layout.js';
 
 // Re-derives every hard constraint from scratch, independent of the
 // solver's own bookkeeping, so "never return invalid geometry" is a
-// checked guarantee rather than a hope. Test support only: not shipped
-// with the production module.
+// checked guarantee rather than a hope.
 
 const EPSILON = 1e-7;
 

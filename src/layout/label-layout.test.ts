@@ -1,6 +1,6 @@
-import * as corpusFixtures from './label-layout-corpus.js';
-import { oversized } from './label-layout-corpus.js';
-import { validateLabelLayout } from './label-layout-validator.js';
+import * as corpusFixtures from './__fixtures__/label-layout-corpus.js';
+import { oversized } from './__fixtures__/label-layout-corpus.js';
+import { validateLabelLayout } from './__fixtures__/label-layout-validator.js';
 import { solveLabelLayout, type LayoutInput } from './label-layout.js';
 
 describe('solveLabelLayout', () => {

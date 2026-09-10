@@ -1,4 +1,4 @@
-import { validateLabelLayout } from './label-layout-validator.js';
+import { validateLabelLayout } from './__fixtures__/label-layout-validator.js';
 import type { LayoutInput, LayoutResult } from './label-layout.js';
 
 const clearances = {
