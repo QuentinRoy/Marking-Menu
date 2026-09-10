@@ -3,6 +3,9 @@ import { oversized } from './__fixtures__/label-layout-corpus.js';
 import { validateLabelLayout } from './__fixtures__/label-layout-validator.js';
 import { solveLabelLayout, type LayoutInput } from './label-layout.js';
 
+const contactRadii = (result: ReturnType<typeof solveLabelLayout>) =>
+  result.plates.map((plate) => Math.hypot(...plate.connectorContact));
+
 describe('solveLabelLayout', () => {
   describe.each(Object.entries(corpusFixtures.corpus))('%s', (_name, input) => {
     it('produces a layout that satisfies every hard constraint', () => {
@@ -66,9 +69,18 @@ describe('solveLabelLayout', () => {
     const input = corpusFixtures.oneExtremeWidth;
     const result = solveLabelLayout(input);
     expect(result.oversized).toBe(false);
-    const contacts = result.plates.map((plate) =>
-      Math.hypot(...plate.connectorContact),
+    const contacts = contactRadii(result);
+    const totalContact = contacts.reduce((sum, value) => sum + value, 0);
+    expect(totalContact).toBeLessThan(
+      Math.max(...contacts) * input.plates.length,
     );
+  });
+
+  it('compacts valid uneven spacing instead of moving every plate outward', () => {
+    const input = corpusFixtures.unevenSpacing;
+    const result = solveLabelLayout(input);
+    expect(result.oversized).toBe(false);
+    const contacts = contactRadii(result);
     const totalContact = contacts.reduce((sum, value) => sum + value, 0);
     expect(totalContact).toBeLessThan(
       Math.max(...contacts) * input.plates.length,
@@ -78,9 +90,7 @@ describe('solveLabelLayout', () => {
   it('keeps the canvas 20-degree pairs close to the ring', () => {
     const result = solveLabelLayout(corpusFixtures.twentyDegreePairs);
     expect(result.oversized).toBe(false);
-    const contacts = result.plates.map((plate) =>
-      Math.hypot(...plate.connectorContact),
-    );
+    const contacts = contactRadii(result);
     expect(Math.max(...contacts) - Math.min(...contacts)).toBeLessThan(4);
   });
 });

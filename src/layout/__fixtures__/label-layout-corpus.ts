@@ -12,11 +12,14 @@ const DEFAULT_CLEARANCES = {
   plateToConnector: 3,
 };
 
-const contentSizedPlate = (label: string, angle: number) => ({
-  angle,
-  height: 20,
-  width: 24 + label.length * 8,
-});
+const contentSizedPlates = (
+  items: ReadonlyArray<{ readonly angle: number; readonly label: string }>,
+) =>
+  items.map(({ angle, label }) => ({
+    angle,
+    height: 20,
+    width: 24 + label.length * 8,
+  }));
 
 function evenlySpaced(
   count: number,
@@ -100,12 +103,12 @@ export const clusteredAngles: LayoutInput = {
 
 // Valid manual angles create both the narrowest and widest wedge sectors.
 export const unevenSpacing: LayoutInput = {
-  plates: [
+  plates: contentSizedPlates([
     { angle: 0, label: 'Right' },
     { angle: 45, label: 'Down-right' },
     { angle: 90, label: 'Down' },
     { angle: 270, label: 'Up' },
-  ].map(({ label, angle }) => contentSizedPlate(label, angle)),
+  ]),
   ringRadius: DEFAULT_RING_RADIUS,
   clearances: DEFAULT_CLEARANCES,
 };
@@ -113,15 +116,15 @@ export const unevenSpacing: LayoutInput = {
 // The canvas's 20-degree pairs bypass model validation to stress layout alone.
 export const twentyDegreePairs: LayoutInput = {
   plates: [
-    { angle: 0, label: 'Right' },
-    { angle: 20, label: 'Down-Right' },
-    { angle: 90, label: 'Others...' },
-    { angle: 160, label: 'Down-Left' },
-    { angle: 180, label: 'Left' },
-    { angle: 200, label: 'Up-Left' },
-    { angle: 270, label: 'Up' },
-    { angle: 340, label: 'Up-Right' },
-  ].map(({ label, angle }) => contentSizedPlate(label, angle)),
+    { angle: 0, height: 20, width: 64 },
+    { angle: 20, height: 20, width: 104 },
+    { angle: 90, height: 20, width: 96 },
+    { angle: 160, height: 20, width: 96 },
+    { angle: 180, height: 20, width: 56 },
+    { angle: 200, height: 20, width: 80 },
+    { angle: 270, height: 20, width: 40 },
+    { angle: 340, height: 20, width: 88 },
+  ],
   ringRadius: DEFAULT_RING_RADIUS,
   clearances: DEFAULT_CLEARANCES,
 };
@@ -140,16 +143,18 @@ export const boundaryCrossing: LayoutInput = {
 // The exact production defaults at today's real maximum item count, with
 // realistic varied label widths: the benchmark case.
 export const default8ItemMenu: LayoutInput = {
-  plates: [
-    'Open',
-    'Save a copy',
-    'Close',
-    'Preferences',
-    'Export as PDF',
-    'Print',
-    'Share',
-    'Recent documents',
-  ].map((label, index) => contentSizedPlate(label, 45 * index)),
+  plates: contentSizedPlates(
+    [
+      'Open',
+      'Save a copy',
+      'Close',
+      'Preferences',
+      'Export as PDF',
+      'Print',
+      'Share',
+      'Recent documents',
+    ].map((label, index) => ({ angle: 45 * index, label })),
+  ),
   ringRadius: DEFAULT_RING_RADIUS,
   clearances: DEFAULT_CLEARANCES,
 };
