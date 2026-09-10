@@ -89,6 +89,16 @@ describe('createModel', () => {
     );
   });
 
+  it('accepts valid uneven item directions', () => {
+    const menu = createModel({
+      items: [0, 45, 90, 270].map((angle) => ({
+        angle,
+        label: `Item ${angle}`,
+      })),
+    });
+    expect(menu.items.map((item) => item.angle)).toEqual([0, 45, 90, 270]);
+  });
+
   it('names a crowded nested level and its spacing', () => {
     expect(() =>
       createModel({

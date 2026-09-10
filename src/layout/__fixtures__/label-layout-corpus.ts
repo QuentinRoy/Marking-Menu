@@ -92,6 +92,22 @@ export const clusteredAngles: LayoutInput = {
   clearances: DEFAULT_CLEARANCES,
 };
 
+// Valid manual angles create both the narrowest and widest wedge sectors.
+export const unevenSpacing: LayoutInput = {
+  plates: [
+    { angle: 0, label: 'Right' },
+    { angle: 45, label: 'Down-right' },
+    { angle: 90, label: 'Down' },
+    { angle: 270, label: 'Up' },
+  ].map(({ label, angle }) => ({
+    angle,
+    height: 20,
+    width: 24 + label.length * 8,
+  })),
+  ringRadius: DEFAULT_RING_RADIUS,
+  clearances: DEFAULT_CLEARANCES,
+};
+
 // Items on both sides of the 0/360 degree wrap.
 export const boundaryCrossing: LayoutInput = {
   plates: [350, 10, 90, 180, 270].map((angle) => ({
@@ -135,6 +151,7 @@ export const corpus: Record<string, LayoutInput> = {
   oneExtremeWidth,
   asymmetricWidths,
   clusteredAngles,
+  unevenSpacing,
   boundaryCrossing,
   default8ItemMenu,
 };
