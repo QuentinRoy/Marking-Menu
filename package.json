@@ -68,7 +68,6 @@
     "@vitejs/plugin-react": "^6.1.1",
     "@vitest/coverage-v8": "^5.0.0",
     "@vitest/eslint-plugin": "^1.6.27",
-    "angles": "^0.5.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.2.5",
     "codemirror-json-schema": "^0.8.1",
