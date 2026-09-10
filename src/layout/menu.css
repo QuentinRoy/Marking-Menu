@@ -25,6 +25,14 @@
   --line-color: var(--item-background);
   --active-line-color: var(--active-item-background);
 
+  /* Minimum gaps the label-layout solver keeps: between two plates
+     (horizontal/vertical), between a plate and the ring, and between a
+     connector line and a plate it doesn't belong to. */
+  --item-horizontal-gap: 14px;
+  --item-vertical-gap: 7px;
+  --item-ring-gap: 12px;
+  --item-connector-gap: 3px;
+
   /* The two following variables must be set from JS. */
   --center-x: 0px;
   --center-y: 0px;
@@ -87,6 +95,25 @@
   height: var(--line-thickness);
   transform-origin: center left;
   transform: rotate(var(--angle));
+}
+
+/* Once the label-layout solver finds a conflict-free arrangement, `--x`,
+   `--y`, and `--contact-radius` (set from JS, in the same pixel coordinates
+   as `--center-x`/`--center-y`: right and down positive) replace the fixed
+   shared radius above. `.marking-menu` gets `.solved` only when the solver
+   didn't report the menu as oversized: an oversized menu keeps rendering
+   every label at the fixed radius, unmodified, rather than with no layout
+   at all. */
+.marking-menu.solved .marking-menu-item .marking-menu-label {
+  left: calc(var(--x) - var(--item-box-width) / 2);
+  top: calc(var(--y) - var(--item-box-height) / 2);
+  bottom: auto;
+}
+
+.marking-menu.solved .marking-menu-item .marking-menu-line {
+  width: calc(
+    var(--contact-radius) + var(--item-radius) + var(--line-thickness)
+  );
 }
 
 .marking-menu-item.active {
