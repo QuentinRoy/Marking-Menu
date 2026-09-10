@@ -28,6 +28,9 @@ function evenlySpaced(
   };
 }
 
+// A single item has no cyclic neighbor, so no association sector constrains it.
+export const singleItem = evenlySpaced(1, 120, 20);
+
 export const evenlySpaced4 = evenlySpaced(4, 120, 20);
 export const evenlySpaced8 = evenlySpaced(8, 120, 20);
 // Forward-looking stress cases beyond today's real 8-item ceiling (#274).
@@ -122,6 +125,7 @@ export const default8ItemMenu: LayoutInput = {
 };
 
 export const corpus: Record<string, LayoutInput> = {
+  singleItem,
   evenlySpaced4,
   evenlySpaced8,
   evenlySpaced12,
