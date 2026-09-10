@@ -52,7 +52,7 @@ export default defineConfig({
       fileName: 'index',
       formats: ['es'],
     },
-    minify: false,
+    minify: true,
     rolldownOptions: {
       output: { banner },
     },
