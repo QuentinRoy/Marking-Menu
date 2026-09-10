@@ -108,6 +108,18 @@ Use strict adaptive global candidate search for the production design. Keep thes
 
 Do not add the 4 px tolerance stage or continuous polishing. Shared radius remains the correctness fallback, not the normal result. The relaxation and fixed-grid variants remain rejected alternatives.
 
+## Algorithm outline
+
+The selected solver works in five steps:
+
+1. Build a finite set of positions for each plate. Positions vary the distance from the center and allow limited sideways movement inside the plate's association sector.
+2. Search for one complete set of compatible positions. Plate positions are chosen together because moving one plate changes which positions remain possible for the others.
+3. Choose the plate with the fewest remaining positions first. After choosing a position, remove every conflicting position from the other plates. Stop that search branch as soon as a plate has no position left.
+4. Compare valid layouts by maximum connector-contact radius, then total contact radius, sideways movement, and distribution. Stop exploring a partial layout when its best possible score cannot beat the current result.
+5. Repeat around the best result with 12, 4, and 1 px position spacing. Start every search with the valid shared-radius layout and return the best independently validated result found within the deterministic work limit.
+
+The optimized prototype avoids repeating most of the expensive geometry work. It computes fixed directions, association sectors, connector starts, plate bounds, and connector bounds once. Broad bounding envelopes identify pairs of items that can never conflict. Exact ray-to-plate intersections are also computed once, and exact candidate-pair results are saved after the first check. Smaller measured work limits for each item-count range reduce search without changing the corpus quality results.
+
 ## Main-thread cost
 
 Before optimization, strict adaptive search took 169.6 ms at the median, 351.0 ms at the 95th percentile, and 373.1 ms in the slowest corpus case. The optimized full-corpus run took 11.2 ms at the median, 23.1 ms at the 95th percentile, and 38.2 ms in the slowest case.
