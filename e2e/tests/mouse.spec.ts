@@ -89,7 +89,7 @@ test('label plates size to their content within the configured bounds', async ({
       padding: Number(style.paddingTop.slice(0, -2)),
       supportsTextBox:
         CSS.supports('text-box-trim', 'trim-both') &&
-        CSS.supports('text-box-edge', 'cap text'),
+        CSS.supports('text-box-edge', 'cap alphabetic'),
       textBoxTrimmed: labels.map((label) => {
         const labelStyle = getComputedStyle(label);
         return (
@@ -118,8 +118,8 @@ test('label plates size to their content within the configured bounds', async ({
     };
   });
   const supportIndex = Number(defaultSize.supportsTextBox);
-  const expectedPadding = [4, 6][supportIndex];
-  const expectedCornerRadius = ['8px', '12px'][supportIndex];
+  const expectedPadding = [4, 8][supportIndex];
+  const expectedCornerRadius = ['8px', '16px'][supportIndex];
   const expectedTextBoxTrimmed = [false, true][supportIndex];
   expect(defaultSize).toMatchObject({
     maxWidth: 'none',
@@ -170,7 +170,8 @@ test('label plates size to their content within the configured bounds', async ({
     return {
       labelClientWidth: label.clientWidth,
       labelScrollWidth: label.scrollWidth,
-      overflow: getComputedStyle(label).overflow,
+      overflowX: getComputedStyle(label).overflowX,
+      overflowY: getComputedStyle(label).overflowY,
       textOverflow: getComputedStyle(label).textOverflow,
       whiteSpace: getComputedStyle(label).whiteSpace,
       width: plate.getBoundingClientRect().width,
@@ -181,7 +182,8 @@ test('label plates size to their content within the configured bounds', async ({
     clampedSize.labelClientWidth,
   );
   expect(clampedSize).toMatchObject({
-    overflow: 'hidden',
+    overflowX: 'clip',
+    overflowY: 'visible',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   });

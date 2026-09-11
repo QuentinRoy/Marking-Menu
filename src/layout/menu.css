@@ -87,20 +87,21 @@
 .marking-menu-label {
   display: block;
   min-width: 0;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: normal;
 }
 
-@supports (text-box-trim: trim-both) and (text-box-edge: cap text) {
+@supports (text-box-trim: trim-both) and (text-box-edge: cap alphabetic) {
   :host {
-    --default-plate-padding: var(--mm-plate-padding, 6px);
+    --default-plate-padding: var(--mm-plate-padding, 8px);
   }
 
   .marking-menu-label {
     text-box-trim: trim-both;
-    text-box-edge: cap text;
+    text-box-edge: cap alphabetic;
   }
 }
 
