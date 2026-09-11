@@ -233,19 +233,7 @@ function togglePart(
   part: string,
   isActive: boolean,
 ): void {
-  if (element.part !== undefined) {
-    element.part.toggle(part, isActive);
-    return;
-  }
-
-  const parts = new Set(element.getAttribute('part')?.split(' '));
-  if (isActive) {
-    parts.add(part);
-  } else {
-    parts.delete(part);
-  }
-
-  element.setAttribute('part', [...parts].join(' '));
+  element.part.toggle(part, isActive);
 }
 
 function setItemActive(item: HTMLElement, isActive: boolean): void {
