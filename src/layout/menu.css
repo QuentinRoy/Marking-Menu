@@ -1,6 +1,6 @@
 :host {
   --default-ring-radius: var(--mm-ring-radius, 80px);
-  --default-plate-padding: var(--mm-plate-padding, 8px);
+  --default-plate-padding: var(--mm-plate-padding, 12px);
   --default-plate-corner-radius: var(--mm-plate-corner-radius, 16px);
   --default-plate-background: var(--mm-plate-background, #f2f2f2);
   --default-plate-color: var(--mm-plate-color, #333333);
