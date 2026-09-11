@@ -1,15 +1,15 @@
 :host {
   --default-ring-radius: var(--mm-ring-radius, 80px);
-  --default-plate-padding: var(--mm-plate-padding, 4px);
+  --default-plate-padding: var(--mm-plate-padding, 8px);
   --default-plate-corner-radius: var(
     --mm-plate-corner-radius,
-    calc(var(--default-plate-padding) * 2)
+    16px
   );
   --default-plate-background: var(--mm-plate-background, #f2f2f2);
   --default-plate-color: var(--mm-plate-color, #333333);
   --default-plate-background-active: var(--mm-plate-background-active, #d9d9d9);
   --default-plate-color-active: var(--mm-plate-color-active, #000);
-  --default-plate-font-size: var(--mm-plate-font-size, 20px);
+  --default-plate-font-size: var(--mm-plate-font-size, 18px);
   --default-connector-thickness: var(--mm-connector-thickness, 4px);
   --default-inner-connector-color: var(--mm-inner-connector-color, transparent);
   --default-outer-connector-color: var(
@@ -25,10 +25,13 @@
     --mm-wedge-fill-active,
     var(--default-plate-background-active)
   );
+  --default-wedge-gap: var(--mm-wedge-gap, 4px);
+  --default-wedge-corner-radius: var(--mm-wedge-corner-radius, 4px);
+
   --default-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 14px);
-  --default-plate-gap-vertical: var(--mm-plate-gap-vertical, 7px);
+  --default-plate-gap-vertical: var(--mm-plate-gap-vertical, 4px);
   --default-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
-  --default-plate-gap-connector: var(--mm-plate-gap-connector, 3px);
+  --default-plate-gap-connector: var(--mm-plate-gap-connector, 4px);
 
   position: absolute;
   top: var(--center-y);
@@ -73,7 +76,7 @@
   );
   border-radius: var(--default-plate-corner-radius);
   background-color: var(--default-plate-background);
-  padding: var(--default-plate-padding);
+  padding: calc(var(--default-plate-padding) - 0.2em);
   width: fit-content;
   min-width: var(--mm-label-min-width, 0);
   max-width: var(--mm-label-max-width, none);
@@ -92,11 +95,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: normal;
+  text-align: center;
 }
 
 @supports (text-box-trim: trim-both) and (text-box-edge: cap alphabetic) {
-  :host {
-    --default-plate-padding: var(--mm-plate-padding, 8px);
+  .marking-menu-plate {
+    padding: var(--default-plate-padding);
   }
 
   .marking-menu-label {
@@ -158,11 +162,11 @@
 }
 
 .marking-menu-layout-probe--wedge-gap {
-  width: var(--mm-wedge-gap, 4px);
+  width: var(--default-wedge-gap);
 }
 
 .marking-menu-layout-probe--wedge-corner-radius {
-  width: var(--mm-wedge-corner-radius, 4px);
+  width: var(--default-wedge-corner-radius);
 }
 
 .marking-menu-layout-probe--plate-gap-horizontal {
