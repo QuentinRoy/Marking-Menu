@@ -458,6 +458,7 @@ function applySolvedLayout(
       `calc(${plate.y}px - ${plateElement.offsetHeight}px / 2)`,
     );
     plateElement.style.setProperty('--solved-bottom', 'auto');
+    plateElement.style.setProperty('--solved-translation', 'none');
 
     const connector = at(connectorElements, index);
     connector.style.setProperty(

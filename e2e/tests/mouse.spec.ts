@@ -72,10 +72,15 @@ test('label plates size to their content within the configured bounds', async ({
     return {
       maxWidth: style.maxWidth,
       minWidth: style.minWidth,
+      transform: style.transform,
       width: plate.getBoundingClientRect().width,
     };
   });
-  expect(defaultSize).toMatchObject({ maxWidth: 'none', minWidth: '0px' });
+  expect(defaultSize).toMatchObject({
+    maxWidth: 'none',
+    minWidth: '0px',
+    transform: 'none',
+  });
   expect(defaultSize.width).toBeLessThan(120);
 
   const clampedSize = await menu.evaluate((host) => {

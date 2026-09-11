@@ -65,9 +65,12 @@
   bottom: var(--solved-bottom, calc(var(--sine) * var(--default-ring-radius)));
   left: var(--solved-left, calc(var(--cosine) * var(--default-ring-radius)));
   top: var(--solved-top, auto);
-  transform: translate(
-    calc((min(1, max(-1, var(--cosine) * 2)) - 1) * 50%),
-    calc((1 - min(1, max(-1, var(--sine) * 2))) * 50%)
+  transform: var(
+    --solved-translation,
+    translate(
+      calc((min(1, max(-1, var(--cosine) * 2)) - 1) * 50%),
+      calc((1 - min(1, max(-1, var(--sine) * 2))) * 50%)
+    )
   );
   border-radius: var(--default-plate-corner-radius);
   background-color: var(--default-plate-background);
