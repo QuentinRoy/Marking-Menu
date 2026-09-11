@@ -97,6 +97,22 @@ test('label plates size to their content within the configured bounds', async ({
           labelStyle.getPropertyValue('text-box-edge').startsWith('cap')
         );
       }),
+      verticalLayout: labels.map((label) => {
+        const labelBox = label.getBoundingClientRect();
+        const plateBox = label.parentElement?.getBoundingClientRect();
+        if (plateBox === undefined) {
+          throw new Error('Label plate is missing.');
+        }
+
+        return {
+          height: labelBox.height,
+          plateHeight: plateBox.height,
+          verticalOffset:
+            labelBox.top +
+            labelBox.height / 2 -
+            (plateBox.top + plateBox.height / 2),
+        };
+      }),
       transform: style.transform,
       width: plate.getBoundingClientRect().width,
     };
@@ -120,6 +136,13 @@ test('label plates size to their content within the configured bounds', async ({
   expect(
     defaultSize.textBoxTrimmed.every(
       (isTrimmed) => isTrimmed === expectedTextBoxTrimmed,
+    ),
+  ).toBe(true);
+  expect(
+    defaultSize.verticalLayout.every(
+      ({ height, plateHeight, verticalOffset }) =>
+        Math.abs(plateHeight - height - defaultSize.padding * 2) < 0.01 &&
+        Math.abs(verticalOffset) < 0.01,
     ),
   ).toBe(true);
 
