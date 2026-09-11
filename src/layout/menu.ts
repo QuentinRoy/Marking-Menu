@@ -514,6 +514,10 @@ function setItemActive(
  @param options.center - The pixel coordinates where the menu should be
  anchored.
  @param options.deadZoneRadius - The inner radius of the wedge ring.
+ @param options.pointerTarget - Whether the menu's items and wedges accept
+ pointer events. Off by default: a live gesture reads strokes on the surface
+ behind the menu, not hovers or clicks on the menu itself. Turn it on for a
+ menu meant to be operated directly, such as a static, non-gesture preview.
  @param options.doc - The root document of the menu. Mostly useful for testing
  purposes.
  @returns The menu controls.
@@ -524,16 +528,20 @@ export function createMenu({
   model,
   center,
   deadZoneRadius = 40,
+  pointerTarget = false,
 }: {
   doc?: Document;
   parent: HTMLElement;
   model: MenuLayoutModel;
   center: Point;
   deadZoneRadius?: number;
+  pointerTarget?: boolean;
 }): Menu {
   const menuDom = template({ items: model.items, center }, doc);
   const { main, root } = menuDom;
   main.style.setProperty('--inner-connector-length', `${deadZoneRadius}px`);
+  main.classList.toggle('marking-menu--pointer-target', pointerTarget);
+
   // Attach before measuring: a detached element's `offsetWidth`/`offsetHeight`
   // are always 0. Everything from here through `applySolvedLayout` runs
   // synchronously in this one call, so the unsolved layout is never

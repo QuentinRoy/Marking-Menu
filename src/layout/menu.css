@@ -39,6 +39,13 @@
   transform: translate(0px, 0px);
 }
 
+/* Drawing-only by default (see `createMenu`'s `pointerTarget` option): a
+   live gesture reads strokes on the surface behind the menu, not hovers or
+   clicks on the menu's own items and wedges. */
+:host(.marking-menu--pointer-target) {
+  pointer-events: auto;
+}
+
 .marking-menu-item {
   --angle: 0deg;
   --cosine: 1;
