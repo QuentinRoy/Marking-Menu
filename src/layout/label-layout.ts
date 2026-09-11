@@ -1,4 +1,4 @@
-import { at, type EmptyTuple, type Point } from '../utils.js';
+import { at, normalizeAngle, type EmptyTuple, type Point } from '../utils.js';
 
 const EPSILON = 1e-7;
 
@@ -55,8 +55,6 @@ const direction = (angle: number): { readonly u: Point; readonly v: Point } => {
   const a = (angle * Math.PI) / 180;
   return { u: [Math.cos(a), Math.sin(a)], v: [-Math.sin(a), Math.cos(a)] };
 };
-
-const normalizeAngle = (angle: number): number => ((angle % 360) + 360) % 360;
 
 type AssociationSector = {
   readonly angle: number;
@@ -387,6 +385,12 @@ type Move = {
   readonly quality: Quality;
 };
 
+type MoveSearch = {
+  readonly item: number;
+  readonly step: number;
+  readonly best: Quality;
+};
+
 /**
 Try nudging plate `item` inward or sideways by `step`; the best resulting layout that improves on `best`, or `null`.
 */
@@ -394,9 +398,7 @@ function bestMoveFor(
   input: LayoutInput,
   prepared: PreparedInput,
   plates: readonly Candidate[],
-  item: number,
-  step: number,
-  best: Quality,
+  { item, step, best }: MoveSearch,
 ): Move | null {
   const plate = at(plates, item);
   const offsets = [
@@ -439,7 +441,11 @@ function compact(
     while (isImproved) {
       isImproved = false;
       for (const item of plates.keys()) {
-        const found = bestMoveFor(input, prepared, plates, item, step, best);
+        const found = bestMoveFor(input, prepared, plates, {
+          item,
+          step,
+          best,
+        });
         if (found !== null) {
           plates = found.plates;
           best = found.quality;

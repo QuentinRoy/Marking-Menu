@@ -7,6 +7,8 @@
  */
 export const mod = (a: number, n: number): number => ((a % n) + n) % n;
 
+export const normalizeAngle = (angle: number): number => mod(angle, 360);
+
 /**
  Convert an angle from radians to degrees.
 

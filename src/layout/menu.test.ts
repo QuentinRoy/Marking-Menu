@@ -51,6 +51,12 @@ const getItems = (parent: HTMLElement): HTMLElement[] => [
   ...getShadowRoot(parent).querySelectorAll<HTMLElement>('.marking-menu-item'),
 ];
 
+const getWedges = (parent: HTMLElement): SVGPathElement[] => [
+  ...getShadowRoot(parent).querySelectorAll<SVGPathElement>(
+    '.marking-menu-wedge',
+  ),
+];
+
 /**
  Vitest resolves the CSS inline import to empty text, so tests supply probe
  widths from inherited test variables.
@@ -59,6 +65,8 @@ const withSolverConfig = (
   parent: HTMLElement,
   overrides: Partial<{
     menuRadius: number;
+    wedgeGap: number;
+    wedgeCornerRadius: number;
     horizontalGap: number;
     verticalGap: number;
     ringGap: number;
@@ -67,6 +75,8 @@ const withSolverConfig = (
 ): void => {
   const {
     menuRadius = 80,
+    wedgeGap = 4,
+    wedgeCornerRadius = 4,
     horizontalGap = 14,
     verticalGap = 7,
     ringGap = 12,
@@ -74,6 +84,8 @@ const withSolverConfig = (
   } = overrides;
   const properties = {
     'ring-radius': `${menuRadius}px`,
+    'wedge-gap': `${wedgeGap}px`,
+    'wedge-corner-radius': `${wedgeCornerRadius}px`,
     'plate-gap-horizontal': `${horizontalGap}px`,
     'plate-gap-vertical': `${verticalGap}px`,
     'plate-gap-ring': `${ringGap}px`,
@@ -143,7 +155,8 @@ describe('createMenu', () => {
     expect(root?.querySelector('style')).not.toBeNull();
     expect(document.head.querySelectorAll('style')).toHaveLength(styles);
     expect(root?.querySelector('[part~="plate"]')).not.toBeNull();
-    expect(root?.querySelector('[part="connector"]')).not.toBeNull();
+    expect(root?.querySelector('[part="inner-connector"]')).not.toBeNull();
+    expect(root?.querySelector('[part="outer-connector"]')).not.toBeNull();
     expect(root?.querySelector('[part~="label"]')).not.toBeNull();
     expect(root?.querySelector('.marking-menu-layout-probe')).toBeNull();
     expect(
@@ -152,8 +165,143 @@ describe('createMenu', () => {
 
     menu.setActive('item-0-key');
     expect(root?.querySelector('[part~="plate--active"]')).not.toBeNull();
-    expect(root?.querySelector('[part~="connector--active"]')).not.toBeNull();
+    expect(
+      root?.querySelector('[part~="inner-connector--active"]'),
+    ).not.toBeNull();
+    expect(
+      root?.querySelector('[part~="outer-connector--active"]'),
+    ).not.toBeNull();
     expect(root?.querySelector('[part~="label--active"]')).not.toBeNull();
+  });
+
+  it('draws a one-item menu as a full annulus without gaps or corners', () => {
+    const div = document.createElement('div');
+    withSolverConfig(div);
+    createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    const root = getShadowRoot(div);
+    const ring = root.querySelector<SVGSVGElement>('[part~="ring"]');
+    const [wedge] = getWedges(div);
+    expect(ring?.getAttribute('viewBox')).toBe('-80 -80 160 160');
+    expect(wedge?.getAttribute('part')).toBe('wedge');
+    expect(wedge?.getAttribute('d')).not.toContain('A 4 4');
+  });
+
+  it('splits a two-item menu at both bisectors', () => {
+    const div = document.createElement('div');
+    withSolverConfig(div);
+    createMenu({
+      parent: div,
+      model: {
+        items: [0, 180].map((angle, index) => ({
+          angle,
+          key: `item-${index}-key`,
+          label: `item-${index}`,
+        })),
+      },
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(getWedges(div)).toHaveLength(2);
+    expect(
+      getWedges(div).every((wedge) => {
+        const path = wedge.getAttribute('d');
+        return (
+          path?.includes('A 40 40 0 0 1') === true &&
+          path.includes('A 80 80 0 0 0')
+        );
+      }),
+    ).toBe(true);
+  });
+
+  it('aligns wedges with the menu angle convention', () => {
+    const div = document.createElement('div');
+    withSolverConfig(div);
+    createMenu({
+      parent: div,
+      model: createSpreadModel(4),
+      center: [30, 50],
+      doc: document,
+    });
+
+    const startPoint = (itemId: string): [number, number] => {
+      const path = getWedges(div).find(
+        (wedge) => wedge.dataset.itemId === itemId,
+      );
+      const [, x, y] = (path?.getAttribute('d') ?? '').split(' ', 3);
+      if (x === undefined || y === undefined) {
+        throw new Error('Wedge path has no start point.');
+      }
+
+      return [Number(x), Number(y)];
+    };
+
+    expect(startPoint('item-1-key')[1]).toBeGreaterThan(0);
+    expect(startPoint('item-3-key')[1]).toBeLessThan(0);
+  });
+
+  it('omits only a wedge whose gap consumes its angular span', () => {
+    const div = document.createElement('div');
+    withSolverConfig(div);
+    createMenu({
+      parent: div,
+      model: {
+        items: [0, 10, 20].map((angle, index) => ({
+          angle,
+          key: `item-${index}-key`,
+          label: `item-${index}`,
+        })),
+      },
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(getWedges(div).map((wedge) => wedge.dataset.itemId)).toEqual([
+      'item-0-key',
+      'item-2-key',
+    ]);
+  });
+
+  it('uses sharp wedge paths when the gap and corner radius are zero', () => {
+    const div = document.createElement('div');
+    withSolverConfig(div, { wedgeGap: 0, wedgeCornerRadius: 0 });
+    createMenu({
+      parent: div,
+      model: createSpreadModel(3),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(getWedges(div)).toHaveLength(3);
+    expect(
+      getWedges(div).every(
+        (wedge) => !wedge.getAttribute('d')?.includes('A 0 0'),
+      ),
+    ).toBe(true);
+  });
+
+  it('marks the active wedge with a part modifier', () => {
+    const div = document.createElement('div');
+    withSolverConfig(div);
+    const menu = createMenu({
+      parent: div,
+      model: createSpreadModel(3),
+      center: [30, 50],
+      doc: document,
+    });
+
+    menu.setActive('item-1-key');
+    expect(
+      getWedges(div)
+        .find((wedge) => wedge.dataset.itemId === 'item-1-key')
+        ?.getAttribute('part'),
+    ).toBe('wedge wedge--active');
   });
 
   it('identifies corner items', () => {
@@ -302,7 +450,9 @@ describe('createMenu', () => {
     expect(items).toHaveLength(8);
     for (const item of items) {
       const label = item.querySelector<HTMLElement>('.marking-menu-label');
-      const connector = item.querySelector<HTMLElement>('.marking-menu-line');
+      const connector = item.querySelector<HTMLElement>(
+        '.marking-menu-outer-connector',
+      );
       expect(label?.style.getPropertyValue('--solved-left')).not.toBe('');
       expect(label?.style.getPropertyValue('--solved-top')).not.toBe('');
       expect(label?.style.getPropertyValue('--solved-bottom')).toBe('auto');
@@ -363,7 +513,7 @@ describe('createMenu', () => {
     const connectorContactRadius = (parent: HTMLElement): number => {
       const width =
         getItems(parent)[0]
-          ?.querySelector<HTMLElement>('.marking-menu-line')
+          ?.querySelector<HTMLElement>('.marking-menu-outer-connector')
           ?.style.getPropertyValue('--solved-connector-contact-radius') ?? '';
 
       return Number(width.slice(0, -2));

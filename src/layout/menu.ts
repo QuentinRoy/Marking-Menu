@@ -1,4 +1,4 @@
-import { at, degreesToRadians, type Point } from '../utils.js';
+import { at, degreesToRadians, normalizeAngle, type Point } from '../utils.js';
 import { solveLabelLayout } from './label-layout.js';
 import menuStyles from './menu.css?inline';
 
@@ -73,6 +73,8 @@ function getCornerClass(angle: number): string | undefined {
 
 type LayoutProbes = {
   ringRadius: HTMLElement;
+  wedgeGap: HTMLElement;
+  wedgeCornerRadius: HTMLElement;
   plateGapHorizontal: HTMLElement;
   plateGapVertical: HTMLElement;
   plateGapRing: HTMLElement;
@@ -111,6 +113,8 @@ const template = (
 
   const probes: LayoutProbes = {
     ringRadius: appendLayoutProbe(root, doc, 'ring-radius'),
+    wedgeGap: appendLayoutProbe(root, doc, 'wedge-gap'),
+    wedgeCornerRadius: appendLayoutProbe(root, doc, 'wedge-corner-radius'),
     plateGapHorizontal: appendLayoutProbe(root, doc, 'plate-gap-horizontal'),
     plateGapVertical: appendLayoutProbe(root, doc, 'plate-gap-vertical'),
     plateGapRing: appendLayoutProbe(root, doc, 'plate-gap-ring'),
@@ -128,14 +132,18 @@ const template = (
     }
 
     const radAngle = degreesToRadians(item.angle);
-    // Why -radAngle? I got the css math wrong at some point, but it works like
-    // this and I could not be bothered fixing it.
+    // CSS y grows downward, unlike label layout's y-axis.
     elt.style.setProperty('--cosine', `${Math.cos(-radAngle)}`);
     elt.style.setProperty('--sine', `${Math.sin(-radAngle)}`);
-    const lineElt = doc.createElement('div');
-    lineElt.className = 'marking-menu-line';
-    lineElt.setAttribute('part', 'connector');
-    elt.append(lineElt);
+    const innerConnector = doc.createElement('div');
+    innerConnector.className = 'marking-menu-inner-connector';
+    innerConnector.setAttribute('part', 'inner-connector');
+    elt.append(innerConnector);
+
+    const outerConnector = doc.createElement('div');
+    outerConnector.className = 'marking-menu-outer-connector';
+    outerConnector.setAttribute('part', 'outer-connector');
+    elt.append(outerConnector);
 
     const labelElt = doc.createElement('div');
     labelElt.className = 'marking-menu-label';
@@ -147,6 +155,236 @@ const template = (
 
   return { main, root, probes };
 };
+
+const svgNamespace = 'http://www.w3.org/2000/svg';
+
+const polar = (angle: number, radius: number): Point => [
+  Math.cos(angle) * radius,
+  Math.sin(angle) * radius,
+];
+
+const svgPoint = ([x, y]: Point): string => `${x} ${y}`;
+
+const svgArc = (
+  radius: number,
+  isLargeArc: boolean,
+  sweep: 0 | 1,
+  endpoint: Point,
+): string =>
+  `A ${radius} ${radius} 0 ${Number(isLargeArc)} ${sweep} ${svgPoint(endpoint)}`;
+
+function fullAnnulusPath(innerRadius: number, outerRadius: number): string {
+  const innerStart = polar(0, innerRadius);
+  const innerOpposite = polar(Math.PI, innerRadius);
+  const outerStart = polar(0, outerRadius);
+  const outerOpposite = polar(Math.PI, outerRadius);
+  return [
+    `M ${svgPoint(innerStart)}`,
+    svgArc(innerRadius, true, 1, innerOpposite),
+    svgArc(innerRadius, true, 1, innerStart),
+    `L ${svgPoint(outerStart)}`,
+    svgArc(outerRadius, true, 0, outerOpposite),
+    svgArc(outerRadius, true, 0, outerStart),
+    'Z',
+  ].join(' ');
+}
+
+function wedgePath({
+  before,
+  next,
+  innerRadius,
+  outerRadius,
+  gap,
+  cornerRadius,
+}: {
+  before: number;
+  next: number;
+  innerRadius: number;
+  outerRadius: number;
+  gap: number;
+  cornerRadius: number;
+}): string | null {
+  const inset = gap / 2 + cornerRadius;
+  const insetInnerRadius = innerRadius + cornerRadius;
+  const insetOuterRadius = outerRadius - cornerRadius;
+  if (insetInnerRadius >= insetOuterRadius || inset > insetInnerRadius) {
+    return null;
+  }
+
+  const innerOffset = Math.asin(inset / insetInnerRadius);
+  const outerOffset = Math.asin(inset / insetOuterRadius);
+  const start = before + innerOffset;
+  const end = next - innerOffset;
+  if (end <= start) {
+    return null;
+  }
+
+  const innerStart = polar(start, innerRadius);
+  const innerEnd = polar(end, innerRadius);
+  const outerEnd = polar(next - outerOffset, outerRadius);
+  const outerStart = polar(before + outerOffset, outerRadius);
+  const isInnerLargeArc = end - start > Math.PI;
+  const isOuterLargeArc = next - outerOffset - (before + outerOffset) > Math.PI;
+  if (cornerRadius === 0) {
+    return [
+      `M ${svgPoint(innerStart)}`,
+      svgArc(innerRadius, isInnerLargeArc, 1, innerEnd),
+      `L ${svgPoint(outerEnd)}`,
+      svgArc(outerRadius, isOuterLargeArc, 0, outerStart),
+      'Z',
+    ].join(' ');
+  }
+
+  const endNormal = polar(next - Math.PI / 2, 1);
+  const startNormal = polar(before + Math.PI / 2, 1);
+  const tangent = (angle: number, radius: number, normal: Point): Point => {
+    const point = polar(angle, radius);
+    return [
+      point[0] - cornerRadius * normal[0],
+      point[1] - cornerRadius * normal[1],
+    ];
+  };
+
+  const innerEndTangent = tangent(
+    next - innerOffset,
+    insetInnerRadius,
+    endNormal,
+  );
+  const outerEndTangent = tangent(
+    next - outerOffset,
+    insetOuterRadius,
+    endNormal,
+  );
+  const outerStartTangent = tangent(
+    before + outerOffset,
+    insetOuterRadius,
+    startNormal,
+  );
+  const innerStartTangent = tangent(
+    before + innerOffset,
+    insetInnerRadius,
+    startNormal,
+  );
+  return [
+    `M ${svgPoint(innerStart)}`,
+    svgArc(innerRadius, isInnerLargeArc, 1, innerEnd),
+    svgArc(cornerRadius, false, 0, innerEndTangent),
+    `L ${svgPoint(outerEndTangent)}`,
+    svgArc(cornerRadius, false, 0, outerEnd),
+    svgArc(outerRadius, isOuterLargeArc, 0, outerStart),
+    svgArc(cornerRadius, false, 0, outerStartTangent),
+    `L ${svgPoint(innerStartTangent)}`,
+    svgArc(cornerRadius, false, 0, innerStart),
+    'Z',
+  ].join(' ');
+}
+
+function readPixels(
+  doc: Document,
+  probe: HTMLElement,
+  fallback: number,
+): number {
+  const { width } = (doc.defaultView ?? globalThis).getComputedStyle(probe);
+  // Vitest leaves inline CSS imports empty, unlike a browser where the probe
+  // always resolves the fallback in its stylesheet.
+  // eslint-disable-next-line unicorn/prefer-number-coercion
+  const pixels = Number.parseFloat(width);
+  return Number.isNaN(pixels) ? fallback : pixels;
+}
+
+function appendWedge(
+  ring: SVGSVGElement,
+  item: MenuLayoutItem,
+  pathData: string,
+  doc: Document,
+): void {
+  const wedge = doc.createElementNS(svgNamespace, 'path');
+  wedge.classList.add('marking-menu-wedge');
+  wedge.dataset.itemId = item.key;
+  wedge.setAttribute('part', 'wedge');
+  wedge.setAttribute('d', pathData);
+  ring.append(wedge);
+}
+
+function renderWedgeRing(
+  { root, probes }: MenuDom,
+  items: readonly MenuLayoutItem[],
+  doc: Document,
+  innerRadius: number,
+): void {
+  const outerRadius = readPixels(doc, probes.ringRadius, 80);
+  const gap = readPixels(doc, probes.wedgeGap, 4);
+  const cornerRadius = readPixels(doc, probes.wedgeCornerRadius, 4);
+  if (
+    !Number.isFinite(outerRadius) ||
+    !Number.isFinite(gap) ||
+    !Number.isFinite(cornerRadius) ||
+    !Number.isFinite(innerRadius) ||
+    outerRadius <= 0 ||
+    innerRadius < 0 ||
+    gap < 0 ||
+    cornerRadius < 0
+  ) {
+    return;
+  }
+
+  const ring = doc.createElementNS(svgNamespace, 'svg');
+  ring.classList.add('marking-menu-ring');
+  ring.setAttribute('part', 'ring');
+  ring.setAttribute('width', `${outerRadius * 2}`);
+  ring.setAttribute('height', `${outerRadius * 2}`);
+  ring.setAttribute(
+    'viewBox',
+    `${-outerRadius} ${-outerRadius} ${outerRadius * 2} ${outerRadius * 2}`,
+  );
+  ring.style.left = `${-outerRadius}px`;
+  ring.style.top = `${-outerRadius}px`;
+  root.insertBefore(ring, root.querySelector('.marking-menu-item'));
+
+  if (items.length === 1 && outerRadius > innerRadius) {
+    appendWedge(
+      ring,
+      at(items, 0),
+      fullAnnulusPath(innerRadius, outerRadius),
+      doc,
+    );
+    return;
+  }
+
+  const orderedItems = items
+    .map((item, index) => ({
+      item,
+      index,
+      angle: normalizeAngle(item.angle),
+    }))
+    .toSorted((a, b) =>
+      a.angle === b.angle ? a.index - b.index : a.angle - b.angle,
+    );
+  for (const [index, entry] of orderedItems.entries()) {
+    const previous = at(
+      orderedItems,
+      (index - 1 + orderedItems.length) % orderedItems.length,
+    );
+    const next = at(orderedItems, (index + 1) % orderedItems.length);
+    const before = (previous.angle - (index === 0 ? 360 : 0) + entry.angle) / 2;
+    const after =
+      (entry.angle +
+        next.angle +
+        (index === orderedItems.length - 1 ? 360 : 0)) /
+      2;
+    const pathData = wedgePath({
+      before: degreesToRadians(before),
+      next: degreesToRadians(after),
+      innerRadius,
+      outerRadius,
+      gap,
+      cornerRadius,
+    });
+    if (pathData !== null) {
+      appendWedge(ring, entry.item, pathData, doc);
+    }
+  }
+}
 
 /**
  Measure `main`'s rendered label boxes, solve their layout once, and apply
@@ -171,7 +409,9 @@ function applySolvedLayout(
     return label;
   });
   const connectorElements = itemElements.map((element) => {
-    const connector = element.querySelector<HTMLElement>('.marking-menu-line');
+    const connector = element.querySelector<HTMLElement>(
+      '.marking-menu-outer-connector',
+    );
     if (connector === null) {
       throw new Error('Menu item element is missing its connector.');
     }
@@ -184,19 +424,14 @@ function applySolvedLayout(
     height: at(labelElements, index).offsetHeight,
   }));
 
-  const view = doc.defaultView ?? globalThis;
-  const readPixels = (probe: HTMLElement): number =>
-    // The probe's resolved width retains its `px` suffix.
-    // eslint-disable-next-line unicorn/prefer-number-coercion
-    Number.parseFloat(view.getComputedStyle(probe).width);
   const layout = {
     plates,
-    ringRadius: readPixels(probes.ringRadius),
+    ringRadius: readPixels(doc, probes.ringRadius, NaN),
     clearances: {
-      plateHorizontal: readPixels(probes.plateGapHorizontal),
-      plateVertical: readPixels(probes.plateGapVertical),
-      plateToRing: readPixels(probes.plateGapRing),
-      plateToConnector: readPixels(probes.plateGapConnector),
+      plateHorizontal: readPixels(doc, probes.plateGapHorizontal, NaN),
+      plateVertical: readPixels(doc, probes.plateGapVertical, NaN),
+      plateToRing: readPixels(doc, probes.plateGapRing, NaN),
+      plateToConnector: readPixels(doc, probes.plateGapConnector, NaN),
     },
   };
   for (const probe of Object.values(probes)) {
@@ -229,24 +464,45 @@ function applySolvedLayout(
 }
 
 function togglePart(
-  element: HTMLElement,
+  element: HTMLElement | SVGElement,
   part: string,
   isActive: boolean,
 ): void {
   element.part.toggle(part, isActive);
 }
 
-function setItemActive(item: HTMLElement, isActive: boolean): void {
+function setItemActive(
+  root: ShadowRoot,
+  item: HTMLElement,
+  isActive: boolean,
+): void {
   item.classList.toggle('active', isActive);
   const label = item.querySelector<HTMLElement>('.marking-menu-label');
-  const connector = item.querySelector<HTMLElement>('.marking-menu-line');
-  if (label === null || connector === null) {
+  const innerConnector = item.querySelector<HTMLElement>(
+    '.marking-menu-inner-connector',
+  );
+  const outerConnector = item.querySelector<HTMLElement>(
+    '.marking-menu-outer-connector',
+  );
+  if (label === null || innerConnector === null || outerConnector === null) {
     throw new Error('Menu item element is incomplete.');
   }
 
   togglePart(label, 'plate--active', isActive);
   togglePart(label, 'label--active', isActive);
-  togglePart(connector, 'connector--active', isActive);
+  togglePart(innerConnector, 'inner-connector--active', isActive);
+  togglePart(outerConnector, 'outer-connector--active', isActive);
+  const { itemId } = item.dataset;
+  for (const wedge of root.querySelectorAll<SVGPathElement>(
+    '.marking-menu-wedge',
+  )) {
+    if (wedge.dataset.itemId !== itemId) {
+      continue;
+    }
+
+    wedge.classList.toggle('marking-menu-wedge--active', isActive);
+    togglePart(wedge, 'wedge--active', isActive);
+  }
 }
 
 /**
@@ -257,6 +513,7 @@ function setItemActive(item: HTMLElement, isActive: boolean): void {
  @param options.model - The model of the menu to open.
  @param options.center - The pixel coordinates where the menu should be
  anchored.
+ @param options.deadZoneRadius - The inner radius of the wedge ring.
  @param options.doc - The root document of the menu. Mostly useful for testing
  purposes.
  @returns The menu controls.
@@ -266,25 +523,29 @@ export function createMenu({
   parent,
   model,
   center,
+  deadZoneRadius = 40,
 }: {
   doc?: Document;
   parent: HTMLElement;
   model: MenuLayoutModel;
   center: Point;
+  deadZoneRadius?: number;
 }): Menu {
   const menuDom = template({ items: model.items, center }, doc);
   const { main, root } = menuDom;
+  main.style.setProperty('--inner-connector-length', `${deadZoneRadius}px`);
   // Attach before measuring: a detached element's `offsetWidth`/`offsetHeight`
   // are always 0. Everything from here through `applySolvedLayout` runs
   // synchronously in this one call, so the unsolved layout is never
   // painted: a browser only paints between tasks, never mid-function.
   parent.append(main);
+  renderWedgeRing(menuDom, model.items, doc, deadZoneRadius);
   applySolvedLayout(menuDom, model.items, doc);
 
   // Clear any  active items.
   const clearActiveItems = () => {
     for (const itemDom of root.querySelectorAll<HTMLElement>('.active')) {
-      setItemActive(itemDom, false);
+      setItemActive(root, itemDom, false);
     }
   };
 
@@ -312,7 +573,7 @@ export function createMenu({
         throw new TypeError(`No menu item found for id: ${itemId}`);
       }
 
-      setItemActive(itemDom, true);
+      setItemActive(root, itemDom, true);
     }
   };
 
