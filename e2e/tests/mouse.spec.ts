@@ -103,6 +103,17 @@ test('novice mode: wedges and connector parts follow the menu directions', async
   expect(geometry.innerPart).toBe('inner-connector');
   expect(geometry.outerPart).toBe('outer-connector');
 
+  await moveTo(page, offset(center, TOP_LEVEL_ITEMS.up.angle, SELECT_RADIUS));
+  const activeWedge = await menu.evaluate((host) => {
+    const wedges = host.shadowRoot?.querySelectorAll<SVGPathElement>(
+      '.marking-menu-wedge',
+    );
+    return [...(wedges ?? [])].findIndex((wedge) =>
+      wedge.classList.contains('marking-menu-wedge--active'),
+    );
+  });
+  expect(activeWedge).toBe(6);
+
   await menu.evaluate((host) => {
     host.style.setProperty('--mm-inner-connector-color', 'rgb(1, 2, 3)');
     host.style.setProperty('--mm-outer-connector-color', 'rgb(4, 5, 6)');
