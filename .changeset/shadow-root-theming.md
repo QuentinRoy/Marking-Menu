@@ -8,6 +8,6 @@ connector theme properties with the `--mm-*` names, and style repeated menu
 boxes through the `plate`, `label`, `inner-connector`, and `outer-connector`
 parts.
 
-The center-to-ring connector is transparent by default. Set
+The center-to-wedge connector is transparent by default. Set
 `--mm-inner-connector-color` to show it; use `--mm-outer-connector-color` for
-the ring-to-plate connector.
+the wedge-to-plate connector.
