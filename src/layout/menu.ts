@@ -464,7 +464,7 @@ function applySolvedLayout(
 }
 
 function togglePart(
-  element: HTMLElement,
+  element: HTMLElement | SVGElement,
   part: string,
   isActive: boolean,
 ): void {
