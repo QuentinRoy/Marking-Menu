@@ -1,4 +1,4 @@
-import { at, type EmptyTuple, type Point } from '../utils.js';
+import { at, normalizeAngle, type EmptyTuple, type Point } from '../utils.js';
 
 const EPSILON = 1e-7;
 
@@ -55,8 +55,6 @@ const direction = (angle: number): { readonly u: Point; readonly v: Point } => {
   const a = (angle * Math.PI) / 180;
   return { u: [Math.cos(a), Math.sin(a)], v: [-Math.sin(a), Math.cos(a)] };
 };
-
-const normalizeAngle = (angle: number): number => ((angle % 360) + 360) % 360;
 
 type AssociationSector = {
   readonly angle: number;

@@ -7,6 +7,7 @@ import {
   isNonEmptyArray,
   mod,
   noOp,
+  normalizeAngle,
   radiansToDegrees,
   toPolar,
 } from './utils.js';
@@ -17,6 +18,14 @@ describe('mod', () => {
     expect(mod(-3, 10)).toBe(7);
     expect(mod(13, 10)).toBe(3);
     expect(mod(-13, 10)).toBe(7);
+  });
+});
+
+describe('normalizeAngle', () => {
+  it('normalizes angles to one turn', () => {
+    expect(normalizeAngle(0)).toBe(0);
+    expect(normalizeAngle(360)).toBe(0);
+    expect(normalizeAngle(-10)).toBe(350);
   });
 });
 

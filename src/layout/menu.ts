@@ -1,4 +1,4 @@
-import { at, degreesToRadians, type Point } from '../utils.js';
+import { at, degreesToRadians, normalizeAngle, type Point } from '../utils.js';
 import { solveLabelLayout } from './label-layout.js';
 import menuStyles from './menu.css?inline';
 
@@ -351,7 +351,7 @@ function renderWedgeRing(
     .map((item, index) => ({
       item,
       index,
-      angle: ((item.angle % 360) + 360) % 360,
+      angle: normalizeAngle(item.angle),
     }))
     .toSorted((a, b) =>
       a.angle === b.angle ? a.index - b.index : a.angle - b.angle,
