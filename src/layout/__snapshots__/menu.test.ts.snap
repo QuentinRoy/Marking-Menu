@@ -43,14 +43,19 @@ exports[`createMenu > can be removed 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-1-key"
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
@@ -63,14 +68,19 @@ exports[`createMenu > can be removed 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item active"
+        class="marking-menu-item active"
         data-item-id="item-2-key"
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
@@ -83,14 +93,19 @@ exports[`createMenu > can be removed 1`] = `
           part="outer-connector outer-connector--active"
         />
         <div
-          class="marking-menu-label"
-          part="plate label plate--active label--active"
+          class="marking-menu-plate"
+          part="plate plate--active"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label label--active"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-3-key"
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
@@ -103,10 +118,15 @@ exports[`createMenu > can be removed 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
   </div>
@@ -158,14 +178,19 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-1-key"
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
@@ -178,14 +203,19 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-2-key"
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
@@ -198,14 +228,19 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-3-key"
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
@@ -218,14 +253,19 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-4-key"
         style="--angle: 40deg; --cosine: 0.766044443118978; --sine: -0.6427876096865393;"
       >
@@ -238,14 +278,19 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-4-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-4-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item active"
+        class="marking-menu-item active"
         data-item-id="item-5-key"
         style="--angle: 50deg; --cosine: 0.6427876096865394; --sine: -0.766044443118978;"
       >
@@ -258,10 +303,15 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector outer-connector--active"
         />
         <div
-          class="marking-menu-label"
-          part="plate label plate--active label--active"
+          class="marking-menu-plate"
+          part="plate plate--active"
         >
-          item-5-name
+          <div
+            class="marking-menu-label"
+            part="label label--active"
+          >
+            item-5-name
+          </div>
         </div>
       </div>
   </div>
@@ -311,14 +361,19 @@ exports[`createMenu > renders without active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-1-key"
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
@@ -331,14 +386,19 @@ exports[`createMenu > renders without active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-2-key"
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
@@ -351,14 +411,19 @@ exports[`createMenu > renders without active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-3-key"
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
@@ -371,10 +436,15 @@ exports[`createMenu > renders without active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
   </div>
@@ -424,14 +494,19 @@ exports[`createMenu > update the active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-1-key"
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
@@ -444,14 +519,19 @@ exports[`createMenu > update the active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item active"
+        class="marking-menu-item active"
         data-item-id="item-2-key"
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
@@ -464,14 +544,19 @@ exports[`createMenu > update the active element 1`] = `
           part="outer-connector outer-connector--active"
         />
         <div
-          class="marking-menu-label"
-          part="plate label plate--active label--active"
+          class="marking-menu-plate"
+          part="plate plate--active"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label label--active"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-3-key"
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
@@ -484,10 +569,15 @@ exports[`createMenu > update the active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
   </div>
@@ -537,14 +627,19 @@ exports[`createMenu > update the active element 2`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item active"
+        class="marking-menu-item active"
         data-item-id="item-1-key"
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
@@ -557,14 +652,19 @@ exports[`createMenu > update the active element 2`] = `
           part="outer-connector outer-connector--active"
         />
         <div
-          class="marking-menu-label"
-          part="plate label plate--active label--active"
+          class="marking-menu-plate"
+          part="plate plate--active"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label label--active"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-2-key"
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
@@ -577,14 +677,19 @@ exports[`createMenu > update the active element 2`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
-        class="marking-menu-item bottom-right-item"
+        class="marking-menu-item"
         data-item-id="item-3-key"
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
@@ -597,10 +702,15 @@ exports[`createMenu > update the active element 2`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
   </div>
