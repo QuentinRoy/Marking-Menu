@@ -5,4 +5,6 @@
 Size label plates to their text by default. Set both `--mm-label-min-width`
 and `--mm-label-max-width` to `120px` to keep the prior fixed, truncated
 plate. The `plate` part now contains the `label` part, which styles text only.
-All plate corners now use `--mm-plate-corner-radius`.
+All plate corners now use `--mm-plate-corner-radius`, and plate padding now
+defaults to `6px` where `text-box-trim` and `text-box-edge` are available,
+otherwise `4px`.

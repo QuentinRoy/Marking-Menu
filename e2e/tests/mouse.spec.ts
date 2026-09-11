@@ -68,6 +68,9 @@ test('label plates size to their content within the configured bounds', async ({
     }
 
     const style = getComputedStyle(plate);
+    const labels = [
+      ...(root?.querySelectorAll<HTMLElement>('.marking-menu-label') ?? []),
+    ];
     return {
       cornerRadii: [
         ...(root?.querySelectorAll<HTMLElement>('.marking-menu-plate') ?? []),
@@ -82,20 +85,44 @@ test('label plates size to their content within the configured bounds', async ({
       }),
       maxWidth: style.maxWidth,
       minWidth: style.minWidth,
+      overflow: style.overflow,
+      padding: Number(style.paddingTop.slice(0, -2)),
+      supportsTextBox:
+        CSS.supports('text-box-trim', 'trim-both') &&
+        CSS.supports('text-box-edge', 'cap text'),
+      textBoxTrimmed: labels.map((label) => {
+        const labelStyle = getComputedStyle(label);
+        return (
+          labelStyle.getPropertyValue('text-box-trim') === 'trim-both' &&
+          labelStyle.getPropertyValue('text-box-edge').startsWith('cap')
+        );
+      }),
       transform: style.transform,
       width: plate.getBoundingClientRect().width,
     };
   });
+  const supportIndex = Number(defaultSize.supportsTextBox);
+  const expectedPadding = [4, 6][supportIndex];
+  const expectedCornerRadius = ['8px', '12px'][supportIndex];
+  const expectedTextBoxTrimmed = [false, true][supportIndex];
   expect(defaultSize).toMatchObject({
     maxWidth: 'none',
     minWidth: '0px',
+    overflow: 'visible',
+    padding: expectedPadding,
     transform: 'none',
   });
   expect(
     defaultSize.cornerRadii.every((radii) =>
-      radii.every((radius) => radius === '8px'),
+      radii.every((radius) => radius === expectedCornerRadius),
     ),
   ).toBe(true);
+  expect(
+    defaultSize.textBoxTrimmed.every(
+      (isTrimmed) => isTrimmed === expectedTextBoxTrimmed,
+    ),
+  ).toBe(true);
+
   expect(defaultSize.width).toBeLessThan(120);
 
   const clampedSize = await menu.evaluate((host) => {
@@ -126,7 +153,7 @@ test('label plates size to their content within the configured bounds', async ({
       width: plate.getBoundingClientRect().width,
     };
   });
-  expect(clampedSize.width).toBe(128);
+  expect(clampedSize.width).toBe(120 + defaultSize.padding * 2);
   expect(clampedSize.labelScrollWidth).toBeGreaterThan(
     clampedSize.labelClientWidth,
   );

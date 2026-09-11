@@ -79,8 +79,6 @@
   min-width: var(--mm-label-min-width, 0);
   max-width: var(--mm-label-max-width, none);
   height: var(--default-plate-height);
-  overflow: hidden;
-  vertical-align: middle;
   text-align: center;
   color: var(--default-plate-color);
   font-size: var(--default-plate-font-size);
@@ -91,7 +89,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: var(--default-plate-height);
+  line-height: normal;
+}
+
+@supports (text-box-trim: trim-both) and (text-box-edge: cap text) {
+  :host {
+    --default-plate-padding: var(--mm-plate-padding, 6px);
+  }
+
+  .marking-menu-label {
+    text-box-trim: trim-both;
+    text-box-edge: cap text;
+  }
 }
 
 .marking-menu-inner-connector,
