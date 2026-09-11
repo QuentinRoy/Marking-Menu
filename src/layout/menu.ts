@@ -2,22 +2,6 @@ import { at, degreesToRadians, type Point } from '../utils.js';
 import { solveLabelLayout } from './label-layout.js';
 import menuStyles from './menu.css?inline';
 
-let hasInjectedStyles = false;
-
-/**
- Inject the menu's stylesheet into a document, once.
- */
-function ensureStylesInjected(doc: Document): void {
-  if (hasInjectedStyles) {
-    return;
-  }
-
-  hasInjectedStyles = true;
-  const style = doc.createElement('style');
-  style.textContent = menuStyles;
-  doc.head.append(style);
-}
-
 /**
  An item of the menu layout's model.
  */
@@ -87,14 +71,52 @@ function getCornerClass(angle: number): string | undefined {
   return CORNER_ITEM_CLASSES[Math.floor(normalizedAngle / 90)];
 }
 
+type LayoutProbes = {
+  ringRadius: HTMLElement;
+  plateGapHorizontal: HTMLElement;
+  plateGapVertical: HTMLElement;
+  plateGapRing: HTMLElement;
+  plateGapConnector: HTMLElement;
+};
+
+type MenuDom = {
+  main: HTMLDivElement;
+  root: ShadowRoot;
+  probes: LayoutProbes;
+};
+
+function appendLayoutProbe(
+  root: ShadowRoot,
+  doc: Document,
+  property: string,
+): HTMLElement {
+  const probe = doc.createElement('div');
+  probe.className = `marking-menu-layout-probe marking-menu-layout-probe--${property}`;
+  root.append(probe);
+  return probe;
+}
+
 const template = (
   { items, center }: { items: readonly MenuLayoutItem[]; center: Point },
   doc: Document,
-): HTMLDivElement => {
+): MenuDom => {
   const main = doc.createElement('div');
   main.className = 'marking-menu';
   main.style.setProperty('--center-x', `${center[0]}px`);
   main.style.setProperty('--center-y', `${center[1]}px`);
+  const root = main.attachShadow({ mode: 'open' });
+  const style = doc.createElement('style');
+  style.textContent = menuStyles;
+  root.append(style);
+
+  const probes: LayoutProbes = {
+    ringRadius: appendLayoutProbe(root, doc, 'ring-radius'),
+    plateGapHorizontal: appendLayoutProbe(root, doc, 'plate-gap-horizontal'),
+    plateGapVertical: appendLayoutProbe(root, doc, 'plate-gap-vertical'),
+    plateGapRing: appendLayoutProbe(root, doc, 'plate-gap-ring'),
+    plateGapConnector: appendLayoutProbe(root, doc, 'plate-gap-connector'),
+  };
+
   for (const item of items) {
     const elt = doc.createElement('div');
     elt.className = 'marking-menu-item';
@@ -112,24 +134,19 @@ const template = (
     elt.style.setProperty('--sine', `${Math.sin(-radAngle)}`);
     const lineElt = doc.createElement('div');
     lineElt.className = 'marking-menu-line';
+    lineElt.setAttribute('part', 'connector');
     elt.append(lineElt);
 
     const labelElt = doc.createElement('div');
     labelElt.className = 'marking-menu-label';
+    labelElt.setAttribute('part', 'plate label');
     labelElt.textContent = item.label;
     elt.append(labelElt);
-    main.append(elt);
+    root.append(elt);
   }
 
-  return main;
+  return { main, root, probes };
 };
-
-function readPixels(style: CSSStyleDeclaration, property: string): number {
-  // `getPropertyValue` returns the raw declared value (e.g. "80px"); unlike
-  // `Number`, `parseFloat` strips that unit suffix instead of yielding NaN.
-  // eslint-disable-next-line unicorn/prefer-number-coercion -- see above.
-  return Number.parseFloat(style.getPropertyValue(property));
-}
 
 /**
  Measure `main`'s rendered label boxes, solve their layout once, and apply
@@ -138,12 +155,12 @@ function readPixels(style: CSSStyleDeclaration, property: string): number {
  already renders unconditionally, still valid, just not conflict-free.
  */
 function applySolvedLayout(
-  main: HTMLDivElement,
+  { root, probes }: MenuDom,
   items: readonly MenuLayoutItem[],
   doc: Document,
 ): void {
   const itemElements = [
-    ...main.querySelectorAll<HTMLElement>('.marking-menu-item'),
+    ...root.querySelectorAll<HTMLElement>('.marking-menu-item'),
   ];
   const labelElements = itemElements.map((element) => {
     const label = element.querySelector<HTMLElement>('.marking-menu-label');
@@ -153,37 +170,95 @@ function applySolvedLayout(
 
     return label;
   });
+  const connectorElements = itemElements.map((element) => {
+    const connector = element.querySelector<HTMLElement>('.marking-menu-line');
+    if (connector === null) {
+      throw new Error('Menu item element is missing its connector.');
+    }
+
+    return connector;
+  });
   const plates = items.map((item, index) => ({
     angle: item.angle,
     width: at(labelElements, index).offsetWidth,
     height: at(labelElements, index).offsetHeight,
   }));
 
-  const style = (doc.defaultView ?? globalThis).getComputedStyle(main);
-  const result = solveLabelLayout({
+  const view = doc.defaultView ?? globalThis;
+  const readPixels = (probe: HTMLElement): number =>
+    // The probe's resolved width retains its `px` suffix.
+    // eslint-disable-next-line unicorn/prefer-number-coercion
+    Number.parseFloat(view.getComputedStyle(probe).width);
+  const layout = {
     plates,
-    ringRadius: readPixels(style, '--menu-radius'),
+    ringRadius: readPixels(probes.ringRadius),
     clearances: {
-      plateHorizontal: readPixels(style, '--item-horizontal-gap'),
-      plateVertical: readPixels(style, '--item-vertical-gap'),
-      plateToRing: readPixels(style, '--item-ring-gap'),
-      plateToConnector: readPixels(style, '--item-connector-gap'),
+      plateHorizontal: readPixels(probes.plateGapHorizontal),
+      plateVertical: readPixels(probes.plateGapVertical),
+      plateToRing: readPixels(probes.plateGapRing),
+      plateToConnector: readPixels(probes.plateGapConnector),
     },
-  });
+  };
+  for (const probe of Object.values(probes)) {
+    probe.remove();
+  }
+
+  const result = solveLabelLayout(layout);
   if (result.oversized) {
     return;
   }
 
-  main.classList.add('solved');
-  for (const [index, element] of itemElements.entries()) {
-    const plate = at(result.plates, index);
-    element.style.setProperty('--x', `${plate.x}px`);
-    element.style.setProperty('--y', `${plate.y}px`);
-    element.style.setProperty(
-      '--contact-radius',
+  for (const [index, plate] of result.plates.entries()) {
+    const label = at(labelElements, index);
+    label.style.setProperty(
+      '--solved-left',
+      `calc(${plate.x}px - var(--item-box-width) / 2)`,
+    );
+    label.style.setProperty(
+      '--solved-top',
+      `calc(${plate.y}px - var(--item-box-height) / 2)`,
+    );
+    label.style.setProperty('--solved-bottom', 'auto');
+
+    const connector = at(connectorElements, index);
+    connector.style.setProperty(
+      '--solved-connector-contact-radius',
       `${Math.hypot(...plate.connectorContact)}px`,
     );
   }
+}
+
+function togglePart(
+  element: HTMLElement,
+  part: string,
+  isActive: boolean,
+): void {
+  if (element.part !== undefined) {
+    element.part.toggle(part, isActive);
+    return;
+  }
+
+  const parts = new Set(element.getAttribute('part')?.split(' '));
+  if (isActive) {
+    parts.add(part);
+  } else {
+    parts.delete(part);
+  }
+
+  element.setAttribute('part', [...parts].join(' '));
+}
+
+function setItemActive(item: HTMLElement, isActive: boolean): void {
+  item.classList.toggle('active', isActive);
+  const label = item.querySelector<HTMLElement>('.marking-menu-label');
+  const connector = item.querySelector<HTMLElement>('.marking-menu-line');
+  if (label === null || connector === null) {
+    throw new Error('Menu item element is incomplete.');
+  }
+
+  togglePart(label, 'plate--active', isActive);
+  togglePart(label, 'label--active', isActive);
+  togglePart(connector, 'connector--active', isActive);
 }
 
 /**
@@ -209,27 +284,25 @@ export function createMenu({
   model: MenuLayoutModel;
   center: Point;
 }): Menu {
-  ensureStylesInjected(doc);
-
-  // Create the DOM.
-  const main = template({ items: model.items, center }, doc);
+  const menuDom = template({ items: model.items, center }, doc);
+  const { main, root } = menuDom;
   // Attach before measuring: a detached element's `offsetWidth`/`offsetHeight`
   // are always 0. Everything from here through `applySolvedLayout` runs
   // synchronously in this one call, so the unsolved layout is never
   // painted: a browser only paints between tasks, never mid-function.
   parent.append(main);
-  applySolvedLayout(main, model.items, doc);
+  applySolvedLayout(menuDom, model.items, doc);
 
   // Clear any  active items.
   const clearActiveItems = () => {
-    for (const itemDom of main.querySelectorAll('.active')) {
-      itemDom.classList.remove('active');
+    for (const itemDom of root.querySelectorAll<HTMLElement>('.active')) {
+      setItemActive(itemDom, false);
     }
   };
 
   // Return an item DOM element from its id.
   const getItemDom = (itemId: string | number) =>
-    [...main.querySelectorAll<HTMLElement>('.marking-menu-item')].find(
+    [...root.querySelectorAll<HTMLElement>('.marking-menu-item')].find(
       (elt) => elt.dataset.itemId === itemId,
     );
 
@@ -251,7 +324,7 @@ export function createMenu({
         throw new TypeError(`No menu item found for id: ${itemId}`);
       }
 
-      itemDom.classList.add('active');
+      setItemActive(itemDom, true);
     }
   };
 

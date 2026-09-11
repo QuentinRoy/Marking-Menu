@@ -1,119 +1,93 @@
-/* A label is sized by its content and padded around it, and the layout adds
-   that padding back to place it (see `--item-box-width` below). A host reset
-   that makes everything `border-box`, as Tailwind's preflight and normalize
-   both do, would take the padding out of the label instead, dropping its
-   text off centre and its box off position. The menu states the box model
-   its own arithmetic assumes rather than inheriting one. */
-.marking-menu,
-.marking-menu * {
-  box-sizing: content-box;
-}
-
-.marking-menu {
+:host {
   --item-width: 120px;
-  --item-height: 20px;
-  --item-font-size: 20px;
-  --item-padding: 4px;
-  --item-background: #f2f2f2;
-  --item-color: #333333;
-  --active-item-background: #d9d9d9;
-  --active-item-color: #000;
-  --item-radius: calc(var(--item-padding) * 2);
-  --menu-radius: 80px;
-  --center-radius: 10px;
-  --line-thickness: 4px;
-  --line-color: var(--item-background);
-  --active-line-color: var(--active-item-background);
-
-  /* Minimum gaps the label-layout solver keeps: between two plates
-     (horizontal/vertical), between a plate and the ring, and between a
-     connector line and a plate it doesn't belong to. */
-  --item-horizontal-gap: 14px;
-  --item-vertical-gap: 7px;
-  --item-ring-gap: 12px;
-  --item-connector-gap: 3px;
-
-  /* The two following variables must be set from JS. */
-  --center-x: 0px;
-  --center-y: 0px;
+  --default-ring-radius: var(--mm-ring-radius, 80px);
+  --default-plate-padding: var(--mm-plate-padding, 4px);
+  --default-plate-height: var(--mm-plate-height, 20px);
+  --default-plate-corner-radius: var(
+    --mm-plate-corner-radius,
+    calc(var(--default-plate-padding) * 2)
+  );
+  --default-plate-background: var(--mm-plate-background, #f2f2f2);
+  --default-plate-color: var(--mm-plate-color, #333333);
+  --default-plate-background-active: var(--mm-plate-background-active, #d9d9d9);
+  --default-plate-color-active: var(--mm-plate-color-active, #000);
+  --default-plate-font-size: var(--mm-plate-font-size, 20px);
+  --default-connector-thickness: var(--mm-connector-thickness, 4px);
+  --default-connector-color: var(
+    --mm-connector-color,
+    var(--default-plate-background)
+  );
+  --default-connector-color-active: var(
+    --mm-connector-color-active,
+    var(--default-plate-background-active)
+  );
+  --default-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 14px);
+  --default-plate-gap-vertical: var(--mm-plate-gap-vertical, 7px);
+  --default-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
+  --default-plate-gap-connector: var(--mm-plate-gap-connector, 3px);
 
   position: absolute;
   top: var(--center-y);
   left: var(--center-x);
   pointer-events: none;
-  /* Using transform to make .marking-menu a stacking context and confine
-     z-ordered children in the document's z-stack. */
   transform: translate(0px, 0px);
-  /* No z-index here on purpose: the menu sits between the two stroke
-     canvases, above the lower stroke and below both the upper one and the
-     completed-gesture feedback. The renderer keeps it there by ordering
-     the siblings itself, so a z-index here would break that. */
 }
 
 .marking-menu-item {
-  /* The three following variables must be set from JS for each item. */
   --angle: 0deg;
   --cosine: 1;
   --sine: 0;
-
-  --item-box-width: calc(var(--item-width) + var(--item-padding) * 2);
-  --item-box-height: calc(var(--item-height) + var(--item-padding) * 2);
+  --item-box-width: calc(var(--item-width) + var(--default-plate-padding) * 2);
+  --item-box-height: calc(
+    var(--default-plate-height) + var(--default-plate-padding) * 2
+  );
 
   position: absolute;
   z-index: 0;
 }
 
-.marking-menu-item .marking-menu-label {
+.marking-menu-label {
   position: absolute;
-  bottom: calc(
-    var(--sine) * var(--menu-radius) + (min(1, max(-1, var(--sine) * 2)) - 1) *
-      var(--item-box-height) / 2
+  bottom: var(
+    --solved-bottom,
+    calc(
+      var(--sine) * var(--default-ring-radius) +
+        (min(1, max(-1, var(--sine) * 2)) - 1) * var(--item-box-height) / 2
+    )
   );
-  left: calc(
-    var(--cosine) * var(--menu-radius) +
-      (min(1, max(-1, var(--cosine) * 2)) - 1) * var(--item-box-width) / 2
+  left: var(
+    --solved-left,
+    calc(
+      var(--cosine) * var(--default-ring-radius) +
+        (min(1, max(-1, var(--cosine) * 2)) - 1) * var(--item-box-width) / 2
+    )
   );
-  border-radius: var(--item-radius);
-  background-color: var(--item-background);
-  padding: var(--item-padding);
+  top: var(--solved-top, auto);
+  border-radius: var(--default-plate-corner-radius);
+  background-color: var(--default-plate-background);
+  padding: var(--default-plate-padding);
   width: var(--item-width);
-  height: var(--item-height);
+  height: var(--default-plate-height);
   overflow: hidden;
   vertical-align: middle;
   text-align: center;
   text-overflow: ellipsis;
-  line-height: var(--item-height);
-  color: var(--item-color);
-  font-size: var(--item-font-size);
+  line-height: var(--default-plate-height);
+  color: var(--default-plate-color);
+  font-size: var(--default-plate-font-size);
 }
 
-.marking-menu-item .marking-menu-line {
+.marking-menu-line {
   position: absolute;
-  top: calc(var(--line-thickness) / -2);
-  background-color: var(--line-color);
-  width: calc(var(--menu-radius) + var(--item-radius) + var(--line-thickness));
-  height: var(--line-thickness);
+  top: calc(var(--default-connector-thickness) / -2);
+  background-color: var(--default-connector-color);
+  width: calc(
+    var(--solved-connector-contact-radius, var(--default-ring-radius)) +
+      var(--default-plate-corner-radius) + var(--default-connector-thickness)
+  );
+  height: var(--default-connector-thickness);
   transform-origin: center left;
   transform: rotate(var(--angle));
-}
-
-/* Once the label-layout solver finds a conflict-free arrangement, `--x`,
-   `--y`, and `--contact-radius` (set from JS, in the same pixel coordinates
-   as `--center-x`/`--center-y`: right and down positive) replace the fixed
-   shared radius above. `.marking-menu` gets `.solved` only when the solver
-   didn't report the menu as oversized: an oversized menu keeps rendering
-   every label at the fixed radius, unmodified, rather than with no layout
-   at all. */
-.marking-menu.solved .marking-menu-item .marking-menu-label {
-  left: calc(var(--x) - var(--item-box-width) / 2);
-  top: calc(var(--y) - var(--item-box-height) / 2);
-  bottom: auto;
-}
-
-.marking-menu.solved .marking-menu-item .marking-menu-line {
-  width: calc(
-    var(--contact-radius) + var(--item-radius) + var(--line-thickness)
-  );
 }
 
 .marking-menu-item.active {
@@ -121,25 +95,54 @@
 }
 
 .marking-menu-item.active .marking-menu-label {
-  background-color: var(--active-item-background);
-  color: var(--active-item-color);
+  background-color: var(--default-plate-background-active);
+  color: var(--default-plate-color-active);
   font-weight: bolder;
 }
 
 .marking-menu-item.active .marking-menu-line {
-  background-color: var(--active-line-color);
+  background-color: var(--default-connector-color-active);
 }
 
-/* Corner items should have hard corner where the line departs. */
 .marking-menu-item.bottom-right-item .marking-menu-label {
   border-top-left-radius: 0;
 }
+
 .marking-menu-item.bottom-left-item .marking-menu-label {
   border-top-right-radius: 0;
 }
+
 .marking-menu-item.top-left-item .marking-menu-label {
   border-bottom-right-radius: 0;
 }
+
 .marking-menu-item.top-right-item .marking-menu-label {
   border-bottom-left-radius: 0;
+}
+
+.marking-menu-layout-probe {
+  position: absolute;
+  visibility: hidden;
+  height: 0;
+  contain: strict;
+}
+
+.marking-menu-layout-probe--ring-radius {
+  width: var(--default-ring-radius);
+}
+
+.marking-menu-layout-probe--plate-gap-horizontal {
+  width: var(--default-plate-gap-horizontal);
+}
+
+.marking-menu-layout-probe--plate-gap-vertical {
+  width: var(--default-plate-gap-vertical);
+}
+
+.marking-menu-layout-probe--plate-gap-ring {
+  width: var(--default-plate-gap-ring);
+}
+
+.marking-menu-layout-probe--plate-gap-connector {
+  width: var(--default-plate-gap-connector);
 }

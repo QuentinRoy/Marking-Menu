@@ -62,8 +62,10 @@ test('commit → render → dispatch ordering: a listener observes the complete 
     // `open`: the menu's DOM must already carry every item by the time the
     // listener runs, not an empty or partially built menu.
     mm.on('open', (event) => {
+      const menuRoot = element.querySelector('.marking-menu')?.shadowRoot;
       observations.push({
-        domItemCount: element.querySelectorAll('.marking-menu-item').length,
+        domItemCount:
+          menuRoot?.querySelectorAll('.marking-menu-item').length ?? 0,
         eventItemCount: event.menu.items.length,
         type: 'open',
       });
@@ -74,7 +76,9 @@ test('commit → render → dispatch ordering: a listener observes the complete 
     // per-level `key`, not the consumer-supplied `id`, hence comparing
     // against `event.active.key`.
     mm.on('change', (event) => {
-      const activeElement = element.querySelector('.marking-menu-item.active');
+      const activeElement = element
+        .querySelector('.marking-menu')
+        ?.shadowRoot?.querySelector('.marking-menu-item.active');
       observations.push({
         domActiveId:
           activeElement instanceof HTMLElement

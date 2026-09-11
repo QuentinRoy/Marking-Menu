@@ -38,11 +38,22 @@ const stubbedLabelSize = (width: number, height: number): Disposable => {
   };
 };
 
+const getShadowRoot = (parent: HTMLElement): ShadowRoot => {
+  const root = parent.querySelector<HTMLElement>('.marking-menu')?.shadowRoot;
+  if (root === null || root === undefined) {
+    throw new Error('Menu shadow root is missing.');
+  }
+
+  return root;
+};
+
+const getItems = (parent: HTMLElement): HTMLElement[] => [
+  ...getShadowRoot(parent).querySelectorAll<HTMLElement>('.marking-menu-item'),
+];
+
 /**
- The label-layout solver's ring radius and clearances aren't set from any
- stylesheet under test (`?inline` CSS imports resolve to an empty string
- here). Set them as inline style on `parent` instead, which `main`
- inherits, exactly as it would inherit them from a real stylesheet.
+ Vitest resolves the CSS inline import to empty text, so tests supply probe
+ widths from inherited test variables.
  */
 const withSolverConfig = (
   parent: HTMLElement,
@@ -61,12 +72,37 @@ const withSolverConfig = (
     ringGap = 12,
     connectorGap = 3,
   } = overrides;
-  parent.style.setProperty('--menu-radius', `${menuRadius}px`);
-  parent.style.setProperty('--item-horizontal-gap', `${horizontalGap}px`);
-  parent.style.setProperty('--item-vertical-gap', `${verticalGap}px`);
-  parent.style.setProperty('--item-ring-gap', `${ringGap}px`);
-  parent.style.setProperty('--item-connector-gap', `${connectorGap}px`);
+  const properties = {
+    'ring-radius': `${menuRadius}px`,
+    'plate-gap-horizontal': `${horizontalGap}px`,
+    'plate-gap-vertical': `${verticalGap}px`,
+    'plate-gap-ring': `${ringGap}px`,
+    'plate-gap-connector': `${connectorGap}px`,
+  };
+  for (const [name, value] of Object.entries(properties)) {
+    parent.style.setProperty(`--mm-${name}`, value);
+  }
+
+  const getComputedStyle = globalThis.getComputedStyle.bind(globalThis);
+  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
+    const probeClass = [...element.classList].find((className) =>
+      className.startsWith('marking-menu-layout-probe--'),
+    );
+    if (probeClass === undefined) {
+      return getComputedStyle(element);
+    }
+
+    const name = probeClass.replace('marking-menu-layout-probe--', '');
+    const style: Pick<CSSStyleDeclaration, 'width'> = {
+      width: properties[name as keyof typeof properties],
+    };
+    return style as CSSStyleDeclaration;
+  });
 };
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe('createMenu', () => {
   it('renders', () => {
@@ -92,6 +128,34 @@ describe('createMenu', () => {
     expect(div).toMatchSnapshot();
   });
 
+  it('renders inside an open shadow root without adding a document style', () => {
+    const div = document.createElement('div');
+    const styles = document.head.querySelectorAll('style').length;
+    const menu = createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    const root = menu.element.shadowRoot;
+    expect(root?.mode).toBe('open');
+    expect(root?.querySelector('style')).not.toBeNull();
+    expect(document.head.querySelectorAll('style')).toHaveLength(styles);
+    expect(root?.querySelector('[part~="plate"]')).not.toBeNull();
+    expect(root?.querySelector('[part="connector"]')).not.toBeNull();
+    expect(root?.querySelector('[part~="label"]')).not.toBeNull();
+    expect(root?.querySelector('.marking-menu-layout-probe')).toBeNull();
+    expect(
+      root?.querySelector('.marking-menu-label')?.getAttribute('part'),
+    ).toBe('plate label');
+
+    menu.setActive('item-0-key');
+    expect(root?.querySelector('[part~="plate--active"]')).not.toBeNull();
+    expect(root?.querySelector('[part~="connector--active"]')).not.toBeNull();
+    expect(root?.querySelector('[part~="label--active"]')).not.toBeNull();
+  });
+
   it('identifies corner items', () => {
     const div = document.createElement('div');
     createMenu({
@@ -106,7 +170,7 @@ describe('createMenu', () => {
       center: [30, 50],
       doc: document,
     });
-    const items = div.querySelectorAll('.marking-menu-item');
+    const items = getItems(div);
     expect((items[0] as Element).classList.contains('bottom-right-item')).toBe(
       true,
     );
@@ -138,7 +202,7 @@ describe('createMenu', () => {
       center: [30, 50],
       doc: document,
     });
-    const items = div.querySelectorAll('.marking-menu-item');
+    const items = getItems(div);
     expect((items[0] as Element).classList.contains('bottom-right-item')).toBe(
       true,
     );
@@ -212,7 +276,7 @@ describe('createMenu', () => {
       doc: document,
     });
 
-    const items = [...div.querySelectorAll<HTMLElement>('.marking-menu-item')];
+    const items = getItems(div);
     expect(items.map((elt) => elt.dataset.itemId)).toEqual(
       model.items.map((item) => item.key),
     );
@@ -234,14 +298,17 @@ describe('createMenu', () => {
       doc: document,
     });
 
-    const main = div.querySelector('.marking-menu');
-    expect(main?.classList.contains('solved')).toBe(true);
-    const items = [...div.querySelectorAll<HTMLElement>('.marking-menu-item')];
+    const items = getItems(div);
     expect(items).toHaveLength(8);
     for (const item of items) {
-      expect(item.style.getPropertyValue('--x')).not.toBe('');
-      expect(item.style.getPropertyValue('--y')).not.toBe('');
-      expect(item.style.getPropertyValue('--contact-radius')).not.toBe('');
+      const label = item.querySelector<HTMLElement>('.marking-menu-label');
+      const connector = item.querySelector<HTMLElement>('.marking-menu-line');
+      expect(label?.style.getPropertyValue('--solved-left')).not.toBe('');
+      expect(label?.style.getPropertyValue('--solved-top')).not.toBe('');
+      expect(label?.style.getPropertyValue('--solved-bottom')).toBe('auto');
+      expect(
+        connector?.style.getPropertyValue('--solved-connector-contact-radius'),
+      ).not.toBe('');
     }
   });
 
@@ -263,11 +330,13 @@ describe('createMenu', () => {
       doc: document,
     });
 
-    const main = div.querySelector('.marking-menu');
-    expect(main?.classList.contains('solved')).toBe(false);
-    const items = [...div.querySelectorAll<HTMLElement>('.marking-menu-item')];
+    const items = getItems(div);
     for (const item of items) {
-      expect(item.style.getPropertyValue('--x')).toBe('');
+      expect(
+        item
+          .querySelector<HTMLElement>('.marking-menu-label')
+          ?.style.getPropertyValue('--solved-left'),
+      ).toBe('');
     }
   });
 
@@ -291,14 +360,17 @@ describe('createMenu', () => {
       doc: document,
     });
 
-    const contactRadius = (parent: HTMLElement): number =>
-      // Trailing "px" needs stripping; `Number` alone can't do that.
-      // eslint-disable-next-line unicorn/prefer-number-coercion -- see above.
-      Number.parseFloat(
-        parent
-          .querySelector<HTMLElement>('.marking-menu-item')
-          ?.style.getPropertyValue('--contact-radius') ?? '',
-      );
-    expect(contactRadius(wideRing)).toBeGreaterThan(contactRadius(narrowRing));
+    const connectorContactRadius = (parent: HTMLElement): number => {
+      const width =
+        getItems(parent)[0]
+          ?.querySelector<HTMLElement>('.marking-menu-line')
+          ?.style.getPropertyValue('--solved-connector-contact-radius') ?? '';
+
+      return Number(width.slice(0, -2));
+    };
+
+    expect(connectorContactRadius(wideRing)).toBeGreaterThan(
+      connectorContactRadius(narrowRing),
+    );
   });
 });
