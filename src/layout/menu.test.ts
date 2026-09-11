@@ -142,9 +142,13 @@ describe('createMenu', () => {
     expect(root?.mode).toBe('open');
     expect(root?.querySelector('style')).not.toBeNull();
     expect(document.head.querySelectorAll('style')).toHaveLength(styles);
-    expect(root?.querySelector('[part="plate"]')).not.toBeNull();
+    expect(root?.querySelector('[part~="plate"]')).not.toBeNull();
     expect(root?.querySelector('[part="connector"]')).not.toBeNull();
-    expect(root?.querySelector('[part="label"]')).not.toBeNull();
+    expect(root?.querySelector('[part~="label"]')).not.toBeNull();
+    expect(root?.querySelector('.marking-menu-layout-probe')).toBeNull();
+    expect(
+      root?.querySelector('.marking-menu-label')?.getAttribute('part'),
+    ).toBe('plate label');
 
     menu.setActive('item-0-key');
     expect(root?.querySelector('[part~="plate--active"]')).not.toBeNull();
@@ -303,7 +307,7 @@ describe('createMenu', () => {
       expect(label?.style.getPropertyValue('--solved-top')).not.toBe('');
       expect(label?.style.getPropertyValue('--solved-bottom')).toBe('auto');
       expect(
-        connector?.style.getPropertyValue('--solved-connector-width'),
+        connector?.style.getPropertyValue('--solved-connector-contact-radius'),
       ).not.toBe('');
     }
   });
@@ -360,9 +364,9 @@ describe('createMenu', () => {
       const width =
         getItems(parent)[0]
           ?.querySelector<HTMLElement>('.marking-menu-line')
-          ?.style.getPropertyValue('--solved-connector-width') ?? '';
+          ?.style.getPropertyValue('--solved-connector-contact-radius') ?? '';
 
-      return Number(width.slice(5, width.indexOf('px')));
+      return Number(width.slice(0, -2));
     };
 
     expect(connectorContactRadius(wideRing)).toBeGreaterThan(

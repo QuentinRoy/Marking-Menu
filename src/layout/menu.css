@@ -1,4 +1,31 @@
 :host {
+  --item-width: 120px;
+  --default-ring-radius: var(--mm-ring-radius, 80px);
+  --default-plate-padding: var(--mm-plate-padding, 4px);
+  --default-plate-height: var(--mm-plate-height, 20px);
+  --default-plate-corner-radius: var(
+    --mm-plate-corner-radius,
+    calc(var(--default-plate-padding) * 2)
+  );
+  --default-plate-background: var(--mm-plate-background, #f2f2f2);
+  --default-plate-color: var(--mm-plate-color, #333333);
+  --default-plate-background-active: var(--mm-plate-background-active, #d9d9d9);
+  --default-plate-color-active: var(--mm-plate-color-active, #000);
+  --default-plate-font-size: var(--mm-plate-font-size, 20px);
+  --default-connector-thickness: var(--mm-connector-thickness, 4px);
+  --default-connector-color: var(
+    --mm-connector-color,
+    var(--default-plate-background)
+  );
+  --default-connector-color-active: var(
+    --mm-connector-color-active,
+    var(--default-plate-background-active)
+  );
+  --default-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 14px);
+  --default-plate-gap-vertical: var(--mm-plate-gap-vertical, 7px);
+  --default-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
+  --default-plate-gap-connector: var(--mm-plate-gap-connector, 3px);
+
   position: absolute;
   top: var(--center-y);
   left: var(--center-x);
@@ -10,11 +37,9 @@
   --angle: 0deg;
   --cosine: 1;
   --sine: 0;
-  --item-box-width: calc(
-    var(--item-width, 120px) + var(--mm-plate-padding, 4px) * 2
-  );
+  --item-box-width: calc(var(--item-width) + var(--default-plate-padding) * 2);
   --item-box-height: calc(
-    var(--mm-plate-height, 20px) + var(--mm-plate-padding, 4px) * 2
+    var(--default-plate-height) + var(--default-plate-padding) * 2
   );
 
   position: absolute;
@@ -26,51 +51,41 @@
   bottom: var(
     --solved-bottom,
     calc(
-      var(--sine) * var(--mm-ring-radius, 80px) +
+      var(--sine) * var(--default-ring-radius) +
         (min(1, max(-1, var(--sine) * 2)) - 1) * var(--item-box-height) / 2
     )
   );
   left: var(
     --solved-left,
     calc(
-      var(--cosine) * var(--mm-ring-radius, 80px) +
+      var(--cosine) * var(--default-ring-radius) +
         (min(1, max(-1, var(--cosine) * 2)) - 1) * var(--item-box-width) / 2
     )
   );
   top: var(--solved-top, auto);
-  border-radius: var(
-    --mm-plate-corner-radius,
-    calc(var(--mm-plate-padding, 4px) * 2)
-  );
-  background-color: var(--mm-plate-background, #f2f2f2);
-  padding: var(--mm-plate-padding, 4px);
-  width: var(--item-width, 120px);
-  height: var(--mm-plate-height, 20px);
+  border-radius: var(--default-plate-corner-radius);
+  background-color: var(--default-plate-background);
+  padding: var(--default-plate-padding);
+  width: var(--item-width);
+  height: var(--default-plate-height);
   overflow: hidden;
   vertical-align: middle;
   text-align: center;
   text-overflow: ellipsis;
-  line-height: var(--mm-plate-height, 20px);
-  color: var(--mm-plate-color, #333333);
-  font-size: var(--mm-plate-font-size, 20px);
+  line-height: var(--default-plate-height);
+  color: var(--default-plate-color);
+  font-size: var(--default-plate-font-size);
 }
 
 .marking-menu-line {
   position: absolute;
-  top: calc(var(--mm-connector-thickness, 4px) / -2);
-  background-color: var(
-    --mm-connector-color,
-    var(--mm-plate-background, #f2f2f2)
+  top: calc(var(--default-connector-thickness) / -2);
+  background-color: var(--default-connector-color);
+  width: calc(
+    var(--solved-connector-contact-radius, var(--default-ring-radius)) +
+      var(--default-plate-corner-radius) + var(--default-connector-thickness)
   );
-  width: var(
-    --solved-connector-width,
-    calc(
-      var(--mm-ring-radius, 80px) +
-        var(--mm-plate-corner-radius, calc(var(--mm-plate-padding, 4px) * 2)) +
-        var(--mm-connector-thickness, 4px)
-    )
-  );
-  height: var(--mm-connector-thickness, 4px);
+  height: var(--default-connector-thickness);
   transform-origin: center left;
   transform: rotate(var(--angle));
 }
@@ -80,16 +95,13 @@
 }
 
 .marking-menu-item.active .marking-menu-label {
-  background-color: var(--mm-plate-background-active, #d9d9d9);
-  color: var(--mm-plate-color-active, #000);
+  background-color: var(--default-plate-background-active);
+  color: var(--default-plate-color-active);
   font-weight: bolder;
 }
 
 .marking-menu-item.active .marking-menu-line {
-  background-color: var(
-    --mm-connector-color-active,
-    var(--mm-plate-background-active, #d9d9d9)
-  );
+  background-color: var(--default-connector-color-active);
 }
 
 .marking-menu-item.bottom-right-item .marking-menu-label {
@@ -116,21 +128,21 @@
 }
 
 .marking-menu-layout-probe--ring-radius {
-  width: var(--mm-ring-radius, 80px);
+  width: var(--default-ring-radius);
 }
 
 .marking-menu-layout-probe--plate-gap-horizontal {
-  width: var(--mm-plate-gap-horizontal, 14px);
+  width: var(--default-plate-gap-horizontal);
 }
 
 .marking-menu-layout-probe--plate-gap-vertical {
-  width: var(--mm-plate-gap-vertical, 7px);
+  width: var(--default-plate-gap-vertical);
 }
 
 .marking-menu-layout-probe--plate-gap-ring {
-  width: var(--mm-plate-gap-ring, 12px);
+  width: var(--default-plate-gap-ring);
 }
 
 .marking-menu-layout-probe--plate-gap-connector {
-  width: var(--mm-plate-gap-connector, 3px);
+  width: var(--default-plate-gap-connector);
 }

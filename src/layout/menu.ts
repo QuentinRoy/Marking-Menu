@@ -71,20 +71,30 @@ function getCornerClass(angle: number): string | undefined {
   return CORNER_ITEM_CLASSES[Math.floor(normalizedAngle / 90)];
 }
 
-type LayoutProbeName =
-  | 'ringRadius'
-  | 'plateGapHorizontal'
-  | 'plateGapVertical'
-  | 'plateGapRing'
-  | 'plateGapConnector';
-
-type LayoutProbes = Record<LayoutProbeName, HTMLElement>;
+type LayoutProbes = {
+  ringRadius: HTMLElement;
+  plateGapHorizontal: HTMLElement;
+  plateGapVertical: HTMLElement;
+  plateGapRing: HTMLElement;
+  plateGapConnector: HTMLElement;
+};
 
 type MenuDom = {
   main: HTMLDivElement;
   root: ShadowRoot;
   probes: LayoutProbes;
 };
+
+function appendLayoutProbe(
+  root: ShadowRoot,
+  doc: Document,
+  property: string,
+): HTMLElement {
+  const probe = doc.createElement('div');
+  probe.className = `marking-menu-layout-probe marking-menu-layout-probe--${property}`;
+  root.append(probe);
+  return probe;
+}
 
 const template = (
   { items, center }: { items: readonly MenuLayoutItem[]; center: Point },
@@ -99,25 +109,17 @@ const template = (
   style.textContent = menuStyles;
   root.append(style);
 
-  const probes = Object.fromEntries(
-    [
-      ['ringRadius', 'ring-radius'],
-      ['plateGapHorizontal', 'plate-gap-horizontal'],
-      ['plateGapVertical', 'plate-gap-vertical'],
-      ['plateGapRing', 'plate-gap-ring'],
-      ['plateGapConnector', 'plate-gap-connector'],
-    ].map(([name, property]) => {
-      const probe = doc.createElement('div');
-      probe.className = `marking-menu-layout-probe marking-menu-layout-probe--${property}`;
-      root.append(probe);
-      return [name, probe];
-    }),
-  ) as LayoutProbes;
+  const probes: LayoutProbes = {
+    ringRadius: appendLayoutProbe(root, doc, 'ring-radius'),
+    plateGapHorizontal: appendLayoutProbe(root, doc, 'plate-gap-horizontal'),
+    plateGapVertical: appendLayoutProbe(root, doc, 'plate-gap-vertical'),
+    plateGapRing: appendLayoutProbe(root, doc, 'plate-gap-ring'),
+    plateGapConnector: appendLayoutProbe(root, doc, 'plate-gap-connector'),
+  };
 
   for (const item of items) {
     const elt = doc.createElement('div');
     elt.className = 'marking-menu-item';
-    elt.setAttribute('part', 'plate');
     elt.dataset.itemId = item.key;
     elt.style.setProperty('--angle', `${item.angle}deg`);
     const cornerClass = getCornerClass(item.angle);
@@ -137,7 +139,7 @@ const template = (
 
     const labelElt = doc.createElement('div');
     labelElt.className = 'marking-menu-label';
-    labelElt.setAttribute('part', 'label');
+    labelElt.setAttribute('part', 'plate label');
     labelElt.textContent = item.label;
     elt.append(labelElt);
     root.append(elt);
@@ -187,7 +189,7 @@ function applySolvedLayout(
     // The probe's resolved width retains its `px` suffix.
     // eslint-disable-next-line unicorn/prefer-number-coercion
     Number.parseFloat(view.getComputedStyle(probe).width);
-  const result = solveLabelLayout({
+  const layout = {
     plates,
     ringRadius: readPixels(probes.ringRadius),
     clearances: {
@@ -196,7 +198,12 @@ function applySolvedLayout(
       plateToRing: readPixels(probes.plateGapRing),
       plateToConnector: readPixels(probes.plateGapConnector),
     },
-  });
+  };
+  for (const probe of Object.values(probes)) {
+    probe.remove();
+  }
+
+  const result = solveLabelLayout(layout);
   if (result.oversized) {
     return;
   }
@@ -215,30 +222,43 @@ function applySolvedLayout(
 
     const connector = at(connectorElements, index);
     connector.style.setProperty(
-      '--solved-connector-width',
-      `calc(${Math.hypot(...plate.connectorContact)}px + var(--mm-plate-corner-radius, calc(var(--mm-plate-padding, 4px) * 2)) + var(--mm-connector-thickness, 4px))`,
+      '--solved-connector-contact-radius',
+      `${Math.hypot(...plate.connectorContact)}px`,
     );
   }
 }
 
+function togglePart(
+  element: HTMLElement,
+  part: string,
+  isActive: boolean,
+): void {
+  if (element.part !== undefined) {
+    element.part.toggle(part, isActive);
+    return;
+  }
+
+  const parts = new Set(element.getAttribute('part')?.split(' '));
+  if (isActive) {
+    parts.add(part);
+  } else {
+    parts.delete(part);
+  }
+
+  element.setAttribute('part', [...parts].join(' '));
+}
+
 function setItemActive(item: HTMLElement, isActive: boolean): void {
   item.classList.toggle('active', isActive);
-  for (const element of [item, ...item.children]) {
-    const part = element.getAttribute('part');
-    if (part === null) {
-      continue;
-    }
-
-    const [basePart] = part.split(' ', 2);
-    if (basePart === undefined) {
-      continue;
-    }
-
-    element.setAttribute(
-      'part',
-      isActive ? `${basePart} ${basePart}--active` : basePart,
-    );
+  const label = item.querySelector<HTMLElement>('.marking-menu-label');
+  const connector = item.querySelector<HTMLElement>('.marking-menu-line');
+  if (label === null || connector === null) {
+    throw new Error('Menu item element is incomplete.');
   }
+
+  togglePart(label, 'plate--active', isActive);
+  togglePart(label, 'label--active', isActive);
+  togglePart(connector, 'connector--active', isActive);
 }
 
 /**
