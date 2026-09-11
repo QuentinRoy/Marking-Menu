@@ -105,6 +105,7 @@ function isPaintedBefore(node: Node, other: Node): boolean {
 
 export type RendererOptions = {
   readonly parent: HTMLElement;
+  readonly deadZoneRadius?: number | undefined;
   /**
   The color of the upper (current gesture) stroke.
   */
@@ -151,6 +152,7 @@ export type RendererOptions = {
 
 export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   parent,
+  deadZoneRadius = 40,
   strokeColor = '#000',
   strokeWidth = 4,
   strokeStartPointRadius = 8,
@@ -262,6 +264,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
             model: view.menu.model,
             menu: createMenu({
               parent,
+              deadZoneRadius,
               // `ModelMenus<M>`'s `items` are generically erased to
               // `AnyModelNode` inside this function body, the same reason
               // `recognize-mm-stroke.ts`'s `walkModelLoose` needs a cast:

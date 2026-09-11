@@ -21,6 +21,11 @@
     --mm-connector-color-active,
     var(--default-plate-background-active)
   );
+  --default-wedge-fill: var(--mm-wedge-fill, var(--default-plate-background));
+  --default-wedge-fill-active: var(
+    --mm-wedge-fill-active,
+    var(--default-plate-background-active)
+  );
   --default-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 14px);
   --default-plate-gap-vertical: var(--mm-plate-gap-vertical, 7px);
   --default-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
@@ -44,6 +49,19 @@
 
   position: absolute;
   z-index: 0;
+}
+
+.marking-menu-ring {
+  position: absolute;
+  overflow: visible;
+}
+
+.marking-menu-wedge {
+  fill: var(--default-wedge-fill);
+}
+
+.marking-menu-wedge--active {
+  fill: var(--default-wedge-fill-active);
 }
 
 .marking-menu-label {
@@ -129,6 +147,14 @@
 
 .marking-menu-layout-probe--ring-radius {
   width: var(--default-ring-radius);
+}
+
+.marking-menu-layout-probe--wedge-gap {
+  width: var(--mm-wedge-gap, 4px);
+}
+
+.marking-menu-layout-probe--wedge-corner-radius {
+  width: var(--mm-wedge-corner-radius, 4px);
 }
 
 .marking-menu-layout-probe--plate-gap-horizontal {

@@ -93,6 +93,26 @@ const pathPoints = (context: MockContext): unknown[] => {
 };
 
 describe('createRenderer', () => {
+  it('uses the selection dead zone as the ring inner radius', () => {
+    const parent = document.createElement('div');
+    const renderer = createRenderer<typeof model>({
+      parent,
+      deadZoneRadius: 60,
+    });
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model, center: [0, 0], activeKey: null },
+      upperStroke: null,
+      lowerStroke: null,
+    });
+
+    const wedge = parent
+      .querySelector('.marking-menu')
+      ?.shadowRoot?.querySelector('.marking-menu-wedge');
+    expect(wedge?.getAttribute('d')).toContain('A 60 60');
+  });
+
   it('skips the redraw when the upper stroke is reference-equal to the previous frame', () => {
     using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
