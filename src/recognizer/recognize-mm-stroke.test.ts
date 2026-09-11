@@ -1,11 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import angles from 'angles';
 import { parse as csvParseCallback } from 'csv-parse';
 import { type Mock } from 'vitest';
 import type { ModelItem } from '../types.js';
-import type { Point } from '../utils.js';
+import { deltaAngle, type Point } from '../utils.js';
 import {
   analyzeMarkingMenuStroke,
   divideLongestSegment,
@@ -271,7 +270,7 @@ describe('recognizeMarkingMenuStroke', () => {
       );
       // Make sure the angle is close to the expected stroke angle (mock model dynamically)
       expect(
-        angles.distance(selection?.requestedAngle ?? NaN, strokeAngle) <
+        Math.abs(deltaAngle(selection?.requestedAngle ?? NaN, strokeAngle)) <
           precision,
       ).toBe(true);
     };
@@ -304,19 +303,21 @@ describe('recognizeMarkingMenuStroke', () => {
       );
       // Make sure the angle is close to the expected stroke angle (mock model dynamically).
       expect(
-        angles.distance(selection?.requestedAngle ?? NaN, strokeAngles[2]) <
-          precision,
-      ).toBe(true);
-      expect(
-        angles.distance(
-          selection?.parent?.requestedAngle ?? NaN,
-          strokeAngles[1],
+        Math.abs(
+          deltaAngle(selection?.requestedAngle ?? NaN, strokeAngles[2]),
         ) < precision,
       ).toBe(true);
       expect(
-        angles.distance(
-          selection?.parent?.parent?.requestedAngle ?? NaN,
-          strokeAngles[0],
+        Math.abs(
+          deltaAngle(selection?.parent?.requestedAngle ?? NaN, strokeAngles[1]),
+        ) < precision,
+      ).toBe(true);
+      expect(
+        Math.abs(
+          deltaAngle(
+            selection?.parent?.parent?.requestedAngle ?? NaN,
+            strokeAngles[0],
+          ),
         ) < precision,
       ).toBe(true);
       expect(selection?.parent?.parent?.parent).toBe(model);
@@ -377,11 +378,11 @@ describe('recognizeMarkingMenuStroke', () => {
     });
     // The selection is the depth 2 menu: it is returned as is by requireMenu.
     expect(selection?.isLeaf).toBe(false);
-    expect(angles.distance(selection?.requestedAngle ?? NaN, 90) < 15).toBe(
-      true,
-    );
     expect(
-      angles.distance(selection?.parent?.requestedAngle ?? NaN, 90) < 15,
+      Math.abs(deltaAngle(selection?.requestedAngle ?? NaN, 90)) < 15,
+    ).toBe(true);
+    expect(
+      Math.abs(deltaAngle(selection?.parent?.requestedAngle ?? NaN, 90)) < 15,
     ).toBe(true);
     expect(selection?.parent?.parent).toBe(model);
   });
