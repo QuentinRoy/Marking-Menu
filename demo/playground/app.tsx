@@ -280,7 +280,7 @@ export function App() {
                   }}
                   className="size-3.5 [&_svg]:size-3"
                 />
-                Breakdown
+                Recognizer breakdown
               </label>
               {showBreakdown && <Legend />}
             </div>
