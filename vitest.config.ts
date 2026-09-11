@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['./vitest.setup.ts'],
     // Test files are being migrated from .js to .ts; match both until the
     // migration completes. The playground page (see `demo/playground`) has
     // tests of its own; coverage below stays scoped to `src`, so demo code

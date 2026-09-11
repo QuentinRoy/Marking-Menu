@@ -7,6 +7,7 @@
   "include": [
     "src/**/*.test.ts",
     "src/**/*.test-d.ts",
-    "src/**/__fixtures__/**/*"
+    "src/**/__fixtures__/**/*",
+    "vitest.setup.ts"
   ]
 }
