@@ -105,6 +105,9 @@ test('label plates fit text and honor a fixed width', async ({ page }) => {
 });
 
 test('an active label grows around its resting position', async ({ page }) => {
+  await page.addStyleTag({
+    content: '.marking-menu::part(label--active) { letter-spacing: 2px; }',
+  });
   const center = await surfaceCenter(page);
   await pressAt(page, center);
   await waitForMenuOpen(page);
