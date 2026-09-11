@@ -61,15 +61,25 @@ test('label plates size to their content within the configured bounds', async ({
 
   const menu = page.locator('.marking-menu');
   const defaultSize = await menu.evaluate((host) => {
-    const plate = host.shadowRoot?.querySelector<HTMLElement>(
-      '.marking-menu-plate',
-    );
+    const root = host.shadowRoot;
+    const plate = root?.querySelector<HTMLElement>('.marking-menu-plate');
     if (plate === null || plate === undefined) {
       throw new Error('Menu plate is missing.');
     }
 
     const style = getComputedStyle(plate);
     return {
+      cornerRadii: [
+        ...(root?.querySelectorAll<HTMLElement>('.marking-menu-plate') ?? []),
+      ].map((item) => {
+        const plateStyle = getComputedStyle(item);
+        return [
+          plateStyle.borderTopLeftRadius,
+          plateStyle.borderTopRightRadius,
+          plateStyle.borderBottomRightRadius,
+          plateStyle.borderBottomLeftRadius,
+        ];
+      }),
       maxWidth: style.maxWidth,
       minWidth: style.minWidth,
       transform: style.transform,
@@ -81,6 +91,11 @@ test('label plates size to their content within the configured bounds', async ({
     minWidth: '0px',
     transform: 'none',
   });
+  expect(
+    defaultSize.cornerRadii.every((radii) =>
+      radii.every((radius) => radius === '8px'),
+    ),
+  ).toBe(true);
   expect(defaultSize.width).toBeLessThan(120);
 
   const clampedSize = await menu.evaluate((host) => {

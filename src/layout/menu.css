@@ -135,22 +135,6 @@
   background-color: var(--default-outer-connector-color-active);
 }
 
-.marking-menu-item.bottom-right-item .marking-menu-plate {
-  border-top-left-radius: 0;
-}
-
-.marking-menu-item.bottom-left-item .marking-menu-plate {
-  border-top-right-radius: 0;
-}
-
-.marking-menu-item.top-left-item .marking-menu-plate {
-  border-bottom-right-radius: 0;
-}
-
-.marking-menu-item.top-right-item .marking-menu-plate {
-  border-bottom-left-radius: 0;
-}
-
 .marking-menu-layout-probe {
   position: absolute;
   visibility: hidden;
