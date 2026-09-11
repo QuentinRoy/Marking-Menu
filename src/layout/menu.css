@@ -102,22 +102,22 @@
   top: calc(var(--default-connector-thickness) / -2);
   height: var(--default-connector-thickness);
   transform-origin: center left;
-  transform: rotate(var(--angle));
 }
 
 .marking-menu-inner-connector {
   background-color: var(--default-inner-connector-color);
-  width: var(--default-ring-radius);
+  width: var(--inner-connector-length);
+  transform: rotate(var(--angle));
 }
 
 .marking-menu-outer-connector {
-  left: var(--default-ring-radius);
   background-color: var(--default-outer-connector-color);
   width: calc(
     var(--solved-connector-contact-radius, var(--default-ring-radius)) +
       var(--default-plate-corner-radius) + var(--default-connector-thickness) -
       var(--default-ring-radius)
   );
+  transform: rotate(var(--angle)) translateX(var(--default-ring-radius));
 }
 
 .marking-menu-item.active {

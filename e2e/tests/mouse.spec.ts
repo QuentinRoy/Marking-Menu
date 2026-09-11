@@ -92,6 +92,10 @@ test('novice mode: wedges and connector parts follow the menu directions', async
       down: wedge(2),
       innerColor: getComputedStyle(innerConnector).backgroundColor,
       innerPart: innerConnector.getAttribute('part'),
+      innerWidth: innerConnector.getBoundingClientRect().width,
+      outerOffset:
+        outerConnector.getBoundingClientRect().x -
+        innerConnector.getBoundingClientRect().x,
       outerPart: outerConnector.getAttribute('part'),
       up: wedge(6),
     };
@@ -101,6 +105,8 @@ test('novice mode: wedges and connector parts follow the menu directions', async
   expect(geometry.up.y + geometry.up.height / 2).toBeLessThan(0);
   expect(geometry.innerColor).toBe('rgba(0, 0, 0, 0)');
   expect(geometry.innerPart).toBe('inner-connector');
+  expect(geometry.innerWidth).toBe(40);
+  expect(geometry.outerOffset).toBe(80);
   expect(geometry.outerPart).toBe('outer-connector');
 
   await moveTo(page, offset(center, TOP_LEVEL_ITEMS.up.angle, SELECT_RADIUS));

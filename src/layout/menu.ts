@@ -533,6 +533,7 @@ export function createMenu({
 }): Menu {
   const menuDom = template({ items: model.items, center }, doc);
   const { main, root } = menuDom;
+  main.style.setProperty('--inner-connector-length', `${deadZoneRadius}px`);
   // Attach before measuring: a detached element's `offsetWidth`/`offsetHeight`
   // are always 0. Everything from here through `applySolvedLayout` runs
   // synchronously in this one call, so the unsolved layout is never
