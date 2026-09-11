@@ -1,5 +1,4 @@
 :host {
-  --item-width: 120px;
   --default-ring-radius: var(--mm-ring-radius, 80px);
   --default-plate-padding: var(--mm-plate-padding, 4px);
   --default-plate-height: var(--mm-plate-height, 20px);
@@ -43,10 +42,6 @@
   --angle: 0deg;
   --cosine: 1;
   --sine: 0;
-  --item-box-width: calc(var(--item-width) + var(--default-plate-padding) * 2);
-  --item-box-height: calc(
-    var(--default-plate-height) + var(--default-plate-padding) * 2
-  );
 
   position: absolute;
   z-index: 0;
@@ -65,35 +60,35 @@
   fill: var(--default-wedge-fill-active);
 }
 
-.marking-menu-label {
+.marking-menu-plate {
   position: absolute;
-  bottom: var(
-    --solved-bottom,
-    calc(
-      var(--sine) * var(--default-ring-radius) +
-        (min(1, max(-1, var(--sine) * 2)) - 1) * var(--item-box-height) / 2
-    )
-  );
-  left: var(
-    --solved-left,
-    calc(
-      var(--cosine) * var(--default-ring-radius) +
-        (min(1, max(-1, var(--cosine) * 2)) - 1) * var(--item-box-width) / 2
-    )
-  );
+  bottom: var(--solved-bottom, calc(var(--sine) * var(--default-ring-radius)));
+  left: var(--solved-left, calc(var(--cosine) * var(--default-ring-radius)));
   top: var(--solved-top, auto);
+  transform: translate(
+    calc((min(1, max(-1, var(--cosine) * 2)) - 1) * 50%),
+    calc((1 - min(1, max(-1, var(--sine) * 2))) * 50%)
+  );
   border-radius: var(--default-plate-corner-radius);
   background-color: var(--default-plate-background);
   padding: var(--default-plate-padding);
-  width: var(--item-width);
+  width: fit-content;
+  min-width: var(--mm-label-min-width, 0);
+  max-width: var(--mm-label-max-width, none);
   height: var(--default-plate-height);
   overflow: hidden;
   vertical-align: middle;
   text-align: center;
-  text-overflow: ellipsis;
-  line-height: var(--default-plate-height);
   color: var(--default-plate-color);
   font-size: var(--default-plate-font-size);
+}
+
+.marking-menu-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--default-plate-height);
 }
 
 .marking-menu-inner-connector,
@@ -124,9 +119,12 @@
   z-index: 1;
 }
 
-.marking-menu-item.active .marking-menu-label {
+.marking-menu-item.active .marking-menu-plate {
   background-color: var(--default-plate-background-active);
   color: var(--default-plate-color-active);
+}
+
+.marking-menu-item.active .marking-menu-label {
   font-weight: bolder;
 }
 
@@ -134,19 +132,19 @@
   background-color: var(--default-outer-connector-color-active);
 }
 
-.marking-menu-item.bottom-right-item .marking-menu-label {
+.marking-menu-item.bottom-right-item .marking-menu-plate {
   border-top-left-radius: 0;
 }
 
-.marking-menu-item.bottom-left-item .marking-menu-label {
+.marking-menu-item.bottom-left-item .marking-menu-plate {
   border-top-right-radius: 0;
 }
 
-.marking-menu-item.top-left-item .marking-menu-label {
+.marking-menu-item.top-left-item .marking-menu-plate {
   border-bottom-right-radius: 0;
 }
 
-.marking-menu-item.top-right-item .marking-menu-label {
+.marking-menu-item.top-right-item .marking-menu-plate {
   border-bottom-left-radius: 0;
 }
 

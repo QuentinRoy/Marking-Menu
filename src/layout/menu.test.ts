@@ -154,14 +154,17 @@ describe('createMenu', () => {
     expect(root?.mode).toBe('open');
     expect(root?.querySelector('style')).not.toBeNull();
     expect(document.head.querySelectorAll('style')).toHaveLength(styles);
-    expect(root?.querySelector('[part~="plate"]')).not.toBeNull();
+    expect(root?.querySelector('[part="plate"]')).not.toBeNull();
     expect(root?.querySelector('[part="inner-connector"]')).not.toBeNull();
     expect(root?.querySelector('[part="outer-connector"]')).not.toBeNull();
-    expect(root?.querySelector('[part~="label"]')).not.toBeNull();
+    expect(root?.querySelector('[part="label"]')).not.toBeNull();
     expect(root?.querySelector('.marking-menu-layout-probe')).toBeNull();
     expect(
+      root?.querySelector('.marking-menu-plate')?.getAttribute('part'),
+    ).toBe('plate');
+    expect(
       root?.querySelector('.marking-menu-label')?.getAttribute('part'),
-    ).toBe('plate label');
+    ).toBe('label');
 
     menu.setActive('item-0-key');
     expect(root?.querySelector('[part~="plate--active"]')).not.toBeNull();
@@ -449,13 +452,13 @@ describe('createMenu', () => {
     const items = getItems(div);
     expect(items).toHaveLength(8);
     for (const item of items) {
-      const label = item.querySelector<HTMLElement>('.marking-menu-label');
+      const plate = item.querySelector<HTMLElement>('.marking-menu-plate');
       const connector = item.querySelector<HTMLElement>(
         '.marking-menu-outer-connector',
       );
-      expect(label?.style.getPropertyValue('--solved-left')).not.toBe('');
-      expect(label?.style.getPropertyValue('--solved-top')).not.toBe('');
-      expect(label?.style.getPropertyValue('--solved-bottom')).toBe('auto');
+      expect(plate?.style.getPropertyValue('--solved-left')).not.toBe('');
+      expect(plate?.style.getPropertyValue('--solved-top')).not.toBe('');
+      expect(plate?.style.getPropertyValue('--solved-bottom')).toBe('auto');
       expect(
         connector?.style.getPropertyValue('--solved-connector-contact-radius'),
       ).not.toBe('');
@@ -484,7 +487,7 @@ describe('createMenu', () => {
     for (const item of items) {
       expect(
         item
-          .querySelector<HTMLElement>('.marking-menu-label')
+          .querySelector<HTMLElement>('.marking-menu-plate')
           ?.style.getPropertyValue('--solved-left'),
       ).toBe('');
     }

@@ -145,11 +145,15 @@ const template = (
     outerConnector.setAttribute('part', 'outer-connector');
     elt.append(outerConnector);
 
+    const plateElt = doc.createElement('div');
+    plateElt.className = 'marking-menu-plate';
+    plateElt.setAttribute('part', 'plate');
     const labelElt = doc.createElement('div');
     labelElt.className = 'marking-menu-label';
-    labelElt.setAttribute('part', 'plate label');
+    labelElt.setAttribute('part', 'label');
     labelElt.textContent = item.label;
-    elt.append(labelElt);
+    plateElt.append(labelElt);
+    elt.append(plateElt);
     root.append(elt);
   }
 
@@ -400,13 +404,13 @@ function applySolvedLayout(
   const itemElements = [
     ...root.querySelectorAll<HTMLElement>('.marking-menu-item'),
   ];
-  const labelElements = itemElements.map((element) => {
-    const label = element.querySelector<HTMLElement>('.marking-menu-label');
-    if (label === null) {
-      throw new Error('Menu item element is missing its label.');
+  const plateElements = itemElements.map((element) => {
+    const plate = element.querySelector<HTMLElement>('.marking-menu-plate');
+    if (plate === null) {
+      throw new Error('Menu item element is missing its plate.');
     }
 
-    return label;
+    return plate;
   });
   const connectorElements = itemElements.map((element) => {
     const connector = element.querySelector<HTMLElement>(
@@ -420,8 +424,8 @@ function applySolvedLayout(
   });
   const plates = items.map((item, index) => ({
     angle: item.angle,
-    width: at(labelElements, index).offsetWidth,
-    height: at(labelElements, index).offsetHeight,
+    width: at(plateElements, index).offsetWidth,
+    height: at(plateElements, index).offsetHeight,
   }));
 
   const layout = {
@@ -444,16 +448,16 @@ function applySolvedLayout(
   }
 
   for (const [index, plate] of result.plates.entries()) {
-    const label = at(labelElements, index);
-    label.style.setProperty(
+    const plateElement = at(plateElements, index);
+    plateElement.style.setProperty(
       '--solved-left',
-      `calc(${plate.x}px - var(--item-box-width) / 2)`,
+      `calc(${plate.x}px - ${plateElement.offsetWidth}px / 2)`,
     );
-    label.style.setProperty(
+    plateElement.style.setProperty(
       '--solved-top',
-      `calc(${plate.y}px - var(--item-box-height) / 2)`,
+      `calc(${plate.y}px - ${plateElement.offsetHeight}px / 2)`,
     );
-    label.style.setProperty('--solved-bottom', 'auto');
+    plateElement.style.setProperty('--solved-bottom', 'auto');
 
     const connector = at(connectorElements, index);
     connector.style.setProperty(
@@ -477,6 +481,7 @@ function setItemActive(
   isActive: boolean,
 ): void {
   item.classList.toggle('active', isActive);
+  const plate = item.querySelector<HTMLElement>('.marking-menu-plate');
   const label = item.querySelector<HTMLElement>('.marking-menu-label');
   const innerConnector = item.querySelector<HTMLElement>(
     '.marking-menu-inner-connector',
@@ -484,11 +489,16 @@ function setItemActive(
   const outerConnector = item.querySelector<HTMLElement>(
     '.marking-menu-outer-connector',
   );
-  if (label === null || innerConnector === null || outerConnector === null) {
+  if (
+    plate === null ||
+    label === null ||
+    innerConnector === null ||
+    outerConnector === null
+  ) {
     throw new Error('Menu item element is incomplete.');
   }
 
-  togglePart(label, 'plate--active', isActive);
+  togglePart(plate, 'plate--active', isActive);
   togglePart(label, 'label--active', isActive);
   togglePart(innerConnector, 'inner-connector--active', isActive);
   togglePart(outerConnector, 'outer-connector--active', isActive);

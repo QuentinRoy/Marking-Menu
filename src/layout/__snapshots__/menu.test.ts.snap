@@ -43,10 +43,15 @@ exports[`createMenu > can be removed 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
@@ -63,10 +68,15 @@ exports[`createMenu > can be removed 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
@@ -83,10 +93,15 @@ exports[`createMenu > can be removed 1`] = `
           part="outer-connector outer-connector--active"
         />
         <div
-          class="marking-menu-label"
-          part="plate label plate--active label--active"
+          class="marking-menu-plate"
+          part="plate plate--active"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label label--active"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
@@ -103,10 +118,15 @@ exports[`createMenu > can be removed 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
   </div>
@@ -158,10 +178,15 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
@@ -178,10 +203,15 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
@@ -198,10 +228,15 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
@@ -218,10 +253,15 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
       <div
@@ -238,10 +278,15 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-4-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-4-name
+          </div>
         </div>
       </div>
       <div
@@ -258,10 +303,15 @@ exports[`createMenu > renders 1`] = `
           part="outer-connector outer-connector--active"
         />
         <div
-          class="marking-menu-label"
-          part="plate label plate--active label--active"
+          class="marking-menu-plate"
+          part="plate plate--active"
         >
-          item-5-name
+          <div
+            class="marking-menu-label"
+            part="label label--active"
+          >
+            item-5-name
+          </div>
         </div>
       </div>
   </div>
@@ -311,10 +361,15 @@ exports[`createMenu > renders without active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
@@ -331,10 +386,15 @@ exports[`createMenu > renders without active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
@@ -351,10 +411,15 @@ exports[`createMenu > renders without active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
@@ -371,10 +436,15 @@ exports[`createMenu > renders without active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
   </div>
@@ -424,10 +494,15 @@ exports[`createMenu > update the active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
@@ -444,10 +519,15 @@ exports[`createMenu > update the active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
@@ -464,10 +544,15 @@ exports[`createMenu > update the active element 1`] = `
           part="outer-connector outer-connector--active"
         />
         <div
-          class="marking-menu-label"
-          part="plate label plate--active label--active"
+          class="marking-menu-plate"
+          part="plate plate--active"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label label--active"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
@@ -484,10 +569,15 @@ exports[`createMenu > update the active element 1`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
   </div>
@@ -537,10 +627,15 @@ exports[`createMenu > update the active element 2`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-0-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-0-name
+          </div>
         </div>
       </div>
       <div
@@ -557,10 +652,15 @@ exports[`createMenu > update the active element 2`] = `
           part="outer-connector outer-connector--active"
         />
         <div
-          class="marking-menu-label"
-          part="plate label plate--active label--active"
+          class="marking-menu-plate"
+          part="plate plate--active"
         >
-          item-1-name
+          <div
+            class="marking-menu-label"
+            part="label label--active"
+          >
+            item-1-name
+          </div>
         </div>
       </div>
       <div
@@ -577,10 +677,15 @@ exports[`createMenu > update the active element 2`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-2-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-2-name
+          </div>
         </div>
       </div>
       <div
@@ -597,10 +702,15 @@ exports[`createMenu > update the active element 2`] = `
           part="outer-connector"
         />
         <div
-          class="marking-menu-label"
-          part="plate label"
+          class="marking-menu-plate"
+          part="plate"
         >
-          item-3-name
+          <div
+            class="marking-menu-label"
+            part="label"
+          >
+            item-3-name
+          </div>
         </div>
       </div>
   </div>

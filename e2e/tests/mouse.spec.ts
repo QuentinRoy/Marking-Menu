@@ -52,6 +52,73 @@ test('novice mode: dwelling opens the menu, lays out every item, and a release s
   ).toBe(true);
 });
 
+test('label plates size to their content within the configured bounds', async ({
+  page,
+}) => {
+  const center = await surfaceCenter(page);
+  await pressAt(page, center);
+  await waitForMenuOpen(page);
+
+  const menu = page.locator('.marking-menu');
+  const defaultSize = await menu.evaluate((host) => {
+    const plate = host.shadowRoot?.querySelector<HTMLElement>(
+      '.marking-menu-plate',
+    );
+    if (plate === null || plate === undefined) {
+      throw new Error('Menu plate is missing.');
+    }
+
+    const style = getComputedStyle(plate);
+    return {
+      maxWidth: style.maxWidth,
+      minWidth: style.minWidth,
+      width: plate.getBoundingClientRect().width,
+    };
+  });
+  expect(defaultSize).toMatchObject({ maxWidth: 'none', minWidth: '0px' });
+  expect(defaultSize.width).toBeLessThan(120);
+
+  const clampedSize = await menu.evaluate((host) => {
+    host.style.setProperty('--mm-label-min-width', '120px');
+    host.style.setProperty('--mm-label-max-width', '120px');
+    const plate = host.shadowRoot?.querySelector<HTMLElement>(
+      '.marking-menu-plate',
+    );
+    const label = host.shadowRoot?.querySelector<HTMLElement>(
+      '.marking-menu-label',
+    );
+    if (
+      plate === null ||
+      plate === undefined ||
+      label === null ||
+      label === undefined
+    ) {
+      throw new Error('Menu plate is incomplete.');
+    }
+
+    label.textContent = 'A label longer than the configured width';
+    return {
+      labelClientWidth: label.clientWidth,
+      labelScrollWidth: label.scrollWidth,
+      overflow: getComputedStyle(label).overflow,
+      textOverflow: getComputedStyle(label).textOverflow,
+      whiteSpace: getComputedStyle(label).whiteSpace,
+      width: plate.getBoundingClientRect().width,
+    };
+  });
+  expect(clampedSize.width).toBe(128);
+  expect(clampedSize.labelScrollWidth).toBeGreaterThan(
+    clampedSize.labelClientWidth,
+  );
+  expect(clampedSize).toMatchObject({
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  });
+
+  await releaseAt(page);
+});
+
 test('novice mode: wedges and connector parts follow the menu directions', async ({
   page,
 }) => {
