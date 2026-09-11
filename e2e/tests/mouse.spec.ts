@@ -73,6 +73,7 @@ test('novice mode: wedges and connector parts follow the menu directions', async
       const { height, y } = path.getBBox();
       return { height, y };
     };
+
     const innerConnector = root?.querySelector<HTMLElement>(
       '.marking-menu-inner-connector',
     );

@@ -385,6 +385,12 @@ type Move = {
   readonly quality: Quality;
 };
 
+type MoveSearch = {
+  readonly item: number;
+  readonly step: number;
+  readonly best: Quality;
+};
+
 /**
 Try nudging plate `item` inward or sideways by `step`; the best resulting layout that improves on `best`, or `null`.
 */
@@ -392,9 +398,7 @@ function bestMoveFor(
   input: LayoutInput,
   prepared: PreparedInput,
   plates: readonly Candidate[],
-  item: number,
-  step: number,
-  best: Quality,
+  { item, step, best }: MoveSearch,
 ): Move | null {
   const plate = at(plates, item);
   const offsets = [
@@ -437,7 +441,11 @@ function compact(
     while (isImproved) {
       isImproved = false;
       for (const item of plates.keys()) {
-        const found = bestMoveFor(input, prepared, plates, item, step, best);
+        const found = bestMoveFor(input, prepared, plates, {
+          item,
+          step,
+          best,
+        });
         if (found !== null) {
           plates = found.plates;
           best = found.quality;

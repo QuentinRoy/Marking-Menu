@@ -48,15 +48,21 @@ const isPointOnBoxBoundary = (
   return isOnVertical || isOnHorizontal;
 };
 
-function doesSegmentHitBox(
-  from: Point,
-  to: Point,
-  center: Point,
-  halfWidth: number,
-  halfHeight: number,
-): boolean {
-  const min: Point = [center[0] - halfWidth, center[1] - halfHeight];
-  const max: Point = [center[0] + halfWidth, center[1] + halfHeight];
+type Box = {
+  readonly center: Point;
+  readonly halfWidth: number;
+  readonly halfHeight: number;
+};
+
+function doesSegmentHitBox(from: Point, to: Point, box: Box): boolean {
+  const min: Point = [
+    box.center[0] - box.halfWidth,
+    box.center[1] - box.halfHeight,
+  ];
+  const max: Point = [
+    box.center[0] + box.halfWidth,
+    box.center[1] + box.halfHeight,
+  ];
   const delta: Point = [to[0] - from[0], to[1] - from[1]];
   let enter = 0;
   let exit = 1;
@@ -194,25 +200,21 @@ export function validateLabelLayout(
 
       const margin = input.clearances.plateToConnector;
       if (
-        doesSegmentHitBox(
-          start(input, i),
-          first.connectorContact,
-          [second.x, second.y],
-          b.width / 2 + margin,
-          b.height / 2 + margin,
-        )
+        doesSegmentHitBox(start(input, i), first.connectorContact, {
+          center: [second.x, second.y],
+          halfWidth: b.width / 2 + margin,
+          halfHeight: b.height / 2 + margin,
+        })
       ) {
         failures.push(`connector ${i} interferes with plate ${j}`);
       }
 
       if (
-        doesSegmentHitBox(
-          start(input, j),
-          second.connectorContact,
-          [first.x, first.y],
-          a.width / 2 + margin,
-          a.height / 2 + margin,
-        )
+        doesSegmentHitBox(start(input, j), second.connectorContact, {
+          center: [first.x, first.y],
+          halfWidth: a.width / 2 + margin,
+          halfHeight: a.height / 2 + margin,
+        })
       ) {
         failures.push(`connector ${j} interferes with plate ${i}`);
       }
