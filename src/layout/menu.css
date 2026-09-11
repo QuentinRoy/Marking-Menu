@@ -22,6 +22,10 @@
     --mm-outer-connector-color,
     var(--default-plate-background-active)
   );
+  --default-connector-start-radius: var(
+    --mm-connector-start-radius,
+    var(--default-ring-radius)
+  );
   --default-wedge-fill: var(--mm-wedge-fill, var(--default-plate-background));
   --default-wedge-fill-active: var(
     --mm-wedge-fill-active,
@@ -113,11 +117,15 @@
 .marking-menu-outer-connector {
   background-color: var(--default-outer-connector-color);
   width: calc(
-    var(--solved-connector-contact-radius, var(--default-ring-radius)) +
-      var(--default-plate-corner-radius) + var(--default-connector-thickness) -
-      var(--default-ring-radius)
+    max(
+        0px,
+        var(--solved-connector-contact-radius, var(--default-ring-radius)) -
+          var(--default-connector-start-radius)
+      ) +
+      var(--default-plate-corner-radius) + var(--default-connector-thickness)
   );
-  transform: rotate(var(--angle)) translateX(var(--default-ring-radius));
+  transform: rotate(var(--angle))
+    translateX(var(--default-connector-start-radius));
 }
 
 .marking-menu-item.active {

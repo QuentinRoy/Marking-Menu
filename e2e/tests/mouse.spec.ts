@@ -124,8 +124,9 @@ test('novice mode: wedges and connector parts follow the menu directions', async
   await menu.evaluate((host) => {
     host.style.setProperty('--mm-inner-connector-color', 'rgb(1, 2, 3)');
     host.style.setProperty('--mm-outer-connector-color', 'rgb(4, 5, 6)');
+    host.style.setProperty('--mm-connector-start-radius', '0px');
   });
-  const colors = await menu.evaluate((host) => {
+  const connectorAtCenter = await menu.evaluate((host) => {
     const root = host.shadowRoot;
     const innerConnector = root?.querySelector<HTMLElement>(
       '.marking-menu-inner-connector',
@@ -145,9 +146,35 @@ test('novice mode: wedges and connector parts follow the menu directions', async
     return {
       inner: getComputedStyle(innerConnector).backgroundColor,
       outer: getComputedStyle(outerConnector).backgroundColor,
+      activePart: root
+        ?.querySelector('[part~="outer-connector--active"]')
+        ?.getAttribute('part'),
+      outerOffset:
+        outerConnector.getBoundingClientRect().x -
+        innerConnector.getBoundingClientRect().x,
     };
   });
-  expect(colors).toEqual({ inner: 'rgb(1, 2, 3)', outer: 'rgb(4, 5, 6)' });
+  expect(connectorAtCenter).toEqual({
+    activePart: 'outer-connector outer-connector--active',
+    inner: 'rgb(1, 2, 3)',
+    outer: 'rgb(4, 5, 6)',
+    outerOffset: 0,
+  });
+
+  await menu.evaluate((host) => {
+    host.style.setProperty('--mm-connector-start-radius', '9999px');
+  });
+  const clampedWidth = await menu.evaluate((host) => {
+    const connector = host.shadowRoot?.querySelector<HTMLElement>(
+      '.marking-menu-outer-connector',
+    );
+    if (connector === null || connector === undefined) {
+      throw new Error('Menu connector is missing.');
+    }
+
+    return connector.getBoundingClientRect().width;
+  });
+  expect(clampedWidth).toBe(12);
 
   await releaseAt(page);
 });
