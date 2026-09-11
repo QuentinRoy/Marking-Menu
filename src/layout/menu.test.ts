@@ -155,7 +155,8 @@ describe('createMenu', () => {
     expect(root?.querySelector('style')).not.toBeNull();
     expect(document.head.querySelectorAll('style')).toHaveLength(styles);
     expect(root?.querySelector('[part~="plate"]')).not.toBeNull();
-    expect(root?.querySelector('[part="connector"]')).not.toBeNull();
+    expect(root?.querySelector('[part="inner-connector"]')).not.toBeNull();
+    expect(root?.querySelector('[part="outer-connector"]')).not.toBeNull();
     expect(root?.querySelector('[part~="label"]')).not.toBeNull();
     expect(root?.querySelector('.marking-menu-layout-probe')).toBeNull();
     expect(
@@ -164,7 +165,12 @@ describe('createMenu', () => {
 
     menu.setActive('item-0-key');
     expect(root?.querySelector('[part~="plate--active"]')).not.toBeNull();
-    expect(root?.querySelector('[part~="connector--active"]')).not.toBeNull();
+    expect(
+      root?.querySelector('[part~="inner-connector--active"]'),
+    ).not.toBeNull();
+    expect(
+      root?.querySelector('[part~="outer-connector--active"]'),
+    ).not.toBeNull();
     expect(root?.querySelector('[part~="label--active"]')).not.toBeNull();
   });
 
@@ -207,11 +213,37 @@ describe('createMenu', () => {
       getWedges(div).every((wedge) => {
         const path = wedge.getAttribute('d');
         return (
-          path?.includes('A 40 40 0 0 0') === true &&
-          path.includes('A 80 80 0 0 1')
+          path?.includes('A 40 40 0 0 1') === true &&
+          path.includes('A 80 80 0 0 0')
         );
       }),
     ).toBe(true);
+  });
+
+  it('aligns wedges with the menu angle convention', () => {
+    const div = document.createElement('div');
+    withSolverConfig(div);
+    createMenu({
+      parent: div,
+      model: createSpreadModel(4),
+      center: [30, 50],
+      doc: document,
+    });
+
+    const startPoint = (itemId: string): [number, number] => {
+      const path = getWedges(div).find(
+        (wedge) => wedge.dataset.itemId === itemId,
+      );
+      const [, x, y] = (path?.getAttribute('d') ?? '').split(' ', 3);
+      if (x === undefined || y === undefined) {
+        throw new Error('Wedge path has no start point.');
+      }
+
+      return [Number(x), Number(y)];
+    };
+
+    expect(startPoint('item-1-key')[1]).toBeGreaterThan(0);
+    expect(startPoint('item-3-key')[1]).toBeLessThan(0);
   });
 
   it('omits only a wedge whose gap consumes its angular span', () => {
@@ -418,7 +450,9 @@ describe('createMenu', () => {
     expect(items).toHaveLength(8);
     for (const item of items) {
       const label = item.querySelector<HTMLElement>('.marking-menu-label');
-      const connector = item.querySelector<HTMLElement>('.marking-menu-line');
+      const connector = item.querySelector<HTMLElement>(
+        '.marking-menu-outer-connector',
+      );
       expect(label?.style.getPropertyValue('--solved-left')).not.toBe('');
       expect(label?.style.getPropertyValue('--solved-top')).not.toBe('');
       expect(label?.style.getPropertyValue('--solved-bottom')).toBe('auto');
@@ -479,7 +513,7 @@ describe('createMenu', () => {
     const connectorContactRadius = (parent: HTMLElement): number => {
       const width =
         getItems(parent)[0]
-          ?.querySelector<HTMLElement>('.marking-menu-line')
+          ?.querySelector<HTMLElement>('.marking-menu-outer-connector')
           ?.style.getPropertyValue('--solved-connector-contact-radius') ?? '';
 
       return Number(width.slice(0, -2));

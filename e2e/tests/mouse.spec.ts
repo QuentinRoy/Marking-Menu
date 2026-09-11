@@ -52,6 +52,88 @@ test('novice mode: dwelling opens the menu, lays out every item, and a release s
   ).toBe(true);
 });
 
+test('novice mode: wedges and connector parts follow the menu directions', async ({
+  page,
+}) => {
+  const center = await surfaceCenter(page);
+  await pressAt(page, center);
+  await waitForMenuOpen(page);
+
+  const menu = page.locator('.marking-menu');
+  const geometry = await menu.evaluate((host) => {
+    const root = host.shadowRoot;
+    const wedge = (index: number): { height: number; y: number } => {
+      const path = root?.querySelectorAll<SVGPathElement>(
+        '.marking-menu-wedge',
+      )[index];
+      if (path === null || path === undefined) {
+        throw new Error(`Missing wedge at index ${index}.`);
+      }
+
+      const { height, y } = path.getBBox();
+      return { height, y };
+    };
+    const innerConnector = root?.querySelector<HTMLElement>(
+      '.marking-menu-inner-connector',
+    );
+    const outerConnector = root?.querySelector<HTMLElement>(
+      '.marking-menu-outer-connector',
+    );
+    if (
+      innerConnector === null ||
+      innerConnector === undefined ||
+      outerConnector === null ||
+      outerConnector === undefined
+    ) {
+      throw new Error('Menu connector is missing.');
+    }
+
+    return {
+      down: wedge(2),
+      innerColor: getComputedStyle(innerConnector).backgroundColor,
+      innerPart: innerConnector.getAttribute('part'),
+      outerPart: outerConnector.getAttribute('part'),
+      up: wedge(6),
+    };
+  });
+
+  expect(geometry.down.y + geometry.down.height / 2).toBeGreaterThan(0);
+  expect(geometry.up.y + geometry.up.height / 2).toBeLessThan(0);
+  expect(geometry.innerColor).toBe('rgba(0, 0, 0, 0)');
+  expect(geometry.innerPart).toBe('inner-connector');
+  expect(geometry.outerPart).toBe('outer-connector');
+
+  await menu.evaluate((host) => {
+    host.style.setProperty('--mm-inner-connector-color', 'rgb(1, 2, 3)');
+    host.style.setProperty('--mm-outer-connector-color', 'rgb(4, 5, 6)');
+  });
+  const colors = await menu.evaluate((host) => {
+    const root = host.shadowRoot;
+    const innerConnector = root?.querySelector<HTMLElement>(
+      '.marking-menu-inner-connector',
+    );
+    const outerConnector = root?.querySelector<HTMLElement>(
+      '.marking-menu-outer-connector',
+    );
+    if (
+      innerConnector === null ||
+      innerConnector === undefined ||
+      outerConnector === null ||
+      outerConnector === undefined
+    ) {
+      throw new Error('Menu connector is missing.');
+    }
+
+    return {
+      inner: getComputedStyle(innerConnector).backgroundColor,
+      outer: getComputedStyle(outerConnector).backgroundColor,
+    };
+  });
+  expect(colors).toEqual({ inner: 'rgb(1, 2, 3)', outer: 'rgb(4, 5, 6)' });
+
+  await releaseAt(page);
+});
+
 test('novice mode: a gesture prevents the browser pointer default', async ({
   page,
 }) => {

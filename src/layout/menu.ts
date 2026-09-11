@@ -132,14 +132,18 @@ const template = (
     }
 
     const radAngle = degreesToRadians(item.angle);
-    // Why -radAngle? I got the css math wrong at some point, but it works like
-    // this and I could not be bothered fixing it.
+    // CSS y grows downward, unlike label layout's y-axis.
     elt.style.setProperty('--cosine', `${Math.cos(-radAngle)}`);
     elt.style.setProperty('--sine', `${Math.sin(-radAngle)}`);
-    const lineElt = doc.createElement('div');
-    lineElt.className = 'marking-menu-line';
-    lineElt.setAttribute('part', 'connector');
-    elt.append(lineElt);
+    const innerConnector = doc.createElement('div');
+    innerConnector.className = 'marking-menu-inner-connector';
+    innerConnector.setAttribute('part', 'inner-connector');
+    elt.append(innerConnector);
+
+    const outerConnector = doc.createElement('div');
+    outerConnector.className = 'marking-menu-outer-connector';
+    outerConnector.setAttribute('part', 'outer-connector');
+    elt.append(outerConnector);
 
     const labelElt = doc.createElement('div');
     labelElt.className = 'marking-menu-label';
@@ -156,7 +160,7 @@ const svgNamespace = 'http://www.w3.org/2000/svg';
 
 const polar = (angle: number, radius: number): Point => [
   Math.cos(angle) * radius,
-  -Math.sin(angle) * radius,
+  Math.sin(angle) * radius,
 ];
 
 const svgPoint = ([x, y]: Point): string => `${x} ${y}`;
@@ -176,11 +180,11 @@ function fullAnnulusPath(innerRadius: number, outerRadius: number): string {
   const outerOpposite = polar(Math.PI, outerRadius);
   return [
     `M ${svgPoint(innerStart)}`,
-    svgArc(innerRadius, true, 0, innerOpposite),
-    svgArc(innerRadius, true, 0, innerStart),
+    svgArc(innerRadius, true, 1, innerOpposite),
+    svgArc(innerRadius, true, 1, innerStart),
     `L ${svgPoint(outerStart)}`,
-    svgArc(outerRadius, true, 1, outerOpposite),
-    svgArc(outerRadius, true, 1, outerStart),
+    svgArc(outerRadius, true, 0, outerOpposite),
+    svgArc(outerRadius, true, 0, outerStart),
     'Z',
   ].join(' ');
 }
@@ -224,9 +228,9 @@ function wedgePath({
   if (cornerRadius === 0) {
     return [
       `M ${svgPoint(innerStart)}`,
-      svgArc(innerRadius, isInnerLargeArc, 0, innerEnd),
+      svgArc(innerRadius, isInnerLargeArc, 1, innerEnd),
       `L ${svgPoint(outerEnd)}`,
-      svgArc(outerRadius, isOuterLargeArc, 1, outerStart),
+      svgArc(outerRadius, isOuterLargeArc, 0, outerStart),
       'Z',
     ].join(' ');
   }
@@ -263,11 +267,11 @@ function wedgePath({
   );
   return [
     `M ${svgPoint(innerStart)}`,
-    svgArc(innerRadius, isInnerLargeArc, 0, innerEnd),
+    svgArc(innerRadius, isInnerLargeArc, 1, innerEnd),
     svgArc(cornerRadius, false, 0, innerEndTangent),
     `L ${svgPoint(outerEndTangent)}`,
     svgArc(cornerRadius, false, 0, outerEnd),
-    svgArc(outerRadius, isOuterLargeArc, 1, outerStart),
+    svgArc(outerRadius, isOuterLargeArc, 0, outerStart),
     svgArc(cornerRadius, false, 0, outerStartTangent),
     `L ${svgPoint(innerStartTangent)}`,
     svgArc(cornerRadius, false, 0, innerStart),
@@ -405,7 +409,9 @@ function applySolvedLayout(
     return label;
   });
   const connectorElements = itemElements.map((element) => {
-    const connector = element.querySelector<HTMLElement>('.marking-menu-line');
+    const connector = element.querySelector<HTMLElement>(
+      '.marking-menu-outer-connector',
+    );
     if (connector === null) {
       throw new Error('Menu item element is missing its connector.');
     }
@@ -472,14 +478,20 @@ function setItemActive(
 ): void {
   item.classList.toggle('active', isActive);
   const label = item.querySelector<HTMLElement>('.marking-menu-label');
-  const connector = item.querySelector<HTMLElement>('.marking-menu-line');
-  if (label === null || connector === null) {
+  const innerConnector = item.querySelector<HTMLElement>(
+    '.marking-menu-inner-connector',
+  );
+  const outerConnector = item.querySelector<HTMLElement>(
+    '.marking-menu-outer-connector',
+  );
+  if (label === null || innerConnector === null || outerConnector === null) {
     throw new Error('Menu item element is incomplete.');
   }
 
   togglePart(label, 'plate--active', isActive);
   togglePart(label, 'label--active', isActive);
-  togglePart(connector, 'connector--active', isActive);
+  togglePart(innerConnector, 'inner-connector--active', isActive);
+  togglePart(outerConnector, 'outer-connector--active', isActive);
   const { itemId } = item.dataset;
   for (const wedge of root.querySelectorAll<SVGPathElement>(
     '.marking-menu-wedge',

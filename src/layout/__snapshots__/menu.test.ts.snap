@@ -18,13 +18,13 @@ exports[`createMenu > can be removed 1`] = `
       >
         <path
           class="marking-menu-wedge"
-          d="M -36.86437851535054 15.52474143671841 A 40 40 0 0 0 39.95095875201386 1.9801249442616125 A 4 4 0 0 0 43.597431656224614 -1.8066413536792085 L 75.64879890439096 -4.610772638399855 A 4 4 0 0 0 79.99728618461221 -0.658940890560918 A 80 80 0 0 1 -75.39823056841138 26.74148139413143 A 4 4 0 0 0 -72.66359522040088 21.54070401926859 L -41.58609254729568 13.21351227523398 A 4 4 0 0 0 -36.86437851535054 15.52474143671841 Z"
+          d="M -36.86437851535054 -15.52474143671841 A 40 40 0 0 1 39.95095875201386 -1.9801249442616125 A 4 4 0 0 0 43.597431656224614 1.8066413536792085 L 75.64879890439096 4.610772638399855 A 4 4 0 0 0 79.99728618461221 0.658940890560918 A 80 80 0 0 0 -75.39823056841138 -26.74148139413143 A 4 4 0 0 0 -72.66359522040088 -21.54070401926859 L -41.58609254729568 -13.21351227523398 A 4 4 0 0 0 -36.86437851535054 -15.52474143671841 Z"
           data-item-id="item-0-key"
           part="wedge"
         />
         <path
           class="marking-menu-wedge"
-          d="M 33.608482712657455 -21.690317880404734 A 40 40 0 0 0 -39.68785900737804 4.987368786292214 A 4 4 0 0 0 -42.62136872770576 9.349808970077708 L -73.69887140081097 17.677000714112307 A 4 4 0 0 0 -78.66752376970636 14.540313062058981 A 80 80 0 0 1 69.60915251496854 -39.427983541488004 A 4 4 0 0 0 67.81916793618291 -33.831353216267004 L 38.659804030886 -20.234118520298605 A 4 4 0 0 0 33.608482712657455 -21.690317880404734 Z"
+          d="M 33.608482712657455 21.690317880404734 A 40 40 0 0 1 -39.68785900737804 -4.987368786292214 A 4 4 0 0 0 -42.62136872770576 -9.349808970077708 L -73.69887140081097 -17.677000714112307 A 4 4 0 0 0 -78.66752376970636 -14.540313062058981 A 80 80 0 0 0 69.60915251496854 39.427983541488004 A 4 4 0 0 0 67.81916793618291 33.831353216267004 L 38.659804030886 20.234118520298605 A 4 4 0 0 0 33.608482712657455 21.690317880404734 Z"
           data-item-id="item-3-key"
           part="wedge"
         />
@@ -35,8 +35,12 @@ exports[`createMenu > can be removed 1`] = `
         style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -51,8 +55,12 @@ exports[`createMenu > can be removed 1`] = `
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -67,8 +75,12 @@ exports[`createMenu > can be removed 1`] = `
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
         <div
-          class="marking-menu-line"
-          part="connector connector--active"
+          class="marking-menu-inner-connector"
+          part="inner-connector inner-connector--active"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector outer-connector--active"
         />
         <div
           class="marking-menu-label"
@@ -83,8 +95,12 @@ exports[`createMenu > can be removed 1`] = `
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -117,13 +133,13 @@ exports[`createMenu > renders 1`] = `
       >
         <path
           class="marking-menu-wedge"
-          d="M -33.608482712657455 21.690317880404727 A 40 40 0 0 0 39.95095875201386 1.9801249442616125 A 4 4 0 0 0 43.597431656224614 -1.8066413536792085 L 75.64879890439096 -4.610772638399855 A 4 4 0 0 0 79.99728618461221 -0.658940890560918 A 80 80 0 0 1 -69.60915251496854 39.427983541488004 A 4 4 0 0 0 -67.81916793618291 33.831353216267004 L -38.659804030886 20.2341185202986 A 4 4 0 0 0 -33.608482712657455 21.690317880404727 Z"
+          d="M -33.608482712657455 -21.690317880404727 A 40 40 0 0 1 39.95095875201386 -1.9801249442616125 A 4 4 0 0 0 43.597431656224614 1.8066413536792085 L 75.64879890439096 4.610772638399855 A 4 4 0 0 0 79.99728618461221 0.658940890560918 A 80 80 0 0 0 -69.60915251496854 -39.427983541488004 A 4 4 0 0 0 -67.81916793618291 -33.831353216267004 L -38.659804030886 -20.2341185202986 A 4 4 0 0 0 -33.608482712657455 -21.690317880404727 Z"
           data-item-id="item-0-key"
           part="wedge"
         />
         <path
           class="marking-menu-wedge marking-menu-wedge--active"
-          d="M 24.16311757065963 -31.877009729058337 A 40 40 0 0 0 -38.21886374982872 11.803323840004914 A 4 4 0 0 0 -40.350277077848794 16.608887372152005 L -69.50964098314572 30.206122068120397 A 4 4 0 0 0 -74.9474884527458 27.979885178919787 A 80 80 0 0 1 51.92604237557496 -60.85791750635239 A 4 4 0 0 0 52.1581673815424 -54.98659450628858 L 29.407856452471783 -32.23628357721798 A 4 4 0 0 0 24.16311757065963 -31.877009729058337 Z"
+          d="M 24.16311757065963 31.877009729058337 A 40 40 0 0 1 -38.21886374982872 -11.803323840004914 A 4 4 0 0 0 -40.350277077848794 -16.608887372152005 L -69.50964098314572 -30.206122068120397 A 4 4 0 0 0 -74.9474884527458 -27.979885178919787 A 80 80 0 0 0 51.92604237557496 60.85791750635239 A 4 4 0 0 0 52.1581673815424 54.98659450628858 L 29.407856452471783 32.23628357721798 A 4 4 0 0 0 24.16311757065963 31.877009729058337 Z"
           data-item-id="item-5-key"
           part="wedge wedge--active"
         />
@@ -134,8 +150,12 @@ exports[`createMenu > renders 1`] = `
         style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -150,8 +170,12 @@ exports[`createMenu > renders 1`] = `
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -166,8 +190,12 @@ exports[`createMenu > renders 1`] = `
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -182,8 +210,12 @@ exports[`createMenu > renders 1`] = `
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -198,8 +230,12 @@ exports[`createMenu > renders 1`] = `
         style="--angle: 40deg; --cosine: 0.766044443118978; --sine: -0.6427876096865393;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -214,8 +250,12 @@ exports[`createMenu > renders 1`] = `
         style="--angle: 50deg; --cosine: 0.6427876096865394; --sine: -0.766044443118978;"
       >
         <div
-          class="marking-menu-line"
-          part="connector connector--active"
+          class="marking-menu-inner-connector"
+          part="inner-connector inner-connector--active"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector outer-connector--active"
         />
         <div
           class="marking-menu-label"
@@ -246,13 +286,13 @@ exports[`createMenu > renders without active element 1`] = `
       >
         <path
           class="marking-menu-wedge"
-          d="M -36.86437851535054 15.52474143671841 A 40 40 0 0 0 39.95095875201386 1.9801249442616125 A 4 4 0 0 0 43.597431656224614 -1.8066413536792085 L 75.64879890439096 -4.610772638399855 A 4 4 0 0 0 79.99728618461221 -0.658940890560918 A 80 80 0 0 1 -75.39823056841138 26.74148139413143 A 4 4 0 0 0 -72.66359522040088 21.54070401926859 L -41.58609254729568 13.21351227523398 A 4 4 0 0 0 -36.86437851535054 15.52474143671841 Z"
+          d="M -36.86437851535054 -15.52474143671841 A 40 40 0 0 1 39.95095875201386 -1.9801249442616125 A 4 4 0 0 0 43.597431656224614 1.8066413536792085 L 75.64879890439096 4.610772638399855 A 4 4 0 0 0 79.99728618461221 0.658940890560918 A 80 80 0 0 0 -75.39823056841138 -26.74148139413143 A 4 4 0 0 0 -72.66359522040088 -21.54070401926859 L -41.58609254729568 -13.21351227523398 A 4 4 0 0 0 -36.86437851535054 -15.52474143671841 Z"
           data-item-id="item-0-key"
           part="wedge"
         />
         <path
           class="marking-menu-wedge"
-          d="M 33.608482712657455 -21.690317880404734 A 40 40 0 0 0 -39.68785900737804 4.987368786292214 A 4 4 0 0 0 -42.62136872770576 9.349808970077708 L -73.69887140081097 17.677000714112307 A 4 4 0 0 0 -78.66752376970636 14.540313062058981 A 80 80 0 0 1 69.60915251496854 -39.427983541488004 A 4 4 0 0 0 67.81916793618291 -33.831353216267004 L 38.659804030886 -20.234118520298605 A 4 4 0 0 0 33.608482712657455 -21.690317880404734 Z"
+          d="M 33.608482712657455 21.690317880404734 A 40 40 0 0 1 -39.68785900737804 -4.987368786292214 A 4 4 0 0 0 -42.62136872770576 -9.349808970077708 L -73.69887140081097 -17.677000714112307 A 4 4 0 0 0 -78.66752376970636 -14.540313062058981 A 80 80 0 0 0 69.60915251496854 39.427983541488004 A 4 4 0 0 0 67.81916793618291 33.831353216267004 L 38.659804030886 20.234118520298605 A 4 4 0 0 0 33.608482712657455 21.690317880404734 Z"
           data-item-id="item-3-key"
           part="wedge"
         />
@@ -263,8 +303,12 @@ exports[`createMenu > renders without active element 1`] = `
         style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -279,8 +323,12 @@ exports[`createMenu > renders without active element 1`] = `
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -295,8 +343,12 @@ exports[`createMenu > renders without active element 1`] = `
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -311,8 +363,12 @@ exports[`createMenu > renders without active element 1`] = `
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -343,13 +399,13 @@ exports[`createMenu > update the active element 1`] = `
       >
         <path
           class="marking-menu-wedge"
-          d="M -36.86437851535054 15.52474143671841 A 40 40 0 0 0 39.95095875201386 1.9801249442616125 A 4 4 0 0 0 43.597431656224614 -1.8066413536792085 L 75.64879890439096 -4.610772638399855 A 4 4 0 0 0 79.99728618461221 -0.658940890560918 A 80 80 0 0 1 -75.39823056841138 26.74148139413143 A 4 4 0 0 0 -72.66359522040088 21.54070401926859 L -41.58609254729568 13.21351227523398 A 4 4 0 0 0 -36.86437851535054 15.52474143671841 Z"
+          d="M -36.86437851535054 -15.52474143671841 A 40 40 0 0 1 39.95095875201386 -1.9801249442616125 A 4 4 0 0 0 43.597431656224614 1.8066413536792085 L 75.64879890439096 4.610772638399855 A 4 4 0 0 0 79.99728618461221 0.658940890560918 A 80 80 0 0 0 -75.39823056841138 -26.74148139413143 A 4 4 0 0 0 -72.66359522040088 -21.54070401926859 L -41.58609254729568 -13.21351227523398 A 4 4 0 0 0 -36.86437851535054 -15.52474143671841 Z"
           data-item-id="item-0-key"
           part="wedge"
         />
         <path
           class="marking-menu-wedge"
-          d="M 33.608482712657455 -21.690317880404734 A 40 40 0 0 0 -39.68785900737804 4.987368786292214 A 4 4 0 0 0 -42.62136872770576 9.349808970077708 L -73.69887140081097 17.677000714112307 A 4 4 0 0 0 -78.66752376970636 14.540313062058981 A 80 80 0 0 1 69.60915251496854 -39.427983541488004 A 4 4 0 0 0 67.81916793618291 -33.831353216267004 L 38.659804030886 -20.234118520298605 A 4 4 0 0 0 33.608482712657455 -21.690317880404734 Z"
+          d="M 33.608482712657455 21.690317880404734 A 40 40 0 0 1 -39.68785900737804 -4.987368786292214 A 4 4 0 0 0 -42.62136872770576 -9.349808970077708 L -73.69887140081097 -17.677000714112307 A 4 4 0 0 0 -78.66752376970636 -14.540313062058981 A 80 80 0 0 0 69.60915251496854 39.427983541488004 A 4 4 0 0 0 67.81916793618291 33.831353216267004 L 38.659804030886 20.234118520298605 A 4 4 0 0 0 33.608482712657455 21.690317880404734 Z"
           data-item-id="item-3-key"
           part="wedge"
         />
@@ -360,8 +416,12 @@ exports[`createMenu > update the active element 1`] = `
         style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -376,8 +436,12 @@ exports[`createMenu > update the active element 1`] = `
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -392,8 +456,12 @@ exports[`createMenu > update the active element 1`] = `
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
         <div
-          class="marking-menu-line"
-          part="connector connector--active"
+          class="marking-menu-inner-connector"
+          part="inner-connector inner-connector--active"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector outer-connector--active"
         />
         <div
           class="marking-menu-label"
@@ -408,8 +476,12 @@ exports[`createMenu > update the active element 1`] = `
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -440,13 +512,13 @@ exports[`createMenu > update the active element 2`] = `
       >
         <path
           class="marking-menu-wedge"
-          d="M -36.86437851535054 15.52474143671841 A 40 40 0 0 0 39.95095875201386 1.9801249442616125 A 4 4 0 0 0 43.597431656224614 -1.8066413536792085 L 75.64879890439096 -4.610772638399855 A 4 4 0 0 0 79.99728618461221 -0.658940890560918 A 80 80 0 0 1 -75.39823056841138 26.74148139413143 A 4 4 0 0 0 -72.66359522040088 21.54070401926859 L -41.58609254729568 13.21351227523398 A 4 4 0 0 0 -36.86437851535054 15.52474143671841 Z"
+          d="M -36.86437851535054 -15.52474143671841 A 40 40 0 0 1 39.95095875201386 -1.9801249442616125 A 4 4 0 0 0 43.597431656224614 1.8066413536792085 L 75.64879890439096 4.610772638399855 A 4 4 0 0 0 79.99728618461221 0.658940890560918 A 80 80 0 0 0 -75.39823056841138 -26.74148139413143 A 4 4 0 0 0 -72.66359522040088 -21.54070401926859 L -41.58609254729568 -13.21351227523398 A 4 4 0 0 0 -36.86437851535054 -15.52474143671841 Z"
           data-item-id="item-0-key"
           part="wedge"
         />
         <path
           class="marking-menu-wedge"
-          d="M 33.608482712657455 -21.690317880404734 A 40 40 0 0 0 -39.68785900737804 4.987368786292214 A 4 4 0 0 0 -42.62136872770576 9.349808970077708 L -73.69887140081097 17.677000714112307 A 4 4 0 0 0 -78.66752376970636 14.540313062058981 A 80 80 0 0 1 69.60915251496854 -39.427983541488004 A 4 4 0 0 0 67.81916793618291 -33.831353216267004 L 38.659804030886 -20.234118520298605 A 4 4 0 0 0 33.608482712657455 -21.690317880404734 Z"
+          d="M 33.608482712657455 21.690317880404734 A 40 40 0 0 1 -39.68785900737804 -4.987368786292214 A 4 4 0 0 0 -42.62136872770576 -9.349808970077708 L -73.69887140081097 -17.677000714112307 A 4 4 0 0 0 -78.66752376970636 -14.540313062058981 A 80 80 0 0 0 69.60915251496854 39.427983541488004 A 4 4 0 0 0 67.81916793618291 33.831353216267004 L 38.659804030886 20.234118520298605 A 4 4 0 0 0 33.608482712657455 21.690317880404734 Z"
           data-item-id="item-3-key"
           part="wedge"
         />
@@ -457,8 +529,12 @@ exports[`createMenu > update the active element 2`] = `
         style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -473,8 +549,12 @@ exports[`createMenu > update the active element 2`] = `
         style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
         <div
-          class="marking-menu-line"
-          part="connector connector--active"
+          class="marking-menu-inner-connector"
+          part="inner-connector inner-connector--active"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector outer-connector--active"
         />
         <div
           class="marking-menu-label"
@@ -489,8 +569,12 @@ exports[`createMenu > update the active element 2`] = `
         style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"
@@ -505,8 +589,12 @@ exports[`createMenu > update the active element 2`] = `
         style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
       >
         <div
-          class="marking-menu-line"
-          part="connector"
+          class="marking-menu-inner-connector"
+          part="inner-connector"
+        />
+        <div
+          class="marking-menu-outer-connector"
+          part="outer-connector"
         />
         <div
           class="marking-menu-label"

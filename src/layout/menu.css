@@ -13,12 +13,13 @@
   --default-plate-color-active: var(--mm-plate-color-active, #000);
   --default-plate-font-size: var(--mm-plate-font-size, 20px);
   --default-connector-thickness: var(--mm-connector-thickness, 4px);
-  --default-connector-color: var(
-    --mm-connector-color,
+  --default-inner-connector-color: var(--mm-inner-connector-color, transparent);
+  --default-outer-connector-color: var(
+    --mm-outer-connector-color,
     var(--default-plate-background)
   );
-  --default-connector-color-active: var(
-    --mm-connector-color-active,
+  --default-outer-connector-color-active: var(
+    --mm-outer-connector-color,
     var(--default-plate-background-active)
   );
   --default-wedge-fill: var(--mm-wedge-fill, var(--default-plate-background));
@@ -95,17 +96,28 @@
   font-size: var(--default-plate-font-size);
 }
 
-.marking-menu-line {
+.marking-menu-inner-connector,
+.marking-menu-outer-connector {
   position: absolute;
   top: calc(var(--default-connector-thickness) / -2);
-  background-color: var(--default-connector-color);
-  width: calc(
-    var(--solved-connector-contact-radius, var(--default-ring-radius)) +
-      var(--default-plate-corner-radius) + var(--default-connector-thickness)
-  );
   height: var(--default-connector-thickness);
   transform-origin: center left;
   transform: rotate(var(--angle));
+}
+
+.marking-menu-inner-connector {
+  background-color: var(--default-inner-connector-color);
+  width: var(--default-ring-radius);
+}
+
+.marking-menu-outer-connector {
+  left: var(--default-ring-radius);
+  background-color: var(--default-outer-connector-color);
+  width: calc(
+    var(--solved-connector-contact-radius, var(--default-ring-radius)) +
+      var(--default-plate-corner-radius) + var(--default-connector-thickness) -
+      var(--default-ring-radius)
+  );
 }
 
 .marking-menu-item.active {
@@ -118,8 +130,8 @@
   font-weight: bolder;
 }
 
-.marking-menu-item.active .marking-menu-line {
-  background-color: var(--default-connector-color-active);
+.marking-menu-item.active .marking-menu-outer-connector {
+  background-color: var(--default-outer-connector-color-active);
 }
 
 .marking-menu-item.bottom-right-item .marking-menu-label {
