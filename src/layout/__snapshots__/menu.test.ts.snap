@@ -6,62 +6,91 @@ exports[`createMenu > can be removed 1`] = `
     class="marking-menu"
     style="--center-x: 30px; --center-y: 50px;"
   >
-    <div
-      class="marking-menu-item"
-      data-item-id="item-0-key"
-      style="--angle: 0deg; --cosine: 1; --sine: 0;"
-    >
+    #shadow-root
+      <style />
       <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--ring-radius"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-0-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-1-key"
-      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-horizontal"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-1-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item active"
-      data-item-id="item-2-key"
-      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-vertical"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-2-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-3-key"
-      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-ring"
       />
       <div
-        class="marking-menu-label"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-connector"
+      />
+      <div
+        class="marking-menu-item"
+        data-item-id="item-0-key"
+        part="plate"
+        style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
-        item-3-name
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-0-name
+        </div>
       </div>
-    </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-1-key"
+        part="plate"
+        style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-1-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item active"
+        data-item-id="item-2-key"
+        part="plate plate--active"
+        style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector connector--active"
+        />
+        <div
+          class="marking-menu-label"
+          part="label label--active"
+        >
+          item-2-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-3-key"
+        part="plate"
+        style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-3-name
+        </div>
+      </div>
   </div>
 </div>
 `;
@@ -74,90 +103,125 @@ exports[`createMenu > renders 1`] = `
     class="marking-menu"
     style="--center-x: 30px; --center-y: 50px;"
   >
-    <div
-      class="marking-menu-item"
-      data-item-id="item-0-key"
-      style="--angle: 0deg; --cosine: 1; --sine: 0;"
-    >
+    #shadow-root
+      <style />
       <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--ring-radius"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-0-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-1-key"
-      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-horizontal"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-1-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-2-key"
-      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-vertical"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-2-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-3-key"
-      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-ring"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-3-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-4-key"
-      style="--angle: 40deg; --cosine: 0.766044443118978; --sine: -0.6427876096865393;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-connector"
       />
       <div
-        class="marking-menu-label"
+        class="marking-menu-item"
+        data-item-id="item-0-key"
+        part="plate"
+        style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
-        item-4-name
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-0-name
+        </div>
       </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item active"
-      data-item-id="item-5-key"
-      style="--angle: 50deg; --cosine: 0.6427876096865394; --sine: -0.766044443118978;"
-    >
       <div
-        class="marking-menu-line"
-      />
-      <div
-        class="marking-menu-label"
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-1-key"
+        part="plate"
+        style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
       >
-        item-5-name
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-1-name
+        </div>
       </div>
-    </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-2-key"
+        part="plate"
+        style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-2-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-3-key"
+        part="plate"
+        style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-3-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-4-key"
+        part="plate"
+        style="--angle: 40deg; --cosine: 0.766044443118978; --sine: -0.6427876096865393;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-4-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item active"
+        data-item-id="item-5-key"
+        part="plate plate--active"
+        style="--angle: 50deg; --cosine: 0.6427876096865394; --sine: -0.766044443118978;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector connector--active"
+        />
+        <div
+          class="marking-menu-label"
+          part="label label--active"
+        >
+          item-5-name
+        </div>
+      </div>
   </div>
 </div>
 `;
@@ -168,62 +232,91 @@ exports[`createMenu > renders without active element 1`] = `
     class="marking-menu"
     style="--center-x: 30px; --center-y: 50px;"
   >
-    <div
-      class="marking-menu-item"
-      data-item-id="item-0-key"
-      style="--angle: 0deg; --cosine: 1; --sine: 0;"
-    >
+    #shadow-root
+      <style />
       <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--ring-radius"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-0-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-1-key"
-      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-horizontal"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-1-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-2-key"
-      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-vertical"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-2-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-3-key"
-      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-ring"
       />
       <div
-        class="marking-menu-label"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-connector"
+      />
+      <div
+        class="marking-menu-item"
+        data-item-id="item-0-key"
+        part="plate"
+        style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
-        item-3-name
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-0-name
+        </div>
       </div>
-    </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-1-key"
+        part="plate"
+        style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-1-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-2-key"
+        part="plate"
+        style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-2-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-3-key"
+        part="plate"
+        style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-3-name
+        </div>
+      </div>
   </div>
 </div>
 `;
@@ -234,62 +327,91 @@ exports[`createMenu > update the active element 1`] = `
     class="marking-menu"
     style="--center-x: 30px; --center-y: 50px;"
   >
-    <div
-      class="marking-menu-item"
-      data-item-id="item-0-key"
-      style="--angle: 0deg; --cosine: 1; --sine: 0;"
-    >
+    #shadow-root
+      <style />
       <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--ring-radius"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-0-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-1-key"
-      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-horizontal"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-1-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item active"
-      data-item-id="item-2-key"
-      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-vertical"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-2-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-3-key"
-      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-ring"
       />
       <div
-        class="marking-menu-label"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-connector"
+      />
+      <div
+        class="marking-menu-item"
+        data-item-id="item-0-key"
+        part="plate"
+        style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
-        item-3-name
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-0-name
+        </div>
       </div>
-    </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-1-key"
+        part="plate"
+        style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-1-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item active"
+        data-item-id="item-2-key"
+        part="plate plate--active"
+        style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector connector--active"
+        />
+        <div
+          class="marking-menu-label"
+          part="label label--active"
+        >
+          item-2-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-3-key"
+        part="plate"
+        style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-3-name
+        </div>
+      </div>
   </div>
 </div>
 `;
@@ -300,62 +422,91 @@ exports[`createMenu > update the active element 2`] = `
     class="marking-menu"
     style="--center-x: 30px; --center-y: 50px;"
   >
-    <div
-      class="marking-menu-item"
-      data-item-id="item-0-key"
-      style="--angle: 0deg; --cosine: 1; --sine: 0;"
-    >
+    #shadow-root
+      <style />
       <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--ring-radius"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-0-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item active"
-      data-item-id="item-1-key"
-      style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-horizontal"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-1-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-2-key"
-      style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-vertical"
       />
       <div
-        class="marking-menu-label"
-      >
-        item-2-name
-      </div>
-    </div>
-    <div
-      class="marking-menu-item bottom-right-item"
-      data-item-id="item-3-key"
-      style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
-    >
-      <div
-        class="marking-menu-line"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-ring"
       />
       <div
-        class="marking-menu-label"
+        class="marking-menu-layout-probe marking-menu-layout-probe--plate-gap-connector"
+      />
+      <div
+        class="marking-menu-item"
+        data-item-id="item-0-key"
+        part="plate"
+        style="--angle: 0deg; --cosine: 1; --sine: 0;"
       >
-        item-3-name
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-0-name
+        </div>
       </div>
-    </div>
+      <div
+        class="marking-menu-item bottom-right-item active"
+        data-item-id="item-1-key"
+        part="plate plate--active"
+        style="--angle: 10deg; --cosine: 0.984807753012208; --sine: -0.17364817766693033;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector connector--active"
+        />
+        <div
+          class="marking-menu-label"
+          part="label label--active"
+        >
+          item-1-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-2-key"
+        part="plate"
+        style="--angle: 20deg; --cosine: 0.9396926207859084; --sine: -0.3420201433256687;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-2-name
+        </div>
+      </div>
+      <div
+        class="marking-menu-item bottom-right-item"
+        data-item-id="item-3-key"
+        part="plate"
+        style="--angle: 30deg; --cosine: 0.8660254037844387; --sine: -0.49999999999999994;"
+      >
+        <div
+          class="marking-menu-line"
+          part="connector"
+        />
+        <div
+          class="marking-menu-label"
+          part="label"
+        >
+          item-3-name
+        </div>
+      </div>
   </div>
 </div>
 `;

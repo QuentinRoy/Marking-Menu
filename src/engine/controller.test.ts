@@ -44,6 +44,13 @@ const items = [
 const voidMock = <Arguments extends readonly unknown[]>() =>
   vi.fn<(...args: Arguments) => void>();
 
+const activeMenuItems = (parent: HTMLElement): HTMLElement[] => [
+  ...(parent
+    .querySelector<HTMLElement>('.marking-menu')
+    ?.shadowRoot?.querySelectorAll<HTMLElement>('.marking-menu-item.active') ??
+    []),
+];
+
 describe('createController', () => {
   it('dispatches select carrying the leaf a straight drag recognizes', () => {
     using _canvases = stubbedCanvasContexts();
@@ -836,9 +843,7 @@ describe('createController', () => {
     expect(moved).toHaveBeenCalledTimes(1);
     expect(moved.mock.calls[0]?.[0].active).toBeNull();
     expect(changed).not.toHaveBeenCalled();
-    expect(parent.querySelectorAll('.marking-menu-item.active')).toHaveLength(
-      0,
-    );
+    expect(activeMenuItems(parent)).toHaveLength(0);
 
     controller.dispose();
   });
@@ -883,19 +888,17 @@ describe('createController', () => {
 
     // The menu DOM is patched in place, not recreated.
     expect(parent.querySelector('.marking-menu')).toBe(menuBefore);
-    const activeItems = parent.querySelectorAll('.marking-menu-item.active');
+    const activeItems = activeMenuItems(parent);
     expect(activeItems).toHaveLength(1);
     // "right" is the first described item, so its library-assigned key is
-    // "0" — `dataset.itemId` is keyed on that, not on the caller's own `id`.
+    // "0", `dataset.itemId` is keyed on that, not on the caller's own `id`.
     expect((activeItems[0] as HTMLElement).dataset.itemId).toBe('0');
 
     // Continued pointing at the same item: another `move`, no further `change`.
     parent.dispatchEvent(pointer('pointermove', { clientX: 110, clientY: 0 }));
     expect(moved).toHaveBeenCalledTimes(2);
     expect(changed).toHaveBeenCalledTimes(1);
-    expect(parent.querySelectorAll('.marking-menu-item.active')).toHaveLength(
-      1,
-    );
+    expect(activeMenuItems(parent)).toHaveLength(1);
 
     controller.dispose();
   });

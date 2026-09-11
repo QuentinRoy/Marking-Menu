@@ -61,6 +61,12 @@ const createStackingRenderer = (parent: HTMLElement) =>
     gestureFeedbackStrokeWidth: feedbackStrokeWidth,
   });
 
+const menuItems = (parent: HTMLElement): HTMLElement[] => [
+  ...(parent
+    .querySelector<HTMLElement>('.marking-menu')
+    ?.shadowRoot?.querySelectorAll<HTMLElement>('.marking-menu-item') ?? []),
+];
+
 /**
  A parent placed away from the viewport's top-left, which is what tells a
  stroke drawn in client coordinates apart from one drawn in the parent's.
@@ -148,7 +154,8 @@ describe('createRenderer', () => {
     const parent = document.createElement('div');
     const renderer = createRenderer<typeof model>({ parent });
     const activeCount = () =>
-      parent.querySelectorAll('.marking-menu-item.active').length;
+      menuItems(parent).filter((item) => item.classList.contains('active'))
+        .length;
 
     renderer.render({
       cursor: 'none',
@@ -157,9 +164,9 @@ describe('createRenderer', () => {
       lowerStroke: null,
     });
     expect(activeCount()).toBe(1);
-    expect(parent.querySelector('[data-item-id="0"]')?.classList).toContain(
-      'active',
-    );
+    expect(
+      menuItems(parent).find((item) => item.dataset.itemId === '0')?.classList,
+    ).toContain('active');
 
     // Same activeKey, same menu identity: the skip branch.
     renderer.render({
@@ -178,9 +185,9 @@ describe('createRenderer', () => {
       lowerStroke: null,
     });
     expect(activeCount()).toBe(1);
-    expect(parent.querySelector('[data-item-id="1"]')?.classList).toContain(
-      'active',
-    );
+    expect(
+      menuItems(parent).find((item) => item.dataset.itemId === '1')?.classList,
+    ).toContain('active');
 
     renderer.dispose();
   });
