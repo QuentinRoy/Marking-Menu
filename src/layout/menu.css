@@ -1,10 +1,7 @@
 :host {
   --default-ring-radius: var(--mm-ring-radius, 80px);
   --default-plate-padding: var(--mm-plate-padding, 8px);
-  --default-plate-corner-radius: var(
-    --mm-plate-corner-radius,
-    16px
-  );
+  --default-plate-corner-radius: var(--mm-plate-corner-radius, 16px);
   --default-plate-background: var(--mm-plate-background, #f2f2f2);
   --default-plate-color: var(--mm-plate-color, #333333);
   --default-plate-background-active: var(--mm-plate-background-active, #d9d9d9);
@@ -83,7 +80,7 @@
   );
   border-radius: var(--default-plate-corner-radius);
   background-color: var(--default-plate-background);
-  padding: calc(var(--default-plate-padding) - 0.2em);
+  padding: calc(var(--default-plate-padding) + 0.2em);
   width: fit-content;
   min-width: var(--mm-label-min-width, 0);
   max-width: var(--mm-label-max-width, none);

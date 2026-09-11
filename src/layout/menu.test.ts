@@ -386,9 +386,6 @@ describe('createMenu', () => {
       expect(plate?.style.getPropertyValue('--solved-left')).not.toBe('');
       expect(plate?.style.getPropertyValue('--solved-top')).not.toBe('');
       expect(plate?.style.getPropertyValue('--solved-bottom')).toBe('auto');
-      expect(plate?.style.getPropertyValue('--solved-translation')).toBe(
-        'none',
-      );
       expect(
         connector?.style.getPropertyValue('--solved-connector-contact-radius'),
       ).not.toBe('');

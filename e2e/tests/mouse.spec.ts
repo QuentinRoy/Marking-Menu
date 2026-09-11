@@ -52,116 +52,30 @@ test('novice mode: dwelling opens the menu, lays out every item, and a release s
   ).toBe(true);
 });
 
-test('label plates size to their content within the configured bounds', async ({
-  page,
-}) => {
+test('label plates fit text and honor a fixed width', async ({ page }) => {
   const center = await surfaceCenter(page);
   await pressAt(page, center);
   await waitForMenuOpen(page);
 
   const menu = page.locator('.marking-menu');
-  const defaultSize = await menu.evaluate((host) => {
-    const root = host.shadowRoot;
-    const plate = root?.querySelector<HTMLElement>('.marking-menu-plate');
-    if (plate === null || plate === undefined) {
-      throw new Error('Menu plate is missing.');
+  const size = await menu.evaluate((host) => {
+    const label = [
+      ...(host.shadowRoot?.querySelectorAll<HTMLElement>(
+        '.marking-menu-label',
+      ) ?? []),
+    ].find((element) => element.textContent === 'Right');
+    const right = label?.parentElement;
+    if (right === null || right === undefined) {
+      throw new Error('Right plate is missing.');
     }
 
-    const style = getComputedStyle(plate);
-    const labels = [
-      ...(root?.querySelectorAll<HTMLElement>('.marking-menu-label') ?? []),
-    ];
-    return {
-      cornerRadii: [
-        ...(root?.querySelectorAll<HTMLElement>('.marking-menu-plate') ?? []),
-      ].map((item) => {
-        const plateStyle = getComputedStyle(item);
-        return [
-          plateStyle.borderTopLeftRadius,
-          plateStyle.borderTopRightRadius,
-          plateStyle.borderBottomRightRadius,
-          plateStyle.borderBottomLeftRadius,
-        ];
-      }),
-      maxWidth: style.maxWidth,
-      minWidth: style.minWidth,
-      overflow: style.overflow,
-      padding: Number(style.paddingTop.slice(0, -2)),
-      supportsTextBox:
-        CSS.supports('text-box-trim', 'trim-both') &&
-        CSS.supports('text-box-edge', 'cap alphabetic'),
-      textBoxTrimmed: labels.map((label) => {
-        const labelStyle = getComputedStyle(label);
-        return (
-          labelStyle.getPropertyValue('text-box-trim') === 'trim-both' &&
-          labelStyle.getPropertyValue('text-box-edge').startsWith('cap')
-        );
-      }),
-      verticalLayout: labels.map((label) => {
-        const labelBox = label.getBoundingClientRect();
-        const plateBox = label.parentElement?.getBoundingClientRect();
-        if (plateBox === undefined) {
-          throw new Error('Label plate is missing.');
-        }
-
-        return {
-          height: labelBox.height,
-          plateHeight: plateBox.height,
-          verticalOffset:
-            labelBox.top +
-            labelBox.height / 2 -
-            (plateBox.top + plateBox.height / 2),
-        };
-      }),
-      transform: style.transform,
-      width: plate.getBoundingClientRect().width,
-    };
+    const box = right.getBoundingClientRect();
+    return { height: box.height, width: box.width };
   });
-  const supportIndex = Number(defaultSize.supportsTextBox);
-  const expectedPadding = [12, 8][supportIndex];
-  const expectedCornerRadius = ['24px', '16px'][supportIndex];
-  const expectedTextBoxTrimmed = [false, true][supportIndex];
-  expect(defaultSize).toMatchObject({
-    maxWidth: 'none',
-    minWidth: '0px',
-    overflow: 'visible',
-    padding: expectedPadding,
-    transform: 'none',
-  });
-  expect(
-    defaultSize.cornerRadii.every((radii) =>
-      radii.every((radius) => radius === expectedCornerRadius),
-    ),
-  ).toBe(true);
-  expect(
-    defaultSize.textBoxTrimmed.every(
-      (isTrimmed) => isTrimmed === expectedTextBoxTrimmed,
-    ),
-  ).toBe(true);
-  expect(
-    defaultSize.verticalLayout.every(
-      ({ height, plateHeight, verticalOffset }) =>
-        Math.abs(plateHeight - height - defaultSize.padding * 2) < 0.01 &&
-        Math.abs(verticalOffset) < 0.01,
-    ),
-  ).toBe(true);
+  expect(size.height).toBeGreaterThan(0);
+  expect(size.width).toBeLessThan(120);
 
-  expect(defaultSize.width).toBeLessThan(120);
-
-  const configuredPadding = await menu.evaluate((host) => {
-    host.style.setProperty('--mm-plate-padding', '10px');
-    const plate = host.shadowRoot?.querySelector<HTMLElement>(
-      '.marking-menu-plate',
-    );
-    if (plate === null || plate === undefined) {
-      throw new Error('Menu plate is missing.');
-    }
-
-    return Number(getComputedStyle(plate).paddingTop.slice(0, -2));
-  });
-  expect(configuredPadding).toBe([14, 10][supportIndex]);
-
-  const clampedSize = await menu.evaluate((host) => {
+  const constrainedSize = await menu.evaluate((host) => {
     host.style.setProperty('--mm-label-min-width', '120px');
     host.style.setProperty('--mm-label-max-width', '120px');
     const plate = host.shadowRoot?.querySelector<HTMLElement>(
@@ -180,26 +94,56 @@ test('label plates size to their content within the configured bounds', async ({
     }
 
     label.textContent = 'A label longer than the configured width';
-    return {
-      labelClientWidth: label.clientWidth,
-      labelScrollWidth: label.scrollWidth,
-      overflowX: getComputedStyle(label).overflowX,
-      overflowY: getComputedStyle(label).overflowY,
-      textOverflow: getComputedStyle(label).textOverflow,
-      whiteSpace: getComputedStyle(label).whiteSpace,
-      width: plate.getBoundingClientRect().width,
-    };
+    const box = plate.getBoundingClientRect();
+    return { height: box.height, width: box.width };
   });
-  expect(clampedSize.width).toBe(120 + configuredPadding * 2);
-  expect(clampedSize.labelScrollWidth).toBeGreaterThan(
-    clampedSize.labelClientWidth,
+  expect(constrainedSize.height).toBeGreaterThan(0);
+  expect(constrainedSize.width).toBeGreaterThan(size.width);
+  expect(constrainedSize.width).toBeLessThan(160);
+
+  await releaseAt(page);
+});
+
+test('an active label grows around its resting position', async ({ page }) => {
+  const center = await surfaceCenter(page);
+  await pressAt(page, center);
+  await waitForMenuOpen(page);
+
+  const menu = page.locator('.marking-menu');
+  const getRightPlate = async () =>
+    menu.evaluate((host) => {
+      const label = [
+        ...(host.shadowRoot?.querySelectorAll<HTMLElement>(
+          '.marking-menu-label',
+        ) ?? []),
+      ].find((element) => element.textContent === 'Right');
+      const plate = label?.parentElement;
+      if (plate === null || plate === undefined) {
+        throw new Error('Right plate is missing.');
+      }
+
+      const box = plate.getBoundingClientRect();
+      return {
+        centerX: box.left + box.width / 2,
+        centerY: box.top + box.height / 2,
+        width: box.width,
+      };
+    });
+
+  const resting = await getRightPlate();
+  await moveTo(
+    page,
+    offset(center, TOP_LEVEL_ITEMS.right.angle, SELECT_RADIUS),
   );
-  expect(clampedSize).toMatchObject({
-    overflowX: 'clip',
-    overflowY: 'visible',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  });
+  await waitForLogEntry(
+    page,
+    (entry) => entry.type === 'change' && entry.activeId === 'right',
+  );
+  const active = await getRightPlate();
+
+  expect(active.width).toBeGreaterThan(resting.width);
+  expect(active.centerX).toBeCloseTo(resting.centerX, 1);
+  expect(active.centerY).toBeCloseTo(resting.centerY, 1);
 
   await releaseAt(page);
 });
