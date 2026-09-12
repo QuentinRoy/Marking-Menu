@@ -30,6 +30,7 @@ const setTheme = async (page: Page) => {
     surface.style.setProperty('--mm-plate-color-active', '#22223b');
     surface.style.setProperty('--mm-stroke-color', '#5a189a');
     surface.style.setProperty('--mm-stroke-width', '10px');
+    surface.style.setProperty('--mm-wedge-thickness', '60px');
   });
 };
 

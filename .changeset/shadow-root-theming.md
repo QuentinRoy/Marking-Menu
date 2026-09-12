@@ -11,6 +11,9 @@ parts.
 Replace the nine stroke appearance options with `--mm-stroke-*` custom
 properties. `gestureFeedbackDuration` remains an option.
 
+Replace `--mm-ring-radius` with `--mm-wedge-thickness`. The default is 40px,
+which sets the radial thickness beyond `deadZoneRadius`.
+
 The center-to-wedge connector is transparent by default. Set
 `--mm-inner-connector-color` to show it; use `--mm-outer-connector-color` for
 the wedge-to-plate connector.

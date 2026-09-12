@@ -64,7 +64,7 @@ const getWedges = (parent: HTMLElement): SVGPathElement[] => [
 const withSolverConfig = (
   parent: HTMLElement,
   overrides: Partial<{
-    menuRadius: number;
+    wedgeThickness: number;
     wedgeGap: number;
     wedgeCornerRadius: number;
     horizontalGap: number;
@@ -74,7 +74,7 @@ const withSolverConfig = (
   }> = {},
 ): void => {
   const {
-    menuRadius = 80,
+    wedgeThickness = 40,
     wedgeGap = 4,
     wedgeCornerRadius = 4,
     horizontalGap = 14,
@@ -83,7 +83,8 @@ const withSolverConfig = (
     connectorGap = 3,
   } = overrides;
   const properties = {
-    'ring-radius': `${menuRadius}px`,
+    'outer-radius': `${40 + wedgeThickness}px`,
+    'wedge-thickness': `${wedgeThickness}px`,
     'wedge-gap': `${wedgeGap}px`,
     'wedge-corner-radius': `${wedgeCornerRadius}px`,
     'plate-gap-horizontal': `${horizontalGap}px`,
@@ -474,10 +475,10 @@ describe('createMenu', () => {
     }
   });
 
-  it('reads the ring radius and clearances from the CSS custom properties in scope', () => {
+  it('reads the wedge thickness and clearances from the CSS custom properties in scope', () => {
     using _size = stubbedLabelSize(80, 20);
     const narrowRing = document.createElement('div');
-    withSolverConfig(narrowRing, { menuRadius: 80 });
+    withSolverConfig(narrowRing, { wedgeThickness: 40 });
     createMenu({
       parent: narrowRing,
       model: createSpreadModel(8),
@@ -486,7 +487,7 @@ describe('createMenu', () => {
     });
 
     const wideRing = document.createElement('div');
-    withSolverConfig(wideRing, { menuRadius: 200 });
+    withSolverConfig(wideRing, { wedgeThickness: 160 });
     createMenu({
       parent: wideRing,
       model: createSpreadModel(8),

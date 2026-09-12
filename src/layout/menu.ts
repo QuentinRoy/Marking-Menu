@@ -53,7 +53,7 @@ export type Menu = {
 };
 
 type LayoutProbes = {
-  ringRadius: HTMLElement;
+  outerRadius: HTMLElement;
   wedgeGap: HTMLElement;
   wedgeCornerRadius: HTMLElement;
   plateGapHorizontal: HTMLElement;
@@ -114,7 +114,7 @@ const template = (
   root.append(style);
 
   const probes: LayoutProbes = {
-    ringRadius: appendLayoutProbe(root, doc, 'ring-radius'),
+    outerRadius: appendLayoutProbe(root, doc, 'outer-radius'),
     wedgeGap: appendLayoutProbe(root, doc, 'wedge-gap'),
     wedgeCornerRadius: appendLayoutProbe(root, doc, 'wedge-corner-radius'),
     plateGapHorizontal: appendLayoutProbe(root, doc, 'plate-gap-horizontal'),
@@ -366,7 +366,7 @@ function renderWedgeRing(
   doc: Document,
   innerRadius: number,
 ): void {
-  const outerRadius = readPixels(doc, probes.ringRadius, 80);
+  const outerRadius = readPixels(doc, probes.outerRadius, 80);
   const gap = readPixels(doc, probes.wedgeGap, 4);
   const cornerRadius = readPixels(doc, probes.wedgeCornerRadius, 4);
   if (
@@ -480,7 +480,7 @@ function applySolvedLayout(
 
   const layout = {
     plates,
-    ringRadius: readPixels(doc, probes.ringRadius, NaN),
+    ringRadius: readPixels(doc, probes.outerRadius, NaN),
     clearances: {
       plateHorizontal: readPixels(doc, probes.plateGapHorizontal, NaN),
       plateVertical: readPixels(doc, probes.plateGapVertical, NaN),
@@ -597,7 +597,7 @@ export function createMenu({
 }): Menu {
   const menuDom = template({ items: model.items, center }, doc);
   const { main, root } = menuDom;
-  main.style.setProperty('--inner-connector-length', `${deadZoneRadius}px`);
+  main.style.setProperty('--inner-radius', `${deadZoneRadius}px`);
   main.classList.toggle('marking-menu--pointer-target', pointerTarget);
 
   // Attach before measuring: a detached element's `offsetWidth`/`offsetHeight`
