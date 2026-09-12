@@ -11,7 +11,7 @@ describe('createMarkingMenu', () => {
     );
     const parent = document.createElement('div');
     const items = [{ id: 'right', label: 'Right' }] as const;
-    const config = { items, parent, strokeColor: '#123456' };
+    const config = { items, parent };
 
     const result = createMarkingMenu(config);
 

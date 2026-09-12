@@ -4,7 +4,7 @@ exports[`createMenu > can be removed 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="--center-x: 30px; --center-y: 50px; --inner-connector-length: 40px;"
+    style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
       <style />
@@ -139,7 +139,7 @@ exports[`createMenu > renders 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="--center-x: 30px; --center-y: 50px; --inner-connector-length: 40px;"
+    style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
       <style />
@@ -322,7 +322,7 @@ exports[`createMenu > renders without active element 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="--center-x: 30px; --center-y: 50px; --inner-connector-length: 40px;"
+    style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
       <style />
@@ -455,7 +455,7 @@ exports[`createMenu > update the active element 1`] = `
 <div>
   <div
     class="marking-menu"
-    style="--center-x: 30px; --center-y: 50px; --inner-connector-length: 40px;"
+    style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
       <style />
@@ -588,7 +588,7 @@ exports[`createMenu > update the active element 2`] = `
 <div>
   <div
     class="marking-menu"
-    style="--center-x: 30px; --center-y: 50px; --inner-connector-length: 40px;"
+    style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
       <style />

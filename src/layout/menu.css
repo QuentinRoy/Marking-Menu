@@ -1,34 +1,70 @@
 :host {
-  --default-ring-radius: var(--mm-ring-radius, 80px);
-  --default-plate-padding: var(--mm-plate-padding, 12px);
-  --default-plate-corner-radius: var(--mm-plate-corner-radius, 16px);
-  --default-plate-background: var(--mm-plate-background, #f2f2f2);
-  --default-plate-color: var(--mm-plate-color, #333333);
-  --default-plate-background-active: var(--mm-plate-background-active, #d9d9d9);
-  --default-plate-color-active: var(--mm-plate-color-active, #000);
-  --default-plate-font-size: var(--mm-plate-font-size, 18px);
-  --default-connector-thickness: var(--mm-connector-thickness, 4px);
-  --default-inner-connector-color: var(--mm-inner-connector-color, transparent);
-  --default-outer-connector-color: var(
-    --mm-outer-connector-color,
-    var(--default-plate-background)
+  --resolved-wedge-thickness: var(--mm-wedge-thickness, 40px);
+  --resolved-outer-radius: calc(
+    var(--inner-radius) + var(--resolved-wedge-thickness)
   );
-  --default-outer-connector-color-active: var(
-    --mm-outer-connector-color,
-    var(--default-plate-background-active)
+  --resolved-plate-padding: var(--mm-plate-padding, 12px);
+  --resolved-plate-corner-radius: var(--mm-plate-corner-radius, 16px);
+  --resolved-plate-background: var(--mm-plate-background, #f2f2f2);
+  --resolved-plate-color: var(--mm-plate-color, #333333);
+  --resolved-plate-background-active: var(
+    --mm-plate-background-active,
+    #d9d9d9
   );
-  --default-wedge-fill: var(--mm-wedge-fill, var(--default-plate-background));
-  --default-wedge-fill-active: var(
+  --resolved-plate-color-active: var(--mm-plate-color-active, #000);
+  --resolved-plate-font-size: var(--mm-plate-font-size, 18px);
+  --resolved-label-min-width: var(--mm-label-min-width, 0);
+  --resolved-label-max-width: var(--mm-label-max-width, none);
+  --resolved-connector-thickness: var(--mm-connector-thickness, 4px);
+  --resolved-inner-connector-color: var(
+    --mm-inner-connector-color,
+    transparent
+  );
+  --resolved-outer-connector-color: var(
+    --mm-outer-connector-color,
+    var(--resolved-plate-background)
+  );
+  --resolved-outer-connector-color-active: var(
+    --mm-outer-connector-color,
+    var(--resolved-plate-background-active)
+  );
+  --resolved-wedge-fill: var(--mm-wedge-fill, var(--resolved-plate-background));
+  --resolved-wedge-fill-active: var(
     --mm-wedge-fill-active,
-    var(--default-plate-background-active)
+    var(--resolved-plate-background-active)
   );
-  --default-wedge-gap: var(--mm-wedge-gap, 4px);
-  --default-wedge-corner-radius: var(--mm-wedge-corner-radius, 4px);
+  --resolved-wedge-gap: var(--mm-wedge-gap, 4px);
+  --resolved-wedge-corner-radius: var(--mm-wedge-corner-radius, 4px);
 
-  --default-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 14px);
-  --default-plate-gap-vertical: var(--mm-plate-gap-vertical, 4px);
-  --default-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
-  --default-plate-gap-connector: var(--mm-plate-gap-connector, 4px);
+  --resolved-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 14px);
+  --resolved-plate-gap-vertical: var(--mm-plate-gap-vertical, 4px);
+  --resolved-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
+  --resolved-plate-gap-connector: var(--mm-plate-gap-connector, 4px);
+
+  --resolved-stroke-color: var(--mm-stroke-color, #000000);
+  --resolved-stroke-width: var(--mm-stroke-width, 4px);
+  --resolved-stroke-start-point-radius: var(
+    --mm-stroke-start-point-radius,
+    8px
+  );
+  --resolved-stroke-color-lower: var(--mm-stroke-color-lower, #777777);
+  --resolved-stroke-width-lower: var(
+    --mm-stroke-width-lower,
+    var(--resolved-stroke-width)
+  );
+  --resolved-stroke-start-point-radius-lower: var(
+    --mm-stroke-start-point-radius-lower,
+    var(--resolved-stroke-width-lower)
+  );
+  --resolved-stroke-color-feedback: var(
+    --mm-stroke-color-feedback,
+    var(--resolved-stroke-color)
+  );
+  --resolved-stroke-width-feedback: var(
+    --mm-stroke-width-feedback,
+    var(--resolved-stroke-width)
+  );
+  --resolved-stroke-color-canceled: var(--mm-stroke-color-canceled, #de6c52);
 
   position: absolute;
   top: var(--center-y);
@@ -59,36 +95,39 @@
 }
 
 .marking-menu-wedge {
-  fill: var(--default-wedge-fill);
+  fill: var(--resolved-wedge-fill);
 }
 
 .marking-menu-wedge--active {
-  fill: var(--default-wedge-fill-active);
+  fill: var(--resolved-wedge-fill-active);
 }
 
 .marking-menu-plate {
   position: absolute;
-  bottom: var(--solved-bottom, calc(var(--sine) * var(--default-ring-radius)));
-  left: var(--solved-left, calc(var(--cosine) * var(--default-ring-radius)));
-  top: var(--solved-top, auto);
+  bottom: var(
+    --layout-bottom,
+    calc(var(--sine) * var(--resolved-outer-radius))
+  );
+  left: var(--layout-left, calc(var(--cosine) * var(--resolved-outer-radius)));
+  top: var(--layout-top, auto);
   transform: var(
-    --solved-translation,
+    --layout-translation,
     translate(
       calc((min(1, max(-1, var(--cosine) * 2)) - 1) * 50%),
       calc((1 - min(1, max(-1, var(--sine) * 2))) * 50%)
     )
   );
-  border-radius: var(--default-plate-corner-radius);
-  background-color: var(--default-plate-background);
-  padding: calc(var(--default-plate-padding) + 0.2em);
+  border-radius: var(--resolved-plate-corner-radius);
+  background-color: var(--resolved-plate-background);
+  padding: calc(var(--resolved-plate-padding) + 0.2em);
   width: fit-content;
-  min-width: var(--mm-label-min-width, 0);
-  max-width: var(--mm-label-max-width, none);
+  min-width: var(--resolved-label-min-width);
+  max-width: var(--resolved-label-max-width);
   display: flex;
   align-items: center;
   text-align: center;
-  color: var(--default-plate-color);
-  font-size: var(--default-plate-font-size);
+  color: var(--resolved-plate-color);
+  font-size: var(--resolved-plate-font-size);
 }
 
 .marking-menu-label {
@@ -104,7 +143,7 @@
 
 @supports (text-box-trim: trim-both) and (text-box-edge: cap alphabetic) {
   .marking-menu-plate {
-    padding: var(--default-plate-padding);
+    padding: var(--resolved-plate-padding);
   }
 
   .marking-menu-label {
@@ -116,25 +155,25 @@
 .marking-menu-inner-connector,
 .marking-menu-outer-connector {
   position: absolute;
-  top: calc(var(--default-connector-thickness) / -2);
-  height: var(--default-connector-thickness);
+  top: calc(var(--resolved-connector-thickness) / -2);
+  height: var(--resolved-connector-thickness);
   transform-origin: center left;
 }
 
 .marking-menu-inner-connector {
-  background-color: var(--default-inner-connector-color);
-  width: var(--inner-connector-length);
+  background-color: var(--resolved-inner-connector-color);
+  width: var(--inner-radius);
   transform: rotate(var(--angle));
 }
 
 .marking-menu-outer-connector {
-  background-color: var(--default-outer-connector-color);
+  background-color: var(--resolved-outer-connector-color);
   width: calc(
-    var(--solved-connector-contact-radius, var(--default-ring-radius)) +
-      var(--default-plate-corner-radius) + var(--default-connector-thickness) -
-      var(--default-ring-radius)
+    var(--layout-connector-contact-radius, var(--resolved-outer-radius)) +
+      var(--resolved-plate-corner-radius) +
+      var(--resolved-connector-thickness) - var(--resolved-outer-radius)
   );
-  transform: rotate(var(--angle)) translateX(var(--default-ring-radius));
+  transform: rotate(var(--angle)) translateX(var(--resolved-outer-radius));
 }
 
 .marking-menu-item.active {
@@ -142,8 +181,8 @@
 }
 
 .marking-menu-item.active .marking-menu-plate {
-  background-color: var(--default-plate-background-active);
-  color: var(--default-plate-color-active);
+  background-color: var(--resolved-plate-background-active);
+  color: var(--resolved-plate-color-active);
 }
 
 .marking-menu-item.active .marking-menu-label {
@@ -151,7 +190,7 @@
 }
 
 .marking-menu-item.active .marking-menu-outer-connector {
-  background-color: var(--default-outer-connector-color-active);
+  background-color: var(--resolved-outer-connector-color-active);
 }
 
 .marking-menu-layout-probe {
@@ -161,30 +200,66 @@
   contain: strict;
 }
 
-.marking-menu-layout-probe--ring-radius {
-  width: var(--default-ring-radius);
+.marking-menu-layout-probe--outer-radius {
+  width: var(--resolved-outer-radius);
 }
 
 .marking-menu-layout-probe--wedge-gap {
-  width: var(--default-wedge-gap);
+  width: var(--resolved-wedge-gap);
 }
 
 .marking-menu-layout-probe--wedge-corner-radius {
-  width: var(--default-wedge-corner-radius);
+  width: var(--resolved-wedge-corner-radius);
 }
 
 .marking-menu-layout-probe--plate-gap-horizontal {
-  width: var(--default-plate-gap-horizontal);
+  width: var(--resolved-plate-gap-horizontal);
 }
 
 .marking-menu-layout-probe--plate-gap-vertical {
-  width: var(--default-plate-gap-vertical);
+  width: var(--resolved-plate-gap-vertical);
 }
 
 .marking-menu-layout-probe--plate-gap-ring {
-  width: var(--default-plate-gap-ring);
+  width: var(--resolved-plate-gap-ring);
 }
 
 .marking-menu-layout-probe--plate-gap-connector {
-  width: var(--default-plate-gap-connector);
+  width: var(--resolved-plate-gap-connector);
+}
+
+.marking-menu-layout-probe--stroke-color {
+  color: var(--resolved-stroke-color);
+}
+
+.marking-menu-layout-probe--stroke-width {
+  width: var(--resolved-stroke-width);
+}
+
+.marking-menu-layout-probe--stroke-start-point-radius {
+  width: var(--resolved-stroke-start-point-radius);
+}
+
+.marking-menu-layout-probe--stroke-color-lower {
+  color: var(--resolved-stroke-color-lower);
+}
+
+.marking-menu-layout-probe--stroke-width-lower {
+  width: var(--resolved-stroke-width-lower);
+}
+
+.marking-menu-layout-probe--stroke-start-point-radius-lower {
+  width: var(--resolved-stroke-start-point-radius-lower);
+}
+
+.marking-menu-layout-probe--stroke-color-feedback {
+  color: var(--resolved-stroke-color-feedback);
+}
+
+.marking-menu-layout-probe--stroke-width-feedback {
+  width: var(--resolved-stroke-width-feedback);
+}
+
+.marking-menu-layout-probe--stroke-color-canceled {
+  color: var(--resolved-stroke-color-canceled);
 }

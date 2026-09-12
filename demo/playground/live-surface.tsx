@@ -13,14 +13,12 @@ import {
 import { strokeLength } from '../../src/recognizer/stroke-length.js';
 import type { MarkingMenuInput } from '../../src/types.js';
 import { toLocalPoint, type Point } from '../../src/utils.js';
-import { token, tokenNumber } from '../tokens.js';
 import {
   pathOfKey,
   stepsAlong,
   type MenuModel,
   type MenuStep,
 } from './menu-model.js';
-import { useColorScheme } from './use-color-scheme.js';
 import { useLatest } from './use-latest.js';
 
 /*
@@ -80,6 +78,9 @@ function drawGesture({
   stroke: readonly Point[];
   analysis: MarkingMenuStrokeAnalysis<MenuModel>;
 }): StrokeCanvas[] {
+  const style = getComputedStyle(document.documentElement);
+  const token = (name: string) => style.getPropertyValue(name).trim();
+  const tokenNumber = (name: string) => Number(token(name));
   const canvases: StrokeCanvas[] = [];
   const add = (options: Omit<StrokeCanvasOptions, 'parent'>) => {
     const canvas = createStrokeCanvas({ parent: overlay, ...options });
@@ -90,7 +91,7 @@ function drawGesture({
   // The mark as the menu drew it, dimmed so the pieces read on top of it.
   add({
     lineColor: token('--color-stroke-trace'),
-    lineWidth: tokenNumber('--stroke-width'),
+    lineWidth: tokenNumber('--mm-stroke-width'),
   }).drawStroke(stroke);
 
   // Two canvases, used in turn, so that consecutive pieces stay told apart
@@ -164,7 +165,6 @@ export function LiveSurface({
   showBreakdown: boolean;
   onResult: (result: GestureResult) => void;
 }) {
-  const colorScheme = useColorScheme();
   const menuParentRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const canvasesRef = useRef<StrokeCanvas[]>([]);
@@ -257,16 +257,8 @@ export function LiveSurface({
       parent: menuParent,
       ...menu,
       // Nothing here times the menu or touches its layout: the point of this
-      // page is what the shipped one looks like and does. Two exceptions.
+      // page is what the shipped one looks like and does.
       //
-      // The stroke colours are options rather than CSS, so the library
-      // cannot follow the reader's scheme on its own and its `#000` default
-      // is invisible on a dark page. These are the demo page's own two
-      // values (see `demo/style.css`), which in light mode are the library's
-      // defaults; `colorScheme` is in this effect's dependencies so a change
-      // of scheme rebuilds the menu with the other pair.
-      strokeColor: token('--stroke-color'),
-      lowerStrokeColor: token('--lower-stroke-color'),
       // With the breakdown off the page draws nothing at all, so the library
       // keeps its own completed-gesture trace and what is on screen is the
       // technique untouched. With it on, the overlay covers that same
@@ -326,7 +318,7 @@ export function LiveSurface({
       controller.dispose();
       clearOverlay();
     };
-  }, [clearOverlay, colorScheme, latestRef, menu, showBreakdown]);
+  }, [clearOverlay, latestRef, menu, showBreakdown]);
 
   // Turning the overlay off, or back on, redraws the gesture already on
   // screen rather than waiting for the next one. Only a gesture the
@@ -348,7 +340,7 @@ export function LiveSurface({
       stroke,
       analysis: analyzeMarkingMenuStroke(stroke, model),
     });
-  }, [clearOverlay, colorScheme, model, showBreakdown]);
+  }, [clearOverlay, model, showBreakdown]);
 
   return (
     <div className="relative min-h-85 flex-1 cursor-crosshair overflow-hidden bg-surface dot-grid wide:min-h-0">
