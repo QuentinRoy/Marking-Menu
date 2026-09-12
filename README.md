@@ -142,7 +142,9 @@ Second and Third split the first 180-degree gap into three 60-degree steps. Fift
 
 ## Appearance
 
-Set CSS variables on `.marking-menu` to style labels and layout. Scope the selector to your container to style one menu:
+Each open menu uses a library-created `<div class="marking-menu">` with an open shadow root. The root is available for inspection, but direct mutation is unsupported. Use `.marking-menu` as the stable host selector for custom properties and `::part()` rules.
+
+Scope the host selector to a container when only one menu should change:
 
 ```css
 #menu-area .marking-menu {
@@ -153,9 +155,91 @@ Set CSS variables on `.marking-menu` to style labels and layout. Scope the selec
 }
 ```
 
-See [the menu styles](src/layout/menu.css) for size, spacing, and line variables.
+Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Layout and stroke values are resolved when a menu opens.
 
-Gesture strokes use configuration options: `strokeColor` defaults to `'#000'`, `strokeWidth` to `4`, and `strokeStartPointRadius` to `8`. Widths and radii use pixels. [The drawing options](src/engine/renderer.ts) also cover earlier stroke segments and completed-gesture feedback.
+### Plate and label properties
+
+| Property                       | Default   | Purpose                                      |
+| ------------------------------ | --------- | -------------------------------------------- |
+| `--mm-plate-background`        | `#f2f2f2` | Plate background.                            |
+| `--mm-plate-color`             | `#333333` | Label color.                                 |
+| `--mm-plate-background-active` | `#d9d9d9` | Active plate background.                     |
+| `--mm-plate-color-active`      | `#000`    | Active label color.                          |
+| `--mm-plate-padding`           | `12px`    | Space around the label.                      |
+| `--mm-plate-corner-radius`     | `16px`    | Plate corner radius.                         |
+| `--mm-plate-font-size`         | `18px`    | Label font size.                             |
+| `--mm-label-min-width`         | `0`       | Minimum plate width.                         |
+| `--mm-label-max-width`         | `none`    | Maximum plate width before label truncation. |
+
+Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the configured plate padding so text is not clipped vertically.
+
+### Wedge and ring properties
+
+| Property                   | Default                 | Purpose                                               |
+| -------------------------- | ----------------------- | ----------------------------------------------------- |
+| `--mm-wedge-thickness`     | `40px`                  | Distance from `deadZoneRadius` to the ring's outside. |
+| `--mm-wedge-fill`          | Plate background        | Wedge fill.                                           |
+| `--mm-wedge-fill-active`   | Active plate background | Active wedge fill.                                    |
+| `--mm-wedge-gap`           | `4px`                   | Constant-width gap between wedges.                    |
+| `--mm-wedge-corner-radius` | `4px`                   | Wedge corner radius.                                  |
+
+### Connector properties
+
+| Property                     | Default          | Purpose                         |
+| ---------------------------- | ---------------- | ------------------------------- |
+| `--mm-connector-thickness`   | `4px`            | Connector thickness.            |
+| `--mm-inner-connector-color` | `transparent`    | Center-to-ring connector color. |
+| `--mm-outer-connector-color` | Plate background | Ring-to-plate connector color.  |
+
+The active outer connector uses the active plate background unless `--mm-outer-connector-color` is set. A set value applies in both states.
+
+### Layout clearance properties
+
+| Property                    | Default | Purpose                                                   |
+| --------------------------- | ------- | --------------------------------------------------------- |
+| `--mm-plate-gap-horizontal` | `14px`  | Horizontal clearance between plates.                      |
+| `--mm-plate-gap-vertical`   | `4px`   | Vertical clearance between plates.                        |
+| `--mm-plate-gap-ring`       | `12px`  | Clearance between a plate and the ring.                   |
+| `--mm-plate-gap-connector`  | `4px`   | Clearance from a plate to another item's outer connector. |
+
+### Stroke properties
+
+| Property                               | Default                   | Purpose                              |
+| -------------------------------------- | ------------------------- | ------------------------------------ |
+| `--mm-stroke-color`                    | `#000000`                 | Current gesture color.               |
+| `--mm-stroke-width`                    | `4px`                     | Current gesture width.               |
+| `--mm-stroke-start-point-radius`       | `8px`                     | Novice-mode start marker radius.     |
+| `--mm-stroke-color-lower`              | `#777777`                 | Earlier gesture segments' color.     |
+| `--mm-stroke-width-lower`              | `--mm-stroke-width`       | Earlier gesture segments' width.     |
+| `--mm-stroke-start-point-radius-lower` | `--mm-stroke-width-lower` | Earlier gesture start marker radius. |
+| `--mm-stroke-color-feedback`           | `--mm-stroke-color`       | Selected gesture feedback color.     |
+| `--mm-stroke-width-feedback`           | `--mm-stroke-width`       | Completed gesture feedback width.    |
+| `--mm-stroke-color-canceled`           | `#de6c52`                 | Canceled gesture feedback color.     |
+
+### Parts
+
+Parts expose whole menu elements when custom properties are not enough:
+
+| Part              | Active modifier           | Element                       |
+| ----------------- | ------------------------- | ----------------------------- |
+| `ring`            | None                      | The ring's SVG element.       |
+| `wedge`           | `wedge--active`           | One wedge path.               |
+| `inner-connector` | `inner-connector--active` | One center-to-ring connector. |
+| `outer-connector` | `outer-connector--active` | One ring-to-plate connector.  |
+| `plate`           | `plate--active`           | One label plate.              |
+| `label`           | `label--active`           | One label's text element.     |
+
+For example, this rule adds an outline only to the active plate:
+
+```css
+#menu-area .marking-menu::part(plate--active) {
+  outline: 2px solid currentColor;
+}
+```
+
+The stroke canvases are light-DOM siblings of `.marking-menu`, not shadow parts. Theme their pixels with the stroke custom properties.
+
+A part selector cannot use combinators, class selectors, ID selectors, attribute selectors, or structural pseudo-classes after `::part()`. It also cannot chain through another shadow root. Add a rule for each exposed part instead of selecting its descendants or position.
 
 ## Input behavior
 
@@ -168,6 +252,80 @@ Once all controllers sharing the parent are disposed, the previous inline value 
 Default item positions change in 5-, 6-, and 7-item menus. The layout change causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
 
 The release also changes imports, menu configuration, and event handling. Use the named `createMarkingMenu` export with a configuration object and register listeners with `on`. Replace subscription cleanup with `dispose()`.
+
+### Appearance and theming
+
+Menus now render inside an open shadow root. Page CSS cannot reach the internal class names. `.marking-menu` remains the host selector, but these selectors stop working:
+
+| Old selector or state                                                              | Replacement                                                           |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `.marking-menu-item`                                                               | None. Style its exposed child parts.                                  |
+| `.marking-menu-label`                                                              | `.marking-menu::part(label)` for text or `::part(plate)` for its box. |
+| `.marking-menu-line`                                                               | `::part(inner-connector)` and `::part(outer-connector)`.              |
+| `.marking-menu.solved`                                                             | None. Solved layout is internal.                                      |
+| `.marking-menu-item.active ...`                                                    | The corresponding `--active` part modifier.                           |
+| `.bottom-right-item`, `.bottom-left-item`, `.top-left-item`, and `.top-right-item` | `--mm-plate-corner-radius` applies to every plate corner.             |
+
+The old box-model rule for `.marking-menu, .marking-menu *` is also gone. The shadow boundary keeps page-wide box sizing rules out of the menu.
+
+Replace the old custom properties as follows:
+
+| Old property               | Replacement                                                              |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `--item-width`             | `--mm-label-min-width` and `--mm-label-max-width`.                       |
+| `--item-height`            | None. Plate height follows the label and padding.                        |
+| `--item-font-size`         | `--mm-plate-font-size`.                                                  |
+| `--item-padding`           | `--mm-plate-padding`.                                                    |
+| `--item-background`        | `--mm-plate-background`.                                                 |
+| `--item-color`             | `--mm-plate-color`.                                                      |
+| `--active-item-background` | `--mm-plate-background-active`.                                          |
+| `--active-item-color`      | `--mm-plate-color-active`.                                               |
+| `--item-radius`            | `--mm-plate-corner-radius`.                                              |
+| `--menu-radius`            | `--mm-wedge-thickness`, measured outward from `deadZoneRadius`.          |
+| `--center-radius`          | None. It was unused.                                                     |
+| `--line-thickness`         | `--mm-connector-thickness`.                                              |
+| `--line-color`             | `--mm-outer-connector-color`.                                            |
+| `--active-line-color`      | `::part(outer-connector--active)` when it differs from the active plate. |
+| `--item-horizontal-gap`    | `--mm-plate-gap-horizontal`.                                             |
+| `--item-vertical-gap`      | `--mm-plate-gap-vertical`.                                               |
+| `--item-ring-gap`          | `--mm-plate-gap-ring`.                                                   |
+| `--item-connector-gap`     | `--mm-plate-gap-connector`.                                              |
+
+Label plates now hug their text. Set both width properties to restore the old fixed width and ellipsis:
+
+```css
+.marking-menu {
+  --mm-label-min-width: 120px;
+  --mm-label-max-width: 120px;
+}
+```
+
+The visible connector now starts at the ring. Set the inner connector to the same color for a continuous center-to-plate line:
+
+```css
+.marking-menu {
+  --mm-inner-connector-color: var(
+    --mm-outer-connector-color,
+    var(--mm-plate-background, #f2f2f2)
+  );
+}
+```
+
+Nine stroke options moved from `createMarkingMenu` configuration to CSS:
+
+| Removed option                       | Replacement                             |
+| ------------------------------------ | --------------------------------------- |
+| `strokeColor`                        | `--mm-stroke-color`.                    |
+| `strokeWidth`                        | `--mm-stroke-width`.                    |
+| `strokeStartPointRadius`             | `--mm-stroke-start-point-radius`.       |
+| `lowerStrokeColor`                   | `--mm-stroke-color-lower`.              |
+| `lowerStrokeWidth`                   | `--mm-stroke-width-lower`.              |
+| `lowerStrokeStartPointRadius`        | `--mm-stroke-start-point-radius-lower`. |
+| `gestureFeedbackStrokeWidth`         | `--mm-stroke-width-feedback`.           |
+| `gestureFeedbackStrokeColor`         | `--mm-stroke-color-feedback`.           |
+| `gestureFeedbackCanceledStrokeColor` | `--mm-stroke-color-canceled`.           |
+
+`gestureFeedbackDuration` remains a configuration option and still defaults to `1000` milliseconds.
 
 ## Background and license
 
