@@ -17,7 +17,7 @@ runs:
       with:
         node-version-file: .tool-versions
         registry-url: ${{ inputs.registry-url }}
-    - run: npm install --global corepack
+    - run: npm install --global corepack@0.36.0
       shell: bash
     - name: Get Yarn cache directory
       id: yarn-cache

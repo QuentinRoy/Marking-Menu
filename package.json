@@ -13,6 +13,7 @@
     }
   },
   "sideEffects": false,
+  "packageManager": "yarn@4.18.0+sha224.5707fce90df5d8720fae4e85a07ab55e90aa20fded8914893e2ba225",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
@@ -29,7 +30,6 @@
     "e2e:visual": "yarn e2e:test --project=chromium-visual",
     "prepare": "yarn build",
     "changeset": "changeset",
-    "changeset:version": "changeset version && prettier --write CHANGELOG.md package.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
