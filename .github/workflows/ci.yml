@@ -5,14 +5,19 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Keep each pull-request commit's result: an updater commit must not cancel
+  # the preceding visual-regression failure that prompted it.
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event.pull_request.head.sha || github.ref
+    }}
   cancel-in-progress: true
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   LintFormatTypecheck:
@@ -63,6 +68,9 @@ jobs:
   E2E:
     needs: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     # The official Playwright image ships the browsers and their system
     # dependencies preinstalled, so the job never has to download them (that
     # step used to hang for tens of minutes when the fetch stalled).
@@ -104,18 +112,23 @@ jobs:
           github.event_name == 'pull_request'
         id: visual
         run: |
-          snapshots=$(jq -r '
+          # Only screenshot assertions count as visual failures. Baseline names
+          # are extracted separately so a matcher failure is never hidden just
+          # because its message did not contain a parseable filename.
+          if jq -e '
             [
               .. | objects | .message? | strings
-              | select(
-                  contains("toHaveScreenshot") or
-                  contains("A snapshot doesn't exist at")
-                )
-              | scan("menu-[A-Za-z0-9-]+\\.png")
-              | select(test("-(actual|diff|previous)\\.png$") | not)
-            ] | unique[]
-          ' test-results.json)
-          if [ -n "$snapshots" ]; then
+              | select(contains("toHaveScreenshot"))
+            ] | length > 0
+          ' test-results.json > /dev/null; then
+            snapshots=$(jq -r '
+              [
+                .. | objects | .message? | strings
+                | select(contains("toHaveScreenshot"))
+                | scan("menu-[A-Za-z0-9-]+\\.png")
+                | select(test("-(actual|diff|previous)\\.png$") | not)
+              ] | unique[]
+            ' test-results.json)
             {
               echo 'failed=true'
               echo 'snapshots<<EOF'
@@ -130,18 +143,25 @@ jobs:
         with:
           script: |
             const updateLabel = 'update screenshots';
-            if (context.payload.pull_request.labels.some(
-              ({ name }) => name === updateLabel,
-            )) {
+            const issue = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            };
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: issue.owner,
+              repo: issue.repo,
+              pull_number: issue.issue_number,
+            });
+            if (
+              pullRequest.head.sha !== context.payload.pull_request.head.sha ||
+              pullRequest.labels.some(({ name }) => name === updateLabel)
+            ) {
               return;
             }
             const comments = await github.paginate(
               github.rest.issues.listComments,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-              },
+              issue,
             );
             const heading = 'Visual regression failures detected';
             if (comments.some((comment) => comment.body?.includes(heading))) {
@@ -151,11 +171,10 @@ jobs:
               .filter(Boolean)
               .map((snapshot) => `- \`${snapshot}\``)
               .join('\n');
+            const affected = snapshots === '' ? '' : `\n\n${snapshots}`;
             await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `### ${heading}\n\n${snapshots}\n\nIf the changes are intentional, add the \`update screenshots\` label to regenerate them.`,
+              ...issue,
+              body: `### ${heading}${affected}\n\nIf the changes are intentional, add the \`update screenshots\` label to regenerate them.`,
             });
       - if: steps.e2e.outcome == 'failure'
         run: exit 1
