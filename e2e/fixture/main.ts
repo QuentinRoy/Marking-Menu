@@ -28,7 +28,14 @@ if (!(surface instanceof HTMLElement) || !(log instanceof HTMLElement)) {
   throw new TypeError('Fixture markup is missing #surface or #log.');
 }
 
-const mm = createMarkingMenu({ items, parent: surface });
+const deadZoneRadius = new URL(globalThis.location.href).searchParams.get(
+  'deadZoneRadius',
+);
+const mm = createMarkingMenu({
+  items,
+  parent: surface,
+  ...(deadZoneRadius !== null && { deadZoneRadius: Number(deadZoneRadius) }),
+});
 
 // A node carries an `id` only when the caller gave it one (root has none);
 // tests need that id, not the whole node, so pull it out defensively.
