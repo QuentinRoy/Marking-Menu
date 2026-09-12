@@ -152,6 +152,66 @@ test('novice mode: wedges and connector parts follow the menu directions', async
   await releaseAt(page);
 });
 
+test('novice mode: strokes use resolved CSS colors and lengths', async ({
+  page,
+}) => {
+  await page.locator('#surface').evaluate((surface) => {
+    surface.style.fontSize = '10px';
+    surface.style.setProperty(
+      '--mm-stroke-color',
+      'color-mix(in srgb, red 25%, blue)',
+    );
+    surface.style.setProperty('--mm-stroke-width', 'calc(1em + 2px)');
+    const { stroke } = CanvasRenderingContext2D.prototype;
+    const styles: Array<{ color: string; width: number }> = [];
+    CanvasRenderingContext2D.prototype.stroke = function (...args: unknown[]) {
+      if (typeof this.strokeStyle === 'string') {
+        styles.push({ color: this.strokeStyle, width: this.lineWidth });
+      }
+
+      Reflect.apply(stroke, this, args);
+    };
+
+    Object.assign(globalThis, { strokeStyles: styles });
+  });
+
+  const center = await surfaceCenter(page);
+  await pressAt(page, center);
+  await waitForMenuOpen(page);
+
+  const stroke = await page.locator('#surface').evaluate((surface) => {
+    const colorProbe = document.createElement('div');
+    colorProbe.style.color = 'var(--mm-stroke-color)';
+    surface.append(colorProbe);
+    const { color } = getComputedStyle(colorProbe);
+    colorProbe.remove();
+
+    const canvas = document.createElement('canvas').getContext('2d');
+    if (canvas === null) {
+      throw new Error('Canvas context is missing.');
+    }
+
+    canvas.strokeStyle = color;
+    const canvasColor = canvas.strokeStyle;
+    return {
+      color: typeof canvasColor === 'string' ? canvasColor : '',
+      strokes: (
+        globalThis as unknown as {
+          strokeStyles: Array<{
+            color: string;
+            width: number;
+          }>;
+        }
+      ).strokeStyles,
+    };
+  });
+
+  expect(stroke.color).not.toBe('');
+  expect(stroke.strokes).toContainEqual({ color: stroke.color, width: 12 });
+
+  await releaseAt(page);
+});
+
 test('novice mode: a gesture prevents the browser pointer default', async ({
   page,
 }) => {

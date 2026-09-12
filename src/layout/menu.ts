@@ -39,6 +39,10 @@ export type Menu = {
   */
   element: HTMLElement;
   /**
+  The resolved stroke theme for this menu opening.
+  */
+  strokeTheme: MenuStrokeTheme;
+  /**
   Mark the item with the given id as active (or none if nullish).
   */
   setActive: (itemId: string | number | null) => void;
@@ -79,6 +83,27 @@ type LayoutProbes = {
   plateGapVertical: HTMLElement;
   plateGapRing: HTMLElement;
   plateGapConnector: HTMLElement;
+  strokeColor: HTMLElement;
+  strokeWidth: HTMLElement;
+  strokeStartPointRadius: HTMLElement;
+  strokeColorLower: HTMLElement;
+  strokeWidthLower: HTMLElement;
+  strokeStartPointRadiusLower: HTMLElement;
+  strokeColorFeedback: HTMLElement;
+  strokeWidthFeedback: HTMLElement;
+  strokeColorCanceled: HTMLElement;
+};
+
+export type MenuStrokeTheme = {
+  strokeColor: string;
+  strokeWidth: number;
+  strokeStartPointRadius: number;
+  lowerStrokeColor: string;
+  lowerStrokeWidth: number;
+  lowerStrokeStartPointRadius: number;
+  gestureFeedbackStrokeColor: string;
+  gestureFeedbackStrokeWidth: number;
+  gestureFeedbackCanceledStrokeColor: string;
 };
 
 type MenuDom = {
@@ -119,6 +144,23 @@ const template = (
     plateGapVertical: appendLayoutProbe(root, doc, 'plate-gap-vertical'),
     plateGapRing: appendLayoutProbe(root, doc, 'plate-gap-ring'),
     plateGapConnector: appendLayoutProbe(root, doc, 'plate-gap-connector'),
+    strokeColor: appendLayoutProbe(root, doc, 'stroke-color'),
+    strokeWidth: appendLayoutProbe(root, doc, 'stroke-width'),
+    strokeStartPointRadius: appendLayoutProbe(
+      root,
+      doc,
+      'stroke-start-point-radius',
+    ),
+    strokeColorLower: appendLayoutProbe(root, doc, 'stroke-color-lower'),
+    strokeWidthLower: appendLayoutProbe(root, doc, 'stroke-width-lower'),
+    strokeStartPointRadiusLower: appendLayoutProbe(
+      root,
+      doc,
+      'stroke-start-point-radius-lower',
+    ),
+    strokeColorFeedback: appendLayoutProbe(root, doc, 'stroke-color-feedback'),
+    strokeWidthFeedback: appendLayoutProbe(root, doc, 'stroke-width-feedback'),
+    strokeColorCanceled: appendLayoutProbe(root, doc, 'stroke-color-canceled'),
   };
 
   for (const item of items) {
@@ -290,6 +332,41 @@ function readPixels(
   // eslint-disable-next-line unicorn/prefer-number-coercion
   const pixels = Number.parseFloat(width);
   return Number.isNaN(pixels) ? fallback : pixels;
+}
+
+function readColor(
+  doc: Document,
+  probe: HTMLElement,
+  fallback: string,
+): string {
+  const { color } = (doc.defaultView ?? globalThis).getComputedStyle(probe);
+  return color === '' ? fallback : color;
+}
+
+function readStrokeTheme(doc: Document, probes: LayoutProbes): MenuStrokeTheme {
+  return {
+    strokeColor: readColor(doc, probes.strokeColor, '#000000'),
+    strokeWidth: readPixels(doc, probes.strokeWidth, 4),
+    strokeStartPointRadius: readPixels(doc, probes.strokeStartPointRadius, 8),
+    lowerStrokeColor: readColor(doc, probes.strokeColorLower, '#777777'),
+    lowerStrokeWidth: readPixels(doc, probes.strokeWidthLower, 4),
+    lowerStrokeStartPointRadius: readPixels(
+      doc,
+      probes.strokeStartPointRadiusLower,
+      4,
+    ),
+    gestureFeedbackStrokeColor: readColor(
+      doc,
+      probes.strokeColorFeedback,
+      '#000000',
+    ),
+    gestureFeedbackStrokeWidth: readPixels(doc, probes.strokeWidthFeedback, 4),
+    gestureFeedbackCanceledStrokeColor: readColor(
+      doc,
+      probes.strokeColorCanceled,
+      '#de6c52',
+    ),
+  };
 }
 
 function appendWedge(
@@ -547,6 +624,7 @@ export function createMenu({
   // synchronously in this one call, so the unsolved layout is never
   // painted: a browser only paints between tasks, never mid-function.
   parent.append(main);
+  const strokeTheme = readStrokeTheme(doc, menuDom.probes);
   renderWedgeRing(menuDom, model.items, doc, deadZoneRadius);
   applySolvedLayout(menuDom, model.items, doc);
 
@@ -591,5 +669,5 @@ export function createMenu({
   };
 
   // Create the interface.
-  return { element: main, setActive, remove };
+  return { element: main, strokeTheme, setActive, remove };
 }

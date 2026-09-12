@@ -25,9 +25,6 @@ const otherModel = createModel({
   ],
 });
 
-// The canvas layers are told apart by their line width, the one drawing
-// property `drawPoint` leaves alone, so the stacking tests below have to
-// configure all three widths differently.
 const upperStrokeWidth = 7;
 const lowerStrokeWidth = 3;
 const feedbackStrokeWidth = 5;
@@ -35,6 +32,7 @@ const feedbackStrokeWidth = 5;
 type Layer = 'lower' | 'menu' | 'upper' | 'feedback';
 
 const layerByStrokeWidth = new Map<number | undefined, Layer>([
+  [4, 'feedback'],
   [upperStrokeWidth, 'upper'],
   [lowerStrokeWidth, 'lower'],
   [feedbackStrokeWidth, 'feedback'],
@@ -50,22 +48,61 @@ const layerOrder = (parent: HTMLElement): Array<Layer | undefined> =>
       : 'menu',
   );
 
-/**
-A renderer whose three canvas layers are individually identifiable.
-*/
-const createStackingRenderer = (parent: HTMLElement) =>
-  createRenderer<typeof model>({
-    parent,
-    strokeWidth: upperStrokeWidth,
-    lowerStrokeWidth,
-    gestureFeedbackStrokeWidth: feedbackStrokeWidth,
+const withStrokeTheme = (
+  values: Partial<Record<string, string>> = {},
+): void => {
+  const defaults = {
+    'stroke-color': '#000000',
+    'stroke-width': '4px',
+    'stroke-start-point-radius': '8px',
+    'stroke-color-lower': '#777777',
+    'stroke-width-lower': '4px',
+    'stroke-start-point-radius-lower': '4px',
+    'stroke-color-feedback': '#000000',
+    'stroke-width-feedback': '4px',
+    'stroke-color-canceled': '#de6c52',
+    ...values,
+  };
+  const getComputedStyle = globalThis.getComputedStyle.bind(globalThis);
+  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
+    const probeClass = element
+      .getAttribute('class')
+      ?.split(' ')
+      .find((className) =>
+        className.startsWith('marking-menu-layout-probe--stroke-'),
+      );
+    if (probeClass === undefined) {
+      return getComputedStyle(element);
+    }
+
+    const name = probeClass.replace('marking-menu-layout-probe--', '');
+    const value = defaults[name as keyof typeof defaults];
+    const style: Pick<CSSStyleDeclaration, 'color' | 'width'> = {
+      color: value,
+      width: value,
+    };
+    return style as CSSStyleDeclaration;
   });
+};
+
+const createStackingRenderer = (parent: HTMLElement) => {
+  withStrokeTheme({
+    'stroke-width': `${upperStrokeWidth}px`,
+    'stroke-width-lower': `${lowerStrokeWidth}px`,
+    'stroke-width-feedback': `${feedbackStrokeWidth}px`,
+  });
+  return createRenderer<typeof model>({ parent });
+};
 
 const menuItems = (parent: HTMLElement): HTMLElement[] => [
   ...(parent
     .querySelector<HTMLElement>('.marking-menu')
     ?.shadowRoot?.querySelectorAll<HTMLElement>('.marking-menu-item') ?? []),
 ];
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 /**
  A parent placed away from the viewport's top-left, which is what tells a
@@ -118,7 +155,7 @@ describe('createRenderer', () => {
     using _timers = fakeTimers();
 
     const parent = document.createElement('div');
-    const renderer = createRenderer({ parent });
+    const renderer = createRenderer<typeof model>({ parent });
     const stroke: Point[] = [
       [0, 0],
       [10, 0],
@@ -151,7 +188,7 @@ describe('createRenderer', () => {
     using _timers = fakeTimers();
 
     const parent = document.createElement('div');
-    const renderer = createRenderer({ parent });
+    const renderer = createRenderer<typeof model>({ parent });
     const stroke: Point[] = [
       [0, 0],
       [10, 0],
@@ -212,17 +249,17 @@ describe('createRenderer', () => {
     renderer.dispose();
   });
 
-  it('draws the upper stroke and its novice start-point marker with the configured styling', () => {
+  it('draws the upper stroke and its novice start-point marker with the menu theme', () => {
     using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
 
     const parent = document.createElement('div');
-    const renderer = createRenderer({
-      parent,
-      strokeColor: '#123456',
-      strokeWidth: 7,
-      strokeStartPointRadius: 12,
+    withStrokeTheme({
+      'stroke-color': '#123456',
+      'stroke-width': '7px',
+      'stroke-start-point-radius': '12px',
     });
+    const renderer = createRenderer<typeof model>({ parent });
     const stroke: Point[] = [
       [0, 0],
       [10, 0],
@@ -230,7 +267,7 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'none',
-      menu: null,
+      menu: { model, center: [0, 0], activeKey: null },
       upperStroke: stroke,
       lowerStroke: null,
     });
@@ -251,7 +288,7 @@ describe('createRenderer', () => {
     using _timers = fakeTimers();
 
     const parent = document.createElement('div');
-    const renderer = createRenderer({ parent });
+    const renderer = createRenderer<typeof model>({ parent });
     const stroke: Point[] = [
       [0, 0],
       [10, 0],
@@ -271,16 +308,16 @@ describe('createRenderer', () => {
     );
   });
 
-  it('draws the lower stroke with its own configured styling, never a start-point marker', () => {
+  it('draws the lower stroke with its own menu theme, never a start-point marker', () => {
     using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
 
     const parent = document.createElement('div');
-    const renderer = createRenderer({
-      parent,
-      lowerStrokeColor: '#abcdef',
-      lowerStrokeWidth: 3,
+    withStrokeTheme({
+      'stroke-color-lower': '#abcdef',
+      'stroke-width-lower': '3px',
     });
+    const renderer = createRenderer<typeof model>({ parent });
     const stroke: Point[] = [
       [0, 0],
       [10, 0],
@@ -288,7 +325,7 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'none',
-      menu: null,
+      menu: { model, center: [0, 0], activeKey: null },
       upperStroke: null,
       lowerStroke: stroke,
     });
@@ -302,25 +339,41 @@ describe('createRenderer', () => {
     );
   });
 
-  it('forwards gesture-feedback styling, using the canceled color only when canceled', () => {
+  it('uses the menu theme for gesture feedback, including canceled strokes', () => {
     using _canvases = stubbedCanvasContexts();
 
     const parent = document.createElement('div');
-    const renderer = createRenderer({
-      parent,
-      gestureFeedbackStrokeColor: '#00ff00',
-      gestureFeedbackStrokeWidth: 5,
-      gestureFeedbackCanceledStrokeColor: '#ff0000',
+    withStrokeTheme({
+      'stroke-color-feedback': '#00ff00',
+      'stroke-width-feedback': '5px',
+      'stroke-color-canceled': '#ff0000',
     });
+    const renderer = createRenderer<typeof model>({ parent });
     const stroke: Point[] = [
       [0, 0],
       [10, 0],
     ];
 
+    renderer.render({
+      cursor: 'none',
+      menu: { model, center: [0, 0], activeKey: null },
+      upperStroke: null,
+      lowerStroke: null,
+    });
     renderer.showFeedback({ stroke, canceled: false });
     const selected = queryCanvasContext(parent);
     expect(selected.strokeStyle).toBe('#00ff00');
     expect(selected.lineWidth).toBe(5);
+
+    renderer.showFeedback({ stroke, canceled: true });
+    const canvases = parent.querySelectorAll<HTMLCanvasElement>('canvas');
+    const canceledCanvas = canvases[1];
+    if (canceledCanvas === undefined) {
+      throw new Error('Canceled feedback canvas is missing.');
+    }
+
+    const canceled = canvasContext(canceledCanvas);
+    expect(canceled.strokeStyle).toBe('#ff0000');
 
     renderer.dispose();
   });
@@ -330,7 +383,7 @@ describe('createRenderer', () => {
     using _timers = fakeTimers();
 
     const parent = offsetParent(200, 50);
-    const renderer = createRenderer({ parent, strokeStartPointRadius: 4 });
+    const renderer = createRenderer({ parent });
 
     renderer.render({
       cursor: 'none',

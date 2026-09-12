@@ -191,3 +191,42 @@
 .marking-menu-layout-probe--plate-gap-connector {
   width: var(--default-plate-gap-connector);
 }
+
+.marking-menu-layout-probe--stroke-color {
+  color: var(--mm-stroke-color, #000000);
+}
+
+.marking-menu-layout-probe--stroke-width {
+  width: var(--mm-stroke-width, 4px);
+}
+
+.marking-menu-layout-probe--stroke-start-point-radius {
+  width: var(--mm-stroke-start-point-radius, 8px);
+}
+
+.marking-menu-layout-probe--stroke-color-lower {
+  color: var(--mm-stroke-color-lower, #777777);
+}
+
+.marking-menu-layout-probe--stroke-width-lower {
+  width: var(--mm-stroke-width-lower, var(--mm-stroke-width, 4px));
+}
+
+.marking-menu-layout-probe--stroke-start-point-radius-lower {
+  width: var(
+    --mm-stroke-start-point-radius-lower,
+    var(--mm-stroke-width-lower, var(--mm-stroke-width, 4px))
+  );
+}
+
+.marking-menu-layout-probe--stroke-color-feedback {
+  color: var(--mm-stroke-color-feedback, var(--mm-stroke-color, #000000));
+}
+
+.marking-menu-layout-probe--stroke-width-feedback {
+  width: var(--mm-stroke-width-feedback, var(--mm-stroke-width, 4px));
+}
+
+.marking-menu-layout-probe--stroke-color-canceled {
+  color: var(--mm-stroke-color-canceled, #de6c52);
+}

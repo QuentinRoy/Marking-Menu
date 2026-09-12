@@ -1,6 +1,5 @@
 import { createMarkingMenu } from 'marking-menu';
 import { DEFAULT_MENU, readMenuConfig } from './menu-config.js';
-import { token } from './tokens.js';
 
 function element(selector: string): HTMLElement {
   const found = document.querySelector(selector);
@@ -18,22 +17,10 @@ const toastElement = element('#toast');
 // built for. Failing that, the page opens on the shared default.
 const items = readMenuConfig(location.search) ?? DEFAULT_MENU;
 
-/**
- Build the menu, taking its stroke colours from the page's own custom
- properties.
-
- The library reads those colours once, when the menu is created, so this is
- called again whenever the colour scheme changes; everything else on the page
- follows `prefers-color-scheme` in CSS alone.
-
- @returns The new menu, already listening.
- */
 function openMenu() {
   const menu = createMarkingMenu({
     ...items,
     parent: element('#main'),
-    strokeColor: token('--stroke-color'),
-    lowerStrokeColor: token('--lower-stroke-color'),
   });
   menu.on('select', (event) => {
     toastMessage(event.selection.label);
@@ -54,10 +41,4 @@ function toastMessage(message: string) {
   }, 1000);
 }
 
-let mm = openMenu();
-globalThis
-  .matchMedia('(prefers-color-scheme: dark)')
-  .addEventListener('change', () => {
-    mm.dispose();
-    mm = openMenu();
-  });
+openMenu();

@@ -1,5 +1,10 @@
 import { createGestureFeedback } from '../layout/gesture-feedback.js';
-import { createMenu, type Menu, type MenuLayoutModel } from '../layout/menu.js';
+import {
+  createMenu,
+  type Menu,
+  type MenuLayoutModel,
+  type MenuStrokeTheme,
+} from '../layout/menu.js';
 import { rafThrottle } from '../layout/raf-throttle.js';
 import {
   createStrokeCanvas,
@@ -29,6 +34,24 @@ export type LayoutRenderer<M extends AnyModelNode> = {
 type MenuHandle<M extends AnyModelNode> = {
   model: ModelMenus<M>;
   menu: Menu;
+};
+
+type StrokeLayers = {
+  upper: ReturnType<typeof createStrokeLayer>;
+  lower: ReturnType<typeof createStrokeLayer>;
+  feedback: ReturnType<typeof createGestureFeedback>;
+};
+
+const defaultStrokeTheme: MenuStrokeTheme = {
+  strokeColor: '#000000',
+  strokeWidth: 4,
+  strokeStartPointRadius: 8,
+  lowerStrokeColor: '#777777',
+  lowerStrokeWidth: 4,
+  lowerStrokeStartPointRadius: 4,
+  gestureFeedbackStrokeColor: '#000000',
+  gestureFeedbackStrokeWidth: 4,
+  gestureFeedbackCanceledStrokeColor: '#de6c52',
 };
 
 /**
@@ -92,6 +115,42 @@ function createStrokeLayer({
   };
 }
 
+function createStrokeLayers(
+  parent: HTMLElement,
+  strokeTheme: MenuStrokeTheme,
+  gestureFeedbackDuration: number,
+): StrokeLayers {
+  return {
+    upper: createStrokeLayer({
+      parent,
+      canvasOptions: {
+        lineColor: strokeTheme.strokeColor,
+        lineWidth: strokeTheme.strokeWidth,
+        pointRadius: strokeTheme.strokeStartPointRadius,
+      },
+    }),
+    lower: createStrokeLayer({
+      parent,
+      canvasOptions: {
+        lineColor: strokeTheme.lowerStrokeColor,
+        lineWidth: strokeTheme.lowerStrokeWidth,
+        pointRadius: strokeTheme.lowerStrokeStartPointRadius,
+      },
+    }),
+    feedback: createGestureFeedback({
+      parent,
+      duration: gestureFeedbackDuration,
+      strokeOptions: {
+        lineColor: strokeTheme.gestureFeedbackStrokeColor,
+        lineWidth: strokeTheme.gestureFeedbackStrokeWidth,
+      },
+      canceledStrokeOptions: {
+        lineColor: strokeTheme.gestureFeedbackCanceledStrokeColor,
+      },
+    }),
+  };
+}
+
 /**
  Whether `node` is painted before `other`. The two are always siblings under
  the renderer's parent, never nested, so `compareDocumentPosition` returns
@@ -107,98 +166,43 @@ export type RendererOptions = {
   readonly parent: HTMLElement;
   readonly deadZoneRadius?: number | undefined;
   /**
-  The color of the upper (current gesture) stroke.
-  */
-  readonly strokeColor?: string | undefined;
-  /**
-  The width of the upper stroke.
-  */
-  readonly strokeWidth?: number | undefined;
-  /**
-   The radius of the point marking the start of the upper stroke, drawn while
-   novice mode is open.
-   */
-  readonly strokeStartPointRadius?: number | undefined;
-  /**
-   The color of the lower stroke, tracking movement accumulated before the
-   currently open menu.
-   */
-  readonly lowerStrokeColor?: string | undefined;
-  /**
-  The width of the lower stroke. Defaults to `strokeWidth`.
-  */
-  readonly lowerStrokeWidth?: number | undefined;
-  /**
-  The radius of the lower stroke's start point. Defaults to `lowerStrokeWidth`.
-  */
-  readonly lowerStrokeStartPointRadius?: number | undefined;
-  /**
   The duration a completed-gesture feedback trace stays visible, in ms.
   */
   readonly gestureFeedbackDuration?: number | undefined;
-  /**
-  The width of a gesture-feedback stroke. Defaults to `strokeWidth`.
-  */
-  readonly gestureFeedbackStrokeWidth?: number | undefined;
-  /**
-  The color of a selected gesture's feedback stroke. Defaults to `strokeColor`.
-  */
-  readonly gestureFeedbackStrokeColor?: string | undefined;
-  /**
-  The color of a canceled gesture's feedback stroke.
-  */
-  readonly gestureFeedbackCanceledStrokeColor?: string | undefined;
 };
 
 export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   parent,
   deadZoneRadius = 40,
-  strokeColor = '#000',
-  strokeWidth = 4,
-  strokeStartPointRadius = 8,
-  lowerStrokeColor = '#777',
-  lowerStrokeWidth = strokeWidth,
-  lowerStrokeStartPointRadius = lowerStrokeWidth,
   gestureFeedbackDuration = 1000,
-  gestureFeedbackStrokeWidth = strokeWidth,
-  gestureFeedbackStrokeColor = strokeColor,
-  gestureFeedbackCanceledStrokeColor = '#DE6C52',
 }: RendererOptions): LayoutRenderer<M> {
   let menuHandle: MenuHandle<M> | null = null;
   // Reference-equality cache: an unchanged active key skips the DOM scan
   // `Menu.setActive` performs.
   let previousActiveKey: string | null = null;
-  const upperStroke = createStrokeLayer({
+  let strokeLayers = createStrokeLayers(
     parent,
-    canvasOptions: {
-      lineColor: strokeColor,
-      lineWidth: strokeWidth,
-      pointRadius: strokeStartPointRadius,
-    },
-  });
-  const lowerStroke = createStrokeLayer({
-    parent,
-    canvasOptions: {
-      lineColor: lowerStrokeColor,
-      lineWidth: lowerStrokeWidth,
-      pointRadius: lowerStrokeStartPointRadius,
-    },
-  });
+    defaultStrokeTheme,
+    gestureFeedbackDuration,
+  );
+  const previousFeedbackLayers: Array<StrokeLayers['feedback']> = [];
   // The parent's own inline cursor, read before the renderer writes one, and
   // restored rather than cleared whenever the view asks for `default`: what
   // the renderer did not set, it does not get to throw away.
   const ownCursor = parent.style.cursor;
-  const gestureFeedback = createGestureFeedback({
-    parent,
-    duration: gestureFeedbackDuration,
-    strokeOptions: {
-      lineColor: gestureFeedbackStrokeColor,
-      lineWidth: gestureFeedbackStrokeWidth,
-    },
-    canceledStrokeOptions: {
-      lineColor: gestureFeedbackCanceledStrokeColor,
-    },
-  });
+  const setStrokeTheme = (strokeTheme: MenuStrokeTheme) => {
+    if (strokeLayers.feedback.elements().length > 0) {
+      previousFeedbackLayers.push(strokeLayers.feedback);
+    }
+
+    strokeLayers.upper.dispose();
+    strokeLayers.lower.dispose();
+    strokeLayers = createStrokeLayers(
+      parent,
+      strokeTheme,
+      gestureFeedbackDuration,
+    );
+  };
 
   /**
    The paint order the novice feedback depends on: the lower stroke, which
@@ -221,21 +225,29 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
       return;
     }
 
-    const lower = lowerStroke.element();
+    const lower = strokeLayers.lower.element();
     if (lower !== null && !isPaintedBefore(lower, menuElement)) {
       menuElement.before(lower);
     }
 
-    const upper = upperStroke.element();
+    const upper = strokeLayers.upper.element();
     if (upper !== null && !isPaintedBefore(menuElement, upper)) {
       menuElement.after(upper);
     }
 
     // After the upper stroke, so a live gesture still draws over a fading
     // trace of the previous one.
-    for (const trace of gestureFeedback.elements()) {
-      if (!isPaintedBefore(menuElement, trace)) {
-        menuElement.after(trace);
+    for (const feedback of previousFeedbackLayers) {
+      for (const trace of feedback.elements()) {
+        if (!isPaintedBefore(menuElement, trace)) {
+          menuElement.after(trace);
+        }
+      }
+    }
+
+    for (let index = previousFeedbackLayers.length - 1; index >= 0; index--) {
+      if (previousFeedbackLayers[index]?.elements().length === 0) {
+        previousFeedbackLayers.splice(index, 1);
       }
     }
   }
@@ -274,6 +286,8 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
               center: toLocalPoint(view.menu.center, cbr),
             }),
           };
+
+          setStrokeTheme(menuHandle.menu.strokeTheme);
           previousActiveKey = null;
         }
 
@@ -283,24 +297,30 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
         }
       }
 
-      upperStroke.sync(view.upperStroke, { drawStartPoint: isNoviceMode });
-      lowerStroke.sync(view.lowerStroke);
+      strokeLayers.upper.sync(view.upperStroke, {
+        drawStartPoint: isNoviceMode,
+      });
+      strokeLayers.lower.sync(view.lowerStroke);
       restack();
     },
     showFeedback(effect) {
       const rect = parent.getBoundingClientRect();
-      gestureFeedback.show(
+      strokeLayers.feedback.show(
         effect.stroke.map((point) => toLocalPoint(point, rect)),
         { canceled: effect.canceled },
       );
     },
     dispose() {
       parent.style.cursor = ownCursor;
-      upperStroke.dispose();
-      lowerStroke.dispose();
+      strokeLayers.upper.dispose();
+      strokeLayers.lower.dispose();
       menuHandle?.menu.remove();
       menuHandle = null;
-      gestureFeedback.remove();
+      for (const feedback of previousFeedbackLayers) {
+        feedback.remove();
+      }
+
+      strokeLayers.feedback.remove();
     },
   };
 }

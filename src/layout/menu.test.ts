@@ -174,6 +174,60 @@ describe('createMenu', () => {
     expect(root?.querySelector('[part~="label--active"]')).not.toBeNull();
   });
 
+  it('reads the stroke theme from probes in the connected shadow root', () => {
+    const div = document.createElement('div');
+    const values = {
+      'stroke-color': 'color(srgb 0.1 0.2 0.3)',
+      'stroke-width': '12px',
+      'stroke-start-point-radius': '9px',
+      'stroke-color-lower': 'color(srgb 0.4 0.5 0.6)',
+      'stroke-width-lower': '8px',
+      'stroke-start-point-radius-lower': '6px',
+      'stroke-color-feedback': 'color(srgb 0.7 0.8 0.9)',
+      'stroke-width-feedback': '4px',
+      'stroke-color-canceled': 'color(srgb 0.9 0.2 0.1)',
+    };
+    const getComputedStyle = globalThis.getComputedStyle.bind(globalThis);
+    vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
+      const probeClass = [...element.classList].find((className) =>
+        className.startsWith('marking-menu-layout-probe--stroke-'),
+      );
+      if (probeClass === undefined) {
+        return getComputedStyle(element);
+      }
+
+      const name = probeClass.replace('marking-menu-layout-probe--', '');
+      const value = values[name as keyof typeof values];
+      const style: Pick<CSSStyleDeclaration, 'color' | 'width'> = {
+        color: value,
+        width: value,
+      };
+      return style as CSSStyleDeclaration;
+    });
+
+    const menu = createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(menu.strokeTheme).toEqual({
+      strokeColor: values['stroke-color'],
+      strokeWidth: 12,
+      strokeStartPointRadius: 9,
+      lowerStrokeColor: values['stroke-color-lower'],
+      lowerStrokeWidth: 8,
+      lowerStrokeStartPointRadius: 6,
+      gestureFeedbackStrokeColor: values['stroke-color-feedback'],
+      gestureFeedbackStrokeWidth: 4,
+      gestureFeedbackCanceledStrokeColor: values['stroke-color-canceled'],
+    });
+    expect(
+      getShadowRoot(div).querySelector('.marking-menu-layout-probe'),
+    ).toBeNull();
+  });
+
   it('draws a one-item menu as a full annulus without gaps or corners', () => {
     const div = document.createElement('div');
     withSolverConfig(div);
