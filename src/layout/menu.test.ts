@@ -438,11 +438,11 @@ describe('createMenu', () => {
       const connector = item.querySelector<HTMLElement>(
         '.marking-menu-outer-connector',
       );
-      expect(plate?.style.getPropertyValue('--solved-left')).not.toBe('');
-      expect(plate?.style.getPropertyValue('--solved-top')).not.toBe('');
-      expect(plate?.style.getPropertyValue('--solved-bottom')).toBe('auto');
+      expect(plate?.style.getPropertyValue('--layout-left')).not.toBe('');
+      expect(plate?.style.getPropertyValue('--layout-top')).not.toBe('');
+      expect(plate?.style.getPropertyValue('--layout-bottom')).toBe('auto');
       expect(
-        connector?.style.getPropertyValue('--solved-connector-contact-radius'),
+        connector?.style.getPropertyValue('--layout-connector-contact-radius'),
       ).not.toBe('');
     }
   });
@@ -470,7 +470,7 @@ describe('createMenu', () => {
       expect(
         item
           .querySelector<HTMLElement>('.marking-menu-plate')
-          ?.style.getPropertyValue('--solved-left'),
+          ?.style.getPropertyValue('--layout-left'),
       ).toBe('');
     }
   });
@@ -499,7 +499,7 @@ describe('createMenu', () => {
       const width =
         getItems(parent)[0]
           ?.querySelector<HTMLElement>('.marking-menu-outer-connector')
-          ?.style.getPropertyValue('--solved-connector-contact-radius') ?? '';
+          ?.style.getPropertyValue('--layout-connector-contact-radius') ?? '';
 
       return Number(width.slice(0, -2));
     };

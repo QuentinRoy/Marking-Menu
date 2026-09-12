@@ -499,17 +499,17 @@ function applySolvedLayout(
 
   for (const [index, plate] of result.plates.entries()) {
     const plateElement = at(plateElements, index);
-    plateElement.style.setProperty('--solved-left', `${plate.x}px`);
-    plateElement.style.setProperty('--solved-top', `${plate.y}px`);
-    plateElement.style.setProperty('--solved-bottom', 'auto');
+    plateElement.style.setProperty('--layout-left', `${plate.x}px`);
+    plateElement.style.setProperty('--layout-top', `${plate.y}px`);
+    plateElement.style.setProperty('--layout-bottom', 'auto');
     plateElement.style.setProperty(
-      '--solved-translation',
+      '--layout-translation',
       'translate(-50%, -50%)',
     );
 
     const connector = at(connectorElements, index);
     connector.style.setProperty(
-      '--solved-connector-contact-radius',
+      '--layout-connector-contact-radius',
       `${Math.hypot(...plate.connectorContact)}px`,
     );
   }
