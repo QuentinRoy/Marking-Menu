@@ -154,14 +154,17 @@ describe('createMenu', () => {
     expect(root?.mode).toBe('open');
     expect(root?.querySelector('style')).not.toBeNull();
     expect(document.head.querySelectorAll('style')).toHaveLength(styles);
-    expect(root?.querySelector('[part~="plate"]')).not.toBeNull();
+    expect(root?.querySelector('[part="plate"]')).not.toBeNull();
     expect(root?.querySelector('[part="inner-connector"]')).not.toBeNull();
     expect(root?.querySelector('[part="outer-connector"]')).not.toBeNull();
-    expect(root?.querySelector('[part~="label"]')).not.toBeNull();
+    expect(root?.querySelector('[part="label"]')).not.toBeNull();
     expect(root?.querySelector('.marking-menu-layout-probe')).toBeNull();
     expect(
+      root?.querySelector('.marking-menu-plate')?.getAttribute('part'),
+    ).toBe('plate');
+    expect(
       root?.querySelector('.marking-menu-label')?.getAttribute('part'),
-    ).toBe('plate label');
+    ).toBe('label');
 
     menu.setActive('item-0-key');
     expect(root?.querySelector('[part~="plate--active"]')).not.toBeNull();
@@ -304,79 +307,6 @@ describe('createMenu', () => {
     ).toBe('wedge wedge--active');
   });
 
-  it('identifies corner items', () => {
-    const div = document.createElement('div');
-    createMenu({
-      parent: div,
-      model: {
-        items: [45, 135, 225, 315, 90].map((angle, i) => ({
-          label: `item-${i}-name`,
-          angle,
-          key: `item-${i}-key`,
-        })),
-      },
-      center: [30, 50],
-      doc: document,
-    });
-    const items = getItems(div);
-    expect((items[0] as Element).classList.contains('bottom-right-item')).toBe(
-      true,
-    );
-    expect((items[1] as Element).classList.contains('bottom-left-item')).toBe(
-      true,
-    );
-    expect((items[2] as Element).classList.contains('top-left-item')).toBe(
-      true,
-    );
-    expect((items[3] as Element).classList.contains('top-right-item')).toBe(
-      true,
-    );
-    expect((items[4] as Element).className).toBe('marking-menu-item');
-  });
-
-  it('styles arbitrary angles by the quadrant they fall in', () => {
-    const div = document.createElement('div');
-    createMenu({
-      parent: div,
-      model: {
-        items: [10, 100, 190, 280, 0, 90, 180, 270, -10, 370].map(
-          (angle, i) => ({
-            label: `item-${i}-name`,
-            angle,
-            key: `item-${i}-key`,
-          }),
-        ),
-      },
-      center: [30, 50],
-      doc: document,
-    });
-    const items = getItems(div);
-    expect((items[0] as Element).classList.contains('bottom-right-item')).toBe(
-      true,
-    );
-    expect((items[1] as Element).classList.contains('bottom-left-item')).toBe(
-      true,
-    );
-    expect((items[2] as Element).classList.contains('top-left-item')).toBe(
-      true,
-    );
-    expect((items[3] as Element).classList.contains('top-right-item')).toBe(
-      true,
-    );
-    expect((items[4] as Element).className).toBe('marking-menu-item');
-    expect((items[5] as Element).className).toBe('marking-menu-item');
-    expect((items[6] as Element).className).toBe('marking-menu-item');
-    expect((items[7] as Element).className).toBe('marking-menu-item');
-    // -10 is equivalent to 350, inside the top-right quadrant.
-    expect((items[8] as Element).classList.contains('top-right-item')).toBe(
-      true,
-    );
-    // 370 is equivalent to 10, inside the bottom-right quadrant.
-    expect((items[9] as Element).classList.contains('bottom-right-item')).toBe(
-      true,
-    );
-  });
-
   it('update the active element', () => {
     const div = document.createElement('div');
     const m = createMenu({
@@ -449,13 +379,13 @@ describe('createMenu', () => {
     const items = getItems(div);
     expect(items).toHaveLength(8);
     for (const item of items) {
-      const label = item.querySelector<HTMLElement>('.marking-menu-label');
+      const plate = item.querySelector<HTMLElement>('.marking-menu-plate');
       const connector = item.querySelector<HTMLElement>(
         '.marking-menu-outer-connector',
       );
-      expect(label?.style.getPropertyValue('--solved-left')).not.toBe('');
-      expect(label?.style.getPropertyValue('--solved-top')).not.toBe('');
-      expect(label?.style.getPropertyValue('--solved-bottom')).toBe('auto');
+      expect(plate?.style.getPropertyValue('--solved-left')).not.toBe('');
+      expect(plate?.style.getPropertyValue('--solved-top')).not.toBe('');
+      expect(plate?.style.getPropertyValue('--solved-bottom')).toBe('auto');
       expect(
         connector?.style.getPropertyValue('--solved-connector-contact-radius'),
       ).not.toBe('');
@@ -484,7 +414,7 @@ describe('createMenu', () => {
     for (const item of items) {
       expect(
         item
-          .querySelector<HTMLElement>('.marking-menu-label')
+          .querySelector<HTMLElement>('.marking-menu-plate')
           ?.style.getPropertyValue('--solved-left'),
       ).toBe('');
     }

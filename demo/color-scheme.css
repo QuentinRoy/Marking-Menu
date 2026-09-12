@@ -4,7 +4,7 @@
  already right on a light page, and this file only answers for the dark one,
  which the library has none for.
 
- The menu's item colours it reads from CSS itself (see `src/layout/menu.css`
+ The menu's plate colours it reads from CSS itself (see `src/layout/menu.css`
  for the four it exposes), so they are simply set below. Its stroke it does
  not: that is drawn on a canvas from options passed at construction, so both
  pages read `--stroke-color` and `--lower-stroke-color` and hand them to
@@ -34,9 +34,9 @@
      injects into the head at runtime and which would otherwise win the tie
      on document order. */
   :root .marking-menu {
-    --item-background: #26262c;
-    --item-color: #c9c9cf;
-    --active-item-background: #43434c;
-    --active-item-color: #ffffff;
+    --mm-plate-background: #26262c;
+    --mm-plate-color: #c9c9cf;
+    --mm-plate-background-active: #43434c;
+    --mm-plate-color-active: #ffffff;
   }
 }
