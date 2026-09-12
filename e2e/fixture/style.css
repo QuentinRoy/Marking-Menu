@@ -13,12 +13,7 @@ body {
   font-family: sans-serif;
 }
 
-/*
- Both #log and #surface are taken out of normal flow (position: fixed) at
- fixed coordinates matching the Playwright projects' fixed viewport, so
- #log's content growing while a gesture streams notifications can never
- reflow, and hence never move, #surface out from under the pointer.
- */
+/* The fixed log and snapshot area keep gestures independent from log growth. */
 
 #log {
   background: #fff;
@@ -35,12 +30,20 @@ body {
   word-break: break-all;
 }
 
+#snapshot-area {
+  height: 480px;
+  left: 100px;
+  position: fixed;
+  top: 120px;
+  width: 600px;
+}
+
 #surface {
   background: #fff;
   border: 1px solid #ccc;
   height: 300px;
-  left: 250px;
-  position: fixed;
-  top: 150px;
+  left: 150px;
+  position: absolute;
+  top: 30px;
   width: 300px;
 }

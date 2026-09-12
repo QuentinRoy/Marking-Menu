@@ -24,12 +24,16 @@ const setTheme = async (page: Page) => {
     surface.style.setProperty('--mm-wedge-fill-active', '#d00000');
     surface.style.setProperty('--mm-inner-connector-color', '#ffb703');
     surface.style.setProperty('--mm-outer-connector-color', '#023e8a');
+    surface.style.setProperty('--mm-plate-background', '#9b2226');
+    surface.style.setProperty('--mm-plate-background-active', '#f8c8dc');
+    surface.style.setProperty('--mm-plate-color', '#f8f9fa');
+    surface.style.setProperty('--mm-plate-color-active', '#22223b');
   });
 };
 
 test('visual: default menu open', async ({ page }) => {
   await openMenu(page);
-  await expect(page.locator('#surface')).toHaveScreenshot(
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
     'menu-default-open.png',
   );
 });
@@ -38,7 +42,7 @@ for (const [id, item] of Object.entries(TOP_LEVEL_ITEMS)) {
   test(`visual: active ${id} item`, async ({ page }) => {
     const center = await openMenu(page);
     await moveTo(page, offset(center, item.angle, ACTIVE_RADIUS));
-    await expect(page.locator('#surface')).toHaveScreenshot(
+    await expect(page.locator('#snapshot-area')).toHaveScreenshot(
       `menu-active-${id}.png`,
     );
   });
@@ -47,7 +51,7 @@ for (const [id, item] of Object.entries(TOP_LEVEL_ITEMS)) {
 test('visual: themed menu open', async ({ page }) => {
   await setTheme(page);
   await openMenu(page);
-  await expect(page.locator('#surface')).toHaveScreenshot(
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
     'menu-themed-open.png',
   );
 });
@@ -59,7 +63,7 @@ test('visual: themed active right item', async ({ page }) => {
     page,
     offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
   );
-  await expect(page.locator('#surface')).toHaveScreenshot(
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
     'menu-themed-active-right.png',
   );
 });
@@ -67,7 +71,7 @@ test('visual: themed active right item', async ({ page }) => {
 test('visual: 64px dead zone menu open', async ({ page }) => {
   await page.goto('/?deadZoneRadius=64');
   await openMenu(page);
-  await expect(page.locator('#surface')).toHaveScreenshot(
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
     'menu-dead-zone-64-open.png',
   );
 });
@@ -79,7 +83,7 @@ test('visual: 64px dead zone active right item', async ({ page }) => {
     page,
     offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
   );
-  await expect(page.locator('#surface')).toHaveScreenshot(
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
     'menu-dead-zone-64-active-right.png',
   );
 });
