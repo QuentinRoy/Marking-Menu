@@ -52,6 +52,105 @@ test('novice mode: dwelling opens the menu, lays out every item, and a release s
   ).toBe(true);
 });
 
+test('label plates fit text and honor a fixed width', async ({ page }) => {
+  const center = await surfaceCenter(page);
+  await pressAt(page, center);
+  await waitForMenuOpen(page);
+
+  const menu = page.locator('.marking-menu');
+  const size = await menu.evaluate((host) => {
+    const label = [
+      ...(host.shadowRoot?.querySelectorAll<HTMLElement>(
+        '.marking-menu-label',
+      ) ?? []),
+    ].find((element) => element.textContent === 'Right');
+    const right = label?.parentElement;
+    if (right === null || right === undefined) {
+      throw new Error('Right plate is missing.');
+    }
+
+    const box = right.getBoundingClientRect();
+    return { height: box.height, width: box.width };
+  });
+  expect(size.height).toBeGreaterThan(0);
+  expect(size.width).toBeLessThan(120);
+
+  const constrainedSize = await menu.evaluate((host) => {
+    host.style.setProperty('--mm-label-min-width', '120px');
+    host.style.setProperty('--mm-label-max-width', '120px');
+    const plate = host.shadowRoot?.querySelector<HTMLElement>(
+      '.marking-menu-plate',
+    );
+    const label = host.shadowRoot?.querySelector<HTMLElement>(
+      '.marking-menu-label',
+    );
+    if (
+      plate === null ||
+      plate === undefined ||
+      label === null ||
+      label === undefined
+    ) {
+      throw new Error('Menu plate is incomplete.');
+    }
+
+    label.textContent = 'A label longer than the configured width';
+    const box = plate.getBoundingClientRect();
+    return { height: box.height, width: box.width };
+  });
+  expect(constrainedSize.height).toBeGreaterThan(0);
+  expect(constrainedSize.width).toBeGreaterThan(size.width);
+  expect(constrainedSize.width).toBeLessThan(160);
+
+  await releaseAt(page);
+});
+
+test('an active label grows around its resting position', async ({ page }) => {
+  await page.addStyleTag({
+    content: '.marking-menu::part(label--active) { letter-spacing: 2px; }',
+  });
+  const center = await surfaceCenter(page);
+  await pressAt(page, center);
+  await waitForMenuOpen(page);
+
+  const menu = page.locator('.marking-menu');
+  const getRightPlate = async () =>
+    menu.evaluate((host) => {
+      const label = [
+        ...(host.shadowRoot?.querySelectorAll<HTMLElement>(
+          '.marking-menu-label',
+        ) ?? []),
+      ].find((element) => element.textContent === 'Right');
+      const plate = label?.parentElement;
+      if (plate === null || plate === undefined) {
+        throw new Error('Right plate is missing.');
+      }
+
+      const box = plate.getBoundingClientRect();
+      return {
+        centerX: box.left + box.width / 2,
+        centerY: box.top + box.height / 2,
+        width: box.width,
+      };
+    });
+
+  const resting = await getRightPlate();
+  await moveTo(
+    page,
+    offset(center, TOP_LEVEL_ITEMS.right.angle, SELECT_RADIUS),
+  );
+  await waitForLogEntry(
+    page,
+    (entry) => entry.type === 'change' && entry.activeId === 'right',
+  );
+  const active = await getRightPlate();
+
+  expect(active.width).toBeGreaterThan(resting.width);
+  expect(active.centerX).toBeCloseTo(resting.centerX, 1);
+  expect(active.centerY).toBeCloseTo(resting.centerY, 1);
+
+  await releaseAt(page);
+});
+
 test('novice mode: wedges and connector parts follow the menu directions', async ({
   page,
 }) => {

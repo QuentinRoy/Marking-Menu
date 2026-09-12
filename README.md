@@ -146,10 +146,10 @@ Set CSS variables on `.marking-menu` to style labels and layout. Scope the selec
 
 ```css
 #menu-area .marking-menu {
-  --item-background: #222;
-  --item-color: #fff;
-  --active-item-background: #444;
-  --active-item-color: #fff;
+  --mm-plate-background: #222;
+  --mm-plate-color: #fff;
+  --mm-plate-background-active: #444;
+  --mm-plate-color-active: #fff;
 }
 ```
 
