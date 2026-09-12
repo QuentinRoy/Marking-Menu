@@ -37,6 +37,7 @@ jobs:
           yarn build
           yarn e2e:build
           yarn e2e:visual --update-snapshots=changed
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git add -- e2e/tests/visual.spec.ts-snapshots/
           if ! git diff --cached --name-only | awk '
             $0 ~ /^e2e\/tests\/visual\.spec\.ts-snapshots\/.+\.png$/ { next }
