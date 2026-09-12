@@ -92,11 +92,13 @@ jobs:
       # launch in that situation ("Running Nightly as root in a regular user's
       # session is not supported"); the other browsers do not care. Overriding
       # HOME here is the workaround Playwright's own error message prescribes.
+      # It's set inline rather than as a step-level `env:` because the runner
+      # also uses step-level env when invoking the Docker client for this
+      # step, and pointing it at /root breaks `docker`'s own config lookup
+      # (`/root/.docker/config.json: permission denied`).
       - id: e2e
         continue-on-error: true
-        run: yarn e2e:test --reporter=json > test-results.json
-        env:
-          HOME: /root
+        run: HOME=/root yarn e2e:test --reporter=json > test-results.json
       - if: >-
           steps.e2e.outcome == 'failure' &&
           github.event_name == 'pull_request'
