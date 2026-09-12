@@ -80,6 +80,9 @@ jobs:
         with:
           name: dist
           path: dist/
+      - run: |
+          apt-get update
+          apt-get install -y --no-install-recommends jq
       # The fixture-only build, not `yarn e2e`: `dist/` was already built once
       # by the Build job above, so this avoids building the library again.
       - run: yarn e2e:build
@@ -88,33 +91,24 @@ jobs:
       # launch in that situation ("Running Nightly as root in a regular user's
       # session is not supported"); the other browsers do not care. Overriding
       # HOME here is the workaround Playwright's own error message prescribes.
-      - run: >-
-          yarn e2e:test --project=chromium --project=firefox
-          --project=webkit --project=chromium-touch
-        env:
-          HOME: /root
-
-  VisualRegression:
-    needs: Build
-    runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.63.0-noble
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      - uses: ./.github/actions/setup
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: dist
-          path: dist/
-      - run: yarn e2e:build
-      - id: visual
+      - id: e2e
         continue-on-error: true
-        run: yarn e2e:visual
+        run: yarn e2e:test --reporter=json > test-results.json
         env:
           HOME: /root
       - if: >-
-          steps.visual.outcome == 'failure' &&
+          steps.e2e.outcome == 'failure' &&
           github.event_name == 'pull_request'
+        id: visual
+        run: |
+          if jq -e '
+            [.. | objects | select(
+              .message? | type == "string" and contains("toHaveScreenshot")
+            )] | length > 0
+          ' test-results.json > /dev/null; then
+            echo 'failed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.visual.outputs.failed == 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
@@ -136,5 +130,5 @@ jobs:
               issue_number: context.payload.pull_request.number,
               body: `### ${heading}\n\nSome screenshots do not match their stored references. If the changes are intentional, add the \`update screenshots\` label to regenerate them.`,
             });
-      - if: steps.visual.outcome == 'failure'
+      - if: steps.e2e.outcome == 'failure'
         run: exit 1
