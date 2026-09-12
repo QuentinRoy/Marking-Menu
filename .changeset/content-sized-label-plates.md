@@ -10,7 +10,7 @@ only.
 Active plates remain centered on their resting position as their label style
 changes.
 All plate corners now use `--mm-plate-corner-radius`, and plate padding now
-defaults to `8px` where `text-box-trim` and `text-box-edge` are available.
+defaults to `12px` where `text-box-trim` and `text-box-edge` are available.
 Browsers without trimming add `0.2em` to the default or configured padding.
 Rename `--item-background`, `--item-color`, `--active-item-background`, and
 `--active-item-color` to the corresponding `--mm-plate-*` properties.
