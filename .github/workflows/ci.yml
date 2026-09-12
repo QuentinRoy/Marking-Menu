@@ -80,6 +80,9 @@ jobs:
         with:
           name: dist
           path: dist/
+      - run: |
+          apt-get update
+          apt-get install -y --no-install-recommends jq
       # The fixture-only build, not `yarn e2e`: `dist/` was already built once
       # by the Build job above, so this avoids building the library again.
       - run: yarn e2e:build
@@ -88,6 +91,44 @@ jobs:
       # launch in that situation ("Running Nightly as root in a regular user's
       # session is not supported"); the other browsers do not care. Overriding
       # HOME here is the workaround Playwright's own error message prescribes.
-      - run: yarn e2e:test
+      - id: e2e
+        continue-on-error: true
+        run: yarn e2e:test --reporter=json > test-results.json
         env:
           HOME: /root
+      - if: >-
+          steps.e2e.outcome == 'failure' &&
+          github.event_name == 'pull_request'
+        id: visual
+        run: |
+          if jq -e '
+            [.. | objects | select(
+              .message? | type == "string" and contains("toHaveScreenshot")
+            )] | length > 0
+          ' test-results.json > /dev/null; then
+            echo 'failed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.visual.outputs.failed == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+              },
+            );
+            const heading = 'Visual regression failures detected';
+            if (comments.some((comment) => comment.body?.includes(heading))) {
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `### ${heading}\n\nSome screenshots do not match their stored references. If the changes are intentional, add the \`update screenshots\` label to regenerate them.`,
+            });
+      - if: steps.e2e.outcome == 'failure'
+        run: exit 1
