@@ -141,7 +141,7 @@ describe('createMenu', () => {
     expect(div).toMatchSnapshot();
   });
 
-  it('renders inside an open shadow root without adding a document style', () => {
+  it('reuses one stylesheet across open shadow roots', () => {
     const div = document.createElement('div');
     const styles = document.head.querySelectorAll('style').length;
     const menu = createMenu({
@@ -150,10 +150,19 @@ describe('createMenu', () => {
       center: [30, 50],
       doc: document,
     });
+    const otherMenu = createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
 
     const root = menu.element.shadowRoot;
+    const otherRoot = otherMenu.element.shadowRoot;
     expect(root?.mode).toBe('open');
-    expect(root?.querySelector('style')).not.toBeNull();
+    expect(root?.querySelector('style')).toBeNull();
+    expect(root?.adoptedStyleSheets).toHaveLength(1);
+    expect(root?.adoptedStyleSheets[0]).toBe(otherRoot?.adoptedStyleSheets[0]);
     expect(document.head.querySelectorAll('style')).toHaveLength(styles);
     expect(root?.querySelector('[part="plate"]')).not.toBeNull();
     expect(root?.querySelector('[part="inner-connector"]')).not.toBeNull();
