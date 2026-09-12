@@ -24,7 +24,6 @@ export default defineConfig([
     // serves them so the next copy is a plain overwrite. `.prettierignore`
     // leaves them alone for the same reason.
     'demo/playground/components/ui/**',
-    '.yarn/releases/',
   ]),
   {
     plugins: { 'import-x': importX },
