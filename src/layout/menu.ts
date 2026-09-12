@@ -39,6 +39,10 @@ export type Menu = {
   */
   element: HTMLElement;
   /**
+  The resolved stroke theme for this menu opening.
+  */
+  strokeTheme: MenuStrokeTheme;
+  /**
   Mark the item with the given id as active (or none if nullish).
   */
   setActive: (itemId: string | number | null) => void;
@@ -49,13 +53,34 @@ export type Menu = {
 };
 
 type LayoutProbes = {
-  ringRadius: HTMLElement;
+  outerRadius: HTMLElement;
   wedgeGap: HTMLElement;
   wedgeCornerRadius: HTMLElement;
   plateGapHorizontal: HTMLElement;
   plateGapVertical: HTMLElement;
   plateGapRing: HTMLElement;
   plateGapConnector: HTMLElement;
+  strokeColor: HTMLElement;
+  strokeWidth: HTMLElement;
+  strokeStartPointRadius: HTMLElement;
+  strokeColorLower: HTMLElement;
+  strokeWidthLower: HTMLElement;
+  strokeStartPointRadiusLower: HTMLElement;
+  strokeColorFeedback: HTMLElement;
+  strokeWidthFeedback: HTMLElement;
+  strokeColorCanceled: HTMLElement;
+};
+
+export type MenuStrokeTheme = {
+  strokeColor: string;
+  strokeWidth: number;
+  strokeStartPointRadius: number;
+  lowerStrokeColor: string;
+  lowerStrokeWidth: number;
+  lowerStrokeStartPointRadius: number;
+  gestureFeedbackStrokeColor: string;
+  gestureFeedbackStrokeWidth: number;
+  gestureFeedbackCanceledStrokeColor: string;
 };
 
 type MenuDom = {
@@ -89,13 +114,30 @@ const template = (
   root.append(style);
 
   const probes: LayoutProbes = {
-    ringRadius: appendLayoutProbe(root, doc, 'ring-radius'),
+    outerRadius: appendLayoutProbe(root, doc, 'outer-radius'),
     wedgeGap: appendLayoutProbe(root, doc, 'wedge-gap'),
     wedgeCornerRadius: appendLayoutProbe(root, doc, 'wedge-corner-radius'),
     plateGapHorizontal: appendLayoutProbe(root, doc, 'plate-gap-horizontal'),
     plateGapVertical: appendLayoutProbe(root, doc, 'plate-gap-vertical'),
     plateGapRing: appendLayoutProbe(root, doc, 'plate-gap-ring'),
     plateGapConnector: appendLayoutProbe(root, doc, 'plate-gap-connector'),
+    strokeColor: appendLayoutProbe(root, doc, 'stroke-color'),
+    strokeWidth: appendLayoutProbe(root, doc, 'stroke-width'),
+    strokeStartPointRadius: appendLayoutProbe(
+      root,
+      doc,
+      'stroke-start-point-radius',
+    ),
+    strokeColorLower: appendLayoutProbe(root, doc, 'stroke-color-lower'),
+    strokeWidthLower: appendLayoutProbe(root, doc, 'stroke-width-lower'),
+    strokeStartPointRadiusLower: appendLayoutProbe(
+      root,
+      doc,
+      'stroke-start-point-radius-lower',
+    ),
+    strokeColorFeedback: appendLayoutProbe(root, doc, 'stroke-color-feedback'),
+    strokeWidthFeedback: appendLayoutProbe(root, doc, 'stroke-width-feedback'),
+    strokeColorCanceled: appendLayoutProbe(root, doc, 'stroke-color-canceled'),
   };
 
   for (const item of items) {
@@ -269,6 +311,41 @@ function readPixels(
   return Number.isNaN(pixels) ? fallback : pixels;
 }
 
+function readColor(
+  doc: Document,
+  probe: HTMLElement,
+  fallback: string,
+): string {
+  const { color } = (doc.defaultView ?? globalThis).getComputedStyle(probe);
+  return color === '' ? fallback : color;
+}
+
+function readStrokeTheme(doc: Document, probes: LayoutProbes): MenuStrokeTheme {
+  return {
+    strokeColor: readColor(doc, probes.strokeColor, '#000000'),
+    strokeWidth: readPixels(doc, probes.strokeWidth, 4),
+    strokeStartPointRadius: readPixels(doc, probes.strokeStartPointRadius, 8),
+    lowerStrokeColor: readColor(doc, probes.strokeColorLower, '#777777'),
+    lowerStrokeWidth: readPixels(doc, probes.strokeWidthLower, 4),
+    lowerStrokeStartPointRadius: readPixels(
+      doc,
+      probes.strokeStartPointRadiusLower,
+      4,
+    ),
+    gestureFeedbackStrokeColor: readColor(
+      doc,
+      probes.strokeColorFeedback,
+      '#000000',
+    ),
+    gestureFeedbackStrokeWidth: readPixels(doc, probes.strokeWidthFeedback, 4),
+    gestureFeedbackCanceledStrokeColor: readColor(
+      doc,
+      probes.strokeColorCanceled,
+      '#de6c52',
+    ),
+  };
+}
+
 function appendWedge(
   ring: SVGSVGElement,
   item: MenuLayoutItem,
@@ -289,7 +366,7 @@ function renderWedgeRing(
   doc: Document,
   innerRadius: number,
 ): void {
-  const outerRadius = readPixels(doc, probes.ringRadius, 80);
+  const outerRadius = readPixels(doc, probes.outerRadius, 80);
   const gap = readPixels(doc, probes.wedgeGap, 4);
   const cornerRadius = readPixels(doc, probes.wedgeCornerRadius, 4);
   if (
@@ -403,7 +480,7 @@ function applySolvedLayout(
 
   const layout = {
     plates,
-    ringRadius: readPixels(doc, probes.ringRadius, NaN),
+    ringRadius: readPixels(doc, probes.outerRadius, NaN),
     clearances: {
       plateHorizontal: readPixels(doc, probes.plateGapHorizontal, NaN),
       plateVertical: readPixels(doc, probes.plateGapVertical, NaN),
@@ -422,17 +499,17 @@ function applySolvedLayout(
 
   for (const [index, plate] of result.plates.entries()) {
     const plateElement = at(plateElements, index);
-    plateElement.style.setProperty('--solved-left', `${plate.x}px`);
-    plateElement.style.setProperty('--solved-top', `${plate.y}px`);
-    plateElement.style.setProperty('--solved-bottom', 'auto');
+    plateElement.style.setProperty('--layout-left', `${plate.x}px`);
+    plateElement.style.setProperty('--layout-top', `${plate.y}px`);
+    plateElement.style.setProperty('--layout-bottom', 'auto');
     plateElement.style.setProperty(
-      '--solved-translation',
+      '--layout-translation',
       'translate(-50%, -50%)',
     );
 
     const connector = at(connectorElements, index);
     connector.style.setProperty(
-      '--solved-connector-contact-radius',
+      '--layout-connector-contact-radius',
       `${Math.hypot(...plate.connectorContact)}px`,
     );
   }
@@ -520,7 +597,7 @@ export function createMenu({
 }): Menu {
   const menuDom = template({ items: model.items, center }, doc);
   const { main, root } = menuDom;
-  main.style.setProperty('--inner-connector-length', `${deadZoneRadius}px`);
+  main.style.setProperty('--inner-radius', `${deadZoneRadius}px`);
   main.classList.toggle('marking-menu--pointer-target', pointerTarget);
 
   // Attach before measuring: a detached element's `offsetWidth`/`offsetHeight`
@@ -528,6 +605,7 @@ export function createMenu({
   // synchronously in this one call, so the unsolved layout is never
   // painted: a browser only paints between tasks, never mid-function.
   parent.append(main);
+  const strokeTheme = readStrokeTheme(doc, menuDom.probes);
   renderWedgeRing(menuDom, model.items, doc, deadZoneRadius);
   applySolvedLayout(menuDom, model.items, doc);
 
@@ -572,5 +650,5 @@ export function createMenu({
   };
 
   // Create the interface.
-  return { element: main, setActive, remove };
+  return { element: main, strokeTheme, setActive, remove };
 }

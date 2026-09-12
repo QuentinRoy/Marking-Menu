@@ -64,7 +64,7 @@ const getWedges = (parent: HTMLElement): SVGPathElement[] => [
 const withSolverConfig = (
   parent: HTMLElement,
   overrides: Partial<{
-    menuRadius: number;
+    wedgeThickness: number;
     wedgeGap: number;
     wedgeCornerRadius: number;
     horizontalGap: number;
@@ -74,7 +74,7 @@ const withSolverConfig = (
   }> = {},
 ): void => {
   const {
-    menuRadius = 80,
+    wedgeThickness = 40,
     wedgeGap = 4,
     wedgeCornerRadius = 4,
     horizontalGap = 14,
@@ -83,7 +83,8 @@ const withSolverConfig = (
     connectorGap = 3,
   } = overrides;
   const properties = {
-    'ring-radius': `${menuRadius}px`,
+    'outer-radius': `${40 + wedgeThickness}px`,
+    'wedge-thickness': `${wedgeThickness}px`,
     'wedge-gap': `${wedgeGap}px`,
     'wedge-corner-radius': `${wedgeCornerRadius}px`,
     'plate-gap-horizontal': `${horizontalGap}px`,
@@ -175,6 +176,60 @@ describe('createMenu', () => {
       root?.querySelector('[part~="outer-connector--active"]'),
     ).not.toBeNull();
     expect(root?.querySelector('[part~="label--active"]')).not.toBeNull();
+  });
+
+  it('reads the stroke theme from probes in the connected shadow root', () => {
+    const div = document.createElement('div');
+    const values = {
+      'stroke-color': 'color(srgb 0.1 0.2 0.3)',
+      'stroke-width': '12px',
+      'stroke-start-point-radius': '9px',
+      'stroke-color-lower': 'color(srgb 0.4 0.5 0.6)',
+      'stroke-width-lower': '8px',
+      'stroke-start-point-radius-lower': '6px',
+      'stroke-color-feedback': 'color(srgb 0.7 0.8 0.9)',
+      'stroke-width-feedback': '4px',
+      'stroke-color-canceled': 'color(srgb 0.9 0.2 0.1)',
+    };
+    const getComputedStyle = globalThis.getComputedStyle.bind(globalThis);
+    vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
+      const probeClass = [...element.classList].find((className) =>
+        className.startsWith('marking-menu-layout-probe--stroke-'),
+      );
+      if (probeClass === undefined) {
+        return getComputedStyle(element);
+      }
+
+      const name = probeClass.replace('marking-menu-layout-probe--', '');
+      const value = values[name as keyof typeof values];
+      const style: Pick<CSSStyleDeclaration, 'color' | 'width'> = {
+        color: value,
+        width: value,
+      };
+      return style as CSSStyleDeclaration;
+    });
+
+    const menu = createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(menu.strokeTheme).toEqual({
+      strokeColor: values['stroke-color'],
+      strokeWidth: 12,
+      strokeStartPointRadius: 9,
+      lowerStrokeColor: values['stroke-color-lower'],
+      lowerStrokeWidth: 8,
+      lowerStrokeStartPointRadius: 6,
+      gestureFeedbackStrokeColor: values['stroke-color-feedback'],
+      gestureFeedbackStrokeWidth: 4,
+      gestureFeedbackCanceledStrokeColor: values['stroke-color-canceled'],
+    });
+    expect(
+      getShadowRoot(div).querySelector('.marking-menu-layout-probe'),
+    ).toBeNull();
   });
 
   it('draws a one-item menu as a full annulus without gaps or corners', () => {
@@ -383,11 +438,11 @@ describe('createMenu', () => {
       const connector = item.querySelector<HTMLElement>(
         '.marking-menu-outer-connector',
       );
-      expect(plate?.style.getPropertyValue('--solved-left')).not.toBe('');
-      expect(plate?.style.getPropertyValue('--solved-top')).not.toBe('');
-      expect(plate?.style.getPropertyValue('--solved-bottom')).toBe('auto');
+      expect(plate?.style.getPropertyValue('--layout-left')).not.toBe('');
+      expect(plate?.style.getPropertyValue('--layout-top')).not.toBe('');
+      expect(plate?.style.getPropertyValue('--layout-bottom')).toBe('auto');
       expect(
-        connector?.style.getPropertyValue('--solved-connector-contact-radius'),
+        connector?.style.getPropertyValue('--layout-connector-contact-radius'),
       ).not.toBe('');
     }
   });
@@ -415,15 +470,15 @@ describe('createMenu', () => {
       expect(
         item
           .querySelector<HTMLElement>('.marking-menu-plate')
-          ?.style.getPropertyValue('--solved-left'),
+          ?.style.getPropertyValue('--layout-left'),
       ).toBe('');
     }
   });
 
-  it('reads the ring radius and clearances from the CSS custom properties in scope', () => {
+  it('reads the wedge thickness and clearances from the CSS custom properties in scope', () => {
     using _size = stubbedLabelSize(80, 20);
     const narrowRing = document.createElement('div');
-    withSolverConfig(narrowRing, { menuRadius: 80 });
+    withSolverConfig(narrowRing, { wedgeThickness: 40 });
     createMenu({
       parent: narrowRing,
       model: createSpreadModel(8),
@@ -432,7 +487,7 @@ describe('createMenu', () => {
     });
 
     const wideRing = document.createElement('div');
-    withSolverConfig(wideRing, { menuRadius: 200 });
+    withSolverConfig(wideRing, { wedgeThickness: 160 });
     createMenu({
       parent: wideRing,
       model: createSpreadModel(8),
@@ -444,7 +499,7 @@ describe('createMenu', () => {
       const width =
         getItems(parent)[0]
           ?.querySelector<HTMLElement>('.marking-menu-outer-connector')
-          ?.style.getPropertyValue('--solved-connector-contact-radius') ?? '';
+          ?.style.getPropertyValue('--layout-connector-contact-radius') ?? '';
 
       return Number(width.slice(0, -2));
     };

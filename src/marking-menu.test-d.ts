@@ -10,6 +10,15 @@ import type { MarkingMenuItemInput } from './types.js';
 declare const parent: HTMLElement;
 
 describe('createMarkingMenu', () => {
+  it('rejects removed stroke options', () => {
+    // @ts-expect-error: Stroke appearance comes from CSS custom properties.
+    createMarkingMenu({
+      items: [{ label: 'Right' }],
+      parent,
+      strokeColor: '#123456',
+    });
+  });
+
   it('rejects sibling items sharing the same id', () => {
     // @ts-expect-error -- two items share the id `duplicate`.
     createMarkingMenu({

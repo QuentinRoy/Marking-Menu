@@ -141,10 +141,8 @@
 
   /* The weights the gesture overlay draws with, read by `live-surface.tsx`.
      A canvas takes numbers rather than lengths, so these are unitless
-     pixels; they sit here so that the whole overlay, colour and weight, is
-     described in one place. The mark itself is drawn at `--stroke-width`,
-     the menu's own (see `color-scheme.css`), so that with the breakdown off
-     what is left on screen is the stroke as the menu drew it. */
+     pixels. The mark uses `--mm-stroke-width`, so the overlay matches the
+     menu with the breakdown off. */
   --stroke-piece-width: 3;
   --stroke-corner-radius: 4.5;
 }
