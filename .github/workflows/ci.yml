@@ -102,15 +102,29 @@ jobs:
           github.event_name == 'pull_request'
         id: visual
         run: |
-          if jq -e '
-            [.. | objects | select(
-              .message? | type == "string" and contains("toHaveScreenshot")
-            )] | length > 0
-          ' test-results.json > /dev/null; then
-            echo 'failed=true' >> "$GITHUB_OUTPUT"
+          snapshots=$(jq -r '
+            [
+              .. | objects | .message? | strings
+              | select(
+                  contains("toHaveScreenshot") or
+                  contains("A snapshot doesn't exist at")
+                )
+              | scan("menu-[A-Za-z0-9-]+\\.png")
+              | select(test("-(actual|diff|previous)\\.png$") | not)
+            ] | unique[]
+          ' test-results.json)
+          if [ -n "$snapshots" ]; then
+            {
+              echo 'failed=true'
+              echo 'snapshots<<EOF'
+              printf '%s\n' "$snapshots"
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
           fi
       - if: steps.visual.outputs.failed == 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          SNAPSHOTS: ${{ steps.visual.outputs.snapshots }}
         with:
           script: |
             const updateLabel = 'update screenshots';
@@ -131,11 +145,15 @@ jobs:
             if (comments.some((comment) => comment.body?.includes(heading))) {
               return;
             }
+            const snapshots = process.env.SNAPSHOTS.split('\n')
+              .filter(Boolean)
+              .map((snapshot) => `- \`${snapshot}\``)
+              .join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.payload.pull_request.number,
-              body: `### ${heading}\n\nSome screenshots do not match their stored references. If the changes are intentional, add the \`update screenshots\` label to regenerate them.`,
+              body: `### ${heading}\n\n${snapshots}\n\nIf the changes are intentional, add the \`update screenshots\` label to regenerate them.`,
             });
       - if: steps.e2e.outcome == 'failure'
         run: exit 1
