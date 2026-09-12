@@ -1,0 +1,114 @@
+name: Update visual screenshots
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [labeled]
+
+concurrency:
+  group: update-screenshots-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  update:
+    if: >-
+      github.event.label.name == 'update screenshots' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: ./.github/actions/setup
+      - id: update
+        continue-on-error: true
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -euo pipefail
+          yarn build
+          yarn e2e:build
+          yarn e2e:visual --update-snapshots=changed
+          git add -- e2e/tests/visual.spec.ts-snapshots/
+          if ! git diff --cached --name-only | awk '
+            $0 ~ /^e2e\/tests\/visual\.spec\.ts-snapshots\/.+\.png$/ { next }
+            { exit 1 }
+          '; then
+            echo 'Only visual PNG snapshots may be staged.' >&2
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test: Update visual screenshots'
+          git push origin "HEAD:${HEAD_REF}"
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+      - if: steps.update.outcome == 'success' && steps.update.outputs.changed == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: 'Updated visual screenshots.',
+            });
+      - if: steps.update.outcome == 'success' && steps.update.outputs.changed != 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: 'Visual screenshots were unchanged.',
+            });
+      - if: steps.update.outcome != 'success'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: 'Visual screenshot update failed. The label remains for retry.',
+            });
+      - if: steps.update.outcome == 'success'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              name: 'update screenshots',
+            });
+      - if: steps.update.outcome != 'success'
+        run: exit 1
+
+  maintainer-update-required:
+    if: >-
+      github.event.label.name == 'update screenshots' &&
+      (github.event.pull_request.head.repo.full_name != github.repository ||
+      github.event.pull_request.user.login == 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: 'A maintainer must update screenshots from a trusted branch.',
+            });

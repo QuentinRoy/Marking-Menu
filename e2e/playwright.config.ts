@@ -8,6 +8,7 @@ const viewport = { width: 800, height: 600 };
 
 export default defineConfig({
   testDir: './tests',
+  snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}{ext}',
   // Project-level concurrency (chromium/firefox/webkit/chromium-touch running
   // side by side) is enough parallelism for now; not enabled within a single
   // spec file yet.
@@ -63,6 +64,11 @@ export default defineConfig({
       name: 'chromium-touch',
       testMatch: /(?:concurrent-pointers|touch)\.spec\.ts/v,
       use: { ...devices['Desktop Chrome'], hasTouch: true, viewport },
+    },
+    {
+      name: 'chromium-visual',
+      testMatch: /visual\.spec\.ts/v,
+      use: { ...devices['Desktop Chrome'], viewport },
     },
   ],
 });
