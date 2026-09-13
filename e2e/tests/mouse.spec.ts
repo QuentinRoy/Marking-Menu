@@ -104,54 +104,7 @@ test('label plates fit text and honor a fixed width', async ({ page }) => {
   await releaseAt(page);
 });
 
-test('an active label grows around its resting position', async ({ page }) => {
-  await page.addStyleTag({
-    content: '.marking-menu::part(label--active) { letter-spacing: 2px; }',
-  });
-  const center = await surfaceCenter(page);
-  await pressAt(page, center);
-  await waitForMenuOpen(page);
-
-  const menu = page.locator('.marking-menu');
-  const getRightPlate = async () =>
-    menu.evaluate((host) => {
-      const label = [
-        ...(host.shadowRoot?.querySelectorAll<HTMLElement>(
-          '.marking-menu-label',
-        ) ?? []),
-      ].find((element) => element.textContent === 'Right');
-      const plate = label?.parentElement;
-      if (plate === null || plate === undefined) {
-        throw new Error('Right plate is missing.');
-      }
-
-      const box = plate.getBoundingClientRect();
-      return {
-        centerX: box.left + box.width / 2,
-        centerY: box.top + box.height / 2,
-        width: box.width,
-      };
-    });
-
-  const resting = await getRightPlate();
-  await moveTo(
-    page,
-    offset(center, TOP_LEVEL_ITEMS.right.angle, SELECT_RADIUS),
-  );
-  await waitForLogEntry(
-    page,
-    (entry) => entry.type === 'change' && entry.activeId === 'right',
-  );
-  const active = await getRightPlate();
-
-  expect(active.width).toBeGreaterThan(resting.width);
-  expect(active.centerX).toBeCloseTo(resting.centerX, 1);
-  expect(active.centerY).toBeCloseTo(resting.centerY, 1);
-
-  await releaseAt(page);
-});
-
-test('novice mode: wedges and connector parts follow the menu directions', async ({
+test('novice mode: wedges and connectors follow the menu directions', async ({
   page,
 }) => {
   const center = await surfaceCenter(page);
@@ -191,12 +144,10 @@ test('novice mode: wedges and connector parts follow the menu directions', async
     return {
       down: wedge(2),
       innerColor: getComputedStyle(innerConnector).backgroundColor,
-      innerPart: innerConnector.getAttribute('part'),
       innerWidth: innerConnector.getBoundingClientRect().width,
       outerOffset:
         outerConnector.getBoundingClientRect().x -
         innerConnector.getBoundingClientRect().x,
-      outerPart: outerConnector.getAttribute('part'),
       up: wedge(6),
     };
   });
@@ -204,18 +155,15 @@ test('novice mode: wedges and connector parts follow the menu directions', async
   expect(geometry.down.y + geometry.down.height / 2).toBeGreaterThan(0);
   expect(geometry.up.y + geometry.up.height / 2).toBeLessThan(0);
   expect(geometry.innerColor).toBe('rgba(0, 0, 0, 0)');
-  expect(geometry.innerPart).toBe('inner-connector');
   expect(geometry.innerWidth).toBe(40);
   expect(geometry.outerOffset).toBe(80);
-  expect(geometry.outerPart).toBe('outer-connector');
 
   await moveTo(page, offset(center, TOP_LEVEL_ITEMS.up.angle, SELECT_RADIUS));
   const activeWedge = await menu.evaluate((host) => {
-    const wedges = host.shadowRoot?.querySelectorAll<SVGPathElement>(
-      '.marking-menu-wedge',
-    );
-    return [...(wedges ?? [])].findIndex((wedge) =>
-      wedge.classList.contains('marking-menu-wedge--active'),
+    const items =
+      host.shadowRoot?.querySelectorAll<HTMLElement>('.marking-menu-item');
+    return [...(items ?? [])].findIndex((item) =>
+      item.classList.contains('active'),
     );
   });
   expect(activeWedge).toBe(6);
@@ -223,6 +171,7 @@ test('novice mode: wedges and connector parts follow the menu directions', async
   await menu.evaluate((host) => {
     host.style.setProperty('--mm-inner-connector-color', 'rgb(1, 2, 3)');
     host.style.setProperty('--mm-outer-connector-color', 'rgb(4, 5, 6)');
+    host.style.setProperty('--mm-outer-connector-color-active', 'rgb(7, 8, 9)');
   });
   const colors = await menu.evaluate((host) => {
     const root = host.shadowRoot;
@@ -232,11 +181,19 @@ test('novice mode: wedges and connector parts follow the menu directions', async
     const outerConnector = root?.querySelector<HTMLElement>(
       '.marking-menu-outer-connector',
     );
+    const activeItem = root?.querySelector<HTMLElement>(
+      '.marking-menu-item.active',
+    );
+    const activeOuterConnector = activeItem?.querySelector<HTMLElement>(
+      ':scope > .marking-menu-outer-connector',
+    );
     if (
       innerConnector === null ||
       innerConnector === undefined ||
       outerConnector === null ||
-      outerConnector === undefined
+      outerConnector === undefined ||
+      activeOuterConnector === null ||
+      activeOuterConnector === undefined
     ) {
       throw new Error('Menu connector is missing.');
     }
@@ -244,9 +201,14 @@ test('novice mode: wedges and connector parts follow the menu directions', async
     return {
       inner: getComputedStyle(innerConnector).backgroundColor,
       outer: getComputedStyle(outerConnector).backgroundColor,
+      outerActive: getComputedStyle(activeOuterConnector).backgroundColor,
     };
   });
-  expect(colors).toEqual({ inner: 'rgb(1, 2, 3)', outer: 'rgb(4, 5, 6)' });
+  expect(colors).toEqual({
+    inner: 'rgb(1, 2, 3)',
+    outer: 'rgb(4, 5, 6)',
+    outerActive: 'rgb(7, 8, 9)',
+  });
 
   await releaseAt(page);
 });

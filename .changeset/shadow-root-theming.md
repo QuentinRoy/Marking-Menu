@@ -4,9 +4,9 @@
 
 Render menus in an open shadow root on the existing `.marking-menu` wrapper.
 Page-level legacy class selectors no longer reach the menu. Replace the label and
-connector theme properties with the `--mm-*` names, and style repeated menu
-boxes through the `plate`, `label`, `inner-connector`, and `outer-connector`
-parts.
+connector theme properties with the `--mm-*` names. Internal shadow elements
+are not a styling API. Use `--mm-outer-connector-color-active` when the active
+outer connector should differ from its resting color.
 
 Replace the nine stroke appearance options with `--mm-stroke-*` custom
 properties. `gestureFeedbackDuration` remains an option.
