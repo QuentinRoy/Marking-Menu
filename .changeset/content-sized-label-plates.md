@@ -11,5 +11,7 @@ changes.
 All plate corners now use `--mm-plate-corner-radius`, and plate padding now
 defaults to `12px` where `text-box-trim` and `text-box-edge` are available.
 Browsers without trimming add `0.2em` to the default or configured padding.
+The default label font size is `20px`, and the horizontal clearance between
+plates defaults to `12px`.
 Rename `--item-background`, `--item-color`, `--active-item-background`, and
 `--active-item-color` to the corresponding `--mm-plate-*` properties.
