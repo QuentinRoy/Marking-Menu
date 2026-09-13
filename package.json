@@ -25,7 +25,7 @@
     "demo:dev": "vite --config vite.demo.config.ts",
     "demo:preview": "vite preview --config vite.demo.config.ts",
     "e2e": "yarn build && yarn e2e:build && yarn e2e:test",
-    "e2e:build": "vite build --config e2e/vite.config.ts",
+    "e2e:build": "vite build --config e2e/vite.config.ts && vite build --config vite.demo.config.ts",
     "e2e:test": "playwright test --config e2e/playwright.config.ts",
     "e2e:visual": "yarn e2e:test --project=chromium-visual",
     "prepare": "yarn build",

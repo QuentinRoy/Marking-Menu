@@ -92,8 +92,8 @@ jobs:
       - run: |
           apt-get update
           apt-get install -y --no-install-recommends jq
-      # The fixture-only build, not `yarn e2e`: `dist/` was already built once
-      # by the Build job above, so this avoids building the library again.
+      # Builds the browser fixture and playground against `dist/`, which the
+      # Build job already produced, so this avoids rebuilding the library.
       - run: yarn e2e:build
       # Inside the container the job runs as root, but the runner points $HOME
       # at /github/home, which the image's `pwuser` owns. Firefox refuses to
