@@ -42,6 +42,31 @@ test('visual: default menu open', async ({ page }) => {
   );
 });
 
+test('visual: menu and stroke escape a visible-overflow parent', async ({
+  page,
+}) => {
+  const center = await openMenu(page);
+  await moveTo(page, offset(center, 0, 200));
+
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
+    'stroke-overflow-visible.png',
+  );
+});
+
+test('visual: overflow hidden clips an escaping menu and stroke', async ({
+  page,
+}) => {
+  await page.locator('#surface').evaluate((surface) => {
+    surface.style.overflow = 'hidden';
+  });
+  const center = await openMenu(page);
+  await moveTo(page, offset(center, 0, 200));
+
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
+    'stroke-overflow-hidden.png',
+  );
+});
+
 for (const [id, item] of Object.entries(TOP_LEVEL_ITEMS)) {
   test(`visual: active ${id} item`, async ({ page }) => {
     const center = await openMenu(page);
