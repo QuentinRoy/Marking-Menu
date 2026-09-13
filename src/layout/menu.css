@@ -12,7 +12,7 @@
     #d9d9d9
   );
   --resolved-plate-color-active: var(--mm-plate-color-active, #000);
-  --resolved-plate-font-size: var(--mm-plate-font-size, 18px);
+  --resolved-plate-font-size: var(--mm-plate-font-size, 20px);
   --resolved-label-min-width: var(--mm-label-min-width, 0);
   --resolved-label-max-width: var(--mm-label-max-width, none);
   --resolved-connector-thickness: var(--mm-connector-thickness, 4px);
@@ -36,7 +36,7 @@
   --resolved-wedge-gap: var(--mm-wedge-gap, 4px);
   --resolved-wedge-corner-radius: var(--mm-wedge-corner-radius, 4px);
 
-  --resolved-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 14px);
+  --resolved-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 12px);
   --resolved-plate-gap-vertical: var(--mm-plate-gap-vertical, 4px);
   --resolved-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
   --resolved-plate-gap-connector: var(--mm-plate-gap-connector, 4px);
