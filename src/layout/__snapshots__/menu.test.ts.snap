@@ -7,7 +7,6 @@ exports[`createMenu > can be removed 1`] = `
     style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
-      <style />
       <svg
         class="marking-menu-ring"
         height="160"
@@ -142,7 +141,6 @@ exports[`createMenu > renders 1`] = `
     style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
-      <style />
       <svg
         class="marking-menu-ring"
         height="160"
@@ -325,7 +323,6 @@ exports[`createMenu > renders without active element 1`] = `
     style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
-      <style />
       <svg
         class="marking-menu-ring"
         height="160"
@@ -458,7 +455,6 @@ exports[`createMenu > update the active element 1`] = `
     style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
-      <style />
       <svg
         class="marking-menu-ring"
         height="160"
@@ -591,7 +587,6 @@ exports[`createMenu > update the active element 2`] = `
     style="--center-x: 30px; --center-y: 50px; --inner-radius: 40px;"
   >
     #shadow-root
-      <style />
       <svg
         class="marking-menu-ring"
         height="160"

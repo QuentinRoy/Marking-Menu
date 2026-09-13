@@ -2,6 +2,20 @@ import { at, degreesToRadians, normalizeAngle, type Point } from '../utils.js';
 import { solveLabelLayout } from './label-layout.js';
 import menuStyles from './menu.css?inline';
 
+let menuStyleSheet: CSSStyleSheet | undefined;
+
+function getMenuStyleSheet(doc: Document): CSSStyleSheet {
+  if (menuStyleSheet !== undefined) {
+    return menuStyleSheet;
+  }
+
+  const styleSheetConstructor = doc.defaultView?.CSSStyleSheet ?? CSSStyleSheet;
+  const styleSheet = new styleSheetConstructor();
+  styleSheet.replaceSync(menuStyles);
+  menuStyleSheet = styleSheet;
+  return styleSheet;
+}
+
 /**
  An item of the menu layout's model.
  */
@@ -109,9 +123,7 @@ const template = (
   main.style.setProperty('--center-x', `${center[0]}px`);
   main.style.setProperty('--center-y', `${center[1]}px`);
   const root = main.attachShadow({ mode: 'open' });
-  const style = doc.createElement('style');
-  style.textContent = menuStyles;
-  root.append(style);
+  root.adoptedStyleSheets = [getMenuStyleSheet(doc)];
 
   const probes: LayoutProbes = {
     outerRadius: appendLayoutProbe(root, doc, 'outer-radius'),
