@@ -44,4 +44,22 @@ describe('stroke surface', () => {
       'M 0 0 L 2 2',
     );
   });
+
+  it('keeps every point drawn on a surface', () => {
+    const parent = document.createElement('div');
+    const surface = createStrokeSurface({ parent, doc: document });
+
+    surface.drawPoint([1, 2]);
+    surface.drawPoint([3, 4]);
+
+    expect(
+      [...surface.element.querySelectorAll('circle')].map((point) => [
+        point.getAttribute('cx'),
+        point.getAttribute('cy'),
+      ]),
+    ).toEqual([
+      ['1', '2'],
+      ['3', '4'],
+    ]);
+  });
 });

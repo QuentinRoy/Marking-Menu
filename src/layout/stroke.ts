@@ -132,13 +132,14 @@ export function createStrokeSurface({
   };
 
   const drawPoint = ([x, y]: Point): void => {
-    marker ??= doc.createElementNS(svgNamespace, 'circle');
-    marker.setAttribute('cx', String(x));
-    marker.setAttribute('cy', String(y));
-    marker.setAttribute('r', String(pointRadius));
-    marker.setAttribute('fill', pointColor);
-    marker.setAttribute('part', ['stroke', ...parts].join(' '));
-    svg.append(marker);
+    const point = doc.createElementNS(svgNamespace, 'circle');
+    point.setAttribute('cx', String(x));
+    point.setAttribute('cy', String(y));
+    point.setAttribute('r', String(pointRadius));
+    point.setAttribute('fill', pointColor);
+    point.setAttribute('part', ['stroke', ...parts].join(' '));
+    marker ??= point;
+    svg.append(point);
   };
 
   const clear = (): void => {
