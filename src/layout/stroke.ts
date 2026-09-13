@@ -10,7 +10,6 @@ export type StrokeSurfaceOptions = {
   lineColor?: string;
   pointRadius?: number;
   pointColor?: string;
-  parts?: readonly string[];
 };
 
 export type StrokeSurface = {
@@ -40,7 +39,6 @@ export function createStrokeSurface({
   lineColor = 'black',
   pointRadius = 0,
   pointColor = lineColor,
-  parts = [],
 }: StrokeSurfaceOptions): StrokeSurface {
   const svg = doc.createElementNS(svgNamespace, 'svg');
   Object.assign(svg.style, {
@@ -67,7 +65,6 @@ export function createStrokeSurface({
     path.setAttribute('stroke-width', String(lineWidth));
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('stroke-linejoin', 'round');
-    path.setAttribute('part', ['stroke', ...parts].join(' '));
 
     if (marker === null) {
       svg.append(path);
@@ -137,7 +134,6 @@ export function createStrokeSurface({
     point.setAttribute('cy', String(y));
     point.setAttribute('r', String(pointRadius));
     point.setAttribute('fill', pointColor);
-    point.setAttribute('part', ['stroke', ...parts].join(' '));
     marker ??= point;
     svg.append(point);
   };

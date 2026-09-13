@@ -154,11 +154,7 @@ describe('createController', () => {
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
     parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
 
-    expect(
-      parent
-        .querySelector('.marking-menu')
-        ?.shadowRoot?.querySelectorAll('[part~="stroke--feedback"]'),
-    ).toHaveLength(1);
+    expect(strokeSurfaces(parent)).toHaveLength(1);
 
     controller.dispose();
   });
@@ -290,11 +286,7 @@ describe('createController', () => {
     controller.on('select', (event) => {
       expect(Object.isFrozen(event.position)).toBe(true);
       observedDuringSelect = {
-        traces:
-          parent
-            .querySelector('.marking-menu')
-            ?.shadowRoot?.querySelectorAll('[part~="stroke--feedback"]')
-            .length ?? 0,
+        traces: strokeSurfaces(parent).length,
         cursor: parent.style.cursor,
       };
     });
@@ -679,9 +671,7 @@ describe('createController', () => {
     expect(selectedMenu).toBe(openedMenu);
     const root = parent.querySelector('.marking-menu')?.shadowRoot;
     expect(root?.querySelector('.marking-menu-layer')).toBeNull();
-    expect(root?.querySelectorAll('[part~="stroke--feedback"]')).toHaveLength(
-      1,
-    );
+    expect(strokeSurfaces(parent)).toHaveLength(1);
 
     controller.dispose();
   });

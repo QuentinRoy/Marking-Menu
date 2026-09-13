@@ -217,14 +217,6 @@ The active outer connector uses `--mm-outer-connector-color` when it is set, or 
 | `--mm-stroke-width-feedback`           | `--mm-stroke-width`       | Completed gesture feedback width.    |
 | `--mm-stroke-color-canceled`           | `#de6c52`                 | Canceled gesture feedback color.     |
 
-Stroke paths use SVG presentation attributes for their defaults, so `::part()` rules can override them. Paths expose `stroke` plus `stroke--lower`, `stroke--upper`, or `stroke--feedback`. Canceled feedback also exposes `stroke--canceled`; the origin marker exposes `stroke stroke--upper`.
-
-```css
-#menu-area .marking-menu::part(stroke--canceled) {
-  stroke: rebeccapurple;
-}
-```
-
 Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
 
 ## Input behavior

@@ -40,10 +40,11 @@ test('an expert stroke paints outside a visible-overflow parent', async ({
         return null;
       }
 
+      const surface = [...(host.shadowRoot?.children ?? [])].find(
+        (element): element is SVGSVGElement => element instanceof SVGSVGElement,
+      );
       const path =
-        host.shadowRoot?.querySelector<SVGPathElement>(
-          '[part~="stroke--upper"]',
-        ) ?? null;
+        surface?.querySelector<SVGPathElement>(':scope > path') ?? null;
       if (path === null) {
         return null;
       }

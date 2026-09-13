@@ -11,11 +11,9 @@ longer reach the menu. Replace the label and connector theme properties with the
 from its resting color.
 
 Replace the nine stroke appearance options with `--mm-stroke-*` custom
-properties. Stroke paths and origin markers expose the `stroke`,
-`stroke--lower`, `stroke--upper`, `stroke--feedback`, and `stroke--canceled`
-parts. Strokes can paint outside the parent without changing scroll extents.
-Set `overflow: hidden` on the parent to keep the clipping behavior from version
-0.10.1. `gestureFeedbackDuration` remains an option.
+properties. Strokes can paint outside the parent without changing scroll
+extents. Set `overflow: hidden` on the parent to keep the clipping behavior
+from version 0.10.1. `gestureFeedbackDuration` remains an option.
 
 Replace `--mm-ring-radius` with `--mm-wedge-thickness`. The default is 40px,
 which sets the radial thickness beyond `deadZoneRadius`.

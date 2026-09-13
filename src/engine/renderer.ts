@@ -118,7 +118,6 @@ function createStrokeLayers(
         lineColor: strokeTheme.strokeColor,
         lineWidth: strokeTheme.strokeWidth,
         pointRadius: strokeTheme.strokeStartPointRadius,
-        parts: ['stroke--upper'],
       },
     }),
     lower: createStrokeLayer({
@@ -128,7 +127,6 @@ function createStrokeLayers(
         lineColor: strokeTheme.lowerStrokeColor,
         lineWidth: strokeTheme.lowerStrokeWidth,
         pointRadius: strokeTheme.lowerStrokeStartPointRadius,
-        parts: ['stroke--lower'],
       },
     }),
     feedback: createGestureFeedback({

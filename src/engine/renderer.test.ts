@@ -75,11 +75,12 @@ describe('createRenderer', () => {
 
     const root = rootOf(parent);
     expect(
-      root.querySelector('[part~="stroke--upper"]')?.getAttribute('d'),
-    ).toBe('M 10 10 L 50 40');
-    expect(
-      root.querySelector('[part~="stroke--feedback"]')?.getAttribute('d'),
-    ).toBe('M 10 10 L 50 40');
+      [...root.children]
+        .filter((surface) => surface.localName === 'svg')
+        .flatMap((surface) => [...surface.children])
+        .filter((path) => path.localName === 'path')
+        .map((path) => path.getAttribute('d')),
+    ).toEqual(['M 10 10 L 50 40', 'M 10 10 L 50 40']);
     renderer.dispose();
   });
 
@@ -129,20 +130,16 @@ describe('createRenderer', () => {
           return 'menu';
         }
 
-        const part = element.querySelector('path')?.getAttribute('part') ?? '';
-        if (part.includes('stroke--lower')) {
-          return 'lower';
-        }
-
-        if (part.includes('stroke--upper')) {
+        const strokeElements = [...element.children];
+        if (strokeElements.some((child) => child.localName === 'circle')) {
           return 'upper';
         }
 
-        if (part.includes('stroke--feedback')) {
-          return 'feedback';
-        }
-
-        return 'unknown';
+        return strokeElements
+          .find((child) => child.localName === 'path')
+          ?.getAttribute('d') === 'M 0 0 L 5 5'
+          ? 'lower'
+          : 'feedback';
       });
     expect(layers).toEqual(['lower', 'menu', 'upper', 'feedback']);
     renderer.dispose();

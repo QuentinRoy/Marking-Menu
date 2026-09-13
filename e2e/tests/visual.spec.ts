@@ -83,23 +83,6 @@ test('visual: novice stroke and origin marker', async ({ page }) => {
   );
 });
 
-test('visual: stroke parts override presentation defaults', async ({
-  page,
-}) => {
-  await page.addStyleTag({
-    content:
-      '.marking-menu::part(stroke--upper) { fill: #d00000; stroke: #d00000; stroke-width: 12px; }',
-  });
-  const center = await openMenu(page);
-  await moveTo(
-    page,
-    offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
-  );
-  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
-    'stroke-part-themed.png',
-  );
-});
-
 test('visual: concurrent normal and canceled feedback', async ({ page }) => {
   const center = await surfaceCenter(page);
   await pressAt(page, center);

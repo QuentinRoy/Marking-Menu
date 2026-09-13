@@ -68,7 +68,6 @@ export function createGestureFeedback({
       parent: parentDOM,
       ...strokeOptions,
       ...(canceled && canceledStrokeOptions),
-      parts: ['stroke--feedback', ...(canceled ? ['stroke--canceled'] : [])],
     });
     surface.drawStroke(stroke);
     const timeoutEntry: StrokeTimeoutEntry = {
