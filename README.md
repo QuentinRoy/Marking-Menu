@@ -167,7 +167,7 @@ Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors ac
 | `--mm-plate-color-active`      | `#000`    | Active label color.                          |
 | `--mm-plate-padding`           | `12px`    | Space around the label.                      |
 | `--mm-plate-corner-radius`     | `16px`    | Plate corner radius.                         |
-| `--mm-plate-font-size`         | `18px`    | Label font size.                             |
+| `--mm-plate-font-size`         | `20px`    | Label font size.                             |
 | `--mm-label-min-width`         | `0`       | Minimum plate width.                         |
 | `--mm-label-max-width`         | `none`    | Maximum plate width before label truncation. |
 
@@ -198,7 +198,7 @@ The active outer connector uses `--mm-outer-connector-color` when it is set, or 
 
 | Property                    | Default | Purpose                                                   |
 | --------------------------- | ------- | --------------------------------------------------------- |
-| `--mm-plate-gap-horizontal` | `14px`  | Horizontal clearance between plates.                      |
+| `--mm-plate-gap-horizontal` | `12px`  | Horizontal clearance between plates.                      |
 | `--mm-plate-gap-vertical`   | `4px`   | Vertical clearance between plates.                        |
 | `--mm-plate-gap-ring`       | `12px`  | Clearance between a plate and the ring.                   |
 | `--mm-plate-gap-connector`  | `4px`   | Clearance from a plate to another item's outer connector. |
