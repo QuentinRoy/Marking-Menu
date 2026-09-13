@@ -67,6 +67,15 @@
   --resolved-stroke-color-canceled: var(--mm-stroke-color-canceled, #de6c52);
 
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.marking-menu-layer {
+  position: absolute;
   top: var(--center-y);
   left: var(--center-x);
   pointer-events: none;
@@ -76,7 +85,7 @@
 /* Drawing-only by default (see `createMenu`'s `pointerTarget` option): a
    live gesture reads strokes on the surface behind the menu, not hovers or
    clicks on the menu's own items and wedges. */
-:host(.marking-menu--pointer-target) {
+.marking-menu-layer.marking-menu--pointer-target {
   pointer-events: auto;
 }
 
@@ -99,7 +108,7 @@
   fill: var(--resolved-wedge-fill);
 }
 
-:host(.marking-menu--pointer-target) .marking-menu-wedge {
+.marking-menu-layer.marking-menu--pointer-target .marking-menu-wedge {
   pointer-events: auto;
 }
 

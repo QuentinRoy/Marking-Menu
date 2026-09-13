@@ -49,9 +49,13 @@ export type MenuLayoutModel = {
  */
 export type Menu = {
   /**
-  The menu's root element, so callers can place it among its siblings.
+  The persistent host element.
   */
   element: HTMLElement;
+  /**
+  The menu layer within the shared root.
+  */
+  layer: HTMLElement;
   /**
   The resolved stroke theme for this menu opening.
   */
@@ -66,14 +70,7 @@ export type Menu = {
   remove: () => void;
 };
 
-type LayoutProbes = {
-  outerRadius: HTMLElement;
-  wedgeGap: HTMLElement;
-  wedgeCornerRadius: HTMLElement;
-  plateGapHorizontal: HTMLElement;
-  plateGapVertical: HTMLElement;
-  plateGapRing: HTMLElement;
-  plateGapConnector: HTMLElement;
+type StrokeThemeProbes = {
   strokeColor: HTMLElement;
   strokeWidth: HTMLElement;
   strokeStartPointRadius: HTMLElement;
@@ -83,6 +80,16 @@ type LayoutProbes = {
   strokeColorFeedback: HTMLElement;
   strokeWidthFeedback: HTMLElement;
   strokeColorCanceled: HTMLElement;
+};
+
+type LayoutProbes = StrokeThemeProbes & {
+  outerRadius: HTMLElement;
+  wedgeGap: HTMLElement;
+  wedgeCornerRadius: HTMLElement;
+  plateGapHorizontal: HTMLElement;
+  plateGapVertical: HTMLElement;
+  plateGapRing: HTMLElement;
+  plateGapConnector: HTMLElement;
 };
 
 export type MenuStrokeTheme = {
@@ -102,56 +109,109 @@ type MenuDom = {
   root: ShadowRoot;
   probes: LayoutProbes;
   itemElements: ReadonlyMap<string, HTMLDivElement>;
+  isOwnHost: boolean;
 };
 
+export function createMenuHost({
+  parent,
+  doc = document,
+}: {
+  parent: HTMLElement;
+  doc?: Document;
+}): {
+  element: HTMLDivElement;
+  root: ShadowRoot;
+  strokeTheme: MenuStrokeTheme;
+} {
+  const element = doc.createElement('div');
+  element.className = 'marking-menu';
+  const root = element.attachShadow({ mode: 'open' });
+  root.adoptedStyleSheets = [getMenuStyleSheet(doc)];
+  parent.append(element);
+
+  const probeParent = doc.createElement('div');
+  root.append(probeParent);
+  const strokeTheme = readStrokeTheme(
+    doc,
+    appendStrokeThemeProbes(probeParent, doc),
+  );
+  probeParent.remove();
+  return { element, root, strokeTheme };
+}
+
 function appendLayoutProbe(
-  root: ShadowRoot,
+  parent: HTMLElement,
   doc: Document,
   property: string,
 ): HTMLElement {
   const probe = doc.createElement('div');
   probe.className = `marking-menu-layout-probe marking-menu-layout-probe--${property}`;
-  root.append(probe);
+  parent.append(probe);
   return probe;
+}
+
+function appendStrokeThemeProbes(
+  parent: HTMLElement,
+  doc: Document,
+): StrokeThemeProbes {
+  return {
+    strokeColor: appendLayoutProbe(parent, doc, 'stroke-color'),
+    strokeWidth: appendLayoutProbe(parent, doc, 'stroke-width'),
+    strokeStartPointRadius: appendLayoutProbe(
+      parent,
+      doc,
+      'stroke-start-point-radius',
+    ),
+    strokeColorLower: appendLayoutProbe(parent, doc, 'stroke-color-lower'),
+    strokeWidthLower: appendLayoutProbe(parent, doc, 'stroke-width-lower'),
+    strokeStartPointRadiusLower: appendLayoutProbe(
+      parent,
+      doc,
+      'stroke-start-point-radius-lower',
+    ),
+    strokeColorFeedback: appendLayoutProbe(
+      parent,
+      doc,
+      'stroke-color-feedback',
+    ),
+    strokeWidthFeedback: appendLayoutProbe(
+      parent,
+      doc,
+      'stroke-width-feedback',
+    ),
+    strokeColorCanceled: appendLayoutProbe(
+      parent,
+      doc,
+      'stroke-color-canceled',
+    ),
+  };
 }
 
 const template = (
   { items, center }: { items: readonly MenuLayoutItem[]; center: Point },
   doc: Document,
+  parent: HTMLElement | ShadowRoot,
 ): MenuDom => {
+  const isOwnHost = parent instanceof HTMLElement;
+  const { root } = isOwnHost
+    ? createMenuHost({ parent, doc })
+    : { root: parent };
   const main = doc.createElement('div');
-  main.className = 'marking-menu';
+  main.className = 'marking-menu-layer';
   main.style.setProperty('--center-x', `${center[0]}px`);
   main.style.setProperty('--center-y', `${center[1]}px`);
-  const root = main.attachShadow({ mode: 'open' });
-  root.adoptedStyleSheets = [getMenuStyleSheet(doc)];
+  root.append(main);
   const itemElements = new Map<string, HTMLDivElement>();
 
   const probes: LayoutProbes = {
-    outerRadius: appendLayoutProbe(root, doc, 'outer-radius'),
-    wedgeGap: appendLayoutProbe(root, doc, 'wedge-gap'),
-    wedgeCornerRadius: appendLayoutProbe(root, doc, 'wedge-corner-radius'),
-    plateGapHorizontal: appendLayoutProbe(root, doc, 'plate-gap-horizontal'),
-    plateGapVertical: appendLayoutProbe(root, doc, 'plate-gap-vertical'),
-    plateGapRing: appendLayoutProbe(root, doc, 'plate-gap-ring'),
-    plateGapConnector: appendLayoutProbe(root, doc, 'plate-gap-connector'),
-    strokeColor: appendLayoutProbe(root, doc, 'stroke-color'),
-    strokeWidth: appendLayoutProbe(root, doc, 'stroke-width'),
-    strokeStartPointRadius: appendLayoutProbe(
-      root,
-      doc,
-      'stroke-start-point-radius',
-    ),
-    strokeColorLower: appendLayoutProbe(root, doc, 'stroke-color-lower'),
-    strokeWidthLower: appendLayoutProbe(root, doc, 'stroke-width-lower'),
-    strokeStartPointRadiusLower: appendLayoutProbe(
-      root,
-      doc,
-      'stroke-start-point-radius-lower',
-    ),
-    strokeColorFeedback: appendLayoutProbe(root, doc, 'stroke-color-feedback'),
-    strokeWidthFeedback: appendLayoutProbe(root, doc, 'stroke-width-feedback'),
-    strokeColorCanceled: appendLayoutProbe(root, doc, 'stroke-color-canceled'),
+    outerRadius: appendLayoutProbe(main, doc, 'outer-radius'),
+    wedgeGap: appendLayoutProbe(main, doc, 'wedge-gap'),
+    wedgeCornerRadius: appendLayoutProbe(main, doc, 'wedge-corner-radius'),
+    plateGapHorizontal: appendLayoutProbe(main, doc, 'plate-gap-horizontal'),
+    plateGapVertical: appendLayoutProbe(main, doc, 'plate-gap-vertical'),
+    plateGapRing: appendLayoutProbe(main, doc, 'plate-gap-ring'),
+    plateGapConnector: appendLayoutProbe(main, doc, 'plate-gap-connector'),
+    ...appendStrokeThemeProbes(main, doc),
   };
 
   for (const item of items) {
@@ -179,11 +239,11 @@ const template = (
     labelElt.textContent = item.label;
     plateElt.append(labelElt);
     elt.append(plateElt);
-    root.append(elt);
+    main.append(elt);
     itemElements.set(item.key, elt);
   }
 
-  return { main, root, probes, itemElements };
+  return { main, root, probes, itemElements, isOwnHost };
 };
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
@@ -331,7 +391,10 @@ function readColor(
   return color === '' ? fallback : color;
 }
 
-function readStrokeTheme(doc: Document, probes: LayoutProbes): MenuStrokeTheme {
+function readStrokeTheme(
+  doc: Document,
+  probes: StrokeThemeProbes,
+): MenuStrokeTheme {
   return {
     strokeColor: readColor(doc, probes.strokeColor, '#000000'),
     strokeWidth: readPixels(doc, probes.strokeWidth, 4),
@@ -557,42 +620,38 @@ export function createMenu({
   pointerTarget = false,
 }: {
   doc?: Document;
-  parent: HTMLElement;
+  parent: HTMLElement | ShadowRoot;
   model: MenuLayoutModel;
   center: Point;
   deadZoneRadius?: number;
   pointerTarget?: boolean;
 }): Menu {
-  const menuDom = template({ items: model.items, center }, doc);
-  const { main, root } = menuDom;
-  main.style.setProperty('--inner-radius', `${deadZoneRadius}px`);
+  const menuDom = template({ items: model.items, center }, doc, parent);
+  const { main, root, isOwnHost } = menuDom;
+  (root.host as HTMLElement).style.setProperty(
+    '--inner-radius',
+    `${deadZoneRadius}px`,
+  );
   main.classList.toggle('marking-menu--pointer-target', pointerTarget);
 
-  // Attach before measuring: a detached element's `offsetWidth`/`offsetHeight`
-  // are always 0. Everything from here through `applySolvedLayout` runs
-  // synchronously in this one call, so the unsolved layout is never
-  // painted: a browser only paints between tasks, never mid-function.
-  parent.append(main);
+  // `template` attaches the layer before measurement. A browser cannot paint
+  // the unsolved layout while this call is still running.
   const strokeTheme = readStrokeTheme(doc, menuDom.probes);
   renderWedges(menuDom, model.items, doc, deadZoneRadius);
   applySolvedLayout(menuDom, model.items, doc);
 
-  // Clear any  active items.
   const clearActiveItems = () => {
     for (const itemDom of root.querySelectorAll<HTMLElement>('.active')) {
       setItemActive(itemDom, false);
     }
   };
 
-  // Return an item DOM element from its id.
   const getItemDom = (itemId: string | number) =>
     [...root.querySelectorAll<HTMLElement>('.marking-menu-item')].find(
       (elt) => elt.dataset.itemId === itemId,
     );
 
-  // Mark an item as active.
   const setActive = (itemId: string | number | null) => {
-    // Clear any  active items.
     clearActiveItems();
 
     // Set the active class. This mirrors the original truthiness check (which
@@ -612,11 +671,19 @@ export function createMenu({
     }
   };
 
-  // Function to remove the menu.
   const remove = () => {
-    main.remove();
+    if (isOwnHost) {
+      (root.host as HTMLElement).remove();
+    } else {
+      main.remove();
+    }
   };
 
-  // Create the interface.
-  return { element: main, strokeTheme, setActive, remove };
+  return {
+    element: root.host as HTMLElement,
+    layer: main,
+    strokeTheme,
+    setActive,
+    remove,
+  };
 }

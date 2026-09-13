@@ -1,4 +1,4 @@
-import { fakeTimers } from '../__fixtures__/canvas.js';
+import { fakeTimers } from '../__fixtures__/timers.js';
 import { createModel } from '../model.js';
 import { createRuntime } from './runtime.js';
 

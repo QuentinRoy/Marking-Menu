@@ -25,16 +25,27 @@ export default defineConfig({
     video: 'off',
     viewport,
   },
-  webServer: {
-    // Serves the already-built fixture; building it is a separate step
-    // (`yarn e2e:build`) so CI can run it once against a downloaded `dist/`
-    // instead of paying for a build inside the test run. Playwright runs
-    // this command with the config file's own directory as cwd, hence the
-    // path relative to `e2e/` rather than the repo root.
-    command: 'vite preview --config vite.config.ts',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: process.env.CI === undefined,
-  },
+  webServer: [
+    {
+      // Serves the already-built fixture; building it is a separate step
+      // (`yarn e2e:build`) so CI can run it once against a downloaded `dist/`
+      // instead of paying for a build inside the test run. Playwright runs
+      // this command with the config file's own directory as cwd, hence the
+      // path relative to `e2e/` rather than the repo root.
+      command: 'vite preview --config vite.config.ts',
+      url: 'http://127.0.0.1:4173',
+      reuseExistingServer: process.env.CI === undefined,
+    },
+    {
+      // The playground ships from the demo build, independently of the
+      // library-only fixture above. Its visual test needs the actual page,
+      // including the recognizer overlay that draws articulation points.
+      command:
+        'vite preview --config ../vite.demo.config.ts --host 127.0.0.1 --port 4174 --strictPort',
+      url: 'http://127.0.0.1:4174',
+      reuseExistingServer: process.env.CI === undefined,
+    },
+  ],
   projects: [
     {
       // `multiple-controllers.spec.ts`, `disposal.spec.ts` and
@@ -44,17 +55,17 @@ export default defineConfig({
       // own.
       name: 'chromium',
       testMatch:
-        /(?:mouse|multiple-controllers|disposal|dispatch-ordering|layout-pointer-target)\.spec\.ts/v,
+        /(?:mouse|multiple-controllers|disposal|dispatch-ordering|layout-pointer-target|stroke-overflow)\.spec\.ts/v,
       use: { ...devices['Desktop Chrome'], viewport },
     },
     {
       name: 'firefox',
-      testMatch: /mouse\.spec\.ts/v,
+      testMatch: /(?:mouse|stroke-overflow)\.spec\.ts/v,
       use: { ...devices['Desktop Firefox'], viewport },
     },
     {
       name: 'webkit',
-      testMatch: /mouse\.spec\.ts/v,
+      testMatch: /(?:mouse|stroke-overflow)\.spec\.ts/v,
       use: { ...devices['Desktop Safari'], viewport },
     },
     {

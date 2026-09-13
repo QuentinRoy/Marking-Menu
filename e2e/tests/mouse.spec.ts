@@ -280,7 +280,7 @@ test('expert mode: a quick decisive stroke selects without ever opening a menu',
   );
 
   // Still held: the expert path never renders a menu.
-  await expect(page.locator('.marking-menu')).toHaveCount(0);
+  await expect(page.locator('.marking-menu-layer')).toHaveCount(0);
 
   await releaseAt(page);
 

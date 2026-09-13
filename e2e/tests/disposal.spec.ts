@@ -52,7 +52,7 @@ async function setUpController(page: Page): Promise<void> {
 
 async function readSurfaceState(
   page: Page,
-): Promise<{ canvasCount: number; cursor: string; eventCount: number }> {
+): Promise<{ hostCount: number; cursor: string; eventCount: number }> {
   return page.evaluate(() => {
     const { events } = (globalThis as unknown as DisposalTestGlobal)
       .__disposalTest;
@@ -62,7 +62,7 @@ async function readSurfaceState(
     }
 
     return {
-      canvasCount: element.querySelectorAll('canvas').length,
+      hostCount: element.querySelectorAll('.marking-menu').length,
       cursor: element.style.cursor,
       eventCount: events.length,
     };
@@ -77,7 +77,7 @@ test('disposal at the browser boundary: pointer input and pending work produce n
   const box = await boundingBoxOf(page, '#disposal-test-surface');
   const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 
-  // Start a gesture and move enough to reach expert mode: a canvas gets
+  // Start a gesture and move enough to reach expert mode: the host gets
   // rendered and the cursor changes, so there's something disposal has to
   // undo.
   await pressAt(page, center);
@@ -85,7 +85,7 @@ test('disposal at the browser boundary: pointer input and pending work produce n
 
   const beforeDispose = await readSurfaceState(page);
   expect(beforeDispose.eventCount, 'start was dispatched').toBeGreaterThan(0);
-  expect(beforeDispose.canvasCount, 'the stroke canvas is rendered').toBe(1);
+  expect(beforeDispose.hostCount, 'the renderer host exists').toBe(1);
   expect(beforeDispose.cursor, 'the gesture cursor is set').not.toBe('');
 
   const didRedisposeThrow = await page.evaluate(() => {
@@ -102,7 +102,7 @@ test('disposal at the browser boundary: pointer input and pending work produce n
   expect(didRedisposeThrow, 'a second dispose() does not throw').toBe(false);
 
   const afterDispose = await readSurfaceState(page);
-  expect(afterDispose.canvasCount, 'rendered resources are gone').toBe(0);
+  expect(afterDispose.hostCount, 'rendered resources are gone').toBe(0);
   expect(afterDispose.cursor, 'the cursor is restored').toBe('');
   expect(afterDispose.eventCount, 'disposal itself emits nothing').toBe(
     beforeDispose.eventCount,
@@ -119,5 +119,5 @@ test('disposal at the browser boundary: pointer input and pending work produce n
     afterPointerActivity.eventCount,
     'pointer input after disposal is inert',
   ).toBe(beforeDispose.eventCount);
-  expect(afterPointerActivity.canvasCount).toBe(0);
+  expect(afterPointerActivity.hostCount).toBe(0);
 });

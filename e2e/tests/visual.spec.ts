@@ -4,6 +4,7 @@ import {
   moveTo,
   offset,
   pressAt,
+  releaseAt,
   surfaceCenter,
   TOP_LEVEL_ITEMS,
   waitForMenuOpen,
@@ -69,6 +70,55 @@ test('visual: themed active right item', async ({ page }) => {
   await expect(page.locator('#snapshot-area')).toHaveScreenshot(
     'menu-themed-active-right.png',
   );
+});
+
+test('visual: novice stroke and origin marker', async ({ page }) => {
+  const center = await openMenu(page);
+  await moveTo(
+    page,
+    offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+  );
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
+    'stroke-novice-origin.png',
+  );
+});
+
+test('visual: concurrent normal and canceled feedback', async ({ page }) => {
+  const center = await surfaceCenter(page);
+  await pressAt(page, center);
+  await moveTo(
+    page,
+    offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+    1,
+  );
+  await releaseAt(page);
+  await pressAt(page, offset(center, 0, 30));
+  await releaseAt(page);
+
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
+    'stroke-feedback-concurrent.png',
+  );
+});
+
+test('visual: playground recognizer shows every corner', async ({ page }) => {
+  await page.goto('http://127.0.0.1:4174/playground/');
+  await page.getByText('Recognizer breakdown', { exact: true }).click();
+
+  const surface = page.locator('div.cursor-crosshair');
+  const box = await surface.boundingBox();
+  expect(box, 'The playground gesture surface is visible').not.toBeNull();
+  const visibleBox = box as NonNullable<typeof box>;
+
+  const start = {
+    x: visibleBox.x + 60,
+    y: visibleBox.y + visibleBox.height / 2,
+  };
+  await pressAt(page, start);
+  await moveTo(page, { x: start.x + 100, y: start.y }, 8);
+  await moveTo(page, { x: start.x + 100, y: start.y + 100 }, 8);
+  await releaseAt(page, { x: start.x + 200, y: start.y + 100 });
+
+  await expect(surface).toHaveScreenshot('stroke-playground-corners.png');
 });
 
 test('visual: 64px dead zone menu open', async ({ page }) => {

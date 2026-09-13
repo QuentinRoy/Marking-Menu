@@ -142,7 +142,7 @@ Second and Third split the first 180-degree gap into three 60-degree steps. Fift
 
 ## Appearance
 
-Each open menu uses a library-created `<div class="marking-menu">` with an open shadow root. The root is available for inspection, but its elements are not a styling API and direct mutation is unsupported. Use `.marking-menu` as the stable host selector for custom properties.
+Each controller owns one `<div class="marking-menu">` with an open shadow root. The host remains mounted until you dispose the controller, including during expert gestures that never open a menu. The root is available for inspection, but its elements are not a styling API and direct mutation is unsupported. Use `.marking-menu` as the stable host selector for custom properties and stroke `::part()` rules.
 
 Scope the host selector to a container when only one menu should change:
 
@@ -155,7 +155,7 @@ Scope the host selector to a container when only one menu should change:
 }
 ```
 
-Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Layout and stroke values are resolved when a menu opens.
+Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Stroke values are resolved when the controller is created and whenever a menu opens; layout values are resolved when a menu opens.
 
 ### Plate and label properties
 
@@ -217,7 +217,7 @@ The active outer connector uses `--mm-outer-connector-color` when it is set, or 
 | `--mm-stroke-width-feedback`           | `--mm-stroke-width`       | Completed gesture feedback width.    |
 | `--mm-stroke-color-canceled`           | `#de6c52`                 | Canceled gesture feedback color.     |
 
-The stroke canvases are light-DOM siblings of `.marking-menu`. Theme their pixels with the stroke custom properties.
+Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
 
 ## Input behavior
 
@@ -233,7 +233,7 @@ The release also changes imports, menu configuration, and event handling. Use th
 
 ### Appearance and theming
 
-Menus now render inside an open shadow root. Page CSS cannot reach the internal class names. `.marking-menu` remains the host selector, but these selectors stop working:
+The menu and stroke surfaces now share one open shadow root for the controller's lifetime. Page CSS cannot reach the internal class names. `.marking-menu` remains the host selector, but these selectors stop working:
 
 | Old selector or state                                                              | Replacement                                                                      |
 | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |

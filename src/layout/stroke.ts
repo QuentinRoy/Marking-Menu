@@ -1,166 +1,159 @@
 import type { Point } from '../utils.js';
 
-/**
- Configuration options of a stroke canvas.
- */
-export type StrokeCanvasOptions = {
-  /**
-  The parent node.
-  */
-  parent: HTMLElement;
-  /**
-  The root document. Mostly useful for testing purposes.
-  */
+const svgNamespace = 'http://www.w3.org/2000/svg';
+const pathPointLimit = 100;
+
+export type StrokeSurfaceOptions = {
+  parent: HTMLElement | ShadowRoot;
   doc?: Document;
-  /**
-  The width of the stroke, in pixels.
-  */
   lineWidth?: number;
-  /**
-  CSS representation of the stroke color.
-  */
   lineColor?: string;
-  /**
-  The radius of the point drawn at the start of the stroke.
-  */
   pointRadius?: number;
-  /**
-  CSS representation of the start point color. Defaults to `lineColor`.
-  */
   pointColor?: string;
-  /**
-  The size of the canvas points (px). Defaults to `1 / devicePixelRatio`.
-  */
-  ptSize?: number;
 };
 
-/**
- The methods of a stroke canvas.
- */
-export type StrokeCanvas = {
-  /**
-  The canvas element, so callers can place it among its siblings.
-  */
-  element: HTMLCanvasElement;
-  /**
-  Clear the canvas.
-  */
+export type StrokeSurface = {
+  element: SVGSVGElement;
   clear: () => void;
-  /**
-  Render a path connecting every point of the given stroke.
-  */
   drawStroke: (stroke: readonly Point[]) => void;
-  /**
-  Render the start-of-stroke marker at the given position.
-  */
   drawPoint: (point: Point) => void;
-  /**
-  Destroy the canvas.
-  */
   remove: () => void;
 };
 
-/**
- Create a stroke canvas.
+const pathData = (points: readonly Point[]): string => {
+  const [first] = points;
+  if (first === undefined) {
+    return '';
+  }
 
- @param options - Configuration options.
- @param options.parent - The parent node.
- @param options.doc - The root document. Mostly useful for testing purposes.
- @param options.lineWidth - The width of the stroke, in pixels.
- @param options.lineColor - CSS representation of the stroke color.
- @param options.pointRadius - The radius of the point drawn at the start of
- the stroke.
- @param options.pointColor - CSS representation of the start point color.
- @param options.ptSize - The size of the canvas points (px).
- @returns The canvas methods.
- */
-export function createStrokeCanvas({
+  const rest = points.length === 1 ? [first] : points.slice(1);
+  return `M ${first[0]} ${first[1]} ${rest
+    .map(([x, y]) => `L ${x} ${y}`)
+    .join(' ')}`;
+};
+
+export function createStrokeSurface({
   parent,
   doc = document,
   lineWidth = 2,
   lineColor = 'black',
   pointRadius = 0,
   pointColor = lineColor,
-  ptSize = window.devicePixelRatio > 0 ? 1 / window.devicePixelRatio : 1,
-}: StrokeCanvasOptions): StrokeCanvas {
-  // Create the canvas.
-  const { width, height } = parent.getBoundingClientRect();
-  const canvas = doc.createElement('canvas');
-  canvas.width = width / ptSize;
-  canvas.height = height / ptSize;
-  Object.assign(canvas.style, {
+}: StrokeSurfaceOptions): StrokeSurface {
+  const svg = doc.createElementNS(svgNamespace, 'svg');
+  Object.assign(svg.style, {
     position: 'absolute',
-    left: 0,
-    top: 0,
-    width: `${width}px`,
-    height: `${height}px`,
-    'pointer-events': 'none',
+    inset: '0',
+    width: '100%',
+    height: '100%',
+    overflow: 'visible',
+    pointerEvents: 'none',
   });
-  parent.append(canvas);
+  parent.append(svg);
 
-  // Get the canvas' context and set it up.
-  // `getContext('2d')` only returns null for invalid or already claimed
-  // context identifiers, which cannot happen here. The assertion preserves
-  // the original unchecked access instead of introducing a new throw path.
-  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-  // Scale to the device pixel ratio.
-  ctx.scale(1 / ptSize, 1 / ptSize);
+  let previousStroke: readonly Point[] = [];
+  let pathPoints: Point[] = [];
+  let livePath: SVGPathElement | null = null;
+  let livePathNewPointCount = 0;
+  let marker: SVGCircleElement | null = null;
 
-  /**
-   Render the start-of-stroke marker at the given position.
+  const createPath = (points: Point[], newPointCount: number) => {
+    const path = doc.createElementNS(svgNamespace, 'path');
+    path.setAttribute('d', pathData(points));
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', lineColor);
+    path.setAttribute('stroke-width', String(lineWidth));
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
 
-   @param point - Position of the point to draw.
-   */
-  const drawPoint = (point: Point): void => {
-    const [x, y] = point;
-    ctx.save();
-    ctx.strokeStyle = 'none';
-    ctx.fillStyle = pointColor;
-    ctx.beginPath();
-    ctx.moveTo(x + pointRadius, y);
-    ctx.arc(x, y, pointRadius, 0, 360);
-    ctx.fill();
-    ctx.restore();
-  };
-
-  /**
-   Clear the canvas.
-   */
-  const clear = (): void => {
-    ctx.clearRect(0, 0, width, height);
-  };
-
-  /**
-   Render a path connecting every point of the given stroke.
-
-   @param stroke - The new stroke.
-   */
-  const drawStroke = (stroke: readonly Point[]): void => {
-    ctx.save();
-    ctx.fillStyle = 'none';
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = lineWidth;
-    ctx.beginPath();
-    for (const [i, point] of stroke.entries()) {
-      if (i === 0) {
-        ctx.moveTo(...point);
-      } else {
-        ctx.lineTo(...point);
-      }
+    if (marker === null) {
+      svg.append(path);
+    } else {
+      marker.before(path);
     }
 
-    ctx.stroke();
-    ctx.restore();
+    livePath = path;
+    pathPoints = points;
+    livePathNewPointCount = newPointCount;
   };
 
-  /**
-   Destroy the canvas.
-   */
-  const remove = (): void => {
-    canvas.remove();
+  const appendPoints = (stroke: readonly Point[], from: number) => {
+    for (let index = from; index < stroke.length; index++) {
+      const point = stroke[index];
+      if (point === undefined) {
+        continue;
+      }
+
+      if (livePath === null) {
+        createPath([point], 1);
+      } else if (livePathNewPointCount === pathPointLimit) {
+        const previousPoint = stroke[index - 1];
+        if (previousPoint !== undefined) {
+          createPath([previousPoint, point], 1);
+        }
+      } else {
+        pathPoints.push(point);
+        livePathNewPointCount++;
+        livePath.setAttribute('d', pathData(pathPoints));
+      }
+    }
   };
 
-  return { element: canvas, clear, drawStroke, drawPoint, remove };
+  const clearPaths = () => {
+    for (const path of svg.querySelectorAll('path')) {
+      path.remove();
+    }
+
+    previousStroke = [];
+    pathPoints = [];
+    livePath = null;
+    livePathNewPointCount = 0;
+  };
+
+  const drawStroke = (stroke: readonly Point[]): void => {
+    const previousLast = previousStroke.at(-1);
+    const appendBoundary = stroke[previousStroke.length - 1];
+    const isAppend =
+      stroke.length > previousStroke.length &&
+      (previousStroke.length === 0 ||
+        (previousLast !== undefined &&
+          appendBoundary?.[0] === previousLast[0] &&
+          appendBoundary[1] === previousLast[1]));
+    const from = isAppend ? previousStroke.length : 0;
+    if (!isAppend) {
+      clearPaths();
+    }
+
+    appendPoints(stroke, from);
+    previousStroke = stroke;
+  };
+
+  const drawPoint = ([x, y]: Point): void => {
+    const point = doc.createElementNS(svgNamespace, 'circle');
+    point.setAttribute('cx', String(x));
+    point.setAttribute('cy', String(y));
+    point.setAttribute('r', String(pointRadius));
+    point.setAttribute('fill', pointColor);
+    marker ??= point;
+    svg.append(point);
+  };
+
+  const clear = (): void => {
+    svg.replaceChildren();
+    previousStroke = [];
+    pathPoints = [];
+    livePath = null;
+    livePathNewPointCount = 0;
+    marker = null;
+  };
+
+  return {
+    element: svg,
+    clear,
+    drawStroke,
+    drawPoint,
+    remove() {
+      svg.remove();
+    },
+  };
 }

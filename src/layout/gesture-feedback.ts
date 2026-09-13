@@ -1,15 +1,15 @@
 import type { Point } from '../utils.js';
 import {
-  createStrokeCanvas,
-  type StrokeCanvas,
-  type StrokeCanvasOptions,
+  createStrokeSurface,
+  type StrokeSurface,
+  type StrokeSurfaceOptions,
 } from './stroke.js';
 
 /**
- Stroke canvas options of the gesture feedback (the parent is provided by the
+ Stroke surface options of the gesture feedback (the parent is provided by the
  gesture feedback itself).
  */
-export type GestureFeedbackStrokeOptions = Omit<StrokeCanvasOptions, 'parent'>;
+export type GestureFeedbackStrokeOptions = Omit<StrokeSurfaceOptions, 'parent'>;
 
 /**
  The gesture feedback controls.
@@ -20,10 +20,10 @@ export type GestureFeedback = {
   */
   show: (stroke: readonly Point[], options?: { canceled?: boolean }) => void;
   /**
-  The canvases of the traces still showing, so callers can place them among
+  The surfaces of the traces still showing, so callers can place them among
   their siblings.
   */
-  elements: () => readonly HTMLCanvasElement[];
+  elements: () => readonly SVGSVGElement[];
   /**
   Immediately remove any shown feedback.
   */
@@ -31,7 +31,7 @@ export type GestureFeedback = {
 };
 
 type StrokeTimeoutEntry = {
-  canvas: StrokeCanvas;
+  surface: StrokeSurface;
   timeout: ReturnType<typeof setTimeout>;
 };
 
@@ -44,7 +44,7 @@ export function createGestureFeedback({
   /**
   The parent node.
   */
-  parent: HTMLElement;
+  parent: HTMLElement | ShadowRoot;
   /**
   The duration of the feedback, in milliseconds.
   */
@@ -64,37 +64,35 @@ export function createGestureFeedback({
     stroke: readonly Point[],
     { canceled = false }: { canceled?: boolean } = {},
   ) => {
-    const canvas = createStrokeCanvas({
+    const surface = createStrokeSurface({
       parent: parentDOM,
       ...strokeOptions,
       ...(canceled && canceledStrokeOptions),
     });
-    canvas.drawStroke(stroke);
+    surface.drawStroke(stroke);
     const timeoutEntry: StrokeTimeoutEntry = {
-      canvas,
+      surface,
       timeout: setTimeout(() => {
-        // Remove the entry from the strokeTimeoutEntries.
         strokeTimeoutEntries = strokeTimeoutEntries.filter(
           (x) => x !== timeoutEntry,
         );
-        // Clear the stroke canvas.
-        canvas.remove();
+        surface.remove();
       }, duration),
     };
     strokeTimeoutEntries.push(timeoutEntry);
   };
 
   const remove = () => {
-    for (const { timeout, canvas } of strokeTimeoutEntries) {
+    for (const { timeout, surface } of strokeTimeoutEntries) {
       clearTimeout(timeout);
-      canvas.remove();
+      surface.remove();
     }
 
     strokeTimeoutEntries = [];
   };
 
   const elements = () =>
-    strokeTimeoutEntries.map(({ canvas }) => canvas.element);
+    strokeTimeoutEntries.map(({ surface }) => surface.element);
 
   return { show, elements, remove };
 }

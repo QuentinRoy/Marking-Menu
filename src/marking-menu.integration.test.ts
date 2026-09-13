@@ -1,10 +1,9 @@
-import { fakeTimers, stubbedCanvasContexts } from './__fixtures__/canvas.js';
+import { fakeTimers } from './__fixtures__/timers.js';
 import { createParent, pointer } from './engine/__fixtures__/pointer.js';
 import { createMarkingMenu } from './marking-menu.js';
 
 describe('createMarkingMenu', () => {
   it('builds a working, already-active controller', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
 
     const parent = createParent();

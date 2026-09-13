@@ -1,4 +1,4 @@
-import { fakeTimers } from '../__fixtures__/canvas.js';
+import { fakeTimers } from '../__fixtures__/timers.js';
 import { createModel } from '../model.js';
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
 import type * as RecognizeModule from '../recognizer/recognize-mm-stroke.js';

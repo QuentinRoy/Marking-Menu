@@ -1,9 +1,5 @@
 import { type Mock } from 'vitest';
-import {
-  fakeTimers,
-  queryCanvasContext,
-  stubbedCanvasContexts,
-} from '../__fixtures__/canvas.js';
+import { fakeTimers } from '../__fixtures__/timers.js';
 import type {
   MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
@@ -51,9 +47,13 @@ const activeMenuItems = (parent: HTMLElement): HTMLElement[] => [
     []),
 ];
 
+const strokeSurfaces = (parent: HTMLElement): SVGSVGElement[] =>
+  [
+    ...(parent.querySelector('.marking-menu')?.shadowRoot?.children ?? []),
+  ].filter((element): element is SVGSVGElement => element.matches('svg'));
+
 describe('createController', () => {
   it('dispatches select carrying the leaf a straight drag recognizes', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -75,7 +75,6 @@ describe('createController', () => {
   });
 
   it('dispatches start as the first event, before select', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -98,7 +97,6 @@ describe('createController', () => {
   });
 
   it('shows a crosshair cursor on gesture start', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -110,7 +108,6 @@ describe('createController', () => {
   });
 
   it("restores the parent's own inline cursor rather than clearing it", () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     parent.style.cursor = 'pointer';
     const controller = createController({ items, parent });
@@ -128,7 +125,6 @@ describe('createController', () => {
   });
 
   it('draws the stroke through the RAF throttle, converging to the latest state when frames coalesce', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({ items, parent });
@@ -138,31 +134,19 @@ describe('createController', () => {
     parent.dispatchEvent(pointer('pointermove', { clientX: 50, clientY: 0 }));
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
 
-    // No frame has run yet: nothing is drawn synchronously.
-    const context = queryCanvasContext(parent);
-    expect(
-      context.mock.methodCalls.filter((c) => c.method === 'stroke'),
-    ).toHaveLength(0);
+    const root = parent.querySelector('.marking-menu')?.shadowRoot;
+    expect(root?.querySelector('path')).toBeNull();
 
     vi.advanceTimersToNextFrame();
 
-    // The three coalesced moves converge to a single draw of the full,
-    // latest stroke: one `beginPath`/`stroke` pair, moveTo + 3 lineTo.
-    const strokeCalls = context.mock.methodCalls.filter(
-      (c) => c.method === 'stroke',
+    expect(root?.querySelector('path')?.getAttribute('d')).toBe(
+      'M 0 0 L 10 0 L 50 0 L 100 0',
     );
-    const lineToCalls = context.mock.methodCalls.filter(
-      (c) => c.method === 'lineTo',
-    );
-    expect(strokeCalls).toHaveLength(1);
-    expect(lineToCalls).toHaveLength(3);
-    expect(lineToCalls.at(-1)?.args).toEqual([100, 0]);
 
     controller.dispose();
   });
 
   it('shows one gesture-feedback trace on completion', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -170,20 +154,19 @@ describe('createController', () => {
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
     parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
 
-    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+    expect(strokeSurfaces(parent)).toHaveLength(1);
 
     controller.dispose();
   });
 
   it('dispose() removes listeners, DOM, and the touch-action claim, and is idempotent', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
 
-    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+    expect(strokeSurfaces(parent)).toHaveLength(1);
     expect(parent.style.getPropertyValue('touch-action')).toBe('none');
 
     const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
@@ -195,7 +178,7 @@ describe('createController', () => {
 
     controller.dispose();
 
-    expect(parent.querySelectorAll('canvas')).toHaveLength(0);
+    expect(strokeSurfaces(parent)).toHaveLength(0);
     expect(parent.style.getPropertyValue('touch-action')).toBe('');
     expect(parent.style.cursor).toBe('');
     expect(cancelled).not.toHaveBeenCalled();
@@ -218,7 +201,6 @@ describe('createController', () => {
   });
 
   it('is also disposable through [Symbol.dispose](), same as dispose()', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -228,7 +210,7 @@ describe('createController', () => {
     controller[Symbol.dispose]();
 
     expect(parent.style.getPropertyValue('touch-action')).toBe('');
-    expect(parent.querySelectorAll('canvas')).toHaveLength(0);
+    expect(strokeSurfaces(parent)).toHaveLength(0);
 
     // Idempotent, and interchangeable with dispose(): whichever runs first
     // wins, the other is a no-op.
@@ -239,7 +221,6 @@ describe('createController', () => {
   });
 
   it('disposes via `using`, releasing everything at the end of the block', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
 
     {
@@ -252,7 +233,6 @@ describe('createController', () => {
   });
 
   it('keeps touch-action while another controller on the parent still holds a claim', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const first = createController({ items, parent });
     const second = createController({ items, parent });
@@ -267,7 +247,6 @@ describe('createController', () => {
   });
 
   it('isolates a throwing consumer listener: the gesture proceeds and other listeners still run', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -295,7 +274,6 @@ describe('createController', () => {
   });
 
   it('freezes position on start and select, and dispatches select after the DOM is fully rendered', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -304,11 +282,11 @@ describe('createController', () => {
       startPosition = event.position;
     });
 
-    let observedDuringSelect: { canvases: number; cursor: string } | undefined;
+    let observedDuringSelect: { traces: number; cursor: string } | undefined;
     controller.on('select', (event) => {
       expect(Object.isFrozen(event.position)).toBe(true);
       observedDuringSelect = {
-        canvases: parent.querySelectorAll('canvas').length,
+        traces: strokeSurfaces(parent).length,
         cursor: parent.style.cursor,
       };
     });
@@ -319,16 +297,12 @@ describe('createController', () => {
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
     parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
 
-    // The listener observed the *complete* result of the pointerup input:
-    // the upper-stroke canvas already gone, the feedback trace already
-    // shown, the cursor already reset. Not a partial, mid-commit view.
-    expect(observedDuringSelect).toEqual({ canvases: 1, cursor: '' });
+    expect(observedDuringSelect).toEqual({ traces: 1, cursor: '' });
 
     controller.dispose();
   });
 
   it('only accepts the primary pointer and primary button, and owns pointer capture', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
     const { releasePointerCapture, setPointerCapture } =
@@ -373,7 +347,6 @@ describe('createController', () => {
   });
 
   it('has already released pointer capture by the time select is dispatched', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -394,7 +367,6 @@ describe('createController', () => {
   });
 
   it('dispatches cancel carrying a null active, not select, for a gesture with no movement at all', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -417,7 +389,6 @@ describe('createController', () => {
   });
 
   it('dispatches cancel, never select, when the native pointer is cancelled mid-gesture, even along a straight line that would otherwise recognize', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -443,7 +414,6 @@ describe('createController', () => {
   });
 
   it('has already released pointer capture by the time cancel is dispatched', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -464,24 +434,22 @@ describe('createController', () => {
   });
 
   it('leaves an earlier gesture-feedback trace untouched when a new gesture completes', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
     parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
-    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+    expect(strokeSurfaces(parent)).toHaveLength(1);
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     parent.dispatchEvent(pointer('pointerup', { clientX: 0, clientY: 0 }));
-    expect(parent.querySelectorAll('canvas')).toHaveLength(2);
+    expect(strokeSurfaces(parent)).toHaveLength(2);
 
     controller.dispose();
   });
 
   it('lets three overlapping gesture-feedback traces expire independently, on their own schedules', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({ items, parent });
@@ -504,25 +472,24 @@ describe('createController', () => {
     vi.advanceTimersByTime(400);
     // Trace #3 shown at 800ms (expires at 1800ms).
     gesture(400);
-    expect(parent.querySelectorAll('canvas')).toHaveLength(3);
+    expect(strokeSurfaces(parent)).toHaveLength(3);
 
     // 1000ms since trace #1 was shown: only that one has expired.
     vi.advanceTimersByTime(200);
-    expect(parent.querySelectorAll('canvas')).toHaveLength(2);
+    expect(strokeSurfaces(parent)).toHaveLength(2);
 
     // 1400ms since trace #1: trace #2 has now expired too.
     vi.advanceTimersByTime(400);
-    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+    expect(strokeSurfaces(parent)).toHaveLength(1);
 
     // 1800ms since trace #1: trace #3 has now expired too.
     vi.advanceTimersByTime(400);
-    expect(parent.querySelectorAll('canvas')).toHaveLength(0);
+    expect(strokeSurfaces(parent)).toHaveLength(0);
 
     controller.dispose();
   });
 
   it('opens novice mode at the gesture origin after the pointer dwells without moving', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -548,7 +515,6 @@ describe('createController', () => {
   });
 
   it('renders the menu at its center in local coordinates, converting from client coordinates itself', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     parent.getBoundingClientRect = vi.fn(
@@ -563,7 +529,9 @@ describe('createController', () => {
     parent.dispatchEvent(pointer('pointerdown', { clientX: 50, clientY: 60 }));
     vi.advanceTimersByTime(100);
 
-    const menu = parent.querySelector<HTMLElement>('.marking-menu');
+    const menu = parent
+      .querySelector('.marking-menu')
+      ?.shadowRoot?.querySelector<HTMLElement>('.marking-menu-layer');
     expect(menu?.style.getPropertyValue('--center-x')).toBe('40px');
     expect(menu?.style.getPropertyValue('--center-y')).toBe('40px');
 
@@ -571,7 +539,6 @@ describe('createController', () => {
   });
 
   it('does not open novice mode when movement crosses movementsThreshold before the dwell time elapses', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -588,13 +555,16 @@ describe('createController', () => {
     vi.advanceTimersByTime(200);
 
     expect(opened).not.toHaveBeenCalled();
-    expect(parent.querySelector('.marking-menu')).toBeNull();
+    expect(
+      parent
+        .querySelector('.marking-menu')
+        ?.shadowRoot?.querySelector('.marking-menu-layer'),
+    ).toBeNull();
 
     controller.dispose();
   });
 
   it('splits the stroke into an upper (current) and lower (accumulated) region once novice mode opens', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -608,16 +578,12 @@ describe('createController', () => {
     vi.advanceTimersByTime(100);
     vi.advanceTimersToNextFrame();
 
-    // The upper stroke (fresh, starting at the menu center) and the lower
-    // stroke (the accumulated startup stroke) are drawn on two separate
-    // canvases.
-    expect(parent.querySelectorAll('canvas')).toHaveLength(2);
+    expect(strokeSurfaces(parent)).toHaveLength(2);
 
     controller.dispose();
   });
 
   it('sets the cursor to none once novice mode opens', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -636,7 +602,6 @@ describe('createController', () => {
   });
 
   it('cancels, carrying the open menu and no active item, when the pointer releases right after novice mode opens', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -661,13 +626,16 @@ describe('createController', () => {
     expect(cancelEvent?.mode).toBe('novice');
     expect(cancelEvent?.active).toBeNull();
     expect(cancelEvent?.menu).not.toBeNull();
-    expect(parent.querySelector('.marking-menu')).toBeNull();
+    expect(
+      parent
+        .querySelector('.marking-menu')
+        ?.shadowRoot?.querySelector('.marking-menu-layer'),
+    ).toBeNull();
 
     controller.dispose();
   });
 
   it('dispatches select carrying the leaf and the open menu when releasing on a leaf active item (objective 7)', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -701,17 +669,14 @@ describe('createController', () => {
     // merely non-null.
     expect(openedMenu).not.toBeNull();
     expect(selectedMenu).toBe(openedMenu);
-    expect(parent.querySelector('.marking-menu')).toBeNull();
-    // A completed novice gesture shows feedback on the same terms as an
-    // expert one: the stroke canvases are gone, and exactly one trace
-    // remains.
-    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+    const root = parent.querySelector('.marking-menu')?.shadowRoot;
+    expect(root?.querySelector('.marking-menu-layer')).toBeNull();
+    expect(strokeSurfaces(parent)).toHaveLength(1);
 
     controller.dispose();
   });
 
   it('dispatches cancel, never select, when releasing on a non-leaf active item, carrying that item as active (objective 7)', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -757,13 +722,12 @@ describe('createController', () => {
     // merely non-null.
     expect(openedMenu).not.toBeNull();
     expect(cancelMenu).toBe(openedMenu);
-    expect(parent.querySelectorAll('canvas')).toHaveLength(1);
+    expect(strokeSurfaces(parent)).toHaveLength(1);
 
     controller.dispose();
   });
 
   it('dispatches cancel, carrying the active item, when the native pointer is cancelled on a leaf active item (objective 8)', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -794,7 +758,6 @@ describe('createController', () => {
   });
 
   it('does not recreate the menu DOM or redraw the lower stroke when a render repeats with the same identity', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -821,7 +784,6 @@ describe('createController', () => {
   });
 
   it('activates no item while the pointer stays within the dead zone', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -849,7 +811,6 @@ describe('createController', () => {
   });
 
   it('activates the nearest item by angle once past the dead zone, patching the DOM without recreating the menu, and distinguishes continued pointing at the same item from moving to a new one', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -904,7 +865,6 @@ describe('createController', () => {
   });
 
   it('dispatches change carrying the new and previous active item, in one batch with move, when the nearest item changes', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -949,7 +909,6 @@ describe('createController', () => {
   });
 
   it('never fires change, and always reports a null active, for move events dispatched in startup and expert', () => {
-    using _canvases = stubbedCanvasContexts();
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -994,7 +953,6 @@ describe('createController', () => {
     ] as const;
 
     it('dispatches open for the submenu and recreates the menu DOM for it, once the pointer dwells past the dead zone on it', () => {
-      using _canvases = stubbedCanvasContexts();
       using _timers = fakeTimers();
       const parent = createParent();
       const controller = createController({
@@ -1012,7 +970,9 @@ describe('createController', () => {
 
       parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
       vi.advanceTimersByTime(100);
-      const rootMenuDom = parent.querySelector('.marking-menu');
+      const rootMenuDom = parent
+        .querySelector('.marking-menu')
+        ?.shadowRoot?.querySelector('.marking-menu-layer');
 
       // Past the dead zone on "right", a submenu.
       parent.dispatchEvent(
@@ -1022,15 +982,17 @@ describe('createController', () => {
 
       expect(openedMenus).toHaveLength(2);
       expect(openedMenus[1]).not.toBe(openedMenus[0]);
-      // A different menu identity: the DOM is recreated, not patched.
-      expect(parent.querySelector('.marking-menu')).not.toBe(rootMenuDom);
+      expect(
+        parent
+          .querySelector('.marking-menu')
+          ?.shadowRoot?.querySelector('.marking-menu-layer'),
+      ).not.toBe(rootMenuDom);
       expect(parent.querySelectorAll('.marking-menu')).toHaveLength(1);
 
       controller.dispose();
     });
 
     it('selects a leaf inside the submenu', () => {
-      using _canvases = stubbedCanvasContexts();
       using _timers = fakeTimers();
       const parent = createParent();
       const controller = createController({
@@ -1066,7 +1028,6 @@ describe('createController', () => {
     });
 
     it('cancels a gesture that ends inside the submenu without a leaf active', () => {
-      using _canvases = stubbedCanvasContexts();
       using _timers = fakeTimers();
       const parent = createParent();
       const controller = createController({
@@ -1127,7 +1088,6 @@ describe('createController', () => {
     ] as const;
 
     it('switches to novice, rooted at the menu the dwell recognizes', () => {
-      using _canvases = stubbedCanvasContexts();
       using _timers = fakeTimers();
       const parent = createParent();
       const controller = createController({
@@ -1169,7 +1129,6 @@ describe('createController', () => {
     });
 
     it('cancels the expert attempt when the dwell recognizes only the root', () => {
-      using _canvases = stubbedCanvasContexts();
       using _timers = fakeTimers();
       const parent = createParent();
       const controller = createController({
@@ -1198,14 +1157,17 @@ describe('createController', () => {
       expect(cancelEvent?.mode).toBe('expert');
       expect(cancelEvent?.active).toBeNull();
       expect(cancelEvent?.menu).toBeNull();
-      expect(parent.querySelector('.marking-menu')).toBeNull();
+      expect(
+        parent
+          .querySelector('.marking-menu')
+          ?.shadowRoot?.querySelector('.marking-menu-layer'),
+      ).toBeNull();
 
       controller.dispose();
     });
   });
 
   it('removes the menu DOM on dispose while novice mode is open', () => {
-    using _canvases = stubbedCanvasContexts();
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({

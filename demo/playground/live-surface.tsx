@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { MarkingMenuMode } from '../../src/events.js';
 import {
-  createStrokeCanvas,
-  type StrokeCanvas,
-  type StrokeCanvasOptions,
+  createStrokeSurface,
+  type StrokeSurface,
+  type StrokeSurfaceOptions,
 } from '../../src/layout/stroke.js';
 import { createMarkingMenu } from '../../src/marking-menu.js';
 import {
@@ -56,18 +56,14 @@ export const IDLE_RESULT: GestureResult = {
  Draw a finished gesture: the stroke as it was made and, when the overlay is
  on, the pieces the recognizer cut it into and the corners it cut them at.
 
- Canvases are made per draw rather than kept and cleared: `createStrokeCanvas`
- takes its size from its parent at creation, so drawing afresh is also how the
- overlay follows a resized surface.
-
  Colors come from the page's own custom properties, so the legend beside the
  surface cannot fall out of step with what is drawn.
 
  @param options - What to draw, and where.
- @param options.overlay - The layer the canvases go in.
+ @param options.overlay - The layer the surfaces go in.
  @param options.stroke - The gesture, in coordinates local to `overlay`.
  @param options.analysis - What the recognizer made of that gesture.
- @returns The canvases drawn, for the caller to remove.
+ @returns The surfaces drawn, for the caller to remove.
  */
 function drawGesture({
   overlay,
@@ -77,15 +73,15 @@ function drawGesture({
   overlay: HTMLElement;
   stroke: readonly Point[];
   analysis: MarkingMenuStrokeAnalysis<MenuModel>;
-}): StrokeCanvas[] {
+}): StrokeSurface[] {
   const style = getComputedStyle(document.documentElement);
   const token = (name: string) => style.getPropertyValue(name).trim();
   const tokenNumber = (name: string) => Number(token(name));
-  const canvases: StrokeCanvas[] = [];
-  const add = (options: Omit<StrokeCanvasOptions, 'parent'>) => {
-    const canvas = createStrokeCanvas({ parent: overlay, ...options });
-    canvases.push(canvas);
-    return canvas;
+  const surfaces: StrokeSurface[] = [];
+  const add = (options: Omit<StrokeSurfaceOptions, 'parent'>) => {
+    const surface = createStrokeSurface({ parent: overlay, ...options });
+    surfaces.push(surface);
+    return surface;
   };
 
   // The mark as the menu drew it, dimmed so the pieces read on top of it.
@@ -94,7 +90,7 @@ function drawGesture({
     lineWidth: tokenNumber('--mm-stroke-width'),
   }).drawStroke(stroke);
 
-  // Two canvases, used in turn, so that consecutive pieces stay told apart
+  // Two surfaces alternate colors so consecutive pieces stay distinct
   // where they meet.
   const pieces = [token('--color-mark'), token('--color-piece-alt')].map(
     (lineColor) =>
@@ -113,7 +109,7 @@ function drawGesture({
     corners.drawPoint(point);
   }
 
-  return canvases;
+  return surfaces;
 }
 
 /**
@@ -167,7 +163,7 @@ export function LiveSurface({
 }) {
   const menuParentRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
-  const canvasesRef = useRef<StrokeCanvas[]>([]);
+  const surfacesRef = useRef<StrokeSurface[]>([]);
   const strokeRef = useRef<Point[]>([]);
   const interruptedRef = useRef(false);
   // The last stroke the recognizer actually ran on, which is the only one
@@ -177,11 +173,11 @@ export function LiveSurface({
   const latestRef = useLatest({ model, showBreakdown, onResult });
 
   const clearOverlay = useCallback(() => {
-    for (const canvas of canvasesRef.current) {
-      canvas.remove();
+    for (const surface of surfacesRef.current) {
+      surface.remove();
     }
 
-    canvasesRef.current = [];
+    surfacesRef.current = [];
   }, []);
 
   useEffect(() => {
@@ -191,7 +187,7 @@ export function LiveSurface({
     ) => {
       const overlay = overlayRef.current;
       if (overlay !== null) {
-        canvasesRef.current = drawGesture({ overlay, stroke, analysis });
+        surfacesRef.current = drawGesture({ overlay, stroke, analysis });
       }
     };
 
@@ -335,7 +331,7 @@ export function LiveSurface({
       return;
     }
 
-    canvasesRef.current = drawGesture({
+    surfacesRef.current = drawGesture({
       overlay,
       stroke,
       analysis: analyzeMarkingMenuStroke(stroke, model),
