@@ -24,6 +24,9 @@ export default defineConfig([
     // serves them so the next copy is a plain overwrite. `.prettierignore`
     // leaves them alone for the same reason.
     'demo/playground/components/ui/**',
+    // Throwaway prototypes: outside every tsconfig project, so type-aware
+    // linting cannot run on them, and they are deliberately unpolished.
+    'prototypes/**',
   ]),
   {
     plugins: { 'import-x': importX },
