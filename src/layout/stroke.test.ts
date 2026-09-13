@@ -1,120 +1,47 @@
-import {
-  queryCanvasContext,
-  stubbedCanvasContexts,
-  type MockContext,
-} from '../__fixtures__/canvas.js';
-import { createStrokeCanvas as stroke } from './stroke.js';
+import type { Point } from '../utils.js';
+import { createStrokeSurface } from './stroke.js';
 
-const createDiv = (): HTMLDivElement => {
-  const div = document.createElement('div');
-  div.getBoundingClientRect = () =>
-    ({ width: 50, height: 60 }) as unknown as DOMRect;
-  return div;
-};
+const points = (length: number): Point[] =>
+  Array.from({ length }, (_, index) => [index, index % 2]);
 
-/**
-A div holding a stroke canvas with the shared test config, and its mock context, calls so far cleared.
-*/
-const createTestStroke = (): {
-  div: HTMLDivElement;
-  strokeCanvas: ReturnType<typeof stroke>;
-  mockContext: MockContext;
-} => {
-  const div = createDiv();
-  const strokeCanvas = stroke({
-    parent: div,
-    doc: document,
-    ptSize: 1 / 4,
-    pointRadius: 100,
-    pointColor: 'mockPointColor',
-    lineWidth: 7,
-    lineColor: 'mockLineColor',
-  });
-  const mockContext = queryCanvasContext(div);
-  return { div, strokeCanvas, mockContext };
-};
+describe('stroke surface', () => {
+  it('keeps completed chunks unchanged as a stroke grows', () => {
+    const parent = document.createElement('div');
+    const surface = createStrokeSurface({ parent, doc: document });
 
-describe('stroke', () => {
-  it('defaults ptSize to the device pixel ratio', () => {
-    using _canvases = stubbedCanvasContexts();
-    vi.stubGlobal('devicePixelRatio', 2);
-    const dprDiv = createDiv();
-    stroke({ parent: dprDiv, doc: document });
-    const canvas = dprDiv.querySelector('canvas') as HTMLCanvasElement;
-    expect(canvas.width).toBe(100);
-    expect(queryCanvasContext(dprDiv).mock.methodCalls).toEqual([
-      { method: 'scale', args: [2, 2] },
-    ]);
-    vi.unstubAllGlobals();
+    surface.drawStroke(points(101));
+    const [completed, live] = surface.element.querySelectorAll('path');
+    expect(completed).toBeDefined();
+    expect(live?.getAttribute('d')).toBe('M 99 1 L 100 0');
+    const completedPath = completed?.getAttribute('d');
+
+    surface.drawStroke(points(102));
+
+    const paths = surface.element.querySelectorAll('path');
+    expect(paths).toHaveLength(2);
+    expect(paths[0]).toBe(completed);
+    expect(paths[0]?.getAttribute('d')).toBe(completedPath);
+    expect(paths[1]?.getAttribute('d')).toBe('M 99 1 L 100 0 L 101 1');
   });
 
-  it('defaults ptSize to 1 if there is no device pixel ratio', () => {
-    using _canvases = stubbedCanvasContexts();
-    vi.stubGlobal('devicePixelRatio', undefined);
-    const noDprDiv = createDiv();
-    stroke({ parent: noDprDiv, doc: document });
-    const canvas = noDprDiv.querySelector('canvas') as HTMLCanvasElement;
-    expect(canvas.width).toBe(50);
-    expect(queryCanvasContext(noDprDiv).mock.methodCalls).toEqual([
-      { method: 'scale', args: [1, 1] },
-    ]);
-    vi.unstubAllGlobals();
-  });
+  it('rebuilds when the endpoint changes without an append', () => {
+    const parent = document.createElement('div');
+    const surface = createStrokeSurface({ parent, doc: document });
 
-  it('creates its DOM and set up the canvas scale', () => {
-    using _canvases = stubbedCanvasContexts();
-    const { div, mockContext } = createTestStroke();
-    expect(div).toMatchSnapshot();
-    expect(mockContext.mock.methodCalls).toEqual([
-      { method: 'scale', args: [4, 4] },
-    ]);
-  });
-
-  it('can be removed', () => {
-    using _canvases = stubbedCanvasContexts();
-    const { div, strokeCanvas } = createTestStroke();
-    strokeCanvas.remove();
-    expect(div).toMatchSnapshot();
-  });
-
-  it('can draw points', () => {
-    using _canvases = stubbedCanvasContexts();
-    const { strokeCanvas, mockContext } = createTestStroke();
-    // Clear the method calls made while setting up the canvas scale.
-    mockContext.mock.methodCalls = [];
-
-    strokeCanvas.drawPoint([10, 12]);
-    strokeCanvas.drawPoint([5.2, 0]);
-    expect(mockContext.mock.methodCalls).toMatchSnapshot();
-  });
-
-  it('can draw strokes', () => {
-    using _canvases = stubbedCanvasContexts();
-    const { strokeCanvas, mockContext } = createTestStroke();
-    // Clear the method calls made while setting up the canvas scale.
-    mockContext.mock.methodCalls = [];
-
-    strokeCanvas.drawStroke([
-      [3, 2],
-      [2, 4],
-      [5, 1],
-      [9, 0],
-    ]);
-    strokeCanvas.drawStroke([
-      [10, 0],
+    surface.drawStroke([
       [0, 0],
       [1, 1],
-      [1, 0],
     ]);
-    expect(mockContext.mock.methodCalls).toMatchSnapshot();
-  });
+    const previousPath = surface.element.querySelector('path');
 
-  it('can be cleared', () => {
-    using _canvases = stubbedCanvasContexts();
-    const { strokeCanvas, mockContext } = createTestStroke();
-    // Clear the method calls made while setting up the canvas scale.
-    mockContext.mock.methodCalls = [];
-    strokeCanvas.clear();
-    expect(mockContext.mock.methodCalls).toMatchSnapshot();
+    surface.drawStroke([
+      [0, 0],
+      [2, 2],
+    ]);
+
+    expect(previousPath?.isConnected).toBe(false);
+    expect(surface.element.querySelector('path')?.getAttribute('d')).toBe(
+      'M 0 0 L 2 2',
+    );
   });
 });

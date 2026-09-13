@@ -44,17 +44,17 @@ export default defineConfig({
       // own.
       name: 'chromium',
       testMatch:
-        /(?:mouse|multiple-controllers|disposal|dispatch-ordering)\.spec\.ts/v,
+        /(?:mouse|multiple-controllers|disposal|dispatch-ordering|stroke-overflow)\.spec\.ts/v,
       use: { ...devices['Desktop Chrome'], viewport },
     },
     {
       name: 'firefox',
-      testMatch: /mouse\.spec\.ts/v,
+      testMatch: /(?:mouse|stroke-overflow)\.spec\.ts/v,
       use: { ...devices['Desktop Firefox'], viewport },
     },
     {
       name: 'webkit',
-      testMatch: /mouse\.spec\.ts/v,
+      testMatch: /(?:mouse|stroke-overflow)\.spec\.ts/v,
       use: { ...devices['Desktop Safari'], viewport },
     },
     {

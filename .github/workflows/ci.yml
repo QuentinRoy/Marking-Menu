@@ -125,7 +125,7 @@ jobs:
               [
                 .. | objects | .message? | strings
                 | select(contains("toHaveScreenshot"))
-                | scan("menu-[A-Za-z0-9-]+\\.png")
+                | scan("(?:menu|stroke)-[A-Za-z0-9-]+\\.png")
                 | select(test("-(actual|diff|previous)\\.png$") | not)
               ] | unique[]
             ' test-results.json)

@@ -142,7 +142,7 @@ Second and Third split the first 180-degree gap into three 60-degree steps. Fift
 
 ## Appearance
 
-Each open menu uses a library-created `<div class="marking-menu">` with an open shadow root. The root is available for inspection, but direct mutation is unsupported. Use `.marking-menu` as the stable host selector for custom properties and `::part()` rules.
+Each controller owns one `<div class="marking-menu">` with an open shadow root. The host remains mounted until you dispose the controller, including during expert gestures that never open a menu. The root is available for inspection, but direct mutation is unsupported. Use `.marking-menu` as the stable host selector for custom properties and `::part()` rules.
 
 Scope the host selector to a container when only one menu should change:
 
@@ -220,14 +220,15 @@ The active outer connector uses the active plate background unless `--mm-outer-c
 
 Parts expose whole menu elements when custom properties are not enough:
 
-| Part              | Active modifier           | Element                       |
-| ----------------- | ------------------------- | ----------------------------- |
-| `ring`            | None                      | The ring's SVG element.       |
-| `wedge`           | `wedge--active`           | One wedge path.               |
-| `inner-connector` | `inner-connector--active` | One center-to-ring connector. |
-| `outer-connector` | `outer-connector--active` | One ring-to-plate connector.  |
-| `plate`           | `plate--active`           | One label plate.              |
-| `label`           | `label--active`           | One label's text element.     |
+| Part              | State modifier                                                           | Element                         |
+| ----------------- | ------------------------------------------------------------------------ | ------------------------------- |
+| `ring`            | None                                                                     | The ring's SVG element.         |
+| `wedge`           | `wedge--active`                                                          | One wedge path.                 |
+| `inner-connector` | `inner-connector--active`                                                | One center-to-ring connector.   |
+| `outer-connector` | `outer-connector--active`                                                | One ring-to-plate connector.    |
+| `plate`           | `plate--active`                                                          | One label plate.                |
+| `label`           | `label--active`                                                          | One label's text element.       |
+| `stroke`          | `stroke--lower`, `stroke--upper`, `stroke--feedback`, `stroke--canceled` | A stroke path or origin marker. |
 
 For example, this rule adds an outline only to the active plate:
 
@@ -237,7 +238,15 @@ For example, this rule adds an outline only to the active plate:
 }
 ```
 
-The stroke canvases are light-DOM siblings of `.marking-menu`, not shadow parts. Theme their pixels with the stroke custom properties.
+Stroke paths use SVG presentation attributes for their defaults, so `::part()` rules can override them. For example:
+
+```css
+#menu-area .marking-menu::part(stroke--canceled) {
+  stroke: rebeccapurple;
+}
+```
+
+Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
 
 A part selector cannot use combinators, class selectors, ID selectors, attribute selectors, or structural pseudo-classes after `::part()`. It also cannot chain through another shadow root. Add a rule for each exposed part instead of selecting its descendants or position.
 
@@ -255,7 +264,7 @@ The release also changes imports, menu configuration, and event handling. Use th
 
 ### Appearance and theming
 
-Menus now render inside an open shadow root. Page CSS cannot reach the internal class names. `.marking-menu` remains the host selector, but these selectors stop working:
+The menu and stroke surfaces now share one open shadow root for the controller's lifetime. Page CSS cannot reach the internal class names. `.marking-menu` remains the host selector, but these selectors stop working:
 
 | Old selector or state                                                              | Replacement                                                           |
 | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------- |

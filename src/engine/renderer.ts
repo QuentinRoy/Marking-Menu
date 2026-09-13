@@ -1,15 +1,16 @@
 import { createGestureFeedback } from '../layout/gesture-feedback.js';
 import {
   createMenu,
+  createMenuHost,
   type Menu,
   type MenuLayoutModel,
   type MenuStrokeTheme,
 } from '../layout/menu.js';
 import { rafThrottle } from '../layout/raf-throttle.js';
 import {
-  createStrokeCanvas,
-  type StrokeCanvas,
-  type StrokeCanvasOptions,
+  createStrokeSurface,
+  type StrokeSurface,
+  type StrokeSurfaceOptions,
 } from '../layout/stroke.js';
 import type { AnyModelNode, ModelMenus } from '../types.js';
 import { toLocalPoint, type Point } from '../utils.js';
@@ -42,54 +43,43 @@ type StrokeLayers = {
   feedback: ReturnType<typeof createGestureFeedback>;
 };
 
-const defaultStrokeTheme: MenuStrokeTheme = {
-  strokeColor: '#000000',
-  strokeWidth: 4,
-  strokeStartPointRadius: 8,
-  lowerStrokeColor: '#777777',
-  lowerStrokeWidth: 4,
-  lowerStrokeStartPointRadius: 4,
-  gestureFeedbackStrokeColor: '#000000',
-  gestureFeedbackStrokeWidth: 4,
-  gestureFeedbackCanceledStrokeColor: '#de6c52',
-};
-
 /**
- One stroke canvas (upper or lower), owning its own reference-equality cache
+ One stroke surface (upper or lower), owning its own reference-equality cache
  so an unchanged stroke array skips the redraw. `upperStroke` and
  `lowerStroke` are two independent instances of the exact same behavior.
  */
 function createStrokeLayer({
   parent,
-  canvasOptions,
+  coordinateParent,
+  surfaceOptions,
 }: {
-  parent: HTMLElement;
-  canvasOptions?: Omit<StrokeCanvasOptions, 'parent'>;
+  parent: ShadowRoot;
+  coordinateParent: HTMLElement;
+  surfaceOptions?: Omit<StrokeSurfaceOptions, 'parent'>;
 }): {
   sync: (
     stroke: readonly Point[] | null,
     options?: { drawStartPoint?: boolean },
   ) => void;
-  element: () => HTMLCanvasElement | null;
+  element: () => SVGSVGElement | null;
   dispose: () => void;
 } {
-  let canvas: StrokeCanvas | null = null;
+  let surface: StrokeSurface | null = null;
   let previousStroke: readonly Point[] | null = null;
 
   const draw = rafThrottle(
     (stroke: readonly Point[], shouldDrawStartPoint: boolean) => {
-      // Strokes arrive in client coordinates, straight from the pointer; a
-      // canvas draws relative to its own top-left, which is the parent's.
+      // Strokes arrive in client coordinates, straight from the pointer. The
+      // surface draws relative to its own top-left, which is the parent's.
       // Converting here rather than in `sync` keeps that method's reference
       // check comparing the array the caller passed, and picks up a parent
       // that has since moved or scrolled.
-      const rect = parent.getBoundingClientRect();
+      const rect = coordinateParent.getBoundingClientRect();
       const local = stroke.map((point) => toLocalPoint(point, rect));
-      canvas?.clear();
-      canvas?.drawStroke(local);
+      surface?.drawStroke(local);
       const [start] = local;
       if (shouldDrawStartPoint && start !== undefined) {
-        canvas?.drawPoint(start);
+        surface?.drawPoint(start);
       }
     },
   );
@@ -97,44 +87,48 @@ function createStrokeLayer({
   return {
     sync(stroke, { drawStartPoint: shouldDrawStartPoint = false } = {}) {
       if (stroke === null) {
-        canvas?.remove();
-        canvas = null;
+        surface?.remove();
+        surface = null;
         previousStroke = null;
       } else if (stroke !== previousStroke) {
         previousStroke = stroke;
-        canvas ??= createStrokeCanvas({ parent, ...canvasOptions });
+        surface ??= createStrokeSurface({ parent, ...surfaceOptions });
         draw(stroke, shouldDrawStartPoint);
       }
     },
-    element: () => canvas?.element ?? null,
+    element: () => surface?.element ?? null,
     dispose() {
       draw.cancel();
-      canvas?.remove();
-      canvas = null;
+      surface?.remove();
+      surface = null;
     },
   };
 }
 
 function createStrokeLayers(
-  parent: HTMLElement,
+  parent: ShadowRoot,
   strokeTheme: MenuStrokeTheme,
   gestureFeedbackDuration: number,
 ): StrokeLayers {
   return {
     upper: createStrokeLayer({
       parent,
-      canvasOptions: {
+      coordinateParent: parent.host.parentElement as HTMLElement,
+      surfaceOptions: {
         lineColor: strokeTheme.strokeColor,
         lineWidth: strokeTheme.strokeWidth,
         pointRadius: strokeTheme.strokeStartPointRadius,
+        parts: ['stroke--upper'],
       },
     }),
     lower: createStrokeLayer({
       parent,
-      canvasOptions: {
+      coordinateParent: parent.host.parentElement as HTMLElement,
+      surfaceOptions: {
         lineColor: strokeTheme.lowerStrokeColor,
         lineWidth: strokeTheme.lowerStrokeWidth,
         pointRadius: strokeTheme.lowerStrokeStartPointRadius,
+        parts: ['stroke--lower'],
       },
     }),
     feedback: createGestureFeedback({
@@ -176,13 +170,18 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   deadZoneRadius = 40,
   gestureFeedbackDuration = 1000,
 }: RendererOptions): LayoutRenderer<M> {
+  const {
+    element: host,
+    root,
+    strokeTheme: initialStrokeTheme,
+  } = createMenuHost({ parent });
   let menuHandle: MenuHandle<M> | null = null;
   // Reference-equality cache: an unchanged active key skips the DOM scan
   // `Menu.setActive` performs.
   let previousActiveKey: string | null = null;
   let strokeLayers = createStrokeLayers(
-    parent,
-    defaultStrokeTheme,
+    root,
+    initialStrokeTheme,
     gestureFeedbackDuration,
   );
   const previousFeedbackLayers: Array<StrokeLayers['feedback']> = [];
@@ -198,7 +197,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
     strokeLayers.upper.dispose();
     strokeLayers.lower.dispose();
     strokeLayers = createStrokeLayers(
-      parent,
+      root,
       strokeTheme,
       gestureFeedbackDuration,
     );
@@ -214,13 +213,13 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
    outlives the gesture that produced it, so a menu opened before it fades
    is appended after it and would cover it.
 
-   Nothing in the stylesheet sets any of this, and each canvas and the menu
+   Nothing in the stylesheet sets any of this, and each stroke surface and menu
    land wherever they were first needed, so sibling order is all that holds
    it. Every render re-asserts that order, moving an element only when it
    is out of place.
    */
   function restack(): void {
-    const menuElement = menuHandle?.menu.element;
+    const menuElement = menuHandle?.menu.layer;
     if (menuElement === undefined) {
       return;
     }
@@ -235,14 +234,17 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
       menuElement.after(upper);
     }
 
-    // After the upper stroke, so a live gesture still draws over a fading
-    // trace of the previous one.
-    for (const feedback of previousFeedbackLayers) {
-      for (const trace of feedback.elements()) {
-        if (!isPaintedBefore(menuElement, trace)) {
-          menuElement.after(trace);
-        }
+    const feedbackTraces = [
+      ...previousFeedbackLayers.flatMap((feedback) => feedback.elements()),
+      ...strokeLayers.feedback.elements(),
+    ];
+    let previousLayer: Element = upper ?? menuElement;
+    for (const trace of feedbackTraces) {
+      if (!isPaintedBefore(previousLayer, trace)) {
+        previousLayer.after(trace);
       }
+
+      previousLayer = trace;
     }
 
     for (let index = previousFeedbackLayers.length - 1; index >= 0; index--) {
@@ -275,7 +277,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
           menuHandle = {
             model: view.menu.model,
             menu: createMenu({
-              parent,
+              parent: root,
               deadZoneRadius,
               // `ModelMenus<M>`'s `items` are generically erased to
               // `AnyModelNode` inside this function body, the same reason
@@ -321,6 +323,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
       }
 
       strokeLayers.feedback.remove();
+      host.remove();
     },
   };
 }

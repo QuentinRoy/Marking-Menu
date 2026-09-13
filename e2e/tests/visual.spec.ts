@@ -4,6 +4,7 @@ import {
   moveTo,
   offset,
   pressAt,
+  releaseAt,
   surfaceCenter,
   TOP_LEVEL_ITEMS,
   waitForMenuOpen,
@@ -68,6 +69,51 @@ test('visual: themed active right item', async ({ page }) => {
   );
   await expect(page.locator('#snapshot-area')).toHaveScreenshot(
     'menu-themed-active-right.png',
+  );
+});
+
+test('visual: novice stroke and origin marker', async ({ page }) => {
+  const center = await openMenu(page);
+  await moveTo(
+    page,
+    offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+  );
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
+    'stroke-novice-origin.png',
+  );
+});
+
+test('visual: stroke parts override presentation defaults', async ({
+  page,
+}) => {
+  await page.addStyleTag({
+    content:
+      '.marking-menu::part(stroke--upper) { fill: #d00000; stroke: #d00000; stroke-width: 12px; }',
+  });
+  const center = await openMenu(page);
+  await moveTo(
+    page,
+    offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+  );
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
+    'stroke-part-themed.png',
+  );
+});
+
+test('visual: concurrent normal and canceled feedback', async ({ page }) => {
+  const center = await surfaceCenter(page);
+  await pressAt(page, center);
+  await moveTo(
+    page,
+    offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+    1,
+  );
+  await releaseAt(page);
+  await pressAt(page, offset(center, 0, 30));
+  await releaseAt(page);
+
+  await expect(page.locator('#snapshot-area')).toHaveScreenshot(
+    'stroke-feedback-concurrent.png',
   );
 });
 

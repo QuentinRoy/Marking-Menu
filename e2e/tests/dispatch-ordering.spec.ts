@@ -93,9 +93,11 @@ test('commit → render → dispatch ordering: a listener observes the complete 
     // back to idle) is part of the same commit as the selection itself, so
     // both must already be reflected by the time this listener runs.
     mm.on('select', () => {
+      const menuRoot = element.querySelector('.marking-menu')?.shadowRoot;
       observations.push({
         cursor: element.style.cursor,
-        domMenuCount: element.querySelectorAll('.marking-menu').length,
+        domMenuCount:
+          menuRoot?.querySelectorAll('.marking-menu-layer').length ?? 0,
         type: 'select',
       });
     });
