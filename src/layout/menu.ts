@@ -108,6 +108,7 @@ type MenuDom = {
   main: HTMLDivElement;
   root: ShadowRoot;
   probes: LayoutProbes;
+  itemElements: ReadonlyMap<string, HTMLDivElement>;
   isOwnHost: boolean;
 };
 
@@ -200,6 +201,7 @@ const template = (
   main.style.setProperty('--center-x', `${center[0]}px`);
   main.style.setProperty('--center-y', `${center[1]}px`);
   root.append(main);
+  const itemElements = new Map<string, HTMLDivElement>();
 
   const probes: LayoutProbes = {
     outerRadius: appendLayoutProbe(main, doc, 'outer-radius'),
@@ -224,27 +226,24 @@ const template = (
     elt.style.setProperty('--sine', `${Math.sin(-radAngle)}`);
     const innerConnector = doc.createElement('div');
     innerConnector.className = 'marking-menu-inner-connector';
-    innerConnector.setAttribute('part', 'inner-connector');
     elt.append(innerConnector);
 
     const outerConnector = doc.createElement('div');
     outerConnector.className = 'marking-menu-outer-connector';
-    outerConnector.setAttribute('part', 'outer-connector');
     elt.append(outerConnector);
 
     const plateElt = doc.createElement('div');
     plateElt.className = 'marking-menu-plate';
-    plateElt.setAttribute('part', 'plate');
     const labelElt = doc.createElement('div');
     labelElt.className = 'marking-menu-label';
-    labelElt.setAttribute('part', 'label');
     labelElt.textContent = item.label;
     plateElt.append(labelElt);
     elt.append(plateElt);
     main.append(elt);
+    itemElements.set(item.key, elt);
   }
 
-  return { main, root, probes, isOwnHost };
+  return { main, root, probes, itemElements, isOwnHost };
 };
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
@@ -422,21 +421,31 @@ function readStrokeTheme(
 }
 
 function appendWedge(
-  ring: SVGSVGElement,
-  item: MenuLayoutItem,
+  itemElement: HTMLElement,
   pathData: string,
   doc: Document,
+  outerRadius: number,
 ): void {
+  const svg = doc.createElementNS(svgNamespace, 'svg');
+  svg.classList.add('marking-menu-wedge-svg');
+  svg.setAttribute('width', `${outerRadius * 2}`);
+  svg.setAttribute('height', `${outerRadius * 2}`);
+  svg.setAttribute(
+    'viewBox',
+    `${-outerRadius} ${-outerRadius} ${outerRadius * 2} ${outerRadius * 2}`,
+  );
+  svg.style.left = `${-outerRadius}px`;
+  svg.style.top = `${-outerRadius}px`;
+
   const wedge = doc.createElementNS(svgNamespace, 'path');
   wedge.classList.add('marking-menu-wedge');
-  wedge.dataset.itemId = item.key;
-  wedge.setAttribute('part', 'wedge');
   wedge.setAttribute('d', pathData);
-  ring.append(wedge);
+  svg.append(wedge);
+  itemElement.prepend(svg);
 }
 
-function renderWedgeRing(
-  { main, probes }: MenuDom,
+function renderWedges(
+  { itemElements, probes }: MenuDom,
   items: readonly MenuLayoutItem[],
   doc: Document,
   innerRadius: number,
@@ -457,26 +466,17 @@ function renderWedgeRing(
     return;
   }
 
-  const ring = doc.createElementNS(svgNamespace, 'svg');
-  ring.classList.add('marking-menu-ring');
-  ring.setAttribute('part', 'ring');
-  ring.setAttribute('width', `${outerRadius * 2}`);
-  ring.setAttribute('height', `${outerRadius * 2}`);
-  ring.setAttribute(
-    'viewBox',
-    `${-outerRadius} ${-outerRadius} ${outerRadius * 2} ${outerRadius * 2}`,
-  );
-  ring.style.left = `${-outerRadius}px`;
-  ring.style.top = `${-outerRadius}px`;
-  main.insertBefore(ring, main.querySelector('.marking-menu-item'));
+  const appendItemWedge = (item: MenuLayoutItem, pathData: string): void => {
+    const itemElement = itemElements.get(item.key);
+    if (itemElement === undefined) {
+      throw new Error(`Menu item element not found for key: ${item.key}`);
+    }
+
+    appendWedge(itemElement, pathData, doc, outerRadius);
+  };
 
   if (items.length === 1 && outerRadius > innerRadius) {
-    appendWedge(
-      ring,
-      at(items, 0),
-      fullAnnulusPath(innerRadius, outerRadius),
-      doc,
-    );
+    appendItemWedge(at(items, 0), fullAnnulusPath(innerRadius, outerRadius));
     return;
   }
 
@@ -510,7 +510,7 @@ function renderWedgeRing(
       cornerRadius,
     });
     if (pathData !== null) {
-      appendWedge(ring, entry.item, pathData, doc);
+      appendItemWedge(entry.item, pathData);
     }
   }
 }
@@ -590,52 +590,8 @@ function applySolvedLayout(
   }
 }
 
-function togglePart(
-  element: HTMLElement | SVGElement,
-  part: string,
-  isActive: boolean,
-): void {
-  element.part.toggle(part, isActive);
-}
-
-function setItemActive(
-  root: ShadowRoot,
-  item: HTMLElement,
-  isActive: boolean,
-): void {
+function setItemActive(item: HTMLElement, isActive: boolean): void {
   item.classList.toggle('active', isActive);
-  const plate = item.querySelector<HTMLElement>('.marking-menu-plate');
-  const label = item.querySelector<HTMLElement>('.marking-menu-label');
-  const innerConnector = item.querySelector<HTMLElement>(
-    '.marking-menu-inner-connector',
-  );
-  const outerConnector = item.querySelector<HTMLElement>(
-    '.marking-menu-outer-connector',
-  );
-  if (
-    plate === null ||
-    label === null ||
-    innerConnector === null ||
-    outerConnector === null
-  ) {
-    throw new Error('Menu item element is incomplete.');
-  }
-
-  togglePart(plate, 'plate--active', isActive);
-  togglePart(label, 'label--active', isActive);
-  togglePart(innerConnector, 'inner-connector--active', isActive);
-  togglePart(outerConnector, 'outer-connector--active', isActive);
-  const { itemId } = item.dataset;
-  for (const wedge of root.querySelectorAll<SVGPathElement>(
-    '.marking-menu-wedge',
-  )) {
-    if (wedge.dataset.itemId !== itemId) {
-      continue;
-    }
-
-    wedge.classList.toggle('marking-menu-wedge--active', isActive);
-    togglePart(wedge, 'wedge--active', isActive);
-  }
 }
 
 /**
@@ -681,12 +637,12 @@ export function createMenu({
   // `template` attaches the layer before measurement. A browser cannot paint
   // the unsolved layout while this call is still running.
   const strokeTheme = readStrokeTheme(doc, menuDom.probes);
-  renderWedgeRing(menuDom, model.items, doc, deadZoneRadius);
+  renderWedges(menuDom, model.items, doc, deadZoneRadius);
   applySolvedLayout(menuDom, model.items, doc);
 
   const clearActiveItems = () => {
     for (const itemDom of root.querySelectorAll<HTMLElement>('.active')) {
-      setItemActive(root, itemDom, false);
+      setItemActive(itemDom, false);
     }
   };
 
@@ -711,7 +667,7 @@ export function createMenu({
         throw new TypeError(`No menu item found for id: ${itemId}`);
       }
 
-      setItemActive(root, itemDom, true);
+      setItemActive(itemDom, true);
     }
   };
 

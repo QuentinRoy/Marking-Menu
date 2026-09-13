@@ -586,11 +586,7 @@ describe('createController', () => {
     vi.advanceTimersByTime(100);
     vi.advanceTimersToNextFrame();
 
-    expect(
-      parent
-        .querySelector('.marking-menu')
-        ?.shadowRoot?.querySelectorAll('svg'),
-    ).toHaveLength(3);
+    expect(strokeSurfaces(parent)).toHaveLength(2);
 
     controller.dispose();
   });

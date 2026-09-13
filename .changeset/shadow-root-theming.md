@@ -6,8 +6,9 @@ Render menus in an open shadow root on the existing `.marking-menu` wrapper.
 The wrapper now exists for the controller's full lifetime. It contains the menu
 and SVG stroke surfaces as sibling layers. Page-level legacy class selectors no
 longer reach the menu. Replace the label and connector theme properties with the
-`--mm-*` names, and style repeated menu boxes through the `plate`, `label`,
-`inner-connector`, and `outer-connector` parts.
+`--mm-*` names. Internal menu elements are not a styling API. Use
+`--mm-outer-connector-color-active` when the active outer connector should differ
+from its resting color.
 
 Replace the nine stroke appearance options with `--mm-stroke-*` custom
 properties. Stroke paths and origin markers expose the `stroke`,

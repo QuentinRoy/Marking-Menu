@@ -13,6 +13,10 @@ export default defineConfig({
     outDir: path.resolve(import.meta.dirname, 'fixture-dist'),
     rolldownOptions: {
       external: (source: string) => importMapDependencies.has(source),
+      input: {
+        layout: path.resolve(import.meta.dirname, 'fixture/layout.html'),
+        main: path.resolve(import.meta.dirname, 'fixture/index.html'),
+      },
     },
   },
   // Copies `dist/index.js` (and its sourcemap and declaration file)

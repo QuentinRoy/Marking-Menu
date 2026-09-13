@@ -57,6 +57,9 @@ const getWedges = (parent: HTMLElement): SVGPathElement[] => [
   ),
 ];
 
+const itemIdOfWedge = (wedge: SVGPathElement): string | undefined =>
+  wedge.closest<HTMLElement>('.marking-menu-item')?.dataset.itemId;
+
 /**
  Vitest resolves the CSS inline import to empty text, so tests supply probe
  widths from inherited test variables.
@@ -118,29 +121,6 @@ afterEach(() => {
 });
 
 describe('createMenu', () => {
-  it('renders', () => {
-    const div = document.createElement('div');
-    const m = createMenu({
-      parent: div,
-      model: createModel(6),
-      center: [30, 50],
-      doc: document,
-    });
-    m.setActive('item-5-key');
-    expect(div).toMatchSnapshot();
-  });
-
-  it('renders without active element', () => {
-    const div = document.createElement('div');
-    createMenu({
-      parent: div,
-      model: createModel(4),
-      center: [30, 50],
-      doc: document,
-    });
-    expect(div).toMatchSnapshot();
-  });
-
   it('reuses one stylesheet across open shadow roots', () => {
     const div = document.createElement('div');
     const styles = document.head.querySelectorAll('style').length;
@@ -164,27 +144,19 @@ describe('createMenu', () => {
     expect(root?.adoptedStyleSheets).toHaveLength(1);
     expect(root?.adoptedStyleSheets[0]).toBe(otherRoot?.adoptedStyleSheets[0]);
     expect(document.head.querySelectorAll('style')).toHaveLength(styles);
-    expect(root?.querySelector('[part="plate"]')).not.toBeNull();
-    expect(root?.querySelector('[part="inner-connector"]')).not.toBeNull();
-    expect(root?.querySelector('[part="outer-connector"]')).not.toBeNull();
-    expect(root?.querySelector('[part="label"]')).not.toBeNull();
     expect(root?.querySelector('.marking-menu-layout-probe')).toBeNull();
-    expect(
-      root?.querySelector('.marking-menu-plate')?.getAttribute('part'),
-    ).toBe('plate');
-    expect(
-      root?.querySelector('.marking-menu-label')?.getAttribute('part'),
-    ).toBe('label');
+  });
 
-    menu.setActive('item-0-key');
-    expect(root?.querySelector('[part~="plate--active"]')).not.toBeNull();
-    expect(
-      root?.querySelector('[part~="inner-connector--active"]'),
-    ).not.toBeNull();
-    expect(
-      root?.querySelector('[part~="outer-connector--active"]'),
-    ).not.toBeNull();
-    expect(root?.querySelector('[part~="label--active"]')).not.toBeNull();
+  it('keeps shadow elements out of the public styling API', () => {
+    const div = document.createElement('div');
+    const menu = createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(menu.element.shadowRoot?.querySelectorAll('[part]')).toHaveLength(0);
   });
 
   it('reads the stroke theme from probes in the connected shadow root', () => {
@@ -251,11 +223,10 @@ describe('createMenu', () => {
       doc: document,
     });
 
-    const root = getShadowRoot(div);
-    const ring = root.querySelector<SVGSVGElement>('[part~="ring"]');
     const [wedge] = getWedges(div);
-    expect(ring?.getAttribute('viewBox')).toBe('-80 -80 160 160');
-    expect(wedge?.getAttribute('part')).toBe('wedge');
+    expect(wedge?.ownerSVGElement?.getAttribute('viewBox')).toBe(
+      '-80 -80 160 160',
+    );
     expect(wedge?.getAttribute('d')).not.toContain('A 4 4');
   });
 
@@ -299,7 +270,7 @@ describe('createMenu', () => {
 
     const startPoint = (itemId: string): [number, number] => {
       const path = getWedges(div).find(
-        (wedge) => wedge.dataset.itemId === itemId,
+        (wedge) => itemIdOfWedge(wedge) === itemId,
       );
       const [, x, y] = (path?.getAttribute('d') ?? '').split(' ', 3);
       if (x === undefined || y === undefined) {
@@ -329,7 +300,7 @@ describe('createMenu', () => {
       doc: document,
     });
 
-    expect(getWedges(div).map((wedge) => wedge.dataset.itemId)).toEqual([
+    expect(getWedges(div).map((wedge) => itemIdOfWedge(wedge))).toEqual([
       'item-0-key',
       'item-2-key',
     ]);
@@ -353,38 +324,6 @@ describe('createMenu', () => {
     ).toBe(true);
   });
 
-  it('marks the active wedge with a part modifier', () => {
-    const div = document.createElement('div');
-    withSolverConfig(div);
-    const menu = createMenu({
-      parent: div,
-      model: createSpreadModel(3),
-      center: [30, 50],
-      doc: document,
-    });
-
-    menu.setActive('item-1-key');
-    expect(
-      getWedges(div)
-        .find((wedge) => wedge.dataset.itemId === 'item-1-key')
-        ?.getAttribute('part'),
-    ).toBe('wedge wedge--active');
-  });
-
-  it('update the active element', () => {
-    const div = document.createElement('div');
-    const m = createMenu({
-      parent: div,
-      model: createModel(4),
-      center: [30, 50],
-      doc: document,
-    });
-    m.setActive('item-2-key');
-    expect(div).toMatchSnapshot();
-    m.setActive('item-1-key');
-    expect(div).toMatchSnapshot();
-  });
-
   it('can be removed', () => {
     const div = document.createElement('div');
     const m = createMenu({
@@ -393,10 +332,9 @@ describe('createMenu', () => {
       center: [30, 50],
       doc: document,
     });
-    m.setActive('item-2-key');
-    expect(div).toMatchSnapshot();
+    expect(div.contains(m.element)).toBe(true);
     m.remove();
-    expect(div).toMatchSnapshot();
+    expect(div.contains(m.element)).toBe(false);
   });
 
   it('renders a real model, using its generated keys', () => {

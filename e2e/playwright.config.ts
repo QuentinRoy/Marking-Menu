@@ -44,7 +44,7 @@ export default defineConfig({
       // own.
       name: 'chromium',
       testMatch:
-        /(?:mouse|multiple-controllers|disposal|dispatch-ordering|stroke-overflow)\.spec\.ts/v,
+        /(?:mouse|multiple-controllers|disposal|dispatch-ordering|layout-pointer-target|stroke-overflow)\.spec\.ts/v,
       use: { ...devices['Desktop Chrome'], viewport },
     },
     {

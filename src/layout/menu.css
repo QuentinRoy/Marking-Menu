@@ -25,8 +25,8 @@
     var(--resolved-plate-background)
   );
   --resolved-outer-connector-color-active: var(
-    --mm-outer-connector-color,
-    var(--resolved-plate-background-active)
+    --mm-outer-connector-color-active,
+    var(--mm-outer-connector-color, var(--resolved-plate-background-active))
   );
   --resolved-wedge-fill: var(--mm-wedge-fill, var(--resolved-plate-background));
   --resolved-wedge-fill-active: var(
@@ -98,16 +98,21 @@
   z-index: 0;
 }
 
-.marking-menu-ring {
+.marking-menu-wedge-svg {
   position: absolute;
   overflow: visible;
+  pointer-events: none;
 }
 
 .marking-menu-wedge {
   fill: var(--resolved-wedge-fill);
 }
 
-.marking-menu-wedge--active {
+.marking-menu-layer.marking-menu--pointer-target .marking-menu-wedge {
+  pointer-events: auto;
+}
+
+.marking-menu-item.active .marking-menu-wedge {
   fill: var(--resolved-wedge-fill-active);
 }
 

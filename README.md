@@ -142,7 +142,7 @@ Second and Third split the first 180-degree gap into three 60-degree steps. Fift
 
 ## Appearance
 
-Each controller owns one `<div class="marking-menu">` with an open shadow root. The host remains mounted until you dispose the controller, including during expert gestures that never open a menu. The root is available for inspection, but direct mutation is unsupported. Use `.marking-menu` as the stable host selector for custom properties and `::part()` rules.
+Each controller owns one `<div class="marking-menu">` with an open shadow root. The host remains mounted until you dispose the controller, including during expert gestures that never open a menu. The root is available for inspection, but its elements are not a styling API and direct mutation is unsupported. Use `.marking-menu` as the stable host selector for custom properties and stroke `::part()` rules.
 
 Scope the host selector to a container when only one menu should change:
 
@@ -155,7 +155,7 @@ Scope the host selector to a container when only one menu should change:
 }
 ```
 
-Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Layout and stroke values are resolved when a menu opens.
+Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Stroke values are resolved when the controller is created and whenever a menu opens; layout values are resolved when a menu opens.
 
 ### Plate and label properties
 
@@ -185,13 +185,14 @@ Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the 
 
 ### Connector properties
 
-| Property                     | Default          | Purpose                         |
-| ---------------------------- | ---------------- | ------------------------------- |
-| `--mm-connector-thickness`   | `4px`            | Connector thickness.            |
-| `--mm-inner-connector-color` | `transparent`    | Center-to-ring connector color. |
-| `--mm-outer-connector-color` | Plate background | Ring-to-plate connector color.  |
+| Property                            | Default               | Purpose                               |
+| ----------------------------------- | --------------------- | ------------------------------------- |
+| `--mm-connector-thickness`          | `4px`                 | Connector thickness.                  |
+| `--mm-inner-connector-color`        | `transparent`         | Center-to-ring connector color.       |
+| `--mm-outer-connector-color`        | Plate background      | Ring-to-plate connector color.        |
+| `--mm-outer-connector-color-active` | Outer connector color | Active ring-to-plate connector color. |
 
-The active outer connector uses the active plate background unless `--mm-outer-connector-color` is set. A set value applies in both states.
+The active outer connector uses `--mm-outer-connector-color` when it is set, or the active plate background otherwise. Set `--mm-outer-connector-color-active` to give it a separate active color.
 
 ### Layout clearance properties
 
@@ -216,29 +217,7 @@ The active outer connector uses the active plate background unless `--mm-outer-c
 | `--mm-stroke-width-feedback`           | `--mm-stroke-width`       | Completed gesture feedback width.    |
 | `--mm-stroke-color-canceled`           | `#de6c52`                 | Canceled gesture feedback color.     |
 
-### Parts
-
-Parts expose whole menu elements when custom properties are not enough:
-
-| Part              | State modifier                                                           | Element                         |
-| ----------------- | ------------------------------------------------------------------------ | ------------------------------- |
-| `ring`            | None                                                                     | The ring's SVG element.         |
-| `wedge`           | `wedge--active`                                                          | One wedge path.                 |
-| `inner-connector` | `inner-connector--active`                                                | One center-to-ring connector.   |
-| `outer-connector` | `outer-connector--active`                                                | One ring-to-plate connector.    |
-| `plate`           | `plate--active`                                                          | One label plate.                |
-| `label`           | `label--active`                                                          | One label's text element.       |
-| `stroke`          | `stroke--lower`, `stroke--upper`, `stroke--feedback`, `stroke--canceled` | A stroke path or origin marker. |
-
-For example, this rule adds an outline only to the active plate:
-
-```css
-#menu-area .marking-menu::part(plate--active) {
-  outline: 2px solid currentColor;
-}
-```
-
-Stroke paths use SVG presentation attributes for their defaults, so `::part()` rules can override them. For example:
+Stroke paths use SVG presentation attributes for their defaults, so `::part()` rules can override them. Paths expose `stroke` plus `stroke--lower`, `stroke--upper`, or `stroke--feedback`. Canceled feedback also exposes `stroke--canceled`; the origin marker exposes `stroke stroke--upper`.
 
 ```css
 #menu-area .marking-menu::part(stroke--canceled) {
@@ -247,8 +226,6 @@ Stroke paths use SVG presentation attributes for their defaults, so `::part()` r
 ```
 
 Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
-
-A part selector cannot use combinators, class selectors, ID selectors, attribute selectors, or structural pseudo-classes after `::part()`. It also cannot chain through another shadow root. Add a rule for each exposed part instead of selecting its descendants or position.
 
 ## Input behavior
 
@@ -266,39 +243,39 @@ The release also changes imports, menu configuration, and event handling. Use th
 
 The menu and stroke surfaces now share one open shadow root for the controller's lifetime. Page CSS cannot reach the internal class names. `.marking-menu` remains the host selector, but these selectors stop working:
 
-| Old selector or state                                                              | Replacement                                                           |
-| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `.marking-menu-item`                                                               | None. Style its exposed child parts.                                  |
-| `.marking-menu-label`                                                              | `.marking-menu::part(label)` for text or `::part(plate)` for its box. |
-| `.marking-menu-line`                                                               | `::part(inner-connector)` and `::part(outer-connector)`.              |
-| `.marking-menu.solved`                                                             | None. Solved layout is internal.                                      |
-| `.marking-menu-item.active ...`                                                    | The corresponding `--active` part modifier.                           |
-| `.bottom-right-item`, `.bottom-left-item`, `.top-left-item`, and `.top-right-item` | `--mm-plate-corner-radius` applies to every plate corner.             |
+| Old selector or state                                                              | Replacement                                                                      |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `.marking-menu-item`                                                               | None. Item structure is internal.                                                |
+| `.marking-menu-label`                                                              | Use the `--mm-plate-*` properties; inherited font properties can go on the host. |
+| `.marking-menu-line`                                                               | Use the `--mm-connector-*` properties.                                           |
+| `.marking-menu.solved`                                                             | None. Solved layout is internal.                                                 |
+| `.marking-menu-item.active ...`                                                    | Use the corresponding `--mm-*-active` property.                                  |
+| `.bottom-right-item`, `.bottom-left-item`, `.top-left-item`, and `.top-right-item` | `--mm-plate-corner-radius` applies to every plate corner.                        |
 
 The old box-model rule for `.marking-menu, .marking-menu *` is also gone. The shadow boundary keeps page-wide box sizing rules out of the menu.
 
 Replace the old custom properties as follows:
 
-| Old property               | Replacement                                                              |
-| -------------------------- | ------------------------------------------------------------------------ |
-| `--item-width`             | `--mm-label-min-width` and `--mm-label-max-width`.                       |
-| `--item-height`            | None. Plate height follows the label and padding.                        |
-| `--item-font-size`         | `--mm-plate-font-size`.                                                  |
-| `--item-padding`           | `--mm-plate-padding`.                                                    |
-| `--item-background`        | `--mm-plate-background`.                                                 |
-| `--item-color`             | `--mm-plate-color`.                                                      |
-| `--active-item-background` | `--mm-plate-background-active`.                                          |
-| `--active-item-color`      | `--mm-plate-color-active`.                                               |
-| `--item-radius`            | `--mm-plate-corner-radius`.                                              |
-| `--menu-radius`            | `--mm-wedge-thickness`, measured outward from `deadZoneRadius`.          |
-| `--center-radius`          | None. It was unused.                                                     |
-| `--line-thickness`         | `--mm-connector-thickness`.                                              |
-| `--line-color`             | `--mm-outer-connector-color`.                                            |
-| `--active-line-color`      | `::part(outer-connector--active)` when it differs from the active plate. |
-| `--item-horizontal-gap`    | `--mm-plate-gap-horizontal`.                                             |
-| `--item-vertical-gap`      | `--mm-plate-gap-vertical`.                                               |
-| `--item-ring-gap`          | `--mm-plate-gap-ring`.                                                   |
-| `--item-connector-gap`     | `--mm-plate-gap-connector`.                                              |
+| Old property               | Replacement                                                     |
+| -------------------------- | --------------------------------------------------------------- |
+| `--item-width`             | `--mm-label-min-width` and `--mm-label-max-width`.              |
+| `--item-height`            | None. Plate height follows the label and padding.               |
+| `--item-font-size`         | `--mm-plate-font-size`.                                         |
+| `--item-padding`           | `--mm-plate-padding`.                                           |
+| `--item-background`        | `--mm-plate-background`.                                        |
+| `--item-color`             | `--mm-plate-color`.                                             |
+| `--active-item-background` | `--mm-plate-background-active`.                                 |
+| `--active-item-color`      | `--mm-plate-color-active`.                                      |
+| `--item-radius`            | `--mm-plate-corner-radius`.                                     |
+| `--menu-radius`            | `--mm-wedge-thickness`, measured outward from `deadZoneRadius`. |
+| `--center-radius`          | None. It was unused.                                            |
+| `--line-thickness`         | `--mm-connector-thickness`.                                     |
+| `--line-color`             | `--mm-outer-connector-color`.                                   |
+| `--active-line-color`      | `--mm-outer-connector-color-active`.                            |
+| `--item-horizontal-gap`    | `--mm-plate-gap-horizontal`.                                    |
+| `--item-vertical-gap`      | `--mm-plate-gap-vertical`.                                      |
+| `--item-ring-gap`          | `--mm-plate-gap-ring`.                                          |
+| `--item-connector-gap`     | `--mm-plate-gap-connector`.                                     |
 
 Label plates now hug their text. Set both width properties to restore the old fixed width and ellipsis:
 
