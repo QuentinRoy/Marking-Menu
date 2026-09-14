@@ -305,6 +305,12 @@ Nine stroke options moved from `createMarkingMenu` configuration to CSS:
 
 `gestureFeedbackDuration` remains a configuration option and still defaults to `1000` milliseconds.
 
+## Development
+
+Visual baselines are committed for the pinned container only (`-chromium-linux.png`). Outside it, `yarn test:visual` has nothing to compare against and just writes a fresh platform-local baseline (e.g. `-chromium-darwin.png`, gitignored) on first run. Generate that baseline before making a rendering change, so running the same command afterward gives a diff instead of an automatic pass. Inside the container this isn't needed: the checked-in `-chromium-linux.png` files are already the reference to test against.
+
+If a PR changes rendered output, CI fails and comments with the list of mismatched snapshots. Adding the `update screenshots` label to the PR regenerates and commits them automatically (same-repo PRs only; forks and Dependabot need a maintainer to do it from a trusted branch).
+
 ## Background and license
 
 This library implements Gordon Kurtenbach's marking menus: [paper 1](https://doi.org/10.1145/120782.120797), [paper 2](http://doi.acm.org/10.1145/169059.169426), and [paper 3](http://doi.acm.org/10.1145/191666.191759).
