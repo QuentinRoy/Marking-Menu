@@ -2,7 +2,12 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2024", "ESNext.Disposable", "DOM", "DOM.Iterable"],
-    "types": ["node", "vite/client", "vitest/globals"]
+    "types": [
+      "node",
+      "vite/client",
+      "vitest/globals",
+      "@vitest/browser/matchers"
+    ]
   },
   "include": [
     "src/**/*.test.ts",

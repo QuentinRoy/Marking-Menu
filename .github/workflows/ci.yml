@@ -30,103 +30,47 @@ jobs:
       - run: yarn format:check
       - run: yarn typecheck
 
-  UnitTests:
-    name: Unit Tests
-    runs-on: ubuntu-slim
-    steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      - uses: ./.github/actions/setup
-      - run: yarn test:coverage
-
-  Build:
-    runs-on: ubuntu-slim
-    steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      - uses: ./.github/actions/setup
-      # Builds the library once for the whole workflow; Package and E2E each
-      # download its `dist/` output instead of rebuilding it themselves.
-      - run: yarn demo:build
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: dist
-          path: dist/
-
-  Package:
-    needs: Build
-    runs-on: ubuntu-slim
-    steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
-      - uses: ./.github/actions/setup
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: dist
-          path: dist/
-      - run: yarn package:lint
-      - run: yarn package:types
-      - run: yarn package:smoke-test
-
-  E2E:
-    needs: Build
+  Test:
+    name: Test
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
-    # The official Playwright image ships the browsers and their system
-    # dependencies preinstalled, so the job never has to download them (that
-    # step used to hang for tens of minutes when the fetch stalled).
-    #
-    # This tag has to match the `@playwright/test` version: browsers are
-    # pinned per release, so a mismatch makes Playwright fail with "Executable
-    # doesn't exist". Renovate groups the two into one PR (see the `playwright`
-    # group in renovate.json), so bump them together if you touch either by
-    # hand.
+    # The `visual` Vitest project needs a real Chromium; see the `E2E` job's
+    # comment for why this image and not a fresh browser install.
     container: mcr.microsoft.com/playwright:v1.63.0-noble
-    timeout-minutes: 20
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
       - uses: ./.github/actions/setup
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: dist
-          path: dist/
-      - run: |
-          apt-get update
-          apt-get install -y --no-install-recommends jq
-      # Builds the browser fixture and playground against `dist/`, which the
-      # Build job already produced, so this avoids rebuilding the library.
-      - run: yarn e2e:build
-      # Inside the container the job runs as root, but the runner points $HOME
-      # at /github/home, which the image's `pwuser` owns. Firefox refuses to
-      # launch in that situation ("Running Nightly as root in a regular user's
-      # session is not supported"); the other browsers do not care. Overriding
-      # HOME here is the workaround Playwright's own error message prescribes.
-      # It's set inline rather than as a step-level `env:` because the runner
-      # also uses step-level env when invoking the Docker client for this
-      # step, and pointing it at /root breaks `docker`'s own config lookup
-      # (`/root/.docker/config.json: permission denied`).
-      - id: e2e
+      - run: apt-get update && apt-get install -y --no-install-recommends jq
+      # Vitest's JSON reporter writes to `.vitest/json/output.json` by
+      # default and prints nothing to stdout, so the path is named
+      # explicitly; the `default` reporter alongside it keeps the usual
+      # console summary in the job log.
+      - id: test
         continue-on-error: true
-        run: HOME=/root yarn e2e:test --reporter=json > test-results.json
+        run: |
+          yarn test:coverage --reporter=default --reporter=json --outputFile=test-results.json
       - if: >-
-          steps.e2e.outcome == 'failure' &&
+          steps.test.outcome == 'failure' &&
           github.event_name == 'pull_request'
         id: visual
         run: |
-          # Only screenshot assertions count as visual failures. Baseline names
-          # are extracted separately so a matcher failure is never hidden just
-          # because its message did not contain a parseable filename.
+          # Only screenshot assertions count as visual failures. A mismatch
+          # fails with this exact string; a missing reference or an unstable
+          # capture does not, so neither falsely invites an update. Baseline
+          # names are extracted separately so a matcher failure is never
+          # hidden just because its message carries no parseable name.
           if jq -e '
-            [
-              .. | objects | .message? | strings
-              | select(contains("toHaveScreenshot"))
+            [.testResults[].assertionResults[].failureMessages[]?
+              | select(contains("Screenshot does not match the stored reference."))
             ] | length > 0
           ' test-results.json > /dev/null; then
             snapshots=$(jq -r '
-              [
-                .. | objects | .message? | strings
-                | select(contains("toHaveScreenshot"))
-                | scan("(?:menu|stroke)-[A-Za-z0-9-]+\\.png")
-                | select(test("-(actual|diff|previous)\\.png$") | not)
+              [.testResults[].assertionResults[].failureMessages[]?
+                | select(contains("Screenshot does not match the stored reference."))
+                | scan("[A-Za-z0-9-]+-chromium-linux\\.png")
+                | select(test("-(actual|diff)-chromium-linux\\.png$") | not)
               ] | unique[]
             ' test-results.json)
             {
@@ -176,5 +120,67 @@ jobs:
               ...issue,
               body: `### ${heading}${affected}\n\nIf the changes are intentional, add the \`update screenshots\` label to regenerate them.`,
             });
-      - if: steps.e2e.outcome == 'failure'
+      - if: steps.test.outcome == 'failure'
         run: exit 1
+
+  Build:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: ./.github/actions/setup
+      # Builds the library once for the whole workflow; Package and E2E each
+      # download its `dist/` output instead of rebuilding it themselves.
+      - run: yarn demo:build
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+
+  Package:
+    needs: Build
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+      - run: yarn package:lint
+      - run: yarn package:types
+      - run: yarn package:smoke-test
+
+  E2E:
+    needs: Build
+    runs-on: ubuntu-latest
+    # The official Playwright image ships the browsers and their system
+    # dependencies preinstalled, so the job never has to download them (that
+    # step used to hang for tens of minutes when the fetch stalled).
+    #
+    # This tag has to match the `@playwright/test` version: browsers are
+    # pinned per release, so a mismatch makes Playwright fail with "Executable
+    # doesn't exist". Renovate groups the two into one PR (see the `playwright`
+    # group in renovate.json), so bump them together if you touch either by
+    # hand.
+    container: mcr.microsoft.com/playwright:v1.63.0-noble
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+      # Builds the browser fixture against `dist/`, which the Build job
+      # already produced, so this avoids rebuilding the library.
+      - run: yarn e2e:build
+      # Inside the container the job runs as root, but the runner points $HOME
+      # at /github/home, which the image's `pwuser` owns. Firefox refuses to
+      # launch in that situation ("Running Nightly as root in a regular user's
+      # session is not supported"); the other browsers do not care. Overriding
+      # HOME here is the workaround Playwright's own error message prescribes.
+      # It's set inline rather than as a step-level `env:` because the runner
+      # also uses step-level env when invoking the Docker client for this
+      # step, and pointing it at /root breaks `docker`'s own config lookup
+      # (`/root/.docker/config.json: permission denied`).
+      - run: HOME=/root yarn e2e:test
