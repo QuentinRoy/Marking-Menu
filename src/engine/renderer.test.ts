@@ -174,7 +174,7 @@ describe('createRenderer', () => {
     expect(parent.children).toHaveLength(0);
   });
 
-  it("draws the opening indicator's outline and dot at the given anchor, and removes both once the indicator clears", () => {
+  it("draws the opening indicator's background and dot at the given anchor, and removes both once the indicator clears", () => {
     const parent = document.createElement('div');
     const renderer = createRenderer<typeof model>({ parent });
 
@@ -183,7 +183,7 @@ describe('createRenderer', () => {
       menu: null,
       upperStroke: [[0, 0]],
       lowerStroke: null,
-      indicator: { anchor: [20, 30], delayMs: 300 },
+      indicator: { anchor: [20, 30], position: [20, 30], delayMs: 300 },
     });
 
     const root = rootOf(parent);
@@ -205,7 +205,7 @@ describe('createRenderer', () => {
     renderer.dispose();
   });
 
-  it('paints the opening indicator after the upper stroke', () => {
+  it("paints the indicator's background behind the upper stroke and its dot in front of it", () => {
     const parent = document.createElement('div');
     const renderer = createRenderer<typeof model>({ parent });
 
@@ -214,24 +214,30 @@ describe('createRenderer', () => {
       menu: null,
       upperStroke: [[0, 0]],
       lowerStroke: null,
-      indicator: { anchor: [20, 30], delayMs: 300 },
+      indicator: { anchor: [20, 30], position: [20, 30], delayMs: 300 },
     });
 
     const root = rootOf(parent);
-    const indicatorSvg = root
+    const backgroundSvg = root
       .querySelector('.marking-menu-indicator-background')
       ?.closest('svg');
+    const dotSvg = root
+      .querySelector('.marking-menu-indicator-dot')
+      ?.closest('svg');
     const upperSvg = [...root.querySelectorAll('svg')].find(
-      (svg) => svg !== indicatorSvg,
+      (svg) => svg !== backgroundSvg && svg !== dotSvg,
     );
     expect(upperSvg).toBeDefined();
-    expect(upperSvg?.compareDocumentPosition(indicatorSvg as Node)).toBe(
+    expect(upperSvg?.compareDocumentPosition(backgroundSvg as Node)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+    expect(upperSvg?.compareDocumentPosition(dotSvg as Node)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
     renderer.dispose();
   });
 
-  it('grows the dot toward the outline radius over the given delay, and cancels its animation frame on dispose', () => {
+  it('grows the dot toward the background radius over the given delay, and cancels its animation frame on dispose', () => {
     const parent = document.createElement('div');
     const renderer = createRenderer<typeof model>({ parent });
     const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame');
@@ -241,7 +247,7 @@ describe('createRenderer', () => {
       menu: null,
       upperStroke: [[0, 0]],
       lowerStroke: null,
-      indicator: { anchor: [0, 0], delayMs: 300 },
+      indicator: { anchor: [0, 0], position: [0, 0], delayMs: 300 },
     });
 
     const dot = rootOf(parent).querySelector('.marking-menu-indicator-dot');

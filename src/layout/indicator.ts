@@ -6,31 +6,30 @@ export type IndicatorSurfaceOptions = {
   parent: HTMLElement | ShadowRoot;
   doc?: Document;
   radius?: number;
+  // The gesture stroke's own line width: only used to size the dot's
+  // starting radius, not the background circle.
   strokeWidth?: number;
   fillColor?: string;
   backgroundColor?: string;
 };
 
 export type IndicatorSurface = {
-  element: SVGSVGElement;
+  // Two separate SVGs, not one: the background sits behind the gesture's
+  // own stroke, the dot in front of it, so the renderer can place each on
+  // its own side of that layer.
+  backgroundElement: SVGSVGElement;
+  dotElement: SVGSVGElement;
   /**
-   Draw the target: a fixed-radius outline at `center`, and a dot growing
-   from the stroke's own half-width (so it starts looking like the stroke's
-   end cap, since the cursor is hidden while this is shown) up to that same
-   radius as `progress` goes from 0 to 1.
+   Draw the target: a fixed-radius filled background at `center`, and a dot
+   growing from the stroke's own half-width (so it starts looking like the
+   stroke's end cap, since the cursor is hidden while this is shown) up to
+   that same radius as `progress` goes from 0 to 1.
    */
   draw: (center: Point, progress: number) => void;
   remove: () => void;
 };
 
-export function createIndicatorSurface({
-  parent,
-  doc = document,
-  radius = 8,
-  strokeWidth = 1,
-  fillColor = 'black',
-  backgroundColor = 'black',
-}: IndicatorSurfaceOptions): IndicatorSurface {
+function createSurface(doc: Document, parent: HTMLElement | ShadowRoot) {
   const svg = doc.createElementNS(svgNamespace, 'svg');
   Object.assign(svg.style, {
     position: 'absolute',
@@ -41,25 +40,36 @@ export function createIndicatorSurface({
     pointerEvents: 'none',
   });
   parent.append(svg);
+  return svg;
+}
 
-  // The outline: a constant-size ring the dot grows to fill.
-  const outline = doc.createElementNS(svgNamespace, 'circle');
-  outline.setAttribute('class', 'marking-menu-indicator-background');
-  outline.setAttribute('r', String(radius));
-  outline.setAttribute('fill', 'none');
-  outline.setAttribute('stroke', backgroundColor);
-  outline.setAttribute('stroke-width', String(strokeWidth));
-  svg.append(outline);
+export function createIndicatorSurface({
+  parent,
+  doc = document,
+  radius = 8,
+  strokeWidth = 4,
+  fillColor = 'black',
+  backgroundColor = 'black',
+}: IndicatorSurfaceOptions): IndicatorSurface {
+  const backgroundSvg = createSurface(doc, parent);
+  const dotSvg = createSurface(doc, parent);
+
+  // The background: a constant-size filled circle the dot grows to fill.
+  const background = doc.createElementNS(svgNamespace, 'circle');
+  background.setAttribute('class', 'marking-menu-indicator-background');
+  background.setAttribute('r', String(radius));
+  background.setAttribute('fill', backgroundColor);
+  backgroundSvg.append(background);
 
   const dot = doc.createElementNS(svgNamespace, 'circle');
   dot.setAttribute('class', 'marking-menu-indicator-dot');
   dot.setAttribute('fill', fillColor);
-  svg.append(dot);
+  dotSvg.append(dot);
 
   const minRadius = strokeWidth / 2;
   const draw = ([cx, cy]: Point, progress: number): void => {
-    outline.setAttribute('cx', String(cx));
-    outline.setAttribute('cy', String(cy));
+    background.setAttribute('cx', String(cx));
+    background.setAttribute('cy', String(cy));
     dot.setAttribute('cx', String(cx));
     dot.setAttribute('cy', String(cy));
     const clamped = Math.max(0, Math.min(1, progress));
@@ -67,10 +77,12 @@ export function createIndicatorSurface({
   };
 
   return {
-    element: svg,
+    backgroundElement: backgroundSvg,
+    dotElement: dotSvg,
     draw,
     remove() {
-      svg.remove();
+      backgroundSvg.remove();
+      dotSvg.remove();
     },
   };
 }

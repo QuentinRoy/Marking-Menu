@@ -854,6 +854,7 @@ describe('navigationMachine', () => {
 
       expect(layouts.at(-1)?.indicator).toEqual({
         anchor: [0, 0],
+        position: [0, 0],
         delayMs: options.noviceDwellingTime,
       });
     });
@@ -896,8 +897,23 @@ describe('navigationMachine', () => {
 
       expect(layouts.at(-1)?.indicator).toEqual({
         anchor: [100, 0],
+        position: [100, 0],
         delayMs: options.submenuOpeningDelay,
       });
+    });
+
+    it("keeps drawing at the pointer's current position even when a small movement leaves the restart anchor untouched", () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] }); // Activates the submenu "right".
+      const firstAnchor = layouts.at(-1)?.indicator?.anchor;
+
+      host.send('move', { position: [102, 0] }); // Insignificant (<5px).
+
+      expect(layouts.at(-1)?.indicator?.anchor).toBe(firstAnchor);
+      expect(layouts.at(-1)?.indicator?.position).toEqual([102, 0]);
     });
   });
 });

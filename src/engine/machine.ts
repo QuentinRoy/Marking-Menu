@@ -135,12 +135,18 @@ export type NavigationLayoutAnnouncement = {
   readonly upperStroke: readonly Point[] | null;
   readonly lowerStroke: readonly Point[] | null;
   readonly indicator: null | {
-    // The point the opening indicator grows at. Carries the same reference
-    // the underlying dwell residency's own restart predicate compares
-    // against, so the renderer can tell a continuing dwell from a
-    // restarted one by reference, the same way `createStrokeLayer` already
-    // does for a stroke array.
+    // Identity only, for restart detection: carries the same reference the
+    // underlying dwell residency's own restart predicate compares against,
+    // so the renderer can tell a continuing dwell from a restarted one by
+    // reference, the same way `createStrokeLayer` already does for a
+    // stroke array. Not necessarily where the indicator currently draws —
+    // see `position`.
     readonly anchor: Point;
+    // Where the indicator draws right now. Unlike `anchor`, always the
+    // pointer's current position: `anchor` only moves on significant
+    // movement, so using it to draw would lag the pointer by up to
+    // `movementsThreshold`.
+    readonly position: Point;
     readonly delayMs: number;
   };
 };

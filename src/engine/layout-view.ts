@@ -16,6 +16,7 @@ export type LayoutView<M extends AnyModelNode> = {
   readonly lowerStroke: readonly Point[] | null;
   readonly indicator: null | {
     readonly anchor: Point;
+    readonly position: Point;
     readonly delayMs: number;
   };
 };
@@ -55,6 +56,9 @@ export function projectLayout<M extends AnyModelNode>(
     case 'startup': {
       const indicator = {
         anchor: state.origin,
+        // The stroke's own tip: it keeps moving with sub-threshold jitter
+        // even though startup's dwell (armed on `origin`) never restarts.
+        position: state.stroke.at(-1) as Point,
         delayMs: options.noviceDwellingTime,
       };
       return {
@@ -106,6 +110,7 @@ export function projectLayout<M extends AnyModelNode>(
             ? null
             : {
                 anchor: state.dwellAnchor,
+                position: state.lastPosition,
                 delayMs: options.submenuOpeningDelay,
               },
       };

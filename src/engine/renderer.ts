@@ -53,7 +53,12 @@ type StrokeLayers = {
  renders: while the pointer dwells, nothing else changes, so the layout
  announcement carrying the indicator arrives once and the growth has to
  keep animating on its own frame loop until either it clears (`sync(null)`)
- or a fresh dwell (a new `anchor` reference) restarts it.
+ or a fresh dwell (a new `anchor` reference) restarts it. `position` is
+ tracked separately from `anchor`: the anchor only carries restart
+ identity and can lag behind the pointer by up to `movementsThreshold`,
+ but the indicator itself must always sit exactly where the stroke's own
+ tip currently is, so every `sync` call updates it even when the anchor
+ (and so the growth's timing) does not restart.
  */
 function createIndicatorLayer({
   parent,
@@ -65,11 +70,13 @@ function createIndicatorLayer({
   surfaceOptions?: Omit<IndicatorSurfaceOptions, 'parent'>;
 }): {
   sync: (indicator: LayoutView<AnyModelNode>['indicator']) => void;
-  element: () => SVGSVGElement | null;
+  backgroundElement: () => SVGSVGElement | null;
+  dotElement: () => SVGSVGElement | null;
   dispose: () => void;
 } {
   let surface: ReturnType<typeof createIndicatorSurface> | null = null;
   let currentAnchor: Point | null = null;
+  let currentPosition: Point | null = null;
   let frame = -1;
 
   const stop = (): void => {
@@ -81,14 +88,18 @@ function createIndicatorLayer({
     frame = -1;
   };
 
-  const tick = (anchor: Point, delayMs: number, startTime: number): void => {
+  const tick = (delayMs: number, startTime: number): void => {
+    if (currentPosition === null) {
+      return;
+    }
+
     const rect = coordinateParent.getBoundingClientRect();
     const progress = Math.min(1, (Date.now() - startTime) / delayMs);
-    surface?.draw(toLocalPoint(anchor, rect), progress);
+    surface?.draw(toLocalPoint(currentPosition, rect), progress);
     frame =
       progress < 1
         ? requestAnimationFrame(() => {
-            tick(anchor, delayMs, startTime);
+            tick(delayMs, startTime);
           })
         : -1;
   };
@@ -100,17 +111,20 @@ function createIndicatorLayer({
         surface?.remove();
         surface = null;
         currentAnchor = null;
+        currentPosition = null;
         return;
       }
 
       surface ??= createIndicatorSurface({ parent, ...surfaceOptions });
+      currentPosition = indicator.position;
       if (indicator.anchor !== currentAnchor) {
         currentAnchor = indicator.anchor;
         stop();
-        tick(indicator.anchor, indicator.delayMs, Date.now());
+        tick(indicator.delayMs, Date.now());
       }
     },
-    element: () => surface?.element ?? null,
+    backgroundElement: () => surface?.backgroundElement ?? null,
+    dotElement: () => surface?.dotElement ?? null,
     dispose() {
       stop();
       surface?.remove();
@@ -305,41 +319,49 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
    */
   function restack(): void {
     const menuElement = menuHandle?.menu.layer;
-    if (menuElement === undefined) {
-      return;
-    }
 
     const lower = strokeLayers.lower.element();
-    if (lower !== null && !isPaintedBefore(lower, menuElement)) {
+    if (
+      menuElement !== undefined &&
+      lower !== null &&
+      !isPaintedBefore(lower, menuElement)
+    ) {
       menuElement.before(lower);
     }
 
-    const upper = strokeLayers.upper.element();
-    if (upper !== null && !isPaintedBefore(menuElement, upper)) {
-      menuElement.after(upper);
-    }
+    // Chains every remaining layer in paint order, each moved right after
+    // the one before it only when it isn't already there. `tail` starts
+    // undefined when no menu is open (startup and expert, where the
+    // indicator and the upper stroke draw with nothing to anchor against
+    // yet): the first layer found then anchors the rest, wherever it
+    // already sits.
+    let tail: Element | undefined = menuElement;
+    const place = (element: Element | null): void => {
+      if (element === null) {
+        return;
+      }
 
-    // The opening indicator paints just above the upper stroke: while it
-    // grows there is no dot yet to sit in front of, and once it does exist
-    // (dwelling on a submenu, over an already-open menu) it is the thing
-    // announcing where the *next* dot is about to appear.
-    const indicator = strokeLayers.indicator.element();
-    const afterUpperOrMenu = upper ?? menuElement;
-    if (indicator !== null && !isPaintedBefore(afterUpperOrMenu, indicator)) {
-      afterUpperOrMenu.after(indicator);
-    }
+      if (tail !== undefined && !isPaintedBefore(tail, element)) {
+        tail.after(element);
+      }
+
+      tail = element;
+    };
+
+    // The indicator's background sits behind the upper stroke: it is
+    // static, not something announcing itself in front of it. The growing
+    // dot stays in front, in the upper stroke's own slot, since it is what
+    // becomes the novice-mode dot there.
+    place(strokeLayers.indicator.backgroundElement());
+    place(strokeLayers.upper.element());
+    place(strokeLayers.indicator.dotElement());
 
     const feedbackTraces = [
       ...previousFeedbackLayers.flatMap((feedback) => feedback.elements()),
       ...strokeLayers.feedback.elements(),
     ];
-    let previousLayer: Element = indicator ?? upper ?? menuElement;
     for (const trace of feedbackTraces) {
-      if (!isPaintedBefore(previousLayer, trace)) {
-        previousLayer.after(trace);
-      }
-
-      previousLayer = trace;
+      place(trace);
     }
 
     for (let index = previousFeedbackLayers.length - 1; index >= 0; index--) {

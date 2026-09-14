@@ -64,9 +64,8 @@ const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-thickness', '60px');
 };
 
-test("opening indicator outline matches the wedge's resting fill, default and themed", async () => {
+test("opening indicator background matches the wedge's resting fill, by default", async () => {
   using menu = mountMenu({ items });
-  setTheme(menu.surface);
   await using drag = await openMenu(menu.surface);
   await drag.moveTo(
     offset(drag.at, TOP_LEVEL_ITEMS.others.angle, ACTIVE_RADIUS),
@@ -77,10 +76,29 @@ test("opening indicator outline matches the wedge's resting fill, default and th
     .poll(() => root?.querySelector('.marking-menu-indicator-background'))
     .not.toBeNull();
 
-  const outline = root?.querySelector('.marking-menu-indicator-background');
+  const background = root?.querySelector('.marking-menu-indicator-background');
   const wedge = root?.querySelector('.marking-menu-wedge');
-  expect(outline && getComputedStyle(outline).stroke).toBe(
+  expect(background && getComputedStyle(background).fill).toBe(
     wedge && getComputedStyle(wedge).fill,
+  );
+});
+
+test('opening indicator background is themeable via --mm-indicator-background', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-indicator-background', '#123456');
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.others.angle, ACTIVE_RADIUS),
+  );
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  await expect
+    .poll(() => root?.querySelector('.marking-menu-indicator-background'))
+    .not.toBeNull();
+
+  const background = root?.querySelector('.marking-menu-indicator-background');
+  expect(getComputedStyle(background as Element).fill).toBe(
+    'rgb(18, 52, 86)',
   );
 });
 
