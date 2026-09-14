@@ -1,3 +1,181 @@
+/* Registered on the `--resolved-*` vars, not the public `--mm-*` ones they
+   are built from: a browser that supports `@property` then validates the
+   fully-substituted value (`--mm-x`, or its fallback, or that fallback's own
+   fallback...) as one unit, so an invalid `--mm-*` value falls back to the
+   default below instead of reaching the property that consumes it and
+   resetting that property to its own initial value. `@property`'s
+   initial-value cannot itself reference another custom property, but a
+   `--resolved-*` var's normal value (below, in `:host`) can and does; only
+   that descriptor's fallback, reached when the whole chain is invalid, has
+   to be the literal default. This covers every `--mm-*` var, including ones
+   whose default mirrors another `--mm-*` var. Unsupported browsers keep
+   today's behavior for every var, registered or not. */
+@property --resolved-wedge-thickness {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 40px;
+}
+@property --resolved-plate-padding {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 12px;
+}
+@property --resolved-plate-corner-radius {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 16px;
+}
+@property --resolved-plate-background {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 95% 5%);
+}
+@property --resolved-plate-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 20% 80%);
+}
+@property --resolved-plate-background-active {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 85% 15%);
+}
+@property --resolved-plate-color-active {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 0% 100%);
+}
+@property --resolved-plate-font-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 20px;
+}
+@property --resolved-label-min-width {
+  syntax: '<length-percentage>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --resolved-label-max-width {
+  syntax: '<length-percentage> | none';
+  inherits: true;
+  initial-value: none;
+}
+@property --resolved-connector-thickness {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-inner-connector-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --resolved-outer-connector-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 95% 5%);
+}
+@property --resolved-outer-connector-color-active {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 85% 15%);
+}
+@property --resolved-wedge-fill {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 95% 5%);
+}
+@property --resolved-wedge-fill-active {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 85% 15%);
+}
+@property --resolved-wedge-gap {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-wedge-corner-radius {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-plate-gap-horizontal {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 12px;
+}
+@property --resolved-plate-gap-vertical {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-plate-gap-ring {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 12px;
+}
+@property --resolved-plate-gap-connector {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-stroke-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 0% 100%);
+}
+@property --resolved-stroke-width {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-stroke-start-point-radius {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 8px;
+}
+@property --resolved-stroke-color-lower {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 47% 53%);
+}
+@property --resolved-stroke-width-lower {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-stroke-start-point-radius-lower {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-stroke-color-feedback {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 0% 100%);
+}
+@property --resolved-stroke-width-feedback {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-stroke-color-canceled {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(11 32% 13%);
+}
+@property --resolved-indicator-fill {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 0% 100%);
+}
+@property --resolved-indicator-background {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 95% 5%);
+}
+
 :host {
   --resolved-wedge-thickness: var(--mm-wedge-thickness, 40px);
   --resolved-outer-radius: calc(
@@ -5,13 +183,13 @@
   );
   --resolved-plate-padding: var(--mm-plate-padding, 12px);
   --resolved-plate-corner-radius: var(--mm-plate-corner-radius, 16px);
-  --resolved-plate-background: var(--mm-plate-background, #f2f2f2);
-  --resolved-plate-color: var(--mm-plate-color, #333333);
+  --resolved-plate-background: var(--mm-plate-background, hwb(0 95% 5%));
+  --resolved-plate-color: var(--mm-plate-color, hwb(0 20% 80%));
   --resolved-plate-background-active: var(
     --mm-plate-background-active,
-    #d9d9d9
+    hwb(0 85% 15%)
   );
-  --resolved-plate-color-active: var(--mm-plate-color-active, #000);
+  --resolved-plate-color-active: var(--mm-plate-color-active, hwb(0 0% 100%));
   --resolved-plate-font-size: var(--mm-plate-font-size, 20px);
   --resolved-label-min-width: var(--mm-label-min-width, 0);
   --resolved-label-max-width: var(--mm-label-max-width, none);
@@ -41,13 +219,13 @@
   --resolved-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
   --resolved-plate-gap-connector: var(--mm-plate-gap-connector, 4px);
 
-  --resolved-stroke-color: var(--mm-stroke-color, #000000);
+  --resolved-stroke-color: var(--mm-stroke-color, hwb(0 0% 100%));
   --resolved-stroke-width: var(--mm-stroke-width, 4px);
   --resolved-stroke-start-point-radius: var(
     --mm-stroke-start-point-radius,
     8px
   );
-  --resolved-stroke-color-lower: var(--mm-stroke-color-lower, #777777);
+  --resolved-stroke-color-lower: var(--mm-stroke-color-lower, hwb(0 47% 53%));
   --resolved-stroke-width-lower: var(
     --mm-stroke-width-lower,
     var(--resolved-stroke-width)
@@ -64,7 +242,10 @@
     --mm-stroke-width-feedback,
     var(--resolved-stroke-width)
   );
-  --resolved-stroke-color-canceled: var(--mm-stroke-color-canceled, #de6c52);
+  --resolved-stroke-color-canceled: var(
+    --mm-stroke-color-canceled,
+    hwb(11 32% 13%)
+  );
 
   --resolved-indicator-fill: var(
     --mm-indicator-fill,

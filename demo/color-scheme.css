@@ -3,21 +3,21 @@
 :root {
   color-scheme: light dark;
 
-  --mm-stroke-color: #000000;
-  --mm-stroke-color-lower: #777777;
+  --mm-stroke-color: hwb(0 0% 100%);
+  --mm-stroke-color-lower: hwb(0 47% 53%);
   --mm-stroke-width: 4px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --mm-stroke-color: rgb(236 236 238);
-    --mm-stroke-color-lower: #6a6a74;
+    --mm-stroke-color: hwb(240 93% 7%);
+    --mm-stroke-color-lower: hwb(240 42% 55%);
   }
 
   :root .marking-menu {
-    --mm-plate-background: #26262c;
-    --mm-plate-color: #c9c9cf;
-    --mm-plate-background-active: #43434c;
-    --mm-plate-color-active: #ffffff;
+    --mm-plate-background: hwb(240 15% 83%);
+    --mm-plate-color: hwb(240 79% 19%);
+    --mm-plate-background-active: hwb(240 26% 70%);
+    --mm-plate-color-active: hwb(0 100% 0%);
   }
 }
