@@ -122,6 +122,12 @@ h1 {
   animation: octocat-wave 560ms ease-in-out;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .github-corner:hover .octo-arm {
+    animation: none;
+  }
+}
+
 @keyframes octocat-wave {
   0%,
   100% {
