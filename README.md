@@ -30,6 +30,10 @@ Add this import map before your module script:
 </script>
 ```
 
+## Browser support
+
+The library requires Chrome and Edge 111, Firefox 114, or Safari and iOS 16.4, or newer.
+
 ## Usage
 
 Give the menu a container with room for gestures:
@@ -148,28 +152,30 @@ Scope the host selector to a container when only one menu should change:
 
 ```css
 #menu-area .marking-menu {
-  --mm-plate-background: #222;
-  --mm-plate-color: #fff;
-  --mm-plate-background-active: #444;
-  --mm-plate-color-active: #fff;
+  --mm-plate-background: hwb(0 13% 87%);
+  --mm-plate-color: hwb(0 100% 0%);
+  --mm-plate-background-active: hwb(0 27% 73%);
+  --mm-plate-color-active: hwb(0 100% 0%);
 }
 ```
 
 Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Stroke values are resolved when the controller is created and whenever a menu opens; layout values are resolved when a menu opens.
 
+Most of the properties below are registered with [`@property`](https://developer.mozilla.org/en-US/docs/Web/CSS/@property), so a browser that supports it rejects an invalid value (a typo'd color, a unitless length) and falls back to the documented default, rather than resetting the CSS property that reads it to that property's own initial value. A browser without `@property` support keeps working exactly as before, just without that validation. Properties whose default mirrors another property in this list (for example `--mm-wedge-fill`, which defaults to the plate background) are not registered, so that mirroring keeps working.
+
 ### Plate and label properties
 
-| Property                       | Default   | Purpose                                      |
-| ------------------------------ | --------- | -------------------------------------------- |
-| `--mm-plate-background`        | `#f2f2f2` | Plate background.                            |
-| `--mm-plate-color`             | `#333333` | Label color.                                 |
-| `--mm-plate-background-active` | `#d9d9d9` | Active plate background.                     |
-| `--mm-plate-color-active`      | `#000`    | Active label color.                          |
-| `--mm-plate-padding`           | `12px`    | Space around the label.                      |
-| `--mm-plate-corner-radius`     | `16px`    | Plate corner radius.                         |
-| `--mm-plate-font-size`         | `20px`    | Label font size.                             |
-| `--mm-label-min-width`         | `0`       | Minimum plate width.                         |
-| `--mm-label-max-width`         | `none`    | Maximum plate width before label truncation. |
+| Property                       | Default          | Purpose                                      |
+| ------------------------------ | ---------------- | -------------------------------------------- |
+| `--mm-plate-background`        | `hwb(0 95% 5%)`  | Plate background.                            |
+| `--mm-plate-color`             | `hwb(0 20% 80%)` | Label color.                                 |
+| `--mm-plate-background-active` | `hwb(0 85% 15%)` | Active plate background.                     |
+| `--mm-plate-color-active`      | `hwb(0 0% 100%)` | Active label color.                          |
+| `--mm-plate-padding`           | `12px`           | Space around the label.                      |
+| `--mm-plate-corner-radius`     | `16px`           | Plate corner radius.                         |
+| `--mm-plate-font-size`         | `20px`           | Label font size.                             |
+| `--mm-label-min-width`         | `0`              | Minimum plate width.                         |
+| `--mm-label-max-width`         | `none`           | Maximum plate width before label truncation. |
 
 Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the configured plate padding so text is not clipped vertically.
 
@@ -207,15 +213,15 @@ The active outer connector uses `--mm-outer-connector-color` when it is set, or 
 
 | Property                               | Default                   | Purpose                              |
 | -------------------------------------- | ------------------------- | ------------------------------------ |
-| `--mm-stroke-color`                    | `#000000`                 | Current gesture color.               |
+| `--mm-stroke-color`                    | `hwb(0 0% 100%)`          | Current gesture color.               |
 | `--mm-stroke-width`                    | `4px`                     | Current gesture width.               |
 | `--mm-stroke-start-point-radius`       | `8px`                     | Novice-mode start marker radius.     |
-| `--mm-stroke-color-lower`              | `#777777`                 | Earlier gesture segments' color.     |
+| `--mm-stroke-color-lower`              | `hwb(0 47% 53%)`          | Earlier gesture segments' color.     |
 | `--mm-stroke-width-lower`              | `--mm-stroke-width`       | Earlier gesture segments' width.     |
 | `--mm-stroke-start-point-radius-lower` | `--mm-stroke-width-lower` | Earlier gesture start marker radius. |
 | `--mm-stroke-color-feedback`           | `--mm-stroke-color`       | Selected gesture feedback color.     |
 | `--mm-stroke-width-feedback`           | `--mm-stroke-width`       | Completed gesture feedback width.    |
-| `--mm-stroke-color-canceled`           | `#de6c52`                 | Canceled gesture feedback color.     |
+| `--mm-stroke-color-canceled`           | `hwb(11 32% 13%)`         | Canceled gesture feedback color.     |
 
 Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
 
@@ -284,7 +290,7 @@ The visible connector now starts at the ring. Set the inner connector to the sam
 .marking-menu {
   --mm-inner-connector-color: var(
     --mm-outer-connector-color,
-    var(--mm-plate-background, #f2f2f2)
+    var(--mm-plate-background, hwb(0 95% 5%))
   );
 }
 ```

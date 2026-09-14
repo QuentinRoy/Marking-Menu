@@ -1,3 +1,117 @@
+/* Registered so a browser that supports `@property` falls back to the
+   default below when a value is invalid (e.g. a typo'd color), instead of
+   the invalid value reaching the property that consumes it and resetting
+   that property to its own initial value. Vars whose default mirrors
+   another `--mm-*` var are left unregistered: `@property`'s initial-value
+   cannot reference another custom property, so registering them would
+   replace that mirroring with a fixed fallback. Unsupported browsers keep
+   today's behavior for every var, registered or not. */
+@property --mm-wedge-thickness {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 40px;
+}
+@property --mm-plate-padding {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 12px;
+}
+@property --mm-plate-corner-radius {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 16px;
+}
+@property --mm-plate-background {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 95% 5%);
+}
+@property --mm-plate-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 20% 80%);
+}
+@property --mm-plate-background-active {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 85% 15%);
+}
+@property --mm-plate-color-active {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 0% 100%);
+}
+@property --mm-plate-font-size {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 20px;
+}
+@property --mm-connector-thickness {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --mm-inner-connector-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+@property --mm-wedge-gap {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --mm-wedge-corner-radius {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --mm-plate-gap-horizontal {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 12px;
+}
+@property --mm-plate-gap-vertical {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --mm-plate-gap-ring {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 12px;
+}
+@property --mm-plate-gap-connector {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --mm-stroke-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 0% 100%);
+}
+@property --mm-stroke-width {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --mm-stroke-start-point-radius {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 8px;
+}
+@property --mm-stroke-color-lower {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 47% 53%);
+}
+@property --mm-stroke-color-canceled {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(11 32% 13%);
+}
+
 :host {
   --resolved-wedge-thickness: var(--mm-wedge-thickness, 40px);
   --resolved-outer-radius: calc(
@@ -5,13 +119,13 @@
   );
   --resolved-plate-padding: var(--mm-plate-padding, 12px);
   --resolved-plate-corner-radius: var(--mm-plate-corner-radius, 16px);
-  --resolved-plate-background: var(--mm-plate-background, #f2f2f2);
-  --resolved-plate-color: var(--mm-plate-color, #333333);
+  --resolved-plate-background: var(--mm-plate-background, hwb(0 95% 5%));
+  --resolved-plate-color: var(--mm-plate-color, hwb(0 20% 80%));
   --resolved-plate-background-active: var(
     --mm-plate-background-active,
-    #d9d9d9
+    hwb(0 85% 15%)
   );
-  --resolved-plate-color-active: var(--mm-plate-color-active, #000);
+  --resolved-plate-color-active: var(--mm-plate-color-active, hwb(0 0% 100%));
   --resolved-plate-font-size: var(--mm-plate-font-size, 20px);
   --resolved-label-min-width: var(--mm-label-min-width, 0);
   --resolved-label-max-width: var(--mm-label-max-width, none);
@@ -41,13 +155,13 @@
   --resolved-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
   --resolved-plate-gap-connector: var(--mm-plate-gap-connector, 4px);
 
-  --resolved-stroke-color: var(--mm-stroke-color, #000000);
+  --resolved-stroke-color: var(--mm-stroke-color, hwb(0 0% 100%));
   --resolved-stroke-width: var(--mm-stroke-width, 4px);
   --resolved-stroke-start-point-radius: var(
     --mm-stroke-start-point-radius,
     8px
   );
-  --resolved-stroke-color-lower: var(--mm-stroke-color-lower, #777777);
+  --resolved-stroke-color-lower: var(--mm-stroke-color-lower, hwb(0 47% 53%));
   --resolved-stroke-width-lower: var(
     --mm-stroke-width-lower,
     var(--resolved-stroke-width)
@@ -64,7 +178,10 @@
     --mm-stroke-width-feedback,
     var(--resolved-stroke-width)
   );
-  --resolved-stroke-color-canceled: var(--mm-stroke-color-canceled, #de6c52);
+  --resolved-stroke-color-canceled: var(
+    --mm-stroke-color-canceled,
+    hwb(11 32% 13%)
+  );
 
   position: absolute;
   inset: 0;
