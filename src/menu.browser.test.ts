@@ -5,11 +5,13 @@ import {
   offset,
   press,
   TOP_LEVEL_ITEMS,
-  waitForFeedbackGone,
   waitForMenuClosed,
   waitForMenuOpen,
   type Drag,
 } from './__fixtures__/browser-menu.js';
+import { fakeTimers } from './__fixtures__/timers.js';
+
+const GESTURE_FEEDBACK_DURATION = 1000;
 
 // A touch left active (see `press`) would carry into whichever test runs
 // next, but every press here is scoped with `await using`. Only the hover
@@ -160,7 +162,11 @@ test('menu closes on release', async () => {
 });
 
 test('gesture feedback fades after its duration', async () => {
-  using menu = mountMenu({ items });
+  using menu = mountMenu({
+    items,
+    gestureFeedbackDuration: GESTURE_FEEDBACK_DURATION,
+  });
+  using _timers = fakeTimers();
   const center = centerOf(menu.surface);
   await using drag = await press(center);
   await drag.moveTo(
@@ -169,7 +175,13 @@ test('gesture feedback fades after its duration', async () => {
   );
   await drag.release();
 
-  await waitForFeedbackGone(menu.surface);
+  await vi.advanceTimersByTimeAsync(GESTURE_FEEDBACK_DURATION);
+
+  expect(
+    menu.surface
+      .querySelector('.marking-menu')
+      ?.shadowRoot?.querySelector('svg'),
+  ).toBeNull();
 });
 
 test('64px dead zone menu open', async () => {

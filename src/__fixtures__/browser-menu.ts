@@ -202,21 +202,3 @@ export const waitForMenuClosed = async (surface: Element): Promise<void> => {
     )
     .toBeNull();
 };
-
-/**
- Wait for a completed gesture's feedback trace to fade. It's the only SVG
- left in `.marking-menu`'s shadow root once the menu itself has closed
- (`waitForMenuClosed`) and any live stroke has stopped drawing, so its
- removal, on `gestureFeedbackDuration`'s timer, is what this polls for.
- */
-export const waitForFeedbackGone = async (surface: Element): Promise<void> => {
-  await expect
-    .poll(
-      () =>
-        surface
-          .querySelector('.marking-menu')
-          ?.shadowRoot?.querySelector('svg'),
-      { timeout: 3000 },
-    )
-    .toBeNull();
-};
