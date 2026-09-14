@@ -369,10 +369,12 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   return {
     render(view) {
       parent.style.cursor = view.cursor === 'default' ? ownCursor : view.cursor;
-      // `projectLayout` sets `cursor: 'none'` exactly in novice mode: the
-      // only phase where the upper stroke's origin point (the gesture's
-      // start) is drawn alongside the line.
-      const isNoviceMode = view.cursor === 'none';
+      // A menu is open exactly in novice mode: the only phase where the
+      // upper stroke's origin point (the gesture's start) is drawn
+      // alongside the line. `cursor` alone no longer distinguishes this,
+      // since startup and expert now also hide the cursor while their own
+      // opening indicator is shown.
+      const isNoviceMode = view.menu !== null;
 
       if (view.menu === null) {
         menuHandle?.menu.remove();

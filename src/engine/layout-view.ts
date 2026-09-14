@@ -67,30 +67,34 @@ export function projectLayout<M extends AnyModelNode>(
     }
 
     case 'startup': {
+      const indicator = {
+        anchor: state.origin,
+        alignAngle: null,
+        delayMs: options.noviceDwellingTime,
+      };
       return {
-        cursor: 'crosshair',
+        // The cursor is hidden behind the opening indicator, the same way
+        // novice mode's own dot already hides it.
+        cursor: 'none',
         menu: null,
         upperStroke: state.stroke,
         lowerStroke: null,
-        indicator: {
-          anchor: state.origin,
-          alignAngle: null,
-          delayMs: options.noviceDwellingTime,
-        },
+        indicator,
       };
     }
 
     case 'expert': {
+      const indicator = {
+        anchor: state.dwellAnchor,
+        alignAngle: travelAngle(state.stroke),
+        delayMs: options.noviceDwellingTime,
+      };
       return {
-        cursor: 'crosshair',
+        cursor: 'none',
         menu: null,
         upperStroke: state.stroke,
         lowerStroke: null,
-        indicator: {
-          anchor: state.dwellAnchor,
-          alignAngle: travelAngle(state.stroke),
-          delayMs: options.noviceDwellingTime,
-        },
+        indicator,
       };
     }
 

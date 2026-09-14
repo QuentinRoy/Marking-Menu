@@ -64,6 +64,26 @@ const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-thickness', '60px');
 };
 
+test('opening indicator background matches the wedge fill, default and themed', async () => {
+  using menu = mountMenu({ items });
+  setTheme(menu.surface);
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.others.angle, ACTIVE_RADIUS),
+  );
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  await expect
+    .poll(() => root?.querySelector('.marking-menu-indicator-background'))
+    .not.toBeNull();
+
+  const background = root?.querySelector('.marking-menu-indicator-background');
+  const wedge = root?.querySelector('.marking-menu-wedge');
+  expect(background && getComputedStyle(background).fill).toBe(
+    wedge && getComputedStyle(wedge).fill,
+  );
+});
+
 test('default menu open', async () => {
   using menu = mountMenu({ items });
   await using _drag = await openMenu(menu.surface);
