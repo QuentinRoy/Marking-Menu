@@ -97,9 +97,7 @@ test('opening indicator background is themeable via --mm-indicator-background', 
     .not.toBeNull();
 
   const background = root?.querySelector('.marking-menu-indicator-background');
-  expect(getComputedStyle(background as Element).fill).toBe(
-    'rgb(18, 52, 86)',
-  );
+  expect(getComputedStyle(background as Element).fill).toBe('rgb(18, 52, 86)');
 });
 
 test('default menu open', async () => {
