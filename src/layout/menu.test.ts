@@ -159,6 +159,19 @@ describe('createMenu', () => {
     expect(menu.element.shadowRoot?.querySelectorAll('[part]')).toHaveLength(0);
   });
 
+  it('creates a menu host in an anchor parent', () => {
+    const anchor = document.createElement('a');
+
+    const menu = createMenu({
+      parent: anchor,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(menu.element.parentElement).toBe(anchor);
+  });
+
   it('reads the stroke theme from probes in the connected shadow root', () => {
     const div = document.createElement('div');
     const values = {

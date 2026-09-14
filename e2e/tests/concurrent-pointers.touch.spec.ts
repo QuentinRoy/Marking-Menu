@@ -8,7 +8,7 @@ import {
 import { readLog, waitForLogEntry, waitForLogGrowth } from '../helpers/log.js';
 import { CdpMultiTouchDrag, CdpTouchDrag } from '../helpers/touch.js';
 
-// Same margin-from-thresholds rationale as mouse.spec.ts.
+// Same margin-from-thresholds rationale as mouse.cross-browser.spec.ts.
 const SELECT_RADIUS = 100;
 
 test('concurrent pointers: a second touch cannot move, select or cancel the owning gesture, and a fresh gesture works once it finishes', async ({

@@ -3,7 +3,7 @@ import { offset, surfaceCenter, TOP_LEVEL_ITEMS } from '../helpers/gestures.js';
 import { waitForLogEntry } from '../helpers/log.js';
 import { CdpTouchDrag } from '../helpers/touch.js';
 
-// Same margin-from-thresholds rationale as mouse.spec.ts.
+// Same margin-from-thresholds rationale as mouse.cross-browser.spec.ts.
 const SELECT_RADIUS = 100;
 
 test('touch: a rightward expert stroke selects without opening a menu, on a surface with touch-action: none', async ({
