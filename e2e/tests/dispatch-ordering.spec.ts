@@ -37,7 +37,7 @@ function observed<T extends Observation['type']>(
 }
 
 // Beyond the default `deadZoneRadius` (40px): far enough to select item
-// "a" unambiguously, the same margin `mouse.spec.ts` uses for its own
+// "a" unambiguously, the same margin `mouse.cross-browser.spec.ts` uses for its own
 // selections.
 const SELECT_RADIUS = 100;
 
