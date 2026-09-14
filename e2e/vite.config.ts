@@ -14,6 +14,10 @@ export default defineConfig({
     rolldownOptions: {
       external: (source: string) => importMapDependencies.has(source),
       input: {
+        crossDocument: path.resolve(
+          import.meta.dirname,
+          'fixture/cross-document.html',
+        ),
         layout: path.resolve(import.meta.dirname, 'fixture/layout.html'),
         main: path.resolve(import.meta.dirname, 'fixture/index.html'),
       },

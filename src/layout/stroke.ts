@@ -34,7 +34,7 @@ const pathData = (points: readonly Point[]): string => {
 
 export function createStrokeSurface({
   parent,
-  doc = document,
+  doc = parent.ownerDocument,
   lineWidth = 2,
   lineColor = 'black',
   pointRadius = 0,
