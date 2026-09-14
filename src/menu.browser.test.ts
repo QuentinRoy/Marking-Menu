@@ -64,7 +64,7 @@ const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-thickness', '60px');
 };
 
-test('opening indicator background matches the wedge fill, default and themed', async () => {
+test("opening indicator outline matches the wedge's resting fill, default and themed", async () => {
   using menu = mountMenu({ items });
   setTheme(menu.surface);
   await using drag = await openMenu(menu.surface);
@@ -77,9 +77,9 @@ test('opening indicator background matches the wedge fill, default and themed', 
     .poll(() => root?.querySelector('.marking-menu-indicator-background'))
     .not.toBeNull();
 
-  const background = root?.querySelector('.marking-menu-indicator-background');
+  const outline = root?.querySelector('.marking-menu-indicator-background');
   const wedge = root?.querySelector('.marking-menu-wedge');
-  expect(background && getComputedStyle(background).fill).toBe(
+  expect(outline && getComputedStyle(outline).stroke).toBe(
     wedge && getComputedStyle(wedge).fill,
   );
 });

@@ -1,5 +1,5 @@
 import type { AnyModelNode, ModelMenus } from '../types.js';
-import { toPolar, type Point } from '../utils.js';
+import type { Point } from '../utils.js';
 import type { NavigationOptions, NavigationState } from './machine.js';
 
 /**
@@ -16,7 +16,6 @@ export type LayoutView<M extends AnyModelNode> = {
   readonly lowerStroke: readonly Point[] | null;
   readonly indicator: null | {
     readonly anchor: Point;
-    readonly alignAngle: number | null;
     readonly delayMs: number;
   };
 };
@@ -56,7 +55,6 @@ export function projectLayout<M extends AnyModelNode>(
     case 'startup': {
       const indicator = {
         anchor: state.origin,
-        alignAngle: null,
         delayMs: options.noviceDwellingTime,
       };
       return {
@@ -108,8 +106,6 @@ export function projectLayout<M extends AnyModelNode>(
             ? null
             : {
                 anchor: state.dwellAnchor,
-                alignAngle: toPolar(state.lastPosition, state.menuCenter)
-                  .azymuth,
                 delayMs: options.submenuOpeningDelay,
               },
       };

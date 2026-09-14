@@ -48,10 +48,6 @@ type StrokeLayers = {
   feedback: ReturnType<typeof createGestureFeedback>;
 };
 
-// The opening indicator's start angle when there is no preceding stroke to
-// align it with: straight up, the conventional start of a clock face.
-const DEFAULT_INDICATOR_START_ANGLE = -90;
-
 /**
  One indicator surface, growing on its own clock rather than in response to
  renders: while the pointer dwells, nothing else changes, so the layout
@@ -85,23 +81,14 @@ function createIndicatorLayer({
     frame = -1;
   };
 
-  const tick = (
-    anchor: Point,
-    alignAngle: number | null,
-    delayMs: number,
-    startTime: number,
-  ): void => {
+  const tick = (anchor: Point, delayMs: number, startTime: number): void => {
     const rect = coordinateParent.getBoundingClientRect();
     const progress = Math.min(1, (Date.now() - startTime) / delayMs);
-    surface?.draw(
-      toLocalPoint(anchor, rect),
-      alignAngle ?? DEFAULT_INDICATOR_START_ANGLE,
-      360 * progress,
-    );
+    surface?.draw(toLocalPoint(anchor, rect), progress);
     frame =
       progress < 1
         ? requestAnimationFrame(() => {
-            tick(anchor, alignAngle, delayMs, startTime);
+            tick(anchor, delayMs, startTime);
           })
         : -1;
   };
@@ -120,12 +107,7 @@ function createIndicatorLayer({
       if (indicator.anchor !== currentAnchor) {
         currentAnchor = indicator.anchor;
         stop();
-        tick(
-          indicator.anchor,
-          indicator.alignAngle,
-          indicator.delayMs,
-          Date.now(),
-        );
+        tick(indicator.anchor, indicator.delayMs, Date.now());
       }
     },
     element: () => surface?.element ?? null,
@@ -228,6 +210,7 @@ function createStrokeLayers(
       coordinateParent: parent.host.parentElement as HTMLElement,
       surfaceOptions: {
         radius: strokeTheme.strokeStartPointRadius,
+        strokeWidth: strokeTheme.strokeWidth,
         fillColor: strokeTheme.indicatorFill,
         backgroundColor: strokeTheme.indicatorBackground,
       },

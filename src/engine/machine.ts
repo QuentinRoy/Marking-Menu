@@ -141,11 +141,6 @@ export type NavigationLayoutAnnouncement = {
     // restarted one by reference, the same way `createStrokeLayer` already
     // does for a stroke array.
     readonly anchor: Point;
-    // The angle (degrees) the indicator's growth starts from, aligned with
-    // the stroke's own direction so the first sliver overlaps the line
-    // already being drawn. `null` when there is no preceding stroke to
-    // align with.
-    readonly alignAngle: number | null;
     readonly delayMs: number;
   };
 };

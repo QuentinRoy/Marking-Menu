@@ -174,7 +174,7 @@ describe('createRenderer', () => {
     expect(parent.children).toHaveLength(0);
   });
 
-  it("draws the opening indicator's background and pie at the given anchor, and removes both once the indicator clears", () => {
+  it("draws the opening indicator's outline and dot at the given anchor, and removes both once the indicator clears", () => {
     const parent = document.createElement('div');
     const renderer = createRenderer<typeof model>({ parent });
 
@@ -183,14 +183,14 @@ describe('createRenderer', () => {
       menu: null,
       upperStroke: [[0, 0]],
       lowerStroke: null,
-      indicator: { anchor: [20, 30], alignAngle: null, delayMs: 300 },
+      indicator: { anchor: [20, 30], delayMs: 300 },
     });
 
     const root = rootOf(parent);
     const background = root.querySelector('.marking-menu-indicator-background');
     expect(background?.getAttribute('cx')).toBe('20');
     expect(background?.getAttribute('cy')).toBe('30');
-    expect(root.querySelector('.marking-menu-indicator-pie')).not.toBeNull();
+    expect(root.querySelector('.marking-menu-indicator-dot')).not.toBeNull();
 
     renderer.render({
       cursor: 'default',
@@ -201,7 +201,7 @@ describe('createRenderer', () => {
     });
 
     expect(root.querySelector('.marking-menu-indicator-background')).toBeNull();
-    expect(root.querySelector('.marking-menu-indicator-pie')).toBeNull();
+    expect(root.querySelector('.marking-menu-indicator-dot')).toBeNull();
     renderer.dispose();
   });
 
@@ -214,7 +214,7 @@ describe('createRenderer', () => {
       menu: null,
       upperStroke: [[0, 0]],
       lowerStroke: null,
-      indicator: { anchor: [20, 30], alignAngle: null, delayMs: 300 },
+      indicator: { anchor: [20, 30], delayMs: 300 },
     });
 
     const root = rootOf(parent);
@@ -231,7 +231,7 @@ describe('createRenderer', () => {
     renderer.dispose();
   });
 
-  it('grows the pie sector over the given delay, and cancels its animation frame on dispose', () => {
+  it('grows the dot toward the outline radius over the given delay, and cancels its animation frame on dispose', () => {
     const parent = document.createElement('div');
     const renderer = createRenderer<typeof model>({ parent });
     const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame');
@@ -241,17 +241,17 @@ describe('createRenderer', () => {
       menu: null,
       upperStroke: [[0, 0]],
       lowerStroke: null,
-      indicator: { anchor: [0, 0], alignAngle: null, delayMs: 300 },
+      indicator: { anchor: [0, 0], delayMs: 300 },
     });
 
-    const pie = rootOf(parent).querySelector('.marking-menu-indicator-pie');
-    const dAtStart = pie?.getAttribute('d');
+    const dot = rootOf(parent).querySelector('.marking-menu-indicator-dot');
+    const radiusAtStart = Number(dot?.getAttribute('r'));
     renderFrame();
     vi.advanceTimersByTime(150);
     renderFrame();
-    const dAtHalfway = pie?.getAttribute('d');
+    const radiusAtHalfway = Number(dot?.getAttribute('r'));
 
-    expect(dAtHalfway).not.toBe(dAtStart);
+    expect(radiusAtHalfway).toBeGreaterThan(radiusAtStart);
 
     renderer.dispose();
     expect(cancelFrame).toHaveBeenCalled();

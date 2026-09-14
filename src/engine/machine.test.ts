@@ -846,7 +846,7 @@ describe('navigationMachine', () => {
   });
 
   describe('the indicator it announces to the layout', () => {
-    it('shows the indicator anchored at the origin, with no alignment, while dwelling in startup', () => {
+    it('shows the indicator anchored at the origin while dwelling in startup', () => {
       const host = startHost();
       const layouts = recordLayouts(host);
 
@@ -854,7 +854,6 @@ describe('navigationMachine', () => {
 
       expect(layouts.at(-1)?.indicator).toEqual({
         anchor: [0, 0],
-        alignAngle: null,
         delayMs: options.noviceDwellingTime,
       });
     });
@@ -888,7 +887,7 @@ describe('navigationMachine', () => {
       expect(layouts.at(-1)?.indicator).toBeNull();
     });
 
-    it('shows the indicator anchored at the dwell anchor, aligned to the straight line from the menu center, while the active item is a submenu', () => {
+    it('shows the indicator anchored at the dwell anchor while the active item is a submenu', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       const layouts = recordLayouts(host);
 
@@ -897,7 +896,6 @@ describe('navigationMachine', () => {
 
       expect(layouts.at(-1)?.indicator).toEqual({
         anchor: [100, 0],
-        alignAngle: 0, // Right, straight out from the menu center.
         delayMs: options.submenuOpeningDelay,
       });
     });
