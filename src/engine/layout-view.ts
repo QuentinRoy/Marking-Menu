@@ -38,19 +38,6 @@ export function noviceUpperStroke({
   return [menuCenter, lastPosition];
 }
 
-/**
- The angle (degrees) of travel from a stroke's second-to-last point to its
- last one: the opening indicator's align angle while a stroke exists. `null`
- when `stroke` has fewer than two points, so there is no direction yet.
- */
-function travelAngle(stroke: readonly Point[]): number | null {
-  const to = stroke.at(-1);
-  const from = stroke.at(-2);
-  return to === undefined || from === undefined
-    ? null
-    : toPolar(to, from).azymuth;
-}
-
 export function projectLayout<M extends AnyModelNode>(
   state: NavigationState<M>,
   options: NavigationOptions,
@@ -84,17 +71,17 @@ export function projectLayout<M extends AnyModelNode>(
     }
 
     case 'expert': {
-      const indicator = {
-        anchor: state.dwellAnchor,
-        alignAngle: travelAngle(state.stroke),
-        delayMs: options.noviceDwellingTime,
-      };
       return {
-        cursor: 'none',
+        // No opening indicator in expert mode: a stroke drawn fast enough
+        // to stay in expert never lingers long enough for one to matter,
+        // and it only gets in the way when the pointer does pause. The
+        // crosshair marks the pointer normally, as it did before the
+        // indicator existed.
+        cursor: 'crosshair',
         menu: null,
         upperStroke: state.stroke,
         lowerStroke: null,
-        indicator,
+        indicator: null,
       };
     }
 

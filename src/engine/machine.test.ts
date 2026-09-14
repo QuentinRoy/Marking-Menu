@@ -859,33 +859,14 @@ describe('navigationMachine', () => {
       });
     });
 
-    it('shows the indicator anchored at the moving dwell anchor, aligned to the direction of travel, while dwelling in expert', () => {
+    it('shows no indicator while dwelling in expert mode', () => {
       const host = startHost();
       const layouts = recordLayouts(host);
 
       host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] }); // Crosses the threshold: expert, heading right.
+      host.send('move', { position: [100, 0] }); // Crosses the threshold: expert.
 
-      expect(layouts.at(-1)?.indicator).toEqual({
-        anchor: [100, 0],
-        alignAngle: 0, // Right, matching the direction just traveled.
-        delayMs: options.noviceDwellingTime,
-      });
-    });
-
-    it("keeps the expert indicator's anchor reference stable across insignificant movement, and gives it a fresh one on significant movement, mirroring the dwell restart it drives", () => {
-      const host = startHost();
-      const layouts = recordLayouts(host);
-
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] }); // Enters expert.
-      const firstAnchor = layouts.at(-1)?.indicator?.anchor;
-
-      host.send('move', { position: [102, 0] }); // Insignificant (<5px).
-      expect(layouts.at(-1)?.indicator?.anchor).toBe(firstAnchor);
-
-      host.send('move', { position: [200, 0] }); // Significant.
-      expect(layouts.at(-1)?.indicator?.anchor).not.toBe(firstAnchor);
+      expect(layouts.at(-1)?.indicator).toBeNull();
     });
 
     it('shows no indicator in novice mode while the pointer is within the dead zone', () => {
