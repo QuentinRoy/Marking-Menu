@@ -459,8 +459,56 @@ function appendWedge(
   wedge.classList.add('marking-menu-wedge');
   wedge.setAttribute('d', pathData);
   svg.append(wedge);
+
+  // PROTOTYPE (#358): hidden extras the demo's variants style into view.
+  const id = `mm-proto-${prototypeIds++}`;
+  const defs = doc.createElementNS(svgNamespace, 'defs');
+  const clip = doc.createElementNS(svgNamespace, 'clipPath');
+  clip.id = `${id}-clip`;
+  const clipShape = doc.createElementNS(svgNamespace, 'path');
+  clipShape.setAttribute('d', pathData);
+  clip.append(clipShape);
+  const hatch = doc.createElementNS(svgNamespace, 'pattern');
+  hatch.id = `${id}-hatch`;
+  hatch.setAttribute('patternUnits', 'userSpaceOnUse');
+  hatch.setAttribute('width', '6');
+  hatch.setAttribute('height', '6');
+  hatch.setAttribute('patternTransform', 'rotate(45)');
+  const hatchLine = doc.createElementNS(svgNamespace, 'rect');
+  hatchLine.classList.add('marking-menu-wedge-hatch-line');
+  hatchLine.setAttribute('width', '2');
+  hatchLine.setAttribute('height', '6');
+  hatch.append(hatchLine);
+  defs.append(clip, hatch);
+
+  const hatchFill = doc.createElementNS(svgNamespace, 'path');
+  hatchFill.classList.add('marking-menu-wedge-hatch');
+  hatchFill.setAttribute('d', pathData);
+  hatchFill.setAttribute('fill', `url(#${id}-hatch)`);
+
+  const clipped = (className: string, radius: number) => {
+    const circle = doc.createElementNS(svgNamespace, 'circle');
+    circle.classList.add(className);
+    circle.setAttribute('r', `${radius}`);
+    circle.setAttribute('clip-path', `url(#${id}-clip)`);
+    return circle;
+  };
+
+  const inset = doc.createElementNS(svgNamespace, 'path');
+  inset.classList.add('marking-menu-wedge-inset');
+  inset.setAttribute('d', pathData);
+  inset.setAttribute('clip-path', `url(#${id}-clip)`);
+
+  svg.append(
+    defs,
+    hatchFill,
+    inset,
+    clipped('marking-menu-wedge-rim', outerRadius),
+  );
   itemElement.prepend(svg);
 }
+
+let prototypeIds = 0;
 
 function renderWedges(
   { itemElements, probes }: MenuDom,

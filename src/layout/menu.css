@@ -298,6 +298,18 @@
   fill: var(--resolved-wedge-fill);
 }
 
+/* PROTOTYPE (#358): hidden unless a demo variant shows them. */
+.marking-menu-wedge-hatch,
+.marking-menu-wedge-inset,
+.marking-menu-wedge-rim {
+  display: none;
+}
+
+.marking-menu-wedge-inset,
+.marking-menu-wedge-rim {
+  fill: none;
+}
+
 .marking-menu-layer.marking-menu--pointer-target .marking-menu-wedge {
   pointer-events: auto;
 }

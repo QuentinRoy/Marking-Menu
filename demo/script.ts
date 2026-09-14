@@ -1,5 +1,8 @@
 import { createMarkingMenu } from 'marking-menu';
 import { DEFAULT_MENU, readMenuConfig } from './menu-config.js';
+// PROTOTYPE, issue #358: wedge contrast variants. Throwaway, capture-branch
+// only, never merged to main.
+import { installWedgeContrastPrototype } from './wedge-contrast-prototype.js';
 
 function element(selector: string): HTMLElement {
   const found = document.querySelector(selector);
@@ -18,13 +21,15 @@ const toastElement = element('#toast');
 const items = readMenuConfig(location.search) ?? DEFAULT_MENU;
 
 function openMenu() {
+  const main = element('#main');
   const menu = createMarkingMenu({
     ...items,
-    parent: element('#main'),
+    parent: main,
   });
   menu.on('select', (event) => {
     toastMessage(event.selection.label);
   });
+  installWedgeContrastPrototype(main);
   return menu;
 }
 
