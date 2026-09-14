@@ -134,6 +134,21 @@ export type NavigationLayoutAnnouncement = {
   };
   readonly upperStroke: readonly Point[] | null;
   readonly lowerStroke: readonly Point[] | null;
+  readonly indicator: null | {
+    // Identity only, for restart detection: carries the same reference the
+    // underlying dwell residency's own restart predicate compares against,
+    // so the renderer can tell a continuing dwell from a restarted one by
+    // reference, the same way `createStrokeLayer` already does for a
+    // stroke array. Not necessarily where the indicator currently draws —
+    // see `position`.
+    readonly anchor: Point;
+    // Where the indicator draws right now. Unlike `anchor`, always the
+    // pointer's current position: `anchor` only moves on significant
+    // movement, so using it to draw would lag the pointer by up to
+    // `movementsThreshold`.
+    readonly position: Point;
+    readonly delayMs: number;
+  };
 };
 
 export type NavigationFeedbackAnnouncement = {
@@ -511,7 +526,10 @@ export const navigationMachine = machine({
     // Declared first: every other action, including the dwell residency,
     // must run after the layout for this commit has already been announced.
     '* -> *'({ to, toData, emit }) {
-      emit('layout', projectLayout(toNavigationState(to, toData)));
+      emit(
+        'layout',
+        projectLayout(toNavigationState(to, toData), toData.options),
+      );
     },
 
     startup: {

@@ -66,6 +66,15 @@
   );
   --resolved-stroke-color-canceled: var(--mm-stroke-color-canceled, #de6c52);
 
+  --resolved-indicator-fill: var(
+    --mm-indicator-fill,
+    var(--resolved-stroke-color)
+  );
+  --resolved-indicator-background: var(
+    --mm-indicator-background,
+    var(--resolved-wedge-fill)
+  );
+
   position: absolute;
   inset: 0;
   width: 100%;
@@ -276,4 +285,12 @@
 
 .marking-menu-layout-probe--stroke-color-canceled {
   color: var(--resolved-stroke-color-canceled);
+}
+
+.marking-menu-layout-probe--indicator-fill {
+  color: var(--resolved-indicator-fill);
+}
+
+.marking-menu-layout-probe--indicator-background {
+  color: var(--resolved-indicator-background);
 }

@@ -1,6 +1,6 @@
 import type { AnyModelNode, ModelMenus } from '../types.js';
 import type { Point } from '../utils.js';
-import type { NavigationState } from './machine.js';
+import type { NavigationOptions, NavigationState } from './machine.js';
 
 /**
  The DOM-free, state-derived layout projection.
@@ -14,6 +14,11 @@ export type LayoutView<M extends AnyModelNode> = {
   };
   readonly upperStroke: readonly Point[] | null;
   readonly lowerStroke: readonly Point[] | null;
+  readonly indicator: null | {
+    readonly anchor: Point;
+    readonly position: Point;
+    readonly delayMs: number;
+  };
 };
 
 /**
@@ -35,6 +40,7 @@ export function noviceUpperStroke({
 
 export function projectLayout<M extends AnyModelNode>(
   state: NavigationState<M>,
+  options: NavigationOptions,
 ): LayoutView<M> {
   switch (state.phase) {
     case 'idle': {
@@ -43,34 +49,70 @@ export function projectLayout<M extends AnyModelNode>(
         menu: null,
         upperStroke: null,
         lowerStroke: null,
+        indicator: null,
       };
     }
 
-    case 'startup':
+    case 'startup': {
+      const indicator = {
+        anchor: state.origin,
+        // The stroke's own tip: it keeps moving with sub-threshold jitter
+        // even though startup's dwell (armed on `origin`) never restarts.
+        position: state.stroke.at(-1) as Point,
+        delayMs: options.noviceDwellingTime,
+      };
+      return {
+        // The cursor is hidden behind the opening indicator, the same way
+        // novice mode's own dot already hides it.
+        cursor: 'none',
+        menu: null,
+        upperStroke: state.stroke,
+        lowerStroke: null,
+        indicator,
+      };
+    }
+
     case 'expert': {
       return {
+        // No opening indicator in expert mode: a stroke drawn fast enough
+        // to stay in expert never lingers long enough for one to matter,
+        // and it only gets in the way when the pointer does pause. The
+        // crosshair marks the pointer normally, as it did before the
+        // indicator existed.
         cursor: 'crosshair',
         menu: null,
         upperStroke: state.stroke,
         lowerStroke: null,
+        indicator: null,
       };
     }
 
     case 'novice': {
+      // `ModelItems<M>` is erased to a bare node at the machine's own
+      // boundary (see machine.ts's module comment); every real item built
+      // by `model.ts` carries `key`/`isLeaf`, the same reason `renderer.ts`
+      // casts `view.menu.model` to `MenuLayoutModel`.
+      const active = state.active as {
+        readonly key: string;
+        readonly isLeaf: boolean;
+      } | null;
       return {
         cursor: 'none',
         menu: {
           model: state.menu,
           center: state.menuCenter,
-          // `ModelItems<M>` is erased to a bare node at the machine's own
-          // boundary (see machine.ts's module comment); every real item
-          // built by `model.ts` carries `key`, the same reason `renderer.ts`
-          // casts `view.menu.model` to `MenuLayoutModel`.
-          activeKey:
-            (state.active as { readonly key: string } | null)?.key ?? null,
+          activeKey: active?.key ?? null,
         },
         upperStroke: noviceUpperStroke(state),
         lowerStroke: state.lowerStroke,
+        indicator:
+          active === null || active.isLeaf
+            ? null
+            : {
+                anchor: state.dwellAnchor,
+                position: state.lastPosition,
+                delayMs: options.submenuOpeningDelay,
+              },
       };
     }
   }

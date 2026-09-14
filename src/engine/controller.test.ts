@@ -47,10 +47,16 @@ const activeMenuItems = (parent: HTMLElement): HTMLElement[] => [
     []),
 ];
 
+// Excludes the opening indicator's own SVG: it draws the dwell-anticipation
+// target, not a stroke.
 const strokeSurfaces = (parent: HTMLElement): SVGSVGElement[] =>
   [
     ...(parent.querySelector('.marking-menu')?.shadowRoot?.children ?? []),
-  ].filter((element): element is SVGSVGElement => element.matches('svg'));
+  ].filter(
+    (element): element is SVGSVGElement =>
+      element.matches('svg') &&
+      element.querySelector('.marking-menu-indicator-background') === null,
+  );
 
 describe('createController', () => {
   it('dispatches select carrying the leaf a straight drag recognizes', () => {
@@ -96,13 +102,13 @@ describe('createController', () => {
     controller.dispose();
   });
 
-  it('shows a crosshair cursor on gesture start', () => {
+  it('hides the cursor on gesture start, behind the opening indicator', () => {
     const parent = createParent();
     const controller = createController({ items, parent });
 
     expect(parent.style.cursor).toBe('');
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
-    expect(parent.style.cursor).toBe('crosshair');
+    expect(parent.style.cursor).toBe('none');
 
     controller.dispose();
   });
@@ -113,7 +119,7 @@ describe('createController', () => {
     const controller = createController({ items, parent });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
-    expect(parent.style.cursor).toBe('crosshair');
+    expect(parent.style.cursor).toBe('none');
 
     // Back to idle: the parent's cursor is the parent's again, not blank.
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
@@ -583,7 +589,7 @@ describe('createController', () => {
     controller.dispose();
   });
 
-  it('sets the cursor to none once novice mode opens', () => {
+  it('keeps the cursor hidden across the dwell into novice mode, with no flicker back to a visible cursor', () => {
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
@@ -593,7 +599,7 @@ describe('createController', () => {
     });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
-    expect(parent.style.cursor).toBe('crosshair');
+    expect(parent.style.cursor).toBe('none');
 
     vi.advanceTimersByTime(100);
     expect(parent.style.cursor).toBe('none');
