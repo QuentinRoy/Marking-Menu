@@ -29,9 +29,14 @@ the real dwell. Release to cancel and try again.
     the closing stretch of the delay; the outer edge never moves, so it also
     closes into the dot without a jump.
 - Sliders for delay, movement threshold, dot radius, and the background
-  circle's size/opacity, plus a toggle for aligning the indicator's start
-  angle with the stroke's direction (the acceptance criteria's "mostly
-  invisible at start" — a thin sliver overlapping the line you're already
-  drawing reads very differently from one appearing at a fixed angle).
+  circle's opacity (its size always matches the dot/pie's own radius exactly
+  — no separate halo), plus a toggle for aligning the indicator's start angle
+  with the stroke's direction (the acceptance criteria's "mostly invisible at
+  start" — a thin sliver overlapping the line you're already drawing reads
+  very differently from one appearing at a fixed angle).
+- The indicator sits at the current dwell anchor, not the gesture's origin:
+  in expert mode that anchor moves with the pointer, and the menu is about
+  to open right there — so the indicator stays under the cursor, same as the
+  real `dwellAnchor` in `src/engine/machine.ts`.
 - A readout of the current phase/progress/angle, for anything the eye
   might miss.

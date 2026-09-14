@@ -256,18 +256,6 @@
           <span class="val" id="radius-val"></span>
         </label>
         <label class="row">
-          <span>Background scale</span>
-          <input
-            id="bg-scale"
-            type="range"
-            min="1"
-            max="4"
-            step="0.1"
-            value="2.2"
-          />
-          <span class="val" id="bg-scale-val"></span>
-        </label>
-        <label class="row">
           <span>Background opacity</span>
           <input
             id="bg-opacity"
@@ -302,7 +290,6 @@
         delay: document.getElementById('delay'),
         threshold: document.getElementById('threshold'),
         radius: document.getElementById('radius'),
-        bgScale: document.getElementById('bg-scale'),
         bgOpacity: document.getElementById('bg-opacity'),
         align: document.getElementById('align'),
       };
@@ -361,7 +348,6 @@
           delay: Number(controls.delay.value),
           threshold: Number(controls.threshold.value),
           radius: Number(controls.radius.value),
-          bgScale: Number(controls.bgScale.value),
           bgOpacity: Number(controls.bgOpacity.value),
           align: controls.align.checked,
         };
@@ -455,7 +441,7 @@
         const opts = options();
 
         for (const [id, el] of Object.entries(controls)) {
-          const label = document.getElementById(`${id === 'bgScale' ? 'bg-scale' : id === 'bgOpacity' ? 'bg-opacity' : id}-val`);
+          const label = document.getElementById(`${id === 'bgOpacity' ? 'bg-opacity' : id}-val`);
           if (label) label.textContent = el.value;
         }
 
@@ -464,11 +450,15 @@
           return;
         }
 
-        const [ox, oy] = state.origin;
-        const bgRadius = opts.radius * opts.bgScale;
+        // The indicator sits at the current dwell anchor, not the gesture's
+        // origin: in expert mode the anchor — and the menu it is about to
+        // open — moves to wherever the pointer paused, same as the real
+        // engine's `dwellAnchor` (see src/engine/machine.ts). It is always
+        // under the cursor.
+        const [ox, oy] = state.anchor;
         bgEl.setAttribute('cx', ox);
         bgEl.setAttribute('cy', oy);
-        bgEl.setAttribute('r', bgRadius);
+        bgEl.setAttribute('r', opts.radius);
         bgEl.setAttribute(
           'opacity',
           variant === 'none' ? '0' : String(opts.bgOpacity),
