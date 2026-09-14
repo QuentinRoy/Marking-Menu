@@ -113,7 +113,7 @@ type MenuDom = {
   root: ShadowRoot;
   probes: LayoutProbes;
   itemElements: ReadonlyMap<string, HTMLDivElement>;
-  isOwnHost: boolean;
+  createsHost: boolean;
 };
 
 export function createMenuHost({
@@ -191,20 +191,19 @@ function appendStrokeThemeProbes(
   };
 }
 
-const isElementParent = (
-  parent: HTMLElement | ShadowRoot,
-): parent is HTMLElement => parent.nodeType === Node.ELEMENT_NODE;
+// `instanceof HTMLElement` would use this module's realm's constructor,
+// which a parent from another document/window never matches. Node type
+// identifies an element without depending on a realm-specific constructor.
+const isElement = (parent: HTMLElement | ShadowRoot): parent is HTMLElement =>
+  parent.nodeType === Node.ELEMENT_NODE;
 
 const template = (
   { items, center }: { items: readonly MenuLayoutItem[]; center: Point },
   doc: Document,
   parent: HTMLElement | ShadowRoot,
 ): MenuDom => {
-  // `instanceof HTMLElement` would use this module's realm's constructor,
-  // which a `parent` from another document/window never matches. Node type
-  // identifies an element without depending on a realm-specific constructor.
-  const isOwnHost = isElementParent(parent);
-  const { root } = isOwnHost
+  const createsHost = isElement(parent);
+  const { root } = createsHost
     ? createMenuHost({ parent, doc })
     : { root: parent };
   const main = doc.createElement('div');
@@ -254,7 +253,7 @@ const template = (
     itemElements.set(item.key, elt);
   }
 
-  return { main, root, probes, itemElements, isOwnHost };
+  return { main, root, probes, itemElements, createsHost };
 };
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
@@ -638,7 +637,7 @@ export function createMenu({
   pointerTarget?: boolean;
 }): Menu {
   const menuDom = template({ items: model.items, center }, doc, parent);
-  const { main, root, isOwnHost } = menuDom;
+  const { main, root, createsHost } = menuDom;
   (root.host as HTMLElement).style.setProperty(
     '--inner-radius',
     `${deadZoneRadius}px`,
@@ -683,7 +682,7 @@ export function createMenu({
   };
 
   const remove = () => {
-    if (isOwnHost) {
+    if (createsHost) {
       (root.host as HTMLElement).remove();
     } else {
       main.remove();
