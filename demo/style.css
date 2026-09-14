@@ -78,6 +78,13 @@ h1 {
   transition: 400ms;
 }
 
+@supports(corner-shape: squircle) {
+  #toast {
+    corner-shape: squircle;
+    border-radius: 10px;
+  }
+}
+
 #toast.shown {
   opacity: 1;
 }

@@ -156,6 +156,13 @@
   font-size: var(--resolved-plate-font-size);
 }
 
+@supports (corner-shape: squircle) {
+  .marking-menu-plate {
+    corner-shape: squircle;
+    border-radius: calc(2 * var(--resolved-plate-corner-radius));
+  }
+}
+
 .marking-menu-label {
   display: block;
   min-width: 0;
