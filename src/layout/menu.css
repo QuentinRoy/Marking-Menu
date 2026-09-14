@@ -1,115 +1,179 @@
-/* Registered so a browser that supports `@property` falls back to the
-   default below when a value is invalid (e.g. a typo'd color), instead of
-   the invalid value reaching the property that consumes it and resetting
-   that property to its own initial value. Vars whose default mirrors
-   another `--mm-*` var are left unregistered: `@property`'s initial-value
-   cannot reference another custom property, so registering them would
-   replace that mirroring with a fixed fallback. Unsupported browsers keep
+/* Registered on the `--resolved-*` vars, not the public `--mm-*` ones they
+   are built from: a browser that supports `@property` then validates the
+   fully-substituted value (`--mm-x`, or its fallback, or that fallback's own
+   fallback...) as one unit, so an invalid `--mm-*` value falls back to the
+   default below instead of reaching the property that consumes it and
+   resetting that property to its own initial value. `@property`'s
+   initial-value cannot itself reference another custom property, but a
+   `--resolved-*` var's normal value (below, in `:host`) can and does; only
+   that descriptor's fallback, reached when the whole chain is invalid, has
+   to be the literal default. This covers every `--mm-*` var, including ones
+   whose default mirrors another `--mm-*` var. Unsupported browsers keep
    today's behavior for every var, registered or not. */
-@property --mm-wedge-thickness {
+@property --resolved-wedge-thickness {
   syntax: '<length>';
   inherits: true;
   initial-value: 40px;
 }
-@property --mm-plate-padding {
+@property --resolved-plate-padding {
   syntax: '<length>';
   inherits: true;
   initial-value: 12px;
 }
-@property --mm-plate-corner-radius {
+@property --resolved-plate-corner-radius {
   syntax: '<length>';
   inherits: true;
   initial-value: 16px;
 }
-@property --mm-plate-background {
+@property --resolved-plate-background {
   syntax: '<color>';
   inherits: true;
   initial-value: hwb(0 95% 5%);
 }
-@property --mm-plate-color {
+@property --resolved-plate-color {
   syntax: '<color>';
   inherits: true;
   initial-value: hwb(0 20% 80%);
 }
-@property --mm-plate-background-active {
+@property --resolved-plate-background-active {
   syntax: '<color>';
   inherits: true;
   initial-value: hwb(0 85% 15%);
 }
-@property --mm-plate-color-active {
+@property --resolved-plate-color-active {
   syntax: '<color>';
   inherits: true;
   initial-value: hwb(0 0% 100%);
 }
-@property --mm-plate-font-size {
+@property --resolved-plate-font-size {
   syntax: '<length>';
   inherits: true;
   initial-value: 20px;
 }
-@property --mm-connector-thickness {
+@property --resolved-label-min-width {
+  syntax: '<length-percentage>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --resolved-label-max-width {
+  syntax: '<length-percentage> | none';
+  inherits: true;
+  initial-value: none;
+}
+@property --resolved-connector-thickness {
   syntax: '<length>';
   inherits: true;
   initial-value: 4px;
 }
-@property --mm-inner-connector-color {
+@property --resolved-inner-connector-color {
   syntax: '<color>';
   inherits: true;
   initial-value: transparent;
 }
-@property --mm-wedge-gap {
+@property --resolved-outer-connector-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 95% 5%);
+}
+@property --resolved-outer-connector-color-active {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 85% 15%);
+}
+@property --resolved-wedge-fill {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 95% 5%);
+}
+@property --resolved-wedge-fill-active {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 85% 15%);
+}
+@property --resolved-wedge-gap {
   syntax: '<length>';
   inherits: true;
   initial-value: 4px;
 }
-@property --mm-wedge-corner-radius {
+@property --resolved-wedge-corner-radius {
   syntax: '<length>';
   inherits: true;
   initial-value: 4px;
 }
-@property --mm-plate-gap-horizontal {
+@property --resolved-plate-gap-horizontal {
   syntax: '<length>';
   inherits: true;
   initial-value: 12px;
 }
-@property --mm-plate-gap-vertical {
+@property --resolved-plate-gap-vertical {
   syntax: '<length>';
   inherits: true;
   initial-value: 4px;
 }
-@property --mm-plate-gap-ring {
+@property --resolved-plate-gap-ring {
   syntax: '<length>';
   inherits: true;
   initial-value: 12px;
 }
-@property --mm-plate-gap-connector {
+@property --resolved-plate-gap-connector {
   syntax: '<length>';
   inherits: true;
   initial-value: 4px;
 }
-@property --mm-stroke-color {
+@property --resolved-stroke-color {
   syntax: '<color>';
   inherits: true;
   initial-value: hwb(0 0% 100%);
 }
-@property --mm-stroke-width {
+@property --resolved-stroke-width {
   syntax: '<length>';
   inherits: true;
   initial-value: 4px;
 }
-@property --mm-stroke-start-point-radius {
+@property --resolved-stroke-start-point-radius {
   syntax: '<length>';
   inherits: true;
   initial-value: 8px;
 }
-@property --mm-stroke-color-lower {
+@property --resolved-stroke-color-lower {
   syntax: '<color>';
   inherits: true;
   initial-value: hwb(0 47% 53%);
 }
-@property --mm-stroke-color-canceled {
+@property --resolved-stroke-width-lower {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-stroke-start-point-radius-lower {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-stroke-color-feedback {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 0% 100%);
+}
+@property --resolved-stroke-width-feedback {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 4px;
+}
+@property --resolved-stroke-color-canceled {
   syntax: '<color>';
   inherits: true;
   initial-value: hwb(11 32% 13%);
+}
+@property --resolved-indicator-fill {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 0% 100%);
+}
+@property --resolved-indicator-background {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 95% 5%);
 }
 
 :host {
