@@ -161,8 +161,6 @@ Scope the host selector to a container when only one menu should change:
 
 Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Stroke values are resolved when the controller is created and whenever a menu opens; layout values are resolved when a menu opens.
 
-Every property below is validated with [`@property`](https://developer.mozilla.org/en-US/docs/Web/CSS/@property), so a browser that supports it rejects an invalid value (a typo'd color, a unitless length) and falls back to the property's default, rather than resetting the CSS property that reads it to that property's own initial value. For a property whose default mirrors another one (for example `--mm-wedge-fill`, which defaults to the plate background), an invalid value falls back to that other property's own documented default, not to whatever it may currently be customized to. A browser without `@property` support keeps working exactly as before, just without that validation.
-
 ### Plate and label properties
 
 | Property                       | Default          | Purpose                                      |
