@@ -54,6 +54,12 @@ h1 {
   z-index: 1;
 }
 
+/* The menu itself must draw above that same link once it opens, so it isn't
+   visually cut off by it near the bottom of the page. */
+#main .marking-menu {
+  z-index: 2;
+}
+
 #toast-wrapper {
   pointer-events: none;
   position: fixed;
