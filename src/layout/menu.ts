@@ -113,7 +113,7 @@ type MenuDom = {
   root: ShadowRoot;
   probes: LayoutProbes;
   itemElements: ReadonlyMap<string, HTMLDivElement>;
-  createsHost: boolean;
+  isOwnHost: boolean;
 };
 
 export function createMenuHost({
@@ -202,8 +202,8 @@ const template = (
   doc: Document,
   parent: HTMLElement | ShadowRoot,
 ): MenuDom => {
-  const createsHost = isElement(parent);
-  const { root } = createsHost
+  const isOwnHost = isElement(parent);
+  const { root } = isOwnHost
     ? createMenuHost({ parent, doc })
     : { root: parent };
   const main = doc.createElement('div');
@@ -253,7 +253,7 @@ const template = (
     itemElements.set(item.key, elt);
   }
 
-  return { main, root, probes, itemElements, createsHost };
+  return { main, root, probes, itemElements, isOwnHost };
 };
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
@@ -637,7 +637,7 @@ export function createMenu({
   pointerTarget?: boolean;
 }): Menu {
   const menuDom = template({ items: model.items, center }, doc, parent);
-  const { main, root, createsHost } = menuDom;
+  const { main, root, isOwnHost } = menuDom;
   (root.host as HTMLElement).style.setProperty(
     '--inner-radius',
     `${deadZoneRadius}px`,
@@ -682,7 +682,7 @@ export function createMenu({
   };
 
   const remove = () => {
-    if (createsHost) {
+    if (isOwnHost) {
       (root.host as HTMLElement).remove();
     } else {
       main.remove();
