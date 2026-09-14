@@ -180,6 +180,7 @@ export default defineConfig([
           assertFunctionNames: [
             'expect',
             'waitForMenuClosed',
+            'expectNoViolations',
             'waitForFeedbackGone',
           ],
         },

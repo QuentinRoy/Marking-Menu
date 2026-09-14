@@ -36,6 +36,10 @@ export type MenuLayoutItem = {
   The item's angle, in degrees.
   */
   angle: number;
+  /**
+  Whether the item has no submenu.
+  */
+  isLeaf: boolean;
 };
 
 /**
@@ -214,6 +218,8 @@ const template = (
     : { root: parent };
   const main = doc.createElement('div');
   main.className = 'marking-menu-layer';
+  main.role = 'menu';
+  main.tabIndex = -1;
   main.style.setProperty('--center-x', `${center[0]}px`);
   main.style.setProperty('--center-y', `${center[1]}px`);
   root.append(main);
@@ -233,6 +239,12 @@ const template = (
   for (const item of items) {
     const elt = doc.createElement('div');
     elt.className = 'marking-menu-item';
+    elt.role = 'menuitem';
+    elt.tabIndex = -1;
+    if (!item.isLeaf) {
+      elt.ariaHasPopup = 'menu';
+    }
+
     elt.dataset.itemId = item.key;
     elt.style.setProperty('--angle', `${item.angle}deg`);
 
@@ -242,10 +254,12 @@ const template = (
     elt.style.setProperty('--sine', `${Math.sin(-radAngle)}`);
     const innerConnector = doc.createElement('div');
     innerConnector.className = 'marking-menu-inner-connector';
+    innerConnector.ariaHidden = 'true';
     elt.append(innerConnector);
 
     const outerConnector = doc.createElement('div');
     outerConnector.className = 'marking-menu-outer-connector';
+    outerConnector.ariaHidden = 'true';
     elt.append(outerConnector);
 
     const plateElt = doc.createElement('div');
@@ -446,6 +460,7 @@ function appendWedge(
 ): void {
   const svg = doc.createElementNS(svgNamespace, 'svg');
   svg.classList.add('marking-menu-wedge-svg');
+  svg.ariaHidden = 'true';
   svg.setAttribute('width', `${outerRadius * 2}`);
   svg.setAttribute('height', `${outerRadius * 2}`);
   svg.setAttribute(

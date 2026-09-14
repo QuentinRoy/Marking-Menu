@@ -9,10 +9,10 @@ createMenu({
   center: [150, 150],
   model: {
     items: [
-      { angle: 0, key: 'right', label: 'Right' },
-      { angle: 90, key: 'down', label: 'Down' },
-      { angle: 180, key: 'left', label: 'Left' },
-      { angle: 270, key: 'up', label: 'Up' },
+      { angle: 0, key: 'right', label: 'Right', isLeaf: true },
+      { angle: 90, key: 'down', label: 'Down', isLeaf: true },
+      { angle: 180, key: 'left', label: 'Left', isLeaf: true },
+      { angle: 270, key: 'up', label: 'Up', isLeaf: true },
     ],
   },
   parent: surface,

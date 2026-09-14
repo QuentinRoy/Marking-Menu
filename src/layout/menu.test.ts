@@ -6,6 +6,7 @@ const createModel = (itemNb = 0): MenuLayoutModel => ({
     label: `item-${i}-name`,
     angle: i * 10,
     key: `item-${i}-key`,
+    isLeaf: true,
   })),
 });
 
@@ -16,6 +17,7 @@ const createSpreadModel = (itemNb: number): MenuLayoutModel => ({
     label: `item-${i}-name`,
     angle: (360 / itemNb) * i,
     key: `item-${i}-key`,
+    isLeaf: true,
   })),
 });
 
@@ -259,6 +261,7 @@ describe('createMenu', () => {
           angle,
           key: `item-${index}-key`,
           label: `item-${index}`,
+          isLeaf: true,
         })),
       },
       center: [30, 50],
@@ -313,6 +316,7 @@ describe('createMenu', () => {
           angle,
           key: `item-${index}-key`,
           label: `item-${index}`,
+          isLeaf: true,
         })),
       },
       center: [30, 50],
@@ -423,8 +427,8 @@ describe('createMenu', () => {
       // large, separates them within the solver's deterministic work limit.
       model: {
         items: [
-          { label: 'item-0-name', angle: 0, key: 'item-0-key' },
-          { label: 'item-1-name', angle: 0.3, key: 'item-1-key' },
+          { label: 'item-0-name', angle: 0, key: 'item-0-key', isLeaf: true },
+          { label: 'item-1-name', angle: 0.3, key: 'item-1-key', isLeaf: true },
         ],
       },
       center: [30, 50],

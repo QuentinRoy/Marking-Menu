@@ -2,6 +2,7 @@ import { commands } from 'vitest/browser';
 import type { MarkingMenuController } from '../engine/controller.js';
 import { createMarkingMenu, type MarkingMenuConfig } from '../marking-menu.js';
 import type { AnyModelNode } from '../types.js';
+import { fakeTimers } from './timers.js';
 
 declare module 'vitest/browser' {
   // Module augmentation only merges through an interface, not a type alias.
@@ -201,4 +202,24 @@ export const waitForMenuClosed = async (surface: Element): Promise<void> => {
         ?.shadowRoot?.querySelector('.marking-menu-label'),
     )
     .toBeNull();
+};
+
+// Comfortably past the default `noviceDwellingTime` (1000 / 3). The dwell
+// fires deterministically under fake time, so the exact margin doesn't
+// matter.
+const NOVICE_DWELL_MARGIN = 1000;
+
+/**
+ Presses and waits for the menu to open, driving the dwell through fake
+ time rather than waiting on it in real time. The freeze is scoped to this
+ function alone: real timers are restored before it returns, so callers
+ that move the pointer afterward still redraw normally through the real
+ `requestAnimationFrame` their strokes throttle through.
+ */
+export const openMenu = async (surface: Element): Promise<Drag> => {
+  const drag = await press(centerOf(surface));
+  using _timers = fakeTimers();
+  await vi.advanceTimersByTimeAsync(NOVICE_DWELL_MARGIN);
+  await waitForMenuOpen(surface);
+  return drag;
 };

@@ -31,6 +31,7 @@ export type IndicatorSurface = {
 
 function createSurface(doc: Document, parent: HTMLElement | ShadowRoot) {
   const svg = doc.createElementNS(svgNamespace, 'svg');
+  svg.ariaHidden = 'true';
   Object.assign(svg.style, {
     position: 'absolute',
     inset: '0',
