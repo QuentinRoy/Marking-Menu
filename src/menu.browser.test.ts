@@ -1,3 +1,4 @@
+import { userEvent } from 'vitest/browser';
 import {
   centerOf,
   mountMenu,
@@ -9,6 +10,15 @@ import {
   waitForMenuOpen,
   type Point,
 } from './__fixtures__/browser-menu.js';
+
+// The Playwright page (and its mouse button and hover state) is shared
+// across every test in this file, unlike Playwright Test's one page per
+// test. Most tests here press without a matching release, so leaving that
+// state in place would make later screenshots depend on run order.
+afterEach(async () => {
+  await releaseAt();
+  await userEvent.unhover(document.body);
+});
 
 // Mirrors `e2e/fixture/main.ts`'s eight-direction topology, with stable ids:
 // tests key off `id`, not display order or label text.
