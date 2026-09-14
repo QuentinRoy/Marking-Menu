@@ -191,15 +191,19 @@ function appendStrokeThemeProbes(
   };
 }
 
+const isElementParent = (
+  parent: HTMLElement | ShadowRoot,
+): parent is HTMLElement => parent.nodeType === Node.ELEMENT_NODE;
+
 const template = (
   { items, center }: { items: readonly MenuLayoutItem[]; center: Point },
   doc: Document,
   parent: HTMLElement | ShadowRoot,
 ): MenuDom => {
   // `instanceof HTMLElement` would use this module's realm's constructor,
-  // which a `parent` from another document/window never matches. `host`
-  // exists only on a `ShadowRoot`, so its absence is realm-safe.
-  const isOwnHost = !('host' in parent);
+  // which a `parent` from another document/window never matches. Node type
+  // identifies an element without depending on a realm-specific constructor.
+  const isOwnHost = isElementParent(parent);
   const { root } = isOwnHost
     ? createMenuHost({ parent, doc })
     : { root: parent };
