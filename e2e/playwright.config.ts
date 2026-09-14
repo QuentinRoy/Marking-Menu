@@ -37,32 +37,31 @@ export default defineConfig({
   },
   projects: [
     {
-      // `multiple-controllers.spec.ts`, `disposal.spec.ts` and
-      // `dispatch-ordering.spec.ts` drive the library directly against
-      // their own detached surfaces, so one browser is enough coverage for
-      // them; they ride along with this project rather than getting their
-      // own.
+      // Every spec runs here except the `.touch.spec.ts` ones, which need
+      // `hasTouch` (see the `chromium-touch` project below): a plain file,
+      // e.g. `disposal.spec.ts`, needs only this one browser for coverage;
+      // a `.cross-browser.spec.ts` one also runs under `firefox` and
+      // `webkit`.
       name: 'chromium',
-      testMatch:
-        /(?:mouse|multiple-controllers|disposal|dispatch-ordering|layout-pointer-target|stroke-overflow)\.spec\.ts/v,
+      testIgnore: '*.touch.spec.ts',
       use: { ...devices['Desktop Chrome'], viewport },
     },
     {
       name: 'firefox',
-      testMatch: /(?:mouse|stroke-overflow)\.spec\.ts/v,
+      testMatch: '*.cross-browser.spec.ts',
       use: { ...devices['Desktop Firefox'], viewport },
     },
     {
       name: 'webkit',
-      testMatch: /(?:mouse|stroke-overflow)\.spec\.ts/v,
+      testMatch: '*.cross-browser.spec.ts',
       use: { ...devices['Desktop Safari'], viewport },
     },
     {
-      // `concurrent-pointers.spec.ts` needs the same CDP-driven native touch
-      // input as `touch.spec.ts` (see `e2e/helpers/touch.ts`), to get a
-      // genuine second pointer id rather than a simulated one.
+      // A `.touch.spec.ts` file needs the CDP-driven native touch input
+      // `hasTouch` provides (see `e2e/helpers/touch.ts`), to get a genuine
+      // touch pointer id rather than a simulated one.
       name: 'chromium-touch',
-      testMatch: /(?:concurrent-pointers|touch)\.spec\.ts/v,
+      testMatch: '*.touch.spec.ts',
       use: { ...devices['Desktop Chrome'], hasTouch: true, viewport },
     },
   ],

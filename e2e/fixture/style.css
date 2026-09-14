@@ -47,3 +47,13 @@ body {
   top: 30px;
   width: 300px;
 }
+
+#snapshot-area iframe {
+  background: #fff;
+  border: 1px solid #ccc;
+  height: 300px;
+  left: 150px;
+  position: absolute;
+  top: 30px;
+  width: 300px;
+}

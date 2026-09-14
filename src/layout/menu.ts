@@ -2,17 +2,21 @@ import { at, degreesToRadians, normalizeAngle, type Point } from '../utils.js';
 import { solveLabelLayout } from './label-layout.js';
 import menuStyles from './menu.css?inline';
 
-let menuStyleSheet: CSSStyleSheet | undefined;
+// A constructable stylesheet is tied to the realm that created it: a shadow
+// root in another document/window can't adopt one made in this document, so
+// the cache is keyed per document rather than a single module-level value.
+const menuStyleSheets = new WeakMap<Document, CSSStyleSheet>();
 
 function getMenuStyleSheet(doc: Document): CSSStyleSheet {
-  if (menuStyleSheet !== undefined) {
-    return menuStyleSheet;
+  const cached = menuStyleSheets.get(doc);
+  if (cached !== undefined) {
+    return cached;
   }
 
   const styleSheetConstructor = doc.defaultView?.CSSStyleSheet ?? CSSStyleSheet;
   const styleSheet = new styleSheetConstructor();
   styleSheet.replaceSync(menuStyles);
-  menuStyleSheet = styleSheet;
+  menuStyleSheets.set(doc, styleSheet);
   return styleSheet;
 }
 
@@ -114,7 +118,7 @@ type MenuDom = {
 
 export function createMenuHost({
   parent,
-  doc = document,
+  doc = parent.ownerDocument,
 }: {
   parent: HTMLElement;
   doc?: Document;
@@ -192,7 +196,10 @@ const template = (
   doc: Document,
   parent: HTMLElement | ShadowRoot,
 ): MenuDom => {
-  const isOwnHost = parent instanceof HTMLElement;
+  // `instanceof HTMLElement` would use this module's realm's constructor,
+  // which a `parent` from another document/window never matches. `host`
+  // exists only on a `ShadowRoot`, so its absence is realm-safe.
+  const isOwnHost = !('host' in parent);
   const { root } = isOwnHost
     ? createMenuHost({ parent, doc })
     : { root: parent };
@@ -607,13 +614,13 @@ function setItemActive(item: HTMLElement, isActive: boolean): void {
  pointer events. Off by default: a live gesture reads strokes on the surface
  behind the menu, not hovers or clicks on the menu itself. Turn it on for a
  menu meant to be operated directly, such as a static, non-gesture preview.
- @param options.doc - The root document of the menu. Mostly useful for testing
- purposes.
+ @param options.doc - The root document of the menu. Defaults to `parent`'s
+ own document; override only for testing.
  @returns The menu controls.
  */
 export function createMenu({
-  doc = document,
   parent,
+  doc = parent.ownerDocument,
   model,
   center,
   deadZoneRadius = 40,
@@ -663,7 +670,7 @@ export function createMenu({
       (typeof itemId !== 'number' || !Number.isNaN(itemId))
     ) {
       const itemDom = getItemDom(itemId);
-      if (!(itemDom instanceof HTMLElement)) {
+      if (itemDom === undefined) {
         throw new TypeError(`No menu item found for id: ${itemId}`);
       }
 

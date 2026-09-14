@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type FrameLocator, type Page } from '@playwright/test';
 
 export type Point = { x: number; y: number };
 
@@ -57,6 +57,22 @@ export const boundingBoxOf = async (
   selector: string,
 ): Promise<{ x: number; y: number; width: number; height: number }> => {
   const box = await page.locator(selector).boundingBox();
+  if (!box) {
+    throw new TypeError(`${selector} has no bounding box.`);
+  }
+
+  return box;
+};
+
+/**
+The bounding box of the element matching `selector` inside `frame`, in the
+top page's viewport coordinates.
+*/
+export const boundingBoxOfIn = async (
+  frame: FrameLocator,
+  selector: string,
+): Promise<{ x: number; y: number; width: number; height: number }> => {
+  const box = await frame.locator(selector).boundingBox();
   if (!box) {
     throw new TypeError(`${selector} has no bounding box.`);
   }

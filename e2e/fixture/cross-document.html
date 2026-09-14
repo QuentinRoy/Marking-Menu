@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width" name="viewport" />
+    <title>Marking Menu Cross-Document E2E Fixture</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "marking-menu": "./index.js"
+        }
+      }
+    </script>
+    <link href="./style.css" rel="stylesheet" />
+    <!--
+      A stroke color the menu must never pick up: it only makes sense as the
+      top document's own value. The iframe sets its own, different value
+      (see cross-document.ts); the test asserts the rendered stroke uses
+      that one, not this one.
+    -->
+    <style>:root { --mm-stroke-color: red; }</style>
+  </head>
+
+  <body>
+    <pre id="log"></pre>
+    <div id="snapshot-area">
+      <iframe height="300" title="menu surface" width="300"></iframe>
+    </div>
+
+    <script type="module" src="./cross-document.ts"></script>
+  </body>
+</html>
