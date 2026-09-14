@@ -44,8 +44,22 @@ const items = [
 
 const ACTIVE_RADIUS = 100;
 
+// Comfortably past the default `noviceDwellingTime` (1000 / 3): none of
+// this file's menus configure their own, and the exact margin doesn't
+// matter since the dwell fires deterministically under fake time.
+const NOVICE_DWELL_MARGIN = 1000;
+
+/**
+ Presses and waits for the menu to open, driving the dwell through fake
+ time rather than waiting on it in real time. The freeze is scoped to this
+ function alone: real timers are restored before it returns, so callers
+ that move the pointer afterward still redraw normally through the real
+ `requestAnimationFrame` their strokes throttle through.
+ */
 const openMenu = async (surface: Element): Promise<Drag> => {
   const drag = await press(centerOf(surface));
+  using _timers = fakeTimers();
+  await vi.advanceTimersByTimeAsync(NOVICE_DWELL_MARGIN);
   await waitForMenuOpen(surface);
   return drag;
 };
@@ -130,17 +144,27 @@ test('overflow hidden clips an escaping menu and stroke', async () => {
 });
 
 for (const [id, item] of Object.entries(TOP_LEVEL_ITEMS)) {
+  const isSubmenu = id === 'others';
   test(`active ${id} item`, async () => {
     using menu = mountMenu({ items });
     await using drag = await openMenu(menu.surface);
+
     // "others" is a submenu: activating it arms the opening indicator,
     // whose dot grows on real elapsed time. Freezing time after the menu
     // is open (so `waitForMenuOpen`'s own polling still runs normally)
     // keeps that dot at its fixed starting radius for the screenshot,
     // rather than whatever real-time-dependent size CI's scheduling
     // jitter happens to land on.
-    using _timers = fakeTimers();
+    using _timers = isSubmenu ? fakeTimers() : undefined;
     await drag.moveTo(offset(drag.at, item.angle, ACTIVE_RADIUS));
+    if (isSubmenu) {
+      // The stroke line to the pointer draws through the same
+      // `requestAnimationFrame` throttle the fake timers above also
+      // freeze, so it needs one explicit frame advanced before the
+      // screenshot, or it never gets drawn at all.
+      vi.advanceTimersToNextFrame();
+    }
+
     await expect
       .element(menu.snapshotArea)
       .toMatchScreenshot(`menu-active-${id}`);
