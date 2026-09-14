@@ -47,10 +47,16 @@ const activeMenuItems = (parent: HTMLElement): HTMLElement[] => [
     []),
 ];
 
+// Excludes the opening indicator's own SVG: it draws the dwell-anticipation
+// pie, not a stroke, and now renders throughout startup and expert too.
 const strokeSurfaces = (parent: HTMLElement): SVGSVGElement[] =>
   [
     ...(parent.querySelector('.marking-menu')?.shadowRoot?.children ?? []),
-  ].filter((element): element is SVGSVGElement => element.matches('svg'));
+  ].filter(
+    (element): element is SVGSVGElement =>
+      element.matches('svg') &&
+      element.querySelector('.marking-menu-indicator-background') === null,
+  );
 
 describe('createController', () => {
   it('dispatches select carrying the leaf a straight drag recognizes', () => {
@@ -135,13 +141,15 @@ describe('createController', () => {
     parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
 
     const root = parent.querySelector('.marking-menu')?.shadowRoot;
-    expect(root?.querySelector('path')).toBeNull();
+    // The opening indicator's own pie is a `path` too, drawn synchronously
+    // rather than through the throttle this test is exercising.
+    const strokePath = () =>
+      root?.querySelector('path:not(.marking-menu-indicator-pie)');
+    expect(strokePath()).toBeNull();
 
     vi.advanceTimersToNextFrame();
 
-    expect(root?.querySelector('path')?.getAttribute('d')).toBe(
-      'M 0 0 L 10 0 L 50 0 L 100 0',
-    );
+    expect(strokePath()?.getAttribute('d')).toBe('M 0 0 L 10 0 L 50 0 L 100 0');
 
     controller.dispose();
   });

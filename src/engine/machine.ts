@@ -134,6 +134,20 @@ export type NavigationLayoutAnnouncement = {
   };
   readonly upperStroke: readonly Point[] | null;
   readonly lowerStroke: readonly Point[] | null;
+  readonly indicator: null | {
+    // The point the opening indicator grows at. Carries the same reference
+    // the underlying dwell residency's own restart predicate compares
+    // against, so the renderer can tell a continuing dwell from a
+    // restarted one by reference, the same way `createStrokeLayer` already
+    // does for a stroke array.
+    readonly anchor: Point;
+    // The angle (degrees) the indicator's growth starts from, aligned with
+    // the stroke's own direction so the first sliver overlaps the line
+    // already being drawn. `null` when there is no preceding stroke to
+    // align with.
+    readonly alignAngle: number | null;
+    readonly delayMs: number;
+  };
 };
 
 export type NavigationFeedbackAnnouncement = {
@@ -511,7 +525,10 @@ export const navigationMachine = machine({
     // Declared first: every other action, including the dwell residency,
     // must run after the layout for this commit has already been announced.
     '* -> *'({ to, toData, emit }) {
-      emit('layout', projectLayout(toNavigationState(to, toData)));
+      emit(
+        'layout',
+        projectLayout(toNavigationState(to, toData), toData.options),
+      );
     },
 
     startup: {

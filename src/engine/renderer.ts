@@ -1,5 +1,9 @@
 import { createGestureFeedback } from '../layout/gesture-feedback.js';
 import {
+  createIndicatorSurface,
+  type IndicatorSurfaceOptions,
+} from '../layout/indicator.js';
+import {
   createMenu,
   createMenuHost,
   type Menu,
@@ -40,8 +44,98 @@ type MenuHandle<M extends AnyModelNode> = {
 type StrokeLayers = {
   upper: ReturnType<typeof createStrokeLayer>;
   lower: ReturnType<typeof createStrokeLayer>;
+  indicator: ReturnType<typeof createIndicatorLayer>;
   feedback: ReturnType<typeof createGestureFeedback>;
 };
+
+// The opening indicator's start angle when there is no preceding stroke to
+// align it with: straight up, the conventional start of a clock face.
+const DEFAULT_INDICATOR_START_ANGLE = -90;
+
+/**
+ One indicator surface, growing on its own clock rather than in response to
+ renders: while the pointer dwells, nothing else changes, so the layout
+ announcement carrying the indicator arrives once and the growth has to
+ keep animating on its own frame loop until either it clears (`sync(null)`)
+ or a fresh dwell (a new `anchor` reference) restarts it.
+ */
+function createIndicatorLayer({
+  parent,
+  coordinateParent,
+  surfaceOptions,
+}: {
+  parent: ShadowRoot;
+  coordinateParent: HTMLElement;
+  surfaceOptions?: Omit<IndicatorSurfaceOptions, 'parent'>;
+}): {
+  sync: (indicator: LayoutView<AnyModelNode>['indicator']) => void;
+  element: () => SVGSVGElement | null;
+  dispose: () => void;
+} {
+  let surface: ReturnType<typeof createIndicatorSurface> | null = null;
+  let currentAnchor: Point | null = null;
+  let frame = -1;
+
+  const stop = (): void => {
+    if (frame === -1) {
+      return;
+    }
+
+    cancelAnimationFrame(frame);
+    frame = -1;
+  };
+
+  const tick = (
+    anchor: Point,
+    alignAngle: number | null,
+    delayMs: number,
+    startTime: number,
+  ): void => {
+    const rect = coordinateParent.getBoundingClientRect();
+    const progress = Math.min(1, (Date.now() - startTime) / delayMs);
+    surface?.draw(
+      toLocalPoint(anchor, rect),
+      alignAngle ?? DEFAULT_INDICATOR_START_ANGLE,
+      360 * progress,
+    );
+    frame =
+      progress < 1
+        ? requestAnimationFrame(() => {
+            tick(anchor, alignAngle, delayMs, startTime);
+          })
+        : -1;
+  };
+
+  return {
+    sync(indicator) {
+      if (indicator === null) {
+        stop();
+        surface?.remove();
+        surface = null;
+        currentAnchor = null;
+        return;
+      }
+
+      surface ??= createIndicatorSurface({ parent, ...surfaceOptions });
+      if (indicator.anchor !== currentAnchor) {
+        currentAnchor = indicator.anchor;
+        stop();
+        tick(
+          indicator.anchor,
+          indicator.alignAngle,
+          indicator.delayMs,
+          Date.now(),
+        );
+      }
+    },
+    element: () => surface?.element ?? null,
+    dispose() {
+      stop();
+      surface?.remove();
+      surface = null;
+    },
+  };
+}
 
 /**
  One stroke surface (upper or lower), owning its own reference-equality cache
@@ -129,6 +223,15 @@ function createStrokeLayers(
         pointRadius: strokeTheme.lowerStrokeStartPointRadius,
       },
     }),
+    indicator: createIndicatorLayer({
+      parent,
+      coordinateParent: parent.host.parentElement as HTMLElement,
+      surfaceOptions: {
+        radius: strokeTheme.strokeStartPointRadius,
+        fillColor: strokeTheme.indicatorFill,
+        backgroundColor: strokeTheme.indicatorBackground,
+      },
+    }),
     feedback: createGestureFeedback({
       parent,
       duration: gestureFeedbackDuration,
@@ -194,6 +297,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
 
     strokeLayers.upper.dispose();
     strokeLayers.lower.dispose();
+    strokeLayers.indicator.dispose();
     strokeLayers = createStrokeLayers(
       root,
       strokeTheme,
@@ -232,11 +336,21 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
       menuElement.after(upper);
     }
 
+    // The opening indicator paints just above the upper stroke: while it
+    // grows there is no dot yet to sit in front of, and once it does exist
+    // (dwelling on a submenu, over an already-open menu) it is the thing
+    // announcing where the *next* dot is about to appear.
+    const indicator = strokeLayers.indicator.element();
+    const afterUpperOrMenu = upper ?? menuElement;
+    if (indicator !== null && !isPaintedBefore(afterUpperOrMenu, indicator)) {
+      afterUpperOrMenu.after(indicator);
+    }
+
     const feedbackTraces = [
       ...previousFeedbackLayers.flatMap((feedback) => feedback.elements()),
       ...strokeLayers.feedback.elements(),
     ];
-    let previousLayer: Element = upper ?? menuElement;
+    let previousLayer: Element = indicator ?? upper ?? menuElement;
     for (const trace of feedbackTraces) {
       if (!isPaintedBefore(previousLayer, trace)) {
         previousLayer.after(trace);
@@ -301,6 +415,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
         drawStartPoint: isNoviceMode,
       });
       strokeLayers.lower.sync(view.lowerStroke);
+      strokeLayers.indicator.sync(view.indicator);
       restack();
     },
     showFeedback(effect) {
@@ -314,6 +429,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
       parent.style.cursor = ownCursor;
       strokeLayers.upper.dispose();
       strokeLayers.lower.dispose();
+      strokeLayers.indicator.dispose();
       menuHandle?.menu.remove();
       menuHandle = null;
       for (const feedback of previousFeedbackLayers) {

@@ -184,6 +184,22 @@ test('gesture feedback fades after its duration', async () => {
   ).toBeNull();
 });
 
+test('growing opening indicator mid-dwell, before novice mode opens', async () => {
+  using menu = mountMenu({ items });
+  using _timers = fakeTimers();
+  const center = centerOf(menu.surface);
+  await using _drag = await press(center);
+
+  // Half of the default novice dwelling time (1000 / 3 ms): far enough
+  // along to show a partial sector, short enough to stay well clear of
+  // the dwell actually firing and opening the menu.
+  await vi.advanceTimersByTimeAsync(1000 / 6);
+
+  await expect
+    .element(menu.snapshotArea)
+    .toMatchScreenshot('opening-indicator-mid-dwell');
+});
+
 test('64px dead zone menu open', async () => {
   using menu = mountMenu({ items, deadZoneRadius: 64 });
   await using _drag = await openMenu(menu.surface);

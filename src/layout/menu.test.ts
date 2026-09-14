@@ -171,11 +171,15 @@ describe('createMenu', () => {
       'stroke-color-feedback': 'color(srgb 0.7 0.8 0.9)',
       'stroke-width-feedback': '4px',
       'stroke-color-canceled': 'color(srgb 0.9 0.2 0.1)',
+      'indicator-fill': 'color(srgb 0.2 0.9 0.3)',
+      'indicator-background': 'color(srgb 0.3 0.9 0.8)',
     };
     const getComputedStyle = globalThis.getComputedStyle.bind(globalThis);
     vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
-      const probeClass = [...element.classList].find((className) =>
-        className.startsWith('marking-menu-layout-probe--stroke-'),
+      const probeClass = [...element.classList].find(
+        (className) =>
+          className.startsWith('marking-menu-layout-probe--stroke-') ||
+          className.startsWith('marking-menu-layout-probe--indicator-'),
       );
       if (probeClass === undefined) {
         return getComputedStyle(element);
@@ -207,6 +211,8 @@ describe('createMenu', () => {
       gestureFeedbackStrokeColor: values['stroke-color-feedback'],
       gestureFeedbackStrokeWidth: 4,
       gestureFeedbackCanceledStrokeColor: values['stroke-color-canceled'],
+      indicatorFill: values['indicator-fill'],
+      indicatorBackground: values['indicator-background'],
     });
     expect(
       getShadowRoot(div).querySelector('.marking-menu-layout-probe'),

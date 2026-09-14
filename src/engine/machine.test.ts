@@ -844,4 +844,81 @@ describe('navigationMachine', () => {
       ]);
     });
   });
+
+  describe('the indicator it announces to the layout', () => {
+    it('shows the indicator anchored at the origin, with no alignment, while dwelling in startup', () => {
+      const host = startHost();
+      const layouts = recordLayouts(host);
+
+      host.send('down', { position: [0, 0] });
+
+      expect(layouts.at(-1)?.indicator).toEqual({
+        anchor: [0, 0],
+        alignAngle: null,
+        delayMs: options.noviceDwellingTime,
+      });
+    });
+
+    it('shows the indicator anchored at the moving dwell anchor, aligned to the direction of travel, while dwelling in expert', () => {
+      const host = startHost();
+      const layouts = recordLayouts(host);
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] }); // Crosses the threshold: expert, heading right.
+
+      expect(layouts.at(-1)?.indicator).toEqual({
+        anchor: [100, 0],
+        alignAngle: 0, // Right, matching the direction just traveled.
+        delayMs: options.noviceDwellingTime,
+      });
+    });
+
+    it("keeps the expert indicator's anchor reference stable across insignificant movement, and gives it a fresh one on significant movement, mirroring the dwell restart it drives", () => {
+      const host = startHost();
+      const layouts = recordLayouts(host);
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] }); // Enters expert.
+      const firstAnchor = layouts.at(-1)?.indicator?.anchor;
+
+      host.send('move', { position: [102, 0] }); // Insignificant (<5px).
+      expect(layouts.at(-1)?.indicator?.anchor).toBe(firstAnchor);
+
+      host.send('move', { position: [200, 0] }); // Significant.
+      expect(layouts.at(-1)?.indicator?.anchor).not.toBe(firstAnchor);
+    });
+
+    it('shows no indicator in novice mode while the pointer is within the dead zone', () => {
+      const host = startHost();
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+
+      expect(layouts.at(-1)?.indicator).toBeNull();
+    });
+
+    it('shows no indicator in novice mode while the active item is a leaf', () => {
+      const host = startHost(); // The plain, leaf-only fixture model.
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+      host.send('move', { position: [200, 0] }); // Activates the leaf "right".
+
+      expect(layouts.at(-1)?.indicator).toBeNull();
+    });
+
+    it('shows the indicator anchored at the dwell anchor, aligned to the straight line from the menu center, while the active item is a submenu', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] }); // Activates the submenu "right".
+
+      expect(layouts.at(-1)?.indicator).toEqual({
+        anchor: [100, 0],
+        alignAngle: 0, // Right, straight out from the menu center.
+        delayMs: options.submenuOpeningDelay,
+      });
+    });
+  });
 });
