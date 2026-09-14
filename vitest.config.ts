@@ -125,7 +125,7 @@ export default defineConfig({
       },
       {
         test: {
-          name: 'visual',
+          name: 'browser',
           include: ['src/**/*.browser.test.ts'],
           browser: {
             enabled: true,

@@ -322,7 +322,7 @@ Nine stroke options moved from `createMarkingMenu` configuration to CSS:
 
 ## Development
 
-Visual baselines are committed for the pinned container only (`-chromium-linux.png`). Outside it, `yarn test:visual` has nothing to compare against and just writes a fresh platform-local baseline (e.g. `-chromium-darwin.png`, gitignored) on first run. Generate that baseline before making a rendering change, so running the same command afterward gives a diff instead of an automatic pass. Inside the container this isn't needed: the checked-in `-chromium-linux.png` files are already the reference to test against.
+Visual baselines are committed for the pinned container only (`-chromium-linux.png`). Outside it, `yarn test:browser` has nothing to compare against and just writes a fresh platform-local baseline (e.g. `-chromium-darwin.png`, gitignored) on first run. Generate that baseline before making a rendering change, so running the same command afterward gives a diff instead of an automatic pass. Inside the container this isn't needed: the checked-in `-chromium-linux.png` files are already the reference to test against.
 
 If a PR changes rendered output, CI fails and comments with the list of mismatched snapshots. Adding the `update screenshots` label to the PR regenerates and commits them automatically (same-repo PRs only; forks and Dependabot need a maintainer to do it from a trusted branch).
 
