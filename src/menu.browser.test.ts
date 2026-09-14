@@ -3,11 +3,10 @@ import {
   centerOf,
   mountMenu,
   offset,
+  openMenu,
   press,
   TOP_LEVEL_ITEMS,
   waitForMenuClosed,
-  waitForMenuOpen,
-  type Drag,
 } from './__fixtures__/browser-menu.js';
 import { fakeTimers } from './__fixtures__/timers.js';
 
@@ -43,26 +42,6 @@ const items = [
 ] as const;
 
 const ACTIVE_RADIUS = 100;
-
-// Comfortably past the default `noviceDwellingTime` (1000 / 3): none of
-// this file's menus configure their own, and the exact margin doesn't
-// matter since the dwell fires deterministically under fake time.
-const NOVICE_DWELL_MARGIN = 1000;
-
-/**
- Presses and waits for the menu to open, driving the dwell through fake
- time rather than waiting on it in real time. The freeze is scoped to this
- function alone: real timers are restored before it returns, so callers
- that move the pointer afterward still redraw normally through the real
- `requestAnimationFrame` their strokes throttle through.
- */
-const openMenu = async (surface: Element): Promise<Drag> => {
-  const drag = await press(centerOf(surface));
-  using _timers = fakeTimers();
-  await vi.advanceTimersByTimeAsync(NOVICE_DWELL_MARGIN);
-  await waitForMenuOpen(surface);
-  return drag;
-};
 
 const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-fill', '#2d6a4f');
