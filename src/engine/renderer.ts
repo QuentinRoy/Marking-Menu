@@ -1,5 +1,9 @@
 import { createGestureFeedback } from '../layout/gesture-feedback.js';
 import {
+  createIndicatorSurface,
+  type IndicatorSurfaceOptions,
+} from '../layout/indicator.js';
+import {
   createMenu,
   createMenuHost,
   type Menu,
@@ -40,8 +44,94 @@ type MenuHandle<M extends AnyModelNode> = {
 type StrokeLayers = {
   upper: ReturnType<typeof createStrokeLayer>;
   lower: ReturnType<typeof createStrokeLayer>;
+  indicator: ReturnType<typeof createIndicatorLayer>;
   feedback: ReturnType<typeof createGestureFeedback>;
 };
+
+/**
+ One indicator surface, growing on its own clock rather than in response to
+ renders: while the pointer dwells, nothing else changes, so the layout
+ announcement carrying the indicator arrives once and the growth has to
+ keep animating on its own frame loop until either it clears (`sync(null)`)
+ or a fresh dwell (a new `anchor` reference) restarts it. `position` is
+ tracked separately from `anchor`: the anchor only carries restart
+ identity and can lag behind the pointer by up to `movementsThreshold`,
+ but the indicator itself must always sit exactly where the stroke's own
+ tip currently is, so every `sync` call updates it even when the anchor
+ (and so the growth's timing) does not restart.
+ */
+function createIndicatorLayer({
+  parent,
+  coordinateParent,
+  surfaceOptions,
+}: {
+  parent: ShadowRoot;
+  coordinateParent: HTMLElement;
+  surfaceOptions?: Omit<IndicatorSurfaceOptions, 'parent'>;
+}): {
+  sync: (indicator: LayoutView<AnyModelNode>['indicator']) => void;
+  backgroundElement: () => SVGSVGElement | null;
+  dotElement: () => SVGSVGElement | null;
+  dispose: () => void;
+} {
+  let surface: ReturnType<typeof createIndicatorSurface> | null = null;
+  let currentAnchor: Point | null = null;
+  let currentPosition: Point | null = null;
+  let frame = -1;
+
+  const stop = (): void => {
+    if (frame === -1) {
+      return;
+    }
+
+    cancelAnimationFrame(frame);
+    frame = -1;
+  };
+
+  const tick = (delayMs: number, startTime: number): void => {
+    if (currentPosition === null) {
+      return;
+    }
+
+    const rect = coordinateParent.getBoundingClientRect();
+    const progress = Math.min(1, (Date.now() - startTime) / delayMs);
+    surface?.draw(toLocalPoint(currentPosition, rect), progress);
+    frame =
+      progress < 1
+        ? requestAnimationFrame(() => {
+            tick(delayMs, startTime);
+          })
+        : -1;
+  };
+
+  return {
+    sync(indicator) {
+      if (indicator === null) {
+        stop();
+        surface?.remove();
+        surface = null;
+        currentAnchor = null;
+        currentPosition = null;
+        return;
+      }
+
+      surface ??= createIndicatorSurface({ parent, ...surfaceOptions });
+      currentPosition = indicator.position;
+      if (indicator.anchor !== currentAnchor) {
+        currentAnchor = indicator.anchor;
+        stop();
+        tick(indicator.delayMs, Date.now());
+      }
+    },
+    backgroundElement: () => surface?.backgroundElement ?? null,
+    dotElement: () => surface?.dotElement ?? null,
+    dispose() {
+      stop();
+      surface?.remove();
+      surface = null;
+    },
+  };
+}
 
 /**
  One stroke surface (upper or lower), owning its own reference-equality cache
@@ -129,6 +219,16 @@ function createStrokeLayers(
         pointRadius: strokeTheme.lowerStrokeStartPointRadius,
       },
     }),
+    indicator: createIndicatorLayer({
+      parent,
+      coordinateParent: parent.host.parentElement as HTMLElement,
+      surfaceOptions: {
+        radius: strokeTheme.strokeStartPointRadius,
+        strokeWidth: strokeTheme.strokeWidth,
+        fillColor: strokeTheme.indicatorFill,
+        backgroundColor: strokeTheme.indicatorBackground,
+      },
+    }),
     feedback: createGestureFeedback({
       parent,
       duration: gestureFeedbackDuration,
@@ -194,6 +294,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
 
     strokeLayers.upper.dispose();
     strokeLayers.lower.dispose();
+    strokeLayers.indicator.dispose();
     strokeLayers = createStrokeLayers(
       root,
       strokeTheme,
@@ -218,31 +319,49 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
    */
   function restack(): void {
     const menuElement = menuHandle?.menu.layer;
-    if (menuElement === undefined) {
-      return;
-    }
 
     const lower = strokeLayers.lower.element();
-    if (lower !== null && !isPaintedBefore(lower, menuElement)) {
+    if (
+      menuElement !== undefined &&
+      lower !== null &&
+      !isPaintedBefore(lower, menuElement)
+    ) {
       menuElement.before(lower);
     }
 
-    const upper = strokeLayers.upper.element();
-    if (upper !== null && !isPaintedBefore(menuElement, upper)) {
-      menuElement.after(upper);
-    }
+    // Chains every remaining layer in paint order, each moved right after
+    // the one before it only when it isn't already there. `tail` starts
+    // undefined when no menu is open (startup and expert, where the
+    // indicator and the upper stroke draw with nothing to anchor against
+    // yet): the first layer found then anchors the rest, wherever it
+    // already sits.
+    let tail: Element | undefined = menuElement;
+    const place = (element: Element | null): void => {
+      if (element === null) {
+        return;
+      }
+
+      if (tail !== undefined && !isPaintedBefore(tail, element)) {
+        tail.after(element);
+      }
+
+      tail = element;
+    };
+
+    // The indicator's background sits behind the upper stroke: it is
+    // static, not something announcing itself in front of it. The growing
+    // dot stays in front, in the upper stroke's own slot, since it is what
+    // becomes the novice-mode dot there.
+    place(strokeLayers.indicator.backgroundElement());
+    place(strokeLayers.upper.element());
+    place(strokeLayers.indicator.dotElement());
 
     const feedbackTraces = [
       ...previousFeedbackLayers.flatMap((feedback) => feedback.elements()),
       ...strokeLayers.feedback.elements(),
     ];
-    let previousLayer: Element = upper ?? menuElement;
     for (const trace of feedbackTraces) {
-      if (!isPaintedBefore(previousLayer, trace)) {
-        previousLayer.after(trace);
-      }
-
-      previousLayer = trace;
+      place(trace);
     }
 
     for (let index = previousFeedbackLayers.length - 1; index >= 0; index--) {
@@ -255,10 +374,12 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   return {
     render(view) {
       parent.style.cursor = view.cursor === 'default' ? ownCursor : view.cursor;
-      // `projectLayout` sets `cursor: 'none'` exactly in novice mode: the
-      // only phase where the upper stroke's origin point (the gesture's
-      // start) is drawn alongside the line.
-      const isNoviceMode = view.cursor === 'none';
+      // A menu is open exactly in novice mode: the only phase where the
+      // upper stroke's origin point (the gesture's start) is drawn
+      // alongside the line. `cursor` alone no longer distinguishes this,
+      // since startup and expert now also hide the cursor while their own
+      // opening indicator is shown.
+      const isNoviceMode = view.menu !== null;
 
       if (view.menu === null) {
         menuHandle?.menu.remove();
@@ -301,6 +422,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
         drawStartPoint: isNoviceMode,
       });
       strokeLayers.lower.sync(view.lowerStroke);
+      strokeLayers.indicator.sync(view.indicator);
       restack();
     },
     showFeedback(effect) {
@@ -314,6 +436,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
       parent.style.cursor = ownCursor;
       strokeLayers.upper.dispose();
       strokeLayers.lower.dispose();
+      strokeLayers.indicator.dispose();
       menuHandle?.menu.remove();
       menuHandle = null;
       for (const feedback of previousFeedbackLayers) {

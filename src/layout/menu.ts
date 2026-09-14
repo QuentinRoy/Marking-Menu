@@ -84,6 +84,8 @@ type StrokeThemeProbes = {
   strokeColorFeedback: HTMLElement;
   strokeWidthFeedback: HTMLElement;
   strokeColorCanceled: HTMLElement;
+  indicatorFill: HTMLElement;
+  indicatorBackground: HTMLElement;
 };
 
 type LayoutProbes = StrokeThemeProbes & {
@@ -106,6 +108,8 @@ export type MenuStrokeTheme = {
   gestureFeedbackStrokeColor: string;
   gestureFeedbackStrokeWidth: number;
   gestureFeedbackCanceledStrokeColor: string;
+  indicatorFill: string;
+  indicatorBackground: string;
 };
 
 type MenuDom = {
@@ -188,6 +192,8 @@ function appendStrokeThemeProbes(
       doc,
       'stroke-color-canceled',
     ),
+    indicatorFill: appendLayoutProbe(parent, doc, 'indicator-fill'),
+    indicatorBackground: appendLayoutProbe(parent, doc, 'indicator-background'),
   };
 }
 
@@ -427,6 +433,8 @@ function readStrokeTheme(
       probes.strokeColorCanceled,
       '#de6c52',
     ),
+    indicatorFill: readColor(doc, probes.indicatorFill, '#000000'),
+    indicatorBackground: readColor(doc, probes.indicatorBackground, '#f2f2f2'),
   };
 }
 

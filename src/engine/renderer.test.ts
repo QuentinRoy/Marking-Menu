@@ -33,12 +33,14 @@ describe('createRenderer', () => {
       menu: { model, center: [0, 0], activeKey: null },
       upperStroke: null,
       lowerStroke: null,
+      indicator: null,
     });
     renderer.render({
       cursor: 'default',
       menu: null,
       upperStroke: null,
       lowerStroke: null,
+      indicator: null,
     });
 
     expect(parent.querySelectorAll('.marking-menu')).toHaveLength(1);
@@ -62,6 +64,7 @@ describe('createRenderer', () => {
         [260, 90],
       ],
       lowerStroke: null,
+      indicator: null,
     });
     left = 210;
     renderFrame();
@@ -106,6 +109,7 @@ describe('createRenderer', () => {
         [0, 0],
         [5, 5],
       ],
+      indicator: null,
     });
     renderFrame();
     renderer.render({
@@ -119,6 +123,7 @@ describe('createRenderer', () => {
         [0, 0],
         [5, 5],
       ],
+      indicator: null,
     });
 
     const layers = [...rootOf(parent).children]
@@ -159,6 +164,7 @@ describe('createRenderer', () => {
         [10, 0],
       ],
       lowerStroke: null,
+      indicator: null,
     });
     renderer.showFeedback({ stroke: [[0, 0]], canceled: false });
     renderer.dispose();
@@ -166,5 +172,94 @@ describe('createRenderer', () => {
     expect(cancelFrame).toHaveBeenCalledOnce();
     expect(clearTimer).toHaveBeenCalled();
     expect(parent.children).toHaveLength(0);
+  });
+
+  it("draws the opening indicator's background and dot at the given anchor, and removes both once the indicator clears", () => {
+    const parent = document.createElement('div');
+    const renderer = createRenderer<typeof model>({ parent });
+
+    renderer.render({
+      cursor: 'crosshair',
+      menu: null,
+      upperStroke: [[0, 0]],
+      lowerStroke: null,
+      indicator: { anchor: [20, 30], position: [20, 30], delayMs: 300 },
+    });
+
+    const root = rootOf(parent);
+    const background = root.querySelector('.marking-menu-indicator-background');
+    expect(background?.getAttribute('cx')).toBe('20');
+    expect(background?.getAttribute('cy')).toBe('30');
+    expect(root.querySelector('.marking-menu-indicator-dot')).not.toBeNull();
+
+    renderer.render({
+      cursor: 'default',
+      menu: null,
+      upperStroke: null,
+      lowerStroke: null,
+      indicator: null,
+    });
+
+    expect(root.querySelector('.marking-menu-indicator-background')).toBeNull();
+    expect(root.querySelector('.marking-menu-indicator-dot')).toBeNull();
+    renderer.dispose();
+  });
+
+  it("paints the indicator's background behind the upper stroke and its dot in front of it", () => {
+    const parent = document.createElement('div');
+    const renderer = createRenderer<typeof model>({ parent });
+
+    renderer.render({
+      cursor: 'crosshair',
+      menu: null,
+      upperStroke: [[0, 0]],
+      lowerStroke: null,
+      indicator: { anchor: [20, 30], position: [20, 30], delayMs: 300 },
+    });
+
+    const root = rootOf(parent);
+    const backgroundSvg = root
+      .querySelector('.marking-menu-indicator-background')
+      ?.closest('svg');
+    const dotSvg = root
+      .querySelector('.marking-menu-indicator-dot')
+      ?.closest('svg');
+    const upperSvg = [...root.querySelectorAll('svg')].find(
+      (svg) => svg !== backgroundSvg && svg !== dotSvg,
+    );
+    expect(upperSvg).toBeDefined();
+    expect(upperSvg?.compareDocumentPosition(backgroundSvg as Node)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+    expect(upperSvg?.compareDocumentPosition(dotSvg as Node)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    renderer.dispose();
+  });
+
+  it('grows the dot toward the background radius over the given delay, and cancels its animation frame on dispose', () => {
+    const parent = document.createElement('div');
+    const renderer = createRenderer<typeof model>({ parent });
+    const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame');
+
+    renderer.render({
+      cursor: 'crosshair',
+      menu: null,
+      upperStroke: [[0, 0]],
+      lowerStroke: null,
+      indicator: { anchor: [0, 0], position: [0, 0], delayMs: 300 },
+    });
+
+    const dot = rootOf(parent).querySelector('.marking-menu-indicator-dot');
+    const radiusAtStart = Number(dot?.getAttribute('r'));
+    renderFrame();
+    vi.advanceTimersByTime(150);
+    renderFrame();
+    const radiusAtHalfway = Number(dot?.getAttribute('r'));
+
+    expect(radiusAtHalfway).toBeGreaterThan(radiusAtStart);
+
+    renderer.dispose();
+    expect(cancelFrame).toHaveBeenCalled();
   });
 });

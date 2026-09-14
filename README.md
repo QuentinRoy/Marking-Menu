@@ -225,6 +225,15 @@ The active outer connector uses `--mm-outer-connector-color` when it is set, or 
 
 Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
 
+### Opening indicator properties
+
+Before novice mode opens, and again while dwelling on a submenu, a background circle appears at the pointer with a dot growing inside it. The dot reaches the circle's size right as the menu opens, then becomes its start marker with no visible jump. The cursor stays hidden while it is visible. Expert mode never shows it, since a gesture fast enough to stay there rarely pauses long enough for it to matter.
+
+| Property                    | Default      | Purpose                  |
+| --------------------------- | ------------ | ------------------------ |
+| `--mm-indicator-fill`       | Stroke color | Growing dot color.       |
+| `--mm-indicator-background` | Wedge fill   | Background circle color. |
+
 ## Input behavior
 
 Gestures start with the primary mouse button, primary touch contact, or primary pen contact. The controller sets the parent's inline `touch-action` to `none !important` for its lifetime, preventing browser touch gestures in that area.

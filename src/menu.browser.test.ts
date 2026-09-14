@@ -64,6 +64,42 @@ const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-thickness', '60px');
 };
 
+test("opening indicator background matches the wedge's resting fill, by default", async () => {
+  using menu = mountMenu({ items });
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.others.angle, ACTIVE_RADIUS),
+  );
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  await expect
+    .poll(() => root?.querySelector('.marking-menu-indicator-background'))
+    .not.toBeNull();
+
+  const background = root?.querySelector('.marking-menu-indicator-background');
+  const wedge = root?.querySelector('.marking-menu-wedge');
+  expect(background && getComputedStyle(background).fill).toBe(
+    wedge && getComputedStyle(wedge).fill,
+  );
+});
+
+test('opening indicator background is themeable via --mm-indicator-background', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-indicator-background', '#123456');
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.others.angle, ACTIVE_RADIUS),
+  );
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  await expect
+    .poll(() => root?.querySelector('.marking-menu-indicator-background'))
+    .not.toBeNull();
+
+  const background = root?.querySelector('.marking-menu-indicator-background');
+  expect(getComputedStyle(background as Element).fill).toBe('rgb(18, 52, 86)');
+});
+
 test('default menu open', async () => {
   using menu = mountMenu({ items });
   await using _drag = await openMenu(menu.surface);
@@ -97,6 +133,13 @@ for (const [id, item] of Object.entries(TOP_LEVEL_ITEMS)) {
   test(`active ${id} item`, async () => {
     using menu = mountMenu({ items });
     await using drag = await openMenu(menu.surface);
+    // "others" is a submenu: activating it arms the opening indicator,
+    // whose dot grows on real elapsed time. Freezing time after the menu
+    // is open (so `waitForMenuOpen`'s own polling still runs normally)
+    // keeps that dot at its fixed starting radius for the screenshot,
+    // rather than whatever real-time-dependent size CI's scheduling
+    // jitter happens to land on.
+    using _timers = fakeTimers();
     await drag.moveTo(offset(drag.at, item.angle, ACTIVE_RADIUS));
     await expect
       .element(menu.snapshotArea)
@@ -182,6 +225,22 @@ test('gesture feedback fades after its duration', async () => {
       .querySelector('.marking-menu')
       ?.shadowRoot?.querySelector('svg'),
   ).toBeNull();
+});
+
+test('growing opening indicator mid-dwell, before novice mode opens', async () => {
+  using menu = mountMenu({ items });
+  using _timers = fakeTimers();
+  const center = centerOf(menu.surface);
+  await using _drag = await press(center);
+
+  // Half of the default novice dwelling time (1000 / 3 ms): far enough
+  // along to show a partial sector, short enough to stay well clear of
+  // the dwell actually firing and opening the menu.
+  await vi.advanceTimersByTimeAsync(1000 / 6);
+
+  await expect
+    .element(menu.snapshotArea)
+    .toMatchScreenshot('opening-indicator-mid-dwell');
 });
 
 test('64px dead zone menu open', async () => {

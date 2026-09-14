@@ -844,4 +844,76 @@ describe('navigationMachine', () => {
       ]);
     });
   });
+
+  describe('the indicator it announces to the layout', () => {
+    it('shows the indicator anchored at the origin while dwelling in startup', () => {
+      const host = startHost();
+      const layouts = recordLayouts(host);
+
+      host.send('down', { position: [0, 0] });
+
+      expect(layouts.at(-1)?.indicator).toEqual({
+        anchor: [0, 0],
+        position: [0, 0],
+        delayMs: options.noviceDwellingTime,
+      });
+    });
+
+    it('shows no indicator while dwelling in expert mode', () => {
+      const host = startHost();
+      const layouts = recordLayouts(host);
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] }); // Crosses the threshold: expert.
+
+      expect(layouts.at(-1)?.indicator).toBeNull();
+    });
+
+    it('shows no indicator in novice mode while the pointer is within the dead zone', () => {
+      const host = startHost();
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+
+      expect(layouts.at(-1)?.indicator).toBeNull();
+    });
+
+    it('shows no indicator in novice mode while the active item is a leaf', () => {
+      const host = startHost(); // The plain, leaf-only fixture model.
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+      host.send('move', { position: [200, 0] }); // Activates the leaf "right".
+
+      expect(layouts.at(-1)?.indicator).toBeNull();
+    });
+
+    it('shows the indicator anchored at the dwell anchor while the active item is a submenu', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] }); // Activates the submenu "right".
+
+      expect(layouts.at(-1)?.indicator).toEqual({
+        anchor: [100, 0],
+        position: [100, 0],
+        delayMs: options.submenuOpeningDelay,
+      });
+    });
+
+    it("keeps drawing at the pointer's current position even when a small movement leaves the restart anchor untouched", () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const layouts = recordLayouts(host);
+
+      openNovice(host);
+      host.send('move', { position: [100, 0] }); // Activates the submenu "right".
+      const firstAnchor = layouts.at(-1)?.indicator?.anchor;
+
+      host.send('move', { position: [102, 0] }); // Insignificant (<5px).
+
+      expect(layouts.at(-1)?.indicator?.anchor).toBe(firstAnchor);
+      expect(layouts.at(-1)?.indicator?.position).toEqual([102, 0]);
+    });
+  });
 });
