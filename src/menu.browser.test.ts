@@ -2,21 +2,19 @@ import { userEvent } from 'vitest/browser';
 import {
   centerOf,
   mountMenu,
-  moveTo,
   offset,
-  pressAt,
-  releaseAt,
+  press,
   TOP_LEVEL_ITEMS,
+  waitForFeedbackGone,
+  waitForMenuClosed,
   waitForMenuOpen,
-  type Point,
+  type Drag,
 } from './__fixtures__/browser-menu.js';
 
-// The Playwright page (and its mouse button and hover state) is shared
-// across every test in this file, unlike Playwright Test's one page per
-// test. Most tests here press without a matching release, so leaving that
-// state in place would make later screenshots depend on run order.
+// A touch left active (see `press`) would carry into whichever test runs
+// next, but every press here is scoped with `await using`. Only the hover
+// state, which isn't tied to any single press, needs a blanket reset.
 afterEach(async () => {
-  await releaseAt();
   await userEvent.unhover(document.body);
 });
 
@@ -44,11 +42,10 @@ const items = [
 
 const ACTIVE_RADIUS = 100;
 
-const openMenu = async (surface: Element): Promise<Point> => {
-  const center = centerOf(surface);
-  await pressAt(center);
+const openMenu = async (surface: Element): Promise<Drag> => {
+  const drag = await press(centerOf(surface));
   await waitForMenuOpen(surface);
-  return center;
+  return drag;
 };
 
 const setTheme = (surface: HTMLElement): void => {
@@ -67,7 +64,7 @@ const setTheme = (surface: HTMLElement): void => {
 
 test('default menu open', async () => {
   using menu = mountMenu({ items });
-  await openMenu(menu.surface);
+  await using _drag = await openMenu(menu.surface);
   await expect
     .element(menu.snapshotArea)
     .toMatchScreenshot('menu-default-open');
@@ -75,8 +72,8 @@ test('default menu open', async () => {
 
 test('menu and stroke escape a visible-overflow parent', async () => {
   using menu = mountMenu({ items });
-  const center = await openMenu(menu.surface);
-  await moveTo(offset(center, 0, 200));
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(offset(drag.at, 0, 200));
 
   await expect
     .element(menu.snapshotArea)
@@ -86,8 +83,8 @@ test('menu and stroke escape a visible-overflow parent', async () => {
 test('overflow hidden clips an escaping menu and stroke', async () => {
   using menu = mountMenu({ items });
   menu.surface.style.overflow = 'hidden';
-  const center = await openMenu(menu.surface);
-  await moveTo(offset(center, 0, 200));
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(offset(drag.at, 0, 200));
 
   await expect
     .element(menu.snapshotArea)
@@ -97,8 +94,8 @@ test('overflow hidden clips an escaping menu and stroke', async () => {
 for (const [id, item] of Object.entries(TOP_LEVEL_ITEMS)) {
   test(`active ${id} item`, async () => {
     using menu = mountMenu({ items });
-    const center = await openMenu(menu.surface);
-    await moveTo(offset(center, item.angle, ACTIVE_RADIUS));
+    await using drag = await openMenu(menu.surface);
+    await drag.moveTo(offset(drag.at, item.angle, ACTIVE_RADIUS));
     await expect
       .element(menu.snapshotArea)
       .toMatchScreenshot(`menu-active-${id}`);
@@ -108,15 +105,17 @@ for (const [id, item] of Object.entries(TOP_LEVEL_ITEMS)) {
 test('themed menu open', async () => {
   using menu = mountMenu({ items });
   setTheme(menu.surface);
-  await openMenu(menu.surface);
+  await using _drag = await openMenu(menu.surface);
   await expect.element(menu.snapshotArea).toMatchScreenshot('menu-themed-open');
 });
 
 test('themed active right item', async () => {
   using menu = mountMenu({ items });
   setTheme(menu.surface);
-  const center = await openMenu(menu.surface);
-  await moveTo(offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS));
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+  );
 
   await expect
     .element(menu.snapshotArea)
@@ -125,8 +124,10 @@ test('themed active right item', async () => {
 
 test('novice stroke and origin marker', async () => {
   using menu = mountMenu({ items });
-  const center = await openMenu(menu.surface);
-  await moveTo(offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS));
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+  );
 
   await expect
     .element(menu.snapshotArea)
@@ -136,20 +137,44 @@ test('novice stroke and origin marker', async () => {
 test('concurrent normal and canceled feedback', async () => {
   using menu = mountMenu({ items });
   const center = centerOf(menu.surface);
-  await pressAt(center);
-  await moveTo(offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS), 1);
-  await releaseAt();
-  await pressAt(offset(center, 0, 30));
-  await releaseAt();
+  await using drag = await press(center);
+  await drag.moveTo(
+    offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+    1,
+  );
+  await drag.release();
+
+  await using drag2 = await press(offset(center, 0, 30));
+  await drag2.release();
 
   await expect
     .element(menu.snapshotArea)
     .toMatchScreenshot('stroke-feedback-concurrent');
 });
 
+test('menu closes on release', async () => {
+  using menu = mountMenu({ items });
+  await using drag = await openMenu(menu.surface);
+  await drag.release();
+  await waitForMenuClosed(menu.surface);
+});
+
+test('gesture feedback fades after its duration', async () => {
+  using menu = mountMenu({ items });
+  const center = centerOf(menu.surface);
+  await using drag = await press(center);
+  await drag.moveTo(
+    offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+    1,
+  );
+  await drag.release();
+
+  await waitForFeedbackGone(menu.surface);
+});
+
 test('64px dead zone menu open', async () => {
   using menu = mountMenu({ items, deadZoneRadius: 64 });
-  await openMenu(menu.surface);
+  await using _drag = await openMenu(menu.surface);
   await expect
     .element(menu.snapshotArea)
     .toMatchScreenshot('menu-dead-zone-64-open');
@@ -157,8 +182,10 @@ test('64px dead zone menu open', async () => {
 
 test('64px dead zone active right item', async () => {
   using menu = mountMenu({ items, deadZoneRadius: 64 });
-  const center = await openMenu(menu.surface);
-  await moveTo(offset(center, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS));
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+  );
 
   await expect
     .element(menu.snapshotArea)

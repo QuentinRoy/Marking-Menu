@@ -170,6 +170,20 @@ export default defineConfig([
       // Describe() is called with an imported function reference in some
       // files; the rule can't resolve the import to confirm it's a function.
       'vitest/valid-title': ['error', { allowArguments: true }],
+      // `waitForMenuClosed` and `waitForFeedbackGone`
+      // (`src/__fixtures__/browser-menu.ts`) assert through `expect.poll`
+      // internally; a test built entirely on one of them carries no literal
+      // `expect` call for the rule to find otherwise.
+      'vitest/expect-expect': [
+        'error',
+        {
+          assertFunctionNames: [
+            'expect',
+            'waitForMenuClosed',
+            'waitForFeedbackGone',
+          ],
+        },
+      ],
     },
   },
   {

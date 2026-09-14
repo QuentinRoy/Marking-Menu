@@ -7,9 +7,9 @@ declare module 'vitest/browser' {
   // Module augmentation only merges through an interface, not a type alias.
   // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
   interface BrowserCommands {
-    mouseMove: (x: number, y: number, steps?: number) => Promise<void>;
-    mouseDown: () => Promise<void>;
-    mouseUp: () => Promise<void>;
+    touchStart: (id: number, x: number, y: number) => Promise<void>;
+    touchMove: (id: number, x: number, y: number) => Promise<void>;
+    touchEnd: (id: number) => Promise<void>;
   }
 }
 
@@ -111,30 +111,66 @@ export const centerOf = (element: Element): Point => {
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 };
 
-/**
-Move the mouse to `at` and press the primary button, without releasing.
-*/
-export const pressAt = async (at: Point): Promise<void> => {
-  await commands.mouseMove(at.x, at.y);
-  await commands.mouseDown();
+export type Drag = AsyncDisposable & {
+  readonly at: Point;
+  /**
+  Move this finger to `at`, interpolating steps.
+  */
+  moveTo(at: Point, steps?: number): Promise<void>;
+  /**
+  Lift this finger. Safe to call more than once.
+  */
+  release(): Promise<void>;
 };
 
-/**
-Move the (already pressed or free) mouse to `at`, interpolating steps.
-*/
-export const moveTo = async (at: Point, steps = 5): Promise<void> => {
-  await commands.mouseMove(at.x, at.y, steps);
-};
+let nextFingerId = 0;
 
 /**
-Optionally move to `at`, then release the primary mouse button.
-*/
-export const releaseAt = async (at?: Point): Promise<void> => {
-  if (at) {
-    await commands.mouseMove(at.x, at.y);
-  }
+ Touch down at `at` and hold, as its own finger: a second `press()` while
+ this one is still down drives a genuinely concurrent touch point, the way
+ two fingers on a real screen do (see `vitest.config.ts`'s touch commands).
+ Call `release()` when the gesture should end, or let the scope's
+ disposal (`await using`) do it: the Playwright page behind these tests,
+ unlike Playwright Test's own pages, is shared across every test in the
+ file, so a touch left active would carry into whichever test runs next.
+ */
+export const press = async (at: Point): Promise<Drag> => {
+  const id = nextFingerId;
+  nextFingerId += 1;
+  await commands.touchStart(id, at.x, at.y);
+  let current = at;
+  let hasReleased = false;
 
-  await commands.mouseUp();
+  const release = async (): Promise<void> => {
+    if (hasReleased) {
+      return;
+    }
+
+    hasReleased = true;
+    await commands.touchEnd(id);
+  };
+
+  return {
+    at,
+    async moveTo(to, steps = 5) {
+      const from = current;
+      // Each step is a real touch move at a point in time, so the browser
+      // sees the same gradual path a finger drawing it would: dispatching
+      // them all at once would collapse the interpolation this exists for.
+      for (let step = 1; step <= steps; step += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        await commands.touchMove(
+          id,
+          from.x + ((to.x - from.x) * step) / steps,
+          from.y + ((to.y - from.y) * step) / steps,
+        );
+      }
+
+      current = to;
+    },
+    release,
+    [Symbol.asyncDispose]: release,
+  };
 };
 
 /**
@@ -152,4 +188,35 @@ export const waitForMenuOpen = async (surface: Element): Promise<void> => {
         ?.shadowRoot?.querySelector('.marking-menu-label'),
     )
     .not.toBeNull();
+};
+
+/**
+Wait for a menu opened with {@link waitForMenuOpen} to close.
+*/
+export const waitForMenuClosed = async (surface: Element): Promise<void> => {
+  await expect
+    .poll(() =>
+      surface
+        .querySelector('.marking-menu')
+        ?.shadowRoot?.querySelector('.marking-menu-label'),
+    )
+    .toBeNull();
+};
+
+/**
+ Wait for a completed gesture's feedback trace to fade. It's the only SVG
+ left in `.marking-menu`'s shadow root once the menu itself has closed
+ (`waitForMenuClosed`) and any live stroke has stopped drawing, so its
+ removal, on `gestureFeedbackDuration`'s timer, is what this polls for.
+ */
+export const waitForFeedbackGone = async (surface: Element): Promise<void> => {
+  await expect
+    .poll(
+      () =>
+        surface
+          .querySelector('.marking-menu')
+          ?.shadowRoot?.querySelector('svg'),
+      { timeout: 3000 },
+    )
+    .toBeNull();
 };
