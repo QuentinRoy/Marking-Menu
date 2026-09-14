@@ -133,6 +133,13 @@ for (const [id, item] of Object.entries(TOP_LEVEL_ITEMS)) {
   test(`active ${id} item`, async () => {
     using menu = mountMenu({ items });
     await using drag = await openMenu(menu.surface);
+    // "others" is a submenu: activating it arms the opening indicator,
+    // whose dot grows on real elapsed time. Freezing time after the menu
+    // is open (so `waitForMenuOpen`'s own polling still runs normally)
+    // keeps that dot at its fixed starting radius for the screenshot,
+    // rather than whatever real-time-dependent size CI's scheduling
+    // jitter happens to land on.
+    using _timers = fakeTimers();
     await drag.moveTo(offset(drag.at, item.angle, ACTIVE_RADIUS));
     await expect
       .element(menu.snapshotArea)
