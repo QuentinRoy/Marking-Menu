@@ -17,7 +17,7 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:visual": "vitest run --project=visual",
+    "test:browser": "vitest run --project=browser",
     "typecheck": "tsc -b",
     "test:coverage": "vitest run --coverage",
     "build": "vite build",

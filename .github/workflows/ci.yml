@@ -36,7 +36,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    # The `visual` Vitest project needs a real Chromium; see the `E2E` job's
+    # The `browser` Vitest project needs a real Chromium; see the `E2E` job's
     # comment for why this image and not a fresh browser install.
     container: mcr.microsoft.com/playwright:v1.63.0-noble
     steps:
@@ -54,7 +54,7 @@ jobs:
       - if: >-
           steps.test.outcome == 'failure' &&
           github.event_name == 'pull_request'
-        id: visual
+        id: browser
         run: |
           # Only screenshot assertions count as visual failures. A mismatch
           # fails with this exact string; a missing reference or an unstable
@@ -80,10 +80,10 @@ jobs:
               echo 'EOF'
             } >> "$GITHUB_OUTPUT"
           fi
-      - if: steps.visual.outputs.failed == 'true'
+      - if: steps.browser.outputs.failed == 'true'
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         env:
-          SNAPSHOTS: ${{ steps.visual.outputs.snapshots }}
+          SNAPSHOTS: ${{ steps.browser.outputs.snapshots }}
         with:
           script: |
             const updateLabel = 'update screenshots';
