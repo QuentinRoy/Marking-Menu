@@ -48,16 +48,16 @@ const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-fill-active', '#d00000');
   surface.style.setProperty('--mm-inner-connector-color', '#ffb703');
   surface.style.setProperty('--mm-outer-connector-color', '#023e8a');
-  surface.style.setProperty('--mm-plate-background', '#9b2226');
-  surface.style.setProperty('--mm-plate-background-active', '#f8c8dc');
-  surface.style.setProperty('--mm-plate-color', '#f8f9fa');
-  surface.style.setProperty('--mm-plate-color-active', '#22223b');
+  surface.style.setProperty('--mm-plate-fill', '#9b2226');
+  surface.style.setProperty('--mm-plate-fill-active', '#f8c8dc');
+  surface.style.setProperty('--mm-plate-text-color', '#f8f9fa');
+  surface.style.setProperty('--mm-plate-text-color-active', '#22223b');
   surface.style.setProperty('--mm-stroke-color', '#5a189a');
   surface.style.setProperty('--mm-stroke-width', '10px');
   surface.style.setProperty('--mm-wedge-thickness', '60px');
 };
 
-test('opening indicator background defaults to a mix weighted toward the active wedge fill', async () => {
+test('opening indicator background defaults to a fixed color, independent of wedge fill', async () => {
   using menu = mountMenu({ items });
   menu.surface.style.setProperty('--mm-wedge-fill', '#000000');
   menu.surface.style.setProperty('--mm-wedge-fill-active', '#ffffff');
@@ -73,7 +73,7 @@ test('opening indicator background defaults to a mix weighted toward the active 
 
   const background = root?.querySelector('.marking-menu-indicator-background');
   const probe = document.createElement('div');
-  probe.style.color = 'color-mix(in srgb, #000000 25%, #ffffff 75%)';
+  probe.style.color = 'hwb(0 85% 15%)';
   document.body.append(probe);
   const expectedFill = getComputedStyle(probe).color;
   probe.remove();

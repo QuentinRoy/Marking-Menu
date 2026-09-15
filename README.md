@@ -152,46 +152,60 @@ Scope the host selector to a container when only one menu should change:
 
 ```css
 #menu-area .marking-menu {
-  --mm-plate-background: hwb(0 13% 87%);
-  --mm-plate-color: hwb(0 100% 0%);
-  --mm-plate-background-active: hwb(0 27% 73%);
-  --mm-plate-color-active: hwb(0 100% 0%);
+  --mm-plate-fill: hwb(0 13% 87%);
+  --mm-plate-text-color: hwb(0 100% 0%);
+  --mm-plate-fill-active: hwb(0 27% 73%);
+  --mm-plate-text-color-active: hwb(0 100% 0%);
 }
 ```
 
 Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Stroke values are resolved when the controller is created and whenever a menu opens; layout values are resolved when a menu opens.
 
+Some colors default to a different value in dark mode, resolved with [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark). The dark default only applies once the host page opts in, typically with `color-scheme: light dark` on `:root`.
+
+### Fill and outline colors
+
+Wedges, plates, and outer connectors share one fill color and one inset outline color by default, so a theme usually only needs to set these.
+
+| Property                    | Default                                           | Purpose                               |
+| --------------------------- | ------------------------------------------------- | ------------------------------------- |
+| `--mm-fill-color`           | `hwb(0 58% 42%)`, `hwb(240 37% 58%)` in dark mode | Resting fill color.                   |
+| `--mm-fill-color-active`    | `hwb(0 44% 56%)`, `hwb(240 51% 44%)` in dark mode | Active fill color.                    |
+| `--mm-outline-color`        | Fill color                                        | Inset outline color.                  |
+| `--mm-outline-color-active` | Active fill color                                 | Active inset outline color.           |
+| `--mm-outline-width`        | `0`                                               | Inset outline width. `0` disables it. |
+
 ### Plate and label properties
 
-| Property                          | Default                 | Purpose                                      |
-| --------------------------------- | ----------------------- | -------------------------------------------- |
-| `--mm-plate-background`           | `hwb(0 50% 50%)`        | Plate background.                            |
-| `--mm-plate-color`                | `hwb(0 100% 0%)`        | Label color.                                 |
-| `--mm-plate-background-active`    | `hwb(0 85% 15%)`        | Active plate background.                     |
-| `--mm-plate-color-active`         | `hwb(0 0% 100%)`        | Active label color.                          |
-| `--mm-plate-padding`              | `12px`                  | Space around the label.                      |
-| `--mm-plate-corner-radius`        | `16px`                  | Plate corner radius.                         |
-| `--mm-plate-font-size`            | `20px`                  | Label font size.                             |
-| `--mm-label-min-width`            | `0`                     | Minimum plate width.                         |
-| `--mm-label-max-width`            | `none`                  | Maximum plate width before label truncation. |
-| `--mm-plate-outline-color`        | Plate background        | Plate inset outline color.                   |
-| `--mm-plate-outline-color-active` | Active plate background | Active plate inset outline color.            |
-| `--mm-plate-outline-width`        | `0`                     | Plate inset outline width. `0` disables it.  |
+| Property                          | Default              | Purpose                                      |
+| --------------------------------- | -------------------- | -------------------------------------------- |
+| `--mm-plate-fill`                 | Fill color           | Plate background.                            |
+| `--mm-plate-text-color`           | `hwb(0 100% 0%)`     | Label color.                                 |
+| `--mm-plate-fill-active`          | Active fill color    | Active plate background.                     |
+| `--mm-plate-text-color-active`    | `hwb(0 100% 0%)`     | Active label color.                          |
+| `--mm-plate-padding`              | `12px`               | Space around the label.                      |
+| `--mm-plate-corner-radius`        | `16px`               | Plate corner radius.                         |
+| `--mm-plate-font-size`            | `20px`               | Label font size.                             |
+| `--mm-plate-min-width`            | `0`                  | Minimum plate width.                         |
+| `--mm-plate-max-width`            | `none`               | Maximum plate width before label truncation. |
+| `--mm-plate-outline-color`        | Outline color        | Plate inset outline color.                   |
+| `--mm-plate-outline-color-active` | Active outline color | Active plate inset outline color.            |
+| `--mm-plate-outline-width`        | Outline width        | Plate inset outline width. `0` disables it.  |
 
 Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the configured plate padding so text is not clipped vertically.
 
 ### Wedge and ring properties
 
-| Property                          | Default                 | Purpose                                               |
-| --------------------------------- | ----------------------- | ----------------------------------------------------- |
-| `--mm-wedge-thickness`            | `40px`                  | Distance from `deadZoneRadius` to the ring's outside. |
-| `--mm-wedge-fill`                 | Plate background        | Wedge fill.                                           |
-| `--mm-wedge-fill-active`          | Active plate background | Active wedge fill.                                    |
-| `--mm-wedge-gap`                  | `4px`                   | Constant-width gap between wedges.                    |
-| `--mm-wedge-corner-radius`        | `4px`                   | Wedge corner radius.                                  |
-| `--mm-wedge-outline-color`        | Wedge fill              | Wedge inset outline color.                            |
-| `--mm-wedge-outline-color-active` | Active wedge fill       | Active wedge inset outline color.                     |
-| `--mm-wedge-outline-width`        | `0`                     | Wedge inset outline width. `0` disables it.           |
+| Property                          | Default              | Purpose                                               |
+| --------------------------------- | -------------------- | ----------------------------------------------------- |
+| `--mm-wedge-thickness`            | `40px`               | Distance from `deadZoneRadius` to the ring's outside. |
+| `--mm-wedge-fill`                 | Fill color           | Wedge fill.                                           |
+| `--mm-wedge-fill-active`          | Active fill color    | Active wedge fill.                                    |
+| `--mm-wedge-gap`                  | `4px`                | Constant-width gap between wedges.                    |
+| `--mm-wedge-corner-radius`        | `4px`                | Wedge corner radius.                                  |
+| `--mm-wedge-outline-color`        | Outline color        | Wedge inset outline color.                            |
+| `--mm-wedge-outline-color-active` | Active outline color | Active wedge inset outline color.                     |
+| `--mm-wedge-outline-width`        | Outline width        | Wedge inset outline width. `0` disables it.           |
 
 ### Connector properties
 
@@ -199,10 +213,10 @@ Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the 
 | ----------------------------------- | --------------------- | ------------------------------------- |
 | `--mm-connector-thickness`          | `4px`                 | Connector thickness.                  |
 | `--mm-inner-connector-color`        | `transparent`         | Center-to-ring connector color.       |
-| `--mm-outer-connector-color`        | Plate background      | Ring-to-plate connector color.        |
+| `--mm-outer-connector-color`        | Outline color         | Ring-to-plate connector color.        |
 | `--mm-outer-connector-color-active` | Outer connector color | Active ring-to-plate connector color. |
 
-The active outer connector uses `--mm-outer-connector-color` when it is set, or the active plate background otherwise. Set `--mm-outer-connector-color-active` to give it a separate active color.
+The active outer connector uses `--mm-outer-connector-color` when it is set, or the active outline color otherwise. Set `--mm-outer-connector-color-active` to give it a separate active color.
 
 ### Layout clearance properties
 
@@ -215,17 +229,17 @@ The active outer connector uses `--mm-outer-connector-color` when it is set, or 
 
 ### Stroke properties
 
-| Property                               | Default                   | Purpose                              |
-| -------------------------------------- | ------------------------- | ------------------------------------ |
-| `--mm-stroke-color`                    | `hwb(0 0% 100%)`          | Current gesture color.               |
-| `--mm-stroke-width`                    | `4px`                     | Current gesture width.               |
-| `--mm-stroke-start-point-radius`       | `8px`                     | Novice-mode start marker radius.     |
-| `--mm-stroke-color-lower`              | `hwb(0 47% 53%)`          | Earlier gesture segments' color.     |
-| `--mm-stroke-width-lower`              | `--mm-stroke-width`       | Earlier gesture segments' width.     |
-| `--mm-stroke-start-point-radius-lower` | `--mm-stroke-width-lower` | Earlier gesture start marker radius. |
-| `--mm-stroke-color-feedback`           | `--mm-stroke-color`       | Selected gesture feedback color.     |
-| `--mm-stroke-width-feedback`           | `--mm-stroke-width`       | Completed gesture feedback width.    |
-| `--mm-stroke-color-canceled`           | `hwb(11 32% 13%)`         | Canceled gesture feedback color.     |
+| Property                               | Default                                           | Purpose                              |
+| -------------------------------------- | ------------------------------------------------- | ------------------------------------ |
+| `--mm-stroke-color`                    | `hwb(0 0% 100%)`, `hwb(240 93% 7%)` in dark mode  | Current gesture color.               |
+| `--mm-stroke-width`                    | `4px`                                             | Current gesture width.               |
+| `--mm-stroke-start-point-radius`       | `8px`                                             | Novice-mode start marker radius.     |
+| `--mm-stroke-color-lower`              | `hwb(0 47% 53%)`, `hwb(240 42% 55%)` in dark mode | Earlier gesture segments' color.     |
+| `--mm-stroke-width-lower`              | `--mm-stroke-width`                               | Earlier gesture segments' width.     |
+| `--mm-stroke-start-point-radius-lower` | `--mm-stroke-width-lower`                         | Earlier gesture start marker radius. |
+| `--mm-stroke-color-feedback`           | `--mm-stroke-color`                               | Selected gesture feedback color.     |
+| `--mm-stroke-width-feedback`           | `--mm-stroke-width`                               | Completed gesture feedback width.    |
+| `--mm-stroke-color-canceled`           | `hwb(11 32% 13%)`, `hwb(11 45% 5%)` in dark mode  | Canceled gesture feedback color.     |
 
 Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
 
@@ -233,10 +247,10 @@ Strokes can paint outside the parent without changing its scroll size. Set `over
 
 Before novice mode opens, and again while dwelling on a submenu, a background circle appears at the pointer with a dot growing inside it. The dot reaches the circle's size right as the menu opens, then becomes its start marker with no visible jump. The cursor stays hidden while it is visible. Expert mode never shows it, since a gesture fast enough to stay there rarely pauses long enough for it to matter.
 
-| Property                    | Default                                   | Purpose                  |
-| --------------------------- | ----------------------------------------- | ------------------------ |
-| `--mm-indicator-fill`       | Stroke color                              | Growing dot color.       |
-| `--mm-indicator-background` | Mix weighted toward the active wedge fill | Background circle color. |
+| Property                    | Default                                           | Purpose                  |
+| --------------------------- | ------------------------------------------------- | ------------------------ |
+| `--mm-indicator-fill`       | Stroke color                                      | Growing dot color.       |
+| `--mm-indicator-background` | `hwb(0 85% 15%)`, `hwb(240 20% 75%)` in dark mode | Background circle color. |
 
 ## Input behavior
 
@@ -269,14 +283,14 @@ Replace the old custom properties as follows:
 
 | Old property               | Replacement                                                     |
 | -------------------------- | --------------------------------------------------------------- |
-| `--item-width`             | `--mm-label-min-width` and `--mm-label-max-width`.              |
+| `--item-width`             | `--mm-plate-min-width` and `--mm-plate-max-width`.              |
 | `--item-height`            | None. Plate height follows the label and padding.               |
 | `--item-font-size`         | `--mm-plate-font-size`.                                         |
 | `--item-padding`           | `--mm-plate-padding`.                                           |
-| `--item-background`        | `--mm-plate-background`.                                        |
-| `--item-color`             | `--mm-plate-color`.                                             |
-| `--active-item-background` | `--mm-plate-background-active`.                                 |
-| `--active-item-color`      | `--mm-plate-color-active`.                                      |
+| `--item-background`        | `--mm-plate-fill`.                                              |
+| `--item-color`             | `--mm-plate-text-color`.                                        |
+| `--active-item-background` | `--mm-plate-fill-active`.                                       |
+| `--active-item-color`      | `--mm-plate-text-color-active`.                                 |
 | `--item-radius`            | `--mm-plate-corner-radius`.                                     |
 | `--menu-radius`            | `--mm-wedge-thickness`, measured outward from `deadZoneRadius`. |
 | `--center-radius`          | None. It was unused.                                            |
@@ -292,8 +306,8 @@ Label plates now hug their text. Set both width properties to restore the old fi
 
 ```css
 .marking-menu {
-  --mm-label-min-width: 120px;
-  --mm-label-max-width: 120px;
+  --mm-plate-min-width: 120px;
+  --mm-plate-max-width: 120px;
 }
 ```
 
@@ -303,7 +317,7 @@ The visible connector now starts at the ring. Set the inner connector to the sam
 .marking-menu {
   --mm-inner-connector-color: var(
     --mm-outer-connector-color,
-    var(--mm-plate-background, hwb(0 95% 5%))
+    var(--mm-outline-color, hwb(0 95% 5%))
   );
 }
 ```

@@ -76,8 +76,8 @@ test('label plates fit text and honor a fixed width', async ({ page }) => {
   expect(size.width).toBeLessThan(120);
 
   const constrainedSize = await menu.evaluate((host) => {
-    host.style.setProperty('--mm-label-min-width', '120px');
-    host.style.setProperty('--mm-label-max-width', '120px');
+    host.style.setProperty('--mm-plate-min-width', '120px');
+    host.style.setProperty('--mm-plate-max-width', '120px');
     const plate = host.shadowRoot?.querySelector<HTMLElement>(
       '.marking-menu-plate',
     );
