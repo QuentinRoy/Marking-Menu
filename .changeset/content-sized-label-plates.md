@@ -2,8 +2,8 @@
 'marking-menu': major
 ---
 
-Size label plates to their text by default. Set both `--mm-label-min-width`
-and `--mm-label-max-width` to `120px` to keep the prior fixed, truncated
+Size label plates to their text by default. Set both `--mm-plate-min-width`
+and `--mm-plate-max-width` to `120px` to keep the prior fixed, truncated
 plate. Plate height now follows its label, so `--mm-plate-height` no longer
 applies.
 Active plates remain centered on their resting position as their label style
