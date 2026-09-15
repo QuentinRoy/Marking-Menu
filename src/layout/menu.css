@@ -91,6 +91,13 @@
   transform: translate(0px, 0px);
 }
 
+/* Script-focused only (`tabindex="-1"`): the active item's own styling is
+   the visible cue, so no browser focus ring is needed here. */
+.marking-menu-layer:focus,
+.marking-menu-item:focus {
+  outline: none;
+}
+
 /* Drawing-only by default (see `createMenu`'s `pointerTarget` option): a
    live gesture reads strokes on the surface behind the menu, not hovers or
    clicks on the menu's own items and wedges. */

@@ -11,6 +11,7 @@ import {
 import type { TypedEventListener } from '../typed-event-emitter.js';
 import type { AnyModelNode, MarkingMenuInput } from '../types.js';
 import { noOp } from '../utils.js';
+import { manageFocus, type FocusManager } from './focus.js';
 import { createPointerSource, type PointerSource } from './pointer-source.js';
 import { createRenderer, type RendererOptions } from './renderer.js';
 import { createRuntime, type NavigationRuntime } from './runtime.js';
@@ -89,6 +90,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
 > {
   readonly #pointerSource: PointerSource;
   readonly #runtime: NavigationRuntime<MarkingMenuModel<Config>>;
+  readonly #focusManager: FocusManager;
   #disposed = false;
 
   constructor(config: Config & ValidateInput<Config>) {
@@ -115,6 +117,10 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       parent: config.parent,
       runtime: this.#runtime,
     });
+    this.#focusManager = manageFocus({
+      root: renderer.root,
+      runtime: this.#runtime,
+    });
   }
 
   on<K extends EventName<Config>>(
@@ -137,6 +143,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     }
 
     this.#disposed = true;
+    this.#focusManager.dispose();
     // Runtime first: it unsubscribes, sends `dispose`, and tears down the
     // rendered DOM before the pointer source releases capture and the
     // touch-action claim.

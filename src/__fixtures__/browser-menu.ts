@@ -1,4 +1,4 @@
-import { commands } from 'vitest/browser';
+import { commands, page } from 'vitest/browser';
 import type { MarkingMenuController } from '../engine/controller.js';
 import { createMarkingMenu, type MarkingMenuConfig } from '../marking-menu.js';
 import type { AnyModelNode } from '../types.js';
@@ -222,4 +222,32 @@ export const openMenu = async (surface: Element): Promise<Drag> => {
   await vi.advanceTimersByTimeAsync(NOVICE_DWELL_MARGIN);
   await waitForMenuOpen(surface);
   return drag;
+};
+
+/**
+ The element actually holding focus, unlike `document.activeElement`: a
+ shadow host reports itself as active for any descendant focused inside it
+ (DOM's own retargeting), so `toHaveFocus()` alone can never see past the
+ menu's shadow root. This walks into every nested `shadowRoot.activeElement`
+ to find the real target.
+ */
+const deepActiveElement = (): Element | null => {
+  let active = document.activeElement;
+  while (active?.shadowRoot?.activeElement) {
+    active = active.shadowRoot.activeElement;
+  }
+
+  return active;
+};
+
+/**
+Asserts that the element with the given role (and, optionally, accessible
+name) currently has focus.
+*/
+export const expectFocused = async (
+  role: string,
+  options?: { name?: string | RegExp },
+): Promise<void> => {
+  const locator = page.getByRole(role, options);
+  await expect.poll(() => locator.query() === deepActiveElement()).toBe(true);
 };
