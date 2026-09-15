@@ -17,6 +17,10 @@
   --resolved-outer-radius: calc(
     var(--inner-radius) + var(--resolved-wedge-thickness)
   );
+  --resolved-muted-color: var(
+    --mm-muted-color,
+    light-dark(hwb(0 85% 15%), hwb(240 20% 75%))
+  );
 
   /* Menu opening indicator */
   --resolved-indicator-fill: var(
@@ -25,7 +29,7 @@
   );
   --resolved-indicator-background: var(
     --mm-indicator-background,
-    light-dark(hwb(0 85% 15%), hwb(240 20% 75%))
+    var(--resolved-muted-color)
   );
 
   /* Connectors */
@@ -113,7 +117,7 @@
   );
   --resolved-stroke-color-lower: var(
     --mm-stroke-color-lower,
-    light-dark(hwb(0 47% 53%), hwb(240 42% 55%))
+    var(--resolved-muted-color)
   );
   --resolved-stroke-start-point-radius: var(
     --mm-stroke-start-point-radius,
