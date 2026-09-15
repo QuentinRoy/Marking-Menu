@@ -1,3 +1,34 @@
+/* Registered on the `--resolved-*` vars, not the public `--mm-*` ones they
+   are built from: a browser that supports `@property` then validates the
+   fully-substituted value (`--mm-x`, or its fallback, or that fallback's own
+   fallback...) as one unit, so an invalid `--mm-*` value falls back to the
+   default below instead of reaching the property that consumes it and
+   resetting that property to its own initial value. `@property`'s
+   initial-value cannot itself reference another custom property, but a
+   `--resolved-*` var's normal value (below, in `:host`) can and does; only
+   that descriptor's fallback, reached when the whole chain is invalid, has
+   to be the literal default. */
+@property --resolved-wedge-outline-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 45% 55%);
+}
+@property --resolved-wedge-outline-width {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 2px;
+}
+@property --resolved-plate-outline-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: hwb(0 45% 55%);
+}
+@property --resolved-plate-outline-width {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 2px;
+}
+
 :host {
   --resolved-connector-thickness: var(--mm-connector-thickness, 4px);
   --resolved-indicator-background: var(
@@ -16,11 +47,11 @@
   --resolved-label-min-width: var(--mm-label-min-width, 0);
   --resolved-outer-connector-color: var(
     --mm-outer-connector-color,
-    var(--resolved-plate-background)
+    var(--resolved-wedge-outline-color)
   );
   --resolved-outer-connector-color-active: var(
     --mm-outer-connector-color-active,
-    var(--mm-outer-connector-color, var(--resolved-plate-background-active))
+    var(--mm-outer-connector-color, var(--resolved-wedge-outline-color))
   );
   --resolved-outer-radius: calc(
     var(--inner-radius) + var(--resolved-wedge-thickness)
@@ -38,6 +69,8 @@
   --resolved-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 12px);
   --resolved-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
   --resolved-plate-gap-vertical: var(--mm-plate-gap-vertical, 4px);
+  --resolved-plate-outline-color: var(--mm-plate-outline-color, hwb(0 45% 55%));
+  --resolved-plate-outline-width: var(--mm-plate-outline-width, 2px);
   --resolved-plate-padding: var(--mm-plate-padding, 12px);
   --resolved-stroke-color: var(--mm-stroke-color, hwb(0 0% 100%));
   --resolved-stroke-color-canceled: var(
@@ -73,6 +106,8 @@
     var(--resolved-plate-background-active)
   );
   --resolved-wedge-gap: var(--mm-wedge-gap, 4px);
+  --resolved-wedge-outline-color: var(--mm-wedge-outline-color, hwb(0 45% 55%));
+  --resolved-wedge-outline-width: var(--mm-wedge-outline-width, 2px);
   --resolved-wedge-thickness: var(--mm-wedge-thickness, 40px);
 
   inset: 0;
@@ -125,6 +160,14 @@
   fill: var(--resolved-wedge-fill-active);
 }
 
+/* Self-clipped so only the inner half of the stroke shows, giving an inset
+   outline without shrinking the wedge's own fill path. */
+.marking-menu-wedge-outline {
+  fill: none;
+  stroke: var(--resolved-wedge-outline-color);
+  stroke-width: calc(var(--resolved-wedge-outline-width) * 2);
+}
+
 .marking-menu-plate {
   position: absolute;
   bottom: var(
@@ -141,6 +184,8 @@
   width: fit-content;
   background-color: var(--resolved-plate-background);
   border-radius: var(--resolved-plate-corner-radius);
+  box-shadow: inset 0 0 0 var(--resolved-plate-outline-width)
+    var(--resolved-plate-outline-color);
   color: var(--resolved-plate-color);
   font-size: var(--resolved-plate-font-size);
   text-align: center;

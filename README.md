@@ -174,6 +174,8 @@ Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors ac
 | `--mm-plate-font-size`         | `20px`           | Label font size.                             |
 | `--mm-label-min-width`         | `0`              | Minimum plate width.                         |
 | `--mm-label-max-width`         | `none`           | Maximum plate width before label truncation. |
+| `--mm-plate-outline-color`     | `hwb(0 45% 55%)` | Plate inset outline color.                   |
+| `--mm-plate-outline-width`     | `2px`            | Plate inset outline width. `0` removes it.   |
 
 Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the configured plate padding so text is not clipped vertically.
 
@@ -186,6 +188,8 @@ Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the 
 | `--mm-wedge-fill-active`   | Active plate background | Active wedge fill.                                    |
 | `--mm-wedge-gap`           | `4px`                   | Constant-width gap between wedges.                    |
 | `--mm-wedge-corner-radius` | `4px`                   | Wedge corner radius.                                  |
+| `--mm-wedge-outline-color` | `hwb(0 45% 55%)`        | Wedge inset outline color.                            |
+| `--mm-wedge-outline-width` | `2px`                   | Wedge inset outline width. `0` removes it.            |
 
 ### Connector properties
 
@@ -193,10 +197,10 @@ Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the 
 | ----------------------------------- | --------------------- | ------------------------------------- |
 | `--mm-connector-thickness`          | `4px`                 | Connector thickness.                  |
 | `--mm-inner-connector-color`        | `transparent`         | Center-to-ring connector color.       |
-| `--mm-outer-connector-color`        | Plate background      | Ring-to-plate connector color.        |
+| `--mm-outer-connector-color`        | Wedge outline color   | Ring-to-plate connector color.        |
 | `--mm-outer-connector-color-active` | Outer connector color | Active ring-to-plate connector color. |
 
-The active outer connector uses `--mm-outer-connector-color` when it is set, or the active plate background otherwise. Set `--mm-outer-connector-color-active` to give it a separate active color.
+The active outer connector uses `--mm-outer-connector-color` when it is set, or the wedge outline color otherwise. Set `--mm-outer-connector-color-active` to give it a separate active color.
 
 ### Layout clearance properties
 

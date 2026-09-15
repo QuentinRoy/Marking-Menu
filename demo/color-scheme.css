@@ -19,5 +19,7 @@
     --mm-plate-color: hwb(240 79% 19%);
     --mm-plate-background-active: hwb(240 26% 70%);
     --mm-plate-color-active: hwb(0 100% 0%);
+    --mm-wedge-outline-color: hwb(240 45% 55%);
+    --mm-plate-outline-color: hwb(240 45% 55%);
   }
 }
