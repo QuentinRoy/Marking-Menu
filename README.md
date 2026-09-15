@@ -175,6 +175,14 @@ Wedges, plates, and outer connectors share one fill color and one inset outline 
 | `--mm-outline-color-active` | Active fill color                                 | Active inset outline color.           |
 | `--mm-outline-width`        | `0`                                               | Inset outline width. `0` disables it. |
 
+### Muted color
+
+| Property           | Default                                           | Purpose                                          |
+| ------------------ | ------------------------------------------------- | ------------------------------------------------ |
+| `--mm-muted-color` | `hwb(0 85% 15%)`, `hwb(240 20% 75%)` in dark mode | Shared default for less prominent color accents. |
+
+The opening indicator's background and earlier gesture segments both default to this color.
+
 ### Plate and label properties
 
 | Property                          | Default              | Purpose                                      |
@@ -229,17 +237,17 @@ The active outer connector uses `--mm-outer-connector-color` when it is set, or 
 
 ### Stroke properties
 
-| Property                               | Default                                           | Purpose                              |
-| -------------------------------------- | ------------------------------------------------- | ------------------------------------ |
-| `--mm-stroke-color`                    | `hwb(0 0% 100%)`, `hwb(240 93% 7%)` in dark mode  | Current gesture color.               |
-| `--mm-stroke-width`                    | `4px`                                             | Current gesture width.               |
-| `--mm-stroke-start-point-radius`       | `8px`                                             | Novice-mode start marker radius.     |
-| `--mm-stroke-color-lower`              | `hwb(0 47% 53%)`, `hwb(240 42% 55%)` in dark mode | Earlier gesture segments' color.     |
-| `--mm-stroke-width-lower`              | `--mm-stroke-width`                               | Earlier gesture segments' width.     |
-| `--mm-stroke-start-point-radius-lower` | `--mm-stroke-width-lower`                         | Earlier gesture start marker radius. |
-| `--mm-stroke-color-feedback`           | `--mm-stroke-color`                               | Selected gesture feedback color.     |
-| `--mm-stroke-width-feedback`           | `--mm-stroke-width`                               | Completed gesture feedback width.    |
-| `--mm-stroke-color-canceled`           | `hwb(11 32% 13%)`, `hwb(11 45% 5%)` in dark mode  | Canceled gesture feedback color.     |
+| Property                               | Default                                          | Purpose                              |
+| -------------------------------------- | ------------------------------------------------ | ------------------------------------ |
+| `--mm-stroke-color`                    | `hwb(0 0% 100%)`, `hwb(240 93% 7%)` in dark mode | Current gesture color.               |
+| `--mm-stroke-width`                    | `4px`                                            | Current gesture width.               |
+| `--mm-stroke-start-point-radius`       | `8px`                                            | Novice-mode start marker radius.     |
+| `--mm-stroke-color-lower`              | Muted color                                      | Earlier gesture segments' color.     |
+| `--mm-stroke-width-lower`              | `--mm-stroke-width`                              | Earlier gesture segments' width.     |
+| `--mm-stroke-start-point-radius-lower` | `--mm-stroke-width-lower`                        | Earlier gesture start marker radius. |
+| `--mm-stroke-color-feedback`           | `--mm-stroke-color`                              | Selected gesture feedback color.     |
+| `--mm-stroke-width-feedback`           | `--mm-stroke-width`                              | Completed gesture feedback width.    |
+| `--mm-stroke-color-canceled`           | `hwb(11 32% 13%)`, `hwb(11 45% 5%)` in dark mode | Canceled gesture feedback color.     |
 
 Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
 
@@ -247,10 +255,10 @@ Strokes can paint outside the parent without changing its scroll size. Set `over
 
 Before novice mode opens, and again while dwelling on a submenu, a background circle appears at the pointer with a dot growing inside it. The dot reaches the circle's size right as the menu opens, then becomes its start marker with no visible jump. The cursor stays hidden while it is visible. Expert mode never shows it, since a gesture fast enough to stay there rarely pauses long enough for it to matter.
 
-| Property                    | Default                                           | Purpose                  |
-| --------------------------- | ------------------------------------------------- | ------------------------ |
-| `--mm-indicator-fill`       | Stroke color                                      | Growing dot color.       |
-| `--mm-indicator-background` | `hwb(0 85% 15%)`, `hwb(240 20% 75%)` in dark mode | Background circle color. |
+| Property                    | Default      | Purpose                  |
+| --------------------------- | ------------ | ------------------------ |
+| `--mm-indicator-fill`       | Stroke color | Growing dot color.       |
+| `--mm-indicator-background` | Muted color  | Background circle color. |
 
 ## Input behavior
 
