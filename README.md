@@ -163,33 +163,35 @@ Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors ac
 
 ### Plate and label properties
 
-| Property                       | Default          | Purpose                                      |
-| ------------------------------ | ---------------- | -------------------------------------------- |
-| `--mm-plate-background`        | `hwb(0 50% 50%)` | Plate background.                            |
-| `--mm-plate-color`             | `hwb(0 100% 0%)` | Label color.                                 |
-| `--mm-plate-background-active` | `hwb(0 85% 15%)` | Active plate background.                     |
-| `--mm-plate-color-active`      | `hwb(0 0% 100%)` | Active label color.                          |
-| `--mm-plate-padding`           | `12px`           | Space around the label.                      |
-| `--mm-plate-corner-radius`     | `16px`           | Plate corner radius.                         |
-| `--mm-plate-font-size`         | `20px`           | Label font size.                             |
-| `--mm-label-min-width`         | `0`              | Minimum plate width.                         |
-| `--mm-label-max-width`         | `none`           | Maximum plate width before label truncation. |
-| `--mm-plate-outline-color`     | `hwb(0 45% 55%)` | Plate inset outline color.                   |
-| `--mm-plate-outline-width`     | `0`              | Plate inset outline width. `0` disables it.  |
+| Property                          | Default                 | Purpose                                      |
+| --------------------------------- | ----------------------- | -------------------------------------------- |
+| `--mm-plate-background`           | `hwb(0 50% 50%)`        | Plate background.                            |
+| `--mm-plate-color`                | `hwb(0 100% 0%)`        | Label color.                                 |
+| `--mm-plate-background-active`    | `hwb(0 85% 15%)`        | Active plate background.                     |
+| `--mm-plate-color-active`         | `hwb(0 0% 100%)`        | Active label color.                          |
+| `--mm-plate-padding`              | `12px`                  | Space around the label.                      |
+| `--mm-plate-corner-radius`        | `16px`                  | Plate corner radius.                         |
+| `--mm-plate-font-size`            | `20px`                  | Label font size.                             |
+| `--mm-label-min-width`            | `0`                     | Minimum plate width.                         |
+| `--mm-label-max-width`            | `none`                  | Maximum plate width before label truncation. |
+| `--mm-plate-outline-color`        | Plate background        | Plate inset outline color.                   |
+| `--mm-plate-outline-color-active` | Active plate background | Active plate inset outline color.            |
+| `--mm-plate-outline-width`        | `0`                     | Plate inset outline width. `0` disables it.  |
 
 Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the configured plate padding so text is not clipped vertically.
 
 ### Wedge and ring properties
 
-| Property                   | Default                 | Purpose                                               |
-| -------------------------- | ----------------------- | ----------------------------------------------------- |
-| `--mm-wedge-thickness`     | `40px`                  | Distance from `deadZoneRadius` to the ring's outside. |
-| `--mm-wedge-fill`          | Plate background        | Wedge fill.                                           |
-| `--mm-wedge-fill-active`   | Active plate background | Active wedge fill.                                    |
-| `--mm-wedge-gap`           | `4px`                   | Constant-width gap between wedges.                    |
-| `--mm-wedge-corner-radius` | `4px`                   | Wedge corner radius.                                  |
-| `--mm-wedge-outline-color` | `hwb(0 45% 55%)`        | Wedge inset outline color.                            |
-| `--mm-wedge-outline-width` | `0`                     | Wedge inset outline width. `0` disables it.           |
+| Property                          | Default                 | Purpose                                               |
+| --------------------------------- | ----------------------- | ----------------------------------------------------- |
+| `--mm-wedge-thickness`            | `40px`                  | Distance from `deadZoneRadius` to the ring's outside. |
+| `--mm-wedge-fill`                 | Plate background        | Wedge fill.                                           |
+| `--mm-wedge-fill-active`          | Active plate background | Active wedge fill.                                    |
+| `--mm-wedge-gap`                  | `4px`                   | Constant-width gap between wedges.                    |
+| `--mm-wedge-corner-radius`        | `4px`                   | Wedge corner radius.                                  |
+| `--mm-wedge-outline-color`        | Wedge fill              | Wedge inset outline color.                            |
+| `--mm-wedge-outline-color-active` | Active wedge fill       | Active wedge inset outline color.                     |
+| `--mm-wedge-outline-width`        | `0`                     | Wedge inset outline width. `0` disables it.           |
 
 ### Connector properties
 

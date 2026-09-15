@@ -124,6 +124,27 @@ test('plate outline is an inset box-shadow using the plate outline properties', 
   );
 });
 
+test('active wedge and plate outlines use their own active color', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-wedge-outline-width', '3px');
+  menu.surface.style.setProperty('--mm-wedge-outline-color-active', '#123456');
+  menu.surface.style.setProperty('--mm-plate-outline-width', '3px');
+  menu.surface.style.setProperty('--mm-plate-outline-color-active', '#654321');
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+  );
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const activeItem = root?.querySelector('.marking-menu-item.active');
+  const outline = activeItem?.querySelector('.marking-menu-wedge-outline');
+  const plate = activeItem?.querySelector('.marking-menu-plate');
+  expect(getComputedStyle(outline as Element).stroke).toBe('rgb(18, 52, 86)');
+  expect(getComputedStyle(plate as Element).boxShadow).toBe(
+    'rgb(101, 67, 33) 0px 0px 0px 3px inset',
+  );
+});
+
 test('outer connector defaults to the plate background', async () => {
   using menu = mountMenu({ items });
   await using _drag = await openMenu(menu.surface);

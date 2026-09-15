@@ -42,7 +42,14 @@
   --resolved-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 12px);
   --resolved-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
   --resolved-plate-gap-vertical: var(--mm-plate-gap-vertical, 4px);
-  --resolved-plate-outline-color: var(--mm-plate-outline-color, hwb(0 45% 55%));
+  --resolved-plate-outline-color: var(
+    --mm-plate-outline-color,
+    var(--resolved-plate-background)
+  );
+  --resolved-plate-outline-color-active: var(
+    --mm-plate-outline-color-active,
+    var(--resolved-plate-background-active)
+  );
   --resolved-plate-outline-width: var(--mm-plate-outline-width, 0);
   --resolved-plate-padding: var(--mm-plate-padding, 12px);
   --resolved-stroke-color: var(--mm-stroke-color, hwb(0 0% 100%));
@@ -79,7 +86,14 @@
     var(--resolved-plate-background-active)
   );
   --resolved-wedge-gap: var(--mm-wedge-gap, 4px);
-  --resolved-wedge-outline-color: var(--mm-wedge-outline-color, hwb(0 45% 55%));
+  --resolved-wedge-outline-color: var(
+    --mm-wedge-outline-color,
+    var(--resolved-wedge-fill)
+  );
+  --resolved-wedge-outline-color-active: var(
+    --mm-wedge-outline-color-active,
+    var(--resolved-wedge-fill-active)
+  );
   --resolved-wedge-outline-width: var(--mm-wedge-outline-width, 0);
   --resolved-wedge-thickness: var(--mm-wedge-thickness, 40px);
 
@@ -146,6 +160,10 @@
   fill: none;
   stroke: var(--resolved-wedge-outline-color);
   stroke-width: calc(var(--resolved-wedge-outline-width) * 2);
+}
+
+.marking-menu-item.active .marking-menu-wedge-outline {
+  stroke: var(--resolved-wedge-outline-color-active);
 }
 
 .marking-menu-plate {
@@ -230,6 +248,8 @@
 
 .marking-menu-item.active .marking-menu-plate {
   background-color: var(--resolved-plate-background-active);
+  box-shadow: inset 0 0 0 var(--resolved-plate-outline-width)
+    var(--resolved-plate-outline-color-active);
   color: var(--resolved-plate-color-active);
 }
 
