@@ -68,13 +68,24 @@ export function createIndicatorSurface({
   dotSvg.append(dot);
 
   const minRadius = strokeWidth / 2;
+  // WCAG doesn't count an opacity change as motion, so a growing dot
+  // becomes a fixed-size one fading in under reduced motion instead.
+  const shouldReduceMotion = (): boolean =>
+    doc.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches ??
+    false;
   const draw = ([cx, cy]: Point, progress: number): void => {
     background.setAttribute('cx', String(cx));
     background.setAttribute('cy', String(cy));
     dot.setAttribute('cx', String(cx));
     dot.setAttribute('cy', String(cy));
     const clamped = Math.max(0, Math.min(1, progress));
-    dot.setAttribute('r', String(minRadius + (radius - minRadius) * clamped));
+    if (shouldReduceMotion()) {
+      dot.setAttribute('r', String(radius));
+      dot.style.opacity = String(clamped);
+    } else {
+      dot.style.opacity = '';
+      dot.setAttribute('r', String(minRadius + (radius - minRadius) * clamped));
+    }
   };
 
   return {
