@@ -165,8 +165,8 @@ Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors ac
 
 | Property                       | Default          | Purpose                                      |
 | ------------------------------ | ---------------- | -------------------------------------------- |
-| `--mm-plate-background`        | `hwb(0 95% 5%)`  | Plate background.                            |
-| `--mm-plate-color`             | `hwb(0 20% 80%)` | Label color.                                 |
+| `--mm-plate-background`        | `hwb(0 50% 50%)` | Plate background.                            |
+| `--mm-plate-color`             | `hwb(0 100% 0%)` | Label color.                                 |
 | `--mm-plate-background-active` | `hwb(0 85% 15%)` | Active plate background.                     |
 | `--mm-plate-color-active`      | `hwb(0 0% 100%)` | Active label color.                          |
 | `--mm-plate-padding`           | `12px`           | Space around the label.                      |
@@ -175,7 +175,7 @@ Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors ac
 | `--mm-label-min-width`         | `0`              | Minimum plate width.                         |
 | `--mm-label-max-width`         | `none`           | Maximum plate width before label truncation. |
 | `--mm-plate-outline-color`     | `hwb(0 45% 55%)` | Plate inset outline color.                   |
-| `--mm-plate-outline-width`     | `2px`            | Plate inset outline width. `0` removes it.   |
+| `--mm-plate-outline-width`     | `0`              | Plate inset outline width. `0` disables it.  |
 
 Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the configured plate padding so text is not clipped vertically.
 
@@ -189,7 +189,7 @@ Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the 
 | `--mm-wedge-gap`           | `4px`                   | Constant-width gap between wedges.                    |
 | `--mm-wedge-corner-radius` | `4px`                   | Wedge corner radius.                                  |
 | `--mm-wedge-outline-color` | `hwb(0 45% 55%)`        | Wedge inset outline color.                            |
-| `--mm-wedge-outline-width` | `2px`                   | Wedge inset outline width. `0` removes it.            |
+| `--mm-wedge-outline-width` | `0`                     | Wedge inset outline width. `0` disables it.           |
 
 ### Connector properties
 
@@ -197,10 +197,10 @@ Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the 
 | ----------------------------------- | --------------------- | ------------------------------------- |
 | `--mm-connector-thickness`          | `4px`                 | Connector thickness.                  |
 | `--mm-inner-connector-color`        | `transparent`         | Center-to-ring connector color.       |
-| `--mm-outer-connector-color`        | Wedge outline color   | Ring-to-plate connector color.        |
+| `--mm-outer-connector-color`        | Plate background      | Ring-to-plate connector color.        |
 | `--mm-outer-connector-color-active` | Outer connector color | Active ring-to-plate connector color. |
 
-The active outer connector uses `--mm-outer-connector-color` when it is set, or the wedge outline color otherwise. Set `--mm-outer-connector-color-active` to give it a separate active color.
+The active outer connector uses `--mm-outer-connector-color` when it is set, or the active plate background otherwise. Set `--mm-outer-connector-color-active` to give it a separate active color.
 
 ### Layout clearance properties
 
@@ -231,10 +231,10 @@ Strokes can paint outside the parent without changing its scroll size. Set `over
 
 Before novice mode opens, and again while dwelling on a submenu, a background circle appears at the pointer with a dot growing inside it. The dot reaches the circle's size right as the menu opens, then becomes its start marker with no visible jump. The cursor stays hidden while it is visible. Expert mode never shows it, since a gesture fast enough to stay there rarely pauses long enough for it to matter.
 
-| Property                    | Default      | Purpose                  |
-| --------------------------- | ------------ | ------------------------ |
-| `--mm-indicator-fill`       | Stroke color | Growing dot color.       |
-| `--mm-indicator-background` | Wedge fill   | Background circle color. |
+| Property                    | Default                              | Purpose                  |
+| --------------------------- | ------------------------------------ | ------------------------ |
+| `--mm-indicator-fill`       | Stroke color                         | Growing dot color.       |
+| `--mm-indicator-background` | Mix of resting and active wedge fill | Background circle color. |
 
 ## Input behavior
 

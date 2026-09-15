@@ -16,7 +16,7 @@
 @property --resolved-wedge-outline-width {
   syntax: '<length>';
   inherits: true;
-  initial-value: 2px;
+  initial-value: 0;
 }
 @property --resolved-plate-outline-color {
   syntax: '<color>';
@@ -26,14 +26,18 @@
 @property --resolved-plate-outline-width {
   syntax: '<length>';
   inherits: true;
-  initial-value: 2px;
+  initial-value: 0;
 }
 
 :host {
   --resolved-connector-thickness: var(--mm-connector-thickness, 4px);
   --resolved-indicator-background: var(
     --mm-indicator-background,
-    var(--resolved-wedge-fill)
+    color-mix(
+      in srgb,
+      var(--resolved-wedge-fill),
+      var(--resolved-wedge-fill-active)
+    )
   );
   --resolved-indicator-fill: var(
     --mm-indicator-fill,
@@ -47,21 +51,21 @@
   --resolved-label-min-width: var(--mm-label-min-width, 0);
   --resolved-outer-connector-color: var(
     --mm-outer-connector-color,
-    var(--resolved-wedge-outline-color)
+    var(--resolved-plate-background)
   );
   --resolved-outer-connector-color-active: var(
     --mm-outer-connector-color-active,
-    var(--mm-outer-connector-color, var(--resolved-wedge-outline-color))
+    var(--mm-outer-connector-color, var(--resolved-plate-background-active))
   );
   --resolved-outer-radius: calc(
     var(--inner-radius) + var(--resolved-wedge-thickness)
   );
-  --resolved-plate-background: var(--mm-plate-background, hwb(0 95% 5%));
+  --resolved-plate-background: var(--mm-plate-background, hwb(0 50% 50%));
   --resolved-plate-background-active: var(
     --mm-plate-background-active,
     hwb(0 85% 15%)
   );
-  --resolved-plate-color: var(--mm-plate-color, hwb(0 20% 80%));
+  --resolved-plate-color: var(--mm-plate-color, hwb(0 100% 0%));
   --resolved-plate-color-active: var(--mm-plate-color-active, hwb(0 0% 100%));
   --resolved-plate-corner-radius: var(--mm-plate-corner-radius, 16px);
   --resolved-plate-font-size: var(--mm-plate-font-size, 20px);
@@ -70,7 +74,7 @@
   --resolved-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
   --resolved-plate-gap-vertical: var(--mm-plate-gap-vertical, 4px);
   --resolved-plate-outline-color: var(--mm-plate-outline-color, hwb(0 45% 55%));
-  --resolved-plate-outline-width: var(--mm-plate-outline-width, 2px);
+  --resolved-plate-outline-width: var(--mm-plate-outline-width, 0);
   --resolved-plate-padding: var(--mm-plate-padding, 12px);
   --resolved-stroke-color: var(--mm-stroke-color, hwb(0 0% 100%));
   --resolved-stroke-color-canceled: var(
@@ -107,7 +111,7 @@
   );
   --resolved-wedge-gap: var(--mm-wedge-gap, 4px);
   --resolved-wedge-outline-color: var(--mm-wedge-outline-color, hwb(0 45% 55%));
-  --resolved-wedge-outline-width: var(--mm-wedge-outline-width, 2px);
+  --resolved-wedge-outline-width: var(--mm-wedge-outline-width, 0);
   --resolved-wedge-thickness: var(--mm-wedge-thickness, 40px);
 
   inset: 0;
