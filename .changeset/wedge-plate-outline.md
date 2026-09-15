@@ -13,5 +13,6 @@ Four new custom properties let a host draw an inset outline instead:
 default to `0`, off.
 
 The opening indicator's background circle no longer tracks the resting
-wedge fill alone: it now defaults to a mix of the resting and active wedge
-fill, so its growing dot stays visible against it.
+wedge fill alone: it now defaults to a mix weighted toward the active
+wedge fill, lighter than the resting fill so its growing dot stays
+visible against it.
