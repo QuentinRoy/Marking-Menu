@@ -27,3 +27,20 @@ if (!('part' in Element.prototype)) {
     },
   });
 }
+
+// JSDOM doesn't implement `matchMedia` at all. `indicator.ts` only reads
+// `.matches`, and the unit project never emulates `prefers-reduced-motion`,
+// so a fixed "never matches" stand-in is enough; the browser project has
+// the real thing.
+if (typeof globalThis.matchMedia !== 'function') {
+  Object.defineProperty(globalThis, 'matchMedia', {
+    configurable: true,
+    value(query: string): MediaQueryList {
+      const result: Pick<MediaQueryList, 'matches' | 'media'> = {
+        matches: false,
+        media: query,
+      };
+      return result as MediaQueryList;
+    },
+  });
+}
