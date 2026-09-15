@@ -48,17 +48,19 @@ const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-fill-active', '#d00000');
   surface.style.setProperty('--mm-inner-connector-color', '#ffb703');
   surface.style.setProperty('--mm-outer-connector-color', '#023e8a');
-  surface.style.setProperty('--mm-plate-background', '#9b2226');
-  surface.style.setProperty('--mm-plate-background-active', '#f8c8dc');
-  surface.style.setProperty('--mm-plate-color', '#f8f9fa');
-  surface.style.setProperty('--mm-plate-color-active', '#22223b');
+  surface.style.setProperty('--mm-plate-fill', '#9b2226');
+  surface.style.setProperty('--mm-plate-fill-active', '#f8c8dc');
+  surface.style.setProperty('--mm-plate-text-color', '#f8f9fa');
+  surface.style.setProperty('--mm-plate-text-color-active', '#22223b');
   surface.style.setProperty('--mm-stroke-color', '#5a189a');
   surface.style.setProperty('--mm-stroke-width', '10px');
   surface.style.setProperty('--mm-wedge-thickness', '60px');
 };
 
-test("opening indicator background matches the wedge's resting fill, by default", async () => {
+test('opening indicator background defaults to a fixed color, independent of wedge fill', async () => {
   using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-wedge-fill', '#000000');
+  menu.surface.style.setProperty('--mm-wedge-fill-active', '#ffffff');
   await using drag = await openMenu(menu.surface);
   await drag.moveTo(
     offset(drag.at, TOP_LEVEL_ITEMS.others.angle, ACTIVE_RADIUS),
@@ -70,10 +72,13 @@ test("opening indicator background matches the wedge's resting fill, by default"
     .not.toBeNull();
 
   const background = root?.querySelector('.marking-menu-indicator-background');
-  const wedge = root?.querySelector('.marking-menu-wedge');
-  expect(background && getComputedStyle(background).fill).toBe(
-    wedge && getComputedStyle(wedge).fill,
-  );
+  const probe = document.createElement('div');
+  probe.style.color = 'hwb(0 85% 15%)';
+  document.body.append(probe);
+  const expectedFill = getComputedStyle(probe).color;
+  probe.remove();
+
+  expect(background && getComputedStyle(background).fill).toBe(expectedFill);
 });
 
 test('opening indicator background is themeable via --mm-indicator-background', async () => {
@@ -93,12 +98,96 @@ test('opening indicator background is themeable via --mm-indicator-background', 
   expect(getComputedStyle(background as Element).fill).toBe('rgb(18, 52, 86)');
 });
 
+test('wedge outline reads its color and doubles its width for the inset stroke', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-wedge-outline-color', '#123456');
+  menu.surface.style.setProperty('--mm-wedge-outline-width', '3px');
+  await using _drag = await openMenu(menu.surface);
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const outline = root?.querySelector('.marking-menu-wedge-outline');
+  const style = getComputedStyle(outline as Element);
+  expect(style.stroke).toBe('rgb(18, 52, 86)');
+  expect(style.strokeWidth).toBe('6px');
+});
+
+test('plate outline is an inset box-shadow using the plate outline properties', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-plate-outline-color', '#123456');
+  menu.surface.style.setProperty('--mm-plate-outline-width', '3px');
+  await using _drag = await openMenu(menu.surface);
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const plate = root?.querySelector('.marking-menu-plate');
+  expect(getComputedStyle(plate as Element).boxShadow).toBe(
+    'rgb(18, 52, 86) 0px 0px 0px 3px inset',
+  );
+});
+
+test('active wedge and plate outlines use their own active color', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-wedge-outline-width', '3px');
+  menu.surface.style.setProperty('--mm-wedge-outline-color-active', '#123456');
+  menu.surface.style.setProperty('--mm-plate-outline-width', '3px');
+  menu.surface.style.setProperty('--mm-plate-outline-color-active', '#654321');
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+  );
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const activeItem = root?.querySelector('.marking-menu-item.active');
+  const outline = activeItem?.querySelector('.marking-menu-wedge-outline');
+  const plate = activeItem?.querySelector('.marking-menu-plate');
+  expect(getComputedStyle(outline as Element).stroke).toBe('rgb(18, 52, 86)');
+  expect(getComputedStyle(plate as Element).boxShadow).toBe(
+    'rgb(101, 67, 33) 0px 0px 0px 3px inset',
+  );
+});
+
+test('outer connector defaults to the plate background', async () => {
+  using menu = mountMenu({ items });
+  await using _drag = await openMenu(menu.surface);
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const connector = root?.querySelector('.marking-menu-outer-connector');
+  const plate = root?.querySelector('.marking-menu-plate');
+  expect(getComputedStyle(connector as Element).backgroundColor).toBe(
+    getComputedStyle(plate as Element).backgroundColor,
+  );
+});
+
+test('outline and outer connector follow --mm-fill-color when the outline color is unset', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-fill-color', '#123456');
+  menu.surface.style.setProperty('--mm-wedge-outline-width', '2px');
+  await using _drag = await openMenu(menu.surface);
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const outline = root?.querySelector('.marking-menu-wedge-outline');
+  const connector = root?.querySelector('.marking-menu-outer-connector');
+  expect(getComputedStyle(outline as Element).stroke).toBe('rgb(18, 52, 86)');
+  expect(getComputedStyle(connector as Element).backgroundColor).toBe(
+    'rgb(18, 52, 86)',
+  );
+});
+
 test('default menu open', async () => {
   using menu = mountMenu({ items });
   await using _drag = await openMenu(menu.surface);
   await expect
     .element(menu.snapshotArea)
     .toMatchScreenshot('menu-default-open');
+});
+
+test('wedges and plates show an outline when its width is set', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-wedge-outline-width', '2px');
+  menu.surface.style.setProperty('--mm-plate-outline-width', '2px');
+  await using _drag = await openMenu(menu.surface);
+  await expect
+    .element(menu.snapshotArea)
+    .toMatchScreenshot('menu-outline-on-open');
 });
 
 test('menu and stroke escape a visible-overflow parent', async () => {

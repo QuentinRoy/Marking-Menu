@@ -452,6 +452,11 @@ function readStrokeTheme(
   };
 }
 
+// Unique per wedge, referenced by its self-clip `<clipPath>`; ids must be
+// unique within the shadow root, which can hold several open menus' worth
+// of wedges over a controller's lifetime.
+let wedgeClipId = 0;
+
 function appendWedge(
   itemElement: HTMLElement,
   pathData: string,
@@ -473,7 +478,25 @@ function appendWedge(
   const wedge = doc.createElementNS(svgNamespace, 'path');
   wedge.classList.add('marking-menu-wedge');
   wedge.setAttribute('d', pathData);
-  svg.append(wedge);
+
+  // Self-clipped to its own shape: a stroke straddles the path, so clipping
+  // away the outer half leaves an inset outline (see menu.css) without
+  // touching the fill path above.
+  const clipId = `marking-menu-wedge-clip-${wedgeClipId++}`;
+  const defs = doc.createElementNS(svgNamespace, 'defs');
+  const clipPath = doc.createElementNS(svgNamespace, 'clipPath');
+  clipPath.id = clipId;
+  const clipShape = doc.createElementNS(svgNamespace, 'path');
+  clipShape.setAttribute('d', pathData);
+  clipPath.append(clipShape);
+  defs.append(clipPath);
+
+  const outline = doc.createElementNS(svgNamespace, 'path');
+  outline.classList.add('marking-menu-wedge-outline');
+  outline.setAttribute('d', pathData);
+  outline.setAttribute('clip-path', `url(#${clipId})`);
+
+  svg.append(defs, wedge, outline);
   itemElement.prepend(svg);
 }
 
