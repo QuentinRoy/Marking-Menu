@@ -8,6 +8,7 @@ import {
   openMenu,
   press,
 } from './__fixtures__/browser-menu.js';
+import { fakeTimers } from './__fixtures__/timers.js';
 
 const items = [
   { id: 'right', label: 'Right' },
@@ -125,11 +126,34 @@ test('the menu container takes focus on open', async () => {
   await expectFocused('menu');
 });
 
-test('the active item takes focus after it has stayed active for 50ms', async () => {
+test('the active item takes focus only once it has stayed active for 50ms', async () => {
   using menu = mountMenu({ items });
   await using drag = await openMenu(menu.surface);
+
+  using _timers = fakeTimers();
   await drag.moveTo(offset(drag.at, 0, ACTIVE_RADIUS));
+  await vi.advanceTimersByTimeAsync(49);
+  await expectFocused('menu');
+
+  await vi.advanceTimersByTimeAsync(1);
   await expectFocused('menuitem', { name: 'Right' });
+});
+
+test("changing the active item before 50ms cancels the earlier item's pending focus move", async () => {
+  using menu = mountMenu({ items });
+  await using drag = await openMenu(menu.surface);
+
+  using _timers = fakeTimers();
+  await drag.moveTo(offset(drag.at, 0, ACTIVE_RADIUS));
+  await vi.advanceTimersByTimeAsync(30);
+  await drag.moveTo(offset(drag.at, 180, ACTIVE_RADIUS));
+  // "Right"'s own 50ms move, scheduled at the 0ms mark, would fire around
+  // now were it not canceled.
+  await vi.advanceTimersByTimeAsync(21);
+  await expectFocused('menu');
+
+  await vi.advanceTimersByTimeAsync(29);
+  await expectFocused('menuitem', { name: 'Left' });
 });
 
 test('focus follows the active item as it changes', async () => {
@@ -168,6 +192,26 @@ test("selecting an item restores the host's previously focused element", async (
     .toHaveFocus();
 });
 
+test("selecting before an item's own 50ms focus move fires still restores the host's focus", async () => {
+  using menu = mountMenu({ items });
+  const before = document.createElement('button');
+  before.textContent = 'Before';
+  menu.snapshotArea.append(before);
+  before.focus();
+
+  await using drag = await openMenu(menu.surface);
+  using _timers = fakeTimers();
+  await drag.moveTo(offset(drag.at, 0, ACTIVE_RADIUS));
+  await drag.release();
+  // The item's own pending focus move would fire around now, stealing focus
+  // back from `before`, were `select` not canceling it.
+  await vi.advanceTimersByTimeAsync(50);
+
+  await expect
+    .element(page.getByRole('button', { name: 'Before' }))
+    .toHaveFocus();
+});
+
 test('pressing the menu surface does not move focus by itself', async () => {
   using menu = mountMenu({ items });
   const sibling = document.createElement('button');
@@ -176,6 +220,26 @@ test('pressing the menu surface does not move focus by itself', async () => {
   sibling.focus();
 
   await using _drag = await press(centerOf(menu.surface));
+  await expect
+    .element(page.getByRole('button', { name: 'Sibling' }))
+    .toHaveFocus();
+});
+
+test('an expert-mode gesture never moves focus', async () => {
+  using menu = mountMenu({ items });
+  const sibling = document.createElement('button');
+  sibling.textContent = 'Sibling';
+  menu.snapshotArea.append(sibling);
+  sibling.focus();
+
+  // Past the default `movementsThreshold` (5px) before any dwell: straight
+  // into expert mode, where no menu ever opens.
+  await using _drag = await press(centerOf(menu.surface));
+  await _drag.moveTo(offset(centerOf(menu.surface), 0, ACTIVE_RADIUS));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 100);
+  });
+
   await expect
     .element(page.getByRole('button', { name: 'Sibling' }))
     .toHaveFocus();

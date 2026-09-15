@@ -26,6 +26,10 @@ export type FeedbackEffect = {
 };
 
 export type LayoutRenderer<M extends AnyModelNode> = {
+  /**
+  The shadow root this renderer's menu (and any submenu) mounts into.
+  */
+  root: ShadowRoot;
   render: (view: LayoutView<M>) => void;
   showFeedback: (effect: FeedbackEffect) => void;
   dispose: () => void;
@@ -372,6 +376,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   }
 
   return {
+    root,
     render(view) {
       parent.style.cursor = view.cursor === 'default' ? ownCursor : view.cursor;
       // A menu is open exactly in novice mode: the only phase where the
