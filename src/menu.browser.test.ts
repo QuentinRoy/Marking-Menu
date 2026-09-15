@@ -57,7 +57,7 @@ const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-thickness', '60px');
 };
 
-test('opening indicator background defaults to a mix of the resting and active wedge fill', async () => {
+test('opening indicator background defaults to a mix weighted toward the active wedge fill', async () => {
   using menu = mountMenu({ items });
   menu.surface.style.setProperty('--mm-wedge-fill', '#000000');
   menu.surface.style.setProperty('--mm-wedge-fill-active', '#ffffff');
@@ -73,7 +73,7 @@ test('opening indicator background defaults to a mix of the resting and active w
 
   const background = root?.querySelector('.marking-menu-indicator-background');
   const probe = document.createElement('div');
-  probe.style.color = 'color-mix(in srgb, #000000, #ffffff)';
+  probe.style.color = 'color-mix(in srgb, #000000 25%, #ffffff 75%)';
   document.body.append(probe);
   const expectedFill = getComputedStyle(probe).color;
   probe.remove();

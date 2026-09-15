@@ -35,8 +35,8 @@
     --mm-indicator-background,
     color-mix(
       in srgb,
-      var(--resolved-wedge-fill),
-      var(--resolved-wedge-fill-active)
+      var(--resolved-wedge-fill) 25%,
+      var(--resolved-wedge-fill-active) 75%
     )
   );
   --resolved-indicator-fill: var(
