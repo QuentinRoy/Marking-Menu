@@ -317,7 +317,7 @@ The visible connector now starts at the ring. Set the inner connector to the sam
 .marking-menu {
   --mm-inner-connector-color: var(
     --mm-outer-connector-color,
-    var(--mm-outline-color, hwb(0 95% 5%))
+    var(--mm-outline-color, var(--mm-fill-color))
   );
 }
 ```

@@ -8,13 +8,10 @@
     --mm-fill-color-active,
     light-dark(hwb(0 44% 56%), hwb(240 51% 44%))
   );
-  --resolved-outline-color: var(
-    --mm-outline-color,
-    light-dark(hwb(0 58% 42%), hwb(240 37% 58%))
-  );
+  --resolved-outline-color: var(--mm-outline-color, var(--resolved-fill-color));
   --resolved-outline-color-active: var(
     --mm-outline-color-active,
-    light-dark(hwb(0 44% 56%), hwb(240 51% 44%))
+    var(--resolved-fill-color-active)
   );
   --resolved-outline-width: var(--mm-outline-width, 0);
   --resolved-outer-radius: calc(

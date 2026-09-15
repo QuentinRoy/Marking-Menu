@@ -157,6 +157,21 @@ test('outer connector defaults to the plate background', async () => {
   );
 });
 
+test('outline and outer connector follow --mm-fill-color when the outline color is unset', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-fill-color', '#123456');
+  menu.surface.style.setProperty('--mm-wedge-outline-width', '2px');
+  await using _drag = await openMenu(menu.surface);
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const outline = root?.querySelector('.marking-menu-wedge-outline');
+  const connector = root?.querySelector('.marking-menu-outer-connector');
+  expect(getComputedStyle(outline as Element).stroke).toBe('rgb(18, 52, 86)');
+  expect(getComputedStyle(connector as Element).backgroundColor).toBe(
+    'rgb(18, 52, 86)',
+  );
+});
+
 test('default menu open', async () => {
   using menu = mountMenu({ items });
   await using _drag = await openMenu(menu.surface);
