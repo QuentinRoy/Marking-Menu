@@ -1190,4 +1190,76 @@ describe('createController', () => {
 
     expect(parent.querySelector('.marking-menu')).toBeNull();
   });
+
+  describe('moving focus during a gesture', () => {
+    // Focus only ever lands on a connected element, so these attach `parent`
+    // to `document.body` (unlike the rest of this file, which never needs
+    // real focus) and detach it again once done.
+    it("focuses each controller's own menu, not another controller's sharing the same parent", () => {
+      using _timers = fakeTimers();
+      const parent = createParent();
+      document.body.append(parent);
+      const first = createController({
+        items,
+        parent,
+        noviceDwellingTime: 100,
+      });
+      const second = createController({
+        items,
+        parent,
+        noviceDwellingTime: 100,
+      });
+
+      try {
+        // One shared `pointerdown` starts a gesture on both controllers at
+        // once: each owns an independent pointer source over the same
+        // parent.
+        parent.dispatchEvent(
+          pointer('pointerdown', { clientX: 0, clientY: 0 }),
+        );
+        vi.advanceTimersByTime(100);
+
+        const [firstRoot, secondRoot] = [
+          ...parent.querySelectorAll('.marking-menu'),
+        ].map((host) => host.shadowRoot);
+        const secondMenu = secondRoot?.querySelector('[role="menu"]');
+        expect(secondMenu).not.toBeNull();
+        expect(secondRoot?.activeElement).toBe(secondMenu);
+        expect(firstRoot?.activeElement).toBeNull();
+      } finally {
+        first.dispose();
+        second.dispose();
+        parent.remove();
+      }
+    });
+
+    it('restores focus that was moved when the controller is disposed mid-gesture', () => {
+      using _timers = fakeTimers();
+      const parent = createParent();
+      document.body.append(parent);
+      const before = document.createElement('button');
+      document.body.append(before);
+      before.focus();
+
+      const controller = createController({
+        items,
+        parent,
+        noviceDwellingTime: 100,
+      });
+
+      try {
+        parent.dispatchEvent(
+          pointer('pointerdown', { clientX: 0, clientY: 0 }),
+        );
+        vi.advanceTimersByTime(100);
+        expect(document.activeElement).not.toBe(before);
+        controller.dispose();
+        expect(document.activeElement).toBe(before);
+      } finally {
+        controller.dispose();
+        parent.remove();
+        before.remove();
+      }
+    });
+  });
 });
