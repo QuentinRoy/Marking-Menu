@@ -60,6 +60,7 @@ export function createStrokeSurface({
 
   const createPath = (points: Point[], newPointCount: number) => {
     const path = doc.createElementNS(svgNamespace, 'path');
+    path.setAttribute('class', 'marking-menu-stroke-path');
     path.setAttribute('d', pathData(points));
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke', lineColor);
@@ -131,6 +132,7 @@ export function createStrokeSurface({
 
   const drawPoint = ([x, y]: Point): void => {
     const point = doc.createElementNS(svgNamespace, 'circle');
+    point.setAttribute('class', 'marking-menu-stroke-point');
     point.setAttribute('cx', String(x));
     point.setAttribute('cy', String(y));
     point.setAttribute('r', String(pointRadius));

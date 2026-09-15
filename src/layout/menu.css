@@ -343,3 +343,45 @@
 .marking-menu-layout-probe--indicator-background {
   color: var(--resolved-indicator-background);
 }
+
+/* Forced-colors mode doesn't remap SVG `fill`/`stroke`, and the stroke and
+   indicator paint themselves from script as presentation attributes, which
+   any CSS rule already outranks. Wedge fill, connectors, and outlines stay
+   on the `--resolved-*` custom properties above, so overriding those here
+   is enough for them; system-color keywords resolve to real colors at
+   compute time, so a var() reading one of these picks it up like any other
+   value. */
+@media (forced-colors: active) {
+  :host {
+    --resolved-plate-background: ButtonFace;
+    --resolved-plate-background-active: Highlight;
+    --resolved-plate-color: ButtonText;
+    --resolved-plate-color-active: HighlightText;
+    --resolved-plate-outline-color: ButtonText;
+    --resolved-wedge-fill: ButtonFace;
+    --resolved-wedge-fill-active: Highlight;
+    --resolved-wedge-outline-color: ButtonText;
+  }
+
+  .marking-menu-stroke-path {
+    stroke: CanvasText;
+  }
+
+  .marking-menu-stroke-point,
+  .marking-menu-indicator-dot {
+    fill: CanvasText;
+  }
+
+  .marking-menu-indicator-background {
+    fill: Canvas;
+  }
+
+  /* Forced colors gives any box with no background-color of its own an
+     opaque one, so it doesn't inherit an unpredictable ancestor color. The
+     label relies on exactly that inheritance to sit on the plate's
+     background; without this it paints over the active plate with its own
+     opaque patch instead of showing the plate's fill through. */
+  .marking-menu-label {
+    forced-color-adjust: none;
+  }
+}

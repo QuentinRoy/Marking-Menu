@@ -11,6 +11,10 @@ declare module 'vitest/browser' {
     touchStart: (id: number, x: number, y: number) => Promise<void>;
     touchMove: (id: number, x: number, y: number) => Promise<void>;
     touchEnd: (id: number) => Promise<void>;
+    emulateMedia: (options: {
+      reducedMotion?: 'reduce' | 'no-preference';
+      forcedColors?: 'active' | 'none';
+    }) => Promise<void>;
   }
 }
 

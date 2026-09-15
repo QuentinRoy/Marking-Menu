@@ -83,6 +83,19 @@ const touchMove: BrowserCommand<[id: number, x: number, y: number]> = async (
   await dispatchActiveTouches(session, 'touchMove');
 };
 
+// Vitest's own browser `page` has no media emulation, only the real
+// Playwright page behind it does.
+const emulateMedia: BrowserCommand<
+  [
+    options: {
+      reducedMotion?: 'reduce' | 'no-preference';
+      forcedColors?: 'active' | 'none';
+    },
+  ]
+> = async (ctx, options) => {
+  await ctx.page.emulateMedia(options);
+};
+
 const touchEnd: BrowserCommand<[id: number]> = async (ctx, id) => {
   const session = await getTouchSession(ctx);
   const point = session.points.get(id);
@@ -137,7 +150,7 @@ export default defineConfig({
             // surface's own bounding box, identical across runs.
             viewport: { width: 800, height: 600 },
             instances: [{ browser: 'chromium' }],
-            commands: { touchStart, touchMove, touchEnd },
+            commands: { touchStart, touchMove, touchEnd, emulateMedia },
           },
         },
       },
