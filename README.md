@@ -32,7 +32,7 @@ Add this import map before your module script:
 
 ## Browser support
 
-The library requires Chrome and Edge 111, Firefox 115, or Safari and iOS 16.4, or newer. Dark mode colors, which you opt into with `color-scheme`, need Chrome and Edge 123, Firefox 120, or Safari 17.5.
+The library requires Chrome and Edge 111, Firefox 115, or Safari and iOS 16.4, or newer. Dark mode colors, which you opt into with `color-scheme`, need Chrome and Edge 123, Firefox 120, or Safari 17.5. Firefox 115 to 118 don't expose the menu's accessibility roles.
 
 ## Usage
 
