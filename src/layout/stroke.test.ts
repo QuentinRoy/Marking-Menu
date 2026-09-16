@@ -44,4 +44,20 @@ describe('stroke surface', () => {
       'M 0 0 L 2 2',
     );
   });
+
+  it('moves the same marker on repeated drawPoint calls instead of piling up circles', () => {
+    const parent = document.createElement('div');
+    const surface = createStrokeSurface({ parent, doc: document });
+
+    surface.drawPoint([0, 0]);
+    surface.drawPoint([1, 1]);
+    surface.drawPoint([2, 2]);
+
+    const markers = surface.element.querySelectorAll(
+      '.marking-menu-stroke-point',
+    );
+    expect(markers).toHaveLength(1);
+    expect(markers[0]?.getAttribute('cx')).toBe('2');
+    expect(markers[0]?.getAttribute('cy')).toBe('2');
+  });
 });

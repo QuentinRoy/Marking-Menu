@@ -152,20 +152,22 @@ export function createStrokeSurface({
   };
 
   const drawPoint = ([x, y]: Point): void => {
-    const point = doc.createElementNS(svgNamespace, 'circle');
-    point.setAttribute('class', 'marking-menu-stroke-point');
-    point.setAttribute('cx', String(x));
-    point.setAttribute('cy', String(y));
-    if (pointRadius !== undefined) {
-      point.setAttribute('r', String(pointRadius));
+    if (marker === null) {
+      marker = doc.createElementNS(svgNamespace, 'circle');
+      marker.setAttribute('class', 'marking-menu-stroke-point');
+      if (pointRadius !== undefined) {
+        marker.setAttribute('r', String(pointRadius));
+      }
+
+      if (pointColor !== undefined) {
+        marker.setAttribute('fill', pointColor);
+      }
+
+      svg.append(marker);
     }
 
-    if (pointColor !== undefined) {
-      point.setAttribute('fill', pointColor);
-    }
-
-    marker ??= point;
-    svg.append(point);
+    marker.setAttribute('cx', String(x));
+    marker.setAttribute('cy', String(y));
   };
 
   const clear = (): void => {

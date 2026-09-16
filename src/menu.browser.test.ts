@@ -335,6 +335,30 @@ test('growing opening indicator mid-dwell, before novice mode opens', async () =
     .toMatchScreenshot('opening-indicator-mid-dwell');
 });
 
+test('opening a submenu leaves a single stroke origin marker, not one per render', async () => {
+  using menu = mountMenu({ items });
+  await using drag = await openMenu(menu.surface);
+
+  using _timers = fakeTimers();
+  // Several real moves toward "Others...", each a fresh render: the origin
+  // marker used to be re-created (never removed) on every one of them.
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.others.angle, ACTIVE_RADIUS),
+    8,
+  );
+  await vi.advanceTimersByTimeAsync(1000); // Past submenuOpeningDelay.
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const markers = root?.querySelectorAll('.marking-menu-stroke-point');
+  expect(markers).toHaveLength(1);
+  expect(markers?.[0]?.getAttribute('cx')).toBe(
+    root
+      ?.querySelector<HTMLElement>('.marking-menu-layer')
+      ?.style.getPropertyValue('--center-x')
+      .replace('px', ''),
+  );
+});
+
 test('64px dead zone menu open', async () => {
   using menu = mountMenu({ items, deadZoneRadius: 64 });
   await using _drag = await openMenu(menu.surface);
