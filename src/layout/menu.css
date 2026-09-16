@@ -379,21 +379,21 @@
 
 /* Forced-colors mode doesn't remap SVG `fill`/`stroke`, and the stroke and
    indicator paint themselves from script as presentation attributes, which
-   any CSS rule already outranks. Wedge fill, connectors, and outlines stay
-   on the `--resolved-*` custom properties above, so overriding those here
-   is enough for them; system-color keywords resolve to real colors at
-   compute time, so a var() reading one of these picks it up like any other
-   value. */
+   any CSS rule already outranks. Wedge fill, plate fill, connectors, and
+   outlines all read from the shared `--resolved-fill`/`--resolved-outline-color`
+   pairs above, so overriding those here reaches every one of them;
+   system-color keywords resolve to real colors at compute time, so a var()
+   reading one of these picks it up like any other value. Plate text stays
+   a fixed white in both states rather than tracking the fill, so it needs
+   its own override. */
 @media (forced-colors: active) {
   :host {
-    --resolved-plate-background: ButtonFace;
-    --resolved-plate-background-active: Highlight;
-    --resolved-plate-color: ButtonText;
-    --resolved-plate-color-active: HighlightText;
-    --resolved-plate-outline-color: ButtonText;
-    --resolved-wedge-fill: ButtonFace;
-    --resolved-wedge-fill-active: Highlight;
-    --resolved-wedge-outline-color: ButtonText;
+    --resolved-fill: ButtonFace;
+    --resolved-fill-active: Highlight;
+    --resolved-outline-color: ButtonText;
+    --resolved-outline-color-active: HighlightText;
+    --resolved-plate-text-color: ButtonText;
+    --resolved-plate-text-color-active: HighlightText;
   }
 
   .marking-menu-stroke-path {
