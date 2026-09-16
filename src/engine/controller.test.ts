@@ -54,10 +54,7 @@ const strokeSurfaces = (parent: HTMLElement): SVGSVGElement[] =>
     ...(parent.querySelector('.marking-menu')?.shadowRoot?.children ?? []),
   ].filter(
     (element): element is SVGSVGElement =>
-      element.matches('svg') &&
-      element.querySelector(
-        '.marking-menu-indicator-background, .marking-menu-indicator-dot',
-      ) === null,
+      element.matches('svg.marking-menu-stroke-surface'),
   );
 
 describe('createController', () => {

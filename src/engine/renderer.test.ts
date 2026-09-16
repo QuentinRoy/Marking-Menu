@@ -224,10 +224,8 @@ describe('createRenderer', () => {
     const dotSvg = root
       .querySelector('.marking-menu-indicator-dot')
       ?.closest('svg');
-    const upperSvg = [...root.querySelectorAll('svg')].find(
-      (svg) => svg !== backgroundSvg && svg !== dotSvg,
-    );
-    expect(upperSvg).toBeDefined();
+    const upperSvg = root.querySelector('.marking-menu-stroke-surface');
+    expect(upperSvg).not.toBeNull();
     expect(upperSvg?.compareDocumentPosition(backgroundSvg as Node)).toBe(
       Node.DOCUMENT_POSITION_PRECEDING,
     );

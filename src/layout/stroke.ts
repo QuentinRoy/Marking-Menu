@@ -54,9 +54,12 @@ export function createStrokeSurface({
 }: StrokeSurfaceOptions): StrokeSurface {
   const svg = doc.createElementNS(svgNamespace, 'svg');
   svg.ariaHidden = 'true';
-  if (className !== undefined) {
-    svg.setAttribute('class', className);
-  }
+  svg.setAttribute(
+    'class',
+    className === undefined
+      ? 'marking-menu-stroke-surface'
+      : `marking-menu-stroke-surface ${className}`,
+  );
 
   Object.assign(svg.style, {
     position: 'absolute',

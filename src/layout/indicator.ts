@@ -30,6 +30,7 @@ export type IndicatorSurface = {
 function createSurface(doc: Document, parent: HTMLElement | ShadowRoot) {
   const svg = doc.createElementNS(svgNamespace, 'svg');
   svg.ariaHidden = 'true';
+  svg.setAttribute('class', 'marking-menu-indicator-surface');
   Object.assign(svg.style, {
     position: 'absolute',
     inset: '0',
