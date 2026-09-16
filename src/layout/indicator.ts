@@ -78,7 +78,8 @@ export function createIndicatorSurface({
       dot.style.opacity = String(clamped);
     } else {
       dot.style.opacity = '';
-      dot.setAttribute('r', String(minRadius + (radius - minRadius) * clamped));
+      const eased = clamped * clamped; // ease-in
+      dot.setAttribute('r', String(minRadius + (radius - minRadius) * eased));
     }
   };
 
