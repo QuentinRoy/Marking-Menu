@@ -7,7 +7,7 @@
     "checkJs": true,
     // The demo (`demo/index.html`) resolves `marking-menu` through its
     // import map (see `demo/lib/marking-menu.js`, a symlink to
-    // `../dist/index.js`); this is what gives the compiler its types for
+    // `../dist/marking-menu.js`); this is what gives the compiler its types for
     // that specifier.
     "paths": { "marking-menu": ["../src/index.ts"] }
   },

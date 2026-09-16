@@ -5,7 +5,7 @@ import {
   type StrokeSurface,
   type StrokeSurfaceOptions,
 } from '../../src/layout/stroke.js';
-import { createMarkingMenu } from '../../src/marking-menu.js';
+import { createMarkingMenu } from '../../src/create-marking-menu.js';
 import {
   analyzeMarkingMenuStroke,
   type MarkingMenuStrokeAnalysis,

@@ -1,6 +1,6 @@
 import { fakeTimers } from './__fixtures__/timers.js';
 import { createParent, pointer } from './engine/__fixtures__/pointer.js';
-import { createMarkingMenu } from './marking-menu.js';
+import { createMarkingMenu } from './create-marking-menu.js';
 
 describe('createMarkingMenu', () => {
   it('builds a working, already-active controller', () => {
