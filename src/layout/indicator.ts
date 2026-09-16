@@ -73,7 +73,8 @@ export function createIndicatorSurface({
     dot.setAttribute('cx', String(cx));
     dot.setAttribute('cy', String(cy));
     const clamped = Math.max(0, Math.min(1, progress));
-    const eased = clamped * clamped; // Ease-in
+    // Ease in quadratically rather than growing at a constant rate.
+    const eased = clamped * clamped;
     if (shouldReduceMotion()) {
       dot.setAttribute('r', String(radius));
       dot.style.opacity = String(eased);
