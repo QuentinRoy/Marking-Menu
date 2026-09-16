@@ -157,9 +157,9 @@ test('outer connector defaults to the plate background', async () => {
   );
 });
 
-test('outline and outer connector follow --mm-fill-color when the outline color is unset', async () => {
+test('outline and outer connector follow --mm-fill when the outline color is unset', async () => {
   using menu = mountMenu({ items });
-  menu.surface.style.setProperty('--mm-fill-color', '#123456');
+  menu.surface.style.setProperty('--mm-fill', '#123456');
   menu.surface.style.setProperty('--mm-wedge-outline-width', '2px');
   await using _drag = await openMenu(menu.surface);
 

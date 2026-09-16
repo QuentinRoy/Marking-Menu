@@ -1,17 +1,14 @@
 :host {
   /* General reused properties */
-  --resolved-fill-color: var(
-    --mm-fill-color,
-    light-dark(hwb(0 58% 42%), hwb(240 37% 58%))
-  );
-  --resolved-fill-color-active: var(
-    --mm-fill-color-active,
+  --resolved-fill: var(--mm-fill, light-dark(hwb(0 58% 42%), hwb(240 37% 58%)));
+  --resolved-fill-active: var(
+    --mm-fill-active,
     light-dark(hwb(0 44% 56%), hwb(240 51% 44%))
   );
-  --resolved-outline-color: var(--mm-outline-color, var(--resolved-fill-color));
+  --resolved-outline-color: var(--mm-outline-color, var(--resolved-fill));
   --resolved-outline-color-active: var(
     --mm-outline-color-active,
-    var(--resolved-fill-color-active)
+    var(--resolved-fill-active)
   );
   --resolved-outline-width: var(--mm-outline-width, 0);
   --resolved-outer-radius: calc(
@@ -48,10 +45,10 @@
   );
 
   /* Plates */
-  --resolved-plate-fill: var(--mm-plate-fill, var(--resolved-fill-color));
+  --resolved-plate-fill: var(--mm-plate-fill, var(--resolved-fill));
   --resolved-plate-fill-active: var(
     --mm-plate-fill-active,
-    var(--resolved-fill-color-active)
+    var(--resolved-fill-active)
   );
   --resolved-plate-text-color: var(--mm-plate-text-color, hwb(0 100% 0%));
   --resolved-plate-text-color-active: var(
@@ -82,10 +79,10 @@
 
   /* Wedges */
   --resolved-wedge-corner-radius: var(--mm-wedge-corner-radius, 4px);
-  --resolved-wedge-fill: var(--mm-wedge-fill, var(--resolved-fill-color));
+  --resolved-wedge-fill: var(--mm-wedge-fill, var(--resolved-fill));
   --resolved-wedge-fill-active: var(
     --mm-wedge-fill-active,
-    var(--resolved-fill-color-active)
+    var(--resolved-fill-active)
   );
   --resolved-wedge-gap: var(--mm-wedge-gap, 4px);
   --resolved-wedge-outline-color: var(
@@ -115,25 +112,25 @@
     --mm-stroke-color-feedback,
     var(--resolved-stroke-color)
   );
-  --resolved-stroke-color-lower: var(
-    --mm-stroke-color-lower,
+  --resolved-stroke-color-earlier: var(
+    --mm-stroke-color-earlier,
     var(--resolved-muted-color)
   );
   --resolved-stroke-start-point-radius: var(
     --mm-stroke-start-point-radius,
     8px
   );
-  --resolved-stroke-start-point-radius-lower: var(
-    --mm-stroke-start-point-radius-lower,
-    var(--resolved-stroke-width-lower)
+  --resolved-stroke-start-point-radius-earlier: var(
+    --mm-stroke-start-point-radius-earlier,
+    var(--resolved-stroke-width-earlier)
   );
   --resolved-stroke-width: var(--mm-stroke-width, 4px);
   --resolved-stroke-width-feedback: var(
     --mm-stroke-width-feedback,
     var(--resolved-stroke-width)
   );
-  --resolved-stroke-width-lower: var(
-    --mm-stroke-width-lower,
+  --resolved-stroke-width-earlier: var(
+    --mm-stroke-width-earlier,
     var(--resolved-stroke-width)
   );
 
@@ -349,15 +346,15 @@
 }
 
 .marking-menu-layout-probe--stroke-color-lower {
-  color: var(--resolved-stroke-color-lower);
+  color: var(--resolved-stroke-color-earlier);
 }
 
 .marking-menu-layout-probe--stroke-width-lower {
-  width: var(--resolved-stroke-width-lower);
+  width: var(--resolved-stroke-width-earlier);
 }
 
 .marking-menu-layout-probe--stroke-start-point-radius-lower {
-  width: var(--resolved-stroke-start-point-radius-lower);
+  width: var(--resolved-stroke-start-point-radius-earlier);
 }
 
 .marking-menu-layout-probe--stroke-color-feedback {

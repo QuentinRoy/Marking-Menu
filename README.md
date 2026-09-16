@@ -161,25 +161,25 @@ Scope the host selector to a container when only one menu should change:
 
 Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Stroke values are resolved when the controller is created and whenever a menu opens; layout values are resolved when a menu opens.
 
-Some colors default to a different value in dark mode, resolved with [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark). The dark default only applies once the host page opts in, typically with `color-scheme: light dark` on `:root`.
+Some colors default to a different value in dark mode, picked with [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark). It needs `color-scheme` declared on the host page or an ancestor, typically `color-scheme: light dark` on `:root`.
 
 ### Fill and outline colors
 
 Wedges, plates, and outer connectors share one fill color and one inset outline color by default, so a theme usually only needs to set these.
 
-| Property                    | Default                                           | Purpose                               |
-| --------------------------- | ------------------------------------------------- | ------------------------------------- |
-| `--mm-fill-color`           | `hwb(0 58% 42%)`, `hwb(240 37% 58%)` in dark mode | Resting fill color.                   |
-| `--mm-fill-color-active`    | `hwb(0 44% 56%)`, `hwb(240 51% 44%)` in dark mode | Active fill color.                    |
-| `--mm-outline-color`        | Fill color                                        | Inset outline color.                  |
-| `--mm-outline-color-active` | Active fill color                                 | Active inset outline color.           |
-| `--mm-outline-width`        | `0`                                               | Inset outline width. `0` disables it. |
+| Property                    | Light             | Dark               | Purpose                               |
+| --------------------------- | ----------------- | ------------------ | ------------------------------------- |
+| `--mm-fill`                 | `hwb(0 58% 42%)`  | `hwb(240 37% 58%)` | Resting fill color.                   |
+| `--mm-fill-active`          | `hwb(0 44% 56%)`  | `hwb(240 51% 44%)` | Active fill color.                    |
+| `--mm-outline-color`        | Fill color        | Fill color         | Inset outline color.                  |
+| `--mm-outline-color-active` | Active fill color | Active fill color  | Active inset outline color.           |
+| `--mm-outline-width`        | `0`               | `0`                | Inset outline width. `0` disables it. |
 
 ### Muted color
 
-| Property           | Default                                           | Purpose                                          |
-| ------------------ | ------------------------------------------------- | ------------------------------------------------ |
-| `--mm-muted-color` | `hwb(0 85% 15%)`, `hwb(240 20% 75%)` in dark mode | Shared default for less prominent color accents. |
+| Property           | Light            | Dark               | Purpose                                          |
+| ------------------ | ---------------- | ------------------ | ------------------------------------------------ |
+| `--mm-muted-color` | `hwb(0 85% 15%)` | `hwb(240 20% 75%)` | Shared default for less prominent color accents. |
 
 The opening indicator's background and earlier gesture segments both default to this color.
 
@@ -237,17 +237,17 @@ The active outer connector uses `--mm-outer-connector-color` when it is set, or 
 
 ### Stroke properties
 
-| Property                               | Default                                          | Purpose                              |
-| -------------------------------------- | ------------------------------------------------ | ------------------------------------ |
-| `--mm-stroke-color`                    | `hwb(0 0% 100%)`, `hwb(240 93% 7%)` in dark mode | Current gesture color.               |
-| `--mm-stroke-width`                    | `4px`                                            | Current gesture width.               |
-| `--mm-stroke-start-point-radius`       | `8px`                                            | Novice-mode start marker radius.     |
-| `--mm-stroke-color-lower`              | Muted color                                      | Earlier gesture segments' color.     |
-| `--mm-stroke-width-lower`              | `--mm-stroke-width`                              | Earlier gesture segments' width.     |
-| `--mm-stroke-start-point-radius-lower` | `--mm-stroke-width-lower`                        | Earlier gesture start marker radius. |
-| `--mm-stroke-color-feedback`           | `--mm-stroke-color`                              | Selected gesture feedback color.     |
-| `--mm-stroke-width-feedback`           | `--mm-stroke-width`                              | Completed gesture feedback width.    |
-| `--mm-stroke-color-canceled`           | `hwb(11 32% 13%)`, `hwb(11 45% 5%)` in dark mode | Canceled gesture feedback color.     |
+| Property                                 | Light                       | Dark                        | Purpose                              |
+| ---------------------------------------- | --------------------------- | --------------------------- | ------------------------------------ |
+| `--mm-stroke-color`                      | `hwb(0 0% 100%)`            | `hwb(240 93% 7%)`           | Current gesture color.               |
+| `--mm-stroke-width`                      | `4px`                       | `4px`                       | Current gesture width.               |
+| `--mm-stroke-start-point-radius`         | `8px`                       | `8px`                       | Novice-mode start marker radius.     |
+| `--mm-stroke-color-earlier`              | Muted color                 | Muted color                 | Earlier gesture segments' color.     |
+| `--mm-stroke-width-earlier`              | `--mm-stroke-width`         | `--mm-stroke-width`         | Earlier gesture segments' width.     |
+| `--mm-stroke-start-point-radius-earlier` | `--mm-stroke-width-earlier` | `--mm-stroke-width-earlier` | Earlier gesture start marker radius. |
+| `--mm-stroke-color-feedback`             | `--mm-stroke-color`         | `--mm-stroke-color`         | Selected gesture feedback color.     |
+| `--mm-stroke-width-feedback`             | `--mm-stroke-width`         | `--mm-stroke-width`         | Completed gesture feedback width.    |
+| `--mm-stroke-color-canceled`             | `hwb(11 32% 13%)`           | `hwb(11 45% 5%)`            | Canceled gesture feedback color.     |
 
 Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
 
@@ -325,24 +325,24 @@ The visible connector now starts at the ring. Set the inner connector to the sam
 .marking-menu {
   --mm-inner-connector-color: var(
     --mm-outer-connector-color,
-    var(--mm-outline-color, var(--mm-fill-color))
+    var(--mm-outline-color, var(--mm-fill))
   );
 }
 ```
 
 Nine stroke options moved from `createMarkingMenu` configuration to CSS:
 
-| Removed option                       | Replacement                             |
-| ------------------------------------ | --------------------------------------- |
-| `strokeColor`                        | `--mm-stroke-color`.                    |
-| `strokeWidth`                        | `--mm-stroke-width`.                    |
-| `strokeStartPointRadius`             | `--mm-stroke-start-point-radius`.       |
-| `lowerStrokeColor`                   | `--mm-stroke-color-lower`.              |
-| `lowerStrokeWidth`                   | `--mm-stroke-width-lower`.              |
-| `lowerStrokeStartPointRadius`        | `--mm-stroke-start-point-radius-lower`. |
-| `gestureFeedbackStrokeWidth`         | `--mm-stroke-width-feedback`.           |
-| `gestureFeedbackStrokeColor`         | `--mm-stroke-color-feedback`.           |
-| `gestureFeedbackCanceledStrokeColor` | `--mm-stroke-color-canceled`.           |
+| Removed option                       | Replacement                               |
+| ------------------------------------ | ----------------------------------------- |
+| `strokeColor`                        | `--mm-stroke-color`.                      |
+| `strokeWidth`                        | `--mm-stroke-width`.                      |
+| `strokeStartPointRadius`             | `--mm-stroke-start-point-radius`.         |
+| `lowerStrokeColor`                   | `--mm-stroke-color-earlier`.              |
+| `lowerStrokeWidth`                   | `--mm-stroke-width-earlier`.              |
+| `lowerStrokeStartPointRadius`        | `--mm-stroke-start-point-radius-earlier`. |
+| `gestureFeedbackStrokeWidth`         | `--mm-stroke-width-feedback`.             |
+| `gestureFeedbackStrokeColor`         | `--mm-stroke-color-feedback`.             |
+| `gestureFeedbackCanceledStrokeColor` | `--mm-stroke-color-canceled`.             |
 
 `gestureFeedbackDuration` remains a configuration option and still defaults to `1000` milliseconds.
 
