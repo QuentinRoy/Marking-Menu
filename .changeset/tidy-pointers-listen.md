@@ -1,5 +1,5 @@
 ---
-'marking-menu': minor
+'marking-menu': major
 ---
 
-Handle input with Pointer Events. A gesture starts with the primary mouse button, touch, or pen, keeps tracking when the pointer leaves the parent, and cancels when the browser cancels the pointer. The parent gets `touch-action: none` while the menu is active.
+Handle input with Pointer Events. Only the primary mouse button, touch, or pen starts a gesture, so right and middle clicks no longer open the menu, and a second touch no longer cancels it. A gesture keeps tracking when the pointer leaves the parent. The parent gets `touch-action: none` until you dispose the menu.

@@ -1,5 +1,5 @@
 ---
-'marking-menu': minor
+'marking-menu': patch
 ---
 
-The `log` option only needs an `error` method, which always receives an `Error`. The menu never calls `info`, `warn`, or `debug`.
+A `log` option without an `error` method falls back to `console.error`, and `error` always receives an `Error`.

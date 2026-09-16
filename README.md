@@ -146,7 +146,7 @@ Second and Third split the first 180-degree gap into three 60-degree steps. Fift
 
 ## Appearance
 
-Each controller owns one `<div class="marking-menu">` with an open shadow root. The host remains mounted until you dispose the controller, including during expert gestures that never open a menu. The root is available for inspection, but its elements are not a styling API and direct mutation is unsupported. Use `.marking-menu` as the stable host selector for custom properties and stroke `::part()` rules.
+Each controller owns one `<div class="marking-menu">` with an open shadow root. The host remains mounted until you dispose the controller, including during expert gestures that never open a menu. The root is available for inspection, but its elements are not a styling API and direct mutation is unsupported. Use `.marking-menu` as the stable host selector for custom properties.
 
 Scope the host selector to a container when only one menu should change:
 
@@ -293,24 +293,21 @@ The menu cannot yet expose a name to the host page, since references cannot cros
 
 ## Upgrading from 0.10.1
 
-Default item positions change in 5-, 6-, and 7-item menus. The layout change causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
+Default item positions change in 2-, 3-, 5-, 6-, and 7-item menus. The layout change causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
 
 The release also changes imports, menu configuration, and event handling. Use the named `createMarkingMenu` export with a configuration object and register listeners with `on`. Replace subscription cleanup with `dispose()`.
 
 ### Appearance and theming
 
-The menu and stroke surfaces now share one open shadow root for the controller's lifetime. Page CSS cannot reach the internal class names. `.marking-menu` remains the host selector, but these selectors stop working:
+The menu and stroke surfaces now share one open shadow root for the controller's lifetime. Page CSS cannot reach the internal class names. `.marking-menu` is now the host, present in the parent for the controller's lifetime, and these selectors stop working:
 
 | Old selector or state                                                              | Replacement                                                                      |
 | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `.marking-menu-item`                                                               | None. Item structure is internal.                                                |
 | `.marking-menu-label`                                                              | Use the `--mm-plate-*` properties; inherited font properties can go on the host. |
 | `.marking-menu-line`                                                               | Use the `--mm-connector-*` properties.                                           |
-| `.marking-menu.solved`                                                             | None. Solved layout is internal.                                                 |
 | `.marking-menu-item.active ...`                                                    | Use the corresponding `--mm-*-active` property.                                  |
 | `.bottom-right-item`, `.bottom-left-item`, `.top-left-item`, and `.top-right-item` | `--mm-plate-corner-radius` applies to every plate corner.                        |
-
-The old box-model rule for `.marking-menu, .marking-menu *` is also gone. The shadow boundary keeps page-wide box sizing rules out of the menu.
 
 Replace the old custom properties as follows:
 
@@ -330,10 +327,6 @@ Replace the old custom properties as follows:
 | `--line-thickness`         | `--mm-connector-thickness`.                                     |
 | `--line-color`             | `--mm-outer-connector-color`.                                   |
 | `--active-line-color`      | `--mm-outer-connector-color-active`.                            |
-| `--item-horizontal-gap`    | `--mm-plate-gap-horizontal`.                                    |
-| `--item-vertical-gap`      | `--mm-plate-gap-vertical`.                                      |
-| `--item-ring-gap`          | `--mm-plate-gap-ring`.                                          |
-| `--item-connector-gap`     | `--mm-plate-gap-connector`.                                     |
 
 Label plates now hug their text. Set both width properties to restore the old fixed width and ellipsis:
 
