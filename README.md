@@ -254,12 +254,12 @@ Strokes can paint outside the parent without changing its scroll size. Set `over
 
 ### Opening indicator properties
 
-Before novice mode opens, and again while dwelling on a submenu, a background circle appears at the pointer with a dot growing inside it. The dot reaches the circle's size right as the menu opens, then becomes its start marker with no visible jump. The cursor stays hidden while it is visible. Expert mode never shows it, since a gesture fast enough to stay there rarely pauses long enough for it to matter.
+While dwelling before novice mode opens, whether at the start of a gesture or partway through an expert gesture, and again while dwelling on a submenu, a background circle appears at the pointer with a dot growing inside it. The dot reaches the circle's size right as the menu opens, then becomes its start marker with no visible jump. The cursor stays hidden while it is visible.
 
-| Property                    | Default                                  | Purpose                  |
-| --------------------------- | ---------------------------------------- | ------------------------ |
-| `--mm-indicator-fill`       | Stroke color                             | Growing dot color.       |
-| `--mm-indicator-background` | Black at 20% opacity, white in dark mode | Background circle color. |
+| Property                    | Default                                                        | Purpose                  |
+| --------------------------- | -------------------------------------------------------------- | ------------------------ |
+| `--mm-indicator-fill`       | Stroke color                                                   | Growing dot color.       |
+| `--mm-indicator-background` | `hwb(215 20% 30% / 0.2)`, `hwb(215 60% 0% / 0.4)` in dark mode | Background circle color. |
 
 ## Input behavior
 
