@@ -2,6 +2,4 @@
 'marking-menu': major
 ---
 
-Return `null` instead of `undefined` from `getChild()` when no direct sub-item
-has the requested ID. Calling `getChild()` on a leaf now also returns `null`
-instead of throwing.
+`getChild()` returns `null` instead of `undefined` when no sub-item has the ID. On an item without sub-items, `getChild()` and `getNearestChild()` return `null`, and `getChildrenByLabel()` returns `[]`, instead of throwing.

@@ -1,7 +1,5 @@
 ---
-'marking-menu': major
+'marking-menu': minor
 ---
 
-Render each menu item as a wedge in a configurable ring. Wedges follow the
-menu's selection regions and use constant-width gaps. Style them with the
-`--mm-wedge-*` custom properties.
+Draw a ring of wedges around the menu center, one per item. Style it with the `--mm-wedge-*` properties. Connectors now start at the ring; set `--mm-inner-connector-color` to draw them from the center.

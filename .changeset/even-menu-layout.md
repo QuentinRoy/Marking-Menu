@@ -2,6 +2,4 @@
 'marking-menu': major
 ---
 
-5-, 6-, and 7-item menus now position items evenly around the circle. The
-upgrade raises no error and does not fail builds, but a learned gesture can
-select a different item. Set each item's `angle` to keep its existing direction.
+Spread items evenly around the circle for every item count. Menus with 2, 3, 5, 6, or 7 items change: 3 items sit 120° apart instead of 90°. A learned gesture can now select a different item, without any error. Set each item's `angle` to keep its old direction.

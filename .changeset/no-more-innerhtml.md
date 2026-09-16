@@ -1,6 +1,5 @@
 ---
-'marking-menu': patch
+'marking-menu': major
 ---
 
-Stop using `innerHTML` to render menu item labels. A label containing markup
-now shows as plain text instead of being parsed as HTML.
+Render labels as plain text instead of HTML, so a label can't inject markup into the page. A label containing HTML now shows the tags as text. Labels are text only.

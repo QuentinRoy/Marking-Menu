@@ -2,32 +2,19 @@
 'marking-menu': major
 ---
 
-`createMarkingMenu` no longer returns an RxJS `Observable`. It returns an
-already-active controller: listen with `controller.on(type, listener)` and
-stop the menu with `controller.dispose()` (or `[Symbol.dispose]()`, for
-`using`).
-
-Six events replace the old notification stream: `start`, `open`, `move`,
-`change`, `select`, and `cancel`. `move` now fires in every mode, so `draw`
-is gone; `cancel`'s `selection` field is renamed `active`, and is always
-present. Where you used to do this:
+`createMarkingMenu` returns a controller instead of an RxJS `Observable`, so you no longer install `rxjs`. The menu is active as soon as you create it. Listen with `on(type, listener)`, and stop the menu with `dispose()` or `using`.
 
 ```js
-const subscription = createMarkingMenu({ items, parent }).subscribe(
-  (selection) => console.log(selection.label),
-);
+// 0.10.1
+const subscription = MarkingMenu(items, parent).subscribe((selection) => {
+  console.log(selection.name);
+});
 subscription.unsubscribe();
-```
 
-do this instead:
-
-```js
+// 1.0
 const menu = createMarkingMenu({ items, parent });
 menu.on('select', (event) => console.log(event.selection.label));
 menu.dispose();
 ```
 
-`notifySteps`, `MarkingMenuNotification`, `exportNotification`, and the
-conditional result type it produced are gone along with it: every controller
-now dispatches the full event set, so a consumer who only wants selections
-listens for `select` and ignores the rest.
+The controller emits `start`, `open`, `move`, `change`, `select`, and `cancel` events, exported as classes such as `MarkingMenuSelectEvent`. Their fields are getters, so spreading an event or `JSON.stringify()` doesn't copy them. They replace the `notifySteps` option, with these differences: `draw` becomes `move`, `move` also fires alongside `change`, `cancel` has no `selection`, `select` has no `active`, and no event has `timeStamp`.
