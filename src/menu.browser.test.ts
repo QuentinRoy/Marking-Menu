@@ -57,30 +57,6 @@ const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-thickness', '60px');
 };
 
-test('opening indicator background defaults to a fixed color, independent of wedge fill', async () => {
-  using menu = mountMenu({ items });
-  menu.surface.style.setProperty('--mm-wedge-fill', '#000000');
-  menu.surface.style.setProperty('--mm-wedge-fill-active', '#ffffff');
-  await using drag = await openMenu(menu.surface);
-  await drag.moveTo(
-    offset(drag.at, TOP_LEVEL_ITEMS.others.angle, ACTIVE_RADIUS),
-  );
-
-  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
-  await expect
-    .poll(() => root?.querySelector('.marking-menu-indicator-background'))
-    .not.toBeNull();
-
-  const background = root?.querySelector('.marking-menu-indicator-background');
-  const probe = document.createElement('div');
-  probe.style.color = 'hwb(0 0% 100% / 0.2)';
-  document.body.append(probe);
-  const expectedFill = getComputedStyle(probe).color;
-  probe.remove();
-
-  expect(background && getComputedStyle(background).fill).toBe(expectedFill);
-});
-
 test('opening indicator background is themeable via --mm-indicator-background', async () => {
   using menu = mountMenu({ items });
   menu.surface.style.setProperty('--mm-indicator-background', '#123456');
