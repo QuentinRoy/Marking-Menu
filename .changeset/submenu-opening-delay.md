@@ -2,5 +2,7 @@
 'marking-menu': major
 ---
 
-Rename the `subMenuOpeningDelay` configuration option to
-`submenuOpeningDelay`.
+pr: #124
+commit: de5942f
+
+Rename the `subMenuOpeningDelay` option to `submenuOpeningDelay`.

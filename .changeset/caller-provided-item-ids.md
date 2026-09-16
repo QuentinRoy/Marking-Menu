@@ -2,7 +2,4 @@
 'marking-menu': major
 ---
 
-Stop assigning generated positional IDs to menu items. Items without a
-caller-provided ID now expose `id: undefined`; provide an explicit ID when an
-item must be addressed by ID. Positional identity is available separately as
-the library-assigned `key` property.
+Stop generating IDs for items without one: their `id` is now `undefined` instead of a positional ID like `'1-0'`. Give an item an `id` if you look it up by ID. The positional ID is still available as `key`.

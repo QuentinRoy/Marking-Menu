@@ -2,9 +2,7 @@
 'marking-menu': major
 ---
 
-Gesture strokes can now paint outside their parent so they follow the same
-overflow behavior as the menu.
+pr: #334
+commit: 3413aa3
 
-Set `overflow: hidden` on the parent when the menu and strokes must stay within
-it, and use the `--mm-stroke-*` custom properties instead of the removed stroke
-options.
+Strokes can paint outside the parent, like the menu itself. Set `overflow: hidden` on the parent to keep both inside it.

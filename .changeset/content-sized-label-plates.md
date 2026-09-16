@@ -2,16 +2,4 @@
 'marking-menu': major
 ---
 
-Size label plates to their text by default. Set both `--mm-plate-min-width`
-and `--mm-plate-max-width` to `120px` to keep the prior fixed, truncated
-plate. Plate height now follows its label, so `--mm-plate-height` no longer
-applies.
-Active plates remain centered on their resting position as their label style
-changes.
-All plate corners now use `--mm-plate-corner-radius`, and plate padding now
-defaults to `12px` where `text-box-trim` and `text-box-edge` are available.
-Browsers without trimming add `0.2em` to the default or configured padding.
-The default label font size is `20px`, and the horizontal clearance between
-plates defaults to `12px`.
-Rename `--item-background`, `--item-color`, `--active-item-background`, and
-`--active-item-color` to the corresponding `--mm-plate-*` properties.
+Size label plates to their text instead of a fixed 120 px width. Set `--mm-plate-min-width` and `--mm-plate-max-width` to `120px` to keep the fixed, truncated width.

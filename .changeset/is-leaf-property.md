@@ -2,5 +2,4 @@
 'marking-menu': major
 ---
 
-Replace the `isLeaf()` method on emitted menu items with an `isLeaf` boolean
-property.
+Replace the `isLeaf()` and `isRoot()` item methods with `isLeaf` and `isRoot` properties.

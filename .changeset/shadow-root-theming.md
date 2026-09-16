@@ -2,15 +2,4 @@
 'marking-menu': major
 ---
 
-Render menus in an open shadow root on the existing `.marking-menu` wrapper.
-Page-level legacy class selectors no longer reach the menu. Replace the label
-and connector theme properties with the `--mm-*` names. Internal menu elements
-are not a styling API. Use `--mm-outer-connector-color-active` when the active
-outer connector should differ from its resting color.
-
-Replace `--mm-ring-radius` with `--mm-wedge-thickness`. The default is 40px,
-which sets the radial thickness beyond `deadZoneRadius`.
-
-The center-to-wedge connector is transparent by default. Set
-`--mm-inner-connector-color` to show it; use `--mm-outer-connector-color` for
-the wedge-to-plate connector.
+Render the menu in an open shadow root on the `.marking-menu` element, so page styles can't break its layout. Page CSS can no longer reach the menu's inner elements, and the theme properties are renamed to `--mm-*`, set on `.marking-menu`. See [Upgrading from 0.10.1](https://github.com/QuentinRoy/Marking-Menu#upgrading-from-0101) for the replacements.
