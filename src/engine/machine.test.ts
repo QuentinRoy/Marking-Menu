@@ -859,14 +859,18 @@ describe('navigationMachine', () => {
       });
     });
 
-    it('shows no indicator while dwelling in expert mode', () => {
+    it('shows the indicator anchored at the dwell position while dwelling in expert mode', () => {
       const host = startHost();
       const layouts = recordLayouts(host);
 
       host.send('down', { position: [0, 0] });
       host.send('move', { position: [100, 0] }); // Crosses the threshold: expert.
 
-      expect(layouts.at(-1)?.indicator).toBeNull();
+      expect(layouts.at(-1)?.indicator).toEqual({
+        anchor: [100, 0],
+        position: [100, 0],
+        delayMs: options.noviceDwellingTime,
+      });
     });
 
     it('shows no indicator in novice mode while the pointer is within the dead zone', () => {

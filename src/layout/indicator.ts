@@ -30,6 +30,7 @@ export type IndicatorSurface = {
 function createSurface(doc: Document, parent: HTMLElement | ShadowRoot) {
   const svg = doc.createElementNS(svgNamespace, 'svg');
   svg.ariaHidden = 'true';
+  svg.setAttribute('class', 'marking-menu-indicator-surface');
   Object.assign(svg.style, {
     position: 'absolute',
     inset: '0',
@@ -73,12 +74,14 @@ export function createIndicatorSurface({
     dot.setAttribute('cx', String(cx));
     dot.setAttribute('cy', String(cy));
     const clamped = Math.max(0, Math.min(1, progress));
+    // Ease in quadratically rather than growing at a constant rate.
+    const eased = clamped * clamped;
     if (shouldReduceMotion()) {
       dot.setAttribute('r', String(radius));
-      dot.style.opacity = String(clamped);
+      dot.style.opacity = String(eased);
     } else {
       dot.style.opacity = '';
-      dot.setAttribute('r', String(minRadius + (radius - minRadius) * clamped));
+      dot.setAttribute('r', String(minRadius + (radius - minRadius) * eased));
     }
   };
 
