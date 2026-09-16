@@ -17,4 +17,4 @@ menu.on('select', (event) => console.log(event.selection.label));
 menu.dispose();
 ```
 
-The controller emits `start`, `open`, `move`, `change`, `select`, and `cancel` events, exported as classes such as `MarkingMenuSelectEvent`. Their fields are getters, so spreading an event or `JSON.stringify()` doesn't copy them. They replace the `notifySteps` option, with these differences: `draw` becomes `move`, `move` also fires alongside `change`, `cancel` reports the last active item as `active` instead of `selection`, `select` has no `active`, only `open` has `menuCenter`, and no event has `timeStamp`.
+The controller emits `start`, `open`, `move`, `change`, `select`, and `cancel` events, exported as classes such as `MarkingMenuSelectEvent`. Their fields are getters, so spreading an event or `JSON.stringify()` doesn't copy them. They replace the `notifySteps` option, with these differences: `draw` becomes `move`, `move` also fires alongside `change`, `cancel` has no `selection`, `select` has no `active`, and no event has `timeStamp`.
