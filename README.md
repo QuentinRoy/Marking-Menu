@@ -167,38 +167,40 @@ Some colors default to a different value in dark mode, picked with [`light-dark(
 
 Wedges, plates, and outer connectors share one fill color and one inset outline color by default, so a theme usually only needs to set these.
 
-| Property                    | Light             | Dark               | Purpose                               |
-| --------------------------- | ----------------- | ------------------ | ------------------------------------- |
-| `--mm-fill`                 | `hwb(0 58% 42%)`  | `hwb(240 37% 58%)` | Resting fill color.                   |
-| `--mm-fill-active`          | `hwb(0 44% 56%)`  | `hwb(240 51% 44%)` | Active fill color.                    |
-| `--mm-outline-color`        | Fill color        | Fill color         | Inset outline color.                  |
-| `--mm-outline-color-active` | Active fill color | Active fill color  | Active inset outline color.           |
-| `--mm-outline-width`        | `0`               | `0`                | Inset outline width. `0` disables it. |
+| Property                    | Light              | Dark               | Purpose                               |
+| --------------------------- | ------------------ | ------------------ | ------------------------------------- |
+| `--mm-fill`                 | `hwb(0 95% 5%)`    | `hwb(0 17% 83%)`   | Resting fill color.                   |
+| `--mm-fill-active`          | `hwb(215 85% 3%)`  | `hwb(215 20% 64%)` | Active fill color.                    |
+| `--mm-outline-color`        | `hwb(0 50% 50%)`   | `hwb(0 38% 62%)`   | Inset outline color.                  |
+| `--mm-outline-color-active` | `hwb(215 10% 30%)` | `hwb(215 52% 18%)` | Active inset outline color.           |
+| `--mm-outline-width`        | `1px`              | `1px`              | Inset outline width. `0` disables it. |
+| `--mm-outline-width-active` | Outline width      | Outline width      | Active inset outline width.           |
 
 ### Muted color
 
-| Property           | Light            | Dark               | Purpose                                          |
-| ------------------ | ---------------- | ------------------ | ------------------------------------------------ |
-| `--mm-muted-color` | `hwb(0 85% 15%)` | `hwb(240 20% 75%)` | Shared default for less prominent color accents. |
+| Property           | Light            | Dark             | Purpose                                          |
+| ------------------ | ---------------- | ---------------- | ------------------------------------------------ |
+| `--mm-muted-color` | `hwb(0 85% 15%)` | `hwb(0 30% 70%)` | Shared default for less prominent color accents. |
 
-The opening indicator's background and earlier gesture segments both default to this color.
+Earlier gesture segments default to this color.
 
 ### Plate and label properties
 
-| Property                          | Default              | Purpose                                      |
-| --------------------------------- | -------------------- | -------------------------------------------- |
-| `--mm-plate-fill`                 | Fill color           | Plate background.                            |
-| `--mm-plate-text-color`           | `hwb(0 100% 0%)`     | Label color.                                 |
-| `--mm-plate-fill-active`          | Active fill color    | Active plate background.                     |
-| `--mm-plate-text-color-active`    | `hwb(0 100% 0%)`     | Active label color.                          |
-| `--mm-plate-padding`              | `12px`               | Space around the label.                      |
-| `--mm-plate-corner-radius`        | `16px`               | Plate corner radius.                         |
-| `--mm-plate-font-size`            | `20px`               | Label font size.                             |
-| `--mm-plate-min-width`            | `0`                  | Minimum plate width.                         |
-| `--mm-plate-max-width`            | `none`               | Maximum plate width before label truncation. |
-| `--mm-plate-outline-color`        | Outline color        | Plate inset outline color.                   |
-| `--mm-plate-outline-color-active` | Active outline color | Active plate inset outline color.            |
-| `--mm-plate-outline-width`        | Outline width        | Plate inset outline width. `0` disables it.  |
+| Property                          | Default                                         | Purpose                                      |
+| --------------------------------- | ----------------------------------------------- | -------------------------------------------- |
+| `--mm-plate-fill`                 | Fill color                                      | Plate background.                            |
+| `--mm-plate-text-color`           | `hwb(0 0% 100%)`, `hwb(0 88% 12%)` in dark mode | Label color.                                 |
+| `--mm-plate-fill-active`          | Active fill color                               | Active plate background.                     |
+| `--mm-plate-text-color-active`    | Label color                                     | Active label color.                          |
+| `--mm-plate-padding`              | `12px`                                          | Space around the label.                      |
+| `--mm-plate-corner-radius`        | `16px`                                          | Plate corner radius.                         |
+| `--mm-plate-font-size`            | `20px`                                          | Label font size.                             |
+| `--mm-plate-min-width`            | `0`                                             | Minimum plate width.                         |
+| `--mm-plate-max-width`            | `none`                                          | Maximum plate width before label truncation. |
+| `--mm-plate-outline-color`        | `transparent`                                   | Plate inset outline color.                   |
+| `--mm-plate-outline-color-active` | Plate outline color                             | Active plate inset outline color.            |
+| `--mm-plate-outline-width`        | Outline width                                   | Plate inset outline width. `0` disables it.  |
+| `--mm-plate-outline-width-active` | Plate outline width                             | Active plate inset outline width.            |
 
 Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the configured plate padding so text is not clipped vertically.
 
@@ -214,17 +216,16 @@ Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the 
 | `--mm-wedge-outline-color`        | Outline color        | Wedge inset outline color.                            |
 | `--mm-wedge-outline-color-active` | Active outline color | Active wedge inset outline color.                     |
 | `--mm-wedge-outline-width`        | Outline width        | Wedge inset outline width. `0` disables it.           |
+| `--mm-wedge-outline-width-active` | Wedge outline width  | Active wedge inset outline width.                     |
 
 ### Connector properties
 
-| Property                            | Default               | Purpose                               |
-| ----------------------------------- | --------------------- | ------------------------------------- |
-| `--mm-connector-thickness`          | `4px`                 | Connector thickness.                  |
-| `--mm-inner-connector-color`        | `transparent`         | Center-to-ring connector color.       |
-| `--mm-outer-connector-color`        | Outline color         | Ring-to-plate connector color.        |
-| `--mm-outer-connector-color-active` | Outer connector color | Active ring-to-plate connector color. |
-
-The active outer connector uses `--mm-outer-connector-color` when it is set, or the active outline color otherwise. Set `--mm-outer-connector-color-active` to give it a separate active color.
+| Property                            | Default           | Purpose                               |
+| ----------------------------------- | ----------------- | ------------------------------------- |
+| `--mm-connector-thickness`          | `4px`             | Connector thickness.                  |
+| `--mm-inner-connector-color`        | `transparent`     | Center-to-ring connector color.       |
+| `--mm-outer-connector-color`        | Fill color        | Ring-to-plate connector color.        |
+| `--mm-outer-connector-color-active` | Active fill color | Active ring-to-plate connector color. |
 
 ### Layout clearance properties
 
@@ -232,14 +233,14 @@ The active outer connector uses `--mm-outer-connector-color` when it is set, or 
 | --------------------------- | ------- | --------------------------------------------------------- |
 | `--mm-plate-gap-horizontal` | `12px`  | Horizontal clearance between plates.                      |
 | `--mm-plate-gap-vertical`   | `4px`   | Vertical clearance between plates.                        |
-| `--mm-plate-gap-ring`       | `12px`  | Clearance between a plate and the ring.                   |
+| `--mm-plate-gap-ring`       | `8px`   | Clearance between a plate and the ring.                   |
 | `--mm-plate-gap-connector`  | `4px`   | Clearance from a plate to another item's outer connector. |
 
 ### Stroke properties
 
 | Property                                 | Light                       | Dark                        | Purpose                              |
 | ---------------------------------------- | --------------------------- | --------------------------- | ------------------------------------ |
-| `--mm-stroke-color`                      | `hwb(0 0% 100%)`            | `hwb(240 93% 7%)`           | Current gesture color.               |
+| `--mm-stroke-color`                      | `hwb(0 0% 100%)`            | `hwb(0 88% 12%)`            | Current gesture color.               |
 | `--mm-stroke-width`                      | `4px`                       | `4px`                       | Current gesture width.               |
 | `--mm-stroke-start-point-radius`         | `8px`                       | `8px`                       | Novice-mode start marker radius.     |
 | `--mm-stroke-color-earlier`              | Muted color                 | Muted color                 | Earlier gesture segments' color.     |
@@ -255,10 +256,10 @@ Strokes can paint outside the parent without changing its scroll size. Set `over
 
 Before novice mode opens, and again while dwelling on a submenu, a background circle appears at the pointer with a dot growing inside it. The dot reaches the circle's size right as the menu opens, then becomes its start marker with no visible jump. The cursor stays hidden while it is visible. Expert mode never shows it, since a gesture fast enough to stay there rarely pauses long enough for it to matter.
 
-| Property                    | Default      | Purpose                  |
-| --------------------------- | ------------ | ------------------------ |
-| `--mm-indicator-fill`       | Stroke color | Growing dot color.       |
-| `--mm-indicator-background` | Muted color  | Background circle color. |
+| Property                    | Default                                  | Purpose                  |
+| --------------------------- | ---------------------------------------- | ------------------------ |
+| `--mm-indicator-fill`       | Stroke color                             | Growing dot color.       |
+| `--mm-indicator-background` | Black at 20% opacity, white in dark mode | Background circle color. |
 
 ## Input behavior
 

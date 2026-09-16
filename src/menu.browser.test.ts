@@ -73,7 +73,7 @@ test('opening indicator background defaults to a fixed color, independent of wed
 
   const background = root?.querySelector('.marking-menu-indicator-background');
   const probe = document.createElement('div');
-  probe.style.color = 'hwb(0 85% 15%)';
+  probe.style.color = 'hwb(0 0% 100% / 0.2)';
   document.body.append(probe);
   const expectedFill = getComputedStyle(probe).color;
   probe.remove();
@@ -157,16 +157,13 @@ test('outer connector defaults to the plate background', async () => {
   );
 });
 
-test('outline and outer connector follow --mm-fill when the outline color is unset', async () => {
+test('outer connector follows --mm-fill', async () => {
   using menu = mountMenu({ items });
   menu.surface.style.setProperty('--mm-fill', '#123456');
-  menu.surface.style.setProperty('--mm-wedge-outline-width', '2px');
   await using _drag = await openMenu(menu.surface);
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
-  const outline = root?.querySelector('.marking-menu-wedge-outline');
   const connector = root?.querySelector('.marking-menu-outer-connector');
-  expect(getComputedStyle(outline as Element).stroke).toBe('rgb(18, 52, 86)');
   expect(getComputedStyle(connector as Element).backgroundColor).toBe(
     'rgb(18, 52, 86)',
   );

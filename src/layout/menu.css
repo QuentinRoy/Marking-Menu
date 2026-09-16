@@ -1,22 +1,29 @@
 :host {
   /* General reused properties */
-  --resolved-fill: var(--mm-fill, light-dark(hwb(0 58% 42%), hwb(240 37% 58%)));
+  --resolved-fill: var(--mm-fill, light-dark(hwb(0 95% 5%), hwb(0 17% 83%)));
   --resolved-fill-active: var(
     --mm-fill-active,
-    light-dark(hwb(0 44% 56%), hwb(240 51% 44%))
+    light-dark(hwb(215 85% 3%), hwb(215 20% 64%))
   );
-  --resolved-outline-color: var(--mm-outline-color, var(--resolved-fill));
+  --resolved-outline-color: var(
+    --mm-outline-color,
+    light-dark(hwb(0 50% 50%), hwb(0 38% 62%))
+  );
   --resolved-outline-color-active: var(
     --mm-outline-color-active,
-    var(--resolved-fill-active)
+    light-dark(hwb(215 10% 30%), hwb(215 52% 18%))
   );
-  --resolved-outline-width: var(--mm-outline-width, 0);
+  --resolved-outline-width: var(--mm-outline-width, 1px);
+  --resolved-outline-width-active: var(
+    --mm-outline-width-active,
+    var(--resolved-outline-width)
+  );
   --resolved-outer-radius: calc(
     var(--inner-radius) + var(--resolved-wedge-thickness)
   );
   --resolved-muted-color: var(
     --mm-muted-color,
-    light-dark(hwb(0 85% 15%), hwb(240 20% 75%))
+    light-dark(hwb(0 85% 15%), hwb(0 30% 70%))
   );
 
   /* Menu opening indicator */
@@ -26,7 +33,7 @@
   );
   --resolved-indicator-background: var(
     --mm-indicator-background,
-    var(--resolved-muted-color)
+    light-dark(hwb(0 0% 100% / 0.2), hwb(0 100% 0% / 0.2))
   );
 
   /* Connectors */
@@ -37,11 +44,11 @@
   );
   --resolved-outer-connector-color: var(
     --mm-outer-connector-color,
-    var(--resolved-outline-color)
+    var(--resolved-fill)
   );
   --resolved-outer-connector-color-active: var(
     --mm-outer-connector-color-active,
-    var(--mm-outer-connector-color, var(--resolved-outline-color-active))
+    var(--resolved-fill-active)
   );
 
   /* Plates */
@@ -50,28 +57,32 @@
     --mm-plate-fill-active,
     var(--resolved-fill-active)
   );
-  --resolved-plate-text-color: var(--mm-plate-text-color, hwb(0 100% 0%));
+  --resolved-plate-text-color: var(
+    --mm-plate-text-color,
+    light-dark(hwb(0 0% 100%), hwb(0 88% 12%))
+  );
   --resolved-plate-text-color-active: var(
     --mm-plate-text-color-active,
-    hwb(0 100% 0%)
+    var(--resolved-plate-text-color)
   );
   --resolved-plate-corner-radius: var(--mm-plate-corner-radius, 16px);
   --resolved-plate-font-size: var(--mm-plate-font-size, 20px);
   --resolved-plate-gap-connector: var(--mm-plate-gap-connector, 4px);
   --resolved-plate-gap-horizontal: var(--mm-plate-gap-horizontal, 12px);
-  --resolved-plate-gap-ring: var(--mm-plate-gap-ring, 12px);
+  --resolved-plate-gap-ring: var(--mm-plate-gap-ring, 8px);
   --resolved-plate-gap-vertical: var(--mm-plate-gap-vertical, 4px);
-  --resolved-plate-outline-color: var(
-    --mm-plate-outline-color,
-    var(--resolved-outline-color)
-  );
+  --resolved-plate-outline-color: var(--mm-plate-outline-color, transparent);
   --resolved-plate-outline-color-active: var(
     --mm-plate-outline-color-active,
-    var(--resolved-outline-color-active)
+    var(--resolved-plate-outline-color)
   );
   --resolved-plate-outline-width: var(
     --mm-plate-outline-width,
     var(--resolved-outline-width)
+  );
+  --resolved-plate-outline-width-active: var(
+    --mm-plate-outline-width-active,
+    var(--mm-plate-outline-width, var(--resolved-outline-width-active))
   );
   --resolved-plate-padding: var(--mm-plate-padding, 12px);
   --resolved-plate-max-width: var(--mm-plate-max-width, none);
@@ -97,12 +108,16 @@
     --mm-wedge-outline-width,
     var(--resolved-outline-width)
   );
+  --resolved-wedge-outline-width-active: var(
+    --mm-wedge-outline-width-active,
+    var(--mm-wedge-outline-width, var(--resolved-outline-width-active))
+  );
   --resolved-wedge-thickness: var(--mm-wedge-thickness, 40px);
 
   /* Strokes */
   --resolved-stroke-color: var(
     --mm-stroke-color,
-    light-dark(hwb(0 0% 100%), hwb(240 93% 7%))
+    light-dark(hwb(0 0% 100%), hwb(0 88% 12%))
   );
   --resolved-stroke-color-canceled: var(
     --mm-stroke-color-canceled,
@@ -201,6 +216,7 @@
 
 .marking-menu-item.active .marking-menu-wedge-outline {
   stroke: var(--resolved-wedge-outline-color-active);
+  stroke-width: calc(var(--resolved-wedge-outline-width-active) * 2);
 }
 
 .marking-menu-plate {
@@ -285,7 +301,7 @@
 
 .marking-menu-item.active .marking-menu-plate {
   background-color: var(--resolved-plate-fill-active);
-  box-shadow: inset 0 0 0 var(--resolved-plate-outline-width)
+  box-shadow: inset 0 0 0 var(--resolved-plate-outline-width-active)
     var(--resolved-plate-outline-color-active);
   color: var(--resolved-plate-text-color-active);
 }
