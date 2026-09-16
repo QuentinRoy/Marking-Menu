@@ -79,17 +79,8 @@ export type Menu = {
 };
 
 type StrokeThemeProbes = {
-  strokeColor: HTMLElement;
   strokeWidth: HTMLElement;
   strokeStartPointRadius: HTMLElement;
-  strokeColorLower: HTMLElement;
-  strokeWidthLower: HTMLElement;
-  strokeStartPointRadiusLower: HTMLElement;
-  strokeColorFeedback: HTMLElement;
-  strokeWidthFeedback: HTMLElement;
-  strokeColorCanceled: HTMLElement;
-  indicatorFill: HTMLElement;
-  indicatorBackground: HTMLElement;
 };
 
 type LayoutProbes = StrokeThemeProbes & {
@@ -103,17 +94,8 @@ type LayoutProbes = StrokeThemeProbes & {
 };
 
 export type MenuStrokeTheme = {
-  strokeColor: string;
   strokeWidth: number;
   strokeStartPointRadius: number;
-  lowerStrokeColor: string;
-  lowerStrokeWidth: number;
-  lowerStrokeStartPointRadius: number;
-  gestureFeedbackStrokeColor: string;
-  gestureFeedbackStrokeWidth: number;
-  gestureFeedbackCanceledStrokeColor: string;
-  indicatorFill: string;
-  indicatorBackground: string;
 };
 
 type MenuDom = {
@@ -167,37 +149,12 @@ function appendStrokeThemeProbes(
   doc: Document,
 ): StrokeThemeProbes {
   return {
-    strokeColor: appendLayoutProbe(parent, doc, 'stroke-color'),
     strokeWidth: appendLayoutProbe(parent, doc, 'stroke-width'),
     strokeStartPointRadius: appendLayoutProbe(
       parent,
       doc,
       'stroke-start-point-radius',
     ),
-    strokeColorLower: appendLayoutProbe(parent, doc, 'stroke-color-lower'),
-    strokeWidthLower: appendLayoutProbe(parent, doc, 'stroke-width-lower'),
-    strokeStartPointRadiusLower: appendLayoutProbe(
-      parent,
-      doc,
-      'stroke-start-point-radius-lower',
-    ),
-    strokeColorFeedback: appendLayoutProbe(
-      parent,
-      doc,
-      'stroke-color-feedback',
-    ),
-    strokeWidthFeedback: appendLayoutProbe(
-      parent,
-      doc,
-      'stroke-width-feedback',
-    ),
-    strokeColorCanceled: appendLayoutProbe(
-      parent,
-      doc,
-      'stroke-color-canceled',
-    ),
-    indicatorFill: appendLayoutProbe(parent, doc, 'indicator-fill'),
-    indicatorBackground: appendLayoutProbe(parent, doc, 'indicator-background'),
   };
 }
 
@@ -412,43 +369,13 @@ function readPixels(
   return Number.isNaN(pixels) ? fallback : pixels;
 }
 
-function readColor(
-  doc: Document,
-  probe: HTMLElement,
-  fallback: string,
-): string {
-  const { color } = (doc.defaultView ?? globalThis).getComputedStyle(probe);
-  return color === '' ? fallback : color;
-}
-
 function readStrokeTheme(
   doc: Document,
   probes: StrokeThemeProbes,
 ): MenuStrokeTheme {
   return {
-    strokeColor: readColor(doc, probes.strokeColor, '#000000'),
     strokeWidth: readPixels(doc, probes.strokeWidth, 4),
     strokeStartPointRadius: readPixels(doc, probes.strokeStartPointRadius, 8),
-    lowerStrokeColor: readColor(doc, probes.strokeColorLower, '#777777'),
-    lowerStrokeWidth: readPixels(doc, probes.strokeWidthLower, 4),
-    lowerStrokeStartPointRadius: readPixels(
-      doc,
-      probes.strokeStartPointRadiusLower,
-      4,
-    ),
-    gestureFeedbackStrokeColor: readColor(
-      doc,
-      probes.strokeColorFeedback,
-      '#000000',
-    ),
-    gestureFeedbackStrokeWidth: readPixels(doc, probes.strokeWidthFeedback, 4),
-    gestureFeedbackCanceledStrokeColor: readColor(
-      doc,
-      probes.strokeColorCanceled,
-      '#de6c52',
-    ),
-    indicatorFill: readColor(doc, probes.indicatorFill, '#000000'),
-    indicatorBackground: readColor(doc, probes.indicatorBackground, '#f2f2f2'),
   };
 }
 

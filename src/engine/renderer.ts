@@ -208,20 +208,11 @@ function createStrokeLayers(
     upper: createStrokeLayer({
       parent,
       coordinateParent: parent.host.parentElement as HTMLElement,
-      surfaceOptions: {
-        lineColor: strokeTheme.strokeColor,
-        lineWidth: strokeTheme.strokeWidth,
-        pointRadius: strokeTheme.strokeStartPointRadius,
-      },
     }),
     lower: createStrokeLayer({
       parent,
       coordinateParent: parent.host.parentElement as HTMLElement,
-      surfaceOptions: {
-        lineColor: strokeTheme.lowerStrokeColor,
-        lineWidth: strokeTheme.lowerStrokeWidth,
-        pointRadius: strokeTheme.lowerStrokeStartPointRadius,
-      },
+      surfaceOptions: { className: 'marking-menu-stroke--lower' },
     }),
     indicator: createIndicatorLayer({
       parent,
@@ -229,19 +220,15 @@ function createStrokeLayers(
       surfaceOptions: {
         radius: strokeTheme.strokeStartPointRadius,
         strokeWidth: strokeTheme.strokeWidth,
-        fillColor: strokeTheme.indicatorFill,
-        backgroundColor: strokeTheme.indicatorBackground,
       },
     }),
     feedback: createGestureFeedback({
       parent,
       duration: gestureFeedbackDuration,
-      strokeOptions: {
-        lineColor: strokeTheme.gestureFeedbackStrokeColor,
-        lineWidth: strokeTheme.gestureFeedbackStrokeWidth,
-      },
+      strokeOptions: { className: 'marking-menu-stroke--feedback' },
       canceledStrokeOptions: {
-        lineColor: strokeTheme.gestureFeedbackCanceledStrokeColor,
+        className:
+          'marking-menu-stroke--feedback marking-menu-stroke--canceled',
       },
     }),
   };
