@@ -1,7 +1,13 @@
 import { createMarkingMenu } from 'marking-menu';
-import { DEFAULT_MENU, readMenuConfig } from './menu-config.js';
+import { DEFAULT_MENU, readMenuConfig } from './shared/menu-config.js';
 
-function element(selector: string): HTMLElement {
+/**
+The page's own element matching `selector`, or throws if it's missing.
+
+@param {string} selector - A CSS selector.
+@returns {HTMLElement} The matching element.
+*/
+function element(selector) {
   const found = document.querySelector(selector);
   if (!(found instanceof HTMLElement)) {
     throw new TypeError(`The demo page is missing ${selector}.`);
@@ -13,8 +19,8 @@ function element(selector: string): HTMLElement {
 const toastElement = element('#toast');
 
 // The address may name a menu: `?config=` carries one built in the
-// playground (see `demo/playground`), so a link can show the menu it was
-// built for. Failing that, the page opens on the shared default.
+// playground (see `playground/`), so a link can show the menu it was built
+// for. Failing that, the page opens on the shared default.
 const items = readMenuConfig(location.search) ?? DEFAULT_MENU;
 
 function openMenu() {
@@ -28,8 +34,17 @@ function openMenu() {
   return menu;
 }
 
-let toastTimeoutId: ReturnType<typeof setTimeout> | null = null;
-function toastMessage(message: string) {
+/**
+@type {ReturnType<typeof setTimeout> | null}
+*/
+let toastTimeoutId = null;
+
+/**
+Shows `message` in the toast, replacing whatever it was already showing.
+
+@param {string} message - The text to show.
+*/
+function toastMessage(message) {
   if (toastTimeoutId !== null) {
     clearTimeout(toastTimeoutId);
   }

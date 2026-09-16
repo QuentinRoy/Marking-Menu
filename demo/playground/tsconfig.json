@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2024", "ESNext.Disposable", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    // Pulls in `demo/shared/menu-config.js`'s inferred types: that module
+    // is native JS (see `demo/tsconfig.json`), not part of this project.
+    "allowJs": true
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

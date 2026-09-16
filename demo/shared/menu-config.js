@@ -1,4 +1,6 @@
-import type { MarkingMenuInput, MarkingMenuItemInput } from '../src/types.js';
+/**
+@import { MarkingMenuInput, MarkingMenuItemInput } from '../../src/types.js';
+*/
 
 /*
  The menu a link carries, as `?config=<json>`.
@@ -9,9 +11,9 @@ import type { MarkingMenuInput, MarkingMenuItemInput } from '../src/types.js';
  construction and either can be pasted into the other.
 
  The value is only checked for shape here. The playground validates it
- against `demo/playground/menu-schema.ts`, which is stricter and reports
- what is wrong; this module only has to decide whether there is a menu at
- all, so that the demo can fall back to its own.
+ against `demo/playground/menu-schema.ts`, which is stricter and reports what is
+ wrong; this module only has to decide whether there is a menu at all, so
+ that the demo can fall back to its own.
 
  Nothing here imports the library at runtime, only its types: the demo
  resolves `marking-menu` through its import map, and a second copy pulled in
@@ -26,8 +28,10 @@ export const CONFIG_PARAM = 'config';
 /**
  The eight-direction menu, with a sub-menu at the bottom, that either page
  opens on when the address carries no menu of its own.
+
+ @type {MarkingMenuInput}
  */
-export const DEFAULT_MENU: MarkingMenuInput = {
+export const DEFAULT_MENU = {
   items: [
     { label: 'Right' },
     { label: 'Down-Right' },
@@ -48,11 +52,24 @@ export const DEFAULT_MENU: MarkingMenuInput = {
   ],
 };
 
-function isRecord(value: unknown): value is Record<string, unknown> {
+/**
+Whether `value` is a plain object, as opposed to `null` or an array.
+
+@param {unknown} value - The value to test.
+@returns {value is Record<string, unknown>} Whether it's a plain object.
+*/
+function isRecord(value) {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function asItem(value: unknown): MarkingMenuItemInput | null {
+/**
+Parses `value` as a single menu item, recursing into its `items`.
+
+@param {unknown} value - An unvalidated JSON value.
+@returns {MarkingMenuItemInput | null} The item, or `null` if `value` is not
+one.
+*/
+function asItem(value) {
   if (!isRecord(value)) {
     return null;
   }
@@ -80,12 +97,22 @@ function asItem(value: unknown): MarkingMenuItemInput | null {
   };
 }
 
-function asItems(value: unknown): MarkingMenuItemInput[] | null {
+/**
+Parses `value` as an array of menu items.
+
+@param {unknown} value - An unvalidated JSON value.
+@returns {MarkingMenuItemInput[] | null} The items, or `null` if `value` is
+not an array of them.
+*/
+function asItems(value) {
   if (!Array.isArray(value)) {
     return null;
   }
 
-  const items: MarkingMenuItemInput[] = [];
+  /**
+  @type {MarkingMenuItemInput[]}
+  */
+  const items = [];
   for (const raw of value) {
     const item = asItem(raw);
     if (item === null) {
@@ -98,7 +125,13 @@ function asItems(value: unknown): MarkingMenuItemInput[] | null {
   return items;
 }
 
-function asMenu(value: unknown): MarkingMenuInput | null {
+/**
+Parses `value` as a menu.
+
+@param {unknown} value - An unvalidated JSON value.
+@returns {MarkingMenuInput | null} The menu, or `null` if `value` is not one.
+*/
+function asMenu(value) {
   if (!isRecord(value)) {
     return null;
   }
@@ -110,11 +143,11 @@ function asMenu(value: unknown): MarkingMenuInput | null {
 /**
  Read the menu a query string names.
 
- @param search - A query string, e.g. `location.search`.
- @returns The menu, or `null` if the parameter is absent or does not hold
- one.
+ @param {string} search - A query string, e.g. `location.search`.
+ @returns {MarkingMenuInput | null} The menu, or `null` if the parameter is
+ absent or does not hold one.
  */
-export function readMenuConfig(search: string): MarkingMenuInput | null {
+export function readMenuConfig(search) {
   const encoded = new URLSearchParams(search).get(CONFIG_PARAM);
   if (encoded === null) {
     return null;
@@ -130,14 +163,11 @@ export function readMenuConfig(search: string): MarkingMenuInput | null {
 /**
  Put a menu into a query string, leaving any other parameter alone.
 
- @param search - The query string to update, e.g. `location.search`.
- @param menu - The menu to carry.
- @returns The new query string, leading `?` included.
+ @param {string} search - The query string to update, e.g. `location.search`.
+ @param {MarkingMenuInput} menu - The menu to carry.
+ @returns {string} The new query string, leading `?` included.
  */
-export function writeMenuConfig(
-  search: string,
-  menu: MarkingMenuInput,
-): string {
+export function writeMenuConfig(search, menu) {
   const parameters = new URLSearchParams(search);
   // `JSON.stringify` with no spacing: the editor pretty-prints for reading,
   // the address carries the same value with nothing to spare.

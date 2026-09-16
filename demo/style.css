@@ -1,4 +1,4 @@
-@import './color-scheme.css';
+@import './shared/color-scheme.css';
 
 /* Dark mode. Every colour it needs is named here and used below, so the two
    schemes differ by this block alone. The stroke's two are shared with the

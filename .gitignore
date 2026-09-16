@@ -33,6 +33,7 @@ yarn-error.log*
 #Build generated
 dist/
 demo-dist/
+playground-dist/
 build/
 e2e/fixture-dist/
 
@@ -115,8 +116,6 @@ coverage
 
 # Dist
 /marking-menu*
-/demo/marking-menu.mjs
-/demo/marking-menu.mjs.map
 
 # Yarn (non zero install)
 .pnp.*

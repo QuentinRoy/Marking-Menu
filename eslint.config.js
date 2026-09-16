@@ -120,10 +120,11 @@ export default defineConfig([
     },
   },
   {
+    // Neither page has a project preview image yet to use as og:image;
+    // og:title, og:type, and og:url are already set on the demo (see
+    // `demo/index.html`).
     files: ['demo/**'],
     rules: {
-      // No project preview image exists yet to use as og:image; og:title,
-      // og:type, and og:url are already set above.
       '@html-eslint/require-open-graph-protocol': 'off',
     },
   },
