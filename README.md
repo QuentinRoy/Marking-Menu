@@ -266,6 +266,31 @@ Gestures start with the primary mouse button, primary touch contact, or primary 
 
 Once all controllers sharing the parent are disposed, the previous inline value and priority are restored, unless your application changed the property in the meantime.
 
+## Accessibility
+
+The menu container gets `role="menu"` and each item gets `role="menuitem"`, with its accessible name taken from the item's own label text. Non-leaf items get `aria-haspopup="menu"`. Wedges, connectors, the stroke, and the opening indicator are hidden from the accessibility tree; they are visual feedback, not content.
+
+In novice mode, focus moves to the menu container when it opens and to each item as it becomes active, so a screen reader speaks the active item's label. Focus returns to whatever had it before the gesture once the gesture ends, whether by selection or cancellation. Expert-mode gestures move too fast for this to help and never move focus.
+
+The menu also respects `prefers-reduced-motion` (the opening indicator fades in instead of growing) and `forced-colors` (wedges, connectors, the stroke, and the indicator switch to system colors), and its wedges and plates support an inset outline for extra contrast against the host page; see [Fill and outline colors](#fill-and-outline-colors).
+
+A marking menu is a gesture technique and will not gain keyboard support. If an action must stay reachable without performing a gesture, provide that path yourself, outside the menu.
+
+The `select` event is not an announcement. Announce it yourself, for example with a live region:
+
+```js
+const status = document.querySelector('[aria-live="polite"]');
+menu.on('select', (event) => {
+  status.textContent = event.selection.label;
+});
+```
+
+or use your own pattern.
+
+Screen reader touch passthrough (VoiceOver's hold, TalkBack's double-tap-and-hold-then-drag) works for someone who already knows the item layout, but it is not a discovery path, and whether the active item is announced mid-gesture is untested. Treat it as a bonus for experienced users, not a substitute for the command path above.
+
+The menu cannot yet expose a name to the host page, since references cannot cross its shadow root.
+
 ## Upgrading from 0.10.1
 
 Default item positions change in 5-, 6-, and 7-item menus. The layout change causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
