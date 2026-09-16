@@ -47,15 +47,17 @@ const activeMenuItems = (parent: HTMLElement): HTMLElement[] => [
     []),
 ];
 
-// Excludes the opening indicator's own SVG: it draws the dwell-anticipation
-// target, not a stroke.
+// Excludes the opening indicator's own SVGs (background and dot): they draw
+// the dwell-anticipation target, not a stroke.
 const strokeSurfaces = (parent: HTMLElement): SVGSVGElement[] =>
   [
     ...(parent.querySelector('.marking-menu')?.shadowRoot?.children ?? []),
   ].filter(
     (element): element is SVGSVGElement =>
       element.matches('svg') &&
-      element.querySelector('.marking-menu-indicator-background') === null,
+      element.querySelector(
+        '.marking-menu-indicator-background, .marking-menu-indicator-dot',
+      ) === null,
   );
 
 describe('createController', () => {

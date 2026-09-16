@@ -74,16 +74,15 @@ export function projectLayout<M extends AnyModelNode>(
 
     case 'expert': {
       return {
-        // No opening indicator in expert mode: a stroke drawn fast enough
-        // to stay in expert never lingers long enough for one to matter,
-        // and it only gets in the way when the pointer does pause. The
-        // crosshair marks the pointer normally, as it did before the
-        // indicator existed.
         cursor: 'crosshair',
         menu: null,
         upperStroke: state.stroke,
         lowerStroke: null,
-        indicator: null,
+        indicator: {
+          anchor: state.dwellAnchor,
+          position: state.stroke.at(-1) as Point,
+          delayMs: options.noviceDwellingTime,
+        },
       };
     }
 
