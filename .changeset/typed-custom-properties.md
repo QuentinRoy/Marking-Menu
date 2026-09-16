@@ -8,7 +8,7 @@ the color notation used throughout the README.
 Plate background and label color default to a darker `hwb(0 58% 42%)`
 and white instead of near-white and dark gray; wedges and outer
 connectors mirror the plate background, using the new
-`--mm-fill-color` and `--mm-fill-color-active` properties. Activating an
+`--mm-fill` and `--mm-fill-active` properties. Activating an
 item nudges the fill a touch darker in light mode, and a touch lighter
 in dark mode. Colors pick a dark-mode variant using `light-dark()` once
 the host page opts in with `color-scheme`.
