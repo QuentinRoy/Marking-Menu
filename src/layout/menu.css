@@ -33,7 +33,7 @@
   );
   --resolved-indicator-background: var(
     --mm-indicator-background,
-    light-dark(hwb(0 0% 100% / 0.2), hwb(0 100% 0% / 0.2))
+    light-dark(hwb(215 20% 30% / 0.2), hwb(215 50% 0% / 0.2))
   );
 
   /* Connectors */
