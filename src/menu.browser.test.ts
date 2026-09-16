@@ -352,8 +352,9 @@ test('opening a submenu leaves a single stroke origin marker, not one per render
   const markers = root?.querySelectorAll('.marking-menu-stroke-point');
   expect(markers).toHaveLength(1);
   expect(markers?.[0]?.getAttribute('cx')).toBe(
-    root?.querySelector<HTMLElement>('.marking-menu-layer')?.style
-      .getPropertyValue('--center-x')
+    root
+      ?.querySelector<HTMLElement>('.marking-menu-layer')
+      ?.style.getPropertyValue('--center-x')
       .replace('px', ''),
   );
 });
