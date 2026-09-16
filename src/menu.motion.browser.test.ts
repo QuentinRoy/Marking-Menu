@@ -78,6 +78,52 @@ test('wedge and plate colors switch to system colors under forced colors', async
   expect(getComputedStyle(wedge).fill).toBe(expectedFill);
 });
 
+test('wedge and plate outlines use a system color and are not suppressed under forced colors', async () => {
+  using menu = mountMenu({ items });
+  menu.surface.style.setProperty('--mm-wedge-outline-width', '3px');
+  menu.surface.style.setProperty('--mm-plate-outline-width', '3px');
+  await commands.emulateMedia({ forcedColors: 'active' });
+  await using _drag = await openMenu(menu.surface);
+
+  const probe = document.createElement('div');
+  probe.style.color = 'ButtonText';
+  document.body.append(probe);
+  const buttonText = getComputedStyle(probe).color;
+  probe.remove();
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const wedgeOutline = root?.querySelector(
+    '.marking-menu-wedge-outline',
+  ) as Element;
+  expect(getComputedStyle(wedgeOutline).stroke).toBe(buttonText);
+  expect(getComputedStyle(wedgeOutline).strokeWidth).toBe('6px');
+
+  const plate = root?.querySelector('.marking-menu-plate') as Element;
+  expect(getComputedStyle(plate).boxShadow).toBe(
+    `${buttonText} 0px 0px 0px 3px inset`,
+  );
+});
+
+test('the outer connector switches from a system color to another when active, under forced colors', async () => {
+  await commands.emulateMedia({ forcedColors: 'active' });
+  using menu = mountMenu({ items });
+  await using drag = await openMenu(menu.surface);
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const connector = root?.querySelector(
+    '.marking-menu-outer-connector',
+  ) as Element;
+  const restingColor = getComputedStyle(connector).backgroundColor;
+
+  await drag.moveTo(
+    offset(drag.at, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
+  );
+  const activeColor = getComputedStyle(connector).backgroundColor;
+
+  expect(activeColor).not.toBe(restingColor);
+  expect(activeColor).not.toBe('rgba(0, 0, 0, 0)');
+});
+
 test('menu open with no active item under forced colors', async () => {
   await commands.emulateMedia({ forcedColors: 'active' });
   using menu = mountMenu({ items });

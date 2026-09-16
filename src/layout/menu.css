@@ -377,23 +377,31 @@
   color: var(--resolved-indicator-background);
 }
 
-/* Forced-colors mode doesn't remap SVG `fill`/`stroke`, and the stroke and
-   indicator paint themselves from script as presentation attributes, which
-   any CSS rule already outranks. Wedge fill, plate fill, connectors, and
-   outlines all read from the shared `--resolved-fill`/`--resolved-outline-color`
-   pairs above, so overriding those here reaches every one of them;
-   system-color keywords resolve to real colors at compute time, so a var()
-   reading one of these picks it up like any other value. Plate text stays
-   a fixed white in both states rather than tracking the fill, so it needs
-   its own override. */
+/* Forced-colors mode doesn't remap SVG `fill`/`stroke` at all, and it
+   auto-forces an HTML element's own `background-color`/`color` only when
+   they're not already a system color, which gives divs like the connectors
+   some default protection but not a deliberately chosen, state-distinct
+   one. So every resolved color a host can customize is set directly here
+   instead of relying on the shared `--resolved-fill`/`--resolved-outline-color`
+   pair those customizations would otherwise still win against. The outer
+   connector gets its own pair rather than reusing the wedge/plate outline
+   colors: it sits on the host page, not on the active fill, so it needs
+   `Highlight` (a system color already legible on `Canvas`) rather than
+   `HighlightText` (legible on `Highlight`, not on the page behind it). */
 @media (forced-colors: active) {
   :host {
-    --resolved-fill: ButtonFace;
-    --resolved-fill-active: Highlight;
-    --resolved-outline-color: ButtonText;
-    --resolved-outline-color-active: HighlightText;
+    --resolved-outer-connector-color: ButtonText;
+    --resolved-outer-connector-color-active: Highlight;
+    --resolved-plate-fill: ButtonFace;
+    --resolved-plate-fill-active: Highlight;
+    --resolved-plate-outline-color: ButtonText;
+    --resolved-plate-outline-color-active: HighlightText;
     --resolved-plate-text-color: ButtonText;
     --resolved-plate-text-color-active: HighlightText;
+    --resolved-wedge-fill: ButtonFace;
+    --resolved-wedge-fill-active: Highlight;
+    --resolved-wedge-outline-color: ButtonText;
+    --resolved-wedge-outline-color-active: HighlightText;
   }
 
   .marking-menu-stroke-path {
@@ -409,12 +417,15 @@
     fill: Canvas;
   }
 
-  /* Forced colors gives any box with no background-color of its own an
-     opaque one, so it doesn't inherit an unpredictable ancestor color. The
-     label relies on exactly that inheritance to sit on the plate's
-     background; without this it paints over the active plate with its own
-     opaque patch instead of showing the plate's fill through. */
-  .marking-menu-label {
+  /* Forced colors also suppresses `box-shadow` outright, and gives any box
+     with no background-color of its own an opaque one so it doesn't
+     inherit an unpredictable ancestor color. `forced-color-adjust` is
+     inherited, so setting it to `none` here, on the plate rather than the
+     label, keeps the plate's own inset outline and covers the label's
+     background in one place: without it, the label paints over the active
+     plate with its own opaque patch instead of showing the plate's fill
+     through. */
+  .marking-menu-plate {
     forced-color-adjust: none;
   }
 }
