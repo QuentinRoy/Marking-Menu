@@ -1,8 +1,8 @@
+import type { MarkingMenuLogger } from '../create-marking-menu.js';
 import type {
   MarkingMenuEventEmitter,
   MarkingMenuEventMap,
 } from '../events.js';
-import type { MarkingMenuLogger } from '../marking-menu.js';
 import {
   createModel,
   type MarkingMenuModel,

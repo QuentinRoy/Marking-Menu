@@ -1,1 +1,1 @@
-../../dist/index.js
+../../dist/marking-menu.js

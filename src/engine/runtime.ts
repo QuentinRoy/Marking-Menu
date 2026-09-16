@@ -1,5 +1,5 @@
+import type { MarkingMenuLogger } from '../create-marking-menu.js';
 import type { MarkingMenuEventEmitter } from '../events.js';
-import type { MarkingMenuLogger } from '../marking-menu.js';
 import type { AnyModelNode } from '../types.js';
 import { noOp } from '../utils.js';
 import type { LayoutView } from './layout-view.js';

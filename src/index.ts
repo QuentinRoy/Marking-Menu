@@ -17,7 +17,7 @@ export {
   createMarkingMenu,
   type MarkingMenuConfig,
   type MarkingMenuLogger,
-} from './marking-menu.js';
+} from './create-marking-menu.js';
 // `createModel` is deliberately not exported: callers never hold a model
 // directly (see the events' `menu`/`active`/`selection` fields in
 // `events.ts`), only its types.
