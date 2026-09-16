@@ -6,12 +6,17 @@
     "allowJs": true,
     "checkJs": true,
     // The demo (`demo/index.html`) resolves `marking-menu` through its
-    // import map (see the `lib` symlink to `../dist`); this is what gives
-    // the compiler its types for that specifier.
+    // import map (see `demo/lib/marking-menu.js`, a symlink to
+    // `../dist/index.js`); this is what gives the compiler its types for
+    // that specifier.
     "paths": { "marking-menu": ["../src/index.ts"] }
   },
-  // The playground (see `demo/playground`) is its own project (jsx, React
-  // types), not plain checkJs.
   "include": ["**/*.js", "**/*.ts"],
-  "exclude": ["playground/**"]
+  "exclude": [
+    // Its own project (jsx, React types), not plain checkJs.
+    "playground/**",
+    // The built library itself, symlinked in for the browser; already
+    // checked as its own source in `../tsconfig.app.json`.
+    "lib/**"
+  ]
 }

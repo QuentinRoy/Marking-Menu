@@ -24,6 +24,9 @@ export default defineConfig([
     // serves them so the next copy is a plain overwrite. `.prettierignore`
     // leaves them alone for the same reason.
     'demo/playground/components/ui/**',
+    // The built library itself, symlinked in for the browser (see
+    // `demo/tsconfig.json`); already linted as its own source.
+    'demo/lib/**',
   ]),
   {
     plugins: { 'import-x': importX },
