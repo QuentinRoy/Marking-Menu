@@ -1,14 +1,22 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
     "lib": ["ES2024", "ESNext.Disposable", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
-    // The demo page resolves `marking-menu` through the import map in
-    // `demo/index.html`, so the specifier has to survive to the browser; this
-    // is what gives the compiler its types, mirroring the dev-server alias in
-    // `vite.demo.config.ts`.
+    "allowJs": true,
+    "checkJs": true,
+    // The demo (`demo/index.html`) resolves `marking-menu` through its
+    // import map (see `demo/lib/marking-menu.js`, a symlink to
+    // `../dist/index.js`); this is what gives the compiler its types for
+    // that specifier.
     "paths": { "marking-menu": ["../src/index.ts"] }
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": ["**/*.js", "**/*.ts"],
+  "exclude": [
+    // Its own project (jsx, React types), not plain checkJs.
+    "playground/**",
+    // The built library itself, symlinked in for the browser; already
+    // checked as its own source in `../tsconfig.app.json`.
+    "lib/**"
+  ]
 }

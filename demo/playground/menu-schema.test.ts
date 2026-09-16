@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_MENU } from '../menu-config.js';
+import { DEFAULT_MENU } from '../shared/menu-config.js';
 import { validateMenuSource } from './menu-schema.js';
 import { formatMenu } from './menu-source.js';
 

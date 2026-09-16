@@ -10,7 +10,7 @@ import {
   DEFAULT_MENU,
   readMenuConfig,
   writeMenuConfig,
-} from '../menu-config.js';
+} from '../shared/menu-config.js';
 import { Button } from './components/ui/button.js';
 import { Checkbox } from './components/ui/checkbox.js';
 import {

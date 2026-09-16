@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import '../color-scheme.css';
+@import '../shared/color-scheme.css';
 
 /* Self-hosted so the page has no third-party font request. Latin subset
    only, which is all its copy and any label typed into the editor needs;

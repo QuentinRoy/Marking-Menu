@@ -14,7 +14,7 @@ import { menuSchema } from './menu-schema.js';
 
  Adding a field to `MarkingMenuItemInput` fails the key assertion below until
  the schema describes it too. The shape check then carries it through shared
- links in `demo/menu-config.ts`.
+ links in `demo/shared/menu-config.js`.
  */
 
 /**

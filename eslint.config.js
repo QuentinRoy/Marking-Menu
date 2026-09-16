@@ -24,6 +24,9 @@ export default defineConfig([
     // serves them so the next copy is a plain overwrite. `.prettierignore`
     // leaves them alone for the same reason.
     'demo/playground/components/ui/**',
+    // The built library itself, symlinked in for the browser (see
+    // `demo/tsconfig.json`); already linted as its own source.
+    'demo/lib/**',
   ]),
   {
     plugins: { 'import-x': importX },
@@ -120,10 +123,11 @@ export default defineConfig([
     },
   },
   {
+    // Neither page has a project preview image yet to use as og:image;
+    // og:title, og:type, and og:url are already set on the demo (see
+    // `demo/index.html`).
     files: ['demo/**'],
     rules: {
-      // No project preview image exists yet to use as og:image; og:title,
-      // og:type, and og:url are already set above.
       '@html-eslint/require-open-graph-protocol': 'off',
     },
   },

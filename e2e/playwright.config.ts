@@ -25,16 +25,28 @@ export default defineConfig({
     video: 'off',
     viewport,
   },
-  webServer: {
-    // Serves the already-built fixture; building it is a separate step
-    // (`yarn e2e:build`) so CI can run it once against a downloaded `dist/`
-    // instead of paying for a build inside the test run. Playwright runs
-    // this command with the config file's own directory as cwd, hence the
-    // path relative to `e2e/` rather than the repo root.
-    command: 'vite preview --config vite.config.ts',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: process.env.CI === undefined,
-  },
+  webServer: [
+    {
+      // Serves the already-built fixture; building it is a separate step
+      // (`yarn e2e:build`) so CI can run it once against a downloaded
+      // `dist/` instead of paying for a build inside the test run.
+      // Playwright runs this command with the config file's own directory
+      // as cwd, hence the path relative to `e2e/` rather than the repo
+      // root.
+      command: 'vite preview --config vite.config.ts',
+      url: 'http://127.0.0.1:4173',
+      reuseExistingServer: process.env.CI === undefined,
+    },
+    {
+      // Serves the assembled demo site (`yarn demo:build`'s output) exactly
+      // as it deploys: a plain static server, no Vite transform, so the
+      // `deployed-demo` project below exercises the real import map and the
+      // `lib` symlink into `dist/` rather than a dev-server stand-in.
+      command: 'vite preview --config demo-preview.config.ts',
+      url: 'http://127.0.0.1:4174',
+      reuseExistingServer: process.env.CI === undefined,
+    },
+  ],
   projects: [
     {
       // Every spec runs here except the `.touch.spec.ts` ones, which need
@@ -43,8 +55,17 @@ export default defineConfig({
       // a `.cross-browser.spec.ts` one also runs under `firefox` and
       // `webkit`.
       name: 'chromium',
-      testIgnore: '*.touch.spec.ts',
+      testIgnore: ['*.touch.spec.ts', 'deployed-demo.spec.ts'],
       use: { ...devices['Desktop Chrome'], viewport },
+    },
+    {
+      // Smoke-tests the assembled demo site rather than the library fixture
+      // (see the second `webServer` entry above); one browser is enough,
+      // since the only thing at risk here is the site's own wiring, not
+      // cross-browser gesture behavior (already covered above).
+      name: 'deployed-demo',
+      testMatch: 'deployed-demo.spec.ts',
+      use: { ...devices['Desktop Chrome'], baseURL: 'http://127.0.0.1:4174' },
     },
     {
       name: 'firefox',
