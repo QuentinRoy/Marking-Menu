@@ -32,7 +32,10 @@ test('completed and canceled gesture-feedback traces use their own themed colors
 
   await pressAt(page, center);
   await waitForMenuOpen(page);
-  await moveTo(page, offset(center, TOP_LEVEL_ITEMS.right.angle, SELECT_RADIUS));
+  await moveTo(
+    page,
+    offset(center, TOP_LEVEL_ITEMS.right.angle, SELECT_RADIUS),
+  );
   await releaseAt(page);
   await waitForLogEntry(page, (entry) => entry.type === 'select');
 

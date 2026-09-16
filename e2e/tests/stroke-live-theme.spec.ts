@@ -20,7 +20,11 @@ test('a CSS custom property change repaints an open stroke without recreating it
 }) => {
   const center = await surfaceCenter(page);
   await pressAt(page, center);
-  await moveTo(page, offset(center, TOP_LEVEL_ITEMS.others.angle, SELECT_RADIUS), 3);
+  await moveTo(
+    page,
+    offset(center, TOP_LEVEL_ITEMS.others.angle, SELECT_RADIUS),
+    3,
+  );
 
   const path = page
     .locator('svg:not(.marking-menu-stroke--lower) > .marking-menu-stroke-path')
@@ -28,15 +32,20 @@ test('a CSS custom property change repaints an open stroke without recreating it
   await path.evaluate((element) => {
     (element as unknown as { testMarker?: boolean }).testMarker = true;
   });
-  const before = await path.evaluate((element) => getComputedStyle(element).stroke);
+  const before = await path.evaluate(
+    (element) => getComputedStyle(element).stroke,
+  );
 
   await page.addStyleTag({
     content: ':root { --mm-stroke-color: rgb(1, 2, 3); }',
   });
 
-  const after = await path.evaluate((element) => getComputedStyle(element).stroke);
+  const after = await path.evaluate(
+    (element) => getComputedStyle(element).stroke,
+  );
   const wasNotRecreated = await path.evaluate(
-    (element) => (element as unknown as { testMarker?: boolean }).testMarker === true,
+    (element) =>
+      (element as unknown as { testMarker?: boolean }).testMarker === true,
   );
 
   await releaseAt(page);
