@@ -27,9 +27,11 @@ test('a menu whose parent lives in a different document reads that document, ope
   await expect(frame.locator('.marking-menu-label').first()).toBeVisible();
 
   await moveTo(page, offset(center, 0, 100));
-  await expect(frame.locator('svg path[stroke="rgb(0, 0, 255)"]')).toHaveCount(
-    1,
-  );
+  await expect(
+    frame.locator(
+      'svg:not(.marking-menu-stroke--lower) > .marking-menu-stroke-path',
+    ),
+  ).toHaveCSS('stroke', 'rgb(0, 0, 255)');
 
   await releaseAt(page);
   const log = await waitForLogEntry(page, (entry) => entry.type === 'select');
