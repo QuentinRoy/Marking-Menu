@@ -333,10 +333,6 @@
   width: var(--resolved-plate-gap-connector);
 }
 
-.marking-menu-layout-probe--stroke-color {
-  color: var(--resolved-stroke-color);
-}
-
 .marking-menu-layout-probe--stroke-width {
   width: var(--resolved-stroke-width);
 }
@@ -345,36 +341,46 @@
   width: var(--resolved-stroke-start-point-radius);
 }
 
-.marking-menu-layout-probe--stroke-color-lower {
-  color: var(--resolved-stroke-color-earlier);
+.marking-menu-stroke-path {
+  fill: none;
+  stroke: var(--resolved-stroke-color);
+  stroke-width: var(--resolved-stroke-width);
 }
 
-.marking-menu-layout-probe--stroke-width-lower {
-  width: var(--resolved-stroke-width-earlier);
+.marking-menu-stroke-point {
+  fill: var(--resolved-stroke-color);
+  r: var(--resolved-stroke-start-point-radius);
 }
 
-.marking-menu-layout-probe--stroke-start-point-radius-lower {
-  width: var(--resolved-stroke-start-point-radius-earlier);
+/* `:where()` keeps these at the same specificity as `.marking-menu-stroke-path`
+   itself, so the forced-colors override below (same specificity, later in the
+   file) still wins over every variant. */
+:where(.marking-menu-stroke--lower) .marking-menu-stroke-path {
+  stroke: var(--resolved-stroke-color-earlier);
+  stroke-width: var(--resolved-stroke-width-earlier);
 }
 
-.marking-menu-layout-probe--stroke-color-feedback {
-  color: var(--resolved-stroke-color-feedback);
+:where(.marking-menu-stroke--lower) .marking-menu-stroke-point {
+  fill: var(--resolved-stroke-color-earlier);
+  r: var(--resolved-stroke-start-point-radius-earlier);
 }
 
-.marking-menu-layout-probe--stroke-width-feedback {
-  width: var(--resolved-stroke-width-feedback);
+:where(.marking-menu-stroke--feedback) .marking-menu-stroke-path {
+  stroke: var(--resolved-stroke-color-feedback);
+  stroke-width: var(--resolved-stroke-width-feedback);
 }
 
-.marking-menu-layout-probe--stroke-color-canceled {
-  color: var(--resolved-stroke-color-canceled);
+:where(.marking-menu-stroke--feedback):where(.marking-menu-stroke--canceled)
+  .marking-menu-stroke-path {
+  stroke: var(--resolved-stroke-color-canceled);
 }
 
-.marking-menu-layout-probe--indicator-fill {
-  color: var(--resolved-indicator-fill);
+.marking-menu-indicator-background {
+  fill: var(--resolved-indicator-background);
 }
 
-.marking-menu-layout-probe--indicator-background {
-  color: var(--resolved-indicator-background);
+.marking-menu-indicator-dot {
+  fill: var(--resolved-indicator-fill);
 }
 
 /* Forced-colors mode doesn't remap SVG `fill`/`stroke` at all, and it

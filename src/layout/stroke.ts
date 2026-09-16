@@ -6,6 +6,17 @@ const pathPointLimit = 100;
 export type StrokeSurfaceOptions = {
   parent: HTMLElement | ShadowRoot;
   doc?: Document;
+  /**
+  Extra class(es) on the surface's root, for a themed variant (see
+  `.marking-menu-stroke--lower` and `.marking-menu-stroke--feedback` in
+  menu.css). Unset for the default (upper-stroke) styling.
+  */
+  className?: string;
+  /**
+  Paint overrides for a surface drawn outside menu.css's reach, such as the
+  demo playground's recognizer overlay. Left unset, the path and point take
+  their stroke/fill/width from menu.css.
+  */
   lineWidth?: number;
   lineColor?: string;
   pointRadius?: number;
@@ -35,13 +46,18 @@ const pathData = (points: readonly Point[]): string => {
 export function createStrokeSurface({
   parent,
   doc = parent.ownerDocument,
-  lineWidth = 2,
-  lineColor = 'black',
-  pointRadius = 0,
+  className,
+  lineWidth,
+  lineColor,
+  pointRadius,
   pointColor = lineColor,
 }: StrokeSurfaceOptions): StrokeSurface {
   const svg = doc.createElementNS(svgNamespace, 'svg');
   svg.ariaHidden = 'true';
+  if (className !== undefined) {
+    svg.setAttribute('class', className);
+  }
+
   Object.assign(svg.style, {
     position: 'absolute',
     inset: '0',
@@ -62,11 +78,16 @@ export function createStrokeSurface({
     const path = doc.createElementNS(svgNamespace, 'path');
     path.setAttribute('class', 'marking-menu-stroke-path');
     path.setAttribute('d', pathData(points));
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', lineColor);
-    path.setAttribute('stroke-width', String(lineWidth));
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('stroke-linejoin', 'round');
+    if (lineColor !== undefined) {
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', lineColor);
+    }
+
+    if (lineWidth !== undefined) {
+      path.setAttribute('stroke-width', String(lineWidth));
+    }
 
     if (marker === null) {
       svg.append(path);
@@ -135,8 +156,14 @@ export function createStrokeSurface({
     point.setAttribute('class', 'marking-menu-stroke-point');
     point.setAttribute('cx', String(x));
     point.setAttribute('cy', String(y));
-    point.setAttribute('r', String(pointRadius));
-    point.setAttribute('fill', pointColor);
+    if (pointRadius !== undefined) {
+      point.setAttribute('r', String(pointRadius));
+    }
+
+    if (pointColor !== undefined) {
+      point.setAttribute('fill', pointColor);
+    }
+
     marker ??= point;
     svg.append(point);
   };

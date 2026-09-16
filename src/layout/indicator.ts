@@ -9,8 +9,6 @@ export type IndicatorSurfaceOptions = {
   // The gesture stroke's own line width: only used to size the dot's
   // starting radius, not the background circle.
   strokeWidth?: number;
-  fillColor?: string;
-  backgroundColor?: string;
 };
 
 export type IndicatorSurface = {
@@ -49,8 +47,6 @@ export function createIndicatorSurface({
   doc = document,
   radius = 8,
   strokeWidth = 4,
-  fillColor = 'black',
-  backgroundColor = 'black',
 }: IndicatorSurfaceOptions): IndicatorSurface {
   const backgroundSvg = createSurface(doc, parent);
   const dotSvg = createSurface(doc, parent);
@@ -59,12 +55,10 @@ export function createIndicatorSurface({
   const background = doc.createElementNS(svgNamespace, 'circle');
   background.setAttribute('class', 'marking-menu-indicator-background');
   background.setAttribute('r', String(radius));
-  background.setAttribute('fill', backgroundColor);
   backgroundSvg.append(background);
 
   const dot = doc.createElementNS(svgNamespace, 'circle');
   dot.setAttribute('class', 'marking-menu-indicator-dot');
-  dot.setAttribute('fill', fillColor);
   dotSvg.append(dot);
 
   const minRadius = strokeWidth / 2;

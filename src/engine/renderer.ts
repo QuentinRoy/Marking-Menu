@@ -45,13 +45,6 @@ type MenuHandle<M extends AnyModelNode> = {
   menu: Menu;
 };
 
-type StrokeLayers = {
-  upper: ReturnType<typeof createStrokeLayer>;
-  lower: ReturnType<typeof createStrokeLayer>;
-  indicator: ReturnType<typeof createIndicatorLayer>;
-  feedback: ReturnType<typeof createGestureFeedback>;
-};
-
 /**
  One indicator surface, growing on its own clock rather than in response to
  renders: while the pointer dwells, nothing else changes, so the layout
@@ -199,52 +192,52 @@ function createStrokeLayer({
   };
 }
 
-function createStrokeLayers(
+/**
+ The stroke and feedback layers: pure CSS-themed SVG surfaces with nothing in
+ their creation depending on `MenuStrokeTheme`, so they live for the
+ renderer's whole lifetime instead of being rebuilt per menu, and a CSS
+ theme change reaches them immediately rather than on the next open.
+ */
+function createPersistentStrokeLayers(
   parent: ShadowRoot,
-  strokeTheme: MenuStrokeTheme,
   gestureFeedbackDuration: number,
-): StrokeLayers {
+): {
+  upper: ReturnType<typeof createStrokeLayer>;
+  lower: ReturnType<typeof createStrokeLayer>;
+  feedback: ReturnType<typeof createGestureFeedback>;
+} {
+  const coordinateParent = parent.host.parentElement as HTMLElement;
   return {
-    upper: createStrokeLayer({
-      parent,
-      coordinateParent: parent.host.parentElement as HTMLElement,
-      surfaceOptions: {
-        lineColor: strokeTheme.strokeColor,
-        lineWidth: strokeTheme.strokeWidth,
-        pointRadius: strokeTheme.strokeStartPointRadius,
-      },
-    }),
+    upper: createStrokeLayer({ parent, coordinateParent }),
     lower: createStrokeLayer({
       parent,
-      coordinateParent: parent.host.parentElement as HTMLElement,
-      surfaceOptions: {
-        lineColor: strokeTheme.lowerStrokeColor,
-        lineWidth: strokeTheme.lowerStrokeWidth,
-        pointRadius: strokeTheme.lowerStrokeStartPointRadius,
-      },
-    }),
-    indicator: createIndicatorLayer({
-      parent,
-      coordinateParent: parent.host.parentElement as HTMLElement,
-      surfaceOptions: {
-        radius: strokeTheme.strokeStartPointRadius,
-        strokeWidth: strokeTheme.strokeWidth,
-        fillColor: strokeTheme.indicatorFill,
-        backgroundColor: strokeTheme.indicatorBackground,
-      },
+      coordinateParent,
+      surfaceOptions: { className: 'marking-menu-stroke--lower' },
     }),
     feedback: createGestureFeedback({
       parent,
       duration: gestureFeedbackDuration,
-      strokeOptions: {
-        lineColor: strokeTheme.gestureFeedbackStrokeColor,
-        lineWidth: strokeTheme.gestureFeedbackStrokeWidth,
-      },
+      strokeOptions: { className: 'marking-menu-stroke--feedback' },
       canceledStrokeOptions: {
-        lineColor: strokeTheme.gestureFeedbackCanceledStrokeColor,
+        className:
+          'marking-menu-stroke--feedback marking-menu-stroke--canceled',
       },
     }),
   };
+}
+
+function createThemedIndicatorLayer(
+  parent: ShadowRoot,
+  strokeTheme: MenuStrokeTheme,
+): ReturnType<typeof createIndicatorLayer> {
+  return createIndicatorLayer({
+    parent,
+    coordinateParent: parent.host.parentElement as HTMLElement,
+    surfaceOptions: {
+      radius: strokeTheme.strokeStartPointRadius,
+      strokeWidth: strokeTheme.strokeWidth,
+    },
+  });
 }
 
 /**
@@ -281,29 +274,18 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   // Reference-equality cache: an unchanged active key skips the DOM scan
   // `Menu.setActive` performs.
   let previousActiveKey: string | null = null;
-  let strokeLayers = createStrokeLayers(
+  const { upper, lower, feedback } = createPersistentStrokeLayers(
     root,
-    initialStrokeTheme,
     gestureFeedbackDuration,
   );
-  const previousFeedbackLayers: Array<StrokeLayers['feedback']> = [];
+  let indicator = createThemedIndicatorLayer(root, initialStrokeTheme);
   // The parent's own inline cursor, read before the renderer writes one, and
   // restored rather than cleared whenever the view asks for `default`: what
   // the renderer did not set, it does not get to throw away.
   const ownCursor = parent.style.cursor;
   const setStrokeTheme = (strokeTheme: MenuStrokeTheme) => {
-    if (strokeLayers.feedback.elements().length > 0) {
-      previousFeedbackLayers.push(strokeLayers.feedback);
-    }
-
-    strokeLayers.upper.dispose();
-    strokeLayers.lower.dispose();
-    strokeLayers.indicator.dispose();
-    strokeLayers = createStrokeLayers(
-      root,
-      strokeTheme,
-      gestureFeedbackDuration,
-    );
+    indicator.dispose();
+    indicator = createThemedIndicatorLayer(root, strokeTheme);
   };
 
   /**
@@ -324,13 +306,13 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   function restack(): void {
     const menuElement = menuHandle?.menu.layer;
 
-    const lower = strokeLayers.lower.element();
+    const lowerElement = lower.element();
     if (
       menuElement !== undefined &&
-      lower !== null &&
-      !isPaintedBefore(lower, menuElement)
+      lowerElement !== null &&
+      !isPaintedBefore(lowerElement, menuElement)
     ) {
-      menuElement.before(lower);
+      menuElement.before(lowerElement);
     }
 
     // Chains every remaining layer in paint order, each moved right after
@@ -356,22 +338,12 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
     // static, not something announcing itself in front of it. The growing
     // dot stays in front, in the upper stroke's own slot, since it is what
     // becomes the novice-mode dot there.
-    place(strokeLayers.indicator.backgroundElement());
-    place(strokeLayers.upper.element());
-    place(strokeLayers.indicator.dotElement());
+    place(indicator.backgroundElement());
+    place(upper.element());
+    place(indicator.dotElement());
 
-    const feedbackTraces = [
-      ...previousFeedbackLayers.flatMap((feedback) => feedback.elements()),
-      ...strokeLayers.feedback.elements(),
-    ];
-    for (const trace of feedbackTraces) {
+    for (const trace of feedback.elements()) {
       place(trace);
-    }
-
-    for (let index = previousFeedbackLayers.length - 1; index >= 0; index--) {
-      if (previousFeedbackLayers[index]?.elements().length === 0) {
-        previousFeedbackLayers.splice(index, 1);
-      }
     }
   }
 
@@ -423,32 +395,26 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
         }
       }
 
-      strokeLayers.upper.sync(view.upperStroke, {
-        drawStartPoint: isNoviceMode,
-      });
-      strokeLayers.lower.sync(view.lowerStroke);
-      strokeLayers.indicator.sync(view.indicator);
+      upper.sync(view.upperStroke, { drawStartPoint: isNoviceMode });
+      lower.sync(view.lowerStroke);
+      indicator.sync(view.indicator);
       restack();
     },
     showFeedback(effect) {
       const rect = parent.getBoundingClientRect();
-      strokeLayers.feedback.show(
+      feedback.show(
         effect.stroke.map((point) => toLocalPoint(point, rect)),
         { canceled: effect.canceled },
       );
     },
     dispose() {
       parent.style.cursor = ownCursor;
-      strokeLayers.upper.dispose();
-      strokeLayers.lower.dispose();
-      strokeLayers.indicator.dispose();
+      upper.dispose();
+      lower.dispose();
+      indicator.dispose();
       menuHandle?.menu.remove();
       menuHandle = null;
-      for (const feedback of previousFeedbackLayers) {
-        feedback.remove();
-      }
-
-      strokeLayers.feedback.remove();
+      feedback.remove();
       host.remove();
     },
   };
