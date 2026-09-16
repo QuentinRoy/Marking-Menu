@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { createMarkingMenu } from '../../src/create-marking-menu.js';
 import type { MarkingMenuMode } from '../../src/events.js';
 import {
   createStrokeSurface,
   type StrokeSurface,
   type StrokeSurfaceOptions,
 } from '../../src/layout/stroke.js';
-import { createMarkingMenu } from '../../src/create-marking-menu.js';
 import {
   analyzeMarkingMenuStroke,
   type MarkingMenuStrokeAnalysis,

@@ -1,5 +1,5 @@
-import { createController } from './engine/controller.js';
 import { createMarkingMenu } from './create-marking-menu.js';
+import { createController } from './engine/controller.js';
 
 vi.mock('./engine/controller.js');
 

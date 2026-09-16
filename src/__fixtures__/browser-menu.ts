@@ -1,6 +1,9 @@
 import { commands, page } from 'vitest/browser';
+import {
+  createMarkingMenu,
+  type MarkingMenuConfig,
+} from '../create-marking-menu.js';
 import type { MarkingMenuController } from '../engine/controller.js';
-import { createMarkingMenu, type MarkingMenuConfig } from '../create-marking-menu.js';
 import type { AnyModelNode } from '../types.js';
 import { fakeTimers } from './timers.js';
 

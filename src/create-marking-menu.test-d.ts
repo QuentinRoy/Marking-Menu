@@ -1,5 +1,8 @@
 import { describe, expectTypeOf, it } from 'vitest';
-import { createMarkingMenu, type MarkingMenuLogger } from './create-marking-menu.js';
+import {
+  createMarkingMenu,
+  type MarkingMenuLogger,
+} from './create-marking-menu.js';
 import type { MarkingMenuItemInput } from './types.js';
 
 /*
