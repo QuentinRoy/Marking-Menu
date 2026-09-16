@@ -74,7 +74,8 @@ export function projectLayout<M extends AnyModelNode>(
 
     case 'expert': {
       return {
-        cursor: 'crosshair',
+        // The cursor is hidden behind the opening indicator, same as startup.
+        cursor: 'none',
         menu: null,
         upperStroke: state.stroke,
         lowerStroke: null,
