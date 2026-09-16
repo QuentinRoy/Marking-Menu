@@ -84,6 +84,7 @@
     "json-schema": "^0.4.0",
     "json-schema-library": "^11.6.2",
     "json-schema-to-ts": "^3.1.1",
+    "lightningcss": "^1.33.0",
     "lucide-react": "^1.41.0",
     "playwright": "^1.63.0",
     "prettier": "^3.9.6",

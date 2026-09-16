@@ -6631,6 +6631,7 @@ __metadata:
     json-schema: "npm:^0.4.0"
     json-schema-library: "npm:^11.6.2"
     json-schema-to-ts: "npm:^3.1.1"
+    lightningcss: "npm:^1.33.0"
     lucide-react: "npm:^1.41.0"
     playwright: "npm:^1.63.0"
     prettier: "npm:^3.9.6"

@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { Features } from 'lightningcss';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import { version } from './package.json' with { type: 'json' };
@@ -45,6 +46,16 @@ export default defineConfig({
       bundleTypes: { invokeOptions: { typescriptCompilerFolder } },
     }),
   ],
+  css: {
+    // Lightning CSS's `light-dark()` downlevel needs `color-scheme` declared
+    // on the stylesheet to pick a branch, and menu.css deliberately leaves
+    // that to the consumer (see README). Without it, the downlevel emits
+    // `var()` references to custom properties it never defines, which some
+    // properties tolerate and others (like SVG `stroke`) do not. Excluding
+    // the feature keeps `light-dark()` untouched, working natively wherever
+    // the consumer's browser supports it.
+    lightningcss: { exclude: Features.LightDark },
+  },
   build: {
     cssMinify: 'lightningcss',
     lib: {
