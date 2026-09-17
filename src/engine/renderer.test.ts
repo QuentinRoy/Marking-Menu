@@ -183,7 +183,7 @@ describe('createRenderer', () => {
       menu: undefined,
       upperStroke: [[0, 0]],
       lowerStroke: undefined,
-      indicator: { anchor: [20, 30], position: [20, 30], delayMs: 300 },
+      indicator: { startedAt: Date.now(), position: [20, 30], delayMs: 300 },
     });
 
     const root = rootOf(parent);
@@ -214,7 +214,7 @@ describe('createRenderer', () => {
       menu: undefined,
       upperStroke: [[0, 0]],
       lowerStroke: undefined,
-      indicator: { anchor: [20, 30], position: [20, 30], delayMs: 300 },
+      indicator: { startedAt: Date.now(), position: [20, 30], delayMs: 300 },
     });
 
     const root = rootOf(parent);
@@ -245,7 +245,7 @@ describe('createRenderer', () => {
       menu: undefined,
       upperStroke: [[0, 0]],
       lowerStroke: undefined,
-      indicator: { anchor: [0, 0], position: [0, 0], delayMs: 300 },
+      indicator: { startedAt: Date.now(), position: [0, 0], delayMs: 300 },
     });
 
     const dot = rootOf(parent).querySelector('.marking-menu-indicator-dot');

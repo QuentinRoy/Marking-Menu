@@ -19,7 +19,7 @@ export type LayoutView<M extends AnyModelNode> = {
   readonly indicator:
     | undefined
     | {
-        readonly anchor: Point;
+        readonly startedAt: number;
         readonly position: Point;
         readonly delayMs: number;
       };
@@ -59,7 +59,7 @@ export function projectLayout<M extends AnyModelNode>(
 
     case 'startup': {
       const indicator = {
-        anchor: state.origin,
+        startedAt: state.dwellStartedAt,
         // The stroke's own tip: it keeps moving with sub-threshold jitter
         // even though startup's dwell (armed on `origin`) never restarts.
         position: state.stroke.at(-1) as Point,
@@ -84,7 +84,7 @@ export function projectLayout<M extends AnyModelNode>(
         upperStroke: state.stroke,
         lowerStroke: undefined,
         indicator: {
-          anchor: state.dwellAnchor,
+          startedAt: state.dwellStartedAt,
           position: state.stroke.at(-1) as Point,
           delayMs: options.noviceDwellingTime,
         },
@@ -115,7 +115,7 @@ export function projectLayout<M extends AnyModelNode>(
           active === undefined || active.isLeaf
             ? undefined
             : {
-                anchor: state.dwellAnchor,
+                startedAt: state.dwellStartedAt,
                 position: state.lastPosition,
                 delayMs: options.submenuOpeningDelay,
               },
