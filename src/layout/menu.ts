@@ -600,14 +600,14 @@ export function createMenu({
   doc = parent.ownerDocument,
   model,
   center,
-  deadZoneRadius = 40,
+  deadZoneRadius,
   pointerTarget = false,
 }: {
   doc?: Document;
   parent: HTMLElement | ShadowRoot;
   model: MenuLayoutModel;
   center: Point;
-  deadZoneRadius?: number;
+  deadZoneRadius: number;
   pointerTarget?: boolean;
 }): Menu {
   const menuDom = template({ items: model.items, center }, doc, parent);

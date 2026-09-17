@@ -1,6 +1,16 @@
 import { fakeTimers } from '../__fixtures__/timers.js';
 import { createModel } from '../model.js';
-import { createRuntime } from './runtime.js';
+import type { AnyModelNode } from '../types.js';
+import { noOp } from '../utils.js';
+import { createRuntime as createRuntimeWithResolvedLog } from './runtime.js';
+
+// The suite below exercises the runtime's own behavior, not what a caller's
+// logger does with a failure, so every call site gets a no-op logger unless
+// it overrides it to assert on it.
+const createRuntime = <M extends AnyModelNode>(
+  options: Omit<Parameters<typeof createRuntimeWithResolvedLog<M>>[0], 'log'> &
+    Partial<Pick<Parameters<typeof createRuntimeWithResolvedLog<M>>[0], 'log'>>,
+) => createRuntimeWithResolvedLog<M>({ log: { error: noOp }, ...options });
 
 const model = createModel({ items: [{ id: 'right', label: 'Right' }] });
 const options = {

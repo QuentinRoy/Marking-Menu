@@ -10,7 +10,7 @@ import type {
 } from '../events.js';
 import type { AnyModelNode } from '../types.js';
 import { createParent, pointer } from './__fixtures__/pointer.js';
-import { createController } from './controller.js';
+import { createController, resolveEngineOptions } from './controller.js';
 
 /**
 Read the pointer-capture mocks `createParent` attaches to a real element.
@@ -55,6 +55,46 @@ const strokeSurfaces = (parent: HTMLElement): SVGSVGElement[] =>
   ].filter((element): element is SVGSVGElement =>
     element.matches('svg.marking-menu-stroke-surface'),
   );
+
+describe('resolveEngineOptions', () => {
+  const parent = document.createElement('div');
+
+  it('defaults every option the config omits', () => {
+    const resolved = resolveEngineOptions({ items, parent });
+
+    expect(resolved).toMatchObject({
+      movementsThreshold: 5,
+      noviceDwellingTime: 1000 / 3,
+      deadZoneRadius: 40,
+      submenuOpeningDelay: 1000 / 3,
+      gestureFeedbackDuration: 1000,
+    });
+    expect(resolved.log.error).toBeTypeOf('function');
+  });
+
+  it('keeps every option the config provides explicitly', () => {
+    const error = voidMock<[Error]>();
+    const resolved = resolveEngineOptions({
+      items,
+      parent,
+      movementsThreshold: 1,
+      noviceDwellingTime: 2,
+      deadZoneRadius: 3,
+      submenuOpeningDelay: 4,
+      gestureFeedbackDuration: 5,
+      log: { error },
+    });
+
+    expect(resolved).toMatchObject({
+      movementsThreshold: 1,
+      noviceDwellingTime: 2,
+      deadZoneRadius: 3,
+      submenuOpeningDelay: 4,
+      gestureFeedbackDuration: 5,
+    });
+    expect(resolved.log.error).toBe(error);
+  });
+});
 
 describe('createController', () => {
   it('dispatches select carrying the leaf a straight drag recognizes', () => {
