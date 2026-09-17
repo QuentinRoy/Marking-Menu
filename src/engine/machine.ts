@@ -87,7 +87,7 @@ type NavigationPhaseFields<Menu, Active> = {
   novice: {
     readonly menu: Menu;
     readonly menuCenter: Point;
-    readonly active: Active | null;
+    readonly active: Active | undefined;
     // Where the pointer is now. The upper stroke novice mode draws is the
     // straight segment from `menuCenter` to here, so the machine keeps the
     // endpoint rather than the segment: `noviceUpperStroke` builds it for
@@ -127,28 +127,32 @@ type MachineStates = {
  */
 export type NavigationLayoutAnnouncement = {
   readonly cursor: 'default' | 'crosshair' | 'none';
-  readonly menu: null | {
-    readonly model: AnyModelNode;
-    readonly center: Point;
-    readonly activeKey: string | null;
-  };
-  readonly upperStroke: readonly Point[] | null;
-  readonly lowerStroke: readonly Point[] | null;
-  readonly indicator: null | {
-    // Identity only, for restart detection: carries the same reference the
-    // underlying dwell residency's own restart predicate compares against,
-    // so the renderer can tell a continuing dwell from a restarted one by
-    // reference, the same way `createStrokeLayer` already does for a
-    // stroke array. Not necessarily where the indicator currently draws —
-    // see `position`.
-    readonly anchor: Point;
-    // Where the indicator draws right now. Unlike `anchor`, always the
-    // pointer's current position: `anchor` only moves on significant
-    // movement, so using it to draw would lag the pointer by up to
-    // `movementsThreshold`.
-    readonly position: Point;
-    readonly delayMs: number;
-  };
+  readonly menu:
+    | undefined
+    | {
+        readonly model: AnyModelNode;
+        readonly center: Point;
+        readonly activeKey: string | undefined;
+      };
+  readonly upperStroke: readonly Point[] | undefined;
+  readonly lowerStroke: readonly Point[] | undefined;
+  readonly indicator:
+    | undefined
+    | {
+        // Identity only, for restart detection: carries the same reference the
+        // underlying dwell residency's own restart predicate compares against,
+        // so the renderer can tell a continuing dwell from a restarted one by
+        // reference, the same way `createStrokeLayer` already does for a
+        // stroke array. Not necessarily where the indicator currently draws —
+        // see `position`.
+        readonly anchor: Point;
+        // Where the indicator draws right now. Unlike `anchor`, always the
+        // pointer's current position: `anchor` only moves on significant
+        // movement, so using it to draw would lag the pointer by up to
+        // `movementsThreshold`.
+        readonly position: Point;
+        readonly delayMs: number;
+      };
 };
 
 export type NavigationFeedbackAnnouncement = {
@@ -207,42 +211,46 @@ function openEvent<N extends AnyModelNode>(data: {
 function moveEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly active: N | null;
-  readonly menu: N | null;
+  readonly active: N | undefined;
+  readonly menu: N | undefined;
 }): MarkingMenuMoveEvent<N> {
   return new MarkingMenuMoveEvent<N>(
     data as unknown as {
       mode: MarkingMenuMode;
       position: Point;
-      active: ModelItems<N> | null;
-      menu: ModelMenus<N> | null;
+      active: ModelItems<N> | undefined;
+      menu: ModelMenus<N> | undefined;
     },
   );
 }
 
 /**
  Shared body of the three startup/expert move actions: no menu is open in
- either state, so `move` always carries a null `active` and `menu` there.
+ either state, so `move` always carries an undefined `active` and `menu`
+ there.
  */
-function emitNullActiveMove(
+function emitInactiveMove(
   emit: (name: 'move', data: MarkingMenuMoveEvent<AnyModelNode>) => void,
   mode: 'startup' | 'expert',
   position: Point,
 ): void {
-  emit('move', moveEvent({ mode, position, active: null, menu: null }));
+  emit(
+    'move',
+    moveEvent({ mode, position, active: undefined, menu: undefined }),
+  );
 }
 
 function changeEvent<N extends AnyModelNode>(data: {
   readonly position: Point;
-  readonly active: N | null;
-  readonly previousActive: N | null;
+  readonly active: N | undefined;
+  readonly previousActive: N | undefined;
   readonly menu: N;
 }): MarkingMenuChangeEvent<N> {
   return new MarkingMenuChangeEvent<N>(
     data as unknown as {
       position: Point;
-      active: ModelItems<N> | null;
-      previousActive: ModelItems<N> | null;
+      active: ModelItems<N> | undefined;
+      previousActive: ModelItems<N> | undefined;
       menu: ModelMenus<N>;
     },
   );
@@ -252,14 +260,14 @@ function selectEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
   readonly selection: N;
-  readonly menu: N | null;
+  readonly menu: N | undefined;
 }): MarkingMenuSelectEvent<N> {
   return new MarkingMenuSelectEvent<N>(
     data as unknown as {
       mode: MarkingMenuMode;
       position: Point;
       selection: ModelLeaves<N>;
-      menu: ModelMenus<N> | null;
+      menu: ModelMenus<N> | undefined;
     },
   );
 }
@@ -267,15 +275,15 @@ function selectEvent<N extends AnyModelNode>(data: {
 function cancelEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly active: N | null;
-  readonly menu: N | null;
+  readonly active: N | undefined;
+  readonly menu: N | undefined;
 }): MarkingMenuCancelEvent<N> {
   return new MarkingMenuCancelEvent<N>(
     data as unknown as {
       mode: MarkingMenuMode;
       position: Point;
-      active: ModelItems<N> | null;
-      menu: ModelMenus<N> | null;
+      active: ModelItems<N> | undefined;
+      menu: ModelMenus<N> | undefined;
     },
   );
 }
@@ -313,8 +321,8 @@ function terminationContext(
   position: Point,
 ): {
   readonly stroke: readonly Point[];
-  readonly menu: AnyModelNode | null;
-  readonly active: AnyModelNode | null;
+  readonly menu: AnyModelNode | undefined;
+  readonly active: AnyModelNode | undefined;
 } {
   if ('lowerStroke' in fromData) {
     const { lowerStroke, menu, active } = fromData;
@@ -325,14 +333,18 @@ function terminationContext(
     };
   }
 
-  return { stroke: [...fromData.stroke, position], menu: null, active: null };
+  return {
+    stroke: [...fromData.stroke, position],
+    menu: undefined,
+    active: undefined,
+  };
 }
 
 /**
  Shared tail of every action that ends a gesture — `up`, `cancel`, and the
  expert dwell that finds nothing to switch to: announce `feedback`, then
  `select` or `cancel` depending on whether a selection was found. The
- latter two callers always pass a null `selection`, since neither ever
+ latter two callers always pass an undefined `selection`, since neither ever
  attempts one.
  */
 function emitTermination(
@@ -350,13 +362,13 @@ function emitTermination(
     readonly from: MarkingMenuMode;
     readonly position: Point;
     readonly stroke: readonly Point[];
-    readonly menu: AnyModelNode | null;
-    readonly active: AnyModelNode | null;
-    readonly selection: AnyModelNode | null;
+    readonly menu: AnyModelNode | undefined;
+    readonly active: AnyModelNode | undefined;
+    readonly selection: AnyModelNode | undefined;
   },
 ): void {
-  emit('feedback', { stroke, canceled: selection === null });
-  if (selection === null) {
+  emit('feedback', { stroke, canceled: selection === undefined });
+  if (selection === undefined) {
     emit('cancel', cancelEvent({ mode: from, position, active, menu }));
   } else {
     emit('select', selectEvent({ mode: from, position, selection, menu }));
@@ -407,7 +419,7 @@ export const navigationMachine = machine({
       options,
       menu: model,
       menuCenter: origin,
-      active: null,
+      active: undefined,
       lastPosition: origin,
       lowerStroke: stroke,
       dwellAnchor: origin,
@@ -437,7 +449,7 @@ export const navigationMachine = machine({
         maxDepth: -1,
         requireMenu: true,
       });
-      if (menu === null || menu.isRoot) {
+      if (menu === undefined || menu.isRoot) {
         return skip();
       }
 
@@ -447,7 +459,7 @@ export const navigationMachine = machine({
         options,
         menu,
         menuCenter: position,
-        active: null,
+        active: undefined,
         lastPosition: position,
         lowerStroke: stroke,
         dwellAnchor: [...position],
@@ -463,7 +475,9 @@ export const navigationMachine = machine({
       const { menuCenter, options, menu, dwellAnchor } = fromData;
       const { azymuth, radius } = toPolar(position, menuCenter);
       const active =
-        radius < options.deadZoneRadius ? null : menu.getNearestChild(azymuth);
+        radius < options.deadZoneRadius
+          ? undefined
+          : menu.getNearestChild(azymuth);
       return {
         ...fromData,
         active,
@@ -485,7 +499,7 @@ export const navigationMachine = machine({
     // is active only past the dead zone, and that is the only threshold.
     'novice -dwell> novice'({ fromData, skip }) {
       const { active, lastPosition, lowerStroke, options, model } = fromData;
-      if (active === null || active.isLeaf) {
+      if (active === undefined || active.isLeaf) {
         return skip();
       }
 
@@ -494,7 +508,7 @@ export const navigationMachine = machine({
         options,
         menu: active,
         menuCenter: lastPosition,
-        active: null,
+        active: undefined,
         lastPosition,
         // The parent menu's own segment becomes part of the trail left
         // behind the new one.
@@ -567,13 +581,14 @@ export const navigationMachine = machine({
     },
 
     // No menu is open in startup or expert, so nothing can be active: `move`
-    // always carries `active: null` and `menu: null` here, and `change` never
+    // always carries `active: undefined` and `menu: undefined` here, and
+    // `change` never
     // fires outside novice.
     'startup -move> expert'({ inputData, emit }) {
-      emitNullActiveMove(emit, 'expert', inputData.position);
+      emitInactiveMove(emit, 'expert', inputData.position);
     },
     'startup -move> startup'({ inputData, emit }) {
-      emitNullActiveMove(emit, 'startup', inputData.position);
+      emitInactiveMove(emit, 'startup', inputData.position);
     },
 
     'startup -dwell> novice'({ fromData, toData, emit }) {
@@ -591,7 +606,7 @@ export const navigationMachine = machine({
     },
 
     'expert -move> expert'({ inputData, emit }) {
-      emitNullActiveMove(emit, 'expert', inputData.position);
+      emitInactiveMove(emit, 'expert', inputData.position);
     },
 
     // Same shape as `'startup -dwell> novice'`'s own `open`: the row above
@@ -617,9 +632,9 @@ export const navigationMachine = machine({
         from: 'expert',
         position,
         stroke,
-        menu: null,
-        active: null,
-        selection: null,
+        menu: undefined,
+        active: undefined,
+        selection: undefined,
       });
     },
 
@@ -686,12 +701,17 @@ export const navigationMachine = machine({
       // `cancel.active` unchanged, since it is precisely the thing that was
       // not selected. Startup with zero movement has nothing to recognize;
       // expert, and startup with sub-threshold movement, always attempt it.
-      let selection: AnyModelNode | null;
+      let selection: AnyModelNode | undefined;
       if (from === 'novice') {
-        selection = active?.isLeaf === true ? active : null;
+        selection = active?.isLeaf === true ? active : undefined;
       } else if (from === 'startup' && strokeLength(stroke) === 0) {
-        selection = null;
+        selection = undefined;
       } else {
+        // `ModelLeaves<AnyModelNode>` collapses to `never` (see the module
+        // comment above), so this call's declared type is exactly
+        // `undefined` here even though it returns a real item at runtime,
+        // the same erasure the rest of this file crosses with a cast.
+        // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
         selection = recognizeMarkingMenuStroke(stroke, fromData.model);
       }
 
@@ -724,7 +744,7 @@ export const navigationMachine = machine({
         stroke,
         menu,
         active,
-        selection: null,
+        selection: undefined,
       });
     },
   },

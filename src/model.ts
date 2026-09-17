@@ -256,13 +256,13 @@ const getTightestSpacing = (angles: readonly number[]): number => {
  */
 abstract class MarkingMenuNode {
   readonly #items: readonly MarkingMenuItem[];
-  readonly #parent: MarkingMenuNode | null;
+  readonly #parent: MarkingMenuNode | undefined;
 
   constructor({
     parent,
     items,
   }: {
-    parent: MarkingMenuNode | null;
+    parent: MarkingMenuNode | undefined;
     /**
      Builds the node's items, given the node itself: sub-items need their
      parent to exist before they can be created.
@@ -277,7 +277,7 @@ abstract class MarkingMenuNode {
     return this.#items;
   }
 
-  get parent(): MarkingMenuNode | null {
+  get parent(): MarkingMenuNode | undefined {
     return this.#parent;
   }
 
@@ -291,10 +291,11 @@ abstract class MarkingMenuNode {
    Retrieve a direct sub-item by its id.
 
    @param childId - The identifier of the sub-item to look for.
-   @returns The sub-item with the id `childId`, or `null` if there is none.
+   @returns The sub-item with the id `childId`, or `undefined` if there is
+   none.
    */
-  getChild(childId: string): MarkingMenuItem | null {
-    return this.#items.find((item) => item.id === childId) ?? null;
+  getChild(childId: string): MarkingMenuItem | undefined {
+    return this.#items.find((item) => item.id === childId) ?? undefined;
   }
 
   /**
@@ -311,13 +312,13 @@ abstract class MarkingMenuNode {
    Find the sub-item whose angle is the closest to a given angle.
 
    @param angle - The angle to compare the sub-items against.
-   @returns The closest sub-item to the angle `angle`, or `null` if the node
-   has no sub-item.
+   @returns The closest sub-item to the angle `angle`, or `undefined` if the
+   node has no sub-item.
    */
-  getNearestChild(angle: number): MarkingMenuItem | null {
+  getNearestChild(angle: number): MarkingMenuItem | undefined {
     const [firstItem, ...otherItems] = this.#items;
     if (firstItem === undefined) {
-      return null;
+      return undefined;
     }
 
     let nearest = firstItem;
@@ -634,7 +635,7 @@ export function createModel<const Input extends MarkingMenuInput>(
   // the single point where the precise types are re-attached to the loosely
   // typed implementation classes.
   return new MarkingMenuRoot({
-    parent: null,
+    parent: undefined,
     items: (self) => createItems(input.items, self),
   }) as unknown as MarkingMenuModel<Input>;
 }

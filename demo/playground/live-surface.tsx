@@ -37,7 +37,7 @@ const CLICK_MOVEMENT_PX = 8;
  sentence saying why it selected nothing, plus what the recognizer did.
  */
 export type GestureResult = {
-  readonly steps: readonly MenuStep[] | null;
+  readonly steps: readonly MenuStep[] | undefined;
   readonly message: string;
   readonly metrics: string;
 };
@@ -46,7 +46,7 @@ export type GestureResult = {
 The readout before any gesture, and after one too short to count.
 */
 export const IDLE_RESULT: GestureResult = {
-  steps: null,
+  steps: undefined,
   message:
     'Press and hold to open the menu, then draw to an item; or draw the mark straight away.',
   metrics: '',
@@ -161,15 +161,19 @@ export function LiveSurface({
   showBreakdown: boolean;
   onResult: (result: GestureResult) => void;
 }) {
+  // Bound to JSX via `ref={}` below: React itself sets `.current` to `null`
+  // on unmount, so these two must stay `null`-typed.
+  /* eslint-disable @typescript-eslint/no-restricted-types -- DOM refs */
   const menuParentRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  /* eslint-enable @typescript-eslint/no-restricted-types -- DOM refs */
   const surfacesRef = useRef<StrokeSurface[]>([]);
   const strokeRef = useRef<Point[]>([]);
   const interruptedRef = useRef(false);
   // The last stroke the recognizer actually ran on, which is the only one
-  // the overlay may be redrawn from; `null` after a gesture it had no part
-  // in (see {@link didRecognize}).
-  const recognizedRef = useRef<readonly Point[] | null>(null);
+  // the overlay may be redrawn from; `undefined` after a gesture it had no
+  // part in (see {@link didRecognize}).
+  const recognizedRef = useRef<readonly Point[] | undefined>(undefined);
   const latestRef = useLatest({ model, showBreakdown, onResult });
 
   const clearOverlay = useCallback(() => {
@@ -185,14 +189,14 @@ export function LiveSurface({
       stroke: readonly Point[],
       analysis: MarkingMenuStrokeAnalysis<MenuModel>,
     ) => {
-      const overlay = overlayRef.current;
-      if (overlay !== null) {
+      const overlay = overlayRef.current ?? undefined;
+      if (overlay !== undefined) {
         surfacesRef.current = drawGesture({ overlay, stroke, analysis });
       }
     };
 
-    const menuParent = menuParentRef.current;
-    if (menuParent === null) {
+    const menuParent = menuParentRef.current ?? undefined;
+    if (menuParent === undefined) {
       return;
     }
 
@@ -202,7 +206,7 @@ export function LiveSurface({
     const finish = (
       position: Point,
       mode: MarkingMenuMode,
-      outcome: { steps: readonly MenuStep[] | null; message: string },
+      outcome: { steps: readonly MenuStep[] | undefined; message: string },
     ) => {
       const { model: current, onResult: report } = latestRef.current;
       const stroke = [...strokeRef.current, local(position)];
@@ -215,7 +219,7 @@ export function LiveSurface({
 
       const depth = outcome.steps?.length ?? 0;
       const wasInterrupted = interruptedRef.current;
-      recognizedRef.current = null;
+      recognizedRef.current = undefined;
       if (!didRecognize(mode, wasInterrupted)) {
         // Nothing is drawn and no piece, corner or threshold is quoted: the
         // overlay is a picture of a recognition that did not happen, and the
@@ -277,11 +281,11 @@ export function LiveSurface({
 
     controller.on('start', (event) => {
       interruptedRef.current = false;
-      recognizedRef.current = null;
+      recognizedRef.current = undefined;
       clearOverlay();
       strokeRef.current = [local(event.position)];
       latestRef.current.onResult({
-        steps: null,
+        steps: undefined,
         message: 'Drawing…',
         metrics: '',
       });
@@ -299,9 +303,9 @@ export function LiveSurface({
     controller.on('cancel', (event) => {
       const { active } = event;
       finish(event.position, event.mode, {
-        steps: null,
+        steps: undefined,
         message:
-          active === null
+          active === undefined
             ? 'No selection: the stroke does not lead to an item.'
             : `No selection: released on the sub-menu “${active.label}”.`,
       });
@@ -320,9 +324,9 @@ export function LiveSurface({
   // screen rather than waiting for the next one. Only a gesture the
   // recognizer ran on has anything to redraw.
   useEffect(() => {
-    const overlay = overlayRef.current;
+    const overlay = overlayRef.current ?? undefined;
     const stroke = recognizedRef.current;
-    if (overlay === null || stroke === null || stroke.length < 2) {
+    if (overlay === undefined || stroke === undefined || stroke.length < 2) {
       return;
     }
 

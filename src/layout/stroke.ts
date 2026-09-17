@@ -73,9 +73,9 @@ export function createStrokeSurface({
 
   let previousStroke: readonly Point[] = [];
   let pathPoints: Point[] = [];
-  let livePath: SVGPathElement | null = null;
+  let livePath: SVGPathElement | undefined;
   let livePathNewPointCount = 0;
-  let marker: SVGCircleElement | null = null;
+  let marker: SVGCircleElement | undefined;
 
   const createPath = (points: Point[], newPointCount: number) => {
     const path = doc.createElementNS(svgNamespace, 'path');
@@ -92,7 +92,7 @@ export function createStrokeSurface({
       path.setAttribute('stroke-width', String(lineWidth));
     }
 
-    if (marker === null) {
+    if (marker === undefined) {
       svg.append(path);
     } else {
       marker.before(path);
@@ -110,7 +110,7 @@ export function createStrokeSurface({
         continue;
       }
 
-      if (livePath === null) {
+      if (livePath === undefined) {
         createPath([point], 1);
       } else if (livePathNewPointCount === pathPointLimit) {
         const previousPoint = stroke[index - 1];
@@ -132,7 +132,7 @@ export function createStrokeSurface({
 
     previousStroke = [];
     pathPoints = [];
-    livePath = null;
+    livePath = undefined;
     livePathNewPointCount = 0;
   };
 
@@ -155,7 +155,7 @@ export function createStrokeSurface({
   };
 
   const drawPoint = ([x, y]: Point): void => {
-    if (marker === null) {
+    if (marker === undefined) {
       marker = doc.createElementNS(svgNamespace, 'circle');
       marker.setAttribute('class', 'marking-menu-stroke-point');
       if (pointRadius !== undefined) {
@@ -177,9 +177,9 @@ export function createStrokeSurface({
     svg.replaceChildren();
     previousStroke = [];
     pathPoints = [];
-    livePath = null;
+    livePath = undefined;
     livePathNewPointCount = 0;
-    marker = null;
+    marker = undefined;
   };
 
   return {

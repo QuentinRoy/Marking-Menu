@@ -22,11 +22,11 @@ export function rafThrottle<Arguments extends readonly unknown[]>(
   fn: (...args: Arguments) => void,
 ): Throttled<Arguments> {
   // The arguments and frame handle of the most recent call, while a frame is
-  // scheduled. `null` when no frame is pending.
-  let pending: { args: Arguments; frame: number } | null = null;
+  // scheduled. `undefined` when no frame is pending.
+  let pending: { args: Arguments; frame: number } | undefined;
 
   function throttled(...args: Arguments): void {
-    if (pending !== null) {
+    if (pending !== undefined) {
       pending.args = args;
       return;
     }
@@ -36,18 +36,18 @@ export function rafThrottle<Arguments extends readonly unknown[]>(
     const scheduled = { args, frame: -1 };
     pending = scheduled;
     scheduled.frame = requestAnimationFrame(() => {
-      pending = null;
+      pending = undefined;
       fn(...scheduled.args);
     });
   }
 
   throttled.cancel = () => {
-    if (pending === null) {
+    if (pending === undefined) {
       return;
     }
 
     cancelAnimationFrame(pending.frame);
-    pending = null;
+    pending = undefined;
   };
 
   return throttled;

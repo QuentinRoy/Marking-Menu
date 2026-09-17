@@ -370,7 +370,7 @@ describe('createController', () => {
     controller.dispose();
   });
 
-  it('dispatches cancel carrying a null active, not select, for a gesture with no movement at all', () => {
+  it('dispatches cancel carrying an undefined active, not select, for a gesture with no movement at all', () => {
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -387,7 +387,7 @@ describe('createController', () => {
 
     expect(selected).not.toHaveBeenCalled();
     expect(cancelEvent?.mode).toBe('startup');
-    expect(cancelEvent?.active).toBeNull();
+    expect(cancelEvent?.active).toBeUndefined();
 
     controller.dispose();
   });
@@ -412,7 +412,7 @@ describe('createController', () => {
 
     expect(selected).not.toHaveBeenCalled();
     expect(cancelEvent?.mode).toBe('expert');
-    expect(cancelEvent?.active).toBeNull();
+    expect(cancelEvent?.active).toBeUndefined();
 
     controller.dispose();
   });
@@ -628,8 +628,8 @@ describe('createController', () => {
 
     expect(selected).not.toHaveBeenCalled();
     expect(cancelEvent?.mode).toBe('novice');
-    expect(cancelEvent?.active).toBeNull();
-    expect(cancelEvent?.menu).not.toBeNull();
+    expect(cancelEvent?.active).toBeUndefined();
+    expect(cancelEvent?.menu).not.toBeUndefined();
     expect(
       parent
         .querySelector('.marking-menu')
@@ -670,8 +670,8 @@ describe('createController', () => {
     expect(canceled).not.toHaveBeenCalled();
     expect(selectedId).toBe('right');
     // `select.menu` is the same root menu that opened this gesture, not
-    // merely non-null.
-    expect(openedMenu).not.toBeNull();
+    // merely defined.
+    expect(openedMenu).not.toBeUndefined();
     expect(selectedMenu).toBe(openedMenu);
     const root = parent.querySelector('.marking-menu')?.shadowRoot;
     expect(root?.querySelector('.marking-menu-layer')).toBeNull();
@@ -723,8 +723,8 @@ describe('createController', () => {
     expect(selected).not.toHaveBeenCalled();
     expect(canceledActiveId).toBe('right');
     // `cancel.menu` is the same root menu that opened this gesture, not
-    // merely non-null.
-    expect(openedMenu).not.toBeNull();
+    // merely defined.
+    expect(openedMenu).not.toBeUndefined();
     expect(cancelMenu).toBe(openedMenu);
     expect(strokeSurfaces(parent)).toHaveLength(1);
 
@@ -776,7 +776,8 @@ describe('createController', () => {
     const menuBefore = parent.querySelector('.marking-menu');
     expect(menuBefore).not.toBeNull();
 
-    // Still within `deadZoneRadius`, so the active item stays null and the
+    // Still within `deadZoneRadius`, so the active item stays undefined and
+    // the
     // menu identity is unchanged: no DOM to patch, but a render pass still
     // runs.
     parent.dispatchEvent(pointer('pointermove', { clientX: 1, clientY: 0 }));
@@ -807,7 +808,7 @@ describe('createController', () => {
     parent.dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 0 }));
 
     expect(moved).toHaveBeenCalledTimes(1);
-    expect(moved.mock.calls[0]?.[0].active).toBeNull();
+    expect(moved.mock.calls[0]?.[0].active).toBeUndefined();
     expect(changed).not.toHaveBeenCalled();
     expect(activeMenuItems(parent)).toHaveLength(0);
 
@@ -849,7 +850,7 @@ describe('createController', () => {
     expect(lastMoveActiveId).toBe('right');
     expect(changed).toHaveBeenCalledTimes(1);
     expect(lastChangeActiveId).toBe('right');
-    expect(lastChangePreviousActive).toBeNull();
+    expect(lastChangePreviousActive).toBeUndefined();
 
     // The menu DOM is patched in place, not recreated.
     expect(parent.querySelector('.marking-menu')).toBe(menuBefore);
@@ -898,7 +899,7 @@ describe('createController', () => {
     const firstActive = lastChangeActiveId;
     expect(seen).toEqual(['move', 'change']);
     expect(firstActive).toBe('right');
-    expect(previousActive).toBeNull();
+    expect(previousActive).toBeUndefined();
 
     // Moving to "down" produces a second, distinct change in the same batch
     // as its move.
@@ -907,12 +908,12 @@ describe('createController', () => {
 
     expect(seen).toEqual(['move', 'change']);
     expect(lastChangeActiveId).toBe('down');
-    expect(lastChangePreviousActive).not.toBeNull();
+    expect(lastChangePreviousActive).not.toBeUndefined();
 
     controller.dispose();
   });
 
-  it('never fires change, and always reports a null active, for move events dispatched in startup and expert', () => {
+  it('never fires change, and always reports an undefined active, for move events dispatched in startup and expert', () => {
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -929,11 +930,11 @@ describe('createController', () => {
 
     expect(moved).toHaveLength(2);
     expect(moved[0]?.mode).toBe('startup');
-    expect(moved[0]?.active).toBeNull();
-    expect(moved[0]?.menu).toBeNull();
+    expect(moved[0]?.active).toBeUndefined();
+    expect(moved[0]?.menu).toBeUndefined();
     expect(moved[1]?.mode).toBe('expert');
-    expect(moved[1]?.active).toBeNull();
-    expect(moved[1]?.menu).toBeNull();
+    expect(moved[1]?.active).toBeUndefined();
+    expect(moved[1]?.menu).toBeUndefined();
     expect(changed).not.toHaveBeenCalled();
 
     controller.dispose();
@@ -1067,7 +1068,7 @@ describe('createController', () => {
 
       expect(selected).not.toHaveBeenCalled();
       expect(cancelEvent?.mode).toBe('novice');
-      expect(cancelEvent?.active).toBeNull();
+      expect(cancelEvent?.active).toBeUndefined();
       expect(cancelEvent?.menu).toBe(submenu);
 
       controller.dispose();
@@ -1159,8 +1160,8 @@ describe('createController', () => {
       expect(opened).not.toHaveBeenCalled();
       expect(selected).not.toHaveBeenCalled();
       expect(cancelEvent?.mode).toBe('expert');
-      expect(cancelEvent?.active).toBeNull();
-      expect(cancelEvent?.menu).toBeNull();
+      expect(cancelEvent?.active).toBeUndefined();
+      expect(cancelEvent?.menu).toBeUndefined();
       expect(
         parent
           .querySelector('.marking-menu')

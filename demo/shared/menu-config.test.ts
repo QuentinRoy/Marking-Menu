@@ -26,15 +26,17 @@ describe('readMenuConfig / writeMenuConfig', () => {
   });
 
   it('reads no menu from a query string without the parameter', () => {
-    expect(readMenuConfig('?theme=dark')).toBeNull();
+    expect(readMenuConfig('?theme=dark')).toBeUndefined();
   });
 
   it('reads no menu from a parameter that is not JSON', () => {
-    expect(readMenuConfig('?config=nope')).toBeNull();
+    expect(readMenuConfig('?config=nope')).toBeUndefined();
   });
 
   it('reads no menu from JSON of the wrong shape', () => {
-    expect(readMenuConfig('?config=%7B%22items%22%3A%5B4%5D%7D')).toBeNull();
+    expect(
+      readMenuConfig('?config=%7B%22items%22%3A%5B4%5D%7D'),
+    ).toBeUndefined();
   });
 
   it('rejects a non-finite item angle', () => {
@@ -42,6 +44,6 @@ describe('readMenuConfig / writeMenuConfig', () => {
       readMenuConfig(
         '?config=%7B%22items%22%3A%5B%7B%22label%22%3A%22A%22%2C%22angle%22%3A1e999%7D%5D%7D',
       ),
-    ).toBeNull();
+    ).toBeUndefined();
   });
 });

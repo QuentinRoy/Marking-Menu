@@ -306,7 +306,7 @@ describe('createModel', () => {
 
   it('has no parent at the root', () => {
     const menu = createModel({ items: [] });
-    expect(menu.parent).toBeNull();
+    expect(menu.parent).toBeUndefined();
   });
 
   it('retrieves a direct sub-item by its id', () => {
@@ -345,7 +345,11 @@ describe('createModel', () => {
 
   it('has no sub-item to retrieve on a leaf', () => {
     const menu = createModel({ items: [{ id: 'leaf', label: 'Leaf' }] });
-    expect(menu.getChild('leaf').getNearestChild(0)).toBeNull();
+    // A leaf's `items` tuple is statically empty, so `getNearestChild`'s
+    // `IfLeaf` (see `src/types.ts`) resolves its return type to exactly
+    // `undefined` here, correctly: a leaf never has a nearest child.
+    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
+    expect(menu.getChild('leaf').getNearestChild(0)).toBeUndefined();
   });
 
   it('computes the maximum depth of the menu', () => {
@@ -391,7 +395,11 @@ describe('createModel', () => {
     expect(menu.items).toEqual([]);
     expect(menu.isRoot).toBe(true);
     expect(menu.isLeaf).toBe(true);
-    expect(menu.getNearestChild(0)).toBeNull();
+    // A leaf's `items` tuple is statically empty, so `getNearestChild`'s
+    // `IfLeaf` (see `src/types.ts`) resolves its return type to exactly
+    // `undefined` here, correctly: a leaf never has a nearest child.
+    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
+    expect(menu.getNearestChild(0)).toBeUndefined();
     expect(menu.getChildrenByLabel('Anything')).toEqual([]);
     expect(menu.getMaxDepth()).toBe(0);
     expect(menu.getMaxBreadth()).toBe(0);
@@ -533,7 +541,7 @@ describe('createModel', () => {
 
     expect(dynamic).toEqual(literal);
     expect(dynamic.getChild('right')?.angle).toBe(0);
-    expect(dynamic.getChild('unknown')).toBeNull();
+    expect(dynamic.getChild('unknown')).toBeUndefined();
     expect(dynamic.getNearestChild(90)?.label).toBe('Right');
     expect(dynamic.getMaxDepth()).toBe(2);
   });

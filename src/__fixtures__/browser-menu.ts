@@ -238,13 +238,13 @@ export const openMenu = async (surface: Element): Promise<Drag> => {
  menu's shadow root. This walks into every nested `shadowRoot.activeElement`
  to find the real target.
  */
-const deepActiveElement = (): Element | null => {
+const deepActiveElement = (): Element | undefined => {
   let active = document.activeElement;
   while (active?.shadowRoot?.activeElement) {
     active = active.shadowRoot.activeElement;
   }
 
-  return active;
+  return active ?? undefined;
 };
 
 /**

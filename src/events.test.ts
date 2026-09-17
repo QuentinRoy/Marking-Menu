@@ -65,17 +65,17 @@ describe('MarkingMenuMoveEvent', () => {
     expect(event.menu).toBe(menu);
   });
 
-  it('allows a null active item and a null menu, for startup and expert', () => {
+  it('allows an undefined active item and an undefined menu, for startup and expert', () => {
     const event = new MarkingMenuMoveEvent<M>({
       mode: 'expert',
       position: [1, 2],
-      active: null,
-      menu: null,
+      active: undefined,
+      menu: undefined,
     });
 
     expect(event.mode).toBe('expert');
-    expect(event.active).toBeNull();
-    expect(event.menu).toBeNull();
+    expect(event.active).toBeUndefined();
+    expect(event.menu).toBeUndefined();
   });
 });
 
@@ -95,15 +95,15 @@ describe('MarkingMenuChangeEvent', () => {
     expect(event.menu).toBe(menu);
   });
 
-  it('allows a null active item, for a change onto or off of empty space', () => {
+  it('allows an undefined active item, for a change onto or off of empty space', () => {
     const event = new MarkingMenuChangeEvent<M>({
       position: [1, 2],
-      active: null,
+      active: undefined,
       previousActive: menu.items[0],
       menu,
     });
 
-    expect(event.active).toBeNull();
+    expect(event.active).toBeUndefined();
     expect(event.previousActive).toBe(menu.items[0]);
   });
 });
@@ -123,16 +123,16 @@ describe('MarkingMenuSelectEvent', () => {
     expect(event.menu).toBe(menu);
   });
 
-  it('allows a null menu, for a selection made in expert mode', () => {
+  it('allows an undefined menu, for a selection made in expert mode', () => {
     const event = new MarkingMenuSelectEvent<M>({
       mode: 'expert',
       position: [1, 2],
       selection: menu.items[0],
-      menu: null,
+      menu: undefined,
     });
 
     expect(event.mode).toBe('expert');
-    expect(event.menu).toBeNull();
+    expect(event.menu).toBeUndefined();
   });
 });
 
@@ -151,15 +151,15 @@ describe('MarkingMenuCancelEvent', () => {
     expect(event.menu).toBe(menu);
   });
 
-  it('allows a null active item and a null menu', () => {
+  it('allows an undefined active item and an undefined menu', () => {
     const event = new MarkingMenuCancelEvent<M>({
       mode: 'startup',
       position: [1, 2],
-      active: null,
-      menu: null,
+      active: undefined,
+      menu: undefined,
     });
 
-    expect(event.active).toBeNull();
-    expect(event.menu).toBeNull();
+    expect(event.active).toBeUndefined();
+    expect(event.menu).toBeUndefined();
   });
 });

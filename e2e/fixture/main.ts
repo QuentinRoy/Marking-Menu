@@ -28,18 +28,25 @@ if (!(surface instanceof HTMLElement) || !(log instanceof HTMLElement)) {
   throw new TypeError('Fixture markup is missing #surface or #log.');
 }
 
-const deadZoneRadius = new URL(globalThis.location.href).searchParams.get(
-  'deadZoneRadius',
-);
+const deadZoneRadius =
+  new URL(globalThis.location.href).searchParams.get('deadZoneRadius') ??
+  undefined;
 const mm = createMarkingMenu({
   items,
   parent: surface,
-  ...(deadZoneRadius !== null && { deadZoneRadius: Number(deadZoneRadius) }),
+  ...(deadZoneRadius !== undefined && {
+    deadZoneRadius: Number(deadZoneRadius),
+  }),
 });
 
 // A node carries an `id` only when the caller gave it one (root has none);
 // tests need that id, not the whole node, so pull it out defensively.
 const idOf = (node: unknown): string | undefined =>
+  // `typeof null === 'object'`, so `'id' in node` below needs this explicit
+  // null check; `typeof node === 'object'` already excludes `undefined`. A
+  // coalesced read narrows the type but not the control flow, so `node`
+  // itself has to be compared directly here.
+  // eslint-disable-next-line unicorn/no-null
   node !== null &&
   typeof node === 'object' &&
   'id' in node &&

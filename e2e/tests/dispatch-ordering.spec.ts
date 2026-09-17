@@ -12,8 +12,8 @@ type Observation =
   | { type: 'open'; domItemCount: number; eventItemCount: number }
   | {
       type: 'change';
-      domActiveId: string | null;
-      eventActiveId: string | null;
+      domActiveId: string | undefined;
+      eventActiveId: string | undefined;
     }
   | { type: 'select'; domMenuCount: number; cursor: string };
 
@@ -82,9 +82,9 @@ test('commit → render → dispatch ordering: a listener observes the complete 
       observations.push({
         domActiveId:
           activeElement instanceof HTMLElement
-            ? (activeElement.dataset.itemId ?? null)
-            : null,
-        eventActiveId: event.active?.key ?? null,
+            ? (activeElement.dataset.itemId ?? undefined)
+            : undefined,
+        eventActiveId: event.active?.key ?? undefined,
         type: 'change',
       });
     });

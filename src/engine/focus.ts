@@ -12,13 +12,13 @@ export type FocusManager = {
 // is announced before a submenu it points at can open.
 const ACTIVE_ITEM_FOCUS_DELAY_MS = 50;
 
-const menuContainer = (root: ShadowRoot): HTMLElement | null =>
-  root.querySelector<HTMLElement>('[role="menu"]');
+const menuContainer = (root: ShadowRoot): HTMLElement | undefined =>
+  root.querySelector<HTMLElement>('[role="menu"]') ?? undefined;
 
-const itemElement = (root: ShadowRoot, key: string): HTMLElement | null =>
+const itemElement = (root: ShadowRoot, key: string): HTMLElement | undefined =>
   [...root.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
     (element) => element.dataset.itemId === key,
-  ) ?? null;
+  ) ?? undefined;
 
 /**
  The element actually holding focus, unlike `document.activeElement`: a
@@ -26,13 +26,13 @@ const itemElement = (root: ShadowRoot, key: string): HTMLElement | null =>
  (DOM's own retargeting), which would otherwise save that host, rather than
  the caller's real focus, as `savedFocus`.
  */
-const deepActiveElement = (doc: Document): Element | null => {
+const deepActiveElement = (doc: Document): Element | undefined => {
   let active = doc.activeElement;
   while (active?.shadowRoot?.activeElement) {
     active = active.shadowRoot.activeElement;
   }
 
-  return active;
+  return active ?? undefined;
 };
 
 /**
@@ -49,7 +49,7 @@ export function manageFocus<M extends AnyModelNode>({
   runtime: MarkingMenuEventEmitter<M>;
 }): FocusManager {
   let pendingFocus: ReturnType<typeof setTimeout> | undefined;
-  let savedFocus: HTMLElement | null = null;
+  let savedFocus: HTMLElement | undefined;
 
   const clearPendingFocus = (): void => {
     clearTimeout(pendingFocus);
@@ -59,19 +59,20 @@ export function manageFocus<M extends AnyModelNode>({
   const restoreFocus = (): void => {
     clearPendingFocus();
     savedFocus?.focus({ preventScroll: true });
-    savedFocus = null;
+    savedFocus = undefined;
   };
 
   const onOpen = (): void => {
     clearPendingFocus();
-    savedFocus ??= deepActiveElement(root.ownerDocument) as HTMLElement | null;
+    savedFocus ??= deepActiveElement(root.ownerDocument) as
+      HTMLElement | undefined;
     menuContainer(root)?.focus({ preventScroll: true });
   };
 
   const onChange = (event: MarkingMenuChangeEvent<M>): void => {
     clearPendingFocus();
     const { active } = event;
-    if (active === null) {
+    if (active === undefined) {
       return;
     }
 

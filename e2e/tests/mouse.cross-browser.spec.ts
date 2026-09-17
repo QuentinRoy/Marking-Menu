@@ -64,8 +64,8 @@ test('label plates fit text and honor a fixed width', async ({ page }) => {
         '.marking-menu-label',
       ) ?? []),
     ].find((element) => element.textContent === 'Right');
-    const right = label?.parentElement;
-    if (right === null || right === undefined) {
+    const right = label?.parentElement ?? undefined;
+    if (right === undefined) {
       throw new Error('Right plate is missing.');
     }
 
@@ -78,18 +78,13 @@ test('label plates fit text and honor a fixed width', async ({ page }) => {
   const constrainedSize = await menu.evaluate((host) => {
     host.style.setProperty('--mm-plate-min-width', '120px');
     host.style.setProperty('--mm-plate-max-width', '120px');
-    const plate = host.shadowRoot?.querySelector<HTMLElement>(
-      '.marking-menu-plate',
-    );
-    const label = host.shadowRoot?.querySelector<HTMLElement>(
-      '.marking-menu-label',
-    );
-    if (
-      plate === null ||
-      plate === undefined ||
-      label === null ||
-      label === undefined
-    ) {
+    const plate =
+      host.shadowRoot?.querySelector<HTMLElement>('.marking-menu-plate') ??
+      undefined;
+    const label =
+      host.shadowRoot?.querySelector<HTMLElement>('.marking-menu-label') ??
+      undefined;
+    if (plate === undefined || label === undefined) {
       throw new Error('Menu plate is incomplete.');
     }
 
@@ -115,10 +110,10 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
   const geometry = await menu.evaluate((host) => {
     const root = host.shadowRoot;
     const wedge = (index: number): { height: number; y: number } => {
-      const path = root?.querySelectorAll<SVGPathElement>(
-        '.marking-menu-wedge',
-      )[index];
-      if (path === null || path === undefined) {
+      const path =
+        root?.querySelectorAll<SVGPathElement>('.marking-menu-wedge')[index] ??
+        undefined;
+      if (path === undefined) {
         throw new Error(`Missing wedge at index ${index}.`);
       }
 
@@ -126,18 +121,13 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
       return { height, y };
     };
 
-    const innerConnector = root?.querySelector<HTMLElement>(
-      '.marking-menu-inner-connector',
-    );
-    const outerConnector = root?.querySelector<HTMLElement>(
-      '.marking-menu-outer-connector',
-    );
-    if (
-      innerConnector === null ||
-      innerConnector === undefined ||
-      outerConnector === null ||
-      outerConnector === undefined
-    ) {
+    const innerConnector =
+      root?.querySelector<HTMLElement>('.marking-menu-inner-connector') ??
+      undefined;
+    const outerConnector =
+      root?.querySelector<HTMLElement>('.marking-menu-outer-connector') ??
+      undefined;
+    if (innerConnector === undefined || outerConnector === undefined) {
       throw new Error('Menu connector is missing.');
     }
 
@@ -175,24 +165,22 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
   });
   const colors = await menu.evaluate((host) => {
     const root = host.shadowRoot;
-    const innerConnector = root?.querySelector<HTMLElement>(
-      '.marking-menu-inner-connector',
-    );
-    const outerConnector = root?.querySelector<HTMLElement>(
-      '.marking-menu-outer-connector',
-    );
-    const activeItem = root?.querySelector<HTMLElement>(
-      '.marking-menu-item.active',
-    );
-    const activeOuterConnector = activeItem?.querySelector<HTMLElement>(
-      ':scope > .marking-menu-outer-connector',
-    );
+    const innerConnector =
+      root?.querySelector<HTMLElement>('.marking-menu-inner-connector') ??
+      undefined;
+    const outerConnector =
+      root?.querySelector<HTMLElement>('.marking-menu-outer-connector') ??
+      undefined;
+    const activeItem =
+      root?.querySelector<HTMLElement>('.marking-menu-item.active') ??
+      undefined;
+    const activeOuterConnector =
+      activeItem?.querySelector<HTMLElement>(
+        ':scope > .marking-menu-outer-connector',
+      ) ?? undefined;
     if (
-      innerConnector === null ||
       innerConnector === undefined ||
-      outerConnector === null ||
       outerConnector === undefined ||
-      activeOuterConnector === null ||
       activeOuterConnector === undefined
     ) {
       throw new Error('Menu connector is missing.');
