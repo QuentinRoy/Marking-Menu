@@ -116,11 +116,13 @@ function createIndicatorLayer({
 
       surface ??= createIndicatorSurface({ parent, ...surfaceOptions });
       currentPosition = indicator.position;
-      if (indicator.startedAt !== currentStartedAt) {
-        currentStartedAt = indicator.startedAt;
-        stop();
-        tick(indicator.delayMs, indicator.startedAt);
+      if (indicator.startedAt === currentStartedAt) {
+        return;
       }
+
+      currentStartedAt = indicator.startedAt;
+      stop();
+      tick(indicator.delayMs, indicator.startedAt);
     },
     backgroundElement: () => surface?.backgroundElement ?? undefined,
     dotElement: () => surface?.dotElement ?? undefined,

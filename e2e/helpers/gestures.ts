@@ -152,6 +152,28 @@ const deltaAngle = (a: number, b: number): number =>
   ((((b - a + 180) % 360) + 360) % 360) - 180;
 
 /**
+The id of the entry whose angle is closest to `measuredAngle`.
+*/
+const nearestIdByAngle = (
+  measuredAngle: number,
+  entries: ReadonlyArray<readonly [string, { angle: number }]>,
+): string => {
+  let nearestId = '';
+  let nearestDelta = Infinity;
+  for (const [candidateId, candidate] of entries) {
+    const delta = Math.abs(deltaAngle(candidate.angle, measuredAngle));
+    if (delta >= nearestDelta) {
+      continue;
+    }
+
+    nearestId = candidateId;
+    nearestDelta = delta;
+  }
+
+  return nearestId;
+};
+
+/**
  Assert that a (sub-)menu renders exactly the given items, each one closest
  (among the given items' own angles) to its own expected direction from
  `center`. "Closest", rather than a fixed angular tolerance, is what makes
@@ -186,15 +208,7 @@ export const expectApproximateOctants = async (
   );
 
   for (const { angle: measuredAngle, id, label } of measuredAngles) {
-    let nearestId = '';
-    let nearestDelta = Infinity;
-    for (const [candidateId, candidate] of entries) {
-      const delta = Math.abs(deltaAngle(candidate.angle, measuredAngle));
-      if (delta < nearestDelta) {
-        nearestId = candidateId;
-        nearestDelta = delta;
-      }
-    }
+    const nearestId = nearestIdByAngle(measuredAngle, entries);
 
     expect(
       nearestId,

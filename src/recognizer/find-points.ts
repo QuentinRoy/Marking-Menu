@@ -79,13 +79,17 @@ export const findMiddlePointForMinAngle = (
   let minAngleIndex = -1;
   for (let i = startIndex; i <= endIndex; i += 1) {
     const point = pointList[i];
-    if (point !== undefined) {
-      const thisAngle = angle(from, point, to);
-      if (thisAngle < minAngle) {
-        minAngle = thisAngle;
-        minAngleIndex = i;
-      }
+    if (point === undefined) {
+      continue;
     }
+
+    const thisAngle = angle(from, point, to);
+    if (thisAngle >= minAngle) {
+      continue;
+    }
+
+    minAngle = thisAngle;
+    minAngleIndex = i;
   }
 
   return { index: minAngleIndex, angle: minAngle };

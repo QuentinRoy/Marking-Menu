@@ -642,17 +642,19 @@ export function createMenu({
     // also allowed the numeric id `0`): only `undefined`, `''`, and `NaN` are
     // skipped.
     if (
-      itemId !== undefined &&
-      itemId !== '' &&
-      (typeof itemId !== 'number' || !Number.isNaN(itemId))
+      itemId === undefined ||
+      itemId === '' ||
+      (typeof itemId === 'number' && Number.isNaN(itemId))
     ) {
-      const itemDom = getItemDom(itemId);
-      if (itemDom === undefined) {
-        throw new TypeError(`No menu item found for id: ${itemId}`);
-      }
-
-      setItemActive(itemDom, true);
+      return;
     }
+
+    const itemDom = getItemDom(itemId);
+    if (itemDom === undefined) {
+      throw new TypeError(`No menu item found for id: ${itemId}`);
+    }
+
+    setItemActive(itemDom, true);
   };
 
   const remove = () => {

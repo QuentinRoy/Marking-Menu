@@ -325,10 +325,12 @@ abstract class MarkingMenuNode {
     let nearestDelta = Math.abs(deltaAngle(nearest.angle, angle));
     for (const item of otherItems) {
       const delta = Math.abs(deltaAngle(item.angle, angle));
-      if (delta < nearestDelta) {
-        nearest = item;
-        nearestDelta = delta;
+      if (delta >= nearestDelta) {
+        continue;
       }
+
+      nearest = item;
+      nearestDelta = delta;
     }
 
     return nearest;
