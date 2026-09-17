@@ -26,12 +26,9 @@ import { noviceUpperStroke, projectLayout } from './layout-view.js';
 
  A definition is a single, non-generic value, so every field that would
  otherwise carry the caller's precise model type `M` is erased to the bare
- `AnyModelNode` here instead: `ModelMenus<AnyModelNode>` and
- `ModelLeaves<AnyModelNode>` both collapse to `never` (their `isLeaf`/`isRoot`
- conditions can never resolve against a plain `boolean`), so nothing in this
- file can name them. `runtime.ts` stays generic over the caller's real `M` and
- casts back at the boundary, the same erase-and-cast shape `renderer.ts`
- already uses for `MenuLayoutModel`.
+ `AnyModelNode` here instead. `runtime.ts` stays generic over the caller's real
+ `M` and casts back at the boundary, the same erase-and-cast shape
+ `renderer.ts` already uses for `MenuLayoutModel`.
  */
 
 export type NavigationOptions = {
@@ -186,42 +183,34 @@ function toNavigationState(
 }
 
 /*
- Event-construction helpers, generic in a fresh `N`. `ModelMenus<AnyModelNode>`
- and `ModelLeaves<AnyModelNode>` both collapse to `never` (see the module
- comment above), so `MarkingMenuOpenEvent<AnyModelNode>` and its siblings
- cannot be constructed directly from the erased `menu`/`selection` values this
- file has. A generic `N` keeps those conditionals deferred, exactly like the
- rest of the codebase's `as unknown as ModelMenus<M>` casts, so the erasure
- crossing happens once per event kind instead of at every call site.
+ Event-construction helpers, generic in a fresh `N`, taking each field at the
+ type the event itself declares for it. They used to take a bare `N` and cast,
+ because `ModelMenus<AnyModelNode>` and its siblings collapsed to `never` and
+ nothing here could produce a value of them; now that those resolve to
+ `AnyModelNode`, the erased `menu`/`selection` values this file holds satisfy
+ the declared types directly and the casts are gone.
+
+ A conditional type is not an inference site, so `N` is never inferred from an
+ argument: at every call site here it falls back to its `AnyModelNode`
+ constraint, which is exactly the erasure this file works in. A caller holding
+ a real `M` can still pass it explicitly and get a precisely typed event back,
+ checked rather than cast.
  */
 function openEvent<N extends AnyModelNode>(data: {
   readonly position: Point;
-  readonly menu: N;
+  readonly menu: ModelMenus<N>;
   readonly menuCenter: Point;
 }): MarkingMenuOpenEvent<N> {
-  return new MarkingMenuOpenEvent<N>(
-    data as unknown as {
-      position: Point;
-      menu: ModelMenus<N>;
-      menuCenter: Point;
-    },
-  );
+  return new MarkingMenuOpenEvent<N>(data);
 }
 
 function moveEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly active: N | undefined;
-  readonly menu: N | undefined;
+  readonly active: ModelItems<N> | undefined;
+  readonly menu: ModelMenus<N> | undefined;
 }): MarkingMenuMoveEvent<N> {
-  return new MarkingMenuMoveEvent<N>(
-    data as unknown as {
-      mode: MarkingMenuMode;
-      position: Point;
-      active: ModelItems<N> | undefined;
-      menu: ModelMenus<N> | undefined;
-    },
-  );
+  return new MarkingMenuMoveEvent<N>(data);
 }
 
 /**
@@ -242,50 +231,29 @@ function emitInactiveMove(
 
 function changeEvent<N extends AnyModelNode>(data: {
   readonly position: Point;
-  readonly active: N | undefined;
-  readonly previousActive: N | undefined;
-  readonly menu: N;
+  readonly active: ModelItems<N> | undefined;
+  readonly previousActive: ModelItems<N> | undefined;
+  readonly menu: ModelMenus<N>;
 }): MarkingMenuChangeEvent<N> {
-  return new MarkingMenuChangeEvent<N>(
-    data as unknown as {
-      position: Point;
-      active: ModelItems<N> | undefined;
-      previousActive: ModelItems<N> | undefined;
-      menu: ModelMenus<N>;
-    },
-  );
+  return new MarkingMenuChangeEvent<N>(data);
 }
 
 function selectEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly selection: N;
-  readonly menu: N | undefined;
+  readonly selection: ModelLeaves<N>;
+  readonly menu: ModelMenus<N> | undefined;
 }): MarkingMenuSelectEvent<N> {
-  return new MarkingMenuSelectEvent<N>(
-    data as unknown as {
-      mode: MarkingMenuMode;
-      position: Point;
-      selection: ModelLeaves<N>;
-      menu: ModelMenus<N> | undefined;
-    },
-  );
+  return new MarkingMenuSelectEvent<N>(data);
 }
 
 function cancelEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly active: N | undefined;
-  readonly menu: N | undefined;
+  readonly active: ModelItems<N> | undefined;
+  readonly menu: ModelMenus<N> | undefined;
 }): MarkingMenuCancelEvent<N> {
-  return new MarkingMenuCancelEvent<N>(
-    data as unknown as {
-      mode: MarkingMenuMode;
-      position: Point;
-      active: ModelItems<N> | undefined;
-      menu: ModelMenus<N> | undefined;
-    },
-  );
+  return new MarkingMenuCancelEvent<N>(data);
 }
 
 /**
@@ -707,11 +675,6 @@ export const navigationMachine = machine({
       } else if (from === 'startup' && strokeLength(stroke) === 0) {
         selection = undefined;
       } else {
-        // `ModelLeaves<AnyModelNode>` collapses to `never` (see the module
-        // comment above), so this call's declared type is exactly
-        // `undefined` here even though it returns a real item at runtime,
-        // the same erasure the rest of this file crosses with a cast.
-        // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
         selection = recognizeMarkingMenuStroke(stroke, fromData.model);
       }
 

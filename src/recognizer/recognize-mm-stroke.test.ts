@@ -56,17 +56,6 @@ type MockModel = ModelItem<string | undefined, string, readonly MockModel[]> & {
   getNearestChild: Mock<(childAngle?: number) => MockModel>;
 };
 
-/*
- `MockModel` describes its children with an unbounded `readonly MockModel[]`
- rather than a tuple, so `ModelLeaves<MockModel>` collapses to `never`: the
- mock's children only exist at runtime, through `getNearestChild`. The tests
- below that read properties off the result therefore go through the general
- overload, which returns the wider `ModelNodes<MockModel>`.
- */
-const anyRecognizedItem: { requireLeaf?: boolean; requireMenu?: boolean } = {
-  requireLeaf: true,
-};
-
 const createMockModel = (
   depth = 1,
   breadth = 8,
@@ -263,11 +252,7 @@ describe('recognizeMarkingMenuStroke', () => {
       // Create the model
       const model = createMockModel(1);
       // Apply the recognizer.
-      const selection = recognizeMarkingMenuStroke(
-        stroke,
-        model,
-        anyRecognizedItem,
-      );
+      const selection = recognizeMarkingMenuStroke(stroke, model);
       // Make sure the angle is close to the expected stroke angle (mock model dynamically)
       expect(
         Math.abs(deltaAngle(selection?.requestedAngle ?? NaN, strokeAngle)) <
@@ -296,11 +281,7 @@ describe('recognizeMarkingMenuStroke', () => {
       // Create the model
       const model = createMockModel(3);
       // Apply the recognizer.
-      const selection = recognizeMarkingMenuStroke(
-        stroke,
-        model,
-        anyRecognizedItem,
-      );
+      const selection = recognizeMarkingMenuStroke(stroke, model);
       // Make sure the angle is close to the expected stroke angle (mock model dynamically).
       expect(
         Math.abs(
@@ -338,9 +319,6 @@ describe('recognizeMarkingMenuStroke', () => {
     // Create the model
     const model = createMockModel(1);
     // Apply the recognizer.
-    // `ModelLeaves<AnyModelNode>` collapses to `never` here, the same
-    // erasure `src/engine/machine.ts` documents.
-    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
     expect(recognizeMarkingMenuStroke(stroke, model)).toBe(undefined);
   });
 
@@ -350,9 +328,6 @@ describe('recognizeMarkingMenuStroke', () => {
     // Create the model
     const model = createMockModel(5);
     // Apply the recognizer.
-    // `ModelLeaves<AnyModelNode>` collapses to `never` here, the same
-    // erasure `src/engine/machine.ts` documents.
-    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
     expect(recognizeMarkingMenuStroke(stroke, model, { maxDepth: 3 })).toBe(
       undefined,
     );
