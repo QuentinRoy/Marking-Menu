@@ -345,8 +345,9 @@ describe('createModel', () => {
 
   it('has no sub-item to retrieve on a leaf', () => {
     const menu = createModel({ items: [{ id: 'leaf', label: 'Leaf' }] });
-    // A leaf's nearest-child type is statically `undefined`, not a union:
-    // the same erasure `src/engine/machine.ts` documents.
+    // A leaf's `items` tuple is statically empty, so `getNearestChild`'s
+    // `IfLeaf` (see `src/types.ts`) resolves its return type to exactly
+    // `undefined` here, correctly: a leaf never has a nearest child.
     // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
     expect(menu.getChild('leaf').getNearestChild(0)).toBeUndefined();
   });
@@ -394,8 +395,9 @@ describe('createModel', () => {
     expect(menu.items).toEqual([]);
     expect(menu.isRoot).toBe(true);
     expect(menu.isLeaf).toBe(true);
-    // A leaf's nearest-child type is statically `undefined`, not a union:
-    // the same erasure `src/engine/machine.ts` documents.
+    // A leaf's `items` tuple is statically empty, so `getNearestChild`'s
+    // `IfLeaf` (see `src/types.ts`) resolves its return type to exactly
+    // `undefined` here, correctly: a leaf never has a nearest child.
     // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
     expect(menu.getNearestChild(0)).toBeUndefined();
     expect(menu.getChildrenByLabel('Anything')).toEqual([]);
