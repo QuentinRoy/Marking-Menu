@@ -1,6 +1,12 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import { createModel } from './model.js';
-import type { MarkingMenuItemInput, MarkingMenuModelItem } from './types.js';
+import type {
+  AnyModelNode,
+  MarkingMenuItemInput,
+  MarkingMenuModelItem,
+  ModelLeaves,
+  ModelMenus,
+} from './types.js';
 
 /*
  Type level tests: they assert what the type system knows about a model built
@@ -226,5 +232,32 @@ describe('createModel', () => {
     expectTypeOf(dynamic.items[0]?.parent).toEqualTypeOf<
       MarkingMenuModelItem | undefined
     >();
+  });
+});
+
+/*
+ A menu whose items are only known at runtime: every node's `isLeaf` is the
+ general `boolean` rather than a literal, the same shape `AnyModelNode` has.
+ */
+declare const dynamicItems: MarkingMenuItemInput[];
+const dynamicMenu = createModel({ items: dynamicItems });
+
+describe('ModelLeaves and ModelMenus', () => {
+  it('picks out exactly the leaves and the menus of a literal menu', () => {
+    expectTypeOf<ModelLeaves<typeof menu>['isLeaf']>().toEqualTypeOf<true>();
+    expectTypeOf<ModelLeaves<typeof menu>['label']>().toEqualTypeOf<
+      'Right' | 'Sub 1' | 'Sub 2' | 'Left'
+    >();
+    expectTypeOf<ModelMenus<typeof menu>['isLeaf']>().toEqualTypeOf<false>();
+  });
+
+  it('keeps a node whose shape is only known at runtime', () => {
+    // Not `never`: a menu built at runtime has leaves and submenus like any
+    // other, and the type checker cannot rule either out from `isLeaf:
+    // boolean`. Both types therefore include such a node, and overlap on it.
+    expectTypeOf<ModelLeaves<AnyModelNode>>().not.toEqualTypeOf<never>();
+    expectTypeOf<ModelMenus<AnyModelNode>>().not.toEqualTypeOf<never>();
+    expectTypeOf<ModelLeaves<typeof dynamicMenu>>().not.toEqualTypeOf<never>();
+    expectTypeOf<ModelMenus<typeof dynamicMenu>>().not.toEqualTypeOf<never>();
   });
 });

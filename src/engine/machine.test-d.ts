@@ -15,10 +15,11 @@ import { type navigationMachine, type NavigationOptions } from './machine.js';
 /*
  Type-level tests: `StatesOf<>`/`OutputsOf<>` resolving over a generic model
  was the type plumbing #219 called out as the thing most likely to fight
- back — `ModelMenus<M>`/`ModelLeaves<M>` collapse to `never` the moment `M` is
- a concrete type rather than a deferred generic parameter, which is exactly
- why `navigationMachine` erases every model-shaped field to `AnyModelNode`
- instead of instantiating them at a real `M`. Checked by `tsc`, not run.
+ back. A totorobot definition is a single, non-generic value, so
+ `navigationMachine` erases every model-shaped field to `AnyModelNode` instead
+ of instantiating them at a real `M`; the probe at the bottom of this file is
+ what proves those helpers preserve a caller's `M` when one is available.
+ Checked by `tsc`, not run.
  */
 
 type States = StatesOf<typeof navigationMachine>;

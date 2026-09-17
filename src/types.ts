@@ -223,19 +223,31 @@ export type ModelItems<N extends AnyModelNode> = Exclude<
 >;
 
 /**
-Every leaf of the (sub-)tree rooted at `N`.
-*/
-export type ModelLeaves<N extends AnyModelNode> = Extract<
+ Every leaf of the (sub-)tree rooted at `N`.
+
+ Written as "keep unless provably not a leaf" rather than "keep only if
+ provably a leaf", matching {@link ModelItems} above. The two agree for a menu
+ described by a literal object, where every node's `isLeaf` is a literal `true`
+ or `false`. They differ only for a node whose shape is known at runtime, where
+ `isLeaf` is the ambiguous `boolean`: such a node is kept here, rather than
+ dropped as unprovable, which would leave this type `never` for a model like
+ {@link AnyModelNode} whose leaves plainly exist at runtime. These are return
+ types, so erring wide costs a caller a case that never occurs, while erring
+ narrow makes a real value unnameable.
+ */
+export type ModelLeaves<N extends AnyModelNode> = Exclude<
   ModelItems<N>,
-  { isLeaf: true }
+  { isLeaf: false }
 >;
 
 /**
-Every non-leaf node of the (sub-)tree rooted at `N`, root included.
-*/
-export type ModelMenus<N extends AnyModelNode> = Extract<
+ Every non-leaf node of the (sub-)tree rooted at `N`, root included. Mirrors
+ {@link ModelLeaves}, including its treatment of a node of unknown shape: the
+ two types overlap for such a node, since neither can rule it out.
+ */
+export type ModelMenus<N extends AnyModelNode> = Exclude<
   ModelNodes<N>,
-  { isLeaf: false }
+  { isLeaf: true }
 >;
 
 /* -------------------------------------------------------------------------- *
