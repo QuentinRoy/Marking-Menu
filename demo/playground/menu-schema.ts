@@ -115,8 +115,12 @@ function labelsAlong(pointer: string, value: unknown): string[] {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
+  // `typeof null === 'object'`, and parsed JSON can genuinely contain
+  // `null`, so plain objects need to be told apart from it here too.
   return (
-    typeof value === 'object' && value !== undefined && !Array.isArray(value)
+    typeof value === 'object' &&
+    (value ?? undefined) !== undefined &&
+    !Array.isArray(value)
   );
 }
 

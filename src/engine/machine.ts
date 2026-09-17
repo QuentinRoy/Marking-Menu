@@ -229,7 +229,7 @@ function moveEvent<N extends AnyModelNode>(data: {
  either state, so `move` always carries an undefined `active` and `menu`
  there.
  */
-function emitNullActiveMove(
+function emitInactiveMove(
   emit: (name: 'move', data: MarkingMenuMoveEvent<AnyModelNode>) => void,
   mode: 'startup' | 'expert',
   position: Point,
@@ -585,10 +585,10 @@ export const navigationMachine = machine({
     // `change` never
     // fires outside novice.
     'startup -move> expert'({ inputData, emit }) {
-      emitNullActiveMove(emit, 'expert', inputData.position);
+      emitInactiveMove(emit, 'expert', inputData.position);
     },
     'startup -move> startup'({ inputData, emit }) {
-      emitNullActiveMove(emit, 'startup', inputData.position);
+      emitInactiveMove(emit, 'startup', inputData.position);
     },
 
     'startup -dwell> novice'({ fromData, toData, emit }) {
@@ -606,7 +606,7 @@ export const navigationMachine = machine({
     },
 
     'expert -move> expert'({ inputData, emit }) {
-      emitNullActiveMove(emit, 'expert', inputData.position);
+      emitInactiveMove(emit, 'expert', inputData.position);
     },
 
     // Same shape as `'startup -dwell> novice'`'s own `open`: the row above
