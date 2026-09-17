@@ -10,7 +10,12 @@ import {
 } from '../events.js';
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
 import { strokeLength } from '../recognizer/stroke-length.js';
-import type { AnyModelNode, ModelItems, ModelMenus } from '../types.js';
+import type {
+  AnyModelNode,
+  ModelItems,
+  ModelLeaves,
+  ModelMenus,
+} from '../types.js';
 import { dist, toPolar, type Point } from '../utils.js';
 import { noviceUpperStroke, projectLayout } from './layout-view.js';
 
@@ -178,28 +183,34 @@ function toNavigationState(
 }
 
 /*
- Event-construction helpers over the erased `AnyModelNode`. Every model-shaped
- field of an event resolves to `AnyModelNode` itself at that instantiation
- (`ModelMenus`, `ModelItems` and `ModelLeaves` all keep a node whose `isLeaf`
- is the ambiguous `boolean`), so the erased `menu`/`selection` values this file
- holds go straight in. `runtime.ts` re-attaches the caller's real `M` at the
- boundary, as it already does for the machine's states.
+ Event-construction helpers, generic in a fresh `N`, taking each field at the
+ type the event itself declares for it. They used to take a bare `N` and cast,
+ because `ModelMenus<AnyModelNode>` and its siblings collapsed to `never` and
+ nothing here could produce a value of them; now that those resolve to
+ `AnyModelNode`, the erased `menu`/`selection` values this file holds satisfy
+ the declared types directly and the casts are gone.
+
+ A conditional type is not an inference site, so `N` is never inferred from an
+ argument: at every call site here it falls back to its `AnyModelNode`
+ constraint, which is exactly the erasure this file works in. A caller holding
+ a real `M` can still pass it explicitly and get a precisely typed event back,
+ checked rather than cast.
  */
-function openEvent(data: {
+function openEvent<N extends AnyModelNode>(data: {
   readonly position: Point;
-  readonly menu: AnyModelNode;
+  readonly menu: ModelMenus<N>;
   readonly menuCenter: Point;
-}): MarkingMenuOpenEvent<AnyModelNode> {
-  return new MarkingMenuOpenEvent<AnyModelNode>(data);
+}): MarkingMenuOpenEvent<N> {
+  return new MarkingMenuOpenEvent<N>(data);
 }
 
-function moveEvent(data: {
+function moveEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly active: AnyModelNode | undefined;
-  readonly menu: AnyModelNode | undefined;
-}): MarkingMenuMoveEvent<AnyModelNode> {
-  return new MarkingMenuMoveEvent<AnyModelNode>(data);
+  readonly active: ModelItems<N> | undefined;
+  readonly menu: ModelMenus<N> | undefined;
+}): MarkingMenuMoveEvent<N> {
+  return new MarkingMenuMoveEvent<N>(data);
 }
 
 /**
@@ -218,31 +229,31 @@ function emitInactiveMove(
   );
 }
 
-function changeEvent(data: {
+function changeEvent<N extends AnyModelNode>(data: {
   readonly position: Point;
-  readonly active: AnyModelNode | undefined;
-  readonly previousActive: AnyModelNode | undefined;
-  readonly menu: AnyModelNode;
-}): MarkingMenuChangeEvent<AnyModelNode> {
-  return new MarkingMenuChangeEvent<AnyModelNode>(data);
+  readonly active: ModelItems<N> | undefined;
+  readonly previousActive: ModelItems<N> | undefined;
+  readonly menu: ModelMenus<N>;
+}): MarkingMenuChangeEvent<N> {
+  return new MarkingMenuChangeEvent<N>(data);
 }
 
-function selectEvent(data: {
+function selectEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly selection: AnyModelNode;
-  readonly menu: AnyModelNode | undefined;
-}): MarkingMenuSelectEvent<AnyModelNode> {
-  return new MarkingMenuSelectEvent<AnyModelNode>(data);
+  readonly selection: ModelLeaves<N>;
+  readonly menu: ModelMenus<N> | undefined;
+}): MarkingMenuSelectEvent<N> {
+  return new MarkingMenuSelectEvent<N>(data);
 }
 
-function cancelEvent(data: {
+function cancelEvent<N extends AnyModelNode>(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly active: AnyModelNode | undefined;
-  readonly menu: AnyModelNode | undefined;
-}): MarkingMenuCancelEvent<AnyModelNode> {
-  return new MarkingMenuCancelEvent<AnyModelNode>(data);
+  readonly active: ModelItems<N> | undefined;
+  readonly menu: ModelMenus<N> | undefined;
+}): MarkingMenuCancelEvent<N> {
+  return new MarkingMenuCancelEvent<N>(data);
 }
 
 /**
