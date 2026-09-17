@@ -1,5 +1,23 @@
 import { createModel as createRealModel } from '../model.js';
-import { createMenu, type MenuLayoutModel } from './menu.js';
+import {
+  createMenu as createMenuWithResolvedOptions,
+  type MenuLayoutModel,
+} from './menu.js';
+
+// The suite below exercises wedge/label layout, not `deadZoneRadius` itself,
+// so every call site gets the same default unless it overrides it.
+const createMenu = (
+  options: Omit<
+    Parameters<typeof createMenuWithResolvedOptions>[0],
+    'deadZoneRadius'
+  > &
+    Partial<
+      Pick<
+        Parameters<typeof createMenuWithResolvedOptions>[0],
+        'deadZoneRadius'
+      >
+    >,
+) => createMenuWithResolvedOptions({ deadZoneRadius: 40, ...options });
 
 const createModel = (itemNb = 0): MenuLayoutModel => ({
   items: Array.from({ length: itemNb }, (_, i) => ({

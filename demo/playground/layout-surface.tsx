@@ -65,6 +65,7 @@ export function LayoutSurface({
         parent: menuParent,
         model: nodeAt(model, focusPath),
         center: [width / 2, height / 2],
+        deadZoneRadius: 40,
         pointerTarget: true,
       });
       menu.setActive(activeKeyRef.current);

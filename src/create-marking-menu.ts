@@ -5,21 +5,7 @@ import {
 } from './engine/controller.js';
 import type { MarkingMenuModel, ValidateInput } from './model.js';
 
-/**
- A logger, as accepted by {@link createMarkingMenu}. `error` is the only
- method anything in the library calls, so any object exposing it — `console`
- included — satisfies this type. `info`/`warn`/`debug` are accepted but
- ignored, so a fuller logger doesn't need to be stripped down first. Errors
- raised internally are always normalized to `Error` before reaching `error`,
- so a handler typed to expect an `Error` (rather than `unknown`) can be passed
- directly.
- */
-export type MarkingMenuLogger = {
-  error: (error: Error) => void;
-  info?: unknown;
-  warn?: unknown;
-  debug?: unknown;
-};
+export type { MarkingMenuLogger } from './engine/logger.js';
 
 /**
  Configuration of a marking menu, as accepted by {@link createMarkingMenu}.

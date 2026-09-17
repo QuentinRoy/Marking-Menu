@@ -1,18 +1,13 @@
-import type { MarkingMenuLogger } from '../create-marking-menu.js';
 import type { MarkingMenuEventEmitter } from '../events.js';
 import type { AnyModelNode } from '../types.js';
-import { noOp } from '../utils.js';
 import type { LayoutView } from './layout-view.js';
+import type { ResolvedLogger } from './logger.js';
 import {
   navigationMachine,
   type NavigationInput,
   type NavigationOptions,
 } from './machine.js';
 import type { LayoutRenderer } from './renderer.js';
-
-const defaultLogger: MarkingMenuLogger = {
-  error: console?.error?.bind(console) ?? noOp,
-};
 
 const toError = (value: unknown): Error =>
   value instanceof Error ? value : new Error(String(value));
@@ -56,12 +51,12 @@ export function createRuntime<M extends AnyModelNode>({
   model,
   options,
   renderer,
-  log = defaultLogger,
+  log,
 }: {
   model: M;
   options: NavigationOptions;
   renderer: LayoutRenderer<M>;
-  log?: MarkingMenuLogger;
+  log: ResolvedLogger;
 }): NavigationRuntime<M> {
   const target = new EventTarget();
   // One registration per (type, listener) pair, in registration order, so

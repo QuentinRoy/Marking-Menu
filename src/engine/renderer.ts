@@ -255,17 +255,17 @@ function isPaintedBefore(node: Node, other: Node): boolean {
 
 export type RendererOptions = {
   readonly parent: HTMLElement;
-  readonly deadZoneRadius?: number | undefined;
+  readonly deadZoneRadius: number;
   /**
   The duration a completed-gesture feedback trace stays visible, in ms.
   */
-  readonly gestureFeedbackDuration?: number | undefined;
+  readonly gestureFeedbackDuration: number;
 };
 
 export function createRenderer<M extends AnyModelNode = AnyModelNode>({
   parent,
-  deadZoneRadius = 40,
-  gestureFeedbackDuration = 1000,
+  deadZoneRadius,
+  gestureFeedbackDuration,
 }: RendererOptions): LayoutRenderer<M> {
   const {
     element: host,

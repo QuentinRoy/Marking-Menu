@@ -16,6 +16,7 @@ createMenu({
     ],
   },
   parent: surface,
+  deadZoneRadius: 40,
   pointerTarget: true,
 });
 

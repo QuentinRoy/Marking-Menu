@@ -1,5 +1,24 @@
 import { createModel } from '../model.js';
-import { createRenderer } from './renderer.js';
+import type { AnyModelNode } from '../types.js';
+import {
+  createRenderer as createRendererWithResolvedOptions,
+  type RendererOptions,
+} from './renderer.js';
+
+// The suite below exercises rendering, not the resolved option values
+// themselves, so every call site gets the same defaults unless it overrides
+// them.
+const createRenderer = <M extends AnyModelNode>(
+  options: Omit<RendererOptions, 'deadZoneRadius' | 'gestureFeedbackDuration'> &
+    Partial<
+      Pick<RendererOptions, 'deadZoneRadius' | 'gestureFeedbackDuration'>
+    >,
+) =>
+  createRendererWithResolvedOptions<M>({
+    deadZoneRadius: 40,
+    gestureFeedbackDuration: 1000,
+    ...options,
+  });
 
 const model = createModel({
   items: [

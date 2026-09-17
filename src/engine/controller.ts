@@ -1,4 +1,3 @@
-import type { MarkingMenuLogger } from '../create-marking-menu.js';
 import type {
   MarkingMenuEventEmitter,
   MarkingMenuEventMap,
@@ -10,46 +9,79 @@ import {
 } from '../model.js';
 import type { TypedEventListener } from '../typed-event-emitter.js';
 import type { AnyModelNode, MarkingMenuInput } from '../types.js';
-import { noOp } from '../utils.js';
 import { manageFocus, type FocusManager } from './focus.js';
+import {
+  defaultLogger,
+  type MarkingMenuLogger,
+  type ResolvedLogger,
+} from './logger.js';
 import { createPointerSource, type PointerSource } from './pointer-source.js';
-import { createRenderer, type RendererOptions } from './renderer.js';
+import { createRenderer } from './renderer.js';
 import { createRuntime, type NavigationRuntime } from './runtime.js';
 
-export type EngineConfig = MarkingMenuInput &
-  Omit<RendererOptions, 'parent'> & {
-    /**
-    The parent node.
-    */
-    readonly parent: HTMLElement;
-    /**
-     The minimum distance between two points to be considered a significant
-     movement, switching startup to expert mode and breaking the submenu
-     dwelling delay.
-     */
-    readonly movementsThreshold?: number;
-    /**
-    The dwelling time required to trigger novice mode (and open the menu).
-    */
-    readonly noviceDwellingTime?: number;
-    /**
-     The radius around the menu center within which no item is active. Past
-     it an item becomes active, and dwelling on it opens its sub-menu.
-     */
-    readonly deadZoneRadius?: number;
-    /**
-    The dwelling delay before opening a sub-menu.
-    */
-    readonly submenuOpeningDelay?: number;
-    /**
-    Override the default logger used to report internal failures.
-    */
-    readonly log?: Partial<MarkingMenuLogger>;
-  };
-
-const defaultLogger: MarkingMenuLogger = {
-  error: console?.error?.bind(console) ?? noOp,
+export type EngineConfig = MarkingMenuInput & {
+  /**
+  The parent node.
+  */
+  readonly parent: HTMLElement;
+  /**
+   The minimum distance between two points to be considered a significant
+   movement, switching startup to expert mode and breaking the submenu
+   dwelling delay.
+   */
+  readonly movementsThreshold?: number;
+  /**
+  The dwelling time required to trigger novice mode (and open the menu).
+  */
+  readonly noviceDwellingTime?: number;
+  /**
+   The radius around the menu center within which no item is active. Past
+   it an item becomes active, and dwelling on it opens its sub-menu.
+   */
+  readonly deadZoneRadius?: number;
+  /**
+  The dwelling delay before opening a sub-menu.
+  */
+  readonly submenuOpeningDelay?: number;
+  /**
+  The duration a completed-gesture feedback trace stays visible, in ms.
+  */
+  readonly gestureFeedbackDuration?: number;
+  /**
+  Override the default logger used to report internal failures.
+  */
+  readonly log?: MarkingMenuLogger;
 };
+
+/**
+Every {@link EngineConfig} option with its default filled in.
+*/
+type ResolvedEngineOptions = {
+  movementsThreshold: number;
+  noviceDwellingTime: number;
+  deadZoneRadius: number;
+  submenuOpeningDelay: number;
+  gestureFeedbackDuration: number;
+  log: ResolvedLogger;
+};
+
+/**
+ Fill in every {@link EngineConfig} default, once, so the renderer, runtime
+ and machine each receive an already-resolved value instead of guessing at
+ the same default independently.
+ */
+export function resolveEngineOptions(
+  config: EngineConfig,
+): ResolvedEngineOptions {
+  return {
+    movementsThreshold: config.movementsThreshold ?? 5,
+    noviceDwellingTime: config.noviceDwellingTime ?? 1000 / 3,
+    deadZoneRadius: config.deadZoneRadius ?? 40,
+    submenuOpeningDelay: config.submenuOpeningDelay ?? 1000 / 3,
+    gestureFeedbackDuration: config.gestureFeedbackDuration ?? 1000,
+    log: { ...defaultLogger, ...config.log },
+  };
+}
 
 /**
  `dispose()` is the whole disposal contract, both terminal and idempotent;
@@ -98,20 +130,22 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     // inference would pick up the `Config & ValidateInput<Config>` parameter
     // type as `Input`, and `MarkingMenuModel` of that is a different type.
     const model = createModel<Config>(config);
-    // `config` structurally satisfies `RendererOptions`: it carries every
-    // styling option `EngineConfig` intersects in, plus fields the renderer
-    // ignores (`items`, the machine options, `log`).
-    const renderer = createRenderer<MarkingMenuModel<Config>>(config);
+    const options = resolveEngineOptions(config);
+    const renderer = createRenderer<MarkingMenuModel<Config>>({
+      parent: config.parent,
+      deadZoneRadius: options.deadZoneRadius,
+      gestureFeedbackDuration: options.gestureFeedbackDuration,
+    });
     this.#runtime = createRuntime<MarkingMenuModel<Config>>({
       model,
       options: {
-        movementsThreshold: config.movementsThreshold ?? 5,
-        noviceDwellingTime: config.noviceDwellingTime ?? 1000 / 3,
-        deadZoneRadius: config.deadZoneRadius ?? 40,
-        submenuOpeningDelay: config.submenuOpeningDelay ?? 1000 / 3,
+        movementsThreshold: options.movementsThreshold,
+        noviceDwellingTime: options.noviceDwellingTime,
+        deadZoneRadius: options.deadZoneRadius,
+        submenuOpeningDelay: options.submenuOpeningDelay,
       },
       renderer,
-      log: { ...defaultLogger, ...config.log },
+      log: options.log,
     });
     this.#pointerSource = createPointerSource({
       parent: config.parent,
