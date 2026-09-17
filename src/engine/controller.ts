@@ -10,7 +10,11 @@ import {
 import type { TypedEventListener } from '../typed-event-emitter.js';
 import type { AnyModelNode, MarkingMenuInput } from '../types.js';
 import { manageFocus, type FocusManager } from './focus.js';
-import { defaultLogger, type MarkingMenuLogger } from './logger.js';
+import {
+  defaultLogger,
+  type MarkingMenuLogger,
+  type ResolvedLogger,
+} from './logger.js';
 import { createPointerSource, type PointerSource } from './pointer-source.js';
 import { createRenderer } from './renderer.js';
 import { createRuntime, type NavigationRuntime } from './runtime.js';
@@ -46,7 +50,7 @@ export type EngineConfig = MarkingMenuInput & {
   /**
   Override the default logger used to report internal failures.
   */
-  readonly log?: Partial<MarkingMenuLogger>;
+  readonly log?: MarkingMenuLogger;
 };
 
 /**
@@ -58,7 +62,7 @@ type ResolvedEngineOptions = {
   deadZoneRadius: number;
   submenuOpeningDelay: number;
   gestureFeedbackDuration: number;
-  log: MarkingMenuLogger;
+  log: ResolvedLogger;
 };
 
 /**

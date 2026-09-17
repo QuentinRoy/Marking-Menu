@@ -120,7 +120,7 @@ declare function reportError(error: Error): void;
 describe('MarkingMenuLogger', () => {
   it('narrows `error` to a single `Error` argument, not varargs', () => {
     expectTypeOf<MarkingMenuLogger['error']>().toEqualTypeOf<
-      (error: Error) => void
+      ((error: Error) => void) | undefined
     >();
   });
 

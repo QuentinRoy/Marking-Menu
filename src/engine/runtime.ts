@@ -1,7 +1,7 @@
 import type { MarkingMenuEventEmitter } from '../events.js';
 import type { AnyModelNode } from '../types.js';
 import type { LayoutView } from './layout-view.js';
-import type { MarkingMenuLogger } from './logger.js';
+import type { ResolvedLogger } from './logger.js';
 import {
   navigationMachine,
   type NavigationInput,
@@ -56,7 +56,7 @@ export function createRuntime<M extends AnyModelNode>({
   model: M;
   options: NavigationOptions;
   renderer: LayoutRenderer<M>;
-  log: MarkingMenuLogger;
+  log: ResolvedLogger;
 }): NavigationRuntime<M> {
   const target = new EventTarget();
   // One registration per (type, listener) pair, in registration order, so
