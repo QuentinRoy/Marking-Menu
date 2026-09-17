@@ -511,6 +511,7 @@ describe('navigationMachine', () => {
     });
 
     it('ignores down and a stray dwell', () => {
+      using _timers = fakeTimers();
       const host = startHost();
       openNovice(host);
       const inNovice = host.current;

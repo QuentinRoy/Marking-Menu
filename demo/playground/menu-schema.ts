@@ -156,14 +156,12 @@ export function validateMenuSource(source: string): MenuSourceResult {
   }
 
   const [first] = schemaNode.validate(value).errors;
-  if (first !== undefined) {
-    return { ok: false, message: describe(first, value) };
-  }
-
   // The schema is what says this value is a `MarkingMenuInput`, so this is
   // the one place the two meet. `menu-schema.test-d.ts` is what keeps the
   // claim true as the library's input type changes.
-  return { ok: true, menu: value as MarkingMenuInput };
+  return first === undefined
+    ? { ok: true, menu: value as MarkingMenuInput }
+    : { ok: false, message: describe(first, value) };
 }
 
 /* -------------------------------------------------------------------------- *
@@ -194,11 +192,9 @@ const DEFS_PREFIX = '#/$defs/';
  local one into `$defs`, so nothing has to be fetched or cached.
  */
 function deref(node: SchemaNode): SchemaNode {
-  if (node.$ref?.startsWith(DEFS_PREFIX) !== true) {
-    return node;
-  }
-
-  return schemaTree.$defs[node.$ref.slice(DEFS_PREFIX.length)] ?? node;
+  return node.$ref?.startsWith(DEFS_PREFIX) === true
+    ? (schemaTree.$defs[node.$ref.slice(DEFS_PREFIX.length)] ?? node)
+    : node;
 }
 
 /**

@@ -392,6 +392,7 @@ type Move = {
 };
 
 type MoveSearch = {
+  readonly plates: readonly Candidate[];
   readonly item: number;
   readonly step: number;
   readonly best: Quality;
@@ -404,8 +405,7 @@ layout that improves on `best`, or `undefined`.
 function bestMoveFor(
   input: LayoutInput,
   prepared: PreparedInput,
-  plates: readonly Candidate[],
-  { item, step, best }: MoveSearch,
+  { plates, item, step, best }: MoveSearch,
 ): Move | undefined {
   const plate = at(plates, item);
   const offsets = [
@@ -436,6 +436,31 @@ function bestMoveFor(
   return found;
 }
 
+/**
+Try nudging each plate by `step` once; the best improvement found, or
+`undefined` if none of them improved on `best`.
+*/
+function improveOnce(
+  input: LayoutInput,
+  prepared: PreparedInput,
+  { plates, step, best }: Omit<MoveSearch, 'item'>,
+): Move | undefined {
+  let found: Move | undefined;
+  for (const item of plates.keys()) {
+    const move = bestMoveFor(input, prepared, {
+      plates: found?.plates ?? plates,
+      item,
+      step,
+      best: found?.quality ?? best,
+    });
+    if (move !== undefined) {
+      found = move;
+    }
+  }
+
+  return found;
+}
+
 function compact(
   input: LayoutInput,
   prepared: PreparedInput,
@@ -444,21 +469,13 @@ function compact(
   let plates = seed;
   let best = quality(plates);
   for (const step of STEP_SIZES) {
-    let isImproved = true;
-    while (isImproved) {
-      isImproved = false;
-      for (const item of plates.keys()) {
-        const found = bestMoveFor(input, prepared, plates, {
-          item,
-          step,
-          best,
-        });
-        if (found !== undefined) {
-          plates = found.plates;
-          best = found.quality;
-          isImproved = true;
-        }
-      }
+    let found: Move | undefined;
+    while (
+      (found = improveOnce(input, prepared, { plates, step, best })) !==
+      undefined
+    ) {
+      plates = found.plates;
+      best = found.quality;
     }
   }
 

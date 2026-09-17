@@ -312,17 +312,13 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
   }
 
   if (requireMenu) {
-    if (item?.isLeaf) {
-      // The menu holding the leaf is the item the walk visited just before it.
-      // A leaf can only ever be the last item of a path (the walk stops on a
-      // leaf model), so this is the leaf's own parent menu, and `model` itself
-      // when the leaf was found at the first level. `N` is trivially a member
-      // of `ModelNodes<N>` (its own base case); the cast is only needed
-      // because the compiler does not unfold the conditional for generic `N`.
-      return path?.at(-2) ?? (model as ModelNodes<N>);
-    }
-
-    return item;
+    // The menu holding the leaf is the item the walk visited just before it.
+    // A leaf can only ever be the last item of a path (the walk stops on a
+    // leaf model), so this is the leaf's own parent menu, and `model` itself
+    // when the leaf was found at the first level. `N` is trivially a member
+    // of `ModelNodes<N>` (its own base case); the cast is only needed
+    // because the compiler does not unfold the conditional for generic `N`.
+    return item?.isLeaf ? (path?.at(-2) ?? (model as ModelNodes<N>)) : item;
   }
 
   return item;

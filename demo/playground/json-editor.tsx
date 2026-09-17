@@ -103,12 +103,10 @@ function schemaHover(
   // eslint-disable-next-line @typescript-eslint/no-restricted-types
 ): ReturnType<ReturnType<typeof jsonSchemaHover>> | null {
   const pointer = jsonPointerForPosition(view.state, pos, side, 'json4');
-  if (annotationAt(pointer) === undefined) {
-    // eslint-disable-next-line unicorn/no-null
-    return null;
-  }
-
-  return hoverSource(view, pos, side);
+  return annotationAt(pointer) === undefined
+    ? // eslint-disable-next-line unicorn/no-null
+      null
+    : hoverSource(view, pos, side);
 }
 
 const hoverSource = jsonSchemaHover({ getHoverTexts: hoverTexts });
