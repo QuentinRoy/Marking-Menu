@@ -73,13 +73,19 @@ type NavigationPhaseFields<Menu, Active> = {
   startup: {
     readonly origin: Point;
     readonly stroke: readonly Point[];
+    // When the pending novice-dwell timer was armed. Startup's own residency
+    // never restarts, so this is set once, on arrival.
+    readonly dwellStartedAt: number;
   };
   expert: {
     readonly stroke: readonly Point[];
-    // Same role as novice's own `dwellAnchor`: the last position significant
-    // movement was measured from, compared by reference in the residency's
-    // `restart` predicate below.
+    // The last position significant movement was measured from, feeding the
+    // `movementsThreshold` check below.
     readonly dwellAnchor: Point;
+    // When the pending novice-dwell timer was last armed: bumped alongside
+    // `dwellAnchor` on significant movement, and what the residency's
+    // `restart` predicate compares below.
+    readonly dwellStartedAt: number;
   };
   novice: {
     readonly menu: Menu;
@@ -92,10 +98,15 @@ type NavigationPhaseFields<Menu, Active> = {
     readonly lastPosition: Point;
     readonly lowerStroke: readonly Point[];
     // The last position significant movement was measured from: distinct
-    // from `menuCenter`, which stays fixed for the life of this menu. Only a
-    // move that carries this anchor forward can restart the submenu-dwell
-    // residency; see its `restart` predicate below.
+    // from `menuCenter`, which stays fixed for the life of this menu.
     readonly dwellAnchor: Point;
+    // When the pending submenu-dwell timer was last armed: bumped on
+    // significant movement, on opening a new menu, and when a dwell fires on
+    // a leaf and is consumed without a phase change. Without that last case,
+    // the residency's `restart` predicate below would see an unchanged value
+    // and never re-arm. Also what the layout announces as the indicator's
+    // `startedAt`.
+    readonly dwellStartedAt: number;
   };
 };
 
@@ -136,17 +147,14 @@ export type NavigationLayoutAnnouncement = {
   readonly indicator:
     | undefined
     | {
-        // Identity only, for restart detection: carries the same reference the
-        // underlying dwell residency's own restart predicate compares against,
-        // so the renderer can tell a continuing dwell from a restarted one by
-        // reference, the same way `createStrokeLayer` already does for a
-        // stroke array. Not necessarily where the indicator currently draws —
-        // see `position`.
-        readonly anchor: Point;
-        // Where the indicator draws right now. Unlike `anchor`, always the
-        // pointer's current position: `anchor` only moves on significant
-        // movement, so using it to draw would lag the pointer by up to
-        // `movementsThreshold`.
+        // When the current dwell began: the renderer computes growth
+        // progress directly from this and `delayMs`, rather than tracking
+        // restart state of its own.
+        readonly startedAt: number;
+        // Where the indicator draws right now. Unlike `startedAt`, always
+        // the pointer's current position: a dwell only restarts on
+        // significant movement, so using its anchor to draw would lag the
+        // pointer by up to `movementsThreshold`.
         readonly position: Point;
         readonly delayMs: number;
       };
@@ -359,6 +367,7 @@ export const navigationMachine = machine({
       options,
       origin: position,
       stroke: [position],
+      dwellStartedAt: Date.now(),
     }),
 
     'startup -move> expert'({
@@ -368,7 +377,13 @@ export const navigationMachine = machine({
     }) {
       const newStroke = [...stroke, position];
       return dist(origin, position) >= options.movementsThreshold
-        ? { model, options, stroke: newStroke, dwellAnchor: position }
+        ? {
+            model,
+            options,
+            stroke: newStroke,
+            dwellAnchor: position,
+            dwellStartedAt: Date.now(),
+          }
         : skip();
     },
 
@@ -391,19 +406,18 @@ export const navigationMachine = machine({
       lastPosition: origin,
       lowerStroke: stroke,
       dwellAnchor: origin,
+      dwellStartedAt: Date.now(),
     }),
 
     'expert -move> expert'({ fromData, inputData: { position } }) {
-      const { dwellAnchor, options } = fromData;
+      const { dwellAnchor, dwellStartedAt, options } = fromData;
+      const hasMovedSignificantly =
+        dist(dwellAnchor, position) >= options.movementsThreshold;
       return {
         ...fromData,
         stroke: [...fromData.stroke, position],
-        // A fresh reference only on significant movement, same rationale as
-        // novice's own `dwellAnchor` update below.
-        dwellAnchor:
-          dist(dwellAnchor, position) >= options.movementsThreshold
-            ? position
-            : dwellAnchor,
+        dwellAnchor: hasMovedSignificantly ? position : dwellAnchor,
+        dwellStartedAt: hasMovedSignificantly ? Date.now() : dwellStartedAt,
       };
     },
 
@@ -430,7 +444,8 @@ export const navigationMachine = machine({
         active: undefined,
         lastPosition: position,
         lowerStroke: stroke,
-        dwellAnchor: [...position],
+        dwellAnchor: position,
+        dwellStartedAt: Date.now(),
       };
     },
 
@@ -440,35 +455,36 @@ export const navigationMachine = machine({
     },
 
     'novice -move> novice'({ fromData, inputData: { position } }) {
-      const { menuCenter, options, menu, dwellAnchor } = fromData;
+      const { menuCenter, options, menu, dwellAnchor, dwellStartedAt } =
+        fromData;
       const { azymuth, radius } = toPolar(position, menuCenter);
       const active =
         radius < options.deadZoneRadius
           ? undefined
           : menu.getNearestChild(azymuth);
+      const hasMovedSignificantly =
+        dist(dwellAnchor, position) >= options.movementsThreshold;
       return {
         ...fromData,
         active,
         lastPosition: position,
-        // A fresh reference only when movement is significant: the
-        // submenu-dwell residency's `restart` predicate below compares this
-        // by reference, so an unchanged anchor must stay the same object.
-        dwellAnchor:
-          dist(dwellAnchor, position) >= options.movementsThreshold
-            ? position
-            : dwellAnchor,
+        dwellAnchor: hasMovedSignificantly ? position : dwellAnchor,
+        dwellStartedAt: hasMovedSignificantly ? Date.now() : dwellStartedAt,
       };
     },
 
     // Pausing on a non-leaf active item opens that submenu: a genuine phase
-    // change, even though the destination is named `novice` too. Anything
-    // else declines, and since no other row is declared for (novice, dwell),
-    // the dwell is silently dropped. No distance test of its own: an item
+    // change, even though the destination is named `novice` too. A leaf (or
+    // no active item) never opens anything, but still commits a fresh
+    // `dwellStartedAt`: the dwell that just fired is spent, and without a
+    // fresh value here the residency's `restart` predicate below would see
+    // an unchanged one and never re-arm, leaving the next dwell attempt dead
+    // even once the pointer moves on. No distance test of its own: an item
     // is active only past the dead zone, and that is the only threshold.
-    'novice -dwell> novice'({ fromData, skip }) {
+    'novice -dwell> novice'({ fromData }) {
       const { active, lastPosition, lowerStroke, options, model } = fromData;
       if (active === undefined || active.isLeaf) {
-        return skip();
+        return { ...fromData, dwellStartedAt: Date.now() };
       }
 
       return {
@@ -481,12 +497,8 @@ export const navigationMachine = machine({
         // The parent menu's own segment becomes part of the trail left
         // behind the new one.
         lowerStroke: [...lowerStroke, ...noviceUpperStroke(fromData)],
-        // A fresh reference, deliberately never `lastPosition` itself:
-        // opening a submenu must always restart the residency for the new
-        // menu, and with no wobble between the move that armed this dwell
-        // and the dwell itself, `lastPosition` is the very same reference
-        // `fromData.dwellAnchor` already holds.
-        dwellAnchor: [...lastPosition],
+        dwellAnchor: lastPosition,
+        dwellStartedAt: Date.now(),
       };
     },
 
@@ -525,23 +537,21 @@ export const navigationMachine = machine({
     expert: {
       run: ({ toData, send }) =>
         armDwellTimer(toData.options.noviceDwellingTime, send),
-      // Same rationale as novice's own submenu-dwell residency: only a
-      // self-transition that carries `dwellAnchor` forward to a new position,
-      // i.e. significant movement, restarts the pending dwell.
+      // Only significant movement bumps `dwellStartedAt`; a self-transition
+      // that leaves it unchanged must not restart the pending dwell.
       restart: ({ fromData, toData }) =>
-        fromData.dwellAnchor !== toData.dwellAnchor,
+        fromData.dwellStartedAt !== toData.dwellStartedAt,
     },
 
     novice: {
       run: ({ toData, send }) =>
         armDwellTimer(toData.options.submenuOpeningDelay, send),
-      // Only a self-transition that carries `dwellAnchor` forward to a new
-      // position restarts the residency, whether from significant movement
-      // or the fresh centre a submenu open itself produces. A small move,
-      // or a dwell that failed its own eligibility check and left the state
-      // unchanged, leaves the pending timer alone.
+      // A fresh `dwellStartedAt` restarts the residency: from significant
+      // movement, from the centre a submenu open produces, or from a dwell
+      // that fired on a leaf and was consumed. A small move leaves the
+      // pending timer alone.
       restart: ({ fromData, toData }) =>
-        fromData.dwellAnchor !== toData.dwellAnchor,
+        fromData.dwellStartedAt !== toData.dwellStartedAt,
     },
 
     'idle -down> startup'({ toData, emit }) {
@@ -607,10 +617,14 @@ export const navigationMachine = machine({
     },
 
     // Same shape as `'startup -dwell> novice'`'s own `open`, one recursion
-    // level down: the row above already declined the input unless the dwell
-    // landed on a non-leaf active item, so an eligible submenu is all this
-    // action ever announces.
-    'novice -dwell> novice'({ toData, emit }) {
+    // level down. The matching transition row now also commits when the
+    // dwell lands on a leaf (to keep the residency alive), so this action
+    // only announces `open` when that commit actually changed the menu.
+    'novice -dwell> novice'({ fromData, toData, emit }) {
+      if (toData.menu === fromData.menu) {
+        return;
+      }
+
       emit(
         'open',
         openEvent({
