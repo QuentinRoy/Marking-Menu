@@ -154,14 +154,14 @@ export class MarkingMenuOpenEvent<
 type ActiveMenuData<M extends AnyModelNode> = {
   readonly mode: MarkingMenuMode;
   readonly position: ReadonlyPoint;
-  readonly active: ModelItems<M> | null;
-  readonly menu: ModelMenus<M> | null;
+  readonly active: ModelItems<M> | undefined;
+  readonly menu: ModelMenus<M> | undefined;
 };
 
 /**
  Dispatched on pointer movement, in every mode. `active` and `menu` are always
- `null` in startup and expert, since no menu is open yet for anything to be
- active in.
+ `undefined` in startup and expert, since no menu is open yet for anything to
+ be active in.
  */
 export class MarkingMenuMoveEvent<
   M extends AnyModelNode,
@@ -173,8 +173,8 @@ export class MarkingMenuMoveEvent<
     return 'move';
   }
 
-  readonly #active: ModelItems<M> | null;
-  readonly #menu: ModelMenus<M> | null;
+  readonly #active: ModelItems<M> | undefined;
+  readonly #menu: ModelMenus<M> | undefined;
 
   declare readonly type: 'move';
 
@@ -188,16 +188,16 @@ export class MarkingMenuMoveEvent<
   }
 
   /**
-  The item under the pointer, or `null` if none is.
+  The item under the pointer, or `undefined` if none is.
   */
-  get active(): ModelItems<M> | null {
+  get active(): ModelItems<M> | undefined {
     return this.#active;
   }
 
   /**
-  The menu currently open, or `null` in startup and expert.
+  The menu currently open, or `undefined` in startup and expert.
   */
-  get menu(): ModelMenus<M> | null {
+  get menu(): ModelMenus<M> | undefined {
     return this.#menu;
   }
 }
@@ -218,16 +218,16 @@ export class MarkingMenuChangeEvent<
     return 'change';
   }
 
-  readonly #active: ModelItems<M> | null;
-  readonly #previousActive: ModelItems<M> | null;
+  readonly #active: ModelItems<M> | undefined;
+  readonly #previousActive: ModelItems<M> | undefined;
   readonly #menu: ModelMenus<M>;
 
   declare readonly type: 'change';
 
   constructor(data: {
     readonly position: ReadonlyPoint;
-    readonly active: ModelItems<M> | null;
-    readonly previousActive: ModelItems<M> | null;
+    readonly active: ModelItems<M> | undefined;
+    readonly previousActive: ModelItems<M> | undefined;
     readonly menu: ModelMenus<M>;
   }) {
     super(MarkingMenuChangeEvent.type, {
@@ -244,16 +244,16 @@ export class MarkingMenuChangeEvent<
   }
 
   /**
-  The item under the pointer after the change, or `null` if none is.
+  The item under the pointer after the change, or `undefined` if none is.
   */
-  get active(): ModelItems<M> | null {
+  get active(): ModelItems<M> | undefined {
     return this.#active;
   }
 
   /**
-  The item that was active before this change, or `null` if none was.
+  The item that was active before this change, or `undefined` if none was.
   */
-  get previousActive(): ModelItems<M> | null {
+  get previousActive(): ModelItems<M> | undefined {
     return this.#previousActive;
   }
 
@@ -267,7 +267,7 @@ export class MarkingMenuChangeEvent<
 
 /**
  Dispatched once, as the last event of a gesture, when it ends on a leaf.
- `menu` is the menu the leaf was selected from, or `null` in expert mode,
+ `menu` is the menu the leaf was selected from, or `undefined` in expert mode,
  since no menu is open there even though the leaf demonstrably has a parent.
  */
 export class MarkingMenuSelectEvent<
@@ -281,7 +281,7 @@ export class MarkingMenuSelectEvent<
   }
 
   readonly #selection: ModelLeaves<M>;
-  readonly #menu: ModelMenus<M> | null;
+  readonly #menu: ModelMenus<M> | undefined;
 
   declare readonly type: 'select';
 
@@ -289,7 +289,7 @@ export class MarkingMenuSelectEvent<
     readonly mode: MarkingMenuMode;
     readonly position: ReadonlyPoint;
     readonly selection: ModelLeaves<M>;
-    readonly menu: ModelMenus<M> | null;
+    readonly menu: ModelMenus<M> | undefined;
   }) {
     super(MarkingMenuSelectEvent.type, {
       mode: data.mode,
@@ -307,9 +307,9 @@ export class MarkingMenuSelectEvent<
   }
 
   /**
-  The menu the selection was made from, or `null` in expert mode.
+  The menu the selection was made from, or `undefined` in expert mode.
   */
-  get menu(): ModelMenus<M> | null {
+  get menu(): ModelMenus<M> | undefined {
     return this.#menu;
   }
 }
@@ -318,7 +318,7 @@ export class MarkingMenuSelectEvent<
  Dispatched once, as the last event of a gesture, when it ends without a
  selection. `active` is the item that was active at the moment the gesture
  was abandoned: `ModelItems`, not `ModelLeaves`, since it need not be one.
- `null` carries the genuine "nothing under the pointer" case.
+ `undefined` carries the genuine "nothing under the pointer" case.
  */
 export class MarkingMenuCancelEvent<
   M extends AnyModelNode,
@@ -330,8 +330,8 @@ export class MarkingMenuCancelEvent<
     return 'cancel';
   }
 
-  readonly #active: ModelItems<M> | null;
-  readonly #menu: ModelMenus<M> | null;
+  readonly #active: ModelItems<M> | undefined;
+  readonly #menu: ModelMenus<M> | undefined;
 
   declare readonly type: 'cancel';
 
@@ -345,16 +345,16 @@ export class MarkingMenuCancelEvent<
   }
 
   /**
-  The item that was active when the gesture was abandoned, or `null`.
+  The item that was active when the gesture was abandoned, or `undefined`.
   */
-  get active(): ModelItems<M> | null {
+  get active(): ModelItems<M> | undefined {
     return this.#active;
   }
 
   /**
-  The menu the gesture was abandoned from, or `null` in expert mode.
+  The menu the gesture was abandoned from, or `undefined` in expert mode.
   */
-  get menu(): ModelMenus<M> | null {
+  get menu(): ModelMenus<M> | undefined {
     return this.#menu;
   }
 }

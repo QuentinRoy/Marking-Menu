@@ -41,8 +41,9 @@ const stubbedLabelSize = (width: number, height: number): Disposable => {
 };
 
 const getShadowRoot = (parent: HTMLElement): ShadowRoot => {
-  const root = parent.querySelector<HTMLElement>('.marking-menu')?.shadowRoot;
-  if (root === null || root === undefined) {
+  const root =
+    parent.querySelector<HTMLElement>('.marking-menu')?.shadowRoot ?? undefined;
+  if (root === undefined) {
     throw new Error('Menu shadow root is missing.');
   }
 
@@ -363,7 +364,7 @@ describe('createMenu', () => {
 
     // Highlighting by key works even for id-less items, and does not collide.
     expect(() => {
-      menu.setActive(model.items[0]?.key ?? null);
+      menu.setActive(model.items[0]?.key ?? undefined);
     }).not.toThrow();
   });
 

@@ -11,8 +11,8 @@ const model = createModel({
 const renderFrame = () => vi.advanceTimersToNextFrame();
 
 const rootOf = (parent: HTMLElement): ShadowRoot => {
-  const root = parent.querySelector('.marking-menu')?.shadowRoot;
-  if (root === null || root === undefined) {
+  const root = parent.querySelector('.marking-menu')?.shadowRoot ?? undefined;
+  if (root === undefined) {
     throw new Error('The renderer root is missing.');
   }
 
@@ -30,17 +30,17 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'none',
-      menu: { model, center: [0, 0], activeKey: null },
-      upperStroke: null,
-      lowerStroke: null,
-      indicator: null,
+      menu: { model, center: [0, 0], activeKey: undefined },
+      upperStroke: undefined,
+      lowerStroke: undefined,
+      indicator: undefined,
     });
     renderer.render({
       cursor: 'default',
-      menu: null,
-      upperStroke: null,
-      lowerStroke: null,
-      indicator: null,
+      menu: undefined,
+      upperStroke: undefined,
+      lowerStroke: undefined,
+      indicator: undefined,
     });
 
     expect(parent.querySelectorAll('.marking-menu')).toHaveLength(1);
@@ -58,13 +58,13 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'none',
-      menu: null,
+      menu: undefined,
       upperStroke: [
         [220, 60],
         [260, 90],
       ],
-      lowerStroke: null,
-      indicator: null,
+      lowerStroke: undefined,
+      indicator: undefined,
     });
     left = 210;
     renderFrame();
@@ -100,7 +100,7 @@ describe('createRenderer', () => {
     });
     renderer.render({
       cursor: 'none',
-      menu: { model, center: [0, 0], activeKey: null },
+      menu: { model, center: [0, 0], activeKey: undefined },
       upperStroke: [
         [0, 0],
         [10, 0],
@@ -109,12 +109,12 @@ describe('createRenderer', () => {
         [0, 0],
         [5, 5],
       ],
-      indicator: null,
+      indicator: undefined,
     });
     renderFrame();
     renderer.render({
       cursor: 'none',
-      menu: { model, center: [0, 0], activeKey: null },
+      menu: { model, center: [0, 0], activeKey: undefined },
       upperStroke: [
         [0, 0],
         [10, 0],
@@ -123,7 +123,7 @@ describe('createRenderer', () => {
         [0, 0],
         [5, 5],
       ],
-      indicator: null,
+      indicator: undefined,
     });
 
     const layers = [...rootOf(parent).children]
@@ -158,13 +158,13 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'crosshair',
-      menu: null,
+      menu: undefined,
       upperStroke: [
         [0, 0],
         [10, 0],
       ],
-      lowerStroke: null,
-      indicator: null,
+      lowerStroke: undefined,
+      indicator: undefined,
     });
     renderer.showFeedback({ stroke: [[0, 0]], canceled: false });
     renderer.dispose();
@@ -180,9 +180,9 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'crosshair',
-      menu: null,
+      menu: undefined,
       upperStroke: [[0, 0]],
-      lowerStroke: null,
+      lowerStroke: undefined,
       indicator: { anchor: [20, 30], position: [20, 30], delayMs: 300 },
     });
 
@@ -194,10 +194,10 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'default',
-      menu: null,
-      upperStroke: null,
-      lowerStroke: null,
-      indicator: null,
+      menu: undefined,
+      upperStroke: undefined,
+      lowerStroke: undefined,
+      indicator: undefined,
     });
 
     expect(root.querySelector('.marking-menu-indicator-background')).toBeNull();
@@ -211,9 +211,9 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'crosshair',
-      menu: null,
+      menu: undefined,
       upperStroke: [[0, 0]],
-      lowerStroke: null,
+      lowerStroke: undefined,
       indicator: { anchor: [20, 30], position: [20, 30], delayMs: 300 },
     });
 
@@ -242,9 +242,9 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'crosshair',
-      menu: null,
+      menu: undefined,
       upperStroke: [[0, 0]],
-      lowerStroke: null,
+      lowerStroke: undefined,
       indicator: { anchor: [0, 0], position: [0, 0], delayMs: 300 },
     });
 

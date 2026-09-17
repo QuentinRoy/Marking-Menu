@@ -70,7 +70,9 @@ type MenuNode<Items extends readonly unknown[]> = {
   /**
   Find the sub-item whose angle is the closest to a given angle.
   */
-  getNearestChild(angle: number): IfLeaf<IsLeaf<Items>, null, Items[number]>;
+  getNearestChild(
+    angle: number,
+  ): IfLeaf<IsLeaf<Items>, undefined, Items[number]>;
   /**
   The maximum depth of the menu below this node.
   */
@@ -84,14 +86,14 @@ type MenuNode<Items extends readonly unknown[]> = {
 /**
  `getChild` accepts the ids of the sub-items it can actually find. When the
  sub-items are not a tuple — a menu built at runtime — the ids are unknown, so
- it falls back to accepting any string and possibly returning `null`.
+ it falls back to accepting any string and possibly returning `undefined`.
  */
 type GetChild<Items extends readonly unknown[]> =
   IsTuple<Items> extends true
     ? <Id extends LiteralIds<Items>>(
         childId: Id,
       ) => Extract<Items[number], { id: Id }>
-    : (childId: string) => Items[number] | null;
+    : (childId: string) => Items[number] | undefined;
 
 /**
  A node of the model that the caller described: it carries back the id and the
@@ -131,7 +133,7 @@ export type ModelItem<
 export type ModelRoot<Items extends readonly unknown[] = readonly unknown[]> =
   MenuNode<Items> & {
     readonly isRoot: true;
-    readonly parent: null;
+    readonly parent: undefined;
   };
 
 /**
@@ -157,7 +159,7 @@ type GenericNodeKeys =
  `parent` is added outside of {@link GenericNodeKeys}, since `ModelItem` has
  no such field: a literal-preserving `parent` is the very problem this file
  works around. An item's parent is always some node of this same union; the
- root's is always `null`.
+ root's is always `undefined`.
  */
 export type MarkingMenuModelItem =
   | (Pick<
@@ -165,7 +167,7 @@ export type MarkingMenuModelItem =
       GenericNodeKeys
     > & { readonly parent: MarkingMenuModelItem })
   | (Pick<ModelRoot<readonly MarkingMenuModelItem[]>, GenericNodeKeys> & {
-      readonly parent: null;
+      readonly parent: undefined;
     });
 
 /* -------------------------------------------------------------------------- *
@@ -188,11 +190,11 @@ export interface AnyModelNode {
   readonly isRoot: boolean;
   readonly items: readonly AnyModelNode[];
   /**
-   The node one level up, or `null` for the root. Erased, like `items`: see
+   The node one level up, or `undefined` for the root. Erased, like `items`: see
    {@link MarkingMenuModel} for the precise version.
    */
-  readonly parent: AnyModelNode | null;
-  getNearestChild(angle: number): this['items'][number] | null;
+  readonly parent: AnyModelNode | undefined;
+  getNearestChild(angle: number): this['items'][number] | undefined;
   getMaxDepth(): number;
   getMaxBreadth(): number;
 }

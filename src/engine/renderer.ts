@@ -49,7 +49,8 @@ type MenuHandle<M extends AnyModelNode> = {
  One indicator surface, growing on its own clock rather than in response to
  renders: while the pointer dwells, nothing else changes, so the layout
  announcement carrying the indicator arrives once and the growth has to
- keep animating on its own frame loop until either it clears (`sync(null)`)
+ keep animating on its own frame loop until either it clears
+ (`sync(undefined)`)
  or a fresh dwell (a new `anchor` reference) restarts it. `position` is
  tracked separately from `anchor`: the anchor only carries restart
  identity and can lag behind the pointer by up to `movementsThreshold`,
@@ -67,13 +68,13 @@ function createIndicatorLayer({
   surfaceOptions?: Omit<IndicatorSurfaceOptions, 'parent'>;
 }): {
   sync: (indicator: LayoutView<AnyModelNode>['indicator']) => void;
-  backgroundElement: () => SVGSVGElement | null;
-  dotElement: () => SVGSVGElement | null;
+  backgroundElement: () => SVGSVGElement | undefined;
+  dotElement: () => SVGSVGElement | undefined;
   dispose: () => void;
 } {
-  let surface: ReturnType<typeof createIndicatorSurface> | null = null;
-  let currentAnchor: Point | null = null;
-  let currentPosition: Point | null = null;
+  let surface: ReturnType<typeof createIndicatorSurface> | undefined;
+  let currentAnchor: Point | undefined;
+  let currentPosition: Point | undefined;
   let frame = -1;
 
   const stop = (): void => {
@@ -86,7 +87,7 @@ function createIndicatorLayer({
   };
 
   const tick = (delayMs: number, startTime: number): void => {
-    if (currentPosition === null) {
+    if (currentPosition === undefined) {
       return;
     }
 
@@ -103,12 +104,12 @@ function createIndicatorLayer({
 
   return {
     sync(indicator) {
-      if (indicator === null) {
+      if (indicator === undefined) {
         stop();
         surface?.remove();
-        surface = null;
-        currentAnchor = null;
-        currentPosition = null;
+        surface = undefined;
+        currentAnchor = undefined;
+        currentPosition = undefined;
         return;
       }
 
@@ -120,12 +121,12 @@ function createIndicatorLayer({
         tick(indicator.delayMs, Date.now());
       }
     },
-    backgroundElement: () => surface?.backgroundElement ?? null,
-    dotElement: () => surface?.dotElement ?? null,
+    backgroundElement: () => surface?.backgroundElement ?? undefined,
+    dotElement: () => surface?.dotElement ?? undefined,
     dispose() {
       stop();
       surface?.remove();
-      surface = null;
+      surface = undefined;
     },
   };
 }
@@ -145,14 +146,14 @@ function createStrokeLayer({
   surfaceOptions?: Omit<StrokeSurfaceOptions, 'parent'>;
 }): {
   sync: (
-    stroke: readonly Point[] | null,
+    stroke: readonly Point[] | undefined,
     options?: { drawStartPoint?: boolean },
   ) => void;
-  element: () => SVGSVGElement | null;
+  element: () => SVGSVGElement | undefined;
   dispose: () => void;
 } {
-  let surface: StrokeSurface | null = null;
-  let previousStroke: readonly Point[] | null = null;
+  let surface: StrokeSurface | undefined;
+  let previousStroke: readonly Point[] | undefined;
 
   const draw = rafThrottle(
     (stroke: readonly Point[], shouldDrawStartPoint: boolean) => {
@@ -173,21 +174,21 @@ function createStrokeLayer({
 
   return {
     sync(stroke, { drawStartPoint: shouldDrawStartPoint = false } = {}) {
-      if (stroke === null) {
+      if (stroke === undefined) {
         surface?.remove();
-        surface = null;
-        previousStroke = null;
+        surface = undefined;
+        previousStroke = undefined;
       } else if (stroke !== previousStroke) {
         previousStroke = stroke;
         surface ??= createStrokeSurface({ parent, ...surfaceOptions });
         draw(stroke, shouldDrawStartPoint);
       }
     },
-    element: () => surface?.element ?? null,
+    element: () => surface?.element ?? undefined,
     dispose() {
       draw.cancel();
       surface?.remove();
-      surface = null;
+      surface = undefined;
     },
   };
 }
@@ -270,10 +271,10 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
     root,
     strokeTheme: initialStrokeTheme,
   } = createMenuHost({ parent });
-  let menuHandle: MenuHandle<M> | null = null;
+  let menuHandle: MenuHandle<M> | undefined;
   // Reference-equality cache: an unchanged active key skips the DOM scan
   // `Menu.setActive` performs.
-  let previousActiveKey: string | null = null;
+  let previousActiveKey: string | undefined;
   const { upper, lower, feedback } = createPersistentStrokeLayers(
     root,
     gestureFeedbackDuration,
@@ -309,7 +310,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
     const lowerElement = lower.element();
     if (
       menuElement !== undefined &&
-      lowerElement !== null &&
+      lowerElement !== undefined &&
       !isPaintedBefore(lowerElement, menuElement)
     ) {
       menuElement.before(lowerElement);
@@ -322,8 +323,8 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
     // yet): the first layer found then anchors the rest, wherever it
     // already sits.
     let tail: Element | undefined = menuElement;
-    const place = (element: Element | null): void => {
-      if (element === null) {
+    const place = (element: Element | undefined): void => {
+      if (element === undefined) {
         return;
       }
 
@@ -356,12 +357,12 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
       // alongside the line. `cursor` alone no longer distinguishes this,
       // since startup and expert now also hide the cursor while their own
       // opening indicator is shown.
-      const isNoviceMode = view.menu !== null;
+      const isNoviceMode = view.menu !== undefined;
 
-      if (view.menu === null) {
+      if (view.menu === undefined) {
         menuHandle?.menu.remove();
-        menuHandle = null;
-        previousActiveKey = null;
+        menuHandle = undefined;
+        previousActiveKey = undefined;
       } else {
         if (menuHandle?.model !== view.menu.model) {
           menuHandle?.menu.remove();
@@ -386,7 +387,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
           };
 
           setStrokeTheme(menuHandle.menu.strokeTheme);
-          previousActiveKey = null;
+          previousActiveKey = undefined;
         }
 
         if (view.menu.activeKey !== previousActiveKey) {
@@ -413,7 +414,7 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
       lower.dispose();
       indicator.dispose();
       menuHandle?.menu.remove();
-      menuHandle = null;
+      menuHandle = undefined;
       feedback.remove();
       host.remove();
     },

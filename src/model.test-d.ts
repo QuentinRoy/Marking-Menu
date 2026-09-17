@@ -53,7 +53,7 @@ describe('createModel', () => {
   });
 
   it('gives every item a precise parent, and the root none', () => {
-    expectTypeOf(menu.parent).toEqualTypeOf<null>();
+    expectTypeOf(menu.parent).toEqualTypeOf<undefined>();
     expectTypeOf(menu.items[0].parent).toEqualTypeOf<typeof menu>();
     expectTypeOf(menu.items[1].items[0].parent).toEqualTypeOf<
       (typeof menu.items)[1]
@@ -100,9 +100,9 @@ describe('createModel', () => {
     >();
   });
 
-  it('never returns null from getNearestChild on a menu, always on a leaf', () => {
+  it('never returns undefined from getNearestChild on a menu, always on a leaf', () => {
     expectTypeOf(menu.getNearestChild(0)).not.toBeNullable();
-    expectTypeOf(menu.items[0].getNearestChild(0)).toEqualTypeOf<null>();
+    expectTypeOf(menu.items[0].getNearestChild(0)).toEqualTypeOf<undefined>();
   });
 
   it('resolves the depth and the breadth of a leaf to 0', () => {
@@ -203,7 +203,7 @@ describe('createModel', () => {
     const empty = createModel({ items: [] });
     expectTypeOf(empty.isLeaf).toEqualTypeOf<true>();
     expectTypeOf(empty.isRoot).toEqualTypeOf<true>();
-    expectTypeOf(empty.getNearestChild(0)).toEqualTypeOf<null>();
+    expectTypeOf(empty.getNearestChild(0)).toEqualTypeOf<undefined>();
     expectTypeOf(empty.getMaxDepth()).toEqualTypeOf<0>();
     // @ts-expect-error -- there is no child to get.
     empty.getChild('anything');
@@ -222,7 +222,7 @@ describe('createModel', () => {
     expectTypeOf(dynamic.getChild('whatever')).toBeNullable();
     expectTypeOf(dynamic.getNearestChild(0)).toBeNullable();
     expectTypeOf(dynamic.getMaxDepth()).toEqualTypeOf<number>();
-    expectTypeOf(dynamic.parent).toEqualTypeOf<null>();
+    expectTypeOf(dynamic.parent).toEqualTypeOf<undefined>();
     expectTypeOf(dynamic.items[0]?.parent).toEqualTypeOf<
       MarkingMenuModelItem | undefined
     >();

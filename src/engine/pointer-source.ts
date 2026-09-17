@@ -21,7 +21,7 @@ export function createPointerSource({
   parent: HTMLElement;
   runtime: NavigationInputSink;
 }): PointerSource {
-  let activePointerId: number | null = null;
+  let activePointerId: number | undefined;
   const releaseTouchAction = claimTouchAction(parent);
 
   /**
@@ -29,19 +29,23 @@ export function createPointerSource({
    Idempotent, and safe to call with no gesture in progress.
    */
   const releaseCapture = (): void => {
-    if (activePointerId === null) {
+    if (activePointerId === undefined) {
       return;
     }
 
     const pointerId = activePointerId;
-    activePointerId = null;
+    activePointerId = undefined;
     if (parent.hasPointerCapture(pointerId)) {
       parent.releasePointerCapture(pointerId);
     }
   };
 
   const onPointerDown = (event: PointerEvent): void => {
-    if (activePointerId !== null || !event.isPrimary || event.button !== 0) {
+    if (
+      activePointerId !== undefined ||
+      !event.isPrimary ||
+      event.button !== 0
+    ) {
       return;
     }
 

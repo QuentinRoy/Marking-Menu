@@ -120,13 +120,14 @@ type Box = {
 };
 
 /**
-The interval of `t` where `origin + t * delta` lies inside `box`, or `null` if it never does.
+The interval of `t` where `origin + t * delta` lies inside `box`, or
+`undefined` if it never does.
 */
 function clipToBox(
   origin: Point,
   delta: Point,
   box: Box,
-): readonly [number, number] | null {
+): readonly [number, number] | undefined {
   let enter = -Infinity;
   let exit = Infinity;
   for (const [o, d, min, max] of [
@@ -135,7 +136,7 @@ function clipToBox(
   ] as const) {
     if (Math.abs(d) < EPSILON) {
       if (o < min || o > max) {
-        return null;
+        return undefined;
       }
     } else {
       const a = (min - o) / d;
@@ -145,24 +146,27 @@ function clipToBox(
     }
   }
 
-  return enter <= exit + EPSILON ? [enter, exit] : null;
+  return enter <= exit + EPSILON ? [enter, exit] : undefined;
 }
 
 /**
-Distance along unit `ray` from the origin to where it enters `box`, or `null` if it misses (behind the origin, or never).
+Distance along unit `ray` from the origin to where it enters `box`, or
+`undefined` if it misses (behind the origin, or never).
 */
 function rayBoxContact(
   center: Point,
   box: { readonly width: number; readonly height: number },
   ray: Point,
-): number | null {
+): number | undefined {
   const interval = clipToBox([0, 0], ray, {
     minX: center[0] - box.width / 2,
     maxX: center[0] + box.width / 2,
     minY: center[1] - box.height / 2,
     maxY: center[1] + box.height / 2,
   });
-  return interval === null || interval[1] < 0 ? null : Math.max(interval[0], 0);
+  return interval === undefined || interval[1] < 0
+    ? undefined
+    : Math.max(interval[0], 0);
 }
 
 /**
@@ -181,7 +185,9 @@ function doesSegmentHitBox(
     maxY: box.maxY + margin,
   });
   return (
-    interval !== null && interval[0] <= 1 + EPSILON && interval[1] >= -EPSILON
+    interval !== undefined &&
+    interval[0] <= 1 + EPSILON &&
+    interval[1] >= -EPSILON
   );
 }
 
@@ -251,14 +257,14 @@ function isInsideAssociationSector(
   return delta >= -sector.before - EPSILON && delta <= sector.after + EPSILON;
 }
 
-// Place plate `item` at the given offset, or `null` if that leaves its
+// Place plate `item` at the given offset, or `undefined` if that leaves its
 // association sector, or lets the plate or connector enter the ring.
 function makeCandidate(
   input: LayoutInput,
   prepared: PreparedInput,
   item: number,
   offset: { readonly radial: number; readonly tangent: number },
-): Candidate | null {
+): Candidate | undefined {
   const { radial, tangent } = offset;
   const plate = at(input.plates, item);
   const { u, v } = at(prepared.directions, item);
@@ -266,13 +272,13 @@ function makeCandidate(
   const y = radial * u[1] + tangent * v[1];
   const contactRadius = rayBoxContact([x, y], plate, u);
   if (
-    contactRadius === null ||
+    contactRadius === undefined ||
     contactRadius < input.ringRadius ||
     !isInsideAssociationSector(prepared.sectors[item], x, y) ||
     distanceToBox(x, y, plate.width, plate.height) <
       input.ringRadius + input.clearances.plateToRing - EPSILON
   ) {
-    return null;
+    return undefined;
   }
 
   return {
@@ -345,7 +351,7 @@ function isBetter(next: Quality, previous: Quality): boolean {
 function solveSharedRadius(
   input: LayoutInput,
   prepared: PreparedInput,
-): readonly Candidate[] | null {
+): readonly Candidate[] | undefined {
   const first = Math.ceil(input.ringRadius + input.clearances.plateToRing);
   // Any configuration the model's minimum angular gap allows can be made
   // conflict-free by a radius this large: every plate's own diagonal is
@@ -364,14 +370,14 @@ function solveSharedRadius(
       }),
     );
     if (
-      plates.every((plate) => plate !== null) &&
+      plates.every((plate) => plate !== undefined) &&
       isValidLayout(input.clearances, prepared.starts, plates)
     ) {
       return plates;
     }
   }
 
-  return null;
+  return undefined;
 }
 
 // Steps 2-4: repeatedly nudge each plate inward (radial) or sideways
@@ -392,24 +398,25 @@ type MoveSearch = {
 };
 
 /**
-Try nudging plate `item` inward or sideways by `step`; the best resulting layout that improves on `best`, or `null`.
+Try nudging plate `item` inward or sideways by `step`; the best resulting
+layout that improves on `best`, or `undefined`.
 */
 function bestMoveFor(
   input: LayoutInput,
   prepared: PreparedInput,
   plates: readonly Candidate[],
   { item, step, best }: MoveSearch,
-): Move | null {
+): Move | undefined {
   const plate = at(plates, item);
   const offsets = [
     { radial: plate.radial - step, tangent: plate.tangent },
     { radial: plate.radial, tangent: plate.tangent + step },
     { radial: plate.radial, tangent: plate.tangent - step },
   ];
-  let found: Move | null = null;
+  let found: Move | undefined;
   for (const offset of offsets) {
     const candidate = makeCandidate(input, prepared, item, offset);
-    if (candidate === null) {
+    if (candidate === undefined) {
       continue;
     }
 
@@ -446,7 +453,7 @@ function compact(
           step,
           best,
         });
-        if (found !== null) {
+        if (found !== undefined) {
           plates = found.plates;
           best = found.quality;
           isImproved = true;
@@ -467,7 +474,7 @@ function compact(
 export function solveLabelLayout(input: LayoutInput): LayoutResult {
   const prepared = prepareInput(input);
   const baseline = solveSharedRadius(input, prepared);
-  if (baseline === null) {
+  if (baseline === undefined) {
     return { oversized: true, plates: [] };
   }
 

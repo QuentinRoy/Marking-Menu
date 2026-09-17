@@ -64,8 +64,8 @@ function isMode(value: string): value is Mode {
  */
 function initialMenu(): Applied {
   const shared = readMenuConfig(location.search);
-  const fromAddress = shared === null ? null : buildMenuModel(shared);
-  if (shared !== null && fromAddress?.ok === true) {
+  const fromAddress = shared === undefined ? undefined : buildMenuModel(shared);
+  if (shared !== undefined && fromAddress?.ok === true) {
     return { menu: shared, model: fromAddress.model };
   }
 
@@ -119,7 +119,7 @@ export function App() {
 
   useEffect(() => {
     history.replaceState(
-      null,
+      undefined,
       '',
       writeMenuConfig(location.search, applied.menu),
     );
@@ -130,7 +130,7 @@ export function App() {
   useEffect(() => {
     const onPopState = () => {
       const shared = readMenuConfig(location.search);
-      if (shared !== null) {
+      if (shared !== undefined) {
         applySource(formatMenu(shared));
       }
     };
@@ -141,10 +141,12 @@ export function App() {
     };
   }, [applySource]);
 
-  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   useEffect(
     () => () => {
-      if (copiedTimerRef.current !== null) {
+      if (copiedTimerRef.current !== undefined) {
         clearTimeout(copiedTimerRef.current);
       }
     },
@@ -158,7 +160,7 @@ export function App() {
       // address bar already holds the same link.
     });
     setCopied(true);
-    if (copiedTimerRef.current !== null) {
+    if (copiedTimerRef.current !== undefined) {
       clearTimeout(copiedTimerRef.current);
     }
 
@@ -295,7 +297,7 @@ export function App() {
             onResult={setResult}
           />
           <Footer metrics={result.metrics}>
-            {result.steps === null ? (
+            {result.steps === undefined ? (
               <span className="font-mono text-chip font-medium text-pretty">
                 {result.message}
               </span>

@@ -4,7 +4,11 @@ import { createMarkingMenu } from 'marking-menu';
 // the iframe's document: a separate realm with its own `HTMLElement` and
 // `CSSStyleSheet` constructors. This is the scenario #330 is about.
 const frame = document.querySelector('iframe');
-if (!(frame instanceof HTMLIFrameElement) || frame.contentDocument === null) {
+const frameDocument =
+  frame instanceof HTMLIFrameElement
+    ? (frame.contentDocument ?? undefined)
+    : undefined;
+if (frameDocument === undefined) {
   throw new TypeError('Fixture markup is missing the iframe.');
 }
 
@@ -13,7 +17,6 @@ if (!(log instanceof HTMLElement)) {
   throw new TypeError('Fixture markup is missing #log.');
 }
 
-const frameDocument = frame.contentDocument;
 Object.assign(frameDocument.body.style, { margin: '0' });
 // The theme is read through `getComputedStyle` on the document the menu's
 // `parent` belongs to. Setting a different `--mm-stroke-color` here than the

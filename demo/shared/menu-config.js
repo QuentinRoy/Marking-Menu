@@ -59,19 +59,25 @@ Whether `value` is a plain object, as opposed to `null` or an array.
 @returns {value is Record<string, unknown>} Whether it's a plain object.
 */
 function isRecord(value) {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  // `typeof null === 'object'`, and parsed JSON can genuinely contain
+  // `null`, so plain objects need to be told apart from it here too.
+  return (
+    typeof value === 'object' &&
+    (value ?? undefined) !== undefined &&
+    !Array.isArray(value)
+  );
 }
 
 /**
 Parses `value` as a single menu item, recursing into its `items`.
 
 @param {unknown} value - An unvalidated JSON value.
-@returns {MarkingMenuItemInput | null} The item, or `null` if `value` is not
-one.
+@returns {MarkingMenuItemInput | undefined} The item, or `undefined` if `value`
+is not one.
 */
 function asItem(value) {
   if (!isRecord(value)) {
-    return null;
+    return undefined;
   }
 
   const { angle, id, label, items } = value;
@@ -81,12 +87,12 @@ function asItem(value) {
       (typeof angle !== 'number' || !Number.isFinite(angle))) ||
     (id !== undefined && typeof id !== 'string')
   ) {
-    return null;
+    return undefined;
   }
 
   const nested = items === undefined ? [] : asItems(items);
-  if (nested === null) {
-    return null;
+  if (nested === undefined) {
+    return undefined;
   }
 
   return {
@@ -101,12 +107,12 @@ function asItem(value) {
 Parses `value` as an array of menu items.
 
 @param {unknown} value - An unvalidated JSON value.
-@returns {MarkingMenuItemInput[] | null} The items, or `null` if `value` is
-not an array of them.
+@returns {MarkingMenuItemInput[] | undefined} The items, or `undefined` if
+`value` is not an array of them.
 */
 function asItems(value) {
   if (!Array.isArray(value)) {
-    return null;
+    return undefined;
   }
 
   /**
@@ -115,8 +121,8 @@ function asItems(value) {
   const items = [];
   for (const raw of value) {
     const item = asItem(raw);
-    if (item === null) {
-      return null;
+    if (item === undefined) {
+      return undefined;
     }
 
     items.push(item);
@@ -129,34 +135,35 @@ function asItems(value) {
 Parses `value` as a menu.
 
 @param {unknown} value - An unvalidated JSON value.
-@returns {MarkingMenuInput | null} The menu, or `null` if `value` is not one.
+@returns {MarkingMenuInput | undefined} The menu, or `undefined` if `value` is
+not one.
 */
 function asMenu(value) {
   if (!isRecord(value)) {
-    return null;
+    return undefined;
   }
 
   const items = asItems(value.items);
-  return items === null ? null : { items };
+  return items === undefined ? undefined : { items };
 }
 
 /**
  Read the menu a query string names.
 
  @param {string} search - A query string, e.g. `location.search`.
- @returns {MarkingMenuInput | null} The menu, or `null` if the parameter is
- absent or does not hold one.
+ @returns {MarkingMenuInput | undefined} The menu, or `undefined` if the
+ parameter is absent or does not hold one.
  */
 export function readMenuConfig(search) {
-  const encoded = new URLSearchParams(search).get(CONFIG_PARAM);
-  if (encoded === null) {
-    return null;
+  const encoded = new URLSearchParams(search).get(CONFIG_PARAM) ?? undefined;
+  if (encoded === undefined) {
+    return undefined;
   }
 
   try {
     return asMenu(JSON.parse(encoded));
   } catch {
-    return null;
+    return undefined;
   }
 }
 

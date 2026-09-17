@@ -98,9 +98,13 @@ function schemaHover(
   view: EditorView,
   pos: number,
   side: -1 | 1,
+  // `hoverTooltip`'s `HoverTooltipSource` (CodeMirror's own API) requires
+  // `null`, not `undefined`, for "nothing to show".
+  // eslint-disable-next-line @typescript-eslint/no-restricted-types
 ): ReturnType<ReturnType<typeof jsonSchemaHover>> | null {
   const pointer = jsonPointerForPosition(view.state, pos, side, 'json4');
-  if (annotationAt(pointer) === null) {
+  if (annotationAt(pointer) === undefined) {
+    // eslint-disable-next-line unicorn/no-null
     return null;
   }
 
@@ -165,8 +169,8 @@ export function JsonEditor({
   });
 
   useEffect(() => {
-    const host = hostRef.current;
-    if (host === null) {
+    const host = hostRef.current ?? undefined;
+    if (host === undefined) {
       return;
     }
 
@@ -192,6 +196,9 @@ export function JsonEditor({
     viewRef.current = view;
     return () => {
       view.destroy();
+      // React manages this DOM-adjacent ref like `hostRef`: `null`, not
+      // `undefined`.
+      // eslint-disable-next-line unicorn/no-null
       viewRef.current = null;
     };
     // Mount-only: `value` seeds the document, and the effect below is what
@@ -203,8 +210,8 @@ export function JsonEditor({
   // address, or was reset or reformatted. Comparing first keeps a plain
   // keystroke from dispatching a full replacement over the caret.
   useEffect(() => {
-    const view = viewRef.current;
-    if (view !== null && view.state.doc.toString() !== value) {
+    const view = viewRef.current ?? undefined;
+    if (view !== undefined && view.state.doc.toString() !== value) {
       view.dispatch({
         changes: { from: 0, to: view.state.doc.length, insert: value },
       });

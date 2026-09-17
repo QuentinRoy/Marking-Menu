@@ -18,7 +18,7 @@ import { createController, type MarkingMenuController } from './controller.js';
  narrowed payload off a listener parameter is what catches it.
  */
 
-const parent = null as unknown as HTMLElement;
+const parent = undefined as unknown as HTMLElement;
 
 const config = {
   items: [

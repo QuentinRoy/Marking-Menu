@@ -63,15 +63,15 @@ const walkModelLoose = (
   model: AnyModelNode,
   segments: Array<{ angle: number }>,
   startIndex: number,
-): NonEmptyArray<AnyModelNode> | null => {
+): NonEmptyArray<AnyModelNode> | undefined => {
   const segment = segments[startIndex];
   if (segment === undefined || model.isLeaf) {
-    return null;
+    return undefined;
   }
 
   const item = model.getNearestChild(segment.angle);
-  if (item === null) {
-    return null;
+  if (item === undefined) {
+    return undefined;
   }
 
   if (startIndex + 1 >= segments.length) {
@@ -79,7 +79,7 @@ const walkModelLoose = (
   }
 
   const rest = walkModelLoose(item, segments, startIndex + 1);
-  return rest === null ? null : [item, ...rest];
+  return rest === undefined ? undefined : [item, ...rest];
 };
 
 /**
@@ -90,7 +90,8 @@ const walkModelLoose = (
  @param options.segments - A list of segments to walk the model.
  @param options.startIndex - The start index in the angle list.
  @returns The path walked down the model, from the item the first segment
- lands on to the one the last segment lands on, or `null` if the segments do
+ lands on to the one the last segment lands on, or `undefined` if the segments
+ do
  not lead to an item. `model` itself is not part of the path, which is hence
  never empty.
  */
@@ -102,16 +103,15 @@ export const walkModel = <N extends AnyModelNode>({
   model: N;
   segments: Array<{ angle: number }>;
   startIndex?: number;
-}): NonEmptyArray<ModelNodes<N>> | null =>
+}): NonEmptyArray<ModelNodes<N>> | undefined =>
   // Sound by construction: `AnyModelNode`'s polymorphic `this` ties a node's
   // children to its own item type, so every node `walkModelLoose` visits is
   // genuinely a member of `ModelNodes<N>` for the concrete `N` it was called
   // with. The compiler just cannot verify this through a generic recursive
   // walk, hence the single assertion here rather than scattered through the
   // recursion.
-  walkModelLoose(model, segments, startIndex) as NonEmptyArray<
-    ModelNodes<N>
-  > | null;
+  walkModelLoose(model, segments, startIndex) as
+    NonEmptyArray<ModelNodes<N>> | undefined;
 
 export const segmentAngle = (a: Point, b: Point): number =>
   radiansToDegrees(Math.atan2(b[1] - a[1], b[0] - a[0]));
@@ -150,15 +150,15 @@ const findItemLoose = (
   model: AnyModelNode,
   segments: StrokeSegment[],
   maxDepth: number,
-): NonEmptyArray<AnyModelNode> | null => {
+): NonEmptyArray<AnyModelNode> | undefined => {
   // If there are no segments, there is no selection to find.
   if (segments.length === 0) {
-    return null;
+    return undefined;
   }
 
   // While we haven't found a leaf item, divide the longest segment and walk the model.
   let currentSegments = segments;
-  let currentPath: NonEmptyArray<AnyModelNode> | null = null;
+  let currentPath: NonEmptyArray<AnyModelNode> | undefined;
   while (currentSegments.length <= maxDepth) {
     currentPath = walkModelLoose(model, currentSegments, 0);
     if (currentPath?.at(-1)?.isLeaf) {
@@ -189,11 +189,10 @@ export const findItem = <N extends AnyModelNode>({
   model: N;
   segments: StrokeSegment[];
   maxDepth?: number;
-}): NonEmptyArray<ModelNodes<N>> | null =>
+}): NonEmptyArray<ModelNodes<N>> | undefined =>
   // Sound by construction, same rationale as `walkModel`'s cast.
-  findItemLoose(model, segments, maxDepth) as NonEmptyArray<
-    ModelNodes<N>
-  > | null;
+  findItemLoose(model, segments, maxDepth) as
+    NonEmptyArray<ModelNodes<N>> | undefined;
 
 /**
  Read the smallest angular gap between neighboring items anywhere in `model`.
@@ -275,7 +274,7 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
     requireMenu?: false;
     requireLeaf?: true;
   },
-): ModelLeaves<N> | null;
+): ModelLeaves<N> | undefined;
 export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
   stroke: readonly Point[],
   model: N,
@@ -284,7 +283,7 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
     requireMenu?: boolean;
     requireLeaf?: boolean;
   },
-): ModelNodes<N> | null;
+): ModelNodes<N> | undefined;
 export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
   stroke: readonly Point[],
   model: N,
@@ -297,7 +296,7 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
     requireMenu?: boolean;
     requireLeaf?: boolean;
   } = {},
-): ModelNodes<N> | null {
+): ModelNodes<N> | undefined {
   if (requireLeaf && requireMenu) {
     throw new Error('The result cannot be both a leaf and a menu');
   }
@@ -307,9 +306,9 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
   const { segments } = cutStroke(stroke, model, maxDepth);
   const path = findItem({ model, segments, maxDepth });
   // Paths are never empty, so the item is only nullish when the path is.
-  const item = path?.at(-1) ?? null;
+  const item = path?.at(-1) ?? undefined;
   if (requireLeaf) {
-    return item?.isLeaf ? item : null;
+    return item?.isLeaf ? item : undefined;
   }
 
   if (requireMenu) {
@@ -358,10 +357,10 @@ export type MarkingMenuStrokeAnalysis<N extends AnyModelNode> = {
   */
   readonly segments: readonly LocatedStrokeSegment[];
   /**
-  The path the stroke was walked down, or `null` if it does not lead
+  The path the stroke was walked down, or `undefined` if it does not lead
   anywhere in the model.
   */
-  readonly path: NonEmptyArray<ModelNodes<N>> | null;
+  readonly path: NonEmptyArray<ModelNodes<N>> | undefined;
 };
 
 /**

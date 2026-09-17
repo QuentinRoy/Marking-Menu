@@ -49,7 +49,7 @@ const csvParse = async (
 
 type MockModel = ModelItem<string | undefined, string, readonly MockModel[]> & {
   requestedAngle: number | undefined;
-  parent: MockModel | null;
+  parent: MockModel | undefined;
   getMaxDepth: Mock<() => number>;
   getMaxBreadth: Mock<() => number>;
   getMinAngularGap: Mock<() => number>;
@@ -71,7 +71,7 @@ const createMockModel = (
   depth = 1,
   breadth = 8,
   requestedAngle?: number,
-  parent: MockModel | null = null,
+  parent?: MockModel,
 ): MockModel => {
   const base = {
     items: [],
@@ -79,7 +79,7 @@ const createMockModel = (
     key: 'mock',
     label: 'Mock',
     angle: requestedAngle ?? 0,
-    getChild: vi.fn(() => null),
+    getChild: vi.fn(() => undefined),
     getChildrenByLabel: vi.fn(() => []),
     isRoot: false as const,
     parent,
@@ -194,14 +194,14 @@ describe('walkModel', () => {
 
     {
       const menu = createMockModel(1);
-      expect(walkModel({ model: menu, segments: [] })).toBe(null);
+      expect(walkModel({ model: menu, segments: [] })).toBe(undefined);
     }
 
     {
       const menu = createMockModel(1);
       expect(
         walkModel({ model: menu, segments: [{ angle: 200 }, { angle: 0 }] }),
-      ).toBe(null);
+      ).toBe(undefined);
     }
 
     {
@@ -211,7 +211,7 @@ describe('walkModel', () => {
           model: menu,
           segments: [{ angle: 200 }, { angle: 5 }, { angle: 10 }],
         }),
-      ).toBe(null);
+      ).toBe(undefined);
     }
   });
 
@@ -332,23 +332,29 @@ describe('recognizeMarkingMenuStroke', () => {
     await testStroke([45, 45, 45], 45);
   });
 
-  it('returns null if the stroke does not correspond to an item', async () => {
+  it('returns undefined if the stroke does not correspond to an item', async () => {
     // Read the stroke.
     const stroke = await readStroke([225, 0, 135].join('-'));
     // Create the model
     const model = createMockModel(1);
     // Apply the recognizer.
-    expect(recognizeMarkingMenuStroke(stroke, model)).toBe(null);
+    // `ModelLeaves<AnyModelNode>` collapses to `never` here, the same
+    // erasure `src/engine/machine.ts` documents.
+    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
+    expect(recognizeMarkingMenuStroke(stroke, model)).toBe(undefined);
   });
 
-  it('returns null if the stroke does not correspond to a leaf and requireLeaf is true (default)', async () => {
+  it('returns undefined if the stroke does not correspond to a leaf and requireLeaf is true (default)', async () => {
     // Read the stroke.
     const stroke = await readStroke([225, 0, 135].join('-'));
     // Create the model
     const model = createMockModel(5);
     // Apply the recognizer.
+    // `ModelLeaves<AnyModelNode>` collapses to `never` here, the same
+    // erasure `src/engine/machine.ts` documents.
+    // eslint-disable-next-line @typescript-eslint/no-confusing-void-expression
     expect(recognizeMarkingMenuStroke(stroke, model, { maxDepth: 3 })).toBe(
-      null,
+      undefined,
     );
   });
 

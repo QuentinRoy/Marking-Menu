@@ -35,18 +35,19 @@ test('an expert stroke paints outside a visible-overflow parent', async ({
   const state = await page
     .locator('#stroke-overflow-surface')
     .evaluate((parent) => {
-      const host = parent.querySelector<HTMLElement>('.marking-menu');
-      if (host === null) {
-        return null;
+      const host =
+        parent.querySelector<HTMLElement>('.marking-menu') ?? undefined;
+      if (host === undefined) {
+        return undefined;
       }
 
       const surface = host.shadowRoot?.querySelector<SVGSVGElement>(
         '.marking-menu-stroke-surface',
       );
       const path =
-        surface?.querySelector<SVGPathElement>(':scope > path') ?? null;
-      if (path === null) {
-        return null;
+        surface?.querySelector<SVGPathElement>(':scope > path') ?? undefined;
+      if (path === undefined) {
+        return undefined;
       }
 
       host.style.pointerEvents = 'auto';

@@ -191,11 +191,11 @@ describe('navigationMachine', () => {
     expect(host.current.name).toBe('idle');
     expect(mockRecognize).not.toHaveBeenCalled();
     expect(selected).not.toHaveBeenCalled();
-    expect(cancelActive).toBeNull();
+    expect(cancelActive).toBeUndefined();
   });
 
   it('dispatches cancel for a completed gesture that recognition does not match', () => {
-    mockRecognize.mockReturnValueOnce(null);
+    mockRecognize.mockReturnValueOnce(undefined);
     const host = startHost();
     const canceled = vi.fn<() => void>();
     host.on('cancel', canceled);
@@ -227,7 +227,7 @@ describe('navigationMachine', () => {
     expect(host.current.name).toBe('idle');
     expect(mockRecognize).not.toHaveBeenCalled();
     expect(selected).not.toHaveBeenCalled();
-    expect(cancelActive).toBeNull();
+    expect(cancelActive).toBeUndefined();
   });
 
   it('dispatches cancel when the pointer is cancelled during startup, before any movement crossed the threshold', () => {
@@ -328,12 +328,13 @@ describe('navigationMachine', () => {
       host.send('dwell');
 
       expect(host.current.name).toBe('novice');
-      const data = host.current.name === 'novice' ? host.current.data : null;
+      const data =
+        host.current.name === 'novice' ? host.current.data : undefined;
       const rightMenu = (submenuModel as unknown as { items: unknown[] })
         .items[0];
       expect(data?.menu).toBe(rightMenu);
       expect(data?.menuCenter).toEqual([100, 0]);
-      expect(data?.active).toBeNull();
+      expect(data?.active).toBeUndefined();
 
       expect(opened).toHaveLength(1);
       const event = opened[0] as {
@@ -353,7 +354,8 @@ describe('navigationMachine', () => {
       host.send('move', { position: [100, 0] });
       host.send('dwell');
 
-      const data = host.current.name === 'novice' ? host.current.data : null;
+      const data =
+        host.current.name === 'novice' ? host.current.data : undefined;
       expect(data?.lastPosition).toEqual([100, 0]);
       expect(data?.lowerStroke).toEqual([
         [0, 0],
@@ -383,8 +385,8 @@ describe('navigationMachine', () => {
       expect(opened).not.toHaveBeenCalled();
       expect(selected).not.toHaveBeenCalled();
       expect(cancelData?.mode).toBe('expert');
-      expect(cancelData?.active).toBeNull();
-      expect(cancelData?.menu).toBeNull();
+      expect(cancelData?.active).toBeUndefined();
+      expect(cancelData?.menu).toBeUndefined();
     });
 
     it('restarts the mid-expert dwell on significant movement', () => {
@@ -435,9 +437,9 @@ describe('navigationMachine', () => {
       expect(host.current.name).toBe('novice');
       expect(
         host.current.name === 'novice' && host.current.data.active,
-      ).toBeNull();
+      ).toBeUndefined();
       expect(moved).toHaveBeenCalledTimes(1);
-      expect(moved.mock.calls[0]?.[0].active).toBeNull();
+      expect(moved.mock.calls[0]?.[0].active).toBeUndefined();
       expect(changed).not.toHaveBeenCalled();
     });
 
@@ -458,8 +460,8 @@ describe('navigationMachine', () => {
 
       expect(host.current.name).toBe('novice');
       const active =
-        host.current.name === 'novice' ? host.current.data.active : null;
-      expect(active).not.toBeNull();
+        host.current.name === 'novice' ? host.current.data.active : undefined;
+      expect(active).not.toBeUndefined();
       expect((active as unknown as { id: string }).id).toBe('right');
       expect(moved).toEqual([active]);
       expect(changed).toHaveBeenCalledTimes(1);
@@ -468,7 +470,7 @@ describe('navigationMachine', () => {
         previousActive: unknown;
       };
       expect(changeData.active).toBe(active);
-      expect(changeData.previousActive).toBeNull();
+      expect(changeData.previousActive).toBeUndefined();
 
       // Continued pointing at the same item: another `move`, no further `change`.
       host.send('move', { position: [110, 0] });
@@ -491,7 +493,7 @@ describe('navigationMachine', () => {
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
-      expect(cancelData?.active).toBeNull();
+      expect(cancelData?.active).toBeUndefined();
       expect(cancelData?.menu).toBe(model);
       expect(cancelData?.mode).toBe('novice');
       expect(mockRecognize).not.toHaveBeenCalled();
@@ -554,14 +556,16 @@ describe('navigationMachine', () => {
       host.send('move', { position: [100, 0] }); // Activates "right", a submenu
       expect(
         host.current.name === 'novice' &&
-          (host.current.data.active as { isLeaf: boolean } | null)?.isLeaf,
+          (host.current.data.active as { isLeaf: boolean } | undefined)?.isLeaf,
       ).toBe(false);
 
       host.send('up', { position: [100, 0] });
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
-      expect((cancelData?.active as { id: string } | null)?.id).toBe('right');
+      expect((cancelData?.active as { id: string } | undefined)?.id).toBe(
+        'right',
+      );
       expect(cancelData?.menu).toBe(submenuModel);
     });
 
@@ -581,7 +585,9 @@ describe('navigationMachine', () => {
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
-      expect((cancelData?.active as { id: string } | null)?.id).toBe('right');
+      expect((cancelData?.active as { id: string } | undefined)?.id).toBe(
+        'right',
+      );
     });
 
     it('dispatches cancel when the pointer is cancelled on a non-leaf active item too (objective 8)', () => {
@@ -600,7 +606,9 @@ describe('navigationMachine', () => {
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
-      expect((cancelData?.active as { id: string } | null)?.id).toBe('right');
+      expect((cancelData?.active as { id: string } | undefined)?.id).toBe(
+        'right',
+      );
     });
   });
 
@@ -615,18 +623,19 @@ describe('navigationMachine', () => {
       openNovice(host);
       host.send('move', { position: [100, 0] }); // Past the dead zone, activates "right"
       const submenu =
-        host.current.name === 'novice' ? host.current.data.active : null;
-      expect(submenu).not.toBeNull();
+        host.current.name === 'novice' ? host.current.data.active : undefined;
+      expect(submenu).not.toBeUndefined();
 
       opened.length = 0; // Discard the root menu's own `open`
       host.send('dwell');
 
       // A genuine phase change: novice re-enters novice, but at the submenu.
       expect(host.current.name).toBe('novice');
-      const data = host.current.name === 'novice' ? host.current.data : null;
+      const data =
+        host.current.name === 'novice' ? host.current.data : undefined;
       expect(data?.menu).toBe(submenu);
       expect(data?.menuCenter).toEqual([100, 0]);
-      expect(data?.active).toBeNull();
+      expect(data?.active).toBeUndefined();
 
       expect(opened).toHaveLength(1);
       const event = opened[0] as {
@@ -648,7 +657,8 @@ describe('navigationMachine', () => {
       host.send('move', { position: [100, 0] });
       host.send('dwell');
 
-      const data = host.current.name === 'novice' ? host.current.data : null;
+      const data =
+        host.current.name === 'novice' ? host.current.data : undefined;
       expect(data?.lastPosition).toEqual([100, 0]);
       expect(data?.lowerStroke).toEqual([
         [0, 0],
@@ -666,7 +676,7 @@ describe('navigationMachine', () => {
       // Just past the dead zone (40): activation and dwelling share it.
       host.send('move', { position: [41, 0] });
       const submenu =
-        host.current.name === 'novice' ? host.current.data.active : null;
+        host.current.name === 'novice' ? host.current.data.active : undefined;
 
       host.send('dwell');
 
@@ -695,7 +705,7 @@ describe('navigationMachine', () => {
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
-      host.send('move', { position: [10, 0] }); // Within the dead zone: active stays null
+      host.send('move', { position: [10, 0] }); // Within the dead zone: active stays undefined
       host.send('dwell');
 
       expect(opened).not.toHaveBeenCalled();
@@ -879,7 +889,7 @@ describe('navigationMachine', () => {
 
       openNovice(host);
 
-      expect(layouts.at(-1)?.indicator).toBeNull();
+      expect(layouts.at(-1)?.indicator).toBeUndefined();
     });
 
     it('shows no indicator in novice mode while the active item is a leaf', () => {
@@ -889,7 +899,7 @@ describe('navigationMachine', () => {
       openNovice(host);
       host.send('move', { position: [200, 0] }); // Activates the leaf "right".
 
-      expect(layouts.at(-1)?.indicator).toBeNull();
+      expect(layouts.at(-1)?.indicator).toBeUndefined();
     });
 
     it('shows the indicator anchored at the dwell anchor while the active item is a submenu', () => {

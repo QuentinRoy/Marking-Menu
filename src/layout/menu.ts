@@ -71,7 +71,7 @@ export type Menu = {
   /**
   Mark the item with the given id as active (or none if nullish).
   */
-  setActive: (itemId: string | number | null) => void;
+  setActive: (itemId: string | number | undefined) => void;
   /**
   Remove the menu.
   */
@@ -280,12 +280,12 @@ function wedgePath({
   outerRadius: number;
   gap: number;
   cornerRadius: number;
-}): string | null {
+}): string | undefined {
   const inset = gap / 2 + cornerRadius;
   const insetInnerRadius = innerRadius + cornerRadius;
   const insetOuterRadius = outerRadius - cornerRadius;
   if (insetInnerRadius >= insetOuterRadius || inset > insetInnerRadius) {
-    return null;
+    return undefined;
   }
 
   const innerOffset = Math.asin(inset / insetInnerRadius);
@@ -293,7 +293,7 @@ function wedgePath({
   const start = before + innerOffset;
   const end = next - innerOffset;
   if (end <= start) {
-    return null;
+    return undefined;
   }
 
   const innerStart = polar(start, innerRadius);
@@ -492,7 +492,7 @@ function renderWedges(
       gap,
       cornerRadius,
     });
-    if (pathData !== null) {
+    if (pathData !== undefined) {
       appendItemWedge(entry.item, pathData);
     }
   }
@@ -513,18 +513,19 @@ function applySolvedLayout(
     ...root.querySelectorAll<HTMLElement>('.marking-menu-item'),
   ];
   const plateElements = itemElements.map((element) => {
-    const plate = element.querySelector<HTMLElement>('.marking-menu-plate');
-    if (plate === null) {
+    const plate =
+      element.querySelector<HTMLElement>('.marking-menu-plate') ?? undefined;
+    if (plate === undefined) {
       throw new Error('Menu item element is missing its plate.');
     }
 
     return plate;
   });
   const connectorElements = itemElements.map((element) => {
-    const connector = element.querySelector<HTMLElement>(
-      '.marking-menu-outer-connector',
-    );
-    if (connector === null) {
+    const connector =
+      element.querySelector<HTMLElement>('.marking-menu-outer-connector') ??
+      undefined;
+    if (connector === undefined) {
       throw new Error('Menu item element is missing its connector.');
     }
 
@@ -634,14 +635,14 @@ export function createMenu({
       (elt) => elt.dataset.itemId === itemId,
     );
 
-  const setActive = (itemId: string | number | null) => {
+  const setActive = (itemId: string | number | undefined) => {
     clearActiveItems();
 
     // Set the active class. This mirrors the original truthiness check (which
-    // also allowed the numeric id `0`): only `null`, `''`, and `NaN` are
+    // also allowed the numeric id `0`): only `undefined`, `''`, and `NaN` are
     // skipped.
     if (
-      itemId !== null &&
+      itemId !== undefined &&
       itemId !== '' &&
       (typeof itemId !== 'number' || !Number.isNaN(itemId))
     ) {

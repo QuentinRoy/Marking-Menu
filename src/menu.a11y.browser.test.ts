@@ -92,6 +92,8 @@ test('menu and items take focus from script only', async () => {
     expect(item).toHaveAttribute('tabindex', '-1');
   }
 
+  // `activeElement` is a DOM API and can be `null`, not `undefined`.
+  // eslint-disable-next-line @typescript-eslint/no-restricted-types
   (document.activeElement as HTMLElement | null)?.blur();
   await userEvent.tab();
   expect(after).toHaveFocus();

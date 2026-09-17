@@ -115,7 +115,9 @@ function labelsAlong(pointer: string, value: unknown): string[] {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return (
+    typeof value === 'object' && value !== undefined && !Array.isArray(value)
+  );
 }
 
 /**
@@ -218,10 +220,10 @@ export type SchemaAnnotation = {
  it means at each place it is used.
 
  @param pointer - A JSON pointer into the document, e.g. `#/items/0/label`.
- @returns The annotation, or `null` if the pointer leads nowhere in the
+ @returns The annotation, or `undefined` if the pointer leads nowhere in the
  schema.
  */
-export function annotationAt(pointer: string): SchemaAnnotation | null {
+export function annotationAt(pointer: string): SchemaAnnotation | undefined {
   let node: SchemaNode = schemaTree;
   for (const step of pointer.replace(/^#\/?/v, '').split('/')) {
     if (step === '') {
@@ -231,7 +233,7 @@ export function annotationAt(pointer: string): SchemaAnnotation | null {
     const here = deref(node);
     const next = /^\d+$/v.test(step) ? here.items : here.properties?.[step];
     if (next === undefined) {
-      return null;
+      return undefined;
     }
 
     node = next;

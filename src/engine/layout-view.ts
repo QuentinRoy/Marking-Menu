@@ -7,18 +7,22 @@ import type { NavigationOptions, NavigationState } from './machine.js';
  */
 export type LayoutView<M extends AnyModelNode> = {
   readonly cursor: 'default' | 'crosshair' | 'none';
-  readonly menu: null | {
-    readonly model: ModelMenus<M>;
-    readonly center: Point;
-    readonly activeKey: string | null;
-  };
-  readonly upperStroke: readonly Point[] | null;
-  readonly lowerStroke: readonly Point[] | null;
-  readonly indicator: null | {
-    readonly anchor: Point;
-    readonly position: Point;
-    readonly delayMs: number;
-  };
+  readonly menu:
+    | undefined
+    | {
+        readonly model: ModelMenus<M>;
+        readonly center: Point;
+        readonly activeKey: string | undefined;
+      };
+  readonly upperStroke: readonly Point[] | undefined;
+  readonly lowerStroke: readonly Point[] | undefined;
+  readonly indicator:
+    | undefined
+    | {
+        readonly anchor: Point;
+        readonly position: Point;
+        readonly delayMs: number;
+      };
 };
 
 /**
@@ -46,10 +50,10 @@ export function projectLayout<M extends AnyModelNode>(
     case 'idle': {
       return {
         cursor: 'default',
-        menu: null,
-        upperStroke: null,
-        lowerStroke: null,
-        indicator: null,
+        menu: undefined,
+        upperStroke: undefined,
+        lowerStroke: undefined,
+        indicator: undefined,
       };
     }
 
@@ -65,9 +69,9 @@ export function projectLayout<M extends AnyModelNode>(
         // The cursor is hidden behind the opening indicator, the same way
         // novice mode's own dot already hides it.
         cursor: 'none',
-        menu: null,
+        menu: undefined,
         upperStroke: state.stroke,
-        lowerStroke: null,
+        lowerStroke: undefined,
         indicator,
       };
     }
@@ -76,9 +80,9 @@ export function projectLayout<M extends AnyModelNode>(
       return {
         // The cursor is hidden behind the opening indicator, same as startup.
         cursor: 'none',
-        menu: null,
+        menu: undefined,
         upperStroke: state.stroke,
-        lowerStroke: null,
+        lowerStroke: undefined,
         indicator: {
           anchor: state.dwellAnchor,
           position: state.stroke.at(-1) as Point,
@@ -92,22 +96,24 @@ export function projectLayout<M extends AnyModelNode>(
       // boundary (see machine.ts's module comment); every real item built
       // by `model.ts` carries `key`/`isLeaf`, the same reason `renderer.ts`
       // casts `view.menu.model` to `MenuLayoutModel`.
-      const active = state.active as {
-        readonly key: string;
-        readonly isLeaf: boolean;
-      } | null;
+      const active = state.active as
+        | {
+            readonly key: string;
+            readonly isLeaf: boolean;
+          }
+        | undefined;
       return {
         cursor: 'none',
         menu: {
           model: state.menu,
           center: state.menuCenter,
-          activeKey: active?.key ?? null,
+          activeKey: active?.key ?? undefined,
         },
         upperStroke: noviceUpperStroke(state),
         lowerStroke: state.lowerStroke,
         indicator:
-          active === null || active.isLeaf
-            ? null
+          active === undefined || active.isLeaf
+            ? undefined
             : {
                 anchor: state.dwellAnchor,
                 position: state.lastPosition,

@@ -35,9 +35,9 @@ function openMenu() {
 }
 
 /**
-@type {ReturnType<typeof setTimeout> | null}
+@type {ReturnType<typeof setTimeout> | undefined}
 */
-let toastTimeoutId = null;
+let toastTimeoutId;
 
 /**
 Shows `message` in the toast, replacing whatever it was already showing.
@@ -45,7 +45,7 @@ Shows `message` in the toast, replacing whatever it was already showing.
 @param {string} message - The text to show.
 */
 function toastMessage(message) {
-  if (toastTimeoutId !== null) {
+  if (toastTimeoutId !== undefined) {
     clearTimeout(toastTimeoutId);
   }
 

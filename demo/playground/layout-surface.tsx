@@ -35,25 +35,29 @@ export function LayoutSurface({
   focusPath: readonly number[];
   onFocus: (path: readonly number[]) => void;
 }) {
+  // Bound to JSX via `ref={}` below: React itself sets `.current` to `null`
+  // on unmount, so these two must stay `null`-typed.
+  /* eslint-disable @typescript-eslint/no-restricted-types -- DOM refs */
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const menuParentRef = useRef<HTMLDivElement | null>(null);
-  const menuRef = useRef<ReturnType<typeof createMenu> | null>(null);
+  /* eslint-enable @typescript-eslint/no-restricted-types -- DOM refs */
+  const menuRef = useRef<ReturnType<typeof createMenu> | undefined>(undefined);
   // The selected-but-not-yet-opened item, read and written imperatively:
   // nothing in JSX depends on it, `Menu.setActive` is what makes it visible.
-  const activeKeyRef = useRef<string | null>(null);
+  const activeKeyRef = useRef<string | undefined>(undefined);
   const latestRef = useLatest({ model, focusPath, onFocus });
 
   useEffect(() => {
-    const surface = surfaceRef.current;
-    const menuParent = menuParentRef.current;
-    if (surface === null || menuParent === null) {
+    const surface = surfaceRef.current ?? undefined;
+    const menuParent = menuParentRef.current ?? undefined;
+    if (surface === undefined || menuParent === undefined) {
       return;
     }
 
     // A new level starts with nothing selected: a key selected at the
     // previous level may not exist at this one, and `setActive` throws for
     // an id it can't find.
-    activeKeyRef.current = null;
+    activeKeyRef.current = undefined;
     const render = () => {
       menuRef.current?.remove();
       const { width, height } = surface.getBoundingClientRect();
@@ -75,7 +79,7 @@ export function LayoutSurface({
     return () => {
       observer.disconnect();
       menuRef.current?.remove();
-      menuRef.current = null;
+      menuRef.current = undefined;
     };
   }, [model, focusPath]);
 
@@ -86,9 +90,9 @@ export function LayoutSurface({
 
     const itemId = hitItemId(event.nativeEvent);
     if (itemId === undefined) {
-      if (activeKeyRef.current !== null) {
-        activeKeyRef.current = null;
-        menuRef.current?.setActive(null);
+      if (activeKeyRef.current !== undefined) {
+        activeKeyRef.current = undefined;
+        menuRef.current?.setActive(undefined);
       }
 
       return;
