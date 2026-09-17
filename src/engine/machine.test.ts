@@ -774,6 +774,41 @@ describe('navigationMachine', () => {
       // compares against.
       expect(vi.getTimerCount()).toBe(1);
     });
+
+    it('opens a submenu reached by an insignificant move away from a leaf whose own dwell just fired', () => {
+      using _timers = fakeTimers();
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const opened = vi.fn<() => void>();
+      host.on('open', opened);
+
+      host.send('down', { position: [0, 0] });
+      vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice
+      opened.mockClear();
+
+      // Just past the boundary between "down" (a leaf) and "right" (a
+      // submenu): activates "down".
+      host.send('move', { position: [69.47, 71.93] });
+      expect(
+        host.current.name === 'novice' &&
+          (host.current.data.active as { id: string } | undefined)?.id,
+      ).toBe('down');
+
+      // The dwell fires on the leaf: nothing opens, but the timer must not
+      // be left dead for the rest of the gesture.
+      vi.advanceTimersByTime(options.submenuOpeningDelay);
+      expect(opened).not.toHaveBeenCalled();
+
+      // Less than `movementsThreshold` away, crossing the boundary onto
+      // "right".
+      host.send('move', { position: [71.93, 69.47] });
+      expect(
+        host.current.name === 'novice' &&
+          (host.current.data.active as { id: string } | undefined)?.id,
+      ).toBe('right');
+
+      vi.advanceTimersByTime(options.submenuOpeningDelay);
+      expect(opened).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('the strokes it announces to the layout', () => {
@@ -856,31 +891,29 @@ describe('navigationMachine', () => {
   });
 
   describe('the indicator it announces to the layout', () => {
-    it('shows the indicator anchored at the origin while dwelling in startup', () => {
+    it('shows the indicator started at the current time while dwelling in startup', () => {
       const host = startHost();
       const layouts = recordLayouts(host);
 
       host.send('down', { position: [0, 0] });
 
-      expect(layouts.at(-1)?.indicator).toEqual({
-        anchor: [0, 0],
-        position: [0, 0],
-        delayMs: options.noviceDwellingTime,
-      });
+      const indicator = layouts.at(-1)?.indicator;
+      expect(typeof indicator?.startedAt).toBe('number');
+      expect(indicator?.position).toEqual([0, 0]);
+      expect(indicator?.delayMs).toBe(options.noviceDwellingTime);
     });
 
-    it('shows the indicator anchored at the dwell position while dwelling in expert mode', () => {
+    it('shows the indicator at the dwell position while dwelling in expert mode', () => {
       const host = startHost();
       const layouts = recordLayouts(host);
 
       host.send('down', { position: [0, 0] });
       host.send('move', { position: [100, 0] }); // Crosses the threshold: expert.
 
-      expect(layouts.at(-1)?.indicator).toEqual({
-        anchor: [100, 0],
-        position: [100, 0],
-        delayMs: options.noviceDwellingTime,
-      });
+      const indicator = layouts.at(-1)?.indicator;
+      expect(typeof indicator?.startedAt).toBe('number');
+      expect(indicator?.position).toEqual([100, 0]);
+      expect(indicator?.delayMs).toBe(options.noviceDwellingTime);
     });
 
     it('shows no indicator in novice mode while the pointer is within the dead zone', () => {
@@ -902,31 +935,32 @@ describe('navigationMachine', () => {
       expect(layouts.at(-1)?.indicator).toBeUndefined();
     });
 
-    it('shows the indicator anchored at the dwell anchor while the active item is a submenu', () => {
+    it('shows the indicator at the dwell position while the active item is a submenu', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       const layouts = recordLayouts(host);
 
       openNovice(host);
       host.send('move', { position: [100, 0] }); // Activates the submenu "right".
 
-      expect(layouts.at(-1)?.indicator).toEqual({
-        anchor: [100, 0],
-        position: [100, 0],
-        delayMs: options.submenuOpeningDelay,
-      });
+      const indicator = layouts.at(-1)?.indicator;
+      expect(typeof indicator?.startedAt).toBe('number');
+      expect(indicator?.position).toEqual([100, 0]);
+      expect(indicator?.delayMs).toBe(options.submenuOpeningDelay);
     });
 
-    it("keeps drawing at the pointer's current position even when a small movement leaves the restart anchor untouched", () => {
+    it("keeps drawing at the pointer's current position, but does not restart the dwell clock, when a small movement leaves the restart anchor untouched", () => {
+      using _timers = fakeTimers();
       const host = navigationMachine.start({ model: submenuModel, options });
       const layouts = recordLayouts(host);
 
       openNovice(host);
       host.send('move', { position: [100, 0] }); // Activates the submenu "right".
-      const firstAnchor = layouts.at(-1)?.indicator?.anchor;
+      const firstStartedAt = layouts.at(-1)?.indicator?.startedAt;
 
+      vi.advanceTimersByTime(10);
       host.send('move', { position: [102, 0] }); // Insignificant (<5px).
 
-      expect(layouts.at(-1)?.indicator?.anchor).toBe(firstAnchor);
+      expect(layouts.at(-1)?.indicator?.startedAt).toBe(firstStartedAt);
       expect(layouts.at(-1)?.indicator?.position).toEqual([102, 0]);
     });
   });

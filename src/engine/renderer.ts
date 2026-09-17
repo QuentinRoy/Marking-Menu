@@ -48,15 +48,14 @@ type MenuHandle<M extends AnyModelNode> = {
 /**
  One indicator surface, growing on its own clock rather than in response to
  renders: while the pointer dwells, nothing else changes, so the layout
- announcement carrying the indicator arrives once and the growth has to
- keep animating on its own frame loop until either it clears
- (`sync(undefined)`)
- or a fresh dwell (a new `anchor` reference) restarts it. `position` is
- tracked separately from `anchor`: the anchor only carries restart
- identity and can lag behind the pointer by up to `movementsThreshold`,
- but the indicator itself must always sit exactly where the stroke's own
- tip currently is, so every `sync` call updates it even when the anchor
- (and so the growth's timing) does not restart.
+ announcement carrying the indicator arrives once and the growth has to keep
+ animating on its own frame loop until either it clears (`sync(undefined)`)
+ or a fresh dwell (a new `startedAt`) restarts it. The machine owns that
+ clock; the loop just reads elapsed time against it. `position` is tracked
+ separately: it can lag behind the pointer by up to `movementsThreshold`,
+ but the indicator itself must always sit exactly where the stroke's own tip
+ currently is, so every `sync` call updates it even when the dwell (and so
+ the growth's timing) does not restart.
  */
 function createIndicatorLayer({
   parent,
@@ -73,7 +72,7 @@ function createIndicatorLayer({
   dispose: () => void;
 } {
   let surface: ReturnType<typeof createIndicatorSurface> | undefined;
-  let currentAnchor: Point | undefined;
+  let currentStartedAt: number | undefined;
   let currentPosition: Point | undefined;
   let frame = -1;
 
@@ -108,17 +107,17 @@ function createIndicatorLayer({
         stop();
         surface?.remove();
         surface = undefined;
-        currentAnchor = undefined;
+        currentStartedAt = undefined;
         currentPosition = undefined;
         return;
       }
 
       surface ??= createIndicatorSurface({ parent, ...surfaceOptions });
       currentPosition = indicator.position;
-      if (indicator.anchor !== currentAnchor) {
-        currentAnchor = indicator.anchor;
+      if (indicator.startedAt !== currentStartedAt) {
+        currentStartedAt = indicator.startedAt;
         stop();
-        tick(indicator.delayMs, Date.now());
+        tick(indicator.delayMs, indicator.startedAt);
       }
     },
     backgroundElement: () => surface?.backgroundElement ?? undefined,
