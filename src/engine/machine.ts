@@ -548,8 +548,7 @@ export const navigationMachine = machine({
         armDwellTimer(toData.options.submenuOpeningDelay, send),
       // A fresh `dwellStartedAt` restarts the residency: from significant
       // movement, from the centre a submenu open produces, or from a dwell
-      // that fired on a leaf and was consumed. A small move, or an
-      // ineligible dwell that left `dwellStartedAt` untouched, leaves the
+      // that fired on a leaf and was consumed. A small move leaves the
       // pending timer alone.
       restart: ({ fromData, toData }) =>
         fromData.dwellStartedAt !== toData.dwellStartedAt,

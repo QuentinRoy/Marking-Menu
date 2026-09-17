@@ -52,10 +52,12 @@ type MenuHandle<M extends AnyModelNode> = {
  animating on its own frame loop until either it clears (`sync(undefined)`)
  or a fresh dwell (a new `startedAt`) restarts it. The machine owns that
  clock; the loop just reads elapsed time against it. `position` is tracked
- separately: it can lag behind the pointer by up to `movementsThreshold`,
- but the indicator itself must always sit exactly where the stroke's own tip
- currently is, so every `sync` call updates it even when the dwell (and so
- the growth's timing) does not restart.
+ separately from `startedAt`: the machine's own movement anchor, and so
+ `startedAt`, can lag the pointer by up to `movementsThreshold`, since
+ sub-threshold movement doesn't restart the dwell, but the indicator itself
+ must always sit exactly where the stroke's own tip currently is, so every
+ `sync` call updates `position` even when `startedAt` (and so the growth's
+ timing) does not restart.
  */
 function createIndicatorLayer({
   parent,
