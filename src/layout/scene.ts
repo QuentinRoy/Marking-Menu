@@ -43,9 +43,6 @@ export function createScene({
     const slot = doc.createElement('div');
     slot.className = 'marking-menu-slot';
     slot.dataset.slot = name;
-    // Generates no box of its own, so children lay out as if they were
-    // direct children of the root, and document order sets paint order.
-    slot.style.display = 'contents';
     root.append(slot);
     return slot;
   };
