@@ -3,7 +3,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { parse as csvParseCallback } from 'csv-parse';
 import { type Mock } from 'vitest';
-import type { ModelItem } from '../types.js';
+import type { ModelItem, ModelRoot } from '../types.js';
 import { deltaAngle, type Point } from '../utils.js';
 import {
   analyzeMarkingMenuStroke,
@@ -47,14 +47,41 @@ const csvParse = async (
     );
   });
 
-type MockModel = ModelItem<string | undefined, string, readonly MockModel[]> & {
+type MockBase = {
+  items: readonly MockModel[];
+  id: string | undefined;
+  key: string;
+  label: string;
+  angle: number;
   requestedAngle: number | undefined;
-  parent: MockModel | undefined;
+  getChild: Mock<() => undefined>;
+  getChildrenByLabel: Mock<() => never[]>;
   getMaxDepth: Mock<() => number>;
   getMaxBreadth: Mock<() => number>;
   getMinAngularGap: Mock<() => number>;
-  getNearestChild: Mock<(childAngle?: number) => MockModel>;
+  getNearestChild: Mock<(childAngle?: number) => MockItem>;
 };
+
+type MockRoot = ModelRoot<readonly MockModel[]> &
+  MockBase & {
+    isRoot: true;
+    parent: undefined;
+    isLeaf: boolean;
+  };
+
+type MockItem = ModelItem<
+  string | undefined,
+  string,
+  readonly MockModel[],
+  MockModel
+> &
+  MockBase & {
+    isRoot: false;
+    parent: MockModel;
+    isLeaf: boolean;
+  };
+
+type MockModel = MockRoot | MockItem;
 
 const createMockModel = (
   depth = 1,
@@ -62,40 +89,63 @@ const createMockModel = (
   requestedAngle?: number,
   parent?: MockModel,
 ): MockModel => {
+  const isRoot = parent === undefined;
   const base = {
-    items: [],
+    items: [] as readonly MockModel[],
     id: undefined,
     key: 'mock',
     label: 'Mock',
     angle: requestedAngle ?? 0,
     getChild: vi.fn(() => undefined),
     getChildrenByLabel: vi.fn(() => []),
-    isRoot: false as const,
-    parent,
+    requestedAngle,
   };
   if (depth === 0) {
+    if (parent === undefined) {
+      throw new Error('A leaf mock requires a parent');
+    }
+
     return {
       ...base,
       isLeaf: true,
       isRoot: false,
+      parent,
       getMaxDepth: vi.fn(() => 0),
       getMaxBreadth: vi.fn(() => 0),
       getMinAngularGap: vi.fn(() => 360 / breadth),
-      getNearestChild: vi.fn<(childAngle?: number) => MockModel>(),
-      requestedAngle,
+      getNearestChild: vi.fn<(childAngle?: number) => MockItem>(),
     };
   }
 
   if (depth > 0) {
-    const m: MockModel = {
+    if (isRoot) {
+      const m: MockRoot = {
+        ...base,
+        isRoot: true,
+        parent: undefined,
+        getMaxDepth: vi.fn(() => depth),
+        getMaxBreadth: vi.fn(() => breadth),
+        getMinAngularGap: vi.fn(() => 360 / breadth),
+        isLeaf: false,
+        getNearestChild: vi.fn(
+          (childAngle?: number) =>
+            createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
+        ),
+      };
+      return m;
+    }
+
+    const m: MockItem = {
       ...base,
-      requestedAngle,
+      isRoot: false,
+      parent,
       getMaxDepth: vi.fn(() => depth),
       getMaxBreadth: vi.fn(() => breadth),
       getMinAngularGap: vi.fn(() => 360 / breadth),
       isLeaf: false,
-      getNearestChild: vi.fn((childAngle?: number) =>
-        createMockModel(depth - 1, breadth, childAngle, m),
+      getNearestChild: vi.fn(
+        (childAngle?: number) =>
+          createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
       ),
     };
     return m;

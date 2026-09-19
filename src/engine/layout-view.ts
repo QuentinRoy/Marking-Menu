@@ -1,16 +1,16 @@
-import type { AnyModelNode, ModelMenus } from '../types.js';
+import type { MenuLayoutModel } from '../layout/menu.js';
 import type { Point } from '../utils.js';
 import type { NavigationOptions, NavigationState } from './machine.js';
 
 /**
  The DOM-free, state-derived layout projection.
  */
-export type LayoutView<M extends AnyModelNode> = {
+export type LayoutView<MenuModel = MenuLayoutModel> = {
   readonly cursor: 'default' | 'crosshair' | 'none';
   readonly menu:
     | undefined
     | {
-        readonly model: ModelMenus<M>;
+        readonly model: MenuModel;
         readonly center: Point;
         readonly activeKey: string | undefined;
       };
@@ -42,10 +42,13 @@ export function noviceUpperStroke({
   return [menuCenter, lastPosition];
 }
 
-export function projectLayout<M extends AnyModelNode>(
-  state: NavigationState<M>,
+export function projectLayout<
+  MenuModel,
+  Active extends { readonly key: string; readonly isLeaf: boolean },
+>(
+  state: NavigationState<MenuModel, Active>,
   options: NavigationOptions,
-): LayoutView<M> {
+): LayoutView<MenuModel> {
   switch (state.phase) {
     case 'idle': {
       return {
@@ -92,16 +95,7 @@ export function projectLayout<M extends AnyModelNode>(
     }
 
     case 'novice': {
-      // `ModelItems<M>` is erased to a bare node at the machine's own
-      // boundary (see machine.ts's module comment); every real item built
-      // by `model.ts` carries `key`/`isLeaf`, the same reason `renderer.ts`
-      // casts `view.menu.model` to `MenuLayoutModel`.
-      const active = state.active as
-        | {
-            readonly key: string;
-            readonly isLeaf: boolean;
-          }
-        | undefined;
+      const { active } = state;
       return {
         cursor: 'none',
         menu: {

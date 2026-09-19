@@ -1,11 +1,14 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import { createModel } from './model.js';
 import type {
-  AnyModelNode,
   MarkingMenuItemInput,
-  MarkingMenuModelItem,
+  ModelItem,
+  ModelLeaf,
   ModelLeaves,
+  ModelMenu,
   ModelMenus,
+  ModelNode,
+  ModelRoot,
 } from './types.js';
 
 /*
@@ -230,17 +233,86 @@ describe('createModel', () => {
     expectTypeOf(dynamic.getMaxDepth()).toEqualTypeOf<number>();
     expectTypeOf(dynamic.parent).toEqualTypeOf<undefined>();
     expectTypeOf(dynamic.items[0]?.parent).toEqualTypeOf<
-      MarkingMenuModelItem | undefined
+      ModelNode | undefined
     >();
   });
 });
 
 /*
  A menu whose items are only known at runtime: every node's `isLeaf` is the
- general `boolean` rather than a literal, the same shape `AnyModelNode` has.
+ general `boolean` rather than a literal, the same shape `ModelNode` has.
  */
 declare const dynamicItems: MarkingMenuItemInput[];
 const dynamicMenu = createModel({ items: dynamicItems });
+declare const sampleNode: ModelNode;
+declare const sampleItem: ModelItem;
+declare const dynamicMenuNode: ModelMenus<typeof dynamicMenu>;
+
+describe('ModelNode discrimination', () => {
+  it('narrows to ModelItem and exposes item fields when not root', () => {
+    expectTypeOf(sampleNode.isRoot).toEqualTypeOf<boolean>();
+    if (sampleNode.isRoot) {
+      return;
+    }
+
+    expectTypeOf(sampleNode).toExtend<ModelItem>();
+    expectTypeOf(sampleNode.label).toEqualTypeOf<string>();
+    expectTypeOf(sampleNode.key).toEqualTypeOf<string>();
+    expectTypeOf(sampleNode.angle).toEqualTypeOf<number>();
+    expectTypeOf(sampleNode.id).toEqualTypeOf<string | undefined>();
+  });
+
+  it('narrows to ModelRoot when root', () => {
+    if (!sampleNode.isRoot) {
+      return;
+    }
+
+    expectTypeOf(sampleNode).toEqualTypeOf<ModelRoot>();
+    expectTypeOf(sampleNode.parent).toEqualTypeOf<undefined>();
+  });
+
+  it('exposes getMinAngularGap on every node', () => {
+    expectTypeOf(sampleNode.getMinAngularGap()).toEqualTypeOf<number>();
+  });
+});
+
+describe('ModelItem narrowing', () => {
+  it('narrows a dynamic node to ModelLeaf', () => {
+    if (!sampleNode.isRoot && sampleNode.isLeaf) {
+      expectTypeOf(sampleNode).toEqualTypeOf<ModelLeaf>();
+    }
+  });
+
+  it('narrows to ModelLeaf when isLeaf is true', () => {
+    if (sampleItem.isLeaf) {
+      expectTypeOf(sampleItem.isLeaf).toEqualTypeOf<true>();
+    }
+  });
+
+  it('narrows isLeaf to false when not leaf', () => {
+    if (!sampleItem.isLeaf) {
+      expectTypeOf(sampleItem.isLeaf).toEqualTypeOf<false>();
+    }
+  });
+});
+
+describe('Parent traversal', () => {
+  it('requires every item parent to be a model node', () => {
+    // @ts-expect-error -- an item parent is always another model node.
+    type InvalidItem = ModelItem<string, string, readonly never[], string>;
+  });
+
+  it('narrows parent to ModelItem when not root', () => {
+    const parent = dynamicMenu.items[0]?.parent;
+    if (!parent || parent.isRoot) {
+      return;
+    }
+
+    expectTypeOf(parent).toExtend<ModelItem>();
+    expectTypeOf(parent.label).toEqualTypeOf<string>();
+    expectTypeOf(parent.key).toEqualTypeOf<string>();
+  });
+});
 
 describe('ModelLeaves and ModelMenus', () => {
   it('picks out exactly the leaves and the menus of a literal menu', () => {
@@ -251,13 +323,27 @@ describe('ModelLeaves and ModelMenus', () => {
     expectTypeOf<ModelMenus<typeof menu>['isLeaf']>().toEqualTypeOf<false>();
   });
 
-  it('keeps a node whose shape is only known at runtime', () => {
-    // Not `never`: a menu built at runtime has leaves and submenus like any
-    // other, and the type checker cannot rule either out from `isLeaf:
-    // boolean`. Both types therefore include such a node, and overlap on it.
-    expectTypeOf<ModelLeaves<AnyModelNode>>().not.toEqualTypeOf<never>();
-    expectTypeOf<ModelMenus<AnyModelNode>>().not.toEqualTypeOf<never>();
-    expectTypeOf<ModelLeaves<typeof dynamicMenu>>().not.toEqualTypeOf<never>();
-    expectTypeOf<ModelMenus<typeof dynamicMenu>>().not.toEqualTypeOf<never>();
+  it('narrows dynamic leaves to isLeaf true', () => {
+    expectTypeOf<
+      ModelLeaves<typeof dynamicMenu>['isLeaf']
+    >().toEqualTypeOf<true>();
+    expectTypeOf<
+      ModelLeaves<typeof dynamicMenu>['label']
+    >().toEqualTypeOf<string>();
+    expectTypeOf<ModelLeaves<ModelNode>['isLeaf']>().toEqualTypeOf<true>();
+    expectTypeOf<ModelLeaves<ModelNode>>().toEqualTypeOf<ModelLeaf>();
+  });
+
+  it('resolves ModelMenus on ModelNode to ModelMenu', () => {
+    expectTypeOf<ModelMenus<ModelNode>>().toEqualTypeOf<ModelMenu>();
+  });
+
+  it('narrows dynamic menus with isRoot', () => {
+    if (dynamicMenuNode.isRoot) {
+      expectTypeOf(dynamicMenuNode.parent).toEqualTypeOf<undefined>();
+    } else {
+      expectTypeOf(dynamicMenuNode.label).toEqualTypeOf<string>();
+      expectTypeOf(dynamicMenuNode.isLeaf).toEqualTypeOf<false>();
+    }
   });
 });

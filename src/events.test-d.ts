@@ -1,16 +1,17 @@
 import { describe, expectTypeOf, it } from 'vitest';
-import type {
-  MarkingMenuCancelEvent,
-  MarkingMenuChangeEvent,
-  MarkingMenuEvent,
-  MarkingMenuEventEmitter,
-  MarkingMenuEventMap,
-  MarkingMenuMoveEvent,
-  MarkingMenuOpenEvent,
-  MarkingMenuSelectEvent,
-  MarkingMenuStartEvent,
+import {
+  type MarkingMenuCancelEvent,
+  type MarkingMenuChangeEvent,
+  type MarkingMenuEvent,
+  type MarkingMenuEventEmitter,
+  type MarkingMenuEventMap,
+  type MarkingMenuMoveEvent,
+  type MarkingMenuOpenEvent,
+  type MarkingMenuSelectEvent,
+  type MarkingMenuStartEvent,
 } from './events.js';
 import { createModel } from './model.js';
+import type { MarkingMenuItemInput } from './types.js';
 import { noOp } from './utils.js';
 
 /*
@@ -22,6 +23,10 @@ const menu = createModel({
   items: [{ id: 'right', label: 'Right' }],
 });
 type M = typeof menu;
+
+declare const dynamicItems: MarkingMenuItemInput[];
+const dynamicMenu = createModel({ items: dynamicItems });
+type DynamicM = typeof dynamicMenu;
 
 describe('MarkingMenuEventMap', () => {
   it('maps each event name to its exact event class', () => {
@@ -101,6 +106,75 @@ describe('MarkingMenuEvent', () => {
 });
 
 declare const target: MarkingMenuEventEmitter<M>;
+declare const genericSelect: MarkingMenuSelectEvent;
+declare const genericOpen: MarkingMenuOpenEvent;
+declare const genericMove: MarkingMenuMoveEvent;
+declare const dynamicSelect: MarkingMenuSelectEvent<DynamicM>;
+declare const dynamicOpen: MarkingMenuOpenEvent<DynamicM>;
+declare const dynamicChange: MarkingMenuChangeEvent<DynamicM>;
+
+describe('Default generic and event payload narrowing', () => {
+  it('exposes label and id on generic select event', () => {
+    expectTypeOf(genericSelect.selection.label).toEqualTypeOf<string>();
+    expectTypeOf(genericSelect.selection.id).toEqualTypeOf<
+      string | undefined
+    >();
+    expectTypeOf(genericSelect.selection.isLeaf).toEqualTypeOf<true>();
+    expectTypeOf(genericSelect.selection.isRoot).toEqualTypeOf<false>();
+  });
+
+  it('narrows menu on generic open event with isRoot', () => {
+    if (genericOpen.menu.isRoot) {
+      expectTypeOf(genericOpen.menu.parent).toEqualTypeOf<undefined>();
+    } else {
+      expectTypeOf(genericOpen.menu.label).toEqualTypeOf<string>();
+      expectTypeOf(genericOpen.menu.key).toEqualTypeOf<string>();
+    }
+  });
+
+  it('exposes item fields on generic move event active', () => {
+    if (!genericMove.active) {
+      return;
+    }
+
+    expectTypeOf(genericMove.active.key).toEqualTypeOf<string>();
+    expectTypeOf(genericMove.active.label).toEqualTypeOf<string>();
+    expectTypeOf(genericMove.active.isRoot).toEqualTypeOf<false>();
+    if (genericMove.active.isLeaf) {
+      expectTypeOf(genericMove.active.isLeaf).toEqualTypeOf<true>();
+    }
+  });
+
+  it('statically types dynamic menu select payloads with isLeaf true', () => {
+    expectTypeOf(dynamicSelect.selection.label).toEqualTypeOf<string>();
+    expectTypeOf(dynamicSelect.selection.id).toEqualTypeOf<
+      string | undefined
+    >();
+    expectTypeOf(dynamicSelect.selection.isLeaf).toEqualTypeOf<true>();
+    expectTypeOf(dynamicSelect.selection.isRoot).toEqualTypeOf<false>();
+  });
+
+  it('narrows dynamic menu open payload with isRoot', () => {
+    if (dynamicOpen.menu.isRoot) {
+      expectTypeOf(dynamicOpen.menu.parent).toEqualTypeOf<undefined>();
+    } else {
+      expectTypeOf(dynamicOpen.menu.label).toEqualTypeOf<string>();
+      expectTypeOf(dynamicOpen.menu.key).toEqualTypeOf<string>();
+    }
+  });
+
+  it('narrows dynamic menu change active item', () => {
+    if (!dynamicChange.active) {
+      return;
+    }
+
+    expectTypeOf(dynamicChange.active.key).toEqualTypeOf<string>();
+    expectTypeOf(dynamicChange.active.label).toEqualTypeOf<string>();
+    if (dynamicChange.active.isLeaf) {
+      expectTypeOf(dynamicChange.active.isLeaf).toEqualTypeOf<true>();
+    }
+  });
+});
 
 describe('MarkingMenuEventEmitter', () => {
   it('types the listener parameter of `on` per event name', () => {

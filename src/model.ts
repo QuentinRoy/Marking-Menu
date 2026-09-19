@@ -3,8 +3,9 @@ import type {
   LiteralId,
   MarkingMenuInput,
   MarkingMenuItemInput,
-  MarkingMenuModelItem,
+  MenuNode,
   ModelItem,
+  ModelNode,
   ModelRoot,
 } from './types.js';
 import { deltaAngle, mod, type EmptyTuple, type IsTuple } from './utils.js';
@@ -100,8 +101,12 @@ type RejectDuplicate<Duplicate extends string> = [Duplicate] extends [never]
 /**
 The id an input item resolves to.
 */
-type IdOf<Input> = Input extends { id: infer Id extends string }
-  ? Id
+type IdOf<Input> = Input extends { id?: infer Id }
+  ? [Id] extends [string]
+    ? Id
+    : string extends Id
+      ? string | undefined
+      : undefined
   : undefined;
 
 /**
@@ -172,20 +177,17 @@ type ItemsAt<
  The model items an input item list resolves to when its length is not
  statically known: a menu, or a portion of one, built at runtime.
  */
-type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = {
-  [K in keyof Inputs]: ToItem<Inputs[K]>;
-};
+type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = ReadonlyArray<
+  ToItem<Inputs[number]>
+>;
 
 /**
  The model item an input item resolves to, without a `Root`/`Path` to derive
- a precise `parent` from: `parent` widens to the generic, erased
- {@link MarkingMenuModelItem}, the same degradation `id`, `label` and
- `items` already undergo.
+ a precise `parent` from: `parent` widens to generic {@link ModelNode}.
  */
 type ToItem<Input> = Input extends MarkingMenuItemInput
-  ? ModelItem<IdOf<Input>, Input['label'], ToItems<ItemsOf<Input>>> & {
-      readonly parent: MarkingMenuModelItem;
-    }
+  ? ModelItem<IdOf<Input>, Input['label'], ToItems<ItemsOf<Input>>> &
+      MenuNode<ToItems<ItemsOf<Input>>>
   : never;
 
 /**
@@ -208,10 +210,13 @@ type NodeAt<
     ? ModelItem<
         IdOf<Input>,
         Input['label'],
-        ItemsAt<Root, Path, ItemsOf<Input>>
-      > & { readonly parent: ParentAt<Root, Path> }
+        ItemsAt<Root, Path, ItemsOf<Input>>,
+        ParentAt<Root, Path>
+      > &
+        MenuNode<ItemsAt<Root, Path, ItemsOf<Input>>>
     : never
-  : ModelRoot<ItemsAt<Root, EmptyTuple, Root['items']>>;
+  : ModelRoot<ItemsAt<Root, EmptyTuple, Root['items']>> &
+      MenuNode<ItemsAt<Root, EmptyTuple, Root['items']>>;
 
 /**
  The parent of the node at (non-empty) `Path`: the node one path segment up.

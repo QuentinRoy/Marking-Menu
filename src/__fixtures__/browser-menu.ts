@@ -4,7 +4,6 @@ import {
   type MarkingMenuConfig,
 } from '../create-marking-menu.js';
 import type { MarkingMenuController } from '../engine/controller.js';
-import type { AnyModelNode } from '../types.js';
 import { fakeTimers } from './timers.js';
 
 declare module 'vitest/browser' {
@@ -47,7 +46,7 @@ export const TOP_LEVEL_ITEMS = {
 } satisfies Record<string, MenuItemGeometry>;
 
 export type MountedMenu = Disposable & {
-  readonly mm: MarkingMenuController<AnyModelNode>;
+  readonly mm: MarkingMenuController;
   readonly surface: HTMLElement;
   readonly snapshotArea: HTMLElement;
 };

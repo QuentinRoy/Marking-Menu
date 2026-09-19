@@ -8,7 +8,6 @@ import type {
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
 } from '../events.js';
-import type { AnyModelNode } from '../types.js';
 import { createParent, pointer } from './__fixtures__/pointer.js';
 import { createController, resolveEngineOptions } from './controller.js';
 
@@ -213,11 +212,11 @@ describe('createController', () => {
     expect(strokeSurfaces(parent)).toHaveLength(1);
     expect(parent.style.getPropertyValue('touch-action')).toBe('none');
 
-    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    const selected = voidMock<[MarkingMenuSelectEvent]>();
     controller.on('select', selected);
     // Disposal mid-gesture is silent: no final `cancel`, or any other public
     // event, is ever dispatched for it.
-    const cancelled = voidMock<[MarkingMenuCancelEvent<AnyModelNode>]>();
+    const cancelled = voidMock<[MarkingMenuCancelEvent]>();
     controller.on('cancel', cancelled);
 
     controller.dispose();
@@ -414,10 +413,10 @@ describe('createController', () => {
     const parent = createParent();
     const controller = createController({ items, parent });
 
-    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    const selected = voidMock<[MarkingMenuSelectEvent]>();
     controller.on('select', selected);
 
-    let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+    let cancelEvent: MarkingMenuCancelEvent | undefined;
     controller.on('cancel', (event) => {
       cancelEvent = event;
     });
@@ -436,10 +435,10 @@ describe('createController', () => {
     const parent = createParent();
     const controller = createController({ items, parent });
 
-    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    const selected = voidMock<[MarkingMenuSelectEvent]>();
     controller.on('select', selected);
 
-    let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+    let cancelEvent: MarkingMenuCancelEvent | undefined;
     controller.on('cancel', (event) => {
       cancelEvent = event;
     });
@@ -542,7 +541,7 @@ describe('createController', () => {
       noviceDwellingTime: 100,
     });
 
-    let openEvent: MarkingMenuOpenEvent<AnyModelNode> | undefined;
+    let openEvent: MarkingMenuOpenEvent | undefined;
     controller.on('open', (event) => {
       openEvent = event;
     });
@@ -591,7 +590,7 @@ describe('createController', () => {
       noviceDwellingTime: 100,
     });
 
-    const opened = voidMock<[MarkingMenuOpenEvent<AnyModelNode>]>();
+    const opened = voidMock<[MarkingMenuOpenEvent]>();
     controller.on('open', opened);
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
@@ -654,10 +653,10 @@ describe('createController', () => {
       noviceDwellingTime: 100,
     });
 
-    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    const selected = voidMock<[MarkingMenuSelectEvent]>();
     controller.on('select', selected);
 
-    let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+    let cancelEvent: MarkingMenuCancelEvent | undefined;
     controller.on('cancel', (event) => {
       cancelEvent = event;
     });
@@ -689,7 +688,7 @@ describe('createController', () => {
       deadZoneRadius: 40,
     });
 
-    const canceled = voidMock<[MarkingMenuCancelEvent<AnyModelNode>]>();
+    const canceled = voidMock<[MarkingMenuCancelEvent]>();
     controller.on('cancel', canceled);
     let openedMenu: unknown;
     controller.on('open', (event) => {
@@ -742,7 +741,7 @@ describe('createController', () => {
       deadZoneRadius: 40,
     });
 
-    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    const selected = voidMock<[MarkingMenuSelectEvent]>();
     controller.on('select', selected);
     let openedMenu: unknown;
     controller.on('open', (event) => {
@@ -781,7 +780,7 @@ describe('createController', () => {
       deadZoneRadius: 40,
     });
 
-    const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+    const selected = voidMock<[MarkingMenuSelectEvent]>();
     controller.on('select', selected);
     let canceledActiveId: string | undefined;
     controller.on('cancel', (event) => {
@@ -838,9 +837,9 @@ describe('createController', () => {
       deadZoneRadius: 40,
     });
 
-    const moved = voidMock<[MarkingMenuMoveEvent<AnyModelNode>]>();
+    const moved = voidMock<[MarkingMenuMoveEvent]>();
     controller.on('move', moved);
-    const changed = voidMock<[MarkingMenuChangeEvent<AnyModelNode>]>();
+    const changed = voidMock<[MarkingMenuChangeEvent]>();
     controller.on('change', changed);
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
@@ -957,11 +956,11 @@ describe('createController', () => {
     const parent = createParent();
     const controller = createController({ items, parent });
 
-    const moved: Array<MarkingMenuMoveEvent<AnyModelNode>> = [];
+    const moved: MarkingMenuMoveEvent[] = [];
     controller.on('move', (event) => {
       moved.push(event);
     });
-    const changed = voidMock<[MarkingMenuChangeEvent<AnyModelNode>]>();
+    const changed = voidMock<[MarkingMenuChangeEvent]>();
     controller.on('change', changed);
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
@@ -1083,9 +1082,9 @@ describe('createController', () => {
         submenuOpeningDelay: 100,
       });
 
-      const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+      const selected = voidMock<[MarkingMenuSelectEvent]>();
       controller.on('select', selected);
-      let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+      let cancelEvent: MarkingMenuCancelEvent | undefined;
       controller.on('cancel', (event) => {
         cancelEvent = event;
       });
@@ -1141,7 +1140,7 @@ describe('createController', () => {
         noviceDwellingTime: 100,
       });
 
-      const opened: Array<MarkingMenuOpenEvent<AnyModelNode>> = [];
+      const opened: MarkingMenuOpenEvent[] = [];
       controller.on('open', (event) => {
         opened.push(event);
       });
@@ -1182,11 +1181,11 @@ describe('createController', () => {
         noviceDwellingTime: 100,
       });
 
-      const selected = voidMock<[MarkingMenuSelectEvent<AnyModelNode>]>();
+      const selected = voidMock<[MarkingMenuSelectEvent]>();
       controller.on('select', selected);
-      const opened = voidMock<[MarkingMenuOpenEvent<AnyModelNode>]>();
+      const opened = voidMock<[MarkingMenuOpenEvent]>();
       controller.on('open', opened);
-      let cancelEvent: MarkingMenuCancelEvent<AnyModelNode> | undefined;
+      let cancelEvent: MarkingMenuCancelEvent | undefined;
       controller.on('cancel', (event) => {
         cancelEvent = event;
       });

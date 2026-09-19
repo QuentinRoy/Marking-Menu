@@ -16,7 +16,6 @@ import {
   type StrokeSurface,
   type StrokeSurfaceOptions,
 } from '../layout/stroke.js';
-import type { AnyModelNode, ModelMenus } from '../types.js';
 import { toLocalPoint, type Point } from '../utils.js';
 import type { LayoutView } from './layout-view.js';
 
@@ -25,12 +24,12 @@ export type FeedbackEffect = {
   readonly canceled: boolean;
 };
 
-export type LayoutRenderer<M extends AnyModelNode> = {
+export type LayoutRenderer = {
   /**
   The shadow root this renderer's menu (and any submenu) mounts into.
   */
   root: ShadowRoot;
-  render: (view: LayoutView<M>) => void;
+  render: (view: LayoutView) => void;
   showFeedback: (effect: FeedbackEffect) => void;
   dispose: () => void;
 };
@@ -40,8 +39,8 @@ export type LayoutRenderer<M extends AnyModelNode> = {
  was built from: reference equality on `model` is enough to decide
  recreate-vs-patch, since the model tree is built once and frozen.
  */
-type MenuHandle<M extends AnyModelNode> = {
-  model: ModelMenus<M>;
+type MenuHandle = {
+  model: MenuLayoutModel;
   menu: Menu;
 };
 
@@ -68,7 +67,7 @@ function createIndicatorLayer({
   coordinateParent: HTMLElement;
   surfaceOptions?: Omit<IndicatorSurfaceOptions, 'parent'>;
 }): {
-  sync: (indicator: LayoutView<AnyModelNode>['indicator']) => void;
+  sync: (indicator: LayoutView['indicator']) => void;
   backgroundElement: () => SVGSVGElement | undefined;
   dotElement: () => SVGSVGElement | undefined;
   dispose: () => void;
@@ -264,17 +263,17 @@ export type RendererOptions = {
   readonly gestureFeedbackDuration: number;
 };
 
-export function createRenderer<M extends AnyModelNode = AnyModelNode>({
+export function createRenderer({
   parent,
   deadZoneRadius,
   gestureFeedbackDuration,
-}: RendererOptions): LayoutRenderer<M> {
+}: RendererOptions): LayoutRenderer {
   const {
     element: host,
     root,
     strokeTheme: initialStrokeTheme,
   } = createMenuHost({ parent });
-  let menuHandle: MenuHandle<M> | undefined;
+  let menuHandle: MenuHandle | undefined;
   // Reference-equality cache: an unchanged active key skips the DOM scan
   // `Menu.setActive` performs.
   let previousActiveKey: string | undefined;
@@ -374,28 +373,23 @@ export function createRenderer<M extends AnyModelNode = AnyModelNode>({
           // DOM-free, so every such conversion is the renderer's to make
           // (see `createStrokeLayer` and `showFeedback` for the others).
           const cbr = parent.getBoundingClientRect();
-          menuHandle = {
+          const handle = {
             model: view.menu.model,
             menu: createMenu({
               parent: root,
               deadZoneRadius,
-              // `ModelMenus<M>`'s `items` are generically erased to
-              // `AnyModelNode` inside this function body, the same reason
-              // `recognize-mm-stroke.ts`'s `walkModelLoose` needs a cast:
-              // the compiler cannot prove genericness away. Every real menu
-              // item built by `model.ts` carries `key`/`label`/`angle`.
-              model: view.menu.model as unknown as MenuLayoutModel,
+              model: view.menu.model,
               center: toLocalPoint(view.menu.center, cbr),
             }),
           };
-
-          setStrokeTheme(menuHandle.menu.strokeTheme);
+          menuHandle = handle;
+          setStrokeTheme(handle.menu.strokeTheme);
           previousActiveKey = undefined;
         }
 
         if (view.menu.activeKey !== previousActiveKey) {
           previousActiveKey = view.menu.activeKey;
-          menuHandle.menu.setActive(view.menu.activeKey);
+          menuHandle?.menu.setActive(view.menu.activeKey);
         }
       }
 

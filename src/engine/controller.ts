@@ -8,7 +8,7 @@ import {
   type ValidateInput,
 } from '../model.js';
 import type { TypedEventListener } from '../typed-event-emitter.js';
-import type { AnyModelNode, MarkingMenuInput } from '../types.js';
+import type { MarkingMenuInput, ModelNode } from '../types.js';
 import { manageFocus, type FocusManager } from './focus.js';
 import {
   defaultLogger,
@@ -90,7 +90,7 @@ export function resolveEngineOptions(
  patches `Symbol` nor ships a polyfill: a consumer without native support
  cannot even parse a `using` call site and owns any transpilation it needs.
  */
-export type MarkingMenuController<M extends AnyModelNode> =
+export type MarkingMenuController<M extends ModelNode = ModelNode> =
   MarkingMenuEventEmitter<M> & {
     dispose(): void;
     [Symbol.dispose](): void;
@@ -131,7 +131,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     // type as `Input`, and `MarkingMenuModel` of that is a different type.
     const model = createModel<Config>(config);
     const options = resolveEngineOptions(config);
-    const renderer = createRenderer<MarkingMenuModel<Config>>({
+    const renderer = createRenderer({
       parent: config.parent,
       deadZoneRadius: options.deadZoneRadius,
       gestureFeedbackDuration: options.gestureFeedbackDuration,
