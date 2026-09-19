@@ -22,7 +22,7 @@ import { noOp } from './utils.js';
 const menu = createModel({
   items: [{ id: 'right', label: 'Right' }],
 });
-type M = typeof menu;
+type Model = typeof menu;
 
 declare const dynamicItems: MarkingMenuItemInput[];
 const dynamicMenu = createModel({ items: dynamicItems });
@@ -30,18 +30,18 @@ type DynamicM = typeof dynamicMenu;
 
 describe('MarkingMenuEventMap', () => {
   it('maps each event name to its exact event class', () => {
-    expectTypeOf<MarkingMenuEventMap<M>>().toEqualTypeOf<{
+    expectTypeOf<MarkingMenuEventMap<Model>>().toEqualTypeOf<{
       start: MarkingMenuStartEvent;
-      open: MarkingMenuOpenEvent<M>;
-      move: MarkingMenuMoveEvent<M>;
-      change: MarkingMenuChangeEvent<M>;
-      select: MarkingMenuSelectEvent<M>;
-      cancel: MarkingMenuCancelEvent<M>;
+      open: MarkingMenuOpenEvent<Model>;
+      move: MarkingMenuMoveEvent<Model>;
+      change: MarkingMenuChangeEvent<Model>;
+      select: MarkingMenuSelectEvent<Model>;
+      cancel: MarkingMenuCancelEvent<Model>;
     }>();
   });
 
   it('is closed: only the six event names are keys', () => {
-    expectTypeOf<keyof MarkingMenuEventMap<M>>().toEqualTypeOf<
+    expectTypeOf<keyof MarkingMenuEventMap<Model>>().toEqualTypeOf<
       'start' | 'open' | 'move' | 'change' | 'select' | 'cancel'
     >();
   });
@@ -49,25 +49,25 @@ describe('MarkingMenuEventMap', () => {
 
 describe('MarkingMenuEvent', () => {
   it('is the union of every event in the map', () => {
-    expectTypeOf<MarkingMenuEvent<M>>().toEqualTypeOf<
+    expectTypeOf<MarkingMenuEvent<Model>>().toEqualTypeOf<
       | MarkingMenuStartEvent
-      | MarkingMenuOpenEvent<M>
-      | MarkingMenuMoveEvent<M>
-      | MarkingMenuChangeEvent<M>
-      | MarkingMenuSelectEvent<M>
-      | MarkingMenuCancelEvent<M>
+      | MarkingMenuOpenEvent<Model>
+      | MarkingMenuMoveEvent<Model>
+      | MarkingMenuChangeEvent<Model>
+      | MarkingMenuSelectEvent<Model>
+      | MarkingMenuCancelEvent<Model>
     >();
   });
 
   it('is not assignable to a DOM Event: this library is DOM-free', () => {
-    expectTypeOf<MarkingMenuEvent<M>>().not.toExtend<Event>();
+    expectTypeOf<MarkingMenuEvent<Model>>().not.toExtend<Event>();
   });
 
   it('discriminates exhaustively on `type` across a `switch`', () => {
     // No `default` case: `@typescript-eslint/switch-exhaustiveness-check`
     // already fails the build if a case is missing, and `noImplicitReturns`
     // fails it if a covered case doesn't return.
-    function handle(event: MarkingMenuEvent<M>): string {
+    function handle(event: MarkingMenuEvent<Model>): string {
       switch (event.type) {
         case 'start': {
           expectTypeOf(event).toEqualTypeOf<MarkingMenuStartEvent>();
@@ -75,27 +75,27 @@ describe('MarkingMenuEvent', () => {
         }
 
         case 'open': {
-          expectTypeOf(event).toEqualTypeOf<MarkingMenuOpenEvent<M>>();
+          expectTypeOf(event).toEqualTypeOf<MarkingMenuOpenEvent<Model>>();
           return String(event.menu.isLeaf);
         }
 
         case 'move': {
-          expectTypeOf(event).toEqualTypeOf<MarkingMenuMoveEvent<M>>();
+          expectTypeOf(event).toEqualTypeOf<MarkingMenuMoveEvent<Model>>();
           return String(event.active?.label);
         }
 
         case 'change': {
-          expectTypeOf(event).toEqualTypeOf<MarkingMenuChangeEvent<M>>();
+          expectTypeOf(event).toEqualTypeOf<MarkingMenuChangeEvent<Model>>();
           return String(event.previousActive?.label);
         }
 
         case 'select': {
-          expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<M>>();
+          expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<Model>>();
           return event.selection.label;
         }
 
         case 'cancel': {
-          expectTypeOf(event).toEqualTypeOf<MarkingMenuCancelEvent<M>>();
+          expectTypeOf(event).toEqualTypeOf<MarkingMenuCancelEvent<Model>>();
           return String(event.active?.label);
         }
       }
@@ -105,7 +105,7 @@ describe('MarkingMenuEvent', () => {
   });
 });
 
-declare const target: MarkingMenuEventEmitter<M>;
+declare const target: MarkingMenuEventEmitter<Model>;
 declare const genericSelect: MarkingMenuSelectEvent;
 declare const genericOpen: MarkingMenuOpenEvent;
 declare const genericMove: MarkingMenuMoveEvent;
@@ -179,10 +179,10 @@ describe('Default generic and event payload narrowing', () => {
 describe('MarkingMenuEventEmitter', () => {
   it('types the listener parameter of `on` per event name', () => {
     target.on('select', (event) => {
-      expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<M>>();
+      expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<Model>>();
     });
     target.on('open', (event) => {
-      expectTypeOf(event).toEqualTypeOf<MarkingMenuOpenEvent<M>>();
+      expectTypeOf(event).toEqualTypeOf<MarkingMenuOpenEvent<Model>>();
     });
   });
 

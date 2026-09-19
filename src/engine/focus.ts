@@ -41,12 +41,12 @@ const deepActiveElement = (doc: Document): Element | undefined => {
  `aria-activedescendant`). Kept out of `machine.ts`: it reacts to the same
  public events a consumer would, and owns nothing the state machine needs.
  */
-export function manageFocus<M extends ModelNode = ModelNode>({
+export function manageFocus<Model extends ModelNode = ModelNode>({
   root,
   runtime,
 }: {
   root: ShadowRoot;
-  runtime: MarkingMenuEventEmitter<M>;
+  runtime: MarkingMenuEventEmitter<Model>;
 }): FocusManager {
   let pendingFocus: ReturnType<typeof setTimeout> | undefined;
   let savedFocus: HTMLElement | undefined;
@@ -69,7 +69,7 @@ export function manageFocus<M extends ModelNode = ModelNode>({
     menuContainer(root)?.focus({ preventScroll: true });
   };
 
-  const onChange = (event: MarkingMenuChangeEvent<M>): void => {
+  const onChange = (event: MarkingMenuChangeEvent<Model>): void => {
     clearPendingFocus();
     const { active } = event;
     if (active === undefined) {

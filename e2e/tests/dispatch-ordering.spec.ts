@@ -24,16 +24,16 @@ type OrderingTestGlobal = { __orderingTest: { observations: Observation[] } };
  later assertion to run conditionally (and silently pass) if the observation
  never happened.
  */
-function observed<T extends Observation['type']>(
+function observed<Type extends Observation['type']>(
   observations: readonly Observation[],
-  type: T,
-): Extract<Observation, { type: T }> {
+  type: Type,
+): Extract<Observation, { type: Type }> {
   const observation = observations.find((o) => o.type === type);
   if (observation === undefined) {
     throw new TypeError(`"${type}" was never observed.`);
   }
 
-  return observation as Extract<Observation, { type: T }>;
+  return observation as Extract<Observation, { type: Type }>;
 }
 
 // Beyond the default `deadZoneRadius` (40px): far enough to select item

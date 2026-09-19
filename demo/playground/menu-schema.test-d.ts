@@ -38,12 +38,12 @@ type SchemaMenu = { items: SchemaItem[] };
  `readonly` throughout and spells its optionals `| undefined`, which no
  schema can say, so the second assertion compares against this instead.
  */
-type AsJson<T> =
-  T extends ReadonlyArray<infer Element>
+type AsJson<Value> =
+  Value extends ReadonlyArray<infer Element>
     ? Array<AsJson<Element>>
-    : T extends Record<string, unknown>
-      ? { -readonly [K in keyof T]: AsJson<Exclude<T[K], undefined>> }
-      : T;
+    : Value extends Record<string, unknown>
+      ? { -readonly [K in keyof Value]: AsJson<Exclude<Value[K], undefined>> }
+      : Value;
 
 describe('menuSchema', () => {
   it('is a JSON schema', () => {

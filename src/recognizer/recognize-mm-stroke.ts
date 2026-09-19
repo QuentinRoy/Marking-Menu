@@ -61,7 +61,7 @@ export const pointsToSegments = (points: Point[]): Segment[] => {
 
 /**
  The broad traversal implementation behind `walkModel`'s precise overload.
- Recursing directly through `ModelItems<N>` would require the compiler to
+ Recursing directly through `ModelItems<Node>` would require the compiler to
  unfold a recursive conditional type across the call.
  */
 const walkModelLoose = (
@@ -100,15 +100,15 @@ const walkModelLoose = (
  not lead to an item. `model` itself is not part of the path, which is hence
  never empty.
  */
-export function walkModel<N extends ModelNode>({
+export function walkModel<Node extends ModelNode>({
   model,
   segments,
   startIndex,
 }: {
-  model: N;
+  model: Node;
   segments: Array<{ angle: number }>;
   startIndex?: number;
-}): NonEmptyArray<ModelItems<N>> | undefined;
+}): NonEmptyArray<ModelItems<Node>> | undefined;
 export function walkModel({
   model,
   segments,
@@ -189,15 +189,15 @@ const findItemLoose = (
  @param options.maxDepth - The maximum depth of the item.
  @returns The path leading to the selected item (see {@link walkModel}).
  */
-export function findItem<N extends ModelNode>({
+export function findItem<Node extends ModelNode>({
   model,
   segments,
   maxDepth,
 }: {
-  model: N;
+  model: Node;
   segments: StrokeSegment[];
   maxDepth?: number;
-}): NonEmptyArray<ModelItems<N>> | undefined;
+}): NonEmptyArray<ModelItems<Node>> | undefined;
 export function findItem({
   model,
   segments,
@@ -276,33 +276,33 @@ const cutStroke = (
  @param options.requireLeaf - Look for a leaf.
  @returns The item recognized by the stroke.
  */
-export function recognizeMarkingMenuStroke<N extends ModelNode>(
+export function recognizeMarkingMenuStroke<Node extends ModelNode>(
   stroke: readonly Point[],
-  model: N,
+  model: Node,
   options?: {
     maxDepth?: number;
     requireMenu?: false;
     requireLeaf?: true;
   },
-): ModelLeaves<N> | undefined;
-export function recognizeMarkingMenuStroke<N extends ModelNode>(
+): ModelLeaves<Node> | undefined;
+export function recognizeMarkingMenuStroke<Node extends ModelNode>(
   stroke: readonly Point[],
-  model: N,
+  model: Node,
   options: {
     maxDepth?: number;
     requireMenu: true;
     requireLeaf?: false;
   },
-): ModelMenus<N> | undefined;
-export function recognizeMarkingMenuStroke<N extends ModelNode>(
+): ModelMenus<Node> | undefined;
+export function recognizeMarkingMenuStroke<Node extends ModelNode>(
   stroke: readonly Point[],
-  model: N,
+  model: Node,
   options: {
     maxDepth?: number;
     requireMenu?: boolean;
     requireLeaf?: boolean;
   },
-): ModelNodes<N> | undefined;
+): ModelNodes<Node> | undefined;
 export function recognizeMarkingMenuStroke(
   stroke: readonly Point[],
   model: ModelNode,
@@ -347,7 +347,7 @@ export function recognizeMarkingMenuStroke(
  Meant for a caller that displays this rather than just acting on the result
  (see {@link analyzeMarkingMenuStroke}).
  */
-export type MarkingMenuStrokeAnalysis<N extends ModelNode> = {
+export type MarkingMenuStrokeAnalysis<Node extends ModelNode> = {
   /**
   The angle, in degrees, past which a bend in the stroke counts as a corner.
   */
@@ -373,7 +373,7 @@ export type MarkingMenuStrokeAnalysis<N extends ModelNode> = {
   The path the stroke was walked down, or `undefined` if it does not lead
   anywhere in the model.
   */
-  readonly path: NonEmptyArray<ModelNodes<N>> | undefined;
+  readonly path: NonEmptyArray<ModelNodes<Node>> | undefined;
 };
 
 /**
@@ -386,10 +386,10 @@ export type MarkingMenuStrokeAnalysis<N extends ModelNode> = {
  @param model - The model to recognize the stroke against.
  @returns The full analysis of the recognition attempt.
  */
-export function analyzeMarkingMenuStroke<N extends ModelNode>(
+export function analyzeMarkingMenuStroke<Node extends ModelNode>(
   stroke: readonly Point[],
-  model: N,
-): MarkingMenuStrokeAnalysis<N> {
+  model: Node,
+): MarkingMenuStrokeAnalysis<Node> {
   const maxDepth = model.getMaxDepth();
   const {
     angleThreshold,

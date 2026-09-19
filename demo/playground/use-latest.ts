@@ -12,7 +12,7 @@ import { useEffect, useRef, type RefObject } from 'react';
  @param value - What this render has.
  @returns A ref holding it, updated after every render.
  */
-export function useLatest<T>(value: T): RefObject<T> {
+export function useLatest<Value>(value: Value): RefObject<Value> {
   const ref = useRef(value);
   useEffect(() => {
     ref.current = value;

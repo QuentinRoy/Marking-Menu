@@ -227,22 +227,22 @@ export type MarkingMenuModelItem = ModelNode;
  * -------------------------------------------------------------------------- */
 
 /**
- Every node of the (sub-)tree rooted at `N`, including `N` itself: `N` and,
+ Every node of the (sub-)tree rooted at `Node`, including `Node` itself: `Node` and,
  recursively, every one of its descendants. Recursion is guarded on
  {@link IsTuple}: for a menu built at runtime (a non-literal `items` list),
  the item type is already the same for every item in the (sub-)tree, so it
  includes that type without recursing forever.
  */
-export type ModelNodes<N extends ModelNode> = N extends {
+export type ModelNodes<Node extends ModelNode> = Node extends {
   items: infer Items extends readonly unknown[];
 }
   ? IsTuple<Items> extends true
-    ? N | ModelNodes<Extract<Items[number], ModelNode>>
-    : N | Extract<Items[number], ModelNode>
-  : N;
+    ? Node | ModelNodes<Extract<Items[number], ModelNode>>
+    : Node | Extract<Items[number], ModelNode>
+  : Node;
 
 /**
-Every node of the (sub-)tree rooted at `N`, excluding the root.
+Every node of the (sub-)tree rooted at `Node`, excluding the root.
 */
 export type ModelItems<Node extends ModelNode> = Exclude<
   ModelNodes<Node>,
@@ -250,7 +250,7 @@ export type ModelItems<Node extends ModelNode> = Exclude<
 >;
 
 /**
- Every leaf of the (sub-)tree rooted at `N`.
+ Every leaf of the (sub-)tree rooted at `Node`.
  */
 export type ModelLeaves<Node extends ModelNode> =
   ModelItems<Node> extends infer Item
@@ -262,18 +262,18 @@ export type ModelLeaves<Node extends ModelNode> =
     : never;
 
 /**
- Every non-leaf node of the (sub-)tree rooted at `N`, root included.
+ Every non-leaf node of the (sub-)tree rooted at `Node`, root included.
  */
-export type ModelMenus<N extends ModelNode> =
-  ModelNodes<N> extends infer Node
-    ? Node extends ModelNode
-      ? Node['isRoot'] extends true
-        ? Node
-        : Node extends { isLeaf: true }
+export type ModelMenus<Node extends ModelNode> =
+  ModelNodes<Node> extends infer Member
+    ? Member extends ModelNode
+      ? Member['isRoot'] extends true
+        ? Member
+        : Member extends { isLeaf: true }
           ? never
-          : boolean extends (Node extends { isLeaf: infer L } ? L : never)
-            ? Node & { readonly isLeaf: false }
-            : Node
+          : boolean extends (Member extends { isLeaf: infer L } ? L : never)
+            ? Member & { readonly isLeaf: false }
+            : Member
       : never
     : never;
 
