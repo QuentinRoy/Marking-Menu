@@ -127,8 +127,9 @@ const createMockModel = (
         getMaxBreadth: vi.fn(() => breadth),
         getMinAngularGap: vi.fn(() => 360 / breadth),
         isLeaf: false,
-        getNearestChild: vi.fn((childAngle?: number) =>
-          createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
+        getNearestChild: vi.fn(
+          (childAngle?: number) =>
+            createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
         ),
       };
       return m;
@@ -142,8 +143,9 @@ const createMockModel = (
       getMaxBreadth: vi.fn(() => breadth),
       getMinAngularGap: vi.fn(() => 360 / breadth),
       isLeaf: false,
-      getNearestChild: vi.fn((childAngle?: number) =>
-        createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
+      getNearestChild: vi.fn(
+        (childAngle?: number) =>
+          createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
       ),
     };
     return m;

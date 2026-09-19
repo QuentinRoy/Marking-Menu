@@ -1,12 +1,12 @@
 import type { MarkingMenuEventEmitter } from '../events.js';
 import type { ModelNode, ModelRoot } from '../types.js';
 import type { ResolvedLogger } from './logger.js';
-import type { EngineModelRoot } from './model-node.js';
 import {
   navigationMachine,
   type NavigationInput,
   type NavigationOptions,
 } from './machine.js';
+import type { EngineModelRoot } from './model-node.js';
 import type { LayoutRenderer } from './renderer.js';
 
 const toError = (value: unknown): Error =>
@@ -23,10 +23,11 @@ export type NavigationInputSink = {
  The runtime owns the emitter: interpreting the machine's public outputs is
  the only thing that ever originates an event.
  */
-export type NavigationRuntime<M extends ModelNode = ModelRoot> = NavigationInputSink &
-  MarkingMenuEventEmitter<M> & {
-    dispose: () => void;
-  };
+export type NavigationRuntime<M extends ModelNode = ModelRoot> =
+  NavigationInputSink &
+    MarkingMenuEventEmitter<M> & {
+      dispose: () => void;
+    };
 
 const publicOutputs = [
   'start',

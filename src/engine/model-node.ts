@@ -6,18 +6,16 @@ import type { ModelItem, ModelRoot } from '../types.js';
  controller boundary.
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- interfaces allow recursive item lists without circular alias errors.
-export interface EngineModelItem
-  extends ModelItem<
-    string | undefined,
-    string,
-    readonly EngineModelItem[]
-  > {
+export interface EngineModelItem extends ModelItem<
+  string | undefined,
+  string,
+  readonly EngineModelItem[]
+> {
   readonly items: readonly EngineModelItem[];
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- interfaces allow recursive item lists without circular alias errors.
-export interface EngineModelRoot
-  extends ModelRoot<readonly EngineModelItem[]> {
+export interface EngineModelRoot extends ModelRoot<readonly EngineModelItem[]> {
   readonly items: readonly EngineModelItem[];
 }
 

@@ -232,7 +232,9 @@ describe('createModel', () => {
     expectTypeOf(dynamic.getNearestChild(0)).toBeNullable();
     expectTypeOf(dynamic.getMaxDepth()).toEqualTypeOf<number>();
     expectTypeOf(dynamic.parent).toEqualTypeOf<undefined>();
-    expectTypeOf(dynamic.items[0]?.parent).toEqualTypeOf<ModelNode | undefined>();
+    expectTypeOf(dynamic.items[0]?.parent).toEqualTypeOf<
+      ModelNode | undefined
+    >();
   });
 });
 
@@ -318,8 +320,12 @@ describe('ModelLeaves and ModelMenus', () => {
   });
 
   it('narrows dynamic leaves to isLeaf true', () => {
-    expectTypeOf<ModelLeaves<typeof dynamicMenu>['isLeaf']>().toEqualTypeOf<true>();
-    expectTypeOf<ModelLeaves<typeof dynamicMenu>['label']>().toEqualTypeOf<string>();
+    expectTypeOf<
+      ModelLeaves<typeof dynamicMenu>['isLeaf']
+    >().toEqualTypeOf<true>();
+    expectTypeOf<
+      ModelLeaves<typeof dynamicMenu>['label']
+    >().toEqualTypeOf<string>();
     expectTypeOf<ModelLeaves<ModelNode>['isLeaf']>().toEqualTypeOf<true>();
     expectTypeOf<ModelLeaves<ModelNode>>().toEqualTypeOf<ModelLeaf>();
   });

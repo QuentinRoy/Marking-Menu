@@ -177,19 +177,16 @@ type ItemsAt<
  The model items an input item list resolves to when its length is not
  statically known: a menu, or a portion of one, built at runtime.
  */
-type ToItems<Inputs extends readonly MarkingMenuItemInput[]> =
-  ReadonlyArray<ToItem<Inputs[number]>>;
+type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = ReadonlyArray<
+  ToItem<Inputs[number]>
+>;
 
 /**
  The model item an input item resolves to, without a `Root`/`Path` to derive
  a precise `parent` from: `parent` widens to generic {@link ModelNode}.
  */
 type ToItem<Input> = Input extends MarkingMenuItemInput
-  ? ModelItem<
-      IdOf<Input>,
-      Input['label'],
-      ToItems<ItemsOf<Input>>
-    > &
+  ? ModelItem<IdOf<Input>, Input['label'], ToItems<ItemsOf<Input>>> &
       MenuNode<ToItems<ItemsOf<Input>>>
   : never;
 

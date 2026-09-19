@@ -10,13 +10,13 @@ import {
 } from '../events.js';
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
 import { strokeLength } from '../recognizer/stroke-length.js';
-import type {
-  ModelItem,
-  ModelLeaf,
-  ModelMenu,
-} from '../types.js';
+import type { ModelItem, ModelLeaf, ModelMenu } from '../types.js';
 import { dist, toPolar, type Point } from '../utils.js';
-import { type LayoutView, noviceUpperStroke, projectLayout } from './layout-view.js';
+import {
+  noviceUpperStroke,
+  projectLayout,
+  type LayoutView,
+} from './layout-view.js';
 import type {
   EngineModelItem,
   EngineModelMenu,
@@ -115,10 +115,7 @@ type NavigationPhaseFields<Menu, Active> = {
  projects from. Kept as a plain discriminated union, independent of
  totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
  */
-export type NavigationState<
-  Menu = ModelMenu,
-  Active = ModelItem,
-> = {
+export type NavigationState<Menu = ModelMenu, Active = ModelItem> = {
   [K in keyof NavigationPhaseFields<Menu, Active>]: {
     readonly phase: K;
   } & NavigationPhaseFields<Menu, Active>[K];

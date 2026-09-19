@@ -116,7 +116,9 @@ declare const dynamicChange: MarkingMenuChangeEvent<DynamicM>;
 describe('Default generic and event payload narrowing', () => {
   it('exposes label and id on generic select event', () => {
     expectTypeOf(genericSelect.selection.label).toEqualTypeOf<string>();
-    expectTypeOf(genericSelect.selection.id).toEqualTypeOf<string | undefined>();
+    expectTypeOf(genericSelect.selection.id).toEqualTypeOf<
+      string | undefined
+    >();
     expectTypeOf(genericSelect.selection.isLeaf).toEqualTypeOf<true>();
     expectTypeOf(genericSelect.selection.isRoot).toEqualTypeOf<false>();
   });
@@ -145,7 +147,9 @@ describe('Default generic and event payload narrowing', () => {
 
   it('statically types dynamic menu select payloads with isLeaf true', () => {
     expectTypeOf(dynamicSelect.selection.label).toEqualTypeOf<string>();
-    expectTypeOf(dynamicSelect.selection.id).toEqualTypeOf<string | undefined>();
+    expectTypeOf(dynamicSelect.selection.id).toEqualTypeOf<
+      string | undefined
+    >();
     expectTypeOf(dynamicSelect.selection.isLeaf).toEqualTypeOf<true>();
     expectTypeOf(dynamicSelect.selection.isRoot).toEqualTypeOf<false>();
   });

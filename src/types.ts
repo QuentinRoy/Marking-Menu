@@ -252,28 +252,30 @@ export type ModelItems<N extends ModelNode> = Exclude<
 /**
  Every leaf of the (sub-)tree rooted at `N`.
  */
-export type ModelLeaves<N extends ModelNode> = ModelItems<N> extends infer Item
-  ? Item extends { isLeaf: false }
-    ? never
-    : boolean extends (Item extends { isLeaf: infer L } ? L : never)
-      ? Item & { readonly isLeaf: true }
-      : Item
-  : never;
+export type ModelLeaves<N extends ModelNode> =
+  ModelItems<N> extends infer Item
+    ? Item extends { isLeaf: false }
+      ? never
+      : boolean extends (Item extends { isLeaf: infer L } ? L : never)
+        ? Item & { readonly isLeaf: true }
+        : Item
+    : never;
 
 /**
  Every non-leaf node of the (sub-)tree rooted at `N`, root included.
  */
-export type ModelMenus<N extends ModelNode> = ModelNodes<N> extends infer Node
-  ? Node extends ModelNode
-    ? Node['isRoot'] extends true
-      ? Node
-      : Node extends { isLeaf: true }
-        ? never
-        : boolean extends (Node extends { isLeaf: infer L } ? L : never)
-          ? Node & { readonly isLeaf: false }
-          : Node
-    : never
-  : never;
+export type ModelMenus<N extends ModelNode> =
+  ModelNodes<N> extends infer Node
+    ? Node extends ModelNode
+      ? Node['isRoot'] extends true
+        ? Node
+        : Node extends { isLeaf: true }
+          ? never
+          : boolean extends (Node extends { isLeaf: infer L } ? L : never)
+            ? Node & { readonly isLeaf: false }
+            : Node
+      : never
+    : never;
 
 /* -------------------------------------------------------------------------- *
  * Helpers

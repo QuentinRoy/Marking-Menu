@@ -1,14 +1,11 @@
 import { type OutputsOf } from 'totorobot';
 import { describe, expectTypeOf, it } from 'vitest';
+import type { MenuLayoutModel } from '../layout/menu.js';
 import { createModel } from '../model.js';
 import type { MarkingMenuItemInput } from '../types.js';
-import type { MenuLayoutModel } from '../layout/menu.js';
 import { type navigationMachine } from './machine.js';
+import type { EngineModelMenu, EngineModelRoot } from './model-node.js';
 import type { LayoutRenderer } from './renderer.js';
-import type {
-  EngineModelMenu,
-  EngineModelRoot,
-} from './model-node.js';
 
 const literalModel = createModel({
   items: [

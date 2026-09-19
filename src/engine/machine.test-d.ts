@@ -9,11 +9,7 @@ import type {
   MarkingMenuStartEvent,
 } from '../events.js';
 import type { MarkingMenuModel } from '../model.js';
-import type {
-  ModelLeaves,
-  ModelMenus,
-  ModelNode,
-} from '../types.js';
+import type { ModelLeaves, ModelMenus, ModelNode } from '../types.js';
 import { type navigationMachine, type NavigationOptions } from './machine.js';
 import type { EngineModelMenu, EngineModelRoot } from './model-node.js';
 
@@ -80,7 +76,9 @@ describe('StatesOf<typeof navigationMachine>', () => {
   });
 
   it("is generic-safe: a caller's own model still threads through `model`", () => {
-    const carryModel = <M extends EngineModelRoot>(model: M): States['idle'] => ({
+    const carryModel = <M extends EngineModelRoot>(
+      model: M,
+    ): States['idle'] => ({
       model,
       options: {
         movementsThreshold: 5,

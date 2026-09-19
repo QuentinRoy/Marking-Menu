@@ -1,7 +1,7 @@
 import { fakeTimers } from '../__fixtures__/timers.js';
 import { createModel } from '../model.js';
-import type { EngineModelRoot } from './model-node.js';
 import { noOp } from '../utils.js';
+import type { EngineModelRoot } from './model-node.js';
 import { createRuntime as createRuntimeWithResolvedLog } from './runtime.js';
 
 // The suite below exercises the runtime's own behavior, not what a caller's
