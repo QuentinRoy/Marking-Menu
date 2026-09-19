@@ -271,8 +271,9 @@ describe('ModelNode discrimination', () => {
     expectTypeOf(sampleNode.parent).toEqualTypeOf<undefined>();
   });
 
-  it('exposes getMinAngularGap on every node', () => {
-    expectTypeOf(sampleNode.getMinAngularGap()).toEqualTypeOf<number>();
+  it('keeps getMinAngularGap off every node', () => {
+    // @ts-expect-error -- internal only, feeds the recognizer threshold.
+    sampleNode.getMinAngularGap();
   });
 });
 

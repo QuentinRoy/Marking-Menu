@@ -218,6 +218,12 @@ export function findItem({
 }
 
 /**
+ Model with its internal smallest gap access. Every model node has the
+ method at runtime, but the public types leave it off.
+ */
+type ModelWithGap = ModelNode & { getMinAngularGap(): number };
+
+/**
  Cut a stroke into the segments a marking-menu walk is attempted against:
  find its articulation points, then join them pairwise, dropping segments too
  short to be a deliberate move. Shared by {@link recognizeMarkingMenuStroke}
@@ -232,7 +238,7 @@ export function findItem({
  */
 const cutStroke = (
   stroke: readonly Point[],
-  model: ModelNode,
+  model: ModelWithGap,
   maxDepth: number,
 ): {
   angleThreshold: number;
@@ -324,7 +330,7 @@ export function recognizeMarkingMenuStroke(
 
   const maxDepth =
     maxDepthOption < 0 ? model.getMaxDepth() + maxDepthOption : maxDepthOption;
-  const { segments } = cutStroke(stroke, model, maxDepth);
+  const { segments } = cutStroke(stroke, model as ModelWithGap, maxDepth);
   const path = findItem({ model, segments, maxDepth });
   // Paths are never empty, so the item is only nullish when the path is.
   const item = path?.at(-1) ?? undefined;
@@ -398,7 +404,7 @@ export function analyzeMarkingMenuStroke<Node extends ModelNode>(
     expectedSegmentLength,
     articulationPoints,
     segments,
-  } = cutStroke(stroke, model, maxDepth);
+  } = cutStroke(stroke, model as ModelWithGap, maxDepth);
   const path = findItem({ model, segments, maxDepth });
   return {
     angleThreshold,
