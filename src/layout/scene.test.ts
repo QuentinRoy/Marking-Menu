@@ -94,6 +94,30 @@ describe('scene', () => {
     tearDown();
   });
 
+  it('reads the parent rect once per batch', () => {
+    const { parent, scene, tearDown } = setUp();
+    let reads = 0;
+    const rect = parent.getBoundingClientRect.bind(parent);
+    parent.getBoundingClientRect = () => {
+      reads += 1;
+      return rect();
+    };
+
+    const local = scene.toLocalMany([
+      [220, 60],
+      [260, 90],
+      [300, 100],
+    ]);
+
+    expect(local).toEqual([
+      [20, 10],
+      [60, 40],
+      [100, 50],
+    ]);
+    expect(reads).toBe(1);
+    tearDown();
+  });
+
   it('removes its slots on dispose', () => {
     const { root, scene, parent } = setUp();
 

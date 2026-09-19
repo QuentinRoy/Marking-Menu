@@ -164,23 +164,48 @@ function appendStrokeThemeProbes(
 const isElement = (parent: HTMLElement | ShadowRoot): parent is HTMLElement =>
   parent.nodeType === Node.ELEMENT_NODE;
 
+// `instanceof ShadowRoot` would use this module's realm's constructor,
+// which a node from another document/window never matches (see `isElement`).
+// A shadow root is the only document fragment with a host.
+const isShadowRoot = (node: Node): node is ShadowRoot =>
+  node.nodeType === Node.DOCUMENT_FRAGMENT_NODE && 'host' in node;
+
 const template = (
   { items, center }: { items: readonly MenuLayoutItem[]; center: Point },
   doc: Document,
   parent: HTMLElement | ShadowRoot,
-  layerParent?: HTMLElement,
 ): MenuDom => {
-  const isOwnHost = isElement(parent);
-  const { root } = isOwnHost
-    ? createMenuHost({ parent, doc })
-    : { root: parent };
+  // The layer mounts into `parent` itself when it is an element. The root it
+  // shares is that element's own shadow root when it has one (for example a
+  // renderer slot), or a fresh host when it lives in the light DOM. Deriving
+  // the root from the mount node keeps the two from ever disagreeing.
+  let root: ShadowRoot;
+  let layerParent: HTMLElement | ShadowRoot;
+  let isOwnHost: boolean;
+  if (isElement(parent)) {
+    const scope = parent.getRootNode();
+    if (isShadowRoot(scope)) {
+      root = scope;
+      layerParent = parent;
+      isOwnHost = false;
+    } else {
+      ({ root } = createMenuHost({ parent, doc }));
+      layerParent = root;
+      isOwnHost = true;
+    }
+  } else {
+    root = parent;
+    layerParent = parent;
+    isOwnHost = false;
+  }
+
   const main = doc.createElement('div');
   main.className = 'marking-menu-layer';
   main.role = 'menu';
   main.tabIndex = -1;
   main.style.setProperty('--center-x', `${center[0]}px`);
   main.style.setProperty('--center-y', `${center[1]}px`);
-  (layerParent ?? root).append(main);
+  layerParent.append(main);
   const itemElements = new Map<string, HTMLDivElement>();
 
   const probes: LayoutProbes = {
@@ -583,11 +608,10 @@ function setItemActive(item: HTMLElement, isActive: boolean): void {
  Create the Menu display.
 
  @param options - Configuration options.
-  @param options.parent - The parent node.
-  @param options.layerParent - The node the menu layer mounts into. Defaults
-  to `parent`'s root: pass a fixed slot to keep paint order without reordering
-  the DOM (see the renderer's scene). Style probes and item queries still use
-  the root.
+  @param options.parent - The node the menu layer mounts into. An element in
+  the light DOM gets a fresh menu host; an element inside a shadow root (for
+  example a renderer slot) mounts there and shares that root; a shadow root
+  mounts directly.
   @param options.model - The model of the menu to open.
  @param options.center - The pixel coordinates where the menu should be
  anchored.
@@ -602,7 +626,6 @@ function setItemActive(item: HTMLElement, isActive: boolean): void {
  */
 export function createMenu({
   parent,
-  layerParent,
   doc = parent.ownerDocument,
   model,
   center,
@@ -611,23 +634,12 @@ export function createMenu({
 }: {
   doc?: Document;
   parent: HTMLElement | ShadowRoot;
-  /**
-  The node the menu layer mounts into. Defaults to `parent`'s root: pass a
-  fixed slot to keep paint order without reordering the DOM (see the
-  renderer's scene). Style probes and item queries still use the root.
-  */
-  layerParent?: HTMLElement;
   model: MenuLayoutModel;
   center: Point;
   deadZoneRadius: number;
   pointerTarget?: boolean;
 }): Menu {
-  const menuDom = template(
-    { items: model.items, center },
-    doc,
-    parent,
-    layerParent,
-  );
+  const menuDom = template({ items: model.items, center }, doc, parent);
   const { main, root, isOwnHost } = menuDom;
   (root.host as HTMLElement).style.setProperty(
     '--inner-radius',

@@ -147,16 +147,17 @@ function createIndicatorLayer({
  */
 function createStrokeLayer({
   slot,
-  convert,
+  convertMany,
   surfaceOptions,
 }: {
   slot: HTMLElement;
   /**
-  Conversion from client coordinates, called inside the animation frame
-  rather than in `sync`, so `sync` keeps comparing the array the caller
-  passed and a parent that moved or scrolled since is picked up.
+  Batch page-to-local conversion, called inside the animation frame rather
+  than in `sync`, so `sync` keeps comparing the array the caller passed, a
+  parent that moved or scrolled since is picked up, and a long stroke costs
+  one rect read per draw instead of one per point.
   */
-  convert: (point: Point) => Point;
+  convertMany: (stroke: readonly Point[]) => Point[];
   surfaceOptions?: Omit<StrokeSurfaceOptions, 'parent'>;
 }): {
   sync: (
@@ -172,7 +173,7 @@ function createStrokeLayer({
     (stroke: readonly Point[], shouldDrawStartPoint: boolean) => {
       // Strokes arrive in client coordinates, straight from the pointer. The
       // surface draws relative to its own top-left, which is the parent's.
-      const local = stroke.map((point) => convert(point));
+      const local = convertMany(stroke);
       surface?.drawStroke(local);
       const [start] = local;
       if (shouldDrawStartPoint && start !== undefined) {
@@ -209,7 +210,7 @@ function createStrokeLayer({
  */
 function createPersistentStrokeLayers(
   slots: Pick<SceneSlots, 'upper' | 'lower' | 'feedback'>,
-  convert: (point: Point) => Point,
+  convertMany: (stroke: readonly Point[]) => Point[],
   gestureFeedbackDuration: number,
 ): {
   upper: ReturnType<typeof createStrokeLayer>;
@@ -217,10 +218,10 @@ function createPersistentStrokeLayers(
   feedback: ReturnType<typeof createGestureFeedback>;
 } {
   return {
-    upper: createStrokeLayer({ slot: slots.upper, convert }),
+    upper: createStrokeLayer({ slot: slots.upper, convertMany }),
     lower: createStrokeLayer({
       slot: slots.lower,
-      convert,
+      convertMany,
       surfaceOptions: { className: 'marking-menu-stroke--lower' },
     }),
     feedback: createGestureFeedback({
@@ -280,7 +281,7 @@ export function createRenderer({
   const scene = createScene({ root, parent });
   const { upper, lower, feedback } = createPersistentStrokeLayers(
     scene.slots,
-    scene.toLocal,
+    scene.toLocalMany,
     gestureFeedbackDuration,
   );
   let indicator = createThemedIndicatorLayer(
@@ -327,8 +328,7 @@ export function createRenderer({
           const handle = {
             model: view.menu.model,
             menu: createMenu({
-              parent: root,
-              layerParent: scene.slots.menu,
+              parent: scene.slots.menu,
               deadZoneRadius,
               model: view.menu.model,
               center: scene.toLocal(view.menu.center),

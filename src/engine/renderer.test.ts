@@ -143,6 +143,36 @@ describe('createRenderer', () => {
     renderer.dispose();
   });
 
+  it('reads the parent rect once per stroke draw', () => {
+    const parent = document.createElement('div');
+    let reads = 0;
+    parent.getBoundingClientRect = () => {
+      reads += 1;
+      return { left: 200, top: 50 } as unknown as DOMRect;
+    };
+
+    const renderer = createRenderer({ parent });
+
+    renderer.render({
+      cursor: 'none',
+      menu: undefined,
+      upperStroke: [
+        [220, 60],
+        [260, 90],
+        [300, 100],
+      ],
+      lowerStroke: undefined,
+      indicator: undefined,
+    });
+    renderFrame();
+
+    expect(
+      slotOf(parent, 'upper').querySelector('path')?.getAttribute('d'),
+    ).toBe('M 20 10 L 60 40 L 100 50');
+    expect(reads).toBe(1);
+    renderer.dispose();
+  });
+
   it('converts strokes against the parent rect at draw time', () => {
     const parent = document.createElement('div');
     let left = 200;

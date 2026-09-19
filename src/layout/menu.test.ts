@@ -193,7 +193,7 @@ describe('createMenu', () => {
     expect(menu.element.parentElement).toBe(anchor);
   });
 
-  it('mounts the menu layer into the given layer parent', () => {
+  it('mounts the menu layer into a shadow-root element directly', () => {
     const host = document.createElement('div');
     document.body.append(host);
     const root = host.attachShadow({ mode: 'open' });
@@ -201,8 +201,7 @@ describe('createMenu', () => {
     root.append(slot);
 
     const menu = createMenu({
-      parent: root,
-      layerParent: slot,
+      parent: slot,
       model: createModel(1),
       center: [30, 50],
       doc: document,

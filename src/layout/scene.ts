@@ -65,7 +65,12 @@ export function createScene({
   return {
     slots,
     toLocal,
-    toLocalMany: (points) => points.map((point) => toLocal(point)),
+    // One rect read per batch: a long stroke converts dozens of points
+    // against the same frame, and a rect read can force layout.
+    toLocalMany(points) {
+      const rect = parent.getBoundingClientRect();
+      return points.map((point) => toLocalPoint(point, rect));
+    },
     dispose() {
       for (const slot of Object.values(slots)) {
         slot.remove();
