@@ -1,5 +1,114 @@
 # Changelog
 
+## 1.0.0
+
+### Major Changes
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Stop generating IDs for items without one: their `id` is now `undefined` instead of a positional ID like `'1-0'`. Give an item an `id` if you look it up by ID. The positional ID moves to the new `key` property.
+
+- [#311](https://github.com/QuentinRoy/Marking-Menu/pull/311) [`999feaf`](https://github.com/QuentinRoy/Marking-Menu/commit/999feaf2021ab5a06d7fe42304d69fa979a028b8) - Size label plates to their text instead of a fixed 120 px width. Set `--mm-plate-min-width` and `--mm-plate-max-width` to `120px` to keep the fixed, truncated width. Plates also default to more padding and rounder corners, with no square corner toward the center.
+
+- [#273](https://github.com/QuentinRoy/Marking-Menu/pull/273) [`2381311`](https://github.com/QuentinRoy/Marking-Menu/commit/23813114708c542c4e69361d0948b0ad5c464f52) - `createMarkingMenu` throws when items in a level are less than 45° apart, such as a level with more than 8 items, because directions that close together can't be told apart. Move extra items into submenus, or space stated angles at least 45° apart.
+
+- [#233](https://github.com/QuentinRoy/Marking-Menu/pull/233) [`ab83b8b`](https://github.com/QuentinRoy/Marking-Menu/commit/ab83b8bede215758236a79640d956dfa8b80470e) - `createMarkingMenu` returns a controller instead of an RxJS `Observable`, so you no longer install `rxjs`. The menu is active as soon as you create it. Listen with `on(type, listener)`, and stop the menu with `dispose()` or `using`.
+
+  ```js
+  // 0.10.1
+  const subscription = MarkingMenu(items, parent).subscribe((selection) => {
+    console.log(selection.name);
+  });
+  subscription.unsubscribe();
+
+  // 1.0
+  const menu = createMarkingMenu({ items, parent });
+  menu.on('select', (event) => console.log(event.selection.label));
+  menu.dispose();
+  ```
+
+  The controller emits `start`, `open`, `move`, `change`, `select`, and `cancel` events, exported as classes such as `MarkingMenuSelectEvent`. Their fields are getters, so spreading an event or `JSON.stringify()` doesn't copy them. They replace the `notifySteps` option, with these differences: `draw` becomes `move`, `move` also fires alongside `change`, `cancel` has no `selection`, `select` has no `active`, and no event has `timeStamp`.
+
+- [#144](https://github.com/QuentinRoy/Marking-Menu/pull/144) [`1580c6e`](https://github.com/QuentinRoy/Marking-Menu/commit/1580c6e1b4e4a5e5d877d7047e4262c011684229) - Ship only an ES module. The UMD build is gone, with its CommonJS, AMD, and `window.MarkingMenu` global loading. Every supported browser loads ES modules natively: use `import` or `<script type="module">`.
+
+- [#260](https://github.com/QuentinRoy/Marking-Menu/pull/260) [`195d2dd`](https://github.com/QuentinRoy/Marking-Menu/commit/195d2ddbbb670ef365b26ef6b14dffe59fa76ed7) - Spread items evenly around the circle for every item count. Menus with 2, 3, 5, 6, or 7 items change: 3 items sit 120° apart instead of 90°. A learned gesture can now select a different item, without any error. Set each item's `angle` to keep its old direction.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Replace the `isLeaf()` and `isRoot()` item methods with `isLeaf` and `isRoot` properties.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Items expose their fields through getters instead of own properties, so spreading an item, `Object.keys()`, or `structuredClone()` no longer copies them. Read the fields you need explicitly.
+
+- [#126](https://github.com/QuentinRoy/Marking-Menu/pull/126) [`5a46547`](https://github.com/QuentinRoy/Marking-Menu/commit/5a46547dadd7fc3855b858dcb74fed359a5fc0a1) - Rename the item `name` property to `label`, and `getChildrenByName()` to `getChildrenByLabel()`.
+
+- [#277](https://github.com/QuentinRoy/Marking-Menu/pull/277) [`ca594cd`](https://github.com/QuentinRoy/Marking-Menu/commit/ca594cd63f7d876da3515640d11d3aaa8c88bd50) - Raise the default `submenuOpeningDelay` from 100 ms to `1000 / 3` ms, the same as `noviceDwellingTime`, so opening a submenu takes the same pause as opening the menu. Set `submenuOpeningDelay: 100` to keep the old delay.
+
+- [#118](https://github.com/QuentinRoy/Marking-Menu/pull/118) [`80d15d6`](https://github.com/QuentinRoy/Marking-Menu/commit/80d15d62ff5192a8af2d0db562f8fcd6591b4686) - Require Chrome and Edge 111, Firefox 115, or Safari and iOS 16.4, or newer. Dark mode colors, which you opt into with `color-scheme`, need Chrome and Edge 123, Firefox 120, or Safari 17.5. Firefox 115 to 118 don't expose the menu's accessibility roles.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Replace the default export with the named `createMarkingMenu` export: `import { createMarkingMenu } from 'marking-menu'`.
+
+- [#262](https://github.com/QuentinRoy/Marking-Menu/pull/262) [`3d2d200`](https://github.com/QuentinRoy/Marking-Menu/commit/3d2d200ca84400b62108d17a1ca75b27ce527f74) - Render labels as plain text instead of HTML, so a label can't inject markup into the page. A label containing HTML now shows the tags as text. Labels are text only.
+
+- [#126](https://github.com/QuentinRoy/Marking-Menu/pull/126) [`5a46547`](https://github.com/QuentinRoy/Marking-Menu/commit/5a46547dadd7fc3855b858dcb74fed359a5fc0a1) - Remove the string shorthand for menu items, so every item has the same shape. Write `{ label: 'Copy' }` instead of `'Copy'`.
+
+- [#126](https://github.com/QuentinRoy/Marking-Menu/pull/126) [`5a46547`](https://github.com/QuentinRoy/Marking-Menu/commit/5a46547dadd7fc3855b858dcb74fed359a5fc0a1) - Pass a single configuration object instead of positional arguments: `createMarkingMenu({ items, parent, ...options })` instead of `MarkingMenu(items, parent, options)`.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - The root has no `id`, `label`, or `angle` instead of having them set to `null`.
+
+- [#302](https://github.com/QuentinRoy/Marking-Menu/pull/302) [`6ca5e42`](https://github.com/QuentinRoy/Marking-Menu/commit/6ca5e42d1dac54243bf6449a68a6a84d0278301f) - Render the menu in an open shadow root on the `.marking-menu` element, so page styles, such as a `box-sizing: border-box` reset, can't break its layout. Page CSS can no longer reach the menu's inner elements, and the theme properties are renamed to `--mm-*`, set on `.marking-menu`. Check the documentation for the replacements.
+
+- [#277](https://github.com/QuentinRoy/Marking-Menu/pull/277) [`ca594cd`](https://github.com/QuentinRoy/Marking-Menu/commit/ca594cd63f7d876da3515640d11d3aaa8c88bd50) - Replace `minSelectionDist` (default 40) and `minMenuSelectionDist` (default 80) with one `deadZoneRadius` option (default 40). An item becomes active past this radius, and pausing on it opens its submenu. Before, a submenu only opened past `minMenuSelectionDist`. Rename `minSelectionDist` to `deadZoneRadius` and remove `minMenuSelectionDist`; JavaScript silently ignores the old names.
+
+- [#383](https://github.com/QuentinRoy/Marking-Menu/pull/383) [`1c836d8`](https://github.com/QuentinRoy/Marking-Menu/commit/1c836d800c45a8b5d5873cf608020a8bb6e2377c) - In novice mode, move focus to the menu and then to the active item, so screen readers announce it. Focus returns where it was when the gesture ends. The focused element gets `blur` and `focusout` events during the gesture.
+
+- [#319](https://github.com/QuentinRoy/Marking-Menu/pull/319) [`f90a2db`](https://github.com/QuentinRoy/Marking-Menu/commit/f90a2dbe103e118a098dc28757089afbc00cc9e5) - Replace the nine stroke options, such as `strokeColor` and `lowerStrokeWidth`, with `--mm-stroke-*` custom properties, so you style strokes in CSS like the rest of the menu. Check the documentation for the replacements.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Rename `children` to `items`, on the items you pass and on the items the menu returns, to match the top-level `items` option. Items without sub-items return `items: []` instead of `undefined`.
+
+- [#124](https://github.com/QuentinRoy/Marking-Menu/pull/124) [`de5942f`](https://github.com/QuentinRoy/Marking-Menu/commit/de5942ff51e660f8a1c546d310135e4a19e57d89) - Rename the `subMenuOpeningDelay` option to `submenuOpeningDelay`.
+
+- [#334](https://github.com/QuentinRoy/Marking-Menu/pull/334) [`3413aa3`](https://github.com/QuentinRoy/Marking-Menu/commit/3413aa3c830e2db82770402d91ba1384363e2bca) - Strokes are no longer clipped to the parent, like the menu itself. Set `overflow: hidden` on the parent to keep both inside it. The `.marking-menu` element now stays in the parent until you dispose the menu, so its presence no longer means a menu is open.
+
+- [#150](https://github.com/QuentinRoy/Marking-Menu/pull/150) [`c7ad8ad`](https://github.com/QuentinRoy/Marking-Menu/commit/c7ad8adf834abe13cf3f1d76504b499e4ea3a186) - Handle input with Pointer Events. Only the primary mouse button, touch, or pen starts a gesture, so right and middle clicks no longer open the menu, and a second touch no longer ends it. A gesture keeps tracking when the pointer leaves the parent, and always cancels when the browser cancels the pointer. The parent gets `touch-action: none` until you dispose the menu.
+
+- [#410](https://github.com/QuentinRoy/Marking-Menu/pull/410) [`b862390`](https://github.com/QuentinRoy/Marking-Menu/commit/b8623908c3fe36c9ef670157197cd38054ed0b97) - Type `MarkingMenuLogger`'s `info`, `warn`, and `debug` as `(message: string) => void` instead of `unknown`, so the library can start calling them without a later breaking change. Make `error` optional too, matching every other method.
+
+- [#138](https://github.com/QuentinRoy/Marking-Menu/pull/138) [`c150389`](https://github.com/QuentinRoy/Marking-Menu/commit/c150389e9a1cc5254d9a42bfeb0c81290474d86e) - Require item IDs to be unique across the whole menu. `createMarkingMenu` throws on duplicates, and TypeScript rejects duplicate literal IDs.
+
+### Minor Changes
+
+- [#261](https://github.com/QuentinRoy/Marking-Menu/pull/261) [`b93d497`](https://github.com/QuentinRoy/Marking-Menu/commit/b93d497f6e7ba9bbd5d97941e0c836395dfa6f68) - Let items set an optional `angle`, in degrees clockwise from the right. Items without one fill the gaps between stated angles.
+
+- [#290](https://github.com/QuentinRoy/Marking-Menu/pull/290) [`1b2b563`](https://github.com/QuentinRoy/Marking-Menu/commit/1b2b563de130a3e4290fa4159c81f133b5bc850e) - Place labels so they don't overlap, instead of at one fixed distance from the center. Tune the spacing with the `--mm-plate-gap-*` properties.
+
+- [#370](https://github.com/QuentinRoy/Marking-Menu/pull/370) [`aa25858`](https://github.com/QuentinRoy/Marking-Menu/commit/aa25858d399ab7befca64ac6ca49f7ff81e8e39e) - Expose the menu to assistive technologies with the `menu` and `menuitem` roles. Items take their label as their name, and items with a submenu have `aria-haspopup="menu"`.
+
+- [#386](https://github.com/QuentinRoy/Marking-Menu/pull/386) [`06f9ae4`](https://github.com/QuentinRoy/Marking-Menu/commit/06f9ae4c372182984ddb86f2b4fcba71d7e2e0f1) - Add `--mm-muted-color`, the default color of earlier gesture segments. Earlier segments are lighter than 0.10.1's `[#777](https://github.com/QuentinRoy/Marking-Menu/issues/777)`.
+
+- [#345](https://github.com/QuentinRoy/Marking-Menu/pull/345) [`55d8361`](https://github.com/QuentinRoy/Marking-Menu/commit/55d83611a26bdbacebd13b97a264fd70c5e14841) - Show a dot growing inside a circle during the pause before a menu or submenu opens. It fades in instead when the user prefers reduced motion. Style it with `--mm-indicator-fill` and `--mm-indicator-background`.
+
+- [#382](https://github.com/QuentinRoy/Marking-Menu/pull/382) [`fc6b7c5`](https://github.com/QuentinRoy/Marking-Menu/commit/fc6b7c5003e2528dcacc5fdd64a413a587105838) - Draw a 1px gray inset outline on wedges, blue on the active one. Change it with `--mm-outline-width` and `--mm-outline-color`, their `-active` variants, and per-part variants, which can also outline plates.
+
+- [#384](https://github.com/QuentinRoy/Marking-Menu/pull/384) [`76e13b1`](https://github.com/QuentinRoy/Marking-Menu/commit/76e13b1eadccf0f5ac1ef6256db2679fcffed897) - Use system colors in forced colors mode.
+
+- [#147](https://github.com/QuentinRoy/Marking-Menu/pull/147) [`9c46198`](https://github.com/QuentinRoy/Marking-Menu/commit/9c46198a9730f314c70828f756508320babb7367) - Ship TypeScript declarations. Items in events are typed from the items you pass, so their `id` and `label` narrow to the values you wrote.
+
+- [#382](https://github.com/QuentinRoy/Marking-Menu/pull/382) [`fc6b7c5`](https://github.com/QuentinRoy/Marking-Menu/commit/fc6b7c5003e2528dcacc5fdd64a413a587105838) - Change the default colors: wedges and plates have a pale fill with black labels, and the active item turns blue. Set `--mm-fill` and `--mm-fill-active` to recolor wedges, plates, and connectors together. Colors follow dark mode when the page declares `color-scheme: light dark`.
+
+- [#304](https://github.com/QuentinRoy/Marking-Menu/pull/304) [`f8594c1`](https://github.com/QuentinRoy/Marking-Menu/commit/f8594c15bee8e3f9a5cacd8bf51f55fcba0b9a0b) - Draw a ring of wedges around the menu center, one per item. Style it with the `--mm-wedge-*` properties. Connectors now start at the ring; set `--mm-inner-connector-color` to draw them from the center.
+
+### Patch Changes
+
+- [#147](https://github.com/QuentinRoy/Marking-Menu/pull/147) [`9c46198`](https://github.com/QuentinRoy/Marking-Menu/commit/9c46198a9730f314c70828f756508320babb7367) - Drop the `raf-schd` dependency.
+
+- [#188](https://github.com/QuentinRoy/Marking-Menu/pull/188) [`fe933d7`](https://github.com/QuentinRoy/Marking-Menu/commit/fe933d7845cb268dddf1ea29ecccf4c7e0f223f7) - A `log` option without an `error` method falls back to `console.error`, and `error` always receives an `Error`.
+
+- [#233](https://github.com/QuentinRoy/Marking-Menu/pull/233) [`ab83b8b`](https://github.com/QuentinRoy/Marking-Menu/commit/ab83b8bede215758236a79640d956dfa8b80470e) - After a gesture switches from expert to novice mode, events report `mode: 'novice'` instead of `undefined`.
+
+- [#344](https://github.com/QuentinRoy/Marking-Menu/pull/344) [`7e7b3fb`](https://github.com/QuentinRoy/Marking-Menu/commit/7e7b3fb0adb9011dcae285705b5c971b567c2307) - Support a `parent` owned by another document, such as an iframe's.
+
+- [#193](https://github.com/QuentinRoy/Marking-Menu/pull/193) [`a872408`](https://github.com/QuentinRoy/Marking-Menu/commit/a87240825aa8999253dda6c7e6157affbcc215a6) - Hide the cursor during gestures instead of showing a crosshair, and restore the parent's own inline `cursor` afterward instead of clearing it.
+
+- [#253](https://github.com/QuentinRoy/Marking-Menu/pull/253) [`7d6704b`](https://github.com/QuentinRoy/Marking-Menu/commit/7d6704be67fd79cf13b379a91e77be158b9cc4c6) - Fix strokes drawn away from the pointer when the parent is not at the top-left corner of the viewport.
+
+- [#409](https://github.com/QuentinRoy/Marking-Menu/pull/409) [`b7cbb41`](https://github.com/QuentinRoy/Marking-Menu/commit/b7cbb4139953cb3d7fa008d3df34c8ab19bf222e) - Fix the submenu-opening dwell never rearming once it fires on a leaf item, so a submenu right next to that leaf could no longer open by dwelling.
+
 All notable changes to this project will be documented in this file. Entries are generated from [Changesets](https://github.com/changesets/changesets) — see `.changeset/README.md` for how to add one.
 
 ## [0.10.1](https://github.com/QuentinRoy/Marking-Menu/compare/v0.10.0...v0.10.1) (2026-07-22)
