@@ -10,7 +10,7 @@ import {
 } from '../events.js';
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
 import { strokeLength } from '../recognizer/stroke-length.js';
-import type { ModelItem, ModelLeaf, ModelMenu } from '../types.js';
+import type { ModelItem, ModelLeaf, ModelMenu, ModelNode } from '../types.js';
 import { dist, toPolar, type Point } from '../utils.js';
 import {
   noviceUpperStroke,
@@ -184,7 +184,7 @@ function moveEvent(data: {
   readonly active: ModelItem | undefined;
   readonly menu: ModelMenu | undefined;
 }): MarkingMenuMoveEvent {
-  return new MarkingMenuMoveEvent(data);
+  return new MarkingMenuMoveEvent<ModelNode>(data);
 }
 
 /**
@@ -209,7 +209,7 @@ function changeEvent(data: {
   readonly previousActive: ModelItem | undefined;
   readonly menu: ModelMenu;
 }): MarkingMenuChangeEvent {
-  return new MarkingMenuChangeEvent(data);
+  return new MarkingMenuChangeEvent<ModelNode>(data);
 }
 
 function selectEvent(data: {
@@ -227,7 +227,7 @@ function cancelEvent(data: {
   readonly active: ModelItem | undefined;
   readonly menu: ModelMenu | undefined;
 }): MarkingMenuCancelEvent {
-  return new MarkingMenuCancelEvent(data);
+  return new MarkingMenuCancelEvent<ModelNode>(data);
 }
 
 function isModelLeaf(item: ModelItem): item is ModelLeaf {

@@ -215,8 +215,7 @@ type NodeAt<
       > &
         MenuNode<ItemsAt<Root, Path, ItemsOf<Input>>>
     : never
-  : ModelRoot<ItemsAt<Root, EmptyTuple, Root['items']>> &
-      MenuNode<ItemsAt<Root, EmptyTuple, Root['items']>>;
+  : MarkingMenuModel<Root>;
 
 /**
  The parent of the node at (non-empty) `Path`: the node one path segment up.
@@ -231,10 +230,10 @@ type ParentAt<
 /**
  The model {@link createModel} builds from a menu description.
  */
-export type MarkingMenuModel<Input extends MarkingMenuInput> = NodeAt<
-  Input,
-  EmptyTuple
->;
+export type MarkingMenuModel<Input extends MarkingMenuInput> = ModelRoot<
+  ItemsAt<Input, EmptyTuple, Input['items']>
+> &
+  MenuNode<ItemsAt<Input, EmptyTuple, Input['items']>>;
 
 /* -------------------------------------------------------------------------- *
  * Implementation

@@ -237,8 +237,8 @@ export type ModelNodes<N extends ModelNode> = N extends {
   items: infer I extends readonly unknown[];
 }
   ? IsTuple<I> extends true
-    ? N | ModelNodes<I[number] & ModelNode>
-    : N | (I[number] & ModelNode)
+    ? N | ModelNodes<Extract<I[number], ModelNode>>
+    : N | Extract<I[number], ModelNode>
   : N;
 
 /**
