@@ -16,8 +16,9 @@ import {
   type StrokeSurface,
   type StrokeSurfaceOptions,
 } from '../layout/stroke.js';
-import { toLocalPoint, type Point } from '../utils.js';
+import type { Point } from '../utils.js';
 import type { LayoutView } from './layout-view.js';
+import { createScene } from './scene.js';
 
 export type FeedbackEffect = {
   readonly stroke: readonly Point[];
@@ -59,17 +60,21 @@ type MenuHandle = {
  timing) does not restart.
  */
 function createIndicatorLayer({
-  parent,
-  coordinateParent,
+  backgroundSlot,
+  dotSlot,
+  convert,
   surfaceOptions,
 }: {
-  parent: ShadowRoot;
-  coordinateParent: HTMLElement;
+  backgroundSlot: HTMLElement;
+  dotSlot: HTMLElement;
+  /**
+  Page-to-local conversion, called on every tick so a parent that has since
+  moved or scrolled is picked up.
+  */
+  convert: (point: Point) => Point;
   surfaceOptions?: Omit<IndicatorSurfaceOptions, 'parent'>;
 }): {
   sync: (indicator: LayoutView['indicator']) => void;
-  backgroundElement: () => SVGSVGElement | undefined;
-  dotElement: () => SVGSVGElement | undefined;
   dispose: () => void;
 } {
   let surface: ReturnType<typeof createIndicatorSurface> | undefined;
@@ -91,9 +96,8 @@ function createIndicatorLayer({
       return;
     }
 
-    const rect = coordinateParent.getBoundingClientRect();
     const progress = Math.min(1, (Date.now() - startTime) / delayMs);
-    surface?.draw(toLocalPoint(currentPosition, rect), progress);
+    surface?.draw(convert(currentPosition), progress);
     frame =
       progress < 1
         ? requestAnimationFrame(() => {
@@ -113,7 +117,12 @@ function createIndicatorLayer({
         return;
       }
 
-      surface ??= createIndicatorSurface({ parent, ...surfaceOptions });
+      surface ??= createIndicatorSurface({
+        parent: backgroundSlot,
+        backgroundParent: backgroundSlot,
+        dotParent: dotSlot,
+        ...surfaceOptions,
+      });
       currentPosition = indicator.position;
       if (indicator.startedAt === currentStartedAt) {
         return;
@@ -123,8 +132,6 @@ function createIndicatorLayer({
       stop();
       tick(indicator.delayMs, indicator.startedAt);
     },
-    backgroundElement: () => surface?.backgroundElement ?? undefined,
-    dotElement: () => surface?.dotElement ?? undefined,
     dispose() {
       stop();
       surface?.remove();
@@ -139,19 +146,23 @@ function createIndicatorLayer({
  `lowerStroke` are two independent instances of the exact same behavior.
  */
 function createStrokeLayer({
-  parent,
-  coordinateParent,
+  slot,
+  convert,
   surfaceOptions,
 }: {
-  parent: ShadowRoot;
-  coordinateParent: HTMLElement;
+  slot: HTMLElement;
+  /**
+  Page-to-local conversion, called inside the animation frame rather than in
+  `sync` so the reference check in `sync` keeps comparing the array the
+  caller passed, and a parent that has since moved or scrolled is picked up.
+  */
+  convert: (point: Point) => Point;
   surfaceOptions?: Omit<StrokeSurfaceOptions, 'parent'>;
 }): {
   sync: (
     stroke: readonly Point[] | undefined,
     options?: { drawStartPoint?: boolean },
   ) => void;
-  element: () => SVGSVGElement | undefined;
   dispose: () => void;
 } {
   let surface: StrokeSurface | undefined;
@@ -161,11 +172,7 @@ function createStrokeLayer({
     (stroke: readonly Point[], shouldDrawStartPoint: boolean) => {
       // Strokes arrive in client coordinates, straight from the pointer. The
       // surface draws relative to its own top-left, which is the parent's.
-      // Converting here rather than in `sync` keeps that method's reference
-      // check comparing the array the caller passed, and picks up a parent
-      // that has since moved or scrolled.
-      const rect = coordinateParent.getBoundingClientRect();
-      const local = stroke.map((point) => toLocalPoint(point, rect));
+      const local = stroke.map((point) => convert(point));
       surface?.drawStroke(local);
       const [start] = local;
       if (shouldDrawStartPoint && start !== undefined) {
@@ -182,11 +189,10 @@ function createStrokeLayer({
         previousStroke = undefined;
       } else if (stroke !== previousStroke) {
         previousStroke = stroke;
-        surface ??= createStrokeSurface({ parent, ...surfaceOptions });
+        surface ??= createStrokeSurface({ parent: slot, ...surfaceOptions });
         draw(stroke, shouldDrawStartPoint);
       }
     },
-    element: () => surface?.element ?? undefined,
     dispose() {
       draw.cancel();
       surface?.remove();
@@ -202,23 +208,26 @@ function createStrokeLayer({
  theme change reaches them immediately rather than on the next open.
  */
 function createPersistentStrokeLayers(
-  parent: ShadowRoot,
+  slots: Pick<
+    ReturnType<typeof createScene>['slots'],
+    'upper' | 'lower' | 'feedback'
+  >,
+  convert: (point: Point) => Point,
   gestureFeedbackDuration: number,
 ): {
   upper: ReturnType<typeof createStrokeLayer>;
   lower: ReturnType<typeof createStrokeLayer>;
   feedback: ReturnType<typeof createGestureFeedback>;
 } {
-  const coordinateParent = parent.host.parentElement as HTMLElement;
   return {
-    upper: createStrokeLayer({ parent, coordinateParent }),
+    upper: createStrokeLayer({ slot: slots.upper, convert }),
     lower: createStrokeLayer({
-      parent,
-      coordinateParent,
+      slot: slots.lower,
+      convert,
       surfaceOptions: { className: 'marking-menu-stroke--lower' },
     }),
     feedback: createGestureFeedback({
-      parent,
+      parent: slots.feedback,
       duration: gestureFeedbackDuration,
       strokeOptions: { className: 'marking-menu-stroke--feedback' },
       canceledStrokeOptions: {
@@ -230,28 +239,22 @@ function createPersistentStrokeLayers(
 }
 
 function createThemedIndicatorLayer(
-  parent: ShadowRoot,
+  slots: Pick<
+    ReturnType<typeof createScene>['slots'],
+    'indicatorBackground' | 'indicatorDot'
+  >,
+  convert: (point: Point) => Point,
   strokeTheme: MenuStrokeTheme,
 ): ReturnType<typeof createIndicatorLayer> {
   return createIndicatorLayer({
-    parent,
-    coordinateParent: parent.host.parentElement as HTMLElement,
+    backgroundSlot: slots.indicatorBackground,
+    dotSlot: slots.indicatorDot,
+    convert,
     surfaceOptions: {
       radius: strokeTheme.strokeStartPointRadius,
       strokeWidth: strokeTheme.strokeWidth,
     },
   });
-}
-
-/**
- Whether `node` is painted before `other`. The two are always siblings under
- the renderer's parent, never nested, so `compareDocumentPosition` returns
- exactly one of the two ordering flags and nothing has to be masked off.
- */
-function isPaintedBefore(node: Node, other: Node): boolean {
-  return (
-    node.compareDocumentPosition(other) === Node.DOCUMENT_POSITION_FOLLOWING
-  );
 }
 
 export type RendererOptions = {
@@ -277,78 +280,32 @@ export function createRenderer({
   // Reference-equality cache: an unchanged active key skips the DOM scan
   // `Menu.setActive` performs.
   let previousActiveKey: string | undefined;
+  // Fixed slots in paint order plus the single page-to-local conversion every
+  // layer shares. Paint order needs no repair: each layer mounts into its own
+  // slot, once, and stays there.
+  const scene = createScene({ root, parent });
   const { upper, lower, feedback } = createPersistentStrokeLayers(
-    root,
+    scene.slots,
+    scene.toLocal,
     gestureFeedbackDuration,
   );
-  let indicator = createThemedIndicatorLayer(root, initialStrokeTheme);
+  let indicator = createThemedIndicatorLayer(
+    scene.slots,
+    scene.toLocal,
+    initialStrokeTheme,
+  );
   // The parent's own inline cursor, read before the renderer writes one, and
   // restored rather than cleared whenever the view asks for `default`: what
   // the renderer did not set, it does not get to throw away.
   const ownCursor = parent.style.cursor;
   const setStrokeTheme = (strokeTheme: MenuStrokeTheme) => {
     indicator.dispose();
-    indicator = createThemedIndicatorLayer(root, strokeTheme);
+    indicator = createThemedIndicatorLayer(
+      scene.slots,
+      scene.toLocal,
+      strokeTheme,
+    );
   };
-
-  /**
-   The paint order the novice feedback depends on: the lower stroke, which
-   records movement made before the menu opened, goes behind the menu; the
-   upper stroke and its origin marker go in front of it, so the marker
-   stays visible and the line is not cut where it crosses an item.
-
-   A completed-gesture trace belongs in front of the menu as well. It
-   outlives the gesture that produced it, so a menu opened before it fades
-   is appended after it and would cover it.
-
-   Nothing in the stylesheet sets any of this, and each stroke surface and menu
-   land wherever they were first needed, so sibling order is all that holds
-   it. Every render re-asserts that order, moving an element only when it
-   is out of place.
-   */
-  function restack(): void {
-    const menuElement = menuHandle?.menu.layer;
-
-    const lowerElement = lower.element();
-    if (
-      menuElement !== undefined &&
-      lowerElement !== undefined &&
-      !isPaintedBefore(lowerElement, menuElement)
-    ) {
-      menuElement.before(lowerElement);
-    }
-
-    // Chains every remaining layer in paint order, each moved right after
-    // the one before it only when it isn't already there. `tail` starts
-    // undefined when no menu is open (startup and expert, where the
-    // indicator and the upper stroke draw with nothing to anchor against
-    // yet): the first layer found then anchors the rest, wherever it
-    // already sits.
-    let tail: Element | undefined = menuElement;
-    const place = (element: Element | undefined): void => {
-      if (element === undefined) {
-        return;
-      }
-
-      if (tail !== undefined && !isPaintedBefore(tail, element)) {
-        tail.after(element);
-      }
-
-      tail = element;
-    };
-
-    // The indicator's background sits behind the upper stroke: it is
-    // static, not something announcing itself in front of it. The growing
-    // dot stays in front, in the upper stroke's own slot, since it is what
-    // becomes the novice-mode dot there.
-    place(indicator.backgroundElement());
-    place(upper.element());
-    place(indicator.dotElement());
-
-    for (const trace of feedback.elements()) {
-      place(trace);
-    }
-  }
 
   return {
     root,
@@ -370,16 +327,18 @@ export function createRenderer({
           menuHandle?.menu.remove();
           // `LayoutView.menu.center` is in client coordinates; the menu
           // layout wants it relative to `parent`. The projector is
-          // DOM-free, so every such conversion is the renderer's to make
-          // (see `createStrokeLayer` and `showFeedback` for the others).
-          const cbr = parent.getBoundingClientRect();
+          // DOM-free, so the scene converts it here, eagerly: menu creation
+          // draws synchronously, so there is no later frame where the
+          // parent could have moved (unlike strokes and the indicator,
+          // which convert lazily inside their own draw loops).
           const handle = {
             model: view.menu.model,
             menu: createMenu({
               parent: root,
+              layerParent: scene.slots.menu,
               deadZoneRadius,
               model: view.menu.model,
-              center: toLocalPoint(view.menu.center, cbr),
+              center: scene.toLocal(view.menu.center),
             }),
           };
           menuHandle = handle;
@@ -396,14 +355,13 @@ export function createRenderer({
       upper.sync(view.upperStroke, { drawStartPoint: isNoviceMode });
       lower.sync(view.lowerStroke);
       indicator.sync(view.indicator);
-      restack();
     },
     showFeedback(effect) {
-      const rect = parent.getBoundingClientRect();
-      feedback.show(
-        effect.stroke.map((point) => toLocalPoint(point, rect)),
-        { canceled: effect.canceled },
-      );
+      // Like the menu center, feedback draws synchronously, so converting
+      // eagerly here is already late enough.
+      feedback.show(scene.toLocalMany(effect.stroke), {
+        canceled: effect.canceled,
+      });
     },
     dispose() {
       parent.style.cursor = ownCursor;
@@ -413,6 +371,7 @@ export function createRenderer({
       menuHandle?.menu.remove();
       menuHandle = undefined;
       feedback.remove();
+      scene.dispose();
       host.remove();
     },
   };

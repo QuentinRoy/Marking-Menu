@@ -48,12 +48,13 @@ const activeMenuItems = (parent: HTMLElement): HTMLElement[] => [
 
 // Excludes the opening indicator's own SVGs (background and dot): they draw
 // the dwell-anticipation target, not a stroke.
-const strokeSurfaces = (parent: HTMLElement): SVGSVGElement[] =>
-  [
-    ...(parent.querySelector('.marking-menu')?.shadowRoot?.children ?? []),
-  ].filter((element): element is SVGSVGElement =>
-    element.matches('svg.marking-menu-stroke-surface'),
-  );
+const strokeSurfaces = (parent: HTMLElement): SVGSVGElement[] => [
+  ...(parent
+    .querySelector('.marking-menu')
+    ?.shadowRoot?.querySelectorAll<SVGSVGElement>(
+      'svg.marking-menu-stroke-surface',
+    ) ?? []),
+];
 
 describe('resolveEngineOptions', () => {
   const parent = document.createElement('div');

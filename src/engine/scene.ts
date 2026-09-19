@@ -8,18 +8,6 @@ export type SceneSlotName =
   | 'indicatorDot'
   | 'feedback';
 
-const slotOrder: readonly {
-  key: SceneSlotName;
-  name: string;
-}[] = [
-  { key: 'lower', name: 'lower' },
-  { key: 'menu', name: 'menu' },
-  { key: 'indicatorBackground', name: 'indicator-background' },
-  { key: 'upper', name: 'upper' },
-  { key: 'indicatorDot', name: 'indicator-dot' },
-  { key: 'feedback', name: 'feedback' },
-];
-
 export type Scene = {
   /**
   One container per paint layer, in paint order. Layers mount their content
@@ -49,8 +37,7 @@ export function createScene({
   parent: HTMLElement;
 }): Scene {
   const doc = root.ownerDocument;
-  const slots = {} as Record<SceneSlotName, HTMLElement>;
-  for (const { key, name } of slotOrder) {
+  const createSlot = (name: string): HTMLElement => {
     const slot = doc.createElement('div');
     slot.className = 'marking-menu-slot';
     slot.dataset.slot = name;
@@ -58,8 +45,17 @@ export function createScene({
     // of the root, while DOM order (hence paint order) stays fixed.
     slot.style.display = 'contents';
     root.append(slot);
-    slots[key] = slot;
-  }
+    return slot;
+  };
+
+  const slots: Record<SceneSlotName, HTMLElement> = {
+    lower: createSlot('lower'),
+    menu: createSlot('menu'),
+    indicatorBackground: createSlot('indicator-background'),
+    upper: createSlot('upper'),
+    indicatorDot: createSlot('indicator-dot'),
+    feedback: createSlot('feedback'),
+  };
 
   const toLocal = (point: Point): Point =>
     toLocalPoint(point, parent.getBoundingClientRect());
@@ -67,7 +63,7 @@ export function createScene({
   return {
     slots,
     toLocal,
-    toLocalMany: (points) => points.map(toLocal),
+    toLocalMany: (points) => points.map((point) => toLocal(point)),
     dispose() {
       for (const slot of Object.values(slots)) {
         slot.remove();

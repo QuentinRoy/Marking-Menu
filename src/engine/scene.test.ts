@@ -25,10 +25,10 @@ const setUp = () => {
     host,
     root,
     scene,
-    setLeft: (value: number) => {
+    setLeft(value: number) {
       left = value;
     },
-    tearDown: () => {
+    tearDown() {
       scene.dispose();
       parent.remove();
     },
@@ -39,34 +39,32 @@ describe('scene', () => {
   it('creates one slot per layer, once, in paint order', () => {
     const { root, tearDown } = setUp();
 
-    const slots = [...root.querySelectorAll('[data-slot]')];
-    expect(slots.map((slot) => slot.getAttribute('data-slot'))).toEqual([
-      ...slotNames,
-    ]);
+    const slots = [...root.querySelectorAll<HTMLElement>('[data-slot]')];
+    expect(slots.map((slot) => slot.dataset.slot)).toEqual([...slotNames]);
     for (const slot of slots) {
       expect(slot.localName).toBe('div');
       expect(slot.classList.contains('marking-menu-slot')).toBe(true);
-      expect((slot as HTMLElement).style.display).toBe('contents');
+      expect(slot.style.display).toBe('contents');
     }
+
     tearDown();
   });
 
   it('exposes each slot by name', () => {
     const { root, scene, tearDown } = setUp();
 
-    expect(scene.slots.lower.getAttribute('data-slot')).toBe('lower');
-    expect(scene.slots.menu.getAttribute('data-slot')).toBe('menu');
-    expect(scene.slots.indicatorBackground.getAttribute('data-slot')).toBe(
+    expect(scene.slots.lower.dataset.slot).toBe('lower');
+    expect(scene.slots.menu.dataset.slot).toBe('menu');
+    expect(scene.slots.indicatorBackground.dataset.slot).toBe(
       'indicator-background',
     );
-    expect(scene.slots.upper.getAttribute('data-slot')).toBe('upper');
-    expect(scene.slots.indicatorDot.getAttribute('data-slot')).toBe(
-      'indicator-dot',
-    );
-    expect(scene.slots.feedback.getAttribute('data-slot')).toBe('feedback');
+    expect(scene.slots.upper.dataset.slot).toBe('upper');
+    expect(scene.slots.indicatorDot.dataset.slot).toBe('indicator-dot');
+    expect(scene.slots.feedback.dataset.slot).toBe('feedback');
     for (const slot of Object.values(scene.slots)) {
       expect(slot.parentNode).toBe(root);
     }
+
     tearDown();
   });
 
