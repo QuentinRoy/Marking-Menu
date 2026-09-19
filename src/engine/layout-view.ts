@@ -1,11 +1,11 @@
-import type { AnyModelNode, ModelMenus } from '../types.js';
+import type { ModelMenus, ModelNode } from '../types.js';
 import type { Point } from '../utils.js';
 import type { NavigationOptions, NavigationState } from './machine.js';
 
 /**
  The DOM-free, state-derived layout projection.
  */
-export type LayoutView<M extends AnyModelNode> = {
+export type LayoutView<M extends ModelNode = ModelNode> = {
   readonly cursor: 'default' | 'crosshair' | 'none';
   readonly menu:
     | undefined
@@ -42,7 +42,7 @@ export function noviceUpperStroke({
   return [menuCenter, lastPosition];
 }
 
-export function projectLayout<M extends AnyModelNode>(
+export function projectLayout<M extends ModelNode = ModelNode>(
   state: NavigationState<M>,
   options: NavigationOptions,
 ): LayoutView<M> {
@@ -92,16 +92,7 @@ export function projectLayout<M extends AnyModelNode>(
     }
 
     case 'novice': {
-      // `ModelItems<M>` is erased to a bare node at the machine's own
-      // boundary (see machine.ts's module comment); every real item built
-      // by `model.ts` carries `key`/`isLeaf`, the same reason `renderer.ts`
-      // casts `view.menu.model` to `MenuLayoutModel`.
-      const active = state.active as
-        | {
-            readonly key: string;
-            readonly isLeaf: boolean;
-          }
-        | undefined;
+      const { active } = state;
       return {
         cursor: 'none',
         menu: {

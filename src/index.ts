@@ -23,14 +23,19 @@ export {
 // `events.ts`), only its types.
 export type { MarkingMenuModel } from './model.js';
 export type {
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   AnyModelNode,
   MarkingMenuInput,
   MarkingMenuItemInput,
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   MarkingMenuModelItem,
   ModelItem,
   ModelItems,
+  ModelLeaf,
   ModelLeaves,
+  ModelMenu,
   ModelMenus,
+  ModelNode,
   ModelNodes,
   ModelRoot,
 } from './types.js';

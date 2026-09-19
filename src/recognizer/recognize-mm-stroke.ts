@@ -1,4 +1,10 @@
-import type { AnyModelNode, ModelLeaves, ModelNodes } from '../types.js';
+import type {
+  ModelItem,
+  ModelLeaves,
+  ModelMenus,
+  ModelNode,
+  ModelNodes,
+} from '../types.js';
 import {
   dist,
   findMaxEntry,
@@ -60,10 +66,10 @@ export const pointsToSegments = (points: Point[]): Segment[] => {
  generic call, which it cannot do (see `walkModel`'s own cast).
  */
 const walkModelLoose = (
-  model: AnyModelNode,
+  model: ModelNode,
   segments: Array<{ angle: number }>,
   startIndex: number,
-): NonEmptyArray<AnyModelNode> | undefined => {
+): NonEmptyArray<ModelItem> | undefined => {
   const segment = segments[startIndex];
   if (segment === undefined || model.isLeaf) {
     return undefined;
@@ -95,7 +101,7 @@ const walkModelLoose = (
  not lead to an item. `model` itself is not part of the path, which is hence
  never empty.
  */
-export const walkModel = <N extends AnyModelNode>({
+export const walkModel = <N extends ModelNode>({
   model,
   segments,
   startIndex = 0,
@@ -104,12 +110,6 @@ export const walkModel = <N extends AnyModelNode>({
   segments: Array<{ angle: number }>;
   startIndex?: number;
 }): NonEmptyArray<ModelNodes<N>> | undefined =>
-  // Sound by construction: `AnyModelNode`'s polymorphic `this` ties a node's
-  // children to its own item type, so every node `walkModelLoose` visits is
-  // genuinely a member of `ModelNodes<N>` for the concrete `N` it was called
-  // with. The compiler just cannot verify this through a generic recursive
-  // walk, hence the single assertion here rather than scattered through the
-  // recursion.
   walkModelLoose(model, segments, startIndex) as
     NonEmptyArray<ModelNodes<N>> | undefined;
 
@@ -147,10 +147,10 @@ export const divideLongestSegment = (
  {@link walkModelLoose}.
  */
 const findItemLoose = (
-  model: AnyModelNode,
+  model: ModelNode,
   segments: StrokeSegment[],
   maxDepth: number,
-): NonEmptyArray<AnyModelNode> | undefined => {
+): NonEmptyArray<ModelItem> | undefined => {
   // If there are no segments, there is no selection to find.
   if (segments.length === 0) {
     return undefined;
@@ -158,7 +158,7 @@ const findItemLoose = (
 
   // While we haven't found a leaf item, divide the longest segment and walk the model.
   let currentSegments = segments;
-  let currentPath: NonEmptyArray<AnyModelNode> | undefined;
+  let currentPath: NonEmptyArray<ModelItem> | undefined;
   while (currentSegments.length <= maxDepth) {
     currentPath = walkModelLoose(model, currentSegments, 0);
     if (currentPath?.at(-1)?.isLeaf) {
@@ -181,7 +181,7 @@ const findItemLoose = (
  @param options.maxDepth - The maximum depth of the item.
  @returns The path leading to the selected item (see {@link walkModel}).
  */
-export const findItem = <N extends AnyModelNode>({
+export const findItem = <N extends ModelNode>({
   model,
   segments,
   maxDepth = model.getMaxDepth(),
@@ -196,14 +196,8 @@ export const findItem = <N extends AnyModelNode>({
 
 /**
  Read the smallest angular gap between neighboring items anywhere in `model`.
-
- Every concrete model node carries this, but it stays off {@link
- AnyModelNode} on purpose: it exists to feed the corner threshold below, not
- as something a caller of the library has a reason to read. The cast is
- sound by construction for that same reason.
  */
-const getMinAngularGap = (model: AnyModelNode): number =>
-  (model as unknown as { getMinAngularGap(): number }).getMinAngularGap();
+const getMinAngularGap = (model: ModelNode): number => model.getMinAngularGap();
 
 /**
  Cut a stroke into the segments a marking-menu walk is attempted against:
@@ -220,7 +214,7 @@ const getMinAngularGap = (model: AnyModelNode): number =>
  */
 const cutStroke = (
   stroke: readonly Point[],
-  model: AnyModelNode,
+  model: ModelNode,
   maxDepth: number,
 ): {
   angleThreshold: number;
@@ -266,7 +260,7 @@ const cutStroke = (
  @param options.requireLeaf - Look for a leaf.
  @returns The item recognized by the stroke.
  */
-export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
+export function recognizeMarkingMenuStroke<N extends ModelNode>(
   stroke: readonly Point[],
   model: N,
   options?: {
@@ -275,7 +269,16 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
     requireLeaf?: true;
   },
 ): ModelLeaves<N> | undefined;
-export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
+export function recognizeMarkingMenuStroke<N extends ModelNode>(
+  stroke: readonly Point[],
+  model: N,
+  options: {
+    maxDepth?: number;
+    requireMenu: true;
+    requireLeaf?: false;
+  },
+): ModelMenus<N> | undefined;
+export function recognizeMarkingMenuStroke<N extends ModelNode>(
   stroke: readonly Point[],
   model: N,
   options: {
@@ -284,7 +287,7 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
     requireLeaf?: boolean;
   },
 ): ModelNodes<N> | undefined;
-export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
+export function recognizeMarkingMenuStroke<N extends ModelNode>(
   stroke: readonly Point[],
   model: N,
   {
@@ -330,7 +333,7 @@ export function recognizeMarkingMenuStroke<N extends AnyModelNode>(
  Meant for a caller that displays this rather than just acting on the result
  (see {@link analyzeMarkingMenuStroke}).
  */
-export type MarkingMenuStrokeAnalysis<N extends AnyModelNode> = {
+export type MarkingMenuStrokeAnalysis<N extends ModelNode> = {
   /**
   The angle, in degrees, past which a bend in the stroke counts as a corner.
   */
@@ -369,7 +372,7 @@ export type MarkingMenuStrokeAnalysis<N extends AnyModelNode> = {
  @param model - The model to recognize the stroke against.
  @returns The full analysis of the recognition attempt.
  */
-export function analyzeMarkingMenuStroke<N extends AnyModelNode>(
+export function analyzeMarkingMenuStroke<N extends ModelNode>(
   stroke: readonly Point[],
   model: N,
 ): MarkingMenuStrokeAnalysis<N> {

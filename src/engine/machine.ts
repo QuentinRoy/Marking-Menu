@@ -11,13 +11,16 @@ import {
 import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
 import { strokeLength } from '../recognizer/stroke-length.js';
 import type {
-  AnyModelNode,
+  ModelItem,
+  ModelLeaf,
   ModelItems,
-  ModelLeaves,
+  ModelMenu,
   ModelMenus,
+  ModelNode,
+  ModelRoot,
 } from '../types.js';
 import { dist, toPolar, type Point } from '../utils.js';
-import { noviceUpperStroke, projectLayout } from './layout-view.js';
+import { type LayoutView, noviceUpperStroke, projectLayout } from './layout-view.js';
 
 /*
  The navigation machine, declared as a totorobot definition rather than a
@@ -115,50 +118,23 @@ type NavigationPhaseFields<Menu, Active> = {
  projects from. Kept as a plain discriminated union, independent of
  totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
  */
-export type NavigationState<M extends AnyModelNode> = {
+export type NavigationState<M extends ModelNode = ModelRoot> = {
   [K in keyof NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>]: {
     readonly phase: K;
   } & NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>[K];
 }[keyof NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>];
 
 type MachineStates = {
-  [K in keyof NavigationPhaseFields<AnyModelNode, AnyModelNode>]: {
-    readonly model: AnyModelNode;
+  [K in keyof NavigationPhaseFields<ModelMenu, ModelItem>]: {
+    readonly model: ModelRoot;
     readonly options: NavigationOptions;
-  } & NavigationPhaseFields<AnyModelNode, AnyModelNode>[K];
+  } & NavigationPhaseFields<ModelMenu, ModelItem>[K];
 };
 
 /**
- The layout announcement's payload: `LayoutView<AnyModelNode>` with the same
- erasure applied to its own `menu.model`, for the same reason `MachineStates`
- erases `novice.menu`.
+ The layout announcement's payload: `LayoutView<ModelRoot>`.
  */
-export type NavigationLayoutAnnouncement = {
-  readonly cursor: 'default' | 'crosshair' | 'none';
-  readonly menu:
-    | undefined
-    | {
-        readonly model: AnyModelNode;
-        readonly center: Point;
-        readonly activeKey: string | undefined;
-      };
-  readonly upperStroke: readonly Point[] | undefined;
-  readonly lowerStroke: readonly Point[] | undefined;
-  readonly indicator:
-    | undefined
-    | {
-        // When the current dwell began: the renderer computes growth
-        // progress directly from this and `delayMs`, rather than tracking
-        // restart state of its own.
-        readonly startedAt: number;
-        // Where the indicator draws right now. Unlike `startedAt`, always
-        // the pointer's current position: a dwell only restarts on
-        // significant movement, so using its anchor to draw would lag the
-        // pointer by up to `movementsThreshold`.
-        readonly position: Point;
-        readonly delayMs: number;
-      };
-};
+export type NavigationLayoutAnnouncement = LayoutView<ModelRoot>;
 
 export type NavigationFeedbackAnnouncement = {
   readonly stroke: readonly Point[];
@@ -167,27 +143,25 @@ export type NavigationFeedbackAnnouncement = {
 
 type MachineOutputs = {
   start: MarkingMenuStartEvent;
-  move: MarkingMenuMoveEvent<AnyModelNode>;
-  open: MarkingMenuOpenEvent<AnyModelNode>;
-  change: MarkingMenuChangeEvent<AnyModelNode>;
-  select: MarkingMenuSelectEvent<AnyModelNode>;
-  cancel: MarkingMenuCancelEvent<AnyModelNode>;
+  move: MarkingMenuMoveEvent;
+  open: MarkingMenuOpenEvent;
+  change: MarkingMenuChangeEvent;
+  select: MarkingMenuSelectEvent;
+  cancel: MarkingMenuCancelEvent;
   // Internal: consumed only by runtime.ts, never forwarded to a consumer.
-  layout: NavigationLayoutAnnouncement;
+  layout: LayoutView;
   feedback: NavigationFeedbackAnnouncement;
 };
 
 /**
  Reassemble the boundary `NavigationState` from a committed `{ to, toData }`
- pair, for `projectLayout`. The cast is the same erasure-crossing every
- model-shaped field in this file needs: `toData`'s real shape already matches
- one of `NavigationState`'s variants field-for-field, `model`/`options` aside.
+ pair, for `projectLayout`.
  */
 function toNavigationState(
   to: keyof MachineStates,
   toData: MachineStates[keyof MachineStates],
-): NavigationState<AnyModelNode> {
-  return { phase: to, ...toData } as unknown as NavigationState<AnyModelNode>;
+): NavigationState {
+  return { phase: to, ...toData } as unknown as NavigationState;
 }
 
 /*
@@ -204,21 +178,21 @@ function toNavigationState(
  a real `M` can still pass it explicitly and get a precisely typed event back,
  checked rather than cast.
  */
-function openEvent<N extends AnyModelNode>(data: {
+function openEvent(data: {
   readonly position: Point;
-  readonly menu: ModelMenus<N>;
+  readonly menu: ModelMenu;
   readonly menuCenter: Point;
-}): MarkingMenuOpenEvent<N> {
-  return new MarkingMenuOpenEvent<N>(data);
+}): MarkingMenuOpenEvent {
+  return new MarkingMenuOpenEvent(data);
 }
 
-function moveEvent<N extends AnyModelNode>(data: {
+function moveEvent(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly active: ModelItems<N> | undefined;
-  readonly menu: ModelMenus<N> | undefined;
-}): MarkingMenuMoveEvent<N> {
-  return new MarkingMenuMoveEvent<N>(data);
+  readonly active: ModelItem | undefined;
+  readonly menu: ModelMenu | undefined;
+}): MarkingMenuMoveEvent {
+  return new MarkingMenuMoveEvent(data);
 }
 
 /**
@@ -227,7 +201,7 @@ function moveEvent<N extends AnyModelNode>(data: {
  there.
  */
 function emitInactiveMove(
-  emit: (name: 'move', data: MarkingMenuMoveEvent<AnyModelNode>) => void,
+  emit: (name: 'move', data: MarkingMenuMoveEvent) => void,
   mode: 'startup' | 'expert',
   position: Point,
 ): void {
@@ -237,31 +211,41 @@ function emitInactiveMove(
   );
 }
 
-function changeEvent<N extends AnyModelNode>(data: {
+function changeEvent(data: {
   readonly position: Point;
-  readonly active: ModelItems<N> | undefined;
-  readonly previousActive: ModelItems<N> | undefined;
-  readonly menu: ModelMenus<N>;
-}): MarkingMenuChangeEvent<N> {
-  return new MarkingMenuChangeEvent<N>(data);
+  readonly active: ModelItem | undefined;
+  readonly previousActive: ModelItem | undefined;
+  readonly menu: ModelMenu;
+}): MarkingMenuChangeEvent {
+  return new MarkingMenuChangeEvent(data);
 }
 
-function selectEvent<N extends AnyModelNode>(data: {
+function selectEvent(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly selection: ModelLeaves<N>;
-  readonly menu: ModelMenus<N> | undefined;
-}): MarkingMenuSelectEvent<N> {
-  return new MarkingMenuSelectEvent<N>(data);
+  readonly selection: ModelLeaf;
+  readonly menu: ModelMenu | undefined;
+}): MarkingMenuSelectEvent {
+  return new MarkingMenuSelectEvent(data);
 }
 
-function cancelEvent<N extends AnyModelNode>(data: {
+function cancelEvent(data: {
   readonly mode: MarkingMenuMode;
   readonly position: Point;
-  readonly active: ModelItems<N> | undefined;
-  readonly menu: ModelMenus<N> | undefined;
-}): MarkingMenuCancelEvent<N> {
-  return new MarkingMenuCancelEvent<N>(data);
+  readonly active: ModelItem | undefined;
+  readonly menu: ModelMenu | undefined;
+}): MarkingMenuCancelEvent {
+  return new MarkingMenuCancelEvent(data);
+}
+
+function isModelLeaf(item: ModelItem): item is ModelLeaf {
+  return item.isLeaf;
+}
+
+function isModelMenuItem(
+  item: ModelItem,
+): item is ModelItem & { readonly isLeaf: false } {
+  return !item.isLeaf;
 }
 
 /**
@@ -297,8 +281,8 @@ function terminationContext(
   position: Point,
 ): {
   readonly stroke: readonly Point[];
-  readonly menu: AnyModelNode | undefined;
-  readonly active: AnyModelNode | undefined;
+  readonly menu: ModelMenu | undefined;
+  readonly active: ModelItem | undefined;
 } {
   if ('lowerStroke' in fromData) {
     const { lowerStroke, menu, active } = fromData;
@@ -324,9 +308,11 @@ function terminationContext(
  attempts one.
  */
 function emitTermination(
-  emit: ((name: 'feedback', data: NavigationFeedbackAnnouncement) => void) &
-    ((name: 'cancel', data: MarkingMenuCancelEvent<AnyModelNode>) => void) &
-    ((name: 'select', data: MarkingMenuSelectEvent<AnyModelNode>) => void),
+  emit: {
+    (name: 'feedback', data: NavigationFeedbackAnnouncement): void;
+    (name: 'cancel', data: MarkingMenuCancelEvent): void;
+    (name: 'select', data: MarkingMenuSelectEvent): void;
+  },
   {
     from,
     position,
@@ -338,9 +324,9 @@ function emitTermination(
     readonly from: MarkingMenuMode;
     readonly position: Point;
     readonly stroke: readonly Point[];
-    readonly menu: AnyModelNode | undefined;
-    readonly active: AnyModelNode | undefined;
-    readonly selection: AnyModelNode | undefined;
+    readonly menu: ModelMenu | undefined;
+    readonly active: ModelItem | undefined;
+    readonly selection: ModelLeaf | undefined;
   },
 ): void {
   emit('feedback', { stroke, canceled: selection === undefined });
@@ -483,7 +469,7 @@ export const navigationMachine = machine({
     // is active only past the dead zone, and that is the only threshold.
     'novice -dwell> novice'({ fromData }) {
       const { active, lastPosition, lowerStroke, options, model } = fromData;
-      if (active === undefined || active.isLeaf) {
+      if (active === undefined || !isModelMenuItem(active)) {
         return { ...fromData, dwellStartedAt: Date.now() };
       }
 
@@ -683,9 +669,10 @@ export const navigationMachine = machine({
       // `cancel.active` unchanged, since it is precisely the thing that was
       // not selected. Startup with zero movement has nothing to recognize;
       // expert, and startup with sub-threshold movement, always attempt it.
-      let selection: AnyModelNode | undefined;
+      let selection: ModelLeaf | undefined;
       if (from === 'novice') {
-        selection = active?.isLeaf === true ? active : undefined;
+        selection =
+          active !== undefined && isModelLeaf(active) ? active : undefined;
       } else if (from === 'startup' && strokeLength(stroke) === 0) {
         selection = undefined;
       } else {

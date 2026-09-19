@@ -1,6 +1,5 @@
 import type { MarkingMenuEventEmitter } from '../events.js';
-import type { AnyModelNode } from '../types.js';
-import type { LayoutView } from './layout-view.js';
+import type { ModelNode, ModelRoot } from '../types.js';
 import type { ResolvedLogger } from './logger.js';
 import {
   navigationMachine,
@@ -23,7 +22,7 @@ export type NavigationInputSink = {
  The runtime owns the emitter: interpreting the machine's public outputs is
  the only thing that ever originates an event.
  */
-export type NavigationRuntime<M extends AnyModelNode> = NavigationInputSink &
+export type NavigationRuntime<M extends ModelNode = ModelRoot> = NavigationInputSink &
   MarkingMenuEventEmitter<M> & {
     dispose: () => void;
   };
@@ -47,7 +46,7 @@ const publicOutputs = [
  raised it mid-setup, so every public output is re-announced through a plain
  `EventTarget`, whose `dispatchEvent` absorbs a throwing listener instead.
  */
-export function createRuntime<M extends AnyModelNode>({
+export function createRuntime<M extends ModelRoot = ModelRoot>({
   model,
   options,
   renderer,
@@ -55,7 +54,7 @@ export function createRuntime<M extends AnyModelNode>({
 }: {
   model: M;
   options: NavigationOptions;
-  renderer: LayoutRenderer<M>;
+  renderer: LayoutRenderer;
   log: ResolvedLogger;
 }): NavigationRuntime<M> {
   const target = new EventTarget();
@@ -92,7 +91,7 @@ export function createRuntime<M extends AnyModelNode>({
 
   const offLayout = host.on('layout', ({ data }) => {
     try {
-      renderer.render(data as unknown as LayoutView<M>);
+      renderer.render(data);
     } catch (error) {
       handleInternalFailure(error);
     }

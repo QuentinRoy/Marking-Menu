@@ -9,7 +9,13 @@ import type {
   MarkingMenuStartEvent,
 } from '../events.js';
 import type { MarkingMenuModel } from '../model.js';
-import type { AnyModelNode, ModelLeaves, ModelMenus } from '../types.js';
+import type {
+  ModelLeaves,
+  ModelMenu,
+  ModelMenus,
+  ModelNode,
+  ModelRoot,
+} from '../types.js';
 import { type navigationMachine, type NavigationOptions } from './machine.js';
 
 /*
@@ -40,7 +46,7 @@ describe('StatesOf<typeof navigationMachine>', () => {
     // as a literal object type. Checking the keys and each field separately
     // sidesteps it without losing what the assertion is for.
     expectTypeOf<keyof States['idle']>().toEqualTypeOf<'model' | 'options'>();
-    expectTypeOf<States['idle']['model']>().toEqualTypeOf<AnyModelNode>();
+    expectTypeOf<States['idle']['model']>().toEqualTypeOf<ModelRoot>();
     expectTypeOf<
       States['idle']['options']
     >().toEqualTypeOf<NavigationOptions>();
@@ -71,16 +77,11 @@ describe('StatesOf<typeof navigationMachine>', () => {
     >();
     expectTypeOf<States['startup']>().not.toHaveProperty('menu');
     expectTypeOf<States['expert']>().not.toHaveProperty('menu');
-    expectTypeOf<States['novice']['menu']>().toEqualTypeOf<AnyModelNode>();
+    expectTypeOf<States['novice']['menu']>().toEqualTypeOf<ModelMenu>();
   });
 
   it("is generic-safe: a caller's own model still threads through `model`", () => {
-    // The exact pattern `runtime.ts` relies on: a real `M` is narrower than
-    // `AnyModelNode`, so it is always assignable into the erased `model`
-    // field this file declares, for any `M` a caller instantiates
-    // `createRuntime` with — never just the fixture model this suite happens
-    // to use.
-    const carryModel = <M extends AnyModelNode>(model: M): States['idle'] => ({
+    const carryModel = <M extends ModelRoot>(model: M): States['idle'] => ({
       model,
       options: {
         movementsThreshold: 5,
@@ -110,19 +111,19 @@ describe('OutputsOf<typeof navigationMachine>', () => {
   it('matches the public event map exactly, over the same erased model', () => {
     expectTypeOf<Outputs['start']>().toEqualTypeOf<MarkingMenuStartEvent>();
     expectTypeOf<Outputs['move']>().toEqualTypeOf<
-      MarkingMenuMoveEvent<AnyModelNode>
+      MarkingMenuMoveEvent<ModelNode>
     >();
     expectTypeOf<Outputs['open']>().toEqualTypeOf<
-      MarkingMenuOpenEvent<AnyModelNode>
+      MarkingMenuOpenEvent<ModelNode>
     >();
     expectTypeOf<Outputs['change']>().toEqualTypeOf<
-      MarkingMenuChangeEvent<AnyModelNode>
+      MarkingMenuChangeEvent<ModelNode>
     >();
     expectTypeOf<Outputs['select']>().toEqualTypeOf<
-      MarkingMenuSelectEvent<AnyModelNode>
+      MarkingMenuSelectEvent<ModelNode>
     >();
     expectTypeOf<Outputs['cancel']>().toEqualTypeOf<
-      MarkingMenuCancelEvent<AnyModelNode>
+      MarkingMenuCancelEvent<ModelNode>
     >();
   });
 });
@@ -133,7 +134,7 @@ describe('OutputsOf<typeof navigationMachine>', () => {
 // model-shaped field to `AnyModelNode` instead of keeping a real `M`: this
 // probe never gets erased, and never gets started either, since this file is
 // type-checked only and never run.
-function genericProbe<M extends AnyModelNode>() {
+function genericProbe<M extends ModelNode>() {
   return machine({
     states: type<{
       idle: undefined;
@@ -145,10 +146,10 @@ function genericProbe<M extends AnyModelNode>() {
   });
 }
 
-type ProbeStates<M extends AnyModelNode> = StatesOf<
+type ProbeStates<M extends ModelNode> = StatesOf<
   ReturnType<typeof genericProbe<M>>
 >;
-type ProbeOutputs<M extends AnyModelNode> = OutputsOf<
+type ProbeOutputs<M extends ModelNode> = OutputsOf<
   ReturnType<typeof genericProbe<M>>
 >;
 

@@ -1,9 +1,9 @@
 import type { TypedEventEmitter } from './typed-event-emitter.js';
 import type {
-  AnyModelNode,
   ModelItems,
   ModelLeaves,
   ModelMenus,
+  ModelNode,
 } from './types.js';
 import type { Point } from './utils.js';
 
@@ -100,7 +100,7 @@ export class MarkingMenuStartEvent extends MarkingMenuEventBase {
  starts novice mode, or a submenu dwell while already in novice mode.
  */
 export class MarkingMenuOpenEvent<
-  M extends AnyModelNode,
+  M extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -151,7 +151,7 @@ export class MarkingMenuOpenEvent<
  {@link MarkingMenuCancelEvent}: both carry the mode, position, active item
  and open menu at a moment where none of those is fixed by the event itself.
  */
-type ActiveMenuData<M extends AnyModelNode> = {
+type ActiveMenuData<M extends ModelNode = ModelNode> = {
   readonly mode: MarkingMenuMode;
   readonly position: ReadonlyPoint;
   readonly active: ModelItems<M> | undefined;
@@ -164,7 +164,7 @@ type ActiveMenuData<M extends AnyModelNode> = {
  be active in.
  */
 export class MarkingMenuMoveEvent<
-  M extends AnyModelNode,
+  M extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -209,7 +209,7 @@ export class MarkingMenuMoveEvent<
  transition.
  */
 export class MarkingMenuChangeEvent<
-  M extends AnyModelNode,
+  M extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -271,7 +271,7 @@ export class MarkingMenuChangeEvent<
  since no menu is open there even though the leaf demonstrably has a parent.
  */
 export class MarkingMenuSelectEvent<
-  M extends AnyModelNode,
+  M extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -321,7 +321,7 @@ export class MarkingMenuSelectEvent<
  `undefined` carries the genuine "nothing under the pointer" case.
  */
 export class MarkingMenuCancelEvent<
-  M extends AnyModelNode,
+  M extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -367,7 +367,7 @@ export class MarkingMenuCancelEvent<
  The closed map from every event name to its exact event class. There is no
  `type: string` fallback: an unknown event name is not a key of this map.
  */
-export type MarkingMenuEventMap<M extends AnyModelNode> = {
+export type MarkingMenuEventMap<M extends ModelNode = ModelNode> = {
   start: MarkingMenuStartEvent;
   open: MarkingMenuOpenEvent<M>;
   move: MarkingMenuMoveEvent<M>;
@@ -379,7 +379,7 @@ export type MarkingMenuEventMap<M extends AnyModelNode> = {
 /**
  The union of every event a marking menu dispatches, discriminated on `type`.
  */
-export type MarkingMenuEvent<M extends AnyModelNode> =
+export type MarkingMenuEvent<M extends ModelNode = ModelNode> =
   MarkingMenuEventMap<M>[keyof MarkingMenuEventMap<M>];
 
 /**
@@ -387,6 +387,5 @@ export type MarkingMenuEvent<M extends AnyModelNode> =
  are narrowed to the six known event names: there is no `type: string`
  fallback, so an unknown event name is rejected at the call site.
  */
-export type MarkingMenuEventEmitter<M extends AnyModelNode> = TypedEventEmitter<
-  MarkingMenuEventMap<M>
->;
+export type MarkingMenuEventEmitter<M extends ModelNode = ModelNode> =
+  TypedEventEmitter<MarkingMenuEventMap<M>>;

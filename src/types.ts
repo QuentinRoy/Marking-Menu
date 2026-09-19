@@ -46,17 +46,9 @@ export type MarkingMenuInput = {
  * -------------------------------------------------------------------------- */
 
 /**
- What the root and the items of the model have in common.
+ Precise methods and properties added to nodes derived from menu inputs.
  */
-type MenuNode<Items extends readonly unknown[]> = {
-  /**
-  The node's direct sub-items.
-  */
-  readonly items: Items;
-  /**
-  Whether the node has no sub-item.
-  */
-  readonly isLeaf: IsLeaf<Items>;
+export type MenuNode<Items extends readonly unknown[]> = {
   /**
    Retrieve a direct sub-item by its id. Only accepts the ids of the node's own
    sub-items, and hence always returns one of them.
@@ -99,11 +91,13 @@ type GetChild<Items extends readonly unknown[]> =
  A node of the model that the caller described: it carries back the id and the
  label it was given, plus the angle the menu laid it out at.
  */
-export type ModelItem<
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- interfaces allow self-referential tree types without circular alias errors.
+export interface ModelItem<
   Id extends string | undefined = string | undefined,
   Label extends string = string,
   Items extends readonly unknown[] = readonly unknown[],
-> = MenuNode<Items> & {
+  Parent = ModelNode,
+> {
   /**
   The item's id, as provided by the caller (`undefined` if it had none).
   */
@@ -125,79 +119,112 @@ export type ModelItem<
    the whole menu. Unlike `id`, it is never provided by the caller.
    */
   readonly key: string;
-};
+  /**
+  The node one level up.
+  */
+  readonly parent: Parent;
+  /**
+  The node's direct sub-items.
+  */
+  readonly items: Items;
+  /**
+   Whether the node has no sub-item.
+   */
+  readonly isLeaf: IsLeaf<Items>;
+  getNearestChild(
+    angle: number,
+  ): IfLeaf<
+    IsLeaf<Items>,
+    undefined,
+    Items[number] extends ModelItem<any, any, any, any>
+      ? Items[number]
+      : ModelItem
+  >;
+  /**
+  The maximum depth of the menu below this node.
+  */
+  getMaxDepth(): IfLeaf<IsLeaf<Items>, 0, number>;
+  /**
+  The maximum breadth of the menu below this node.
+  */
+  getMaxBreadth(): IfLeaf<IsLeaf<Items>, 0, number>;
+  /**
+  The smallest angular gap between neighboring items in the menu.
+  */
+  getMinAngularGap(): number;
+}
 
 /**
  The root of the model. Unlike items, it has no id, label nor angle.
  */
-export type ModelRoot<Items extends readonly unknown[] = readonly unknown[]> =
-  MenuNode<Items> & {
-    readonly isRoot: true;
-    readonly parent: undefined;
-  };
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- interfaces allow self-referential tree types without circular alias errors.
+export interface ModelRoot<
+  Items extends readonly unknown[] = readonly unknown[],
+> {
+  readonly isRoot: true;
+  readonly parent: undefined;
+  /**
+  The node's direct sub-items.
+  */
+  readonly items: Items;
+  /**
+   Whether the node has no sub-item.
+   */
+  readonly isLeaf: IsLeaf<Items>;
+  getNearestChild(
+    angle: number,
+  ): IfLeaf<
+    IsLeaf<Items>,
+    undefined,
+    Items[number] extends ModelItem<any, any, any, any>
+      ? Items[number]
+      : ModelItem
+  >;
+  /**
+  The maximum depth of the menu below this node.
+  */
+  getMaxDepth(): IfLeaf<IsLeaf<Items>, 0, number>;
+  /**
+  The maximum breadth of the menu below this node.
+  */
+  getMaxBreadth(): IfLeaf<IsLeaf<Items>, 0, number>;
+  /**
+  The smallest angular gap between neighboring items in the menu.
+  */
+  getMinAngularGap(): number;
+}
 
 /**
- The members of a model node that a caller can use without knowing the
- literal ids described in a specific menu: `getChild` and `getChildrenByLabel`
- are excluded, as `getChild`'s overload is only sound for the exact tuple type
- it was built from. `items` is kept — its element type is the same
- self-referential erased shape, not the literal tuple — so that
- {@link MarkingMenuModelItem} satisfies {@link AnyModelNode}.
+ A terminal item in the menu tree with no sub-items.
  */
-type GenericNodeKeys =
-  | 'isLeaf'
-  | 'isRoot'
-  | 'items'
-  | 'getNearestChild'
-  | 'getMaxDepth'
-  | 'getMaxBreadth';
+export type ModelLeaf = ModelItem & { readonly isLeaf: true };
+
+type ModelMenuItem = ModelItem & { readonly isLeaf: false };
 
 /**
- The shape of a model node — root or item — for callers that walk the model
- generically rather than through the literal ids described in a specific menu.
-
- `parent` is added outside of {@link GenericNodeKeys}, since `ModelItem` has
- no such field: a literal-preserving `parent` is the very problem this file
- works around. An item's parent is always some node of this same union; the
- root's is always `undefined`.
+ A node in the marking menu tree: either the root or an item, discriminated by
+ `isRoot` and `isLeaf`.
  */
-export type MarkingMenuModelItem =
-  | (Pick<
-      ModelItem<string | undefined, string, readonly MarkingMenuModelItem[]>,
-      GenericNodeKeys
-    > & { readonly parent: MarkingMenuModelItem })
-  | (Pick<ModelRoot<readonly MarkingMenuModelItem[]>, GenericNodeKeys> & {
-      readonly parent: undefined;
-    });
+export type ModelNode = ModelRoot | ModelLeaf | ModelMenuItem;
+
+/**
+ A node that can hold sub-items: either the root or a submenu item.
+ */
+export type ModelMenu = ModelRoot | ModelMenuItem;
+
+/**
+ @deprecated Use {@link ModelNode} instead.
+ */
+export type AnyModelNode = ModelNode;
+
+/**
+ @deprecated Use {@link ModelItem} or {@link ModelNode} instead.
+ */
+export type MarkingMenuModelItem = ModelNode;
 
 /* -------------------------------------------------------------------------- *
  * Generic node walking
  * -------------------------------------------------------------------------- */
-
-/**
- The shape of a model node — root or item — precise enough to walk the model
- generically while keeping `getNearestChild` sound: unlike
- {@link MarkingMenuModelItem}, its return type is tied to the node's own
- `items` via a polymorphic `this`, so a generic node's nearest child resolves
- to that node's own item type instead of the erased one.
-
- Declared as an interface (not a type alias) because polymorphic `this` is
- only available on interfaces and classes.
- */
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- see above.
-export interface AnyModelNode {
-  readonly isLeaf: boolean;
-  readonly isRoot: boolean;
-  readonly items: readonly AnyModelNode[];
-  /**
-   The node one level up, or `undefined` for the root. Erased, like `items`: see
-   {@link MarkingMenuModel} for the precise version.
-   */
-  readonly parent: AnyModelNode | undefined;
-  getNearestChild(angle: number): this['items'][number] | undefined;
-  getMaxDepth(): number;
-  getMaxBreadth(): number;
-}
 
 /**
  Every node of the (sub-)tree rooted at `N`, including `N` itself: `N` and,
@@ -206,49 +233,47 @@ export interface AnyModelNode {
  the item type is already the same for every item in the (sub-)tree, so it
  includes that type without recursing forever.
  */
-export type ModelNodes<N extends AnyModelNode> = N extends {
-  items: infer I extends readonly AnyModelNode[];
+export type ModelNodes<N extends ModelNode> = N extends {
+  items: infer I extends readonly unknown[];
 }
   ? IsTuple<I> extends true
-    ? N | ModelNodes<I[number]>
-    : N | I[number]
+    ? N | ModelNodes<I[number] & ModelNode>
+    : N | (I[number] & ModelNode)
   : N;
 
 /**
 Every node of the (sub-)tree rooted at `N`, excluding the root.
 */
-export type ModelItems<N extends AnyModelNode> = Exclude<
+export type ModelItems<N extends ModelNode> = Exclude<
   ModelNodes<N>,
   { isRoot: true }
 >;
 
 /**
  Every leaf of the (sub-)tree rooted at `N`.
-
- Written as "keep unless provably not a leaf" rather than "keep only if
- provably a leaf", matching {@link ModelItems} above. The two agree for a menu
- described by a literal object, where every node's `isLeaf` is a literal `true`
- or `false`. They differ only for a node whose shape is known at runtime, where
- `isLeaf` is the ambiguous `boolean`: such a node is kept here, rather than
- dropped as unprovable, which would leave this type `never` for a model like
- {@link AnyModelNode} whose leaves plainly exist at runtime. These are return
- types, so erring wide costs a caller a case that never occurs, while erring
- narrow makes a real value unnameable.
  */
-export type ModelLeaves<N extends AnyModelNode> = Exclude<
-  ModelItems<N>,
-  { isLeaf: false }
->;
+export type ModelLeaves<N extends ModelNode> = ModelItems<N> extends infer Item
+  ? Item extends { isLeaf: false }
+    ? never
+    : boolean extends (Item extends { isLeaf: infer L } ? L : never)
+      ? Item & { readonly isLeaf: true }
+      : Item
+  : never;
 
 /**
- Every non-leaf node of the (sub-)tree rooted at `N`, root included. Mirrors
- {@link ModelLeaves}, including its treatment of a node of unknown shape: the
- two types overlap for such a node, since neither can rule it out.
+ Every non-leaf node of the (sub-)tree rooted at `N`, root included.
  */
-export type ModelMenus<N extends AnyModelNode> = Exclude<
-  ModelNodes<N>,
-  { isLeaf: true }
->;
+export type ModelMenus<N extends ModelNode> = ModelNodes<N> extends infer Node
+  ? Node extends ModelNode
+    ? Node['isRoot'] extends true
+      ? Node
+      : Node extends { isLeaf: true }
+        ? never
+        : boolean extends (Node extends { isLeaf: infer L } ? L : never)
+          ? Node & { readonly isLeaf: false }
+          : Node
+    : never
+  : never;
 
 /* -------------------------------------------------------------------------- *
  * Helpers
@@ -258,7 +283,7 @@ export type ModelMenus<N extends AnyModelNode> = Exclude<
  Whether an item list makes its owner a leaf. `boolean` when the list's length
  is not statically known.
  */
-type IsLeaf<Items extends readonly unknown[]> = Items['length'] extends 0
+export type IsLeaf<Items extends readonly unknown[]> = Items['length'] extends 0
   ? true
   : Items extends readonly [unknown, ...unknown[]]
     ? false

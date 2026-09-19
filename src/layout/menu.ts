@@ -27,19 +27,19 @@ export type MenuLayoutItem = {
   /**
   The item's key.
   */
-  key: string;
+  readonly key: string;
   /**
   The item's label.
   */
-  label: string;
+  readonly label: string;
   /**
   The item's angle, in degrees.
   */
-  angle: number;
+  readonly angle: number;
   /**
   Whether the item has no submenu.
   */
-  isLeaf: boolean;
+  readonly isLeaf: boolean;
 };
 
 /**

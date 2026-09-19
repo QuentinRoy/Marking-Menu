@@ -1,5 +1,4 @@
 import { createModel } from '../model.js';
-import type { AnyModelNode } from '../types.js';
 import {
   createRenderer as createRendererWithResolvedOptions,
   type RendererOptions,
@@ -8,13 +7,13 @@ import {
 // The suite below exercises rendering, not the resolved option values
 // themselves, so every call site gets the same defaults unless it overrides
 // them.
-const createRenderer = <M extends AnyModelNode>(
+const createRenderer = (
   options: Omit<RendererOptions, 'deadZoneRadius' | 'gestureFeedbackDuration'> &
     Partial<
       Pick<RendererOptions, 'deadZoneRadius' | 'gestureFeedbackDuration'>
     >,
 ) =>
-  createRendererWithResolvedOptions<M>({
+  createRendererWithResolvedOptions({
     deadZoneRadius: 40,
     gestureFeedbackDuration: 1000,
     ...options,
@@ -44,7 +43,7 @@ describe('createRenderer', () => {
 
   it('owns one host for its lifetime', () => {
     const parent = document.createElement('div');
-    const renderer = createRenderer<typeof model>({ parent });
+    const renderer = createRenderer({ parent });
     const host = parent.querySelector('.marking-menu');
 
     renderer.render({
@@ -73,7 +72,7 @@ describe('createRenderer', () => {
     let left = 200;
     parent.getBoundingClientRect = () =>
       ({ left, top: 50 }) as unknown as DOMRect;
-    const renderer = createRenderer<typeof model>({ parent });
+    const renderer = createRenderer({ parent });
 
     renderer.render({
       cursor: 'none',
@@ -108,7 +107,7 @@ describe('createRenderer', () => {
 
   it('keeps lower, menu, upper, then feedback paint order', () => {
     const parent = document.createElement('div');
-    const renderer = createRenderer<typeof model>({ parent });
+    const renderer = createRenderer({ parent });
 
     renderer.showFeedback({
       stroke: [
@@ -171,7 +170,7 @@ describe('createRenderer', () => {
 
   it('cancels pending drawing and feedback removal on dispose', () => {
     const parent = document.createElement('div');
-    const renderer = createRenderer<typeof model>({ parent });
+    const renderer = createRenderer({ parent });
     const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame');
     const clearTimer = vi.spyOn(globalThis, 'clearTimeout');
 
@@ -195,7 +194,7 @@ describe('createRenderer', () => {
 
   it("draws the opening indicator's background and dot at the given anchor, and removes both once the indicator clears", () => {
     const parent = document.createElement('div');
-    const renderer = createRenderer<typeof model>({ parent });
+    const renderer = createRenderer({ parent });
 
     renderer.render({
       cursor: 'crosshair',
@@ -226,7 +225,7 @@ describe('createRenderer', () => {
 
   it("paints the indicator's background behind the upper stroke and its dot in front of it", () => {
     const parent = document.createElement('div');
-    const renderer = createRenderer<typeof model>({ parent });
+    const renderer = createRenderer({ parent });
 
     renderer.render({
       cursor: 'crosshair',
@@ -256,7 +255,7 @@ describe('createRenderer', () => {
 
   it('grows the dot toward the background radius over the given delay, and cancels its animation frame on dispose', () => {
     const parent = document.createElement('div');
-    const renderer = createRenderer<typeof model>({ parent });
+    const renderer = createRenderer({ parent });
     const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame');
 
     renderer.render({

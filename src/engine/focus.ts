@@ -2,7 +2,7 @@ import type {
   MarkingMenuChangeEvent,
   MarkingMenuEventEmitter,
 } from '../events.js';
-import type { AnyModelNode } from '../types.js';
+import type { ModelNode } from '../types.js';
 
 export type FocusManager = {
   dispose: () => void;
@@ -41,7 +41,7 @@ const deepActiveElement = (doc: Document): Element | undefined => {
  `aria-activedescendant`). Kept out of `machine.ts`: it reacts to the same
  public events a consumer would, and owns nothing the state machine needs.
  */
-export function manageFocus<M extends AnyModelNode>({
+export function manageFocus<M extends ModelNode = ModelNode>({
   root,
   runtime,
 }: {
@@ -76,11 +76,7 @@ export function manageFocus<M extends AnyModelNode>({
       return;
     }
 
-    // `active` is generically erased to `AnyModelNode` here, the same reason
-    // `renderer.ts`'s own model cast exists: the compiler cannot prove
-    // genericness away. Every real menu item built by `model.ts` carries a
-    // `key`.
-    const { key } = active as unknown as { key: string };
+    const { key } = active;
     pendingFocus = setTimeout(() => {
       itemElement(root, key)?.focus({ preventScroll: true });
     }, ACTIVE_ITEM_FOCUS_DELAY_MS);
