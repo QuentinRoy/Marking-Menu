@@ -38,6 +38,26 @@ export const deltaAngle = (alpha: number, beta: number): number =>
   mod(beta - alpha + 180, 360) - 180;
 
 /**
+ Find the smallest gap between neighboring angles around the circle.
+
+ @param angles - Angles in degrees.
+ @returns The smallest gap, in degrees, or `Infinity` for fewer than two
+ angles.
+ */
+export const getTightestSpacing = (angles: readonly number[]): number => {
+  if (angles.length < 2) {
+    return Infinity;
+  }
+
+  const sorted = angles.toSorted((a, b) => a - b);
+  return Math.min(
+    ...sorted.map((angle, index) =>
+      mod((sorted[(index + 1) % sorted.length] ?? angle) - angle, 360),
+    ),
+  );
+};
+
+/**
  Calculate the euclidean distance between two
  points.
 

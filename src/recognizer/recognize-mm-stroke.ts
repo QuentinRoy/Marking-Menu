@@ -8,6 +8,7 @@ import type {
 } from '../types.js';
 import {
   dist,
+  getTightestSpacing,
   radiansToDegrees,
   type NonEmptyArray,
   type Point,
@@ -218,10 +219,23 @@ export function findItem({
 }
 
 /**
- Model with its internal smallest gap access. Every model node has the
- method at runtime, but the public types leave it off.
+ Find the smallest angular gap between neighboring items, at this level or
+ any level below it. Feeds the corner threshold; private to the recognizer,
+ its only caller.
+
+ @param node - The model node to search.
+ @returns The smallest gap, in degrees, or `Infinity` if no level has two
+ or more items to have a gap between.
  */
-type ModelWithGap = ModelNode & { getMinAngularGap(): number };
+const getMinAngularGap = (node: ModelNode): number => {
+  const children = node.items as ReadonlyArray<ModelNode & { angle: number }>;
+  let minGap = getTightestSpacing(children.map((child) => child.angle));
+  for (const child of children) {
+    minGap = Math.min(minGap, getMinAngularGap(child));
+  }
+
+  return minGap;
+};
 
 /**
  Cut a stroke into the segments a marking-menu walk is attempted against:
@@ -238,7 +252,7 @@ type ModelWithGap = ModelNode & { getMinAngularGap(): number };
  */
 const cutStroke = (
   stroke: readonly Point[],
-  model: ModelWithGap,
+  model: ModelNode,
   maxDepth: number,
 ): {
   angleThreshold: number;
@@ -249,7 +263,7 @@ const cutStroke = (
   const length = strokeLength(stroke);
   const expectedSegmentLength = length / maxDepth;
   const sensitivity = 0.75;
-  const angleThreshold = model.getMinAngularGap() / 2 / sensitivity;
+  const angleThreshold = getMinAngularGap(model) / 2 / sensitivity;
   const articulationPoints = getStrokeArticulationPoints(stroke, {
     expectedSegmentLength,
     angleThreshold,
@@ -330,7 +344,7 @@ export function recognizeMarkingMenuStroke(
 
   const maxDepth =
     maxDepthOption < 0 ? model.getMaxDepth() + maxDepthOption : maxDepthOption;
-  const { segments } = cutStroke(stroke, model as ModelWithGap, maxDepth);
+  const { segments } = cutStroke(stroke, model, maxDepth);
   const path = findItem({ model, segments, maxDepth });
   // Paths are never empty, so the item is only nullish when the path is.
   const item = path?.at(-1) ?? undefined;
@@ -404,7 +418,7 @@ export function analyzeMarkingMenuStroke<Node extends ModelNode>(
     expectedSegmentLength,
     articulationPoints,
     segments,
-  } = cutStroke(stroke, model as ModelWithGap, maxDepth);
+  } = cutStroke(stroke, model, maxDepth);
   const path = findItem({ model, segments, maxDepth });
   return {
     angleThreshold,
