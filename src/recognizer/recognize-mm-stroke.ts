@@ -136,8 +136,7 @@ export const divideLongestSegment = (
   let longestI = 0;
   let longest = segments[0];
   for (const [i, s] of segments.entries()) {
-    // Threshold mirrors the removed findMaxEntry (`> 1`, not `> 0`).
-    if (!(longest === undefined || s.length - longest.length > 1)) {
+    if (!(longest === undefined || s.length > longest.length)) {
       continue;
     }
 
