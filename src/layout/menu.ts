@@ -168,6 +168,7 @@ const template = (
   { items, center }: { items: readonly MenuLayoutItem[]; center: Point },
   doc: Document,
   parent: HTMLElement | ShadowRoot,
+  layerParent?: HTMLElement,
 ): MenuDom => {
   const isOwnHost = isElement(parent);
   const { root } = isOwnHost
@@ -179,7 +180,7 @@ const template = (
   main.tabIndex = -1;
   main.style.setProperty('--center-x', `${center[0]}px`);
   main.style.setProperty('--center-y', `${center[1]}px`);
-  root.append(main);
+  (layerParent ?? root).append(main);
   const itemElements = new Map<string, HTMLDivElement>();
 
   const probes: LayoutProbes = {
@@ -597,6 +598,7 @@ function setItemActive(item: HTMLElement, isActive: boolean): void {
  */
 export function createMenu({
   parent,
+  layerParent,
   doc = parent.ownerDocument,
   model,
   center,
@@ -605,12 +607,18 @@ export function createMenu({
 }: {
   doc?: Document;
   parent: HTMLElement | ShadowRoot;
+  /**
+  The node the menu layer mounts into. Defaults to `parent`'s root: pass a
+  fixed slot to keep paint order without reordering the DOM (see the
+  renderer's scene). Style probes and item queries still use the root.
+  */
+  layerParent?: HTMLElement;
   model: MenuLayoutModel;
   center: Point;
   deadZoneRadius: number;
   pointerTarget?: boolean;
 }): Menu {
-  const menuDom = template({ items: model.items, center }, doc, parent);
+  const menuDom = template({ items: model.items, center }, doc, parent, layerParent);
   const { main, root, isOwnHost } = menuDom;
   (root.host as HTMLElement).style.setProperty(
     '--inner-radius',

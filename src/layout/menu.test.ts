@@ -193,6 +193,29 @@ describe('createMenu', () => {
     expect(menu.element.parentElement).toBe(anchor);
   });
 
+  it('mounts the menu layer into the given layer parent', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = host.attachShadow({ mode: 'open' });
+    const slot = document.createElement('div');
+    root.append(slot);
+
+    const menu = createMenu({
+      parent: root,
+      layerParent: slot,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(menu.layer.parentNode).toBe(slot);
+    expect(root.querySelector('.marking-menu-layer')).toBe(menu.layer);
+    expect(menu.element).toBe(host);
+    menu.remove();
+    expect(slot.children).toHaveLength(0);
+    host.remove();
+  });
+
   it('reads the stroke theme from probes in the connected shadow root', () => {
     const div = document.createElement('div');
     const values = {

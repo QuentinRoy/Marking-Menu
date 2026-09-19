@@ -5,6 +5,13 @@ const svgNamespace = 'http://www.w3.org/2000/svg';
 
 export type IndicatorSurfaceOptions = {
   parent: HTMLElement | ShadowRoot;
+  /**
+  Where the background / dot surfaces mount. Default to `parent`; the
+  renderer passes its own fixed slots so each sits on its own side of the
+  upper stroke without reordering the DOM.
+  */
+  backgroundParent?: HTMLElement | ShadowRoot;
+  dotParent?: HTMLElement | ShadowRoot;
   doc?: Document;
   radius?: number;
   // The gesture stroke's own line width: only used to size the dot's
@@ -34,12 +41,14 @@ function createSurface(doc: Document, parent: HTMLElement | ShadowRoot) {
 
 export function createIndicatorSurface({
   parent,
+  backgroundParent = parent,
+  dotParent = parent,
   doc = document,
   radius = 8,
   strokeWidth = 4,
 }: IndicatorSurfaceOptions): IndicatorSurface {
-  const backgroundSvg = createSurface(doc, parent);
-  const dotSvg = createSurface(doc, parent);
+  const backgroundSvg = createSurface(doc, backgroundParent);
+  const dotSvg = createSurface(doc, dotParent);
 
   // The background: a constant-size filled circle the dot grows to fill.
   const background = doc.createElementNS(svgNamespace, 'circle');
