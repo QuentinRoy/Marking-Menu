@@ -68,8 +68,8 @@ function createIndicatorLayer({
   backgroundSlot: HTMLElement;
   dotSlot: HTMLElement;
   /**
-  Page-to-local conversion, called on every tick so a parent that has since
-  moved or scrolled is picked up.
+  Conversion from client coordinates, called on every tick, so a parent that
+  moved or scrolled since is picked up.
   */
   convert: (point: Point) => Point;
   surfaceOptions?: Omit<IndicatorSurfaceOptions, 'parent'>;
@@ -152,9 +152,9 @@ function createStrokeLayer({
 }: {
   slot: HTMLElement;
   /**
-  Page-to-local conversion, called inside the animation frame rather than in
-  `sync` so the reference check in `sync` keeps comparing the array the
-  caller passed, and a parent that has since moved or scrolled is picked up.
+  Conversion from client coordinates, called inside the animation frame
+  rather than in `sync`, so `sync` keeps comparing the array the caller
+  passed and a parent that moved or scrolled since is picked up.
   */
   convert: (point: Point) => Point;
   surfaceOptions?: Omit<StrokeSurfaceOptions, 'parent'>;
@@ -274,9 +274,9 @@ export function createRenderer({
   // Reference-equality cache: an unchanged active key skips the DOM scan
   // `Menu.setActive` performs.
   let previousActiveKey: string | undefined;
-  // Fixed slots in paint order plus the single page-to-local conversion every
-  // layer shares. Paint order needs no repair: each layer mounts into its own
-  // slot, once, and stays there.
+  // Fixed slots in paint order, plus the one conversion every layer shares.
+  // Each layer mounts into its own slot and stays there, so nothing
+  // reorders the DOM.
   const scene = createScene({ root, parent });
   const { upper, lower, feedback } = createPersistentStrokeLayers(
     scene.slots,
@@ -320,11 +320,10 @@ export function createRenderer({
         if (menuHandle?.model !== view.menu.model) {
           menuHandle?.menu.remove();
           // `LayoutView.menu.center` is in client coordinates; the menu
-          // layout wants it relative to `parent`. The projector is
-          // DOM-free, so the scene converts it here, eagerly: menu creation
-          // draws synchronously, so there is no later frame where the
-          // parent could have moved (unlike strokes and the indicator,
-          // which convert lazily inside their own draw loops).
+          // layout wants it relative to `parent`. Converted here, eagerly:
+          // creating the menu draws synchronously, so the parent cannot
+          // move before the points are used — unlike strokes and the
+          // indicator, which convert lazily inside their own draw loops.
           const handle = {
             model: view.menu.model,
             menu: createMenu({
@@ -351,8 +350,7 @@ export function createRenderer({
       indicator.sync(view.indicator);
     },
     showFeedback(effect) {
-      // Like the menu center, feedback draws synchronously, so converting
-      // eagerly here is already late enough.
+      // Converting here is late enough: feedback draws synchronously.
       feedback.show(scene.toLocalMany(effect.stroke), {
         canceled: effect.canceled,
       });

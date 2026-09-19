@@ -17,10 +17,10 @@ export type Scene = {
   */
   slots: SceneSlots;
   /**
-  Convert a client-coordinates point to coordinates local to the menu's
+  Convert a point from client coordinates to coordinates local to the menu's
   parent. Reads the parent's bounding rect on every call, so layers that draw
-  after a delay (strokes in their animation frame, the indicator on its tick)
-  see a parent that has since moved or scrolled.
+  late (strokes in their animation frame, the indicator on its tick) still
+  convert against the current rect.
   */
   toLocal: (point: Point) => Point;
   toLocalMany: (points: readonly Point[]) => Point[];
@@ -28,8 +28,8 @@ export type Scene = {
 };
 
 /**
-  Create the renderer's scene: fixed layer slots in paint order plus the
-  single page-to-local coordinate conversion every layer shares.
+  Create the renderer's scene: fixed layer slots in paint order, plus the one
+  conversion from client coordinates that every layer shares.
   */
 export function createScene({
   root,
@@ -43,8 +43,8 @@ export function createScene({
     const slot = doc.createElement('div');
     slot.className = 'marking-menu-slot';
     slot.dataset.slot = name;
-    // No box of its own: children position as if they were direct children
-    // of the root, while DOM order (hence paint order) stays fixed.
+    // Generates no box of its own, so children lay out as if they were
+    // direct children of the root, and document order sets paint order.
     slot.style.display = 'contents';
     root.append(slot);
     return slot;

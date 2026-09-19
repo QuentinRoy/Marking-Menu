@@ -6,7 +6,7 @@ const svgNamespace = 'http://www.w3.org/2000/svg';
 export type IndicatorSurfaceOptions = {
   parent: HTMLElement | ShadowRoot;
   /**
-  Where the background / dot surfaces mount. Default to `parent`; the
+  Where the background and dot surfaces mount. Both default to `parent`; the
   renderer passes its own fixed slots so each sits on its own side of the
   upper stroke without reordering the DOM.
   */

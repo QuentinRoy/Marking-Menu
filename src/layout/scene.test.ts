@@ -68,7 +68,7 @@ describe('scene', () => {
     tearDown();
   });
 
-  it('converts client points to parent-local points', () => {
+  it('converts client points to parent coordinates', () => {
     const { scene, tearDown } = setUp();
 
     const point: Point = [220, 60];

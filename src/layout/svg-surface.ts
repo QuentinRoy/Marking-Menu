@@ -1,11 +1,10 @@
 const svgNamespace = 'http://www.w3.org/2000/svg';
 
 /**
-  Create a full-size, pointer-transparent SVG surface inside `slot`.
-
-  This factors out the surface styling `stroke.ts` and `indicator.ts` used to
-  repeat: absolute, covering its parent, with visible overflow so strokes can
-  paint past the parent's box, and never intercepting pointer input.
+  Create a full-size SVG surface inside `slot`, shared by `stroke.ts` and
+  `indicator.ts`: absolute, covering its parent, with visible overflow so
+  strokes can paint past the parent's box, and never intercepting pointer
+  input.
   */
 export function createFullSizeSvg(
   doc: Document,
