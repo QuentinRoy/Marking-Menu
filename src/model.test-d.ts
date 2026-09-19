@@ -251,13 +251,15 @@ declare const dynamicMenuNode: ModelMenus<typeof dynamicMenu>;
 describe('ModelNode discrimination', () => {
   it('narrows to ModelItem and exposes item fields when not root', () => {
     expectTypeOf(sampleNode.isRoot).toEqualTypeOf<boolean>();
-    if (!sampleNode.isRoot) {
-      expectTypeOf(sampleNode).toExtend<ModelItem>();
-      expectTypeOf(sampleNode.label).toEqualTypeOf<string>();
-      expectTypeOf(sampleNode.key).toEqualTypeOf<string>();
-      expectTypeOf(sampleNode.angle).toEqualTypeOf<number>();
-      expectTypeOf(sampleNode.id).toEqualTypeOf<string | undefined>();
+    if (sampleNode.isRoot) {
+      return;
     }
+
+    expectTypeOf(sampleNode).toExtend<ModelItem>();
+    expectTypeOf(sampleNode.label).toEqualTypeOf<string>();
+    expectTypeOf(sampleNode.key).toEqualTypeOf<string>();
+    expectTypeOf(sampleNode.angle).toEqualTypeOf<number>();
+    expectTypeOf(sampleNode.id).toEqualTypeOf<string | undefined>();
   });
 
   it('narrows to ModelRoot when root', () => {
@@ -302,11 +304,13 @@ describe('Parent traversal', () => {
 
   it('narrows parent to ModelItem when not root', () => {
     const parent = dynamicMenu.items[0]?.parent;
-    if (parent && !parent.isRoot) {
-      expectTypeOf(parent).toExtend<ModelItem>();
-      expectTypeOf(parent.label).toEqualTypeOf<string>();
-      expectTypeOf(parent.key).toEqualTypeOf<string>();
+    if (!parent || parent.isRoot) {
+      return;
     }
+
+    expectTypeOf(parent).toExtend<ModelItem>();
+    expectTypeOf(parent.label).toEqualTypeOf<string>();
+    expectTypeOf(parent.key).toEqualTypeOf<string>();
   });
 });
 

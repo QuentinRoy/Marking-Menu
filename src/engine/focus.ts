@@ -76,9 +76,8 @@ export function manageFocus<M extends ModelNode = ModelNode>({
       return;
     }
 
-    const { key } = active;
     pendingFocus = setTimeout(() => {
-      itemElement(root, key)?.focus({ preventScroll: true });
+      itemElement(root, active.key)?.focus({ preventScroll: true });
     }, ACTIVE_ITEM_FOCUS_DELAY_MS);
   };
 
