@@ -293,6 +293,11 @@ describe('ModelItem narrowing', () => {
 });
 
 describe('Parent traversal', () => {
+  it('requires every item parent to be a model node', () => {
+    // @ts-expect-error -- an item parent is always another model node.
+    type InvalidItem = ModelItem<string, string, readonly never[], string>;
+  });
+
   it('narrows parent to ModelItem when not root', () => {
     const parent = dynamicMenu.items[0]?.parent;
     if (parent && !parent.isRoot) {

@@ -96,7 +96,7 @@ export interface ModelItem<
   Id extends string | undefined = string | undefined,
   Label extends string = string,
   Items extends readonly unknown[] = readonly unknown[],
-  Parent = ModelNode,
+  Parent extends ModelNode = ModelNode,
 > {
   /**
   The item's id, as provided by the caller (`undefined` if it had none).
