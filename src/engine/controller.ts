@@ -90,8 +90,8 @@ export function resolveEngineOptions(
  patches `Symbol` nor ships a polyfill: a consumer without native support
  cannot even parse a `using` call site and owns any transpilation it needs.
  */
-export type MarkingMenuController<M extends ModelNode = ModelNode> =
-  MarkingMenuEventEmitter<M> & {
+export type MarkingMenuController<Model extends ModelNode = ModelNode> =
+  MarkingMenuEventEmitter<Model> & {
     dispose(): void;
     [Symbol.dispose](): void;
   };
@@ -157,16 +157,16 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     });
   }
 
-  on<K extends EventName<Config>>(
-    type: K,
-    listener: TypedEventListener<EventMap<Config>, K>,
+  on<Name extends EventName<Config>>(
+    type: Name,
+    listener: TypedEventListener<EventMap<Config>, Name>,
   ): void {
     this.#runtime.on(type, listener);
   }
 
-  off<K extends EventName<Config>>(
-    type: K,
-    listener: TypedEventListener<EventMap<Config>, K>,
+  off<Name extends EventName<Config>>(
+    type: Name,
+    listener: TypedEventListener<EventMap<Config>, Name>,
   ): void {
     this.#runtime.off(type, listener);
   }

@@ -100,7 +100,7 @@ export class MarkingMenuStartEvent extends MarkingMenuEventBase {
  starts novice mode, or a submenu dwell while already in novice mode.
  */
 export class MarkingMenuOpenEvent<
-  M extends ModelNode = ModelNode,
+  Model extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -109,14 +109,14 @@ export class MarkingMenuOpenEvent<
     return 'open';
   }
 
-  readonly #menu: ModelMenus<M>;
+  readonly #menu: ModelMenus<Model>;
   readonly #menuCenter: ReadonlyPoint;
 
   declare readonly type: 'open';
 
   constructor(data: {
     readonly position: ReadonlyPoint;
-    readonly menu: ModelMenus<M>;
+    readonly menu: ModelMenus<Model>;
     readonly menuCenter: ReadonlyPoint;
   }) {
     super(MarkingMenuOpenEvent.type, {
@@ -134,7 +134,7 @@ export class MarkingMenuOpenEvent<
   /**
   The menu that was just opened.
   */
-  get menu(): ModelMenus<M> {
+  get menu(): ModelMenus<Model> {
     return this.#menu;
   }
 
@@ -151,11 +151,11 @@ export class MarkingMenuOpenEvent<
  {@link MarkingMenuCancelEvent}: both carry the mode, position, active item
  and open menu at a moment where none of those is fixed by the event itself.
  */
-type ActiveMenuData<M extends ModelNode = ModelNode> = {
+type ActiveMenuData<Model extends ModelNode = ModelNode> = {
   readonly mode: MarkingMenuMode;
   readonly position: ReadonlyPoint;
-  readonly active: ModelItems<M> | undefined;
-  readonly menu: ModelMenus<M> | undefined;
+  readonly active: ModelItems<Model> | undefined;
+  readonly menu: ModelMenus<Model> | undefined;
 };
 
 /**
@@ -164,7 +164,7 @@ type ActiveMenuData<M extends ModelNode = ModelNode> = {
  be active in.
  */
 export class MarkingMenuMoveEvent<
-  M extends ModelNode = ModelNode,
+  Model extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -173,12 +173,12 @@ export class MarkingMenuMoveEvent<
     return 'move';
   }
 
-  readonly #active: ModelItems<M> | undefined;
-  readonly #menu: ModelMenus<M> | undefined;
+  readonly #active: ModelItems<Model> | undefined;
+  readonly #menu: ModelMenus<Model> | undefined;
 
   declare readonly type: 'move';
 
-  constructor(data: ActiveMenuData<M>) {
+  constructor(data: ActiveMenuData<Model>) {
     super(MarkingMenuMoveEvent.type, {
       mode: data.mode,
       position: data.position,
@@ -190,14 +190,14 @@ export class MarkingMenuMoveEvent<
   /**
   The item under the pointer, or `undefined` if none is.
   */
-  get active(): ModelItems<M> | undefined {
+  get active(): ModelItems<Model> | undefined {
     return this.#active;
   }
 
   /**
   The menu currently open, or `undefined` in startup and expert.
   */
-  get menu(): ModelMenus<M> | undefined {
+  get menu(): ModelMenus<Model> | undefined {
     return this.#menu;
   }
 }
@@ -209,7 +209,7 @@ export class MarkingMenuMoveEvent<
  transition.
  */
 export class MarkingMenuChangeEvent<
-  M extends ModelNode = ModelNode,
+  Model extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -218,17 +218,17 @@ export class MarkingMenuChangeEvent<
     return 'change';
   }
 
-  readonly #active: ModelItems<M> | undefined;
-  readonly #previousActive: ModelItems<M> | undefined;
-  readonly #menu: ModelMenus<M>;
+  readonly #active: ModelItems<Model> | undefined;
+  readonly #previousActive: ModelItems<Model> | undefined;
+  readonly #menu: ModelMenus<Model>;
 
   declare readonly type: 'change';
 
   constructor(data: {
     readonly position: ReadonlyPoint;
-    readonly active: ModelItems<M> | undefined;
-    readonly previousActive: ModelItems<M> | undefined;
-    readonly menu: ModelMenus<M>;
+    readonly active: ModelItems<Model> | undefined;
+    readonly previousActive: ModelItems<Model> | undefined;
+    readonly menu: ModelMenus<Model>;
   }) {
     super(MarkingMenuChangeEvent.type, {
       mode: 'novice',
@@ -246,21 +246,21 @@ export class MarkingMenuChangeEvent<
   /**
   The item under the pointer after the change, or `undefined` if none is.
   */
-  get active(): ModelItems<M> | undefined {
+  get active(): ModelItems<Model> | undefined {
     return this.#active;
   }
 
   /**
   The item that was active before this change, or `undefined` if none was.
   */
-  get previousActive(): ModelItems<M> | undefined {
+  get previousActive(): ModelItems<Model> | undefined {
     return this.#previousActive;
   }
 
   /**
   The menu currently open.
   */
-  get menu(): ModelMenus<M> {
+  get menu(): ModelMenus<Model> {
     return this.#menu;
   }
 }
@@ -271,7 +271,7 @@ export class MarkingMenuChangeEvent<
  since no menu is open there even though the leaf demonstrably has a parent.
  */
 export class MarkingMenuSelectEvent<
-  M extends ModelNode = ModelNode,
+  Model extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -280,16 +280,16 @@ export class MarkingMenuSelectEvent<
     return 'select';
   }
 
-  readonly #selection: ModelLeaves<M>;
-  readonly #menu: ModelMenus<M> | undefined;
+  readonly #selection: ModelLeaves<Model>;
+  readonly #menu: ModelMenus<Model> | undefined;
 
   declare readonly type: 'select';
 
   constructor(data: {
     readonly mode: MarkingMenuMode;
     readonly position: ReadonlyPoint;
-    readonly selection: ModelLeaves<M>;
-    readonly menu: ModelMenus<M> | undefined;
+    readonly selection: ModelLeaves<Model>;
+    readonly menu: ModelMenus<Model> | undefined;
   }) {
     super(MarkingMenuSelectEvent.type, {
       mode: data.mode,
@@ -302,14 +302,14 @@ export class MarkingMenuSelectEvent<
   /**
   The leaf that was selected.
   */
-  get selection(): ModelLeaves<M> {
+  get selection(): ModelLeaves<Model> {
     return this.#selection;
   }
 
   /**
   The menu the selection was made from, or `undefined` in expert mode.
   */
-  get menu(): ModelMenus<M> | undefined {
+  get menu(): ModelMenus<Model> | undefined {
     return this.#menu;
   }
 }
@@ -321,7 +321,7 @@ export class MarkingMenuSelectEvent<
  `undefined` carries the genuine "nothing under the pointer" case.
  */
 export class MarkingMenuCancelEvent<
-  M extends ModelNode = ModelNode,
+  Model extends ModelNode = ModelNode,
 > extends MarkingMenuEventBase {
   /**
   This event's type, as a literal.
@@ -330,12 +330,12 @@ export class MarkingMenuCancelEvent<
     return 'cancel';
   }
 
-  readonly #active: ModelItems<M> | undefined;
-  readonly #menu: ModelMenus<M> | undefined;
+  readonly #active: ModelItems<Model> | undefined;
+  readonly #menu: ModelMenus<Model> | undefined;
 
   declare readonly type: 'cancel';
 
-  constructor(data: ActiveMenuData<M>) {
+  constructor(data: ActiveMenuData<Model>) {
     super(MarkingMenuCancelEvent.type, {
       mode: data.mode,
       position: data.position,
@@ -347,14 +347,14 @@ export class MarkingMenuCancelEvent<
   /**
   The item that was active when the gesture was abandoned, or `undefined`.
   */
-  get active(): ModelItems<M> | undefined {
+  get active(): ModelItems<Model> | undefined {
     return this.#active;
   }
 
   /**
   The menu the gesture was abandoned from, or `undefined` in expert mode.
   */
-  get menu(): ModelMenus<M> | undefined {
+  get menu(): ModelMenus<Model> | undefined {
     return this.#menu;
   }
 }
@@ -367,25 +367,25 @@ export class MarkingMenuCancelEvent<
  The closed map from every event name to its exact event class. There is no
  `type: string` fallback: an unknown event name is not a key of this map.
  */
-export type MarkingMenuEventMap<M extends ModelNode = ModelNode> = {
+export type MarkingMenuEventMap<Model extends ModelNode = ModelNode> = {
   start: MarkingMenuStartEvent;
-  open: MarkingMenuOpenEvent<M>;
-  move: MarkingMenuMoveEvent<M>;
-  change: MarkingMenuChangeEvent<M>;
-  select: MarkingMenuSelectEvent<M>;
-  cancel: MarkingMenuCancelEvent<M>;
+  open: MarkingMenuOpenEvent<Model>;
+  move: MarkingMenuMoveEvent<Model>;
+  change: MarkingMenuChangeEvent<Model>;
+  select: MarkingMenuSelectEvent<Model>;
+  cancel: MarkingMenuCancelEvent<Model>;
 };
 
 /**
  The union of every event a marking menu dispatches, discriminated on `type`.
  */
-export type MarkingMenuEvent<M extends ModelNode = ModelNode> =
-  MarkingMenuEventMap<M>[keyof MarkingMenuEventMap<M>];
+export type MarkingMenuEvent<Model extends ModelNode = ModelNode> =
+  MarkingMenuEventMap<Model>[keyof MarkingMenuEventMap<Model>];
 
 /**
  The typed, listen-only facade a marking menu controller satisfies. `on`/`off`
  are narrowed to the six known event names: there is no `type: string`
  fallback, so an unknown event name is rejected at the call site.
  */
-export type MarkingMenuEventEmitter<M extends ModelNode = ModelNode> =
-  TypedEventEmitter<MarkingMenuEventMap<M>>;
+export type MarkingMenuEventEmitter<Model extends ModelNode = ModelNode> =
+  TypedEventEmitter<MarkingMenuEventMap<Model>>;

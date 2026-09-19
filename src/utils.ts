@@ -103,8 +103,8 @@ export const angle = (
  @param index - An index already known to be within `array`'s bounds.
  @returns The element at `index`.
  */
-export function at<T>(array: readonly T[], index: number): T {
-  return array[index] as T;
+export function at<Item>(array: readonly Item[], index: number): Item {
+  return array[index] as Item;
 }
 
 /**
@@ -117,11 +117,11 @@ export function at<T>(array: readonly T[], index: number): T {
  @returns The found `[index, item]` entry. For an empty list, the item is
  `undefined`.
  */
-export const findMaxEntry = <T>(
-  list: readonly T[],
-  comp: (item1: T, item2: T) => number,
-): [number, T | undefined] => {
-  let result: [number, T | undefined] = [0, list[0]];
+export const findMaxEntry = <Item>(
+  list: readonly Item[],
+  comp: (item1: Item, item2: Item) => number,
+): [number, Item | undefined] => {
+  let result: [number, Item | undefined] = [0, list[0]];
   for (const [index, item] of list.entries()) {
     const current = result[1];
     if (current !== undefined && comp(current, item) > 1) {
@@ -180,13 +180,13 @@ export const noOp = (): void => {
 /**
   A type that makes some properties of a type optional.
  */
-export type SetOptional<T, K extends keyof T> = Omit<T, K> &
-  Partial<Pick<T, K>>;
+export type SetOptional<Type, Key extends keyof Type> = Omit<Type, Key> &
+  Partial<Pick<Type, Key>>;
 
 /**
  A type that simplifies a type by removing unnecessary intersections and making it more readable.
  */
-export type Simplify<T> = T extends infer O
+export type Simplify<Type> = Type extends infer O
   ? { [K in keyof O]: O[K] } & {}
   : never;
 
@@ -194,18 +194,18 @@ export type Simplify<T> = T extends infer O
  Recursively make a type's properties (and the properties of any array or
  object nested within it) readonly. Functions are left untouched.
  */
-export type DeepReadonly<T> = T extends (...args: any[]) => any
-  ? T
-  : T extends Array<infer U>
+export type DeepReadonly<Type> = Type extends (...args: any[]) => any
+  ? Type
+  : Type extends Array<infer U>
     ? ReadonlyArray<DeepReadonly<U>>
-    : T extends Record<string, unknown>
-      ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
-      : T;
+    : Type extends Record<string, unknown>
+      ? { readonly [K in keyof Type]: DeepReadonly<Type[K]> }
+      : Type;
 
 /**
  An array with at least one element.
  */
-export type NonEmptyArray<T> = [T, ...T[]];
+export type NonEmptyArray<Item> = [Item, ...Item[]];
 
 /**
  Check whether an array has at least one element, narrowing its type to
@@ -214,9 +214,9 @@ export type NonEmptyArray<T> = [T, ...T[]];
  @param array - The array to check.
  @returns Whether `array` is non-empty.
  */
-export function isNonEmptyArray<T>(
-  array: readonly T[],
-): array is NonEmptyArray<T> {
+export function isNonEmptyArray<Item>(
+  array: readonly Item[],
+): array is NonEmptyArray<Item> {
   return array.length > 0;
 }
 
@@ -234,11 +234,10 @@ export type EmptyTuple = readonly [];
 export type EmptyArray = readonly never[];
 
 /**
- Whether `T` is a tuple, i.e. its length is statically known.
+ Whether `Tuple` is a tuple, i.e. its length is statically known.
  */
-export type IsTuple<T extends readonly unknown[]> = number extends T['length']
-  ? false
-  : true;
+export type IsTuple<Tuple extends readonly unknown[]> =
+  number extends Tuple['length'] ? false : true;
 
 /**
  A 2D point.

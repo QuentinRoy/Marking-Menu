@@ -10,12 +10,12 @@ The minimal shape any event needs to be routed by its `type`.
 export type EventLike = { readonly type: string };
 
 /**
-A listener for one event name `K` in `EventMap`.
-*/
+A listener for one event name `Name` in `EventMap`.
+ */
 export type TypedEventListener<
   EventMap extends Record<string, EventLike>,
-  K extends keyof EventMap,
-> = (event: EventMap[K]) => void;
+  Name extends keyof EventMap,
+> = (event: EventMap[Name]) => void;
 
 /**
  No `emit`/`dispatch`: whatever exposes this stays the only thing that can
@@ -26,13 +26,13 @@ export type TypedEventListener<
  override-compatibility check against the wider base signature.
  */
 export type TypedEventEmitter<EventMap extends Record<string, EventLike>> = {
-  on<K extends keyof EventMap>(
-    type: K,
-    listener: TypedEventListener<EventMap, K>,
+  on<Name extends keyof EventMap>(
+    type: Name,
+    listener: TypedEventListener<EventMap, Name>,
   ): void;
 
-  off<K extends keyof EventMap>(
-    type: K,
-    listener: TypedEventListener<EventMap, K>,
+  off<Name extends keyof EventMap>(
+    type: Name,
+    listener: TypedEventListener<EventMap, Name>,
   ): void;
 };

@@ -7,10 +7,15 @@ import { createRuntime as createRuntimeWithResolvedLog } from './runtime.js';
 // The suite below exercises the runtime's own behavior, not what a caller's
 // logger does with a failure, so every call site gets a no-op logger unless
 // it overrides it to assert on it.
-const createRuntime = <M extends EngineModelRoot>(
-  options: Omit<Parameters<typeof createRuntimeWithResolvedLog<M>>[0], 'log'> &
-    Partial<Pick<Parameters<typeof createRuntimeWithResolvedLog<M>>[0], 'log'>>,
-) => createRuntimeWithResolvedLog<M>({ log: { error: noOp }, ...options });
+const createRuntime = <Model extends EngineModelRoot>(
+  options: Omit<
+    Parameters<typeof createRuntimeWithResolvedLog<Model>>[0],
+    'log'
+  > &
+    Partial<
+      Pick<Parameters<typeof createRuntimeWithResolvedLog<Model>>[0], 'log'>
+    >,
+) => createRuntimeWithResolvedLog<Model>({ log: { error: noOp }, ...options });
 
 const model = createModel({ items: [{ id: 'right', label: 'Right' }] });
 const options = {

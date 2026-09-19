@@ -23,9 +23,9 @@ export type NavigationInputSink = {
  The runtime owns the emitter: interpreting the machine's public outputs is
  the only thing that ever originates an event.
  */
-export type NavigationRuntime<M extends ModelNode = ModelRoot> =
+export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
   NavigationInputSink &
-    MarkingMenuEventEmitter<M> & {
+    MarkingMenuEventEmitter<Model> & {
       dispose: () => void;
     };
 
@@ -48,17 +48,17 @@ const publicOutputs = [
  raised it mid-setup, so every public output is re-announced through a plain
  `EventTarget`, whose `dispatchEvent` absorbs a throwing listener instead.
  */
-export function createRuntime<M extends EngineModelRoot>({
+export function createRuntime<Model extends EngineModelRoot>({
   model,
   options,
   renderer,
   log,
 }: {
-  model: M;
+  model: Model;
   options: NavigationOptions;
   renderer: LayoutRenderer;
   log: ResolvedLogger;
-}): NavigationRuntime<M> {
+}): NavigationRuntime<Model> {
   const target = new EventTarget();
   // One registration per (type, listener) pair, in registration order, so
   // `off` removes exactly the one `addEventListener` call `on` made for it —

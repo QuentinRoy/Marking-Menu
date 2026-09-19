@@ -12,7 +12,7 @@ import { createController, type MarkingMenuController } from './controller.js';
  Type level tests: the model the controller's events carry is the one the
  *literal* config describes, not a widened one. Checked by `tsc`, not run.
 
- `M` appears only in input positions on the controller, so
+ `Model` appears only in input positions on the controller, so
  `MarkingMenuController<A>` and `MarkingMenuController<B>` stay mutually
  assignable and no plain assignment can catch the model widening. Reading a
  narrowed payload off a listener parameter is what catches it.
@@ -31,11 +31,11 @@ const config = {
 } as const;
 
 const controller = createController(config);
-type M = MarkingMenuModel<typeof config>;
+type Model = MarkingMenuModel<typeof config>;
 
 describe('createController', () => {
   it('returns the controller for the model the literal config describes', () => {
-    expectTypeOf(controller).toEqualTypeOf<MarkingMenuController<M>>();
+    expectTypeOf(controller).toEqualTypeOf<MarkingMenuController<Model>>();
   });
 
   it('exposes disposal as a plain method', () => {
@@ -43,7 +43,7 @@ describe('createController', () => {
   });
 
   it('exposes exactly the listen-only facade and both forms of disposal, nothing else', () => {
-    expectTypeOf<keyof MarkingMenuController<M>>().toEqualTypeOf<
+    expectTypeOf<keyof MarkingMenuController<Model>>().toEqualTypeOf<
       'on' | 'off' | 'dispose' | typeof Symbol.dispose
     >();
   });
@@ -52,7 +52,7 @@ describe('createController', () => {
 describe('createController listeners', () => {
   it('narrows `select` to the literal leaf ids, not `string`', () => {
     controller.on('select', (event) => {
-      expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<M>>();
+      expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<Model>>();
       // The assertion that actually fails if the model widens to
       // `MarkingMenuModel<EngineConfig>`: `id` collapses to `string` there.
       expectTypeOf(event.selection.id).toEqualTypeOf<
@@ -64,7 +64,7 @@ describe('createController listeners', () => {
 
   it('narrows `change` to this model, including the open menu', () => {
     controller.on('change', (event) => {
-      expectTypeOf(event).toEqualTypeOf<MarkingMenuChangeEvent<M>>();
+      expectTypeOf(event).toEqualTypeOf<MarkingMenuChangeEvent<Model>>();
       expectTypeOf(event.menu.isLeaf).toEqualTypeOf<false>();
       expectTypeOf(event.mode).toEqualTypeOf<'novice'>();
     });
@@ -86,14 +86,14 @@ describe('createController listeners', () => {
     controller.on(
       'select',
       // @ts-expect-error -- a `select` listener cannot take a `change` event.
-      (event: MarkingMenuChangeEvent<M>) => {
-        expectTypeOf(event).toEqualTypeOf<MarkingMenuChangeEvent<M>>();
+      (event: MarkingMenuChangeEvent<Model>) => {
+        expectTypeOf(event).toEqualTypeOf<MarkingMenuChangeEvent<Model>>();
       },
     );
   });
 
   it('removes listeners under the same narrowing', () => {
-    const onSelect = (event: MarkingMenuSelectEvent<M>): void => {
+    const onSelect = (event: MarkingMenuSelectEvent<Model>): void => {
       expectTypeOf(event.selection.id).toEqualTypeOf<
         'right' | 'down' | 'left' | 'up'
       >();

@@ -14,7 +14,7 @@ const menu = createModel({
     { id: 'bottom', label: 'Bottom', items: [{ id: 'sub', label: 'Sub' }] },
   ],
 });
-type M = typeof menu;
+type Model = typeof menu;
 
 describe('MarkingMenuStartEvent', () => {
   it('carries the mode and position it was constructed with', () => {
@@ -35,7 +35,7 @@ describe('MarkingMenuStartEvent', () => {
 
 describe('MarkingMenuOpenEvent', () => {
   it('carries the menu, its center, and the position it was opened at', () => {
-    const event = new MarkingMenuOpenEvent<M>({
+    const event = new MarkingMenuOpenEvent<Model>({
       position: [5, 5],
       menu,
       menuCenter: [50, 50],
@@ -51,7 +51,7 @@ describe('MarkingMenuOpenEvent', () => {
 
 describe('MarkingMenuMoveEvent', () => {
   it('carries the mode, active item and open menu at the time of the move', () => {
-    const event = new MarkingMenuMoveEvent<M>({
+    const event = new MarkingMenuMoveEvent<Model>({
       mode: 'novice',
       position: [1, 2],
       active: menu.items[0],
@@ -66,7 +66,7 @@ describe('MarkingMenuMoveEvent', () => {
   });
 
   it('allows an undefined active item and an undefined menu, for startup and expert', () => {
-    const event = new MarkingMenuMoveEvent<M>({
+    const event = new MarkingMenuMoveEvent<Model>({
       mode: 'expert',
       position: [1, 2],
       active: undefined,
@@ -81,7 +81,7 @@ describe('MarkingMenuMoveEvent', () => {
 
 describe('MarkingMenuChangeEvent', () => {
   it('carries the new and previous active item, and the open menu', () => {
-    const event = new MarkingMenuChangeEvent<M>({
+    const event = new MarkingMenuChangeEvent<Model>({
       position: [1, 2],
       active: menu.items[1],
       previousActive: menu.items[0],
@@ -96,7 +96,7 @@ describe('MarkingMenuChangeEvent', () => {
   });
 
   it('allows an undefined active item, for a change onto or off of empty space', () => {
-    const event = new MarkingMenuChangeEvent<M>({
+    const event = new MarkingMenuChangeEvent<Model>({
       position: [1, 2],
       active: undefined,
       previousActive: menu.items[0],
@@ -110,7 +110,7 @@ describe('MarkingMenuChangeEvent', () => {
 
 describe('MarkingMenuSelectEvent', () => {
   it('carries the mode, the selected leaf, and the menu it was selected from', () => {
-    const event = new MarkingMenuSelectEvent<M>({
+    const event = new MarkingMenuSelectEvent<Model>({
       mode: 'novice',
       position: [1, 2],
       selection: menu.items[0],
@@ -124,7 +124,7 @@ describe('MarkingMenuSelectEvent', () => {
   });
 
   it('allows an undefined menu, for a selection made in expert mode', () => {
-    const event = new MarkingMenuSelectEvent<M>({
+    const event = new MarkingMenuSelectEvent<Model>({
       mode: 'expert',
       position: [1, 2],
       selection: menu.items[0],
@@ -138,7 +138,7 @@ describe('MarkingMenuSelectEvent', () => {
 
 describe('MarkingMenuCancelEvent', () => {
   it('carries the mode, the active item at abandon time, and the open menu', () => {
-    const event = new MarkingMenuCancelEvent<M>({
+    const event = new MarkingMenuCancelEvent<Model>({
       mode: 'novice',
       position: [1, 2],
       active: menu.items[0],
@@ -152,7 +152,7 @@ describe('MarkingMenuCancelEvent', () => {
   });
 
   it('allows an undefined active item and an undefined menu', () => {
-    const event = new MarkingMenuCancelEvent<M>({
+    const event = new MarkingMenuCancelEvent<Model>({
       mode: 'startup',
       position: [1, 2],
       active: undefined,
