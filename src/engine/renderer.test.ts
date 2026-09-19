@@ -164,9 +164,7 @@ describe('createRenderer', () => {
     renderFrame();
 
     expect(
-      slotOf(parent, 'upper')
-        .querySelector('path')
-        ?.getAttribute('d'),
+      slotOf(parent, 'upper').querySelector('path')?.getAttribute('d'),
     ).toBe('M 10 10 L 50 40');
     renderer.dispose();
   });
@@ -239,17 +237,13 @@ describe('createRenderer', () => {
         '.marking-menu-indicator-background',
       ),
     ).not.toBeNull();
-    expect(
-      slotOf(parent, 'upper').querySelectorAll('path'),
-    ).toHaveLength(1);
+    expect(slotOf(parent, 'upper').querySelectorAll('path')).toHaveLength(1);
     expect(
       slotOf(parent, 'indicator-dot').querySelector(
         '.marking-menu-indicator-dot',
       ),
     ).not.toBeNull();
-    expect(
-      slotOf(parent, 'feedback').querySelectorAll('path'),
-    ).toHaveLength(1);
+    expect(slotOf(parent, 'feedback').querySelectorAll('path')).toHaveLength(1);
     renderer.dispose();
   });
 

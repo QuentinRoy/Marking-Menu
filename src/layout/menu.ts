@@ -622,7 +622,12 @@ export function createMenu({
   deadZoneRadius: number;
   pointerTarget?: boolean;
 }): Menu {
-  const menuDom = template({ items: model.items, center }, doc, parent, layerParent);
+  const menuDom = template(
+    { items: model.items, center },
+    doc,
+    parent,
+    layerParent,
+  );
   const { main, root, isOwnHost } = menuDom;
   (root.host as HTMLElement).style.setProperty(
     '--inner-radius',
