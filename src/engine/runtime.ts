@@ -1,6 +1,7 @@
 import type { MarkingMenuEventEmitter } from '../events.js';
 import type { ModelNode, ModelRoot } from '../types.js';
 import type { ResolvedLogger } from './logger.js';
+import type { EngineModelRoot } from './model-node.js';
 import {
   navigationMachine,
   type NavigationInput,
@@ -46,7 +47,7 @@ const publicOutputs = [
  raised it mid-setup, so every public output is re-announced through a plain
  `EventTarget`, whose `dispatchEvent` absorbs a throwing listener instead.
  */
-export function createRuntime<M extends ModelRoot = ModelRoot>({
+export function createRuntime<M extends EngineModelRoot>({
   model,
   options,
   renderer,

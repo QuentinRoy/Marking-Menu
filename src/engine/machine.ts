@@ -13,25 +13,24 @@ import { strokeLength } from '../recognizer/stroke-length.js';
 import type {
   ModelItem,
   ModelLeaf,
-  ModelItems,
   ModelMenu,
-  ModelMenus,
-  ModelNode,
-  ModelRoot,
 } from '../types.js';
 import { dist, toPolar, type Point } from '../utils.js';
 import { type LayoutView, noviceUpperStroke, projectLayout } from './layout-view.js';
+import type {
+  EngineModelItem,
+  EngineModelMenu,
+  EngineModelRoot,
+} from './model-node.js';
 
 /*
  The navigation machine, declared as a totorobot definition rather than a
  hand-rolled reducer. `machine()` is inert data; `runtime.ts` is the only
  place that ever calls `.start()` on it.
 
- A definition is a single, non-generic value, so every field that would
- otherwise carry the caller's precise model type `M` is erased to the bare
- `AnyModelNode` here instead. `runtime.ts` stays generic over the caller's real
- `M` and casts back at the boundary, the same erase-and-cast shape
- `renderer.ts` already uses for `MenuLayoutModel`.
+ A definition is a single, non-generic value, so it uses the recursive
+ `EngineModel*` types. They retain the renderer's required fields while
+ `runtime.ts` keeps the caller's exact model type for public events.
  */
 
 export type NavigationOptions = {
@@ -66,10 +65,8 @@ export type NavigationInput = {
  Each phase's fields, factored out before `NavigationState` tags on a
  `phase` discriminant or `MachineStates` adds `model`/`options`: the one
  place either lists them, so the two can't diverge. Parameterized over the
- menu/active node types since each needs a different projection:
- `NavigationState` gets the caller's own `ModelMenus<M>`/`ModelItems<M>`,
- `MachineStates` the file's erased `AnyModelNode` (see the module comment
- above).
+ menu/active node types so the public projection and the machine's erased
+ projection share one phase definition.
  */
 type NavigationPhaseFields<Menu, Active> = {
   idle: Record<never, never>;
@@ -118,23 +115,27 @@ type NavigationPhaseFields<Menu, Active> = {
  projects from. Kept as a plain discriminated union, independent of
  totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
  */
-export type NavigationState<M extends ModelNode = ModelRoot> = {
-  [K in keyof NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>]: {
+export type NavigationState<
+  Menu = ModelMenu,
+  Active = ModelItem,
+> = {
+  [K in keyof NavigationPhaseFields<Menu, Active>]: {
     readonly phase: K;
-  } & NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>[K];
-}[keyof NavigationPhaseFields<ModelMenus<M>, ModelItems<M>>];
+  } & NavigationPhaseFields<Menu, Active>[K];
+}[keyof NavigationPhaseFields<Menu, Active>];
 
 type MachineStates = {
-  [K in keyof NavigationPhaseFields<ModelMenu, ModelItem>]: {
-    readonly model: ModelRoot;
+  [K in keyof NavigationPhaseFields<EngineModelMenu, EngineModelItem>]: {
+    readonly model: EngineModelRoot;
     readonly options: NavigationOptions;
-  } & NavigationPhaseFields<ModelMenu, ModelItem>[K];
+  } & NavigationPhaseFields<EngineModelMenu, EngineModelItem>[K];
 };
 
 /**
- The layout announcement's payload: `LayoutView<ModelRoot>`.
+ The layout announcement's payload, carrying the menu projection the renderer
+ consumes.
  */
-export type NavigationLayoutAnnouncement = LayoutView<ModelRoot>;
+export type NavigationLayoutAnnouncement = LayoutView<EngineModelMenu>;
 
 export type NavigationFeedbackAnnouncement = {
   readonly stroke: readonly Point[];
@@ -149,7 +150,7 @@ type MachineOutputs = {
   select: MarkingMenuSelectEvent;
   cancel: MarkingMenuCancelEvent;
   // Internal: consumed only by runtime.ts, never forwarded to a consumer.
-  layout: LayoutView;
+  layout: NavigationLayoutAnnouncement;
   feedback: NavigationFeedbackAnnouncement;
 };
 
@@ -160,23 +161,17 @@ type MachineOutputs = {
 function toNavigationState(
   to: keyof MachineStates,
   toData: MachineStates[keyof MachineStates],
-): NavigationState {
-  return { phase: to, ...toData } as unknown as NavigationState;
+): NavigationState<EngineModelMenu, EngineModelItem> {
+  return { phase: to, ...toData } as unknown as NavigationState<
+    EngineModelMenu,
+    EngineModelItem
+  >;
 }
 
 /*
- Event-construction helpers, generic in a fresh `N`, taking each field at the
- type the event itself declares for it. They used to take a bare `N` and cast,
- because `ModelMenus<AnyModelNode>` and its siblings collapsed to `never` and
- nothing here could produce a value of them; now that those resolve to
- `AnyModelNode`, the erased `menu`/`selection` values this file holds satisfy
- the declared types directly and the casts are gone.
-
- A conditional type is not an inference site, so `N` is never inferred from an
- argument: at every call site here it falls back to its `AnyModelNode`
- constraint, which is exactly the erasure this file works in. A caller holding
- a real `M` can still pass it explicitly and get a precisely typed event back,
- checked rather than cast.
+ Event-construction helpers receive the machine's erased but discriminated
+ node types. The public event classes retain their own generic model types for
+ controller consumers.
  */
 function openEvent(data: {
   readonly position: Point;

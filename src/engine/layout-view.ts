@@ -1,16 +1,16 @@
-import type { ModelMenus, ModelNode } from '../types.js';
+import type { MenuLayoutModel } from '../layout/menu.js';
 import type { Point } from '../utils.js';
 import type { NavigationOptions, NavigationState } from './machine.js';
 
 /**
  The DOM-free, state-derived layout projection.
  */
-export type LayoutView<M extends ModelNode = ModelNode> = {
+export type LayoutView<MenuModel = MenuLayoutModel> = {
   readonly cursor: 'default' | 'crosshair' | 'none';
   readonly menu:
     | undefined
     | {
-        readonly model: ModelMenus<M>;
+        readonly model: MenuModel;
         readonly center: Point;
         readonly activeKey: string | undefined;
       };
@@ -42,10 +42,13 @@ export function noviceUpperStroke({
   return [menuCenter, lastPosition];
 }
 
-export function projectLayout<M extends ModelNode = ModelNode>(
-  state: NavigationState<M>,
+export function projectLayout<
+  MenuModel,
+  Active extends { readonly key: string; readonly isLeaf: boolean },
+>(
+  state: NavigationState<MenuModel, Active>,
   options: NavigationOptions,
-): LayoutView<M> {
+): LayoutView<MenuModel> {
   switch (state.phase) {
     case 'idle': {
       return {

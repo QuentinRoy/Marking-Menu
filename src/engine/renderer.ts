@@ -7,6 +7,7 @@ import {
   createMenu,
   createMenuHost,
   type Menu,
+  type MenuLayoutModel,
   type MenuStrokeTheme,
 } from '../layout/menu.js';
 import { rafThrottle } from '../layout/raf-throttle.js';
@@ -15,7 +16,6 @@ import {
   type StrokeSurface,
   type StrokeSurfaceOptions,
 } from '../layout/stroke.js';
-import type { ModelMenus, ModelRoot } from '../types.js';
 import { toLocalPoint, type Point } from '../utils.js';
 import type { LayoutView } from './layout-view.js';
 
@@ -24,14 +24,12 @@ export type FeedbackEffect = {
   readonly canceled: boolean;
 };
 
-type RenderModel = ModelRoot<any>;
-
 export type LayoutRenderer = {
   /**
   The shadow root this renderer's menu (and any submenu) mounts into.
   */
   root: ShadowRoot;
-  render: (view: LayoutView<RenderModel>) => void;
+  render: (view: LayoutView) => void;
   showFeedback: (effect: FeedbackEffect) => void;
   dispose: () => void;
 };
@@ -42,7 +40,7 @@ export type LayoutRenderer = {
  recreate-vs-patch, since the model tree is built once and frozen.
  */
 type MenuHandle = {
-  model: ModelMenus<RenderModel>;
+  model: MenuLayoutModel;
   menu: Menu;
 };
 
@@ -69,7 +67,7 @@ function createIndicatorLayer({
   coordinateParent: HTMLElement;
   surfaceOptions?: Omit<IndicatorSurfaceOptions, 'parent'>;
 }): {
-  sync: (indicator: LayoutView<ModelRoot>['indicator']) => void;
+  sync: (indicator: LayoutView['indicator']) => void;
   backgroundElement: () => SVGSVGElement | undefined;
   dotElement: () => SVGSVGElement | undefined;
   dispose: () => void;
@@ -376,13 +374,10 @@ export function createRenderer({
           // (see `createStrokeLayer` and `showFeedback` for the others).
           const cbr = parent.getBoundingClientRect();
           const handle = {
-            // The machine erases literal item shapes before announcing layouts.
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             model: view.menu.model,
             menu: createMenu({
               parent: root,
               deadZoneRadius,
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               model: view.menu.model,
               center: toLocalPoint(view.menu.center, cbr),
             }),

@@ -49,7 +49,7 @@ export type MenuLayoutModel = {
   /**
   The items of the (sub-)menu to display.
   */
-  items: readonly MenuLayoutItem[];
+  readonly items: readonly MenuLayoutItem[];
 };
 
 /**
