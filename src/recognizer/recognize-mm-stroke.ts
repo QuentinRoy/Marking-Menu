@@ -8,7 +8,6 @@ import type {
 } from '../types.js';
 import {
   dist,
-  findMaxEntry,
   radiansToDegrees,
   type NonEmptyArray,
   type Point,
@@ -133,10 +132,18 @@ export const segmentAngle = (a: Point, b: Point): number =>
 export const divideLongestSegment = (
   segments: StrokeSegment[],
 ): StrokeSegment[] => {
-  const [longestI, longest] = findMaxEntry(
-    segments,
-    (s1, s2) => s2.length - s1.length,
-  );
+  let longestI = 0;
+  let longest = segments[0];
+  for (const [i, s] of segments.entries()) {
+    // Threshold mirrors the removed findMaxEntry (`> 1`, not `> 0`).
+    if (!(longest === undefined || s.length - longest.length > 1)) {
+      continue;
+    }
+
+    longestI = i;
+    longest = s;
+  }
+
   if (longest === undefined) {
     // Only possible for an empty segment list.
     return [];
@@ -211,11 +218,6 @@ export function findItem({
 }
 
 /**
- Read the smallest angular gap between neighboring items anywhere in `model`.
- */
-const getMinAngularGap = (model: ModelNode): number => model.getMinAngularGap();
-
-/**
  Cut a stroke into the segments a marking-menu walk is attempted against:
  find its articulation points, then join them pairwise, dropping segments too
  short to be a deliberate move. Shared by {@link recognizeMarkingMenuStroke}
@@ -241,7 +243,7 @@ const cutStroke = (
   const length = strokeLength(stroke);
   const expectedSegmentLength = length / maxDepth;
   const sensitivity = 0.75;
-  const angleThreshold = getMinAngularGap(model) / 2 / sensitivity;
+  const angleThreshold = model.getMinAngularGap() / 2 / sensitivity;
   const articulationPoints = getStrokeArticulationPoints(stroke, {
     expectedSegmentLength,
     angleThreshold,

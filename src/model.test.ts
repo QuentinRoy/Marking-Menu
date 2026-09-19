@@ -3,7 +3,7 @@ import type { MarkingMenuItemInput } from './types.js';
 
 /*
  `getMinAngularGap` is a real method of every model node, but it is
- deliberately absent from the public `AnyModelNode`/`ModelItem` types (see
+ deliberately absent from the public `ModelNode`/`ModelItem` types (see
  `recognize-mm-stroke.ts`, its only caller), so it does not show up on
  `createModel`'s return type either. The cast reaches it anyway to test the
  computation directly.

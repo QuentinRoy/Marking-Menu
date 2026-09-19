@@ -108,31 +108,6 @@ export function at<Item>(array: readonly Item[], index: number): Item {
 }
 
 /**
- Find the entry of `list` ranked highest by `comp`.
-
- @param list - A list of items.
- @param comp - A function comparing two items. Should return a positive number if
- the second item should be ranked higher than the first, a negative number if it
- should be ranked lower and 0 if they should be ranked the same.
- @returns The found `[index, item]` entry. For an empty list, the item is
- `undefined`.
- */
-export const findMaxEntry = <Item>(
-  list: readonly Item[],
-  comp: (item1: Item, item2: Item) => number,
-): [number, Item | undefined] => {
-  let result: [number, Item | undefined] = [0, list[0]];
-  for (const [index, item] of list.entries()) {
-    const current = result[1];
-    if (current !== undefined && comp(current, item) > 1) {
-      result = [index, item];
-    }
-  }
-
-  return result;
-};
-
-/**
  Converts the coordinates of a point in polar coordinates (angle in degrees).
 
  @param point - A point.
@@ -178,60 +153,15 @@ export const noOp = (): void => {
 };
 
 /**
-  A type that makes some properties of a type optional.
- */
-export type SetOptional<Type, Key extends keyof Type> = Omit<Type, Key> &
-  Partial<Pick<Type, Key>>;
-
-/**
- A type that simplifies a type by removing unnecessary intersections and making it more readable.
- */
-export type Simplify<Type> = Type extends infer O
-  ? { [K in keyof O]: O[K] } & {}
-  : never;
-
-/**
- Recursively make a type's properties (and the properties of any array or
- object nested within it) readonly. Functions are left untouched.
- */
-export type DeepReadonly<Type> = Type extends (...args: any[]) => any
-  ? Type
-  : Type extends Array<infer U>
-    ? ReadonlyArray<DeepReadonly<U>>
-    : Type extends Record<string, unknown>
-      ? { readonly [K in keyof Type]: DeepReadonly<Type[K]> }
-      : Type;
-
-/**
  An array with at least one element.
  */
 export type NonEmptyArray<Item> = [Item, ...Item[]];
-
-/**
- Check whether an array has at least one element, narrowing its type to
- {@link NonEmptyArray} when it does.
-
- @param array - The array to check.
- @returns Whether `array` is non-empty.
- */
-export function isNonEmptyArray<Item>(
-  array: readonly Item[],
-): array is NonEmptyArray<Item> {
-  return array.length > 0;
-}
 
 /**
  A list statically known to be empty.
  */
 // eslint-disable-next-line @typescript-eslint/no-restricted-types -- This is needed here.
 export type EmptyTuple = readonly [];
-
-/**
- An array statically known to be empty (its element type is `never`), but,
- unlike {@link EmptyTuple}, not necessarily a tuple: its length is not a
- literal `0`, so {@link IsTuple} is `false` for it.
- */
-export type EmptyArray = readonly never[];
 
 /**
  Whether `Tuple` is a tuple, i.e. its length is statically known.

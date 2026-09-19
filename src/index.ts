@@ -10,7 +10,6 @@ export {
   MarkingMenuOpenEvent,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
-  type ReadonlyPoint,
 } from './events.js';
 export type { MarkingMenuController } from './engine/controller.js';
 export {
@@ -23,12 +22,8 @@ export {
 // `events.ts`), only its types.
 export type { MarkingMenuModel } from './model.js';
 export type {
-  // eslint-disable-next-line @typescript-eslint/no-deprecated
-  AnyModelNode,
   MarkingMenuInput,
   MarkingMenuItemInput,
-  // eslint-disable-next-line @typescript-eslint/no-deprecated
-  MarkingMenuModelItem,
   ModelItem,
   ModelItems,
   ModelLeaf,
@@ -39,3 +34,4 @@ export type {
   ModelNodes,
   ModelRoot,
 } from './types.js';
+export type { Point } from './utils.js';

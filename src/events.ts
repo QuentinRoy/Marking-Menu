@@ -21,14 +21,6 @@ The navigation mode a gesture is in when an event is dispatched.
 */
 export type MarkingMenuMode = 'startup' | 'novice' | 'expert';
 
-/**
- A 2D point, as carried by event payloads.
-
- The public name for the library's internal {@link Point}, which is readonly
- for exactly this reason.
- */
-export type ReadonlyPoint = Point;
-
 /* -------------------------------------------------------------------------- *
  * Event classes
  * -------------------------------------------------------------------------- */
@@ -42,12 +34,12 @@ export type ReadonlyPoint = Point;
  */
 export abstract class MarkingMenuEventBase {
   readonly #mode: MarkingMenuMode;
-  readonly #position: ReadonlyPoint;
+  readonly #position: Point;
   readonly type: string;
 
   constructor(
     type: string,
-    data: { readonly mode: MarkingMenuMode; readonly position: ReadonlyPoint },
+    data: { readonly mode: MarkingMenuMode; readonly position: Point },
   ) {
     this.type = type;
     this.#mode = data.mode;
@@ -64,7 +56,7 @@ export abstract class MarkingMenuEventBase {
   /**
   The pointer position at the time this event was dispatched.
   */
-  get position(): ReadonlyPoint {
+  get position(): Point {
     return this.#position;
   }
 }
@@ -83,7 +75,7 @@ export class MarkingMenuStartEvent extends MarkingMenuEventBase {
 
   declare readonly type: 'start';
 
-  constructor(data: { readonly position: ReadonlyPoint }) {
+  constructor(data: { readonly position: Point }) {
     super(MarkingMenuStartEvent.type, {
       mode: 'startup',
       position: data.position,
@@ -110,14 +102,14 @@ export class MarkingMenuOpenEvent<
   }
 
   readonly #menu: ModelMenus<Model>;
-  readonly #menuCenter: ReadonlyPoint;
+  readonly #menuCenter: Point;
 
   declare readonly type: 'open';
 
   constructor(data: {
-    readonly position: ReadonlyPoint;
+    readonly position: Point;
     readonly menu: ModelMenus<Model>;
-    readonly menuCenter: ReadonlyPoint;
+    readonly menuCenter: Point;
   }) {
     super(MarkingMenuOpenEvent.type, {
       mode: 'novice',
@@ -141,7 +133,7 @@ export class MarkingMenuOpenEvent<
   /**
   The center the opened menu is positioned at.
   */
-  get menuCenter(): ReadonlyPoint {
+  get menuCenter(): Point {
     return this.#menuCenter;
   }
 }
@@ -153,7 +145,7 @@ export class MarkingMenuOpenEvent<
  */
 type ActiveMenuData<Model extends ModelNode = ModelNode> = {
   readonly mode: MarkingMenuMode;
-  readonly position: ReadonlyPoint;
+  readonly position: Point;
   readonly active: ModelItems<Model> | undefined;
   readonly menu: ModelMenus<Model> | undefined;
 };
@@ -225,7 +217,7 @@ export class MarkingMenuChangeEvent<
   declare readonly type: 'change';
 
   constructor(data: {
-    readonly position: ReadonlyPoint;
+    readonly position: Point;
     readonly active: ModelItems<Model> | undefined;
     readonly previousActive: ModelItems<Model> | undefined;
     readonly menu: ModelMenus<Model>;
@@ -287,7 +279,7 @@ export class MarkingMenuSelectEvent<
 
   constructor(data: {
     readonly mode: MarkingMenuMode;
-    readonly position: ReadonlyPoint;
+    readonly position: Point;
     readonly selection: ModelLeaves<Model>;
     readonly menu: ModelMenus<Model> | undefined;
   }) {

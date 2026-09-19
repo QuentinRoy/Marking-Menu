@@ -19,11 +19,11 @@ describe('gesture feedback', () => {
       { canceled: true },
     );
 
-    expect(feedback.elements()).toHaveLength(2);
+    expect(parent.children).toHaveLength(2);
     vi.advanceTimersByTime(25);
-    expect(feedback.elements()).toHaveLength(1);
+    expect(parent.children).toHaveLength(1);
     vi.advanceTimersByTime(25);
-    expect(feedback.elements()).toHaveLength(0);
+    expect(parent.children).toHaveLength(0);
     vi.useRealTimers();
   });
 
@@ -36,7 +36,6 @@ describe('gesture feedback', () => {
 
     feedback.remove();
 
-    expect(feedback.elements()).toHaveLength(0);
     expect(parent.children).toHaveLength(0);
     vi.runAllTimers();
     expect(parent.children).toHaveLength(0);

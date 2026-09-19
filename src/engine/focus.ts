@@ -12,14 +12,6 @@ export type FocusManager = {
 // is announced before a submenu it points at can open.
 const ACTIVE_ITEM_FOCUS_DELAY_MS = 50;
 
-const menuContainer = (root: ShadowRoot): HTMLElement | undefined =>
-  root.querySelector<HTMLElement>('[role="menu"]') ?? undefined;
-
-const itemElement = (root: ShadowRoot, key: string): HTMLElement | undefined =>
-  [...root.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
-    (element) => element.dataset.itemId === key,
-  ) ?? undefined;
-
 /**
  The element actually holding focus, unlike `document.activeElement`: a
  shadow host reports itself as active for any descendant focused inside it
@@ -66,7 +58,9 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     clearPendingFocus();
     savedFocus ??= deepActiveElement(root.ownerDocument) as
       HTMLElement | undefined;
-    menuContainer(root)?.focus({ preventScroll: true });
+    root
+      .querySelector<HTMLElement>('[role="menu"]')
+      ?.focus({ preventScroll: true });
   };
 
   const onChange = (event: MarkingMenuChangeEvent<Model>): void => {
@@ -77,7 +71,9 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     }
 
     pendingFocus = setTimeout(() => {
-      itemElement(root, active.key)?.focus({ preventScroll: true });
+      [...root.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+        .find((element) => element.dataset.itemId === active.key)
+        ?.focus({ preventScroll: true });
     }, ACTIVE_ITEM_FOCUS_DELAY_MS);
   };
 

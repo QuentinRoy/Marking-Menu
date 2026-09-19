@@ -20,11 +20,6 @@ export type IndicatorSurfaceOptions = {
 };
 
 export type IndicatorSurface = {
-  // Two separate SVGs, not one: the background sits behind the gesture's
-  // own stroke, the dot in front of it, so the renderer can place each on
-  // its own side of that layer.
-  backgroundElement: SVGSVGElement;
-  dotElement: SVGSVGElement;
   /**
    Draw the target: a fixed-radius filled background at `center`, and a dot
    growing from the stroke's own half-width (so it starts looking like the
@@ -84,8 +79,6 @@ export function createIndicatorSurface({
   };
 
   return {
-    backgroundElement: backgroundSvg,
-    dotElement: dotSvg,
     draw,
     remove() {
       backgroundSvg.remove();
