@@ -583,8 +583,12 @@ function setItemActive(item: HTMLElement, isActive: boolean): void {
  Create the Menu display.
 
  @param options - Configuration options.
- @param options.parent - The parent node.
- @param options.model - The model of the menu to open.
+  @param options.parent - The parent node.
+  @param options.layerParent - The node the menu layer mounts into. Defaults
+  to `parent`'s root: pass a fixed slot to keep paint order without reordering
+  the DOM (see the renderer's scene). Style probes and item queries still use
+  the root.
+  @param options.model - The model of the menu to open.
  @param options.center - The pixel coordinates where the menu should be
  anchored.
  @param options.deadZoneRadius - The inner radius of the wedge ring.
