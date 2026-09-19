@@ -83,6 +83,15 @@ type MockItem = ModelItem<
 
 type MockModel = MockRoot | MockItem;
 
+// Real items for the gap walk; walking still uses getNearestChild.
+const attachItems = (model: MockModel, breadth: number): void => {
+  model.items = Array.from(
+    { length: breadth },
+    (_, index) =>
+      createMockModel(0, breadth, (index * 360) / breadth, model) as MockItem,
+  );
+};
+
 const createMockModel = (
   depth = 1,
   breadth = 8,
@@ -130,12 +139,7 @@ const createMockModel = (
             createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
         ),
       };
-      // Real items for the gap walk; walking still uses getNearestChild.
-      m.items = Array.from(
-        { length: breadth },
-        (_, index) =>
-          createMockModel(0, breadth, (index * 360) / breadth, m) as MockItem,
-      );
+      attachItems(m, breadth);
       return m;
     }
 
@@ -151,12 +155,7 @@ const createMockModel = (
           createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
       ),
     };
-    // Real items for the gap walk; walking still uses getNearestChild.
-    m.items = Array.from(
-      { length: breadth },
-      (_, index) =>
-        createMockModel(0, breadth, (index * 360) / breadth, m) as MockItem,
-    );
+    attachItems(m, breadth);
     return m;
   }
 
