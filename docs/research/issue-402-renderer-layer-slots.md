@@ -1,4 +1,4 @@
-# Issue #402: Renderer fixed layer slots and one coordinate conversion — implementation-ready spec
+# Issue #402: Renderer fixed layer slots and one coordinate conversion: implementation-ready spec
 
 Source proposal: [Give the renderer fixed layer slots and one coordinate conversion](https://github.com/QuentinRoy/Marking-Menu/issues/402).
 Sibling scope boundary: [Style the opening indicator from CSS and drop the stroke theme probes](https://github.com/QuentinRoy/Marking-Menu/issues/403) stays separate (see Non-goals).
@@ -14,7 +14,7 @@ plumbing are deleted; tests assert slot contents instead of guessing layers.
 
 ## Design decisions (locked)
 
-1. **Slots:** 6 fixed slots in paint order — `lower` → `menu` → `indicator-background` →
+1. **Slots:** 6 fixed slots in paint order: `lower` → `menu` → `indicator-background` →
    `upper` → `indicator-dot` → `feedback`. The feedback slot holds N traces in arrival order.
 2. **Conversion:** the scene owns `getBoundingClientRect` + `toLocalPoint` and hands layers a
    late `convert()` they call at draw/tick time (preserves the current moved/scrolled-parent
@@ -81,7 +81,7 @@ createFullSizeSvg(doc: Document, slot: HTMLElement, className: string) => SVGSVG
 - `createPersistentStrokeLayers` / `createThemedIndicatorLayer`: take slots + convert; delete
   both `parent.host.parentElement` lookups.
 - `render(view)`: menu center and feedback strokes convert via `scene.toLocal`/`toLocalMany`
-  eagerly (both draw synchronously — no rAF delay — so eager conversion is already late enough).
+  eagerly (both draw synchronously with no rAF delay, so eager conversion is already late enough).
   Stroke/indicator layers convert lazily inside their draw/tick. Document this split and why it
   is safe.
 - Delete `restack()` and `isPaintedBefore()` plus the per-render call. Paint order is now

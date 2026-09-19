@@ -322,7 +322,7 @@ export function createRenderer({
           // `LayoutView.menu.center` is in client coordinates; the menu
           // layout wants it relative to `parent`. Converted here, eagerly:
           // creating the menu draws synchronously, so the parent cannot
-          // move before the points are used — unlike strokes and the
+          // move before the points are used, unlike strokes and the
           // indicator, which convert lazily inside their own draw loops.
           const handle = {
             model: view.menu.model,
