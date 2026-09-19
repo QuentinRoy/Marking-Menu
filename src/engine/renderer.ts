@@ -18,7 +18,7 @@ import {
 } from '../layout/stroke.js';
 import type { Point } from '../utils.js';
 import type { LayoutView } from './layout-view.js';
-import { createScene, type SceneSlots } from './scene.js';
+import { createScene, type SceneSlots } from '../layout/scene.js';
 
 export type FeedbackEffect = {
   readonly stroke: readonly Point[];
