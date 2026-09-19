@@ -253,6 +253,64 @@ describe('createRenderer', () => {
     renderer.dispose();
   });
 
+  it('converts the menu center and feedback eagerly against the parent rect', () => {
+    const parent = document.createElement('div');
+    parent.getBoundingClientRect = () =>
+      ({ left: 200, top: 50 }) as unknown as DOMRect;
+    const renderer = createRenderer({ parent });
+
+    renderer.render({
+      cursor: 'none',
+      menu: { model, center: [220, 60], activeKey: undefined },
+      upperStroke: undefined,
+      lowerStroke: undefined,
+      indicator: undefined,
+    });
+    renderer.showFeedback({
+      stroke: [
+        [220, 60],
+        [260, 90],
+      ],
+      canceled: false,
+    });
+
+    const layer = slotOf(parent, 'menu').querySelector<HTMLElement>(
+      '.marking-menu-layer',
+    );
+    expect(layer?.style.getPropertyValue('--center-x')).toBe('20px');
+    expect(layer?.style.getPropertyValue('--center-y')).toBe('10px');
+    expect(
+      slotOf(parent, 'feedback').querySelector('path')?.getAttribute('d'),
+    ).toBe('M 20 10 L 60 40');
+    renderer.dispose();
+  });
+
+  it('holds concurrent feedback traces in arrival order', () => {
+    const parent = document.createElement('div');
+    const renderer = createRenderer({ parent });
+
+    renderer.showFeedback({
+      stroke: [
+        [0, 0],
+        [10, 0],
+      ],
+      canceled: false,
+    });
+    renderer.showFeedback({
+      stroke: [
+        [0, 0],
+        [0, 10],
+      ],
+      canceled: true,
+    });
+
+    const traces = slotOf(parent, 'feedback').querySelectorAll('path');
+    expect(traces).toHaveLength(2);
+    expect(traces[0]?.getAttribute('d')).toBe('M 0 0 L 10 0');
+    expect(traces[1]?.getAttribute('d')).toBe('M 0 0 L 0 10');
+    renderer.dispose();
+  });
+
   it('cancels pending drawing and feedback removal on dispose', () => {
     const parent = document.createElement('div');
     const renderer = createRenderer({ parent });

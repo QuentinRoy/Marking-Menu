@@ -18,7 +18,7 @@ import {
 } from '../layout/stroke.js';
 import type { Point } from '../utils.js';
 import type { LayoutView } from './layout-view.js';
-import { createScene } from './scene.js';
+import { createScene, type SceneSlots } from './scene.js';
 
 export type FeedbackEffect = {
   readonly stroke: readonly Point[];
@@ -208,10 +208,7 @@ function createStrokeLayer({
  theme change reaches them immediately rather than on the next open.
  */
 function createPersistentStrokeLayers(
-  slots: Pick<
-    ReturnType<typeof createScene>['slots'],
-    'upper' | 'lower' | 'feedback'
-  >,
+  slots: Pick<SceneSlots, 'upper' | 'lower' | 'feedback'>,
   convert: (point: Point) => Point,
   gestureFeedbackDuration: number,
 ): {
@@ -239,10 +236,7 @@ function createPersistentStrokeLayers(
 }
 
 function createThemedIndicatorLayer(
-  slots: Pick<
-    ReturnType<typeof createScene>['slots'],
-    'indicatorBackground' | 'indicatorDot'
-  >,
+  slots: Pick<SceneSlots, 'indicatorBackground' | 'indicatorDot'>,
   convert: (point: Point) => Point,
   strokeTheme: MenuStrokeTheme,
 ): ReturnType<typeof createIndicatorLayer> {

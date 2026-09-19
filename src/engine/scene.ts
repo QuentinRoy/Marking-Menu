@@ -8,12 +8,14 @@ export type SceneSlotName =
   | 'indicatorDot'
   | 'feedback';
 
+export type SceneSlots = Record<SceneSlotName, HTMLElement>;
+
 export type Scene = {
   /**
   One container per paint layer, in paint order. Layers mount their content
   into their own slot and never reorder the DOM themselves.
   */
-  slots: Record<SceneSlotName, HTMLElement>;
+  slots: SceneSlots;
   /**
   Convert a client-coordinates point to coordinates local to the menu's
   parent. Reads the parent's bounding rect on every call, so layers that draw
@@ -48,7 +50,7 @@ export function createScene({
     return slot;
   };
 
-  const slots: Record<SceneSlotName, HTMLElement> = {
+  const slots: SceneSlots = {
     lower: createSlot('lower'),
     menu: createSlot('menu'),
     indicatorBackground: createSlot('indicator-background'),
