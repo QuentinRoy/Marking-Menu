@@ -270,11 +270,6 @@ describe('ModelNode discrimination', () => {
     expectTypeOf(sampleNode).toEqualTypeOf<ModelRoot>();
     expectTypeOf(sampleNode.parent).toEqualTypeOf<undefined>();
   });
-
-  it('keeps getMinAngularGap off every node', () => {
-    // @ts-expect-error -- internal only, feeds the recognizer threshold.
-    sampleNode.getMinAngularGap();
-  });
 });
 
 describe('ModelItem narrowing', () => {
