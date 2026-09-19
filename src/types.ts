@@ -234,26 +234,26 @@ export type MarkingMenuModelItem = ModelNode;
  includes that type without recursing forever.
  */
 export type ModelNodes<N extends ModelNode> = N extends {
-  items: infer I extends readonly unknown[];
+  items: infer Items extends readonly unknown[];
 }
-  ? IsTuple<I> extends true
-    ? N | ModelNodes<I[number] & ModelNode>
-    : N | (I[number] & ModelNode)
+  ? IsTuple<Items> extends true
+    ? N | ModelNodes<Extract<Items[number], ModelNode>>
+    : N | Extract<Items[number], ModelNode>
   : N;
 
 /**
 Every node of the (sub-)tree rooted at `N`, excluding the root.
 */
-export type ModelItems<N extends ModelNode> = Exclude<
-  ModelNodes<N>,
+export type ModelItems<Node extends ModelNode> = Exclude<
+  ModelNodes<Node>,
   { isRoot: true }
 >;
 
 /**
  Every leaf of the (sub-)tree rooted at `N`.
  */
-export type ModelLeaves<N extends ModelNode> =
-  ModelItems<N> extends infer Item
+export type ModelLeaves<Node extends ModelNode> =
+  ModelItems<Node> extends infer Item
     ? Item extends { isLeaf: false }
       ? never
       : boolean extends (Item extends { isLeaf: infer L } ? L : never)

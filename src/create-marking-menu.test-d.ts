@@ -35,12 +35,20 @@ describe('createMarkingMenu', () => {
 
   it('exposes select events typed on the exact literal item ids', () => {
     const mm = createMarkingMenu({
-      items: [{ id: 'right', label: 'Right' }],
+      items: [
+        { id: 'right', label: 'Right' },
+        { id: 'up', label: 'Up' },
+      ],
       parent,
     });
     mm.on('select', (event) => {
-      expectTypeOf(event.selection.id).toEqualTypeOf<'right'>();
+      expectTypeOf(event.selection.id).toEqualTypeOf<'right' | 'up'>();
+      expectTypeOf(event.selection.label).toEqualTypeOf<'Right' | 'Up'>();
       expectTypeOf(event.selection.isLeaf).toEqualTypeOf<true>();
+      expectTypeOf(event.selection.parent.isRoot).toEqualTypeOf<true>();
+      expectTypeOf(
+        event.selection.parent.getChild('right').label,
+      ).toEqualTypeOf<'Right'>();
     });
   });
 
