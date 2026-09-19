@@ -357,6 +357,19 @@
   width: var(--resolved-stroke-start-point-radius);
 }
 
+/* Structural: every full-size surface covers its parent and never intercepts
+   pointer input. Anything mounting a surface outside this stylesheet's reach
+   must provide the same positioning itself. */
+.marking-menu-stroke-surface,
+.marking-menu-indicator-surface {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
 .marking-menu-stroke-path {
   fill: none;
   stroke: var(--resolved-stroke-color);

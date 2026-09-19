@@ -18,16 +18,11 @@ describe('full-size SVG surface', () => {
     expect(svg.ariaHidden).toBe('true');
   });
 
-  it('covers its slot without intercepting pointer input', () => {
+  it('leaves positioning to the stylesheet', () => {
     const slot = document.createElement('div');
 
     const svg = createFullSizeSvg(document, slot, 'marking-menu-test');
 
-    expect(svg.style.position).toBe('absolute');
-    expect(svg.style.inset).toBe('0px');
-    expect(svg.style.width).toBe('100%');
-    expect(svg.style.height).toBe('100%');
-    expect(svg.style.overflow).toBe('visible');
-    expect(svg.style.pointerEvents).toBe('none');
+    expect(svg.getAttribute('style')).toBeNull();
   });
 });

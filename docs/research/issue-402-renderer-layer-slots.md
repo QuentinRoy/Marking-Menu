@@ -55,11 +55,13 @@ createScene({ root, parent }: { root: ShadowRoot; parent: HTMLElement }) => {
 ## Shared helper: `src/layout/svg-surface.ts` (new)
 
 ```ts
-createFullSizeSvg(doc: Document, slot: HTMLElement, className: string) => SVGSVGElement;
+createFullSizeSvg(doc, slot, className) => SVGSVGElement;
 ```
 
-- Appends to `slot`; applies today's duplicated styling
-  (`position: absolute; inset: 0; width/height: 100%; overflow: visible; pointer-events: none`).
+- Appends to `slot` with the given class; positioning comes from the
+  stylesheet (`.marking-menu-stroke-surface`, `.marking-menu-indicator-surface`
+  in `menu.css`), so anything mounting a surface outside its reach, like the
+  playground's recognizer overlay, positions the surface itself.
 - Class names preserved: `marking-menu-stroke-surface` (+ variants),
   `marking-menu-indicator-surface`.
 - `src/layout/stroke.ts` and `src/layout/indicator.ts` use it internally; their public

@@ -345,7 +345,7 @@ export function LiveSurface({
   return (
     <div className="relative min-h-85 flex-1 cursor-crosshair overflow-hidden bg-surface dot-grid wide:min-h-0">
       <div ref={menuParentRef} className="absolute inset-0" />
-      <div ref={overlayRef} className="pointer-events-none absolute inset-0" />
+      <div ref={overlayRef} className="recognizer-overlay pointer-events-none absolute inset-0" />
     </div>
   );
 }
