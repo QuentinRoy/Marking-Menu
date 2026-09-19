@@ -37,6 +37,18 @@ const rootOf = (parent: HTMLElement): ShadowRoot => {
   return root;
 };
 
+const slotOf = (parent: HTMLElement, name: string): HTMLElement => {
+  const slot =
+    rootOf(parent).querySelector<HTMLElement>(
+      `[data-slot="${CSS.escape(name)}"]`,
+    ) ?? undefined;
+  if (slot === undefined) {
+    throw new Error(`The renderer slot is missing: ${name}.`);
+  }
+
+  return slot;
+};
+
 describe('createRenderer', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
@@ -65,6 +77,33 @@ describe('createRenderer', () => {
     expect(parent.querySelector('.marking-menu')).toBe(host);
     renderer.dispose();
     expect(parent.children).toHaveLength(0);
+  });
+
+  it('creates one slot per layer, in paint order', () => {
+    const parent = document.createElement('div');
+    const renderer = createRenderer({ parent });
+
+    renderer.render({
+      cursor: 'default',
+      menu: undefined,
+      upperStroke: undefined,
+      lowerStroke: undefined,
+      indicator: undefined,
+    });
+
+    expect(
+      [...rootOf(parent).querySelectorAll<HTMLElement>('[data-slot]')].map(
+        (slot) => slot.dataset.slot,
+      ),
+    ).toEqual([
+      'lower',
+      'menu',
+      'indicator-background',
+      'upper',
+      'indicator-dot',
+      'feedback',
+    ]);
+    renderer.dispose();
   });
 
   it('converts live and completed strokes from client to parent coordinates', () => {
@@ -96,8 +135,7 @@ describe('createRenderer', () => {
 
     const root = rootOf(parent);
     expect(
-      [...root.children]
-        .filter((surface) => surface.localName === 'svg')
+      [...root.querySelectorAll('svg')]
         .flatMap((surface) => [...surface.children])
         .filter((path) => path.localName === 'path')
         .map((path) => path.getAttribute('d')),
@@ -105,7 +143,88 @@ describe('createRenderer', () => {
     renderer.dispose();
   });
 
-  it('keeps lower, menu, upper, then feedback paint order', () => {
+  it('reads the parent rect once per stroke draw', () => {
+    const parent = document.createElement('div');
+    let reads = 0;
+    parent.getBoundingClientRect = () => {
+      reads += 1;
+      return { left: 200, top: 50 } as unknown as DOMRect;
+    };
+
+    const renderer = createRenderer({ parent });
+
+    renderer.render({
+      cursor: 'none',
+      menu: undefined,
+      upperStroke: [
+        [220, 60],
+        [260, 90],
+        [300, 100],
+      ],
+      lowerStroke: undefined,
+      indicator: undefined,
+    });
+    renderFrame();
+
+    expect(
+      slotOf(parent, 'upper').querySelector('path')?.getAttribute('d'),
+    ).toBe('M 20 10 L 60 40 L 100 50');
+    expect(reads).toBe(1);
+    renderer.dispose();
+  });
+
+  it('converts strokes against the parent rect at draw time', () => {
+    const parent = document.createElement('div');
+    let left = 200;
+    parent.getBoundingClientRect = () =>
+      ({ left, top: 50 }) as unknown as DOMRect;
+    const renderer = createRenderer({ parent });
+
+    renderer.render({
+      cursor: 'none',
+      menu: undefined,
+      upperStroke: [
+        [220, 60],
+        [260, 90],
+      ],
+      lowerStroke: undefined,
+      indicator: undefined,
+    });
+    left = 210;
+    renderFrame();
+
+    expect(
+      slotOf(parent, 'upper').querySelector('path')?.getAttribute('d'),
+    ).toBe('M 10 10 L 50 40');
+    renderer.dispose();
+  });
+
+  it('positions the opening indicator against the parent rect on every tick', () => {
+    const parent = document.createElement('div');
+    let left = 0;
+    parent.getBoundingClientRect = () =>
+      ({ left, top: 0 }) as unknown as DOMRect;
+    const renderer = createRenderer({ parent });
+
+    renderer.render({
+      cursor: 'crosshair',
+      menu: undefined,
+      upperStroke: [[0, 0]],
+      lowerStroke: undefined,
+      indicator: { startedAt: Date.now(), position: [20, 30], delayMs: 300 },
+    });
+    left = 5;
+    renderFrame();
+
+    expect(
+      slotOf(parent, 'indicator-background')
+        .querySelector('.marking-menu-indicator-background')
+        ?.getAttribute('cx'),
+    ).toBe('15');
+    renderer.dispose();
+  });
+
+  it('paints each layer inside its own fixed slot', () => {
     const parent = document.createElement('div');
     const renderer = createRenderer({ parent });
 
@@ -116,55 +235,103 @@ describe('createRenderer', () => {
       ],
       canceled: false,
     });
-    renderer.render({
+    const view = {
       cursor: 'none',
-      menu: { model, center: [0, 0], activeKey: undefined },
+      menu: {
+        model,
+        center: [0, 0] as [number, number],
+        activeKey: undefined,
+      },
       upperStroke: [
         [0, 0],
         [10, 0],
-      ],
+      ] as Array<[number, number]>,
       lowerStroke: [
         [0, 0],
         [5, 5],
-      ],
-      indicator: undefined,
-    });
+      ] as Array<[number, number]>,
+      indicator: { startedAt: Date.now(), position: [20, 30], delayMs: 300 },
+    } as const;
+    renderer.render(view);
     renderFrame();
+    renderer.render(view);
+
+    expect(
+      slotOf(parent, 'lower').querySelector('path')?.getAttribute('d'),
+    ).toBe('M 0 0 L 5 5');
+    expect(
+      slotOf(parent, 'menu').querySelector('.marking-menu-layer'),
+    ).not.toBeNull();
+    expect(
+      slotOf(parent, 'indicator-background').querySelector(
+        '.marking-menu-indicator-background',
+      ),
+    ).not.toBeNull();
+    expect(slotOf(parent, 'upper').querySelectorAll('path')).toHaveLength(1);
+    expect(
+      slotOf(parent, 'indicator-dot').querySelector(
+        '.marking-menu-indicator-dot',
+      ),
+    ).not.toBeNull();
+    expect(slotOf(parent, 'feedback').querySelectorAll('path')).toHaveLength(1);
+    renderer.dispose();
+  });
+
+  it('converts the menu center and feedback eagerly against the parent rect', () => {
+    const parent = document.createElement('div');
+    parent.getBoundingClientRect = () =>
+      ({ left: 200, top: 50 }) as unknown as DOMRect;
+    const renderer = createRenderer({ parent });
+
     renderer.render({
       cursor: 'none',
-      menu: { model, center: [0, 0], activeKey: undefined },
-      upperStroke: [
+      menu: { model, center: [220, 60], activeKey: undefined },
+      upperStroke: undefined,
+      lowerStroke: undefined,
+      indicator: undefined,
+    });
+    renderer.showFeedback({
+      stroke: [
+        [220, 60],
+        [260, 90],
+      ],
+      canceled: false,
+    });
+
+    const layer = slotOf(parent, 'menu').querySelector<HTMLElement>(
+      '.marking-menu-layer',
+    );
+    expect(layer?.style.getPropertyValue('--center-x')).toBe('20px');
+    expect(layer?.style.getPropertyValue('--center-y')).toBe('10px');
+    expect(
+      slotOf(parent, 'feedback').querySelector('path')?.getAttribute('d'),
+    ).toBe('M 20 10 L 60 40');
+    renderer.dispose();
+  });
+
+  it('holds concurrent feedback traces in arrival order', () => {
+    const parent = document.createElement('div');
+    const renderer = createRenderer({ parent });
+
+    renderer.showFeedback({
+      stroke: [
         [0, 0],
         [10, 0],
       ],
-      lowerStroke: [
+      canceled: false,
+    });
+    renderer.showFeedback({
+      stroke: [
         [0, 0],
-        [5, 5],
+        [0, 10],
       ],
-      indicator: undefined,
+      canceled: true,
     });
 
-    const layers = [...rootOf(parent).children]
-      .filter(
-        (element) => !element.classList.contains('marking-menu-layout-probe'),
-      )
-      .map((element) => {
-        if (element.classList.contains('marking-menu-layer')) {
-          return 'menu';
-        }
-
-        const strokeElements = [...element.children];
-        if (strokeElements.some((child) => child.localName === 'circle')) {
-          return 'upper';
-        }
-
-        return strokeElements
-          .find((child) => child.localName === 'path')
-          ?.getAttribute('d') === 'M 0 0 L 5 5'
-          ? 'lower'
-          : 'feedback';
-      });
-    expect(layers).toEqual(['lower', 'menu', 'upper', 'feedback']);
+    const traces = slotOf(parent, 'feedback').querySelectorAll('path');
+    expect(traces).toHaveLength(2);
+    expect(traces[0]?.getAttribute('d')).toBe('M 0 0 L 10 0');
+    expect(traces[1]?.getAttribute('d')).toBe('M 0 0 L 0 10');
     renderer.dispose();
   });
 

@@ -156,6 +156,18 @@
   background-size: var(--dot-grid-gap) var(--dot-grid-gap);
 }
 
+/* The recognizer overlay lives outside the menu's shadow root, beyond its
+   stylesheet's reach, so its stroke surfaces get the same structural
+   positioning here that the menu's own surfaces get from the library. */
+.recognizer-overlay > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
 /* Dark mode is the same page with the palette turned over: every colour the
    layout uses is one of the variables above, plus the four the library's own
    stylesheet exposes for the menu itself. */
