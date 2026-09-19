@@ -201,6 +201,32 @@ describe('divideLongestSegment', () => {
       { length: 20, angle: 20 },
     ]);
   });
+
+  it('divides the later segment when it leads by one pixel', () => {
+    expect(
+      divideLongestSegment([
+        { length: 10, angle: 5 },
+        { length: 11, angle: 10 },
+      ]),
+    ).toEqual([
+      { length: 10, angle: 5 },
+      { length: 5.5, angle: 10 },
+      { length: 5.5, angle: 10 },
+    ]);
+  });
+
+  it('divides the first segment on a tie', () => {
+    expect(
+      divideLongestSegment([
+        { length: 10, angle: 5 },
+        { length: 10, angle: 10 },
+      ]),
+    ).toEqual([
+      { length: 5, angle: 5 },
+      { length: 5, angle: 5 },
+      { length: 10, angle: 10 },
+    ]);
+  });
 });
 
 describe('walkModel', () => {
