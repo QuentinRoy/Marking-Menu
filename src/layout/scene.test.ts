@@ -44,7 +44,7 @@ describe('scene', () => {
     for (const slot of slots) {
       expect(slot.localName).toBe('div');
       expect(slot.classList.contains('marking-menu-slot')).toBe(true);
-      expect(slot.style.display).toBe('contents');
+      expect(slot.style.display).toBe('');
     }
 
     tearDown();

@@ -357,6 +357,13 @@
   width: var(--resolved-stroke-start-point-radius);
 }
 
+/* Structural: slots generate no box of their own, so children lay out as
+   if they were direct children of the root, and document order sets
+   paint order. */
+.marking-menu-slot {
+  display: contents;
+}
+
 /* Structural: every full-size surface covers its parent and never intercepts
    pointer input. Anything mounting a surface outside this stylesheet's reach
    must provide the same positioning itself. */
