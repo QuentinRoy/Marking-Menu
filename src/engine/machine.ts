@@ -165,28 +165,6 @@ function toNavigationState(
   >;
 }
 
-/*
- Event-construction helpers receive the machine's erased but discriminated
- node types. The public event classes retain their own generic model types for
- controller consumers.
- */
-function openEvent(data: {
-  readonly position: Point;
-  readonly menu: ModelMenu;
-  readonly menuCenter: Point;
-}): MarkingMenuOpenEvent {
-  return new MarkingMenuOpenEvent(data);
-}
-
-function moveEvent(data: {
-  readonly mode: MarkingMenuMode;
-  readonly position: Point;
-  readonly active: ModelItem | undefined;
-  readonly menu: ModelMenu | undefined;
-}): MarkingMenuMoveEvent {
-  return new MarkingMenuMoveEvent<ModelNode>(data);
-}
-
 /**
  Shared body of the three startup/expert move actions: no menu is open in
  either state, so `move` always carries an undefined `active` and `menu`
@@ -199,35 +177,13 @@ function emitInactiveMove(
 ): void {
   emit(
     'move',
-    moveEvent({ mode, position, active: undefined, menu: undefined }),
+    new MarkingMenuMoveEvent<ModelNode>({
+      mode,
+      position,
+      active: undefined,
+      menu: undefined,
+    }),
   );
-}
-
-function changeEvent(data: {
-  readonly position: Point;
-  readonly active: ModelItem | undefined;
-  readonly previousActive: ModelItem | undefined;
-  readonly menu: ModelMenu;
-}): MarkingMenuChangeEvent {
-  return new MarkingMenuChangeEvent<ModelNode>(data);
-}
-
-function selectEvent(data: {
-  readonly mode: MarkingMenuMode;
-  readonly position: Point;
-  readonly selection: ModelLeaf;
-  readonly menu: ModelMenu | undefined;
-}): MarkingMenuSelectEvent {
-  return new MarkingMenuSelectEvent(data);
-}
-
-function cancelEvent(data: {
-  readonly mode: MarkingMenuMode;
-  readonly position: Point;
-  readonly active: ModelItem | undefined;
-  readonly menu: ModelMenu | undefined;
-}): MarkingMenuCancelEvent {
-  return new MarkingMenuCancelEvent<ModelNode>(data);
 }
 
 function isModelLeaf(item: ModelItem): item is ModelLeaf {
@@ -323,9 +279,20 @@ function emitTermination(
 ): void {
   emit('feedback', { stroke, canceled: selection === undefined });
   if (selection === undefined) {
-    emit('cancel', cancelEvent({ mode: from, position, active, menu }));
+    emit(
+      'cancel',
+      new MarkingMenuCancelEvent<ModelNode>({
+        mode: from,
+        position,
+        active,
+        menu,
+      }),
+    );
   } else {
-    emit('select', selectEvent({ mode: from, position, selection, menu }));
+    emit(
+      'select',
+      new MarkingMenuSelectEvent({ mode: from, position, selection, menu }),
+    );
   }
 }
 
@@ -550,7 +517,7 @@ export const navigationMachine = machine({
     'startup -dwell> novice'({ fromData, toData, emit }) {
       emit(
         'open',
-        openEvent({
+        new MarkingMenuOpenEvent({
           // `dwell` carries no position of its own; the machine holds the
           // last committed one instead. `fromData.stroke` always starts with
           // the origin and is only ever appended to, so it is never empty.
@@ -571,7 +538,7 @@ export const navigationMachine = machine({
     'expert -dwell> novice'({ fromData, toData, emit }) {
       emit(
         'open',
-        openEvent({
+        new MarkingMenuOpenEvent({
           position: fromData.stroke.at(-1) as Point,
           menu: toData.menu,
           menuCenter: toData.menuCenter,
@@ -605,7 +572,7 @@ export const navigationMachine = machine({
 
       emit(
         'open',
-        openEvent({
+        new MarkingMenuOpenEvent({
           position: toData.menuCenter,
           menu: toData.menu,
           menuCenter: toData.menuCenter,
@@ -618,7 +585,7 @@ export const navigationMachine = machine({
     'novice -move> novice'({ fromData, toData, inputData, emit }) {
       emit(
         'move',
-        moveEvent({
+        new MarkingMenuMoveEvent<ModelNode>({
           mode: 'novice',
           position: inputData.position,
           active: toData.active,
@@ -629,7 +596,7 @@ export const navigationMachine = machine({
       if (toData.active !== fromData.active) {
         emit(
           'change',
-          changeEvent({
+          new MarkingMenuChangeEvent<ModelNode>({
             position: inputData.position,
             active: toData.active,
             previousActive: fromData.active,

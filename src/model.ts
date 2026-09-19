@@ -8,7 +8,13 @@ import type {
   ModelNode,
   ModelRoot,
 } from './types.js';
-import { deltaAngle, mod, type EmptyTuple, type IsTuple } from './utils.js';
+import {
+  deltaAngle,
+  mod,
+  normalizeAngle,
+  type EmptyTuple,
+  type IsTuple,
+} from './utils.js';
 
 /*
  The marking menu model.
@@ -450,8 +456,6 @@ class MarkingMenuRoot extends MarkingMenuNode {
     return true;
   }
 }
-
-const normalizeAngle = (angle: number): number => mod(angle, 360);
 
 type StatedItemAngle = { angle: number; index: number };
 type StatedItemAngles = [StatedItemAngle, ...StatedItemAngle[]];

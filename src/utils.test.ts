@@ -3,8 +3,6 @@ import {
   degreesToRadians,
   deltaAngle,
   dist,
-  findMaxEntry,
-  isNonEmptyArray,
   mod,
   noOp,
   normalizeAngle,
@@ -114,23 +112,6 @@ describe('angle', () => {
   });
 });
 
-describe('findMaxEntry', () => {
-  it('return an entry with the item that raised the highest number', () => {
-    expect(
-      findMaxEntry(
-        [{ l: 2 }, { l: 0 }, { l: 10 }, { l: 5 }],
-        (a, b) => b.l - a.l,
-      ),
-    ).toEqual([2, { l: 10 }]);
-    expect(
-      findMaxEntry(
-        [{ l: 2 }, { l: 0 }, { l: 10 }, { l: 5 }],
-        (a, b) => a.l - b.l,
-      ),
-    ).toEqual([1, { l: 0 }]);
-  });
-});
-
 describe('toPolar', () => {
   it('calculates the coordinates of a point in a polar system', () => {
     expect(toPolar([10, 0], [0, 0])).toEqual({ azymuth: 0, radius: 10 });
@@ -149,17 +130,5 @@ describe('toPolar', () => {
 describe('noOp', () => {
   it('does nothing', () => {
     expect(noOp).not.toThrow();
-  });
-});
-
-describe('isNonEmptyArray', () => {
-  it('returns true for arrays with at least one element', () => {
-    expect(isNonEmptyArray([1])).toBe(true);
-    expect(isNonEmptyArray([1, 2, 3])).toBe(true);
-    expect(isNonEmptyArray([undefined])).toBe(true);
-  });
-
-  it('returns false for an empty array', () => {
-    expect(isNonEmptyArray([])).toBe(false);
   });
 });

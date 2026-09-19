@@ -26,7 +26,6 @@ export type StrokeSurfaceOptions = {
 
 export type StrokeSurface = {
   element: SVGSVGElement;
-  clear: () => void;
   drawStroke: (stroke: readonly Point[]) => void;
   drawPoint: (point: Point) => void;
   remove: () => void;
@@ -163,18 +162,8 @@ export function createStrokeSurface({
     marker.setAttribute('cy', String(y));
   };
 
-  const clear = (): void => {
-    svg.replaceChildren();
-    previousStroke = [];
-    pathPoints = [];
-    livePath = undefined;
-    livePathNewPointCount = 0;
-    marker = undefined;
-  };
-
   return {
     element: svg,
-    clear,
     drawStroke,
     drawPoint,
     remove() {

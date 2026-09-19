@@ -11,7 +11,7 @@ import {
   type MenuStrokeTheme,
 } from '../layout/menu.js';
 import { rafThrottle } from '../layout/raf-throttle.js';
-import { createScene, type SceneSlots } from '../layout/scene.js';
+import { createScene } from '../layout/scene.js';
 import {
   createStrokeSurface,
   type StrokeSurface,
@@ -202,56 +202,6 @@ function createStrokeLayer({
   };
 }
 
-/**
- The stroke and feedback layers: pure CSS-themed SVG surfaces with nothing in
- their creation depending on `MenuStrokeTheme`, so they live for the
- renderer's whole lifetime instead of being rebuilt per menu, and a CSS
- theme change reaches them immediately rather than on the next open.
- */
-function createPersistentStrokeLayers(
-  slots: Pick<SceneSlots, 'upper' | 'lower' | 'feedback'>,
-  convertMany: (stroke: readonly Point[]) => Point[],
-  gestureFeedbackDuration: number,
-): {
-  upper: ReturnType<typeof createStrokeLayer>;
-  lower: ReturnType<typeof createStrokeLayer>;
-  feedback: ReturnType<typeof createGestureFeedback>;
-} {
-  return {
-    upper: createStrokeLayer({ slot: slots.upper, convertMany }),
-    lower: createStrokeLayer({
-      slot: slots.lower,
-      convertMany,
-      surfaceOptions: { className: 'marking-menu-stroke--lower' },
-    }),
-    feedback: createGestureFeedback({
-      parent: slots.feedback,
-      duration: gestureFeedbackDuration,
-      strokeOptions: { className: 'marking-menu-stroke--feedback' },
-      canceledStrokeOptions: {
-        className:
-          'marking-menu-stroke--feedback marking-menu-stroke--canceled',
-      },
-    }),
-  };
-}
-
-function createThemedIndicatorLayer(
-  slots: Pick<SceneSlots, 'indicatorBackground' | 'indicatorDot'>,
-  convert: (point: Point) => Point,
-  strokeTheme: MenuStrokeTheme,
-): ReturnType<typeof createIndicatorLayer> {
-  return createIndicatorLayer({
-    backgroundSlot: slots.indicatorBackground,
-    dotSlot: slots.indicatorDot,
-    convert,
-    surfaceOptions: {
-      radius: strokeTheme.strokeStartPointRadius,
-      strokeWidth: strokeTheme.strokeWidth,
-    },
-  });
-}
-
 export type RendererOptions = {
   readonly parent: HTMLElement;
   readonly deadZoneRadius: number;
@@ -279,27 +229,41 @@ export function createRenderer({
   // Each layer mounts into its own slot and stays there, so nothing
   // reorders the DOM.
   const scene = createScene({ root, parent });
-  const { upper, lower, feedback } = createPersistentStrokeLayers(
-    scene.slots,
-    scene.toLocalMany,
-    gestureFeedbackDuration,
-  );
-  let indicator = createThemedIndicatorLayer(
-    scene.slots,
-    scene.toLocal,
-    initialStrokeTheme,
-  );
+  const upper = createStrokeLayer({
+    slot: scene.slots.upper,
+    convertMany: scene.toLocalMany,
+  });
+  const lower = createStrokeLayer({
+    slot: scene.slots.lower,
+    convertMany: scene.toLocalMany,
+    surfaceOptions: { className: 'marking-menu-stroke--lower' },
+  });
+  const feedback = createGestureFeedback({
+    parent: scene.slots.feedback,
+    duration: gestureFeedbackDuration,
+    strokeOptions: { className: 'marking-menu-stroke--feedback' },
+    canceledStrokeOptions: {
+      className: 'marking-menu-stroke--feedback marking-menu-stroke--canceled',
+    },
+  });
+  const makeIndicator = (strokeTheme: MenuStrokeTheme) =>
+    createIndicatorLayer({
+      backgroundSlot: scene.slots.indicatorBackground,
+      dotSlot: scene.slots.indicatorDot,
+      convert: scene.toLocal,
+      surfaceOptions: {
+        radius: strokeTheme.strokeStartPointRadius,
+        strokeWidth: strokeTheme.strokeWidth,
+      },
+    });
+  let indicator = makeIndicator(initialStrokeTheme);
   // The parent's own inline cursor, read before the renderer writes one, and
   // restored rather than cleared whenever the view asks for `default`: what
   // the renderer did not set, it does not get to throw away.
   const ownCursor = parent.style.cursor;
   const setStrokeTheme = (strokeTheme: MenuStrokeTheme) => {
     indicator.dispose();
-    indicator = createThemedIndicatorLayer(
-      scene.slots,
-      scene.toLocal,
-      strokeTheme,
-    );
+    indicator = makeIndicator(strokeTheme);
   };
 
   return {

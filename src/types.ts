@@ -212,16 +212,6 @@ export type ModelNode = ModelRoot | ModelLeaf | ModelMenuItem;
  */
 export type ModelMenu = ModelRoot | ModelMenuItem;
 
-/**
- @deprecated Use {@link ModelNode} instead.
- */
-export type AnyModelNode = ModelNode;
-
-/**
- @deprecated Use {@link ModelItem} or {@link ModelNode} instead.
- */
-export type MarkingMenuModelItem = ModelNode;
-
 /* -------------------------------------------------------------------------- *
  * Generic node walking
  * -------------------------------------------------------------------------- */

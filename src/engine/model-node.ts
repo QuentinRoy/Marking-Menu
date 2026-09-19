@@ -19,8 +19,6 @@ export interface EngineModelRoot extends ModelRoot<readonly EngineModelItem[]> {
   readonly items: readonly EngineModelItem[];
 }
 
-export type EngineModelLeaf = EngineModelItem & { readonly isLeaf: true };
-
 export type EngineModelMenuItem = EngineModelItem & {
   readonly isLeaf: false;
 };

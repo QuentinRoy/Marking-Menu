@@ -7,7 +7,6 @@
  */
 import { createMarkingMenu } from 'marking-menu';
 import type {
-  AnyModelNode,
   MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
   MarkingMenuConfig,
@@ -21,7 +20,6 @@ import type {
   MarkingMenuLogger,
   MarkingMenuMode,
   MarkingMenuModel,
-  MarkingMenuModelItem,
   MarkingMenuMoveEvent,
   MarkingMenuOpenEvent,
   MarkingMenuSelectEvent,
@@ -35,7 +33,7 @@ import type {
   ModelNode,
   ModelNodes,
   ModelRoot,
-  ReadonlyPoint,
+  Point,
 } from 'marking-menu';
 
 /*
@@ -46,35 +44,33 @@ import type {
  */
 export type PublicSurface = [
   typeof createMarkingMenu,
-  AnyModelNode,
-  MarkingMenuCancelEvent<AnyModelNode>,
-  MarkingMenuChangeEvent<AnyModelNode>,
+  MarkingMenuCancelEvent<ModelNode>,
+  MarkingMenuChangeEvent<ModelNode>,
   MarkingMenuConfig,
-  MarkingMenuController<AnyModelNode>,
-  MarkingMenuEvent<AnyModelNode>,
+  MarkingMenuController<ModelNode>,
+  MarkingMenuEvent<ModelNode>,
   MarkingMenuEventBase,
-  MarkingMenuEventEmitter<AnyModelNode>,
-  MarkingMenuEventMap<AnyModelNode>,
+  MarkingMenuEventEmitter<ModelNode>,
+  MarkingMenuEventMap<ModelNode>,
   MarkingMenuInput,
   MarkingMenuItemInput,
   MarkingMenuLogger,
   MarkingMenuMode,
   MarkingMenuModel<MarkingMenuInput>,
-  MarkingMenuModelItem,
-  MarkingMenuMoveEvent<AnyModelNode>,
-  MarkingMenuOpenEvent<AnyModelNode>,
-  MarkingMenuSelectEvent<AnyModelNode>,
+  MarkingMenuMoveEvent<ModelNode>,
+  MarkingMenuOpenEvent<ModelNode>,
+  MarkingMenuSelectEvent<ModelNode>,
   MarkingMenuStartEvent,
   ModelItem,
-  ModelItems<AnyModelNode>,
+  ModelItems<ModelNode>,
   ModelLeaf,
-  ModelLeaves<AnyModelNode>,
+  ModelLeaves<ModelNode>,
   ModelMenu,
-  ModelMenus<AnyModelNode>,
+  ModelMenus<ModelNode>,
   ModelNode,
-  ModelNodes<AnyModelNode>,
+  ModelNodes<ModelNode>,
   ModelRoot,
-  ReadonlyPoint,
+  Point,
 ];
 
 declare const parent: HTMLElement;
