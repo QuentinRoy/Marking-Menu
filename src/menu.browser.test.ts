@@ -74,6 +74,25 @@ test('opening indicator background is themeable via --mm-indicator-background', 
   expect(getComputedStyle(background as Element).fill).toBe('rgb(18, 52, 86)');
 });
 
+test('opening indicator follows a stroke theme change while visible', async () => {
+  using menu = mountMenu({ items });
+  using _timers = fakeTimers();
+  const center = centerOf(menu.surface);
+  await using _drag = await press(center);
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const background = root?.querySelector('.marking-menu-indicator-background');
+  const dot = root?.querySelector('.marking-menu-indicator-dot');
+  expect(getComputedStyle(background as Element).r).toBe('8px');
+  expect(getComputedStyle(dot as Element).r).toBe('2px');
+
+  menu.surface.style.setProperty('--mm-stroke-start-point-radius', '20px');
+  menu.surface.style.setProperty('--mm-stroke-width', '10px');
+
+  expect(getComputedStyle(background as Element).r).toBe('20px');
+  expect(getComputedStyle(dot as Element).r).toBe('5px');
+});
+
 test('wedge outline reads its color and doubles its width for the inset stroke', async () => {
   using menu = mountMenu({ items });
   menu.surface.style.setProperty('--mm-wedge-outline-color', '#123456');

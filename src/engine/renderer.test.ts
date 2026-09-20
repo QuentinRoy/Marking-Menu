@@ -420,7 +420,7 @@ describe('createRenderer', () => {
     renderer.dispose();
   });
 
-  it('grows the dot toward the background radius over the given delay, and cancels its animation frame on dispose', () => {
+  it('reports the opening indicator progress through CSS, and cancels its animation frame on dispose', () => {
     const parent = document.createElement('div');
     const renderer = createRenderer({ parent });
     const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame');
@@ -433,14 +433,19 @@ describe('createRenderer', () => {
       indicator: { startedAt: Date.now(), position: [0, 0], delayMs: 300 },
     });
 
-    const dot = rootOf(parent).querySelector('.marking-menu-indicator-dot');
-    const radiusAtStart = Number(dot?.getAttribute('r'));
+    const dot = rootOf(parent).querySelector<SVGCircleElement>(
+      '.marking-menu-indicator-dot',
+    );
+    expect(dot?.getAttribute('r')).toBeNull();
+    expect(dot?.style.getPropertyValue('--mm-indicator-progress')).toBe('0');
     renderFrame();
     vi.advanceTimersByTime(150);
     renderFrame();
-    const radiusAtHalfway = Number(dot?.getAttribute('r'));
-
-    expect(radiusAtHalfway).toBeGreaterThan(radiusAtStart);
+    const progress = Number(
+      dot?.style.getPropertyValue('--mm-indicator-progress'),
+    );
+    expect(progress).toBeGreaterThan(0);
+    expect(progress).toBeLessThan(1);
 
     renderer.dispose();
     expect(cancelFrame).toHaveBeenCalled();

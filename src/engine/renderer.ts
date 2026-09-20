@@ -1,14 +1,10 @@
 import { createGestureFeedback } from '../layout/gesture-feedback.js';
-import {
-  createIndicatorSurface,
-  type IndicatorSurfaceOptions,
-} from '../layout/indicator.js';
+import { createIndicatorSurface } from '../layout/indicator.js';
 import {
   createMenu,
   createMenuHost,
   type Menu,
   type MenuLayoutModel,
-  type MenuStrokeTheme,
 } from '../layout/menu.js';
 import { rafThrottle } from '../layout/raf-throttle.js';
 import { createScene } from '../layout/scene.js';
@@ -63,7 +59,6 @@ function createIndicatorLayer({
   backgroundSlot,
   dotSlot,
   convert,
-  surfaceOptions,
 }: {
   backgroundSlot: HTMLElement;
   dotSlot: HTMLElement;
@@ -72,7 +67,6 @@ function createIndicatorLayer({
   moved or scrolled since is picked up.
   */
   convert: (point: Point) => Point;
-  surfaceOptions?: Omit<IndicatorSurfaceOptions, 'parent'>;
 }): {
   sync: (indicator: LayoutView['indicator']) => void;
   dispose: () => void;
@@ -121,7 +115,6 @@ function createIndicatorLayer({
         parent: backgroundSlot,
         backgroundParent: backgroundSlot,
         dotParent: dotSlot,
-        ...surfaceOptions,
       });
       currentPosition = indicator.position;
       if (indicator.startedAt === currentStartedAt) {
@@ -216,11 +209,7 @@ export function createRenderer({
   deadZoneRadius,
   gestureFeedbackDuration,
 }: RendererOptions): LayoutRenderer {
-  const {
-    element: host,
-    root,
-    strokeTheme: initialStrokeTheme,
-  } = createMenuHost({ parent });
+  const { element: host, root } = createMenuHost({ parent });
   let menuHandle: MenuHandle | undefined;
   // Reference-equality cache: an unchanged active key skips the DOM scan
   // `Menu.setActive` performs.
@@ -246,26 +235,15 @@ export function createRenderer({
       className: 'marking-menu-stroke--feedback marking-menu-stroke--canceled',
     },
   });
-  const makeIndicator = (strokeTheme: MenuStrokeTheme) =>
-    createIndicatorLayer({
-      backgroundSlot: scene.slots.indicatorBackground,
-      dotSlot: scene.slots.indicatorDot,
-      convert: scene.toLocal,
-      surfaceOptions: {
-        radius: strokeTheme.strokeStartPointRadius,
-        strokeWidth: strokeTheme.strokeWidth,
-      },
-    });
-  let indicator = makeIndicator(initialStrokeTheme);
+  const indicator = createIndicatorLayer({
+    backgroundSlot: scene.slots.indicatorBackground,
+    dotSlot: scene.slots.indicatorDot,
+    convert: scene.toLocal,
+  });
   // The parent's own inline cursor, read before the renderer writes one, and
   // restored rather than cleared whenever the view asks for `default`: what
   // the renderer did not set, it does not get to throw away.
   const ownCursor = parent.style.cursor;
-  const setStrokeTheme = (strokeTheme: MenuStrokeTheme) => {
-    indicator.dispose();
-    indicator = makeIndicator(strokeTheme);
-  };
-
   return {
     root,
     render(view) {
@@ -299,7 +277,6 @@ export function createRenderer({
             }),
           };
           menuHandle = handle;
-          setStrokeTheme(handle.menu.strokeTheme);
           previousActiveKey = undefined;
         }
 
