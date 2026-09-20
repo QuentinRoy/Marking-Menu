@@ -85,16 +85,24 @@ export function createPointerSource({
     runtime.send({ type: 'pointer.cancel', position: toPosition(event) });
   };
 
+  // WebKit only suppresses its long-press loupe when touchstart itself is
+  // canceled; canceling the corresponding pointerdown is not enough.
+  const onTouchStart = (event: TouchEvent): void => {
+    event.preventDefault();
+  };
+
   parent.addEventListener('pointerdown', onPointerDown);
   parent.addEventListener('pointermove', onPointerMove);
   parent.addEventListener('pointerup', onPointerUp);
   parent.addEventListener('pointercancel', onPointerCancel);
+  parent.addEventListener('touchstart', onTouchStart, { passive: false });
 
   const dispose = (): void => {
     parent.removeEventListener('pointerdown', onPointerDown);
     parent.removeEventListener('pointermove', onPointerMove);
     parent.removeEventListener('pointerup', onPointerUp);
     parent.removeEventListener('pointercancel', onPointerCancel);
+    parent.removeEventListener('touchstart', onTouchStart);
     // Disposing mid-gesture: the listeners that would have released the
     // capture are gone, so nothing else ever would.
     releaseCapture();
