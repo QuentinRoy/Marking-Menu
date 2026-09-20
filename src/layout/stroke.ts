@@ -1,4 +1,5 @@
 import type { Point } from '../utils.js';
+import { createFullSizeSvg } from './svg-surface.js';
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
 const pathPointLimit = 100;
@@ -25,7 +26,6 @@ export type StrokeSurfaceOptions = {
 
 export type StrokeSurface = {
   element: SVGSVGElement;
-  clear: () => void;
   drawStroke: (stroke: readonly Point[]) => void;
   drawPoint: (point: Point) => void;
   remove: () => void;
@@ -52,24 +52,13 @@ export function createStrokeSurface({
   pointRadius,
   pointColor = lineColor,
 }: StrokeSurfaceOptions): StrokeSurface {
-  const svg = doc.createElementNS(svgNamespace, 'svg');
-  svg.ariaHidden = 'true';
-  svg.setAttribute(
-    'class',
+  const svg = createFullSizeSvg(
+    doc,
+    parent,
     className === undefined
       ? 'marking-menu-stroke-surface'
       : `marking-menu-stroke-surface ${className}`,
   );
-
-  Object.assign(svg.style, {
-    position: 'absolute',
-    inset: '0',
-    width: '100%',
-    height: '100%',
-    overflow: 'visible',
-    pointerEvents: 'none',
-  });
-  parent.append(svg);
 
   let previousStroke: readonly Point[] = [];
   let pathPoints: Point[] = [];
@@ -173,18 +162,8 @@ export function createStrokeSurface({
     marker.setAttribute('cy', String(y));
   };
 
-  const clear = (): void => {
-    svg.replaceChildren();
-    previousStroke = [];
-    pathPoints = [];
-    livePath = undefined;
-    livePathNewPointCount = 0;
-    marker = undefined;
-  };
-
   return {
     element: svg,
-    clear,
     drawStroke,
     drawPoint,
     remove() {

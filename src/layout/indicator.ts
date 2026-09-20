@@ -1,9 +1,17 @@
 import type { Point } from '../utils.js';
+import { createFullSizeSvg } from './svg-surface.js';
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
 
 export type IndicatorSurfaceOptions = {
   parent: HTMLElement | ShadowRoot;
+  /**
+  Where the background and dot surfaces mount. Both default to `parent`; the
+  renderer passes its own fixed slots so each sits on its own side of the
+  upper stroke without reordering the DOM.
+  */
+  backgroundParent?: HTMLElement | ShadowRoot;
+  dotParent?: HTMLElement | ShadowRoot;
   doc?: Document;
   radius?: number;
   // The gesture stroke's own line width: only used to size the dot's
@@ -12,11 +20,6 @@ export type IndicatorSurfaceOptions = {
 };
 
 export type IndicatorSurface = {
-  // Two separate SVGs, not one: the background sits behind the gesture's
-  // own stroke, the dot in front of it, so the renderer can place each on
-  // its own side of that layer.
-  backgroundElement: SVGSVGElement;
-  dotElement: SVGSVGElement;
   /**
    Draw the target: a fixed-radius filled background at `center`, and a dot
    growing from the stroke's own half-width (so it starts looking like the
@@ -28,29 +31,19 @@ export type IndicatorSurface = {
 };
 
 function createSurface(doc: Document, parent: HTMLElement | ShadowRoot) {
-  const svg = doc.createElementNS(svgNamespace, 'svg');
-  svg.ariaHidden = 'true';
-  svg.setAttribute('class', 'marking-menu-indicator-surface');
-  Object.assign(svg.style, {
-    position: 'absolute',
-    inset: '0',
-    width: '100%',
-    height: '100%',
-    overflow: 'visible',
-    pointerEvents: 'none',
-  });
-  parent.append(svg);
-  return svg;
+  return createFullSizeSvg(doc, parent, 'marking-menu-indicator-surface');
 }
 
 export function createIndicatorSurface({
   parent,
+  backgroundParent = parent,
+  dotParent = parent,
   doc = document,
   radius = 8,
   strokeWidth = 4,
 }: IndicatorSurfaceOptions): IndicatorSurface {
-  const backgroundSvg = createSurface(doc, parent);
-  const dotSvg = createSurface(doc, parent);
+  const backgroundSvg = createSurface(doc, backgroundParent);
+  const dotSvg = createSurface(doc, dotParent);
 
   // The background: a constant-size filled circle the dot grows to fill.
   const background = doc.createElementNS(svgNamespace, 'circle');
@@ -86,8 +79,6 @@ export function createIndicatorSurface({
   };
 
   return {
-    backgroundElement: backgroundSvg,
-    dotElement: dotSvg,
     draw,
     remove() {
       backgroundSvg.remove();

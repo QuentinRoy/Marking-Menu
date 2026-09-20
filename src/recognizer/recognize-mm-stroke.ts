@@ -8,7 +8,7 @@ import type {
 } from '../types.js';
 import {
   dist,
-  findMaxEntry,
+  getTightestSpacing,
   radiansToDegrees,
   type NonEmptyArray,
   type Point,
@@ -133,10 +133,17 @@ export const segmentAngle = (a: Point, b: Point): number =>
 export const divideLongestSegment = (
   segments: StrokeSegment[],
 ): StrokeSegment[] => {
-  const [longestI, longest] = findMaxEntry(
-    segments,
-    (s1, s2) => s2.length - s1.length,
-  );
+  let longestI = 0;
+  let longest = segments[0];
+  for (const [i, s] of segments.entries()) {
+    if (!(longest === undefined || s.length > longest.length)) {
+      continue;
+    }
+
+    longestI = i;
+    longest = s;
+  }
+
   if (longest === undefined) {
     // Only possible for an empty segment list.
     return [];
@@ -211,9 +218,23 @@ export function findItem({
 }
 
 /**
- Read the smallest angular gap between neighboring items anywhere in `model`.
+ Find the smallest angular gap between neighboring items, at this level or
+ any level below it. Feeds the corner threshold; private to the recognizer,
+ its only caller.
+
+ @param node - The model node to search.
+ @returns The smallest gap, in degrees, or `Infinity` if no level has two
+ or more items to have a gap between.
  */
-const getMinAngularGap = (model: ModelNode): number => model.getMinAngularGap();
+const getMinAngularGap = (node: ModelNode): number => {
+  const children = node.items as ReadonlyArray<ModelNode & { angle: number }>;
+  let minGap = getTightestSpacing(children.map((child) => child.angle));
+  for (const child of children) {
+    minGap = Math.min(minGap, getMinAngularGap(child));
+  }
+
+  return minGap;
+};
 
 /**
  Cut a stroke into the segments a marking-menu walk is attempted against:

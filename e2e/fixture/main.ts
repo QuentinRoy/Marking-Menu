@@ -1,4 +1,4 @@
-import { createMarkingMenu, type ReadonlyPoint } from 'marking-menu';
+import { createMarkingMenu, type Point } from 'marking-menu';
 
 // The demo's eight-direction topology (see `demo/script.js`), with stable
 // ids added: tests key off `id`, not display order or label text.
@@ -58,7 +58,7 @@ const logEvent = (
   event: {
     readonly type: string;
     readonly mode: string;
-    readonly position: ReadonlyPoint;
+    readonly position: Point;
   },
   fields: Record<string, string | undefined> = {},
 ): void => {

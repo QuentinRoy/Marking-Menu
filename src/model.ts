@@ -8,7 +8,13 @@ import type {
   ModelNode,
   ModelRoot,
 } from './types.js';
-import { deltaAngle, mod, type EmptyTuple, type IsTuple } from './utils.js';
+import {
+  deltaAngle,
+  getTightestSpacing,
+  normalizeAngle,
+  type EmptyTuple,
+  type IsTuple,
+} from './utils.js';
 
 /*
  The marking menu model.
@@ -239,19 +245,6 @@ export type MarkingMenuModel<Input extends MarkingMenuInput> = ModelRoot<
  * Implementation
  * -------------------------------------------------------------------------- */
 
-const getTightestSpacing = (angles: readonly number[]): number => {
-  if (angles.length < 2) {
-    return Infinity;
-  }
-
-  const sorted = angles.toSorted((a, b) => a - b);
-  return Math.min(
-    ...sorted.map((angle, index) =>
-      mod((sorted[(index + 1) % sorted.length] ?? angle) - angle, 360),
-    ),
-  );
-};
-
 /**
  The behavior shared by the root of the menu and its items.
 
@@ -367,25 +360,6 @@ abstract class MarkingMenuNode {
 
     return breadth;
   }
-
-  /**
-   Find the smallest angular gap between neighboring items, at this level or
-   any level below it. Feeds the recognizer's corner threshold; deliberately
-   left off the public {@link ModelItem}/{@link ModelRoot} types, the same
-   way {@link createModel} is left off `index.ts`.
-
-   @returns The smallest gap, in degrees, or `Infinity` if no level has two
-   or more items to have a gap between.
-  */
-  getMinAngularGap(): number {
-    let minGap = getTightestSpacing(this.#items.map((item) => item.angle));
-
-    for (const item of this.#items) {
-      minGap = Math.min(minGap, item.getMinAngularGap());
-    }
-
-    return minGap;
-  }
 }
 
 /**
@@ -450,8 +424,6 @@ class MarkingMenuRoot extends MarkingMenuNode {
     return true;
   }
 }
-
-const normalizeAngle = (angle: number): number => mod(angle, 360);
 
 type StatedItemAngle = { angle: number; index: number };
 type StatedItemAngles = [StatedItemAngle, ...StatedItemAngle[]];

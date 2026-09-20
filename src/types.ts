@@ -148,10 +148,6 @@ export interface ModelItem<
   The maximum breadth of the menu below this node.
   */
   getMaxBreadth(): IfLeaf<IsLeaf<Items>, 0, number>;
-  /**
-  The smallest angular gap between neighboring items in the menu.
-  */
-  getMinAngularGap(): number;
 }
 
 /**
@@ -188,10 +184,6 @@ export interface ModelRoot<
   The maximum breadth of the menu below this node.
   */
   getMaxBreadth(): IfLeaf<IsLeaf<Items>, 0, number>;
-  /**
-  The smallest angular gap between neighboring items in the menu.
-  */
-  getMinAngularGap(): number;
 }
 
 /**
@@ -211,16 +203,6 @@ export type ModelNode = ModelRoot | ModelLeaf | ModelMenuItem;
  A node that can hold sub-items: either the root or a submenu item.
  */
 export type ModelMenu = ModelRoot | ModelMenuItem;
-
-/**
- @deprecated Use {@link ModelNode} instead.
- */
-export type AnyModelNode = ModelNode;
-
-/**
- @deprecated Use {@link ModelItem} or {@link ModelNode} instead.
- */
-export type MarkingMenuModelItem = ModelNode;
 
 /* -------------------------------------------------------------------------- *
  * Generic node walking

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { parse as csvParseCallback } from 'csv-parse';
 import { type Mock } from 'vitest';
+import { createModel } from '../model.js';
 import type { ModelItem, ModelRoot } from '../types.js';
 import { deltaAngle, type Point } from '../utils.js';
 import {
@@ -58,7 +59,6 @@ type MockBase = {
   getChildrenByLabel: Mock<() => never[]>;
   getMaxDepth: Mock<() => number>;
   getMaxBreadth: Mock<() => number>;
-  getMinAngularGap: Mock<() => number>;
   getNearestChild: Mock<(childAngle?: number) => MockItem>;
 };
 
@@ -82,6 +82,15 @@ type MockItem = ModelItem<
   };
 
 type MockModel = MockRoot | MockItem;
+
+// Real items for the gap walk; walking still uses getNearestChild.
+const attachItems = (model: MockModel, breadth: number): void => {
+  model.items = Array.from(
+    { length: breadth },
+    (_, index) =>
+      createMockModel(0, breadth, (index * 360) / breadth, model) as MockItem,
+  );
+};
 
 const createMockModel = (
   depth = 1,
@@ -112,7 +121,6 @@ const createMockModel = (
       parent,
       getMaxDepth: vi.fn(() => 0),
       getMaxBreadth: vi.fn(() => 0),
-      getMinAngularGap: vi.fn(() => 360 / breadth),
       getNearestChild: vi.fn<(childAngle?: number) => MockItem>(),
     };
   }
@@ -125,13 +133,13 @@ const createMockModel = (
         parent: undefined,
         getMaxDepth: vi.fn(() => depth),
         getMaxBreadth: vi.fn(() => breadth),
-        getMinAngularGap: vi.fn(() => 360 / breadth),
         isLeaf: false,
         getNearestChild: vi.fn(
           (childAngle?: number) =>
             createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
         ),
       };
+      attachItems(m, breadth);
       return m;
     }
 
@@ -141,13 +149,13 @@ const createMockModel = (
       parent,
       getMaxDepth: vi.fn(() => depth),
       getMaxBreadth: vi.fn(() => breadth),
-      getMinAngularGap: vi.fn(() => 360 / breadth),
       isLeaf: false,
       getNearestChild: vi.fn(
         (childAngle?: number) =>
           createMockModel(depth - 1, breadth, childAngle, m) as MockItem,
       ),
     };
+    attachItems(m, breadth);
     return m;
   }
 
@@ -199,6 +207,32 @@ describe('divideLongestSegment', () => {
       { length: 15, angle: 10 },
       { length: 15, angle: 10 },
       { length: 20, angle: 20 },
+    ]);
+  });
+
+  it('divides the later segment when it leads by one pixel', () => {
+    expect(
+      divideLongestSegment([
+        { length: 10, angle: 5 },
+        { length: 11, angle: 10 },
+      ]),
+    ).toEqual([
+      { length: 10, angle: 5 },
+      { length: 5.5, angle: 10 },
+      { length: 5.5, angle: 10 },
+    ]);
+  });
+
+  it('divides the first segment on a tie', () => {
+    expect(
+      divideLongestSegment([
+        { length: 10, angle: 5 },
+        { length: 10, angle: 10 },
+      ]),
+    ).toEqual([
+      { length: 5, angle: 5 },
+      { length: 5, angle: 5 },
+      { length: 10, angle: 10 },
     ]);
   });
 });
@@ -462,6 +496,40 @@ describe('analyzeMarkingMenuStroke', () => {
     const { angleThreshold } = analyzeMarkingMenuStroke(stroke, model);
 
     expect(angleThreshold).toBeCloseTo(360 / 8 / 2 / 0.75);
+  });
+
+  it('derives the angle threshold from the tightest level', async () => {
+    const stroke = await readStroke(90);
+    const model = createModel({
+      items: [
+        { label: 'Right' },
+        {
+          label: 'Bottom',
+          items: [
+            { label: 'Sub 1' },
+            { label: 'Sub 2' },
+            { label: 'Sub 3' },
+            { label: 'Sub 4' },
+            { label: 'Sub 5' },
+          ],
+        },
+      ],
+    });
+
+    const { angleThreshold } = analyzeMarkingMenuStroke(stroke, model);
+
+    expect(angleThreshold).toBeCloseTo(72 / 2 / 0.75);
+  });
+
+  it('derives an infinite threshold when no level has two items', async () => {
+    const stroke = await readStroke(90);
+    const model = createModel({
+      items: [{ label: 'Only', items: [{ label: 'Sub' }] }],
+    });
+
+    const { angleThreshold } = analyzeMarkingMenuStroke(stroke, model);
+
+    expect(angleThreshold).toBe(Infinity);
   });
 
   it('derives the expected segment length from the stroke length and depth', async () => {

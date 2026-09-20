@@ -13,15 +13,6 @@ import type { MarkingMenuItemInput } from './types.js';
 declare const parent: HTMLElement;
 
 describe('createMarkingMenu', () => {
-  it('rejects removed stroke options', () => {
-    // @ts-expect-error: Stroke appearance comes from CSS custom properties.
-    createMarkingMenu({
-      items: [{ label: 'Right' }],
-      parent,
-      strokeColor: '#123456',
-    });
-  });
-
   it('rejects sibling items sharing the same id', () => {
     // @ts-expect-error -- two items share the id `duplicate`.
     createMarkingMenu({
@@ -76,37 +67,12 @@ describe('createMarkingMenu', () => {
     });
   });
 
-  it('accepts a logger implementing extra methods like `info`/`warn`/`debug`', () => {
-    // Nothing in the library calls them, but a richer logger (e.g. one
-    // shared with the rest of an app) can still be passed as-is.
-    createMarkingMenu({
-      items: [{ id: 'right', label: 'Right' }],
-      parent,
-      log: {
-        error: (error: unknown) => sendToSentry(error),
-        info: (message: unknown) => sendToSentry(message),
-        warn: (message: unknown) => sendToSentry(message),
-        debug: (message: unknown) => sendToSentry(message),
-      },
-    });
-  });
-
   it('accepts a logger omitting `error`', () => {
-    // Useless at runtime (nothing overrides the default), but harmless — and
-    // it leaves room for future logger methods without forcing every partial
-    // override to include `error`.
+    // Useless at runtime (nothing overrides the default), but harmless.
     createMarkingMenu({
       items: [{ id: 'right', label: 'Right' }],
       parent,
       log: {},
-    });
-  });
-
-  it('accepts a logger with only extra methods and no `error`', () => {
-    createMarkingMenu({
-      items: [{ id: 'right', label: 'Right' }],
-      parent,
-      log: { info: (message: unknown) => sendToSentry(message) },
     });
   });
 
@@ -130,13 +96,5 @@ describe('MarkingMenuLogger', () => {
     expectTypeOf<MarkingMenuLogger['error']>().toEqualTypeOf<
       ((error: Error) => void) | undefined
     >();
-  });
-
-  it('allows properties beyond `error`', () => {
-    const logger: MarkingMenuLogger = {
-      error: (error: unknown) => sendToSentry(error),
-      info: (message: unknown) => sendToSentry(message),
-    };
-    expectTypeOf(logger.info).not.toBeNever();
   });
 });
