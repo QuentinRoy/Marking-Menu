@@ -3,6 +3,22 @@ import type { NavigationInput } from './machine.js';
 import { createPointerSource } from './pointer-source.js';
 
 describe('createPointerSource', () => {
+  it('prevents native touch gestures until disposed', () => {
+    const parent = createParent();
+    const send = vi.fn<(input: NavigationInput) => void>();
+    const source = createPointerSource({ parent, runtime: { send } });
+
+    const whileActive = new Event('touchstart', { cancelable: true });
+    expect(parent.dispatchEvent(whileActive)).toBe(false);
+    expect(whileActive.defaultPrevented).toBe(true);
+
+    source.dispose();
+
+    const afterDisposal = new Event('touchstart', { cancelable: true });
+    expect(parent.dispatchEvent(afterDisposal)).toBe(true);
+    expect(afterDisposal.defaultPrevented).toBe(false);
+  });
+
   it('ignores move and up events from a pointer that is not the active gesture owner', () => {
     const parent = createParent();
     const send = vi.fn<(input: NavigationInput) => void>();
