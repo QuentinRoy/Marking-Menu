@@ -152,7 +152,8 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       runtime: this.#runtime,
     });
     this.#focusManager = manageFocus({
-      root: renderer.root,
+      doc: config.parent.ownerDocument,
+      getMenu: renderer.getMenu,
       runtime: this.#runtime,
     });
   }
