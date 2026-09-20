@@ -39,7 +39,9 @@ test('opening indicator stays a fixed size and fades in under reduced motion', a
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
   const dot = root?.querySelector('.marking-menu-indicator-dot');
   const background = root?.querySelector('.marking-menu-indicator-background');
-  expect(dot?.getAttribute('r')).toBe(background?.getAttribute('r'));
+  expect(getComputedStyle(dot as Element).r).toBe(
+    getComputedStyle(background as Element).r,
+  );
   const opacity = Number(getComputedStyle(dot as Element).opacity);
   expect(opacity).toBeGreaterThan(0);
   expect(opacity).toBeLessThan(1);

@@ -13,10 +13,6 @@ export type IndicatorSurfaceOptions = {
   backgroundParent?: HTMLElement | ShadowRoot;
   dotParent?: HTMLElement | ShadowRoot;
   doc?: Document;
-  radius?: number;
-  // The gesture stroke's own line width: only used to size the dot's
-  // starting radius, not the background circle.
-  strokeWidth?: number;
 };
 
 export type IndicatorSurface = {
@@ -39,8 +35,6 @@ export function createIndicatorSurface({
   backgroundParent = parent,
   dotParent = parent,
   doc = document,
-  radius = 8,
-  strokeWidth = 4,
 }: IndicatorSurfaceOptions): IndicatorSurface {
   const backgroundSvg = createSurface(doc, backgroundParent);
   const dotSvg = createSurface(doc, dotParent);
@@ -48,19 +42,12 @@ export function createIndicatorSurface({
   // The background: a constant-size filled circle the dot grows to fill.
   const background = doc.createElementNS(svgNamespace, 'circle');
   background.setAttribute('class', 'marking-menu-indicator-background');
-  background.setAttribute('r', String(radius));
   backgroundSvg.append(background);
 
   const dot = doc.createElementNS(svgNamespace, 'circle');
   dot.setAttribute('class', 'marking-menu-indicator-dot');
   dotSvg.append(dot);
 
-  const minRadius = strokeWidth / 2;
-  // WCAG doesn't count an opacity change as motion, so a growing dot
-  // becomes a fixed-size one fading in under reduced motion instead.
-  const shouldReduceMotion = (): boolean =>
-    doc.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches ??
-    false;
   const draw = ([cx, cy]: Point, progress: number): void => {
     background.setAttribute('cx', String(cx));
     background.setAttribute('cy', String(cy));
@@ -69,13 +56,7 @@ export function createIndicatorSurface({
     const clamped = Math.max(0, Math.min(1, progress));
     // Ease in quadratically rather than growing at a constant rate.
     const eased = clamped * clamped;
-    if (shouldReduceMotion()) {
-      dot.setAttribute('r', String(radius));
-      dot.style.opacity = String(eased);
-    } else {
-      dot.style.opacity = '';
-      dot.setAttribute('r', String(minRadius + (radius - minRadius) * eased));
-    }
+    dot.style.setProperty('--mm-indicator-progress', String(eased));
   };
 
   return {

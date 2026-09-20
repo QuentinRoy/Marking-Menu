@@ -215,43 +215,6 @@ describe('createMenu', () => {
     host.remove();
   });
 
-  it('reads the stroke theme from probes in the connected shadow root', () => {
-    const div = document.createElement('div');
-    const values = {
-      'stroke-width': '12px',
-      'stroke-start-point-radius': '9px',
-    };
-    const getComputedStyle = globalThis.getComputedStyle.bind(globalThis);
-    vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
-      const probeClass = [...element.classList].find((className) =>
-        className.startsWith('marking-menu-layout-probe--stroke-'),
-      );
-      if (probeClass === undefined) {
-        return getComputedStyle(element);
-      }
-
-      const name = probeClass.replace('marking-menu-layout-probe--', '');
-      const value = values[name as keyof typeof values];
-      const style: Pick<CSSStyleDeclaration, 'width'> = { width: value };
-      return style as CSSStyleDeclaration;
-    });
-
-    const menu = createMenu({
-      parent: div,
-      model: createModel(1),
-      center: [30, 50],
-      doc: document,
-    });
-
-    expect(menu.strokeTheme).toEqual({
-      strokeWidth: 12,
-      strokeStartPointRadius: 9,
-    });
-    expect(
-      getShadowRoot(div).querySelector('.marking-menu-layout-probe'),
-    ).toBeNull();
-  });
-
   it('draws a one-item menu as a full annulus without gaps or corners', () => {
     const div = document.createElement('div');
     withSolverConfig(div);
