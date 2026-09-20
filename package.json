@@ -79,7 +79,7 @@
     "codemirror-json-schema": "^0.8.1",
     "csv-parse": "^7.0.2",
     "eslint": "^10.9.1",
-    "eslint-config-xo": "^3.0.0",
+    "eslint-config-xo": "^4.0.0",
     "eslint-plugin-import-x": "^4.17.1",
     "eslint-plugin-playwright": "^2.11.0",
     "eslint-plugin-react-hooks": "^7.1.1",
