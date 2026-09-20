@@ -159,7 +159,7 @@ Scope the host selector to a container when only one menu should change:
 }
 ```
 
-Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Stroke values are resolved when the controller is created and whenever a menu opens; layout values are resolved when a menu opens.
+Lengths accept CSS length values, including `em`, `rem`, and `calc()`. Colors accept any CSS color value. Stroke values apply immediately; layout values are resolved when a menu opens.
 
 Some colors default to a different value in dark mode, picked with [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/light-dark). It needs `color-scheme` declared on the host page or an ancestor, typically `color-scheme: light dark` on `:root`.
 
@@ -238,17 +238,17 @@ Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the 
 
 ### Stroke properties
 
-| Property                                 | Light                       | Dark                        | Purpose                              |
-| ---------------------------------------- | --------------------------- | --------------------------- | ------------------------------------ |
-| `--mm-stroke-color`                      | `hwb(0 0% 100%)`            | `hwb(0 88% 12%)`            | Current gesture color.               |
-| `--mm-stroke-width`                      | `4px`                       | `4px`                       | Current gesture width.               |
-| `--mm-stroke-start-point-radius`         | `8px`                       | `8px`                       | Novice-mode start marker radius.     |
-| `--mm-stroke-color-earlier`              | Muted color                 | Muted color                 | Earlier gesture segments' color.     |
-| `--mm-stroke-width-earlier`              | `--mm-stroke-width`         | `--mm-stroke-width`         | Earlier gesture segments' width.     |
-| `--mm-stroke-start-point-radius-earlier` | `--mm-stroke-width-earlier` | `--mm-stroke-width-earlier` | Earlier gesture start marker radius. |
-| `--mm-stroke-color-feedback`             | `--mm-stroke-color`         | `--mm-stroke-color`         | Selected gesture feedback color.     |
-| `--mm-stroke-width-feedback`             | `--mm-stroke-width`         | `--mm-stroke-width`         | Completed gesture feedback width.    |
-| `--mm-stroke-color-canceled`             | `hwb(11 32% 13%)`           | `hwb(11 45% 5%)`            | Canceled gesture feedback color.     |
+| Property                                 | Light                       | Dark                        | Purpose                                         |
+| ---------------------------------------- | --------------------------- | --------------------------- | ----------------------------------------------- |
+| `--mm-stroke-color`                      | `hwb(0 0% 100%)`            | `hwb(0 88% 12%)`            | Current gesture color.                          |
+| `--mm-stroke-width`                      | `4px`                       | `4px`                       | Current gesture width and indicator start size. |
+| `--mm-stroke-start-point-radius`         | `8px`                       | `8px`                       | Novice-mode start marker and indicator radius.  |
+| `--mm-stroke-color-earlier`              | Muted color                 | Muted color                 | Earlier gesture segments' color.                |
+| `--mm-stroke-width-earlier`              | `--mm-stroke-width`         | `--mm-stroke-width`         | Earlier gesture segments' width.                |
+| `--mm-stroke-start-point-radius-earlier` | `--mm-stroke-width-earlier` | `--mm-stroke-width-earlier` | Earlier gesture start marker radius.            |
+| `--mm-stroke-color-feedback`             | `--mm-stroke-color`         | `--mm-stroke-color`         | Selected gesture feedback color.                |
+| `--mm-stroke-width-feedback`             | `--mm-stroke-width`         | `--mm-stroke-width`         | Completed gesture feedback width.               |
+| `--mm-stroke-color-canceled`             | `hwb(11 32% 13%)`           | `hwb(11 45% 5%)`            | Canceled gesture feedback color.                |
 
 Strokes can paint outside the parent without changing its scroll size. Set `overflow: hidden` on the parent when strokes must stay inside its box.
 

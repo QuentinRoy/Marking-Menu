@@ -413,10 +413,28 @@
 
 .marking-menu-indicator-background {
   fill: var(--resolved-indicator-background);
+  r: var(--resolved-stroke-start-point-radius);
 }
 
 .marking-menu-indicator-dot {
+  --mm-indicator-progress: 0;
+
   fill: var(--resolved-indicator-fill);
+  r: calc(
+    var(--resolved-stroke-width) / 2 +
+      (
+        var(--resolved-stroke-start-point-radius) -
+          var(--resolved-stroke-width) / 2
+      ) *
+      var(--mm-indicator-progress)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marking-menu-indicator-dot {
+    opacity: var(--mm-indicator-progress);
+    r: var(--resolved-stroke-start-point-radius);
+  }
 }
 
 /* Forced-colors mode doesn't remap SVG `fill`/`stroke` at all, and it

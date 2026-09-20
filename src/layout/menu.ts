@@ -65,10 +65,6 @@ export type Menu = {
   */
   layer: HTMLElement;
   /**
-  The resolved stroke theme for this menu opening.
-  */
-  strokeTheme: MenuStrokeTheme;
-  /**
   Move focus to the menu layer.
   */
   focusMenu: () => void;
@@ -86,12 +82,7 @@ export type Menu = {
   remove: () => void;
 };
 
-type StrokeThemeProbes = {
-  strokeWidth: HTMLElement;
-  strokeStartPointRadius: HTMLElement;
-};
-
-type LayoutProbes = StrokeThemeProbes & {
+type LayoutProbes = {
   outerRadius: HTMLElement;
   wedgeGap: HTMLElement;
   wedgeCornerRadius: HTMLElement;
@@ -99,11 +90,6 @@ type LayoutProbes = StrokeThemeProbes & {
   plateGapVertical: HTMLElement;
   plateGapRing: HTMLElement;
   plateGapConnector: HTMLElement;
-};
-
-export type MenuStrokeTheme = {
-  strokeWidth: number;
-  strokeStartPointRadius: number;
 };
 
 type MenuDom = {
@@ -123,22 +109,13 @@ export function createMenuHost({
 }): {
   element: HTMLDivElement;
   root: ShadowRoot;
-  strokeTheme: MenuStrokeTheme;
 } {
   const element = doc.createElement('div');
   element.className = 'marking-menu';
   const root = element.attachShadow({ mode: 'open' });
   root.adoptedStyleSheets = [getMenuStyleSheet(doc)];
   parent.append(element);
-
-  const probeParent = doc.createElement('div');
-  root.append(probeParent);
-  const strokeTheme = readStrokeTheme(
-    doc,
-    appendStrokeThemeProbes(probeParent, doc),
-  );
-  probeParent.remove();
-  return { element, root, strokeTheme };
+  return { element, root };
 }
 
 function appendLayoutProbe(
@@ -150,20 +127,6 @@ function appendLayoutProbe(
   probe.className = `marking-menu-layout-probe marking-menu-layout-probe--${property}`;
   parent.append(probe);
   return probe;
-}
-
-function appendStrokeThemeProbes(
-  parent: HTMLElement,
-  doc: Document,
-): StrokeThemeProbes {
-  return {
-    strokeWidth: appendLayoutProbe(parent, doc, 'stroke-width'),
-    strokeStartPointRadius: appendLayoutProbe(
-      parent,
-      doc,
-      'stroke-start-point-radius',
-    ),
-  };
 }
 
 // `instanceof HTMLElement` would use this module's realm's constructor,
@@ -224,7 +187,6 @@ const template = (
     plateGapVertical: appendLayoutProbe(main, doc, 'plate-gap-vertical'),
     plateGapRing: appendLayoutProbe(main, doc, 'plate-gap-ring'),
     plateGapConnector: appendLayoutProbe(main, doc, 'plate-gap-connector'),
-    ...appendStrokeThemeProbes(main, doc),
   };
 
   for (const item of items) {
@@ -401,16 +363,6 @@ function readPixels(
   // eslint-disable-next-line unicorn/prefer-number-coercion
   const pixels = Number.parseFloat(width);
   return Number.isNaN(pixels) ? fallback : pixels;
-}
-
-function readStrokeTheme(
-  doc: Document,
-  probes: StrokeThemeProbes,
-): MenuStrokeTheme {
-  return {
-    strokeWidth: readPixels(doc, probes.strokeWidth, 4),
-    strokeStartPointRadius: readPixels(doc, probes.strokeStartPointRadius, 8),
-  };
 }
 
 // Unique per wedge, referenced by its self-clip `<clipPath>`; ids must be
@@ -657,7 +609,6 @@ export function createMenu({
 
   // `template` attaches the layer before measurement. A browser cannot paint
   // the unsolved layout while this call is still running.
-  const strokeTheme = readStrokeTheme(doc, menuDom.probes);
   renderWedges(menuDom, model.items, doc, deadZoneRadius);
   applySolvedLayout(menuDom, model.items, doc);
 
@@ -711,7 +662,6 @@ export function createMenu({
   return {
     element: root.host as HTMLElement,
     layer: main,
-    strokeTheme,
     focusMenu,
     focusItem,
     setActive,
