@@ -26,10 +26,7 @@ export type FeedbackEffect = {
 };
 
 export type LayoutRenderer = {
-  /**
-  The shadow root this renderer's menu (and any submenu) mounts into.
-  */
-  root: ShadowRoot;
+  getMenu: () => Menu | undefined;
   render: (view: LayoutView) => void;
   showFeedback: (effect: FeedbackEffect) => void;
   dispose: () => void;
@@ -222,8 +219,7 @@ export function createRenderer({
     strokeTheme: initialStrokeTheme,
   } = createMenuHost({ parent });
   let menuHandle: MenuHandle | undefined;
-  // Reference-equality cache: an unchanged active key skips the DOM scan
-  // `Menu.setActive` performs.
+  // Reference-equality cache: an unchanged active key needs no menu update.
   let previousActiveKey: string | undefined;
   // Fixed slots in paint order, plus the one conversion every layer shares.
   // Each layer mounts into its own slot and stays there, so nothing
@@ -267,7 +263,7 @@ export function createRenderer({
   };
 
   return {
-    root,
+    getMenu: () => menuHandle?.menu,
     render(view) {
       parent.style.cursor = view.cursor === 'default' ? ownCursor : view.cursor;
       // A menu is open exactly in novice mode: the only phase where the

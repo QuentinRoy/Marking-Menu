@@ -180,6 +180,46 @@ describe('createMenu', () => {
     expect(menu.element.shadowRoot?.querySelectorAll('[part]')).toHaveLength(0);
   });
 
+  it('focuses its menu layer', () => {
+    const div = document.createElement('div');
+    document.body.append(div);
+
+    try {
+      const menu = createMenu({
+        parent: div,
+        model: createModel(1),
+        center: [30, 50],
+        doc: document,
+      });
+
+      menu.focusMenu();
+
+      expect(getShadowRoot(div).activeElement).toBe(menu.layer);
+    } finally {
+      div.remove();
+    }
+  });
+
+  it('focuses an item by key', () => {
+    const div = document.createElement('div');
+    document.body.append(div);
+
+    try {
+      const menu = createMenu({
+        parent: div,
+        model: createModel(1),
+        center: [30, 50],
+        doc: document,
+      });
+
+      menu.focusItem('item-0-key');
+
+      expect(getShadowRoot(div).activeElement).toBe(getItems(div)[0]);
+    } finally {
+      div.remove();
+    }
+  });
+
   it('creates a menu host in an anchor parent', () => {
     const anchor = document.createElement('a');
 

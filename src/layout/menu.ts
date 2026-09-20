@@ -69,6 +69,14 @@ export type Menu = {
   */
   strokeTheme: MenuStrokeTheme;
   /**
+  Move focus to the menu layer.
+  */
+  focusMenu: () => void;
+  /**
+  Move focus to an item by key.
+  */
+  focusItem: (key: string) => void;
+  /**
   Mark the item with the given id as active (or none if nullish).
   */
   setActive: (itemId: string | number | undefined) => void;
@@ -640,7 +648,7 @@ export function createMenu({
   pointerTarget?: boolean;
 }): Menu {
   const menuDom = template({ items: model.items, center }, doc, parent);
-  const { main, root, isOwnHost } = menuDom;
+  const { main, root, itemElements, isOwnHost } = menuDom;
   (root.host as HTMLElement).style.setProperty(
     '--inner-radius',
     `${deadZoneRadius}px`,
@@ -654,15 +662,13 @@ export function createMenu({
   applySolvedLayout(menuDom, model.items, doc);
 
   const clearActiveItems = () => {
-    for (const itemDom of root.querySelectorAll<HTMLElement>('.active')) {
+    for (const itemDom of itemElements.values()) {
       setItemActive(itemDom, false);
     }
   };
 
   const getItemDom = (itemId: string | number) =>
-    [...root.querySelectorAll<HTMLElement>('.marking-menu-item')].find(
-      (elt) => elt.dataset.itemId === itemId,
-    );
+    itemElements.get(String(itemId));
 
   const setActive = (itemId: string | number | undefined) => {
     clearActiveItems();
@@ -686,6 +692,14 @@ export function createMenu({
     setItemActive(itemDom, true);
   };
 
+  const focusMenu = () => {
+    main.focus({ preventScroll: true });
+  };
+
+  const focusItem = (key: string) => {
+    itemElements.get(key)?.focus({ preventScroll: true });
+  };
+
   const remove = () => {
     if (isOwnHost) {
       (root.host as HTMLElement).remove();
@@ -698,6 +712,8 @@ export function createMenu({
     element: root.host as HTMLElement,
     layer: main,
     strokeTheme,
+    focusMenu,
+    focusItem,
     setActive,
     remove,
   };

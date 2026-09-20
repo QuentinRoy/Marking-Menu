@@ -26,7 +26,7 @@ const options = {
 };
 
 const createFakeRenderer = () => ({
-  root: document.createElement('div').attachShadow({ mode: 'open' }),
+  getMenu: () => undefined,
   render: vi.fn(),
   showFeedback: vi.fn(),
   dispose: vi.fn(),

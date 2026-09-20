@@ -2,6 +2,7 @@ import type {
   MarkingMenuChangeEvent,
   MarkingMenuEventEmitter,
 } from '../events.js';
+import type { Menu } from '../layout/menu.js';
 import type { ModelNode } from '../types.js';
 
 export type FocusManager = {
@@ -34,10 +35,12 @@ const deepActiveElement = (doc: Document): Element | undefined => {
  public events a consumer would, and owns nothing the state machine needs.
  */
 export function manageFocus<Model extends ModelNode = ModelNode>({
-  root,
+  doc,
+  getMenu,
   runtime,
 }: {
-  root: ShadowRoot;
+  doc: Document;
+  getMenu: () => Pick<Menu, 'focusMenu' | 'focusItem'> | undefined;
   runtime: MarkingMenuEventEmitter<Model>;
 }): FocusManager {
   let pendingFocus: ReturnType<typeof setTimeout> | undefined;
@@ -56,11 +59,9 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
 
   const onOpen = (): void => {
     clearPendingFocus();
-    savedFocus ??= deepActiveElement(root.ownerDocument) as
+    savedFocus ??= deepActiveElement(doc) as
       HTMLElement | undefined;
-    root
-      .querySelector<HTMLElement>('[role="menu"]')
-      ?.focus({ preventScroll: true });
+    getMenu()?.focusMenu();
   };
 
   const onChange = (event: MarkingMenuChangeEvent<Model>): void => {
@@ -71,9 +72,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     }
 
     pendingFocus = setTimeout(() => {
-      [...root.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-        .find((element) => element.dataset.itemId === active.key)
-        ?.focus({ preventScroll: true });
+      getMenu()?.focusItem(active.key);
     }, ACTIVE_ITEM_FOCUS_DELAY_MS);
   };
 
