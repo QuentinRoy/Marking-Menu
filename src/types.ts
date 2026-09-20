@@ -148,10 +148,6 @@ export interface ModelItem<
   The maximum breadth of the menu below this node.
   */
   getMaxBreadth(): IfLeaf<IsLeaf<Items>, 0, number>;
-  /**
-  The smallest angular gap between neighboring items in the menu.
-  */
-  getMinAngularGap(): number;
 }
 
 /**
@@ -188,10 +184,6 @@ export interface ModelRoot<
   The maximum breadth of the menu below this node.
   */
   getMaxBreadth(): IfLeaf<IsLeaf<Items>, 0, number>;
-  /**
-  The smallest angular gap between neighboring items in the menu.
-  */
-  getMinAngularGap(): number;
 }
 
 /**

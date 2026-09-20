@@ -8,6 +8,7 @@ import type {
 } from '../types.js';
 import {
   dist,
+  getTightestSpacing,
   radiansToDegrees,
   type NonEmptyArray,
   type Point,
@@ -217,6 +218,25 @@ export function findItem({
 }
 
 /**
+ Find the smallest angular gap between neighboring items, at this level or
+ any level below it. Feeds the corner threshold; private to the recognizer,
+ its only caller.
+
+ @param node - The model node to search.
+ @returns The smallest gap, in degrees, or `Infinity` if no level has two
+ or more items to have a gap between.
+ */
+const getMinAngularGap = (node: ModelNode): number => {
+  const children = node.items as ReadonlyArray<ModelNode & { angle: number }>;
+  let minGap = getTightestSpacing(children.map((child) => child.angle));
+  for (const child of children) {
+    minGap = Math.min(minGap, getMinAngularGap(child));
+  }
+
+  return minGap;
+};
+
+/**
  Cut a stroke into the segments a marking-menu walk is attempted against:
  find its articulation points, then join them pairwise, dropping segments too
  short to be a deliberate move. Shared by {@link recognizeMarkingMenuStroke}
@@ -242,7 +262,7 @@ const cutStroke = (
   const length = strokeLength(stroke);
   const expectedSegmentLength = length / maxDepth;
   const sensitivity = 0.75;
-  const angleThreshold = model.getMinAngularGap() / 2 / sensitivity;
+  const angleThreshold = getMinAngularGap(model) / 2 / sensitivity;
   const articulationPoints = getStrokeArticulationPoints(stroke, {
     expectedSegmentLength,
     angleThreshold,

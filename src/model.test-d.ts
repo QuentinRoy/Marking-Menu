@@ -270,10 +270,6 @@ describe('ModelNode discrimination', () => {
     expectTypeOf(sampleNode).toEqualTypeOf<ModelRoot>();
     expectTypeOf(sampleNode.parent).toEqualTypeOf<undefined>();
   });
-
-  it('exposes getMinAngularGap on every node', () => {
-    expectTypeOf(sampleNode.getMinAngularGap()).toEqualTypeOf<number>();
-  });
 });
 
 describe('ModelItem narrowing', () => {
