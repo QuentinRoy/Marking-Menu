@@ -59,8 +59,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
 
   const onOpen = (): void => {
     clearPendingFocus();
-    savedFocus ??= deepActiveElement(doc) as
-      HTMLElement | undefined;
+    savedFocus ??= deepActiveElement(doc) as HTMLElement | undefined;
     getMenu()?.focusMenu();
   };
 
