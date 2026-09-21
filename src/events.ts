@@ -123,7 +123,9 @@ export abstract class MarkingMenuEventBase<
  Dispatched once, as the first event of a gesture, when a primary pointer goes
  down.
  */
-export class MarkingMenuStartEvent extends MarkingMenuEventBase<'startup'> {
+export class MarkingMenuStartEvent<
+  Mode extends 'startup' = 'startup',
+> extends MarkingMenuEventBase<Mode> {
   /**
   This event's type, as a literal.
   */
@@ -133,11 +135,11 @@ export class MarkingMenuStartEvent extends MarkingMenuEventBase<'startup'> {
 
   declare readonly type: 'start';
 
-  constructor(data: { readonly position: Point }) {
-    super(MarkingMenuStartEvent.type, {
-      mode: 'startup',
-      position: data.position,
-    });
+  constructor(data: {
+    readonly mode: Mode;
+    readonly position: Mode extends 'standalone' ? undefined : Point;
+  }) {
+    super(MarkingMenuStartEvent.type, data);
   }
 }
 

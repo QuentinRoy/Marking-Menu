@@ -159,6 +159,15 @@ describe('mode and position', () => {
     >().toEqualTypeOf<Point>();
   });
 
+  it('gives `start` a mode type parameter too, which can only be startup', () => {
+    expectTypeOf<
+      MarkingMenuStartEvent<'startup'>
+    >().toEqualTypeOf<MarkingMenuStartEvent>();
+    expectTypeOf<MarkingMenuStartEvent['position']>().toEqualTypeOf<Point>();
+    // @ts-expect-error -- a gesture only ever starts in startup mode.
+    expectTypeOf<MarkingMenuStartEvent<'novice'>>().not.toBeNever();
+  });
+
   it('keeps `open` and `change` to the modes with a menu open', () => {
     expectTypeOf<OpenEvent['mode']>().toEqualTypeOf<'novice' | 'standalone'>();
     expectTypeOf<ChangeEvent['mode']>().toEqualTypeOf<

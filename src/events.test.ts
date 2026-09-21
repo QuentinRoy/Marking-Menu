@@ -39,7 +39,10 @@ const recognition = {
 
 describe('MarkingMenuStartEvent', () => {
   it('carries the mode and position it was constructed with', () => {
-    const event = new MarkingMenuStartEvent({ position: [10, 20] });
+    const event = new MarkingMenuStartEvent({
+      mode: 'startup',
+      position: [10, 20],
+    });
 
     expect(event.type).toBe('start');
     expect(event.mode).toBe('startup');
@@ -49,7 +52,10 @@ describe('MarkingMenuStartEvent', () => {
   it('exposes its type as a static, matching the instance type', () => {
     expect(MarkingMenuStartEvent.type).toBe('start');
 
-    const event = new MarkingMenuStartEvent({ position: [0, 0] });
+    const event = new MarkingMenuStartEvent({
+      mode: 'startup',
+      position: [0, 0],
+    });
     expect(event.type).toBe(MarkingMenuStartEvent.type);
   });
 });

@@ -254,6 +254,13 @@ function emitInactiveMove(
 }
 
 /**
+ A frozen copy of a point: the engine keeps its own, and a consumer that
+ alters what an event publishes must not reach it.
+ */
+const copyPoint = (point: Point): Point =>
+  Object.freeze([point[0], point[1]] as const);
+
+/**
  Copy a recognition attempt into the frozen shape events publish. The
  recognizer's own analysis carries fields (each piece's length and angle) the
  public contract leaves out, and events must not leak them at run time.
@@ -262,16 +269,23 @@ function toRecognition(
   stroke: readonly Point[],
   { articulationPoints, segments }: StrokeCut,
 ): MarkingMenuRecognition {
-  const frozenSegments = segments.map((segment) =>
-    Object.freeze({
-      points: Object.freeze([segment.points[0], segment.points[1]] as const),
-    }),
-  );
+  const frozenSegments = segments.map((segment) => {
+    const points = Object.freeze([
+      copyPoint(segment.points[0]),
+      copyPoint(segment.points[1]),
+    ] as const);
+    return Object.freeze({ points });
+  });
   const analysis = Object.freeze({
-    articulationPoints: Object.freeze([...articulationPoints]),
+    articulationPoints: Object.freeze(
+      articulationPoints.map((point) => copyPoint(point)),
+    ),
     segments: Object.freeze(frozenSegments),
   });
-  return Object.freeze({ stroke: Object.freeze([...stroke]), analysis });
+  return Object.freeze({
+    stroke: Object.freeze(stroke.map((point) => copyPoint(point))),
+    analysis,
+  });
 }
 
 function isModelLeaf(item: ModelItem): item is ModelLeaf {
@@ -861,7 +875,13 @@ export const navigationMachine = machine({
     },
 
     'idle -down> startup'({ toData, emit }) {
-      emit('start', new MarkingMenuStartEvent({ position: toData.origin }));
+      emit(
+        'start',
+        new MarkingMenuStartEvent({
+          mode: 'startup',
+          position: toData.origin,
+        }),
+      );
     },
 
     'idle -open> standalone'({ toData, emit }) {

@@ -545,6 +545,43 @@ describe('navigationMachine', () => {
       expect(Object.isFrozen(recognition.analysis.segments)).toBe(true);
     });
 
+    it('copies every point, so a listener that alters one cannot reach the engine', () => {
+      const host = startHost();
+      const recognitions = recordRecognitions(host, 'select');
+      const down: Point = [0, 0];
+      const move: Point = [100, 0];
+      const up: Point = [200, 0];
+
+      host.send('down', { position: down });
+      host.send('move', { position: move });
+      host.send('up', { position: up });
+
+      const [recognition] = recognitions as [
+        {
+          stroke: Point[];
+          analysis: {
+            articulationPoints: Point[];
+            segments: Array<{ points: Point[] }>;
+          };
+        },
+      ];
+      const published = [
+        ...recognition.stroke,
+        ...recognition.analysis.articulationPoints,
+        ...recognition.analysis.segments.flatMap((segment) => segment.points),
+      ];
+      expect(published.length).toBeGreaterThan(0);
+      for (const point of published) {
+        expect(Object.isFrozen(point)).toBe(true);
+        expect([down, move, up]).not.toContain(point);
+      }
+
+      expect(Object.isFrozen(recognition.analysis.segments[0])).toBe(true);
+      expect(Object.isFrozen(recognition.analysis.segments[0]?.points)).toBe(
+        true,
+      );
+    });
+
     it('carries no recognition when nothing was recognized', () => {
       const host = startHost();
       const selects = recordRecognitions(host, 'select');
