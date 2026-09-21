@@ -77,8 +77,9 @@ export type MenuNode<Items extends readonly unknown[]> = {
 
 /**
  `getChild` accepts the ids of the sub-items it can actually find. When the
- sub-items are not a tuple — a menu built at runtime — the ids are unknown, so
- it falls back to accepting any string and possibly returning `undefined`.
+ sub-items are not a tuple because the menu was built at runtime. Its ids are
+ unknown, so it falls back to accepting any string and possibly returning
+ `undefined`.
  */
 type GetChild<Items extends readonly unknown[]> =
   IsTuple<Items> extends true
@@ -192,6 +193,16 @@ export interface ModelRoot<
 export type ModelLeaf = ModelItem & { readonly isLeaf: true };
 
 type ModelMenuItem = ModelItem & { readonly isLeaf: false };
+
+export function isModelLeaf(item: ModelItem): item is ModelLeaf {
+  return item.isLeaf;
+}
+
+export function isModelMenuItem<Item extends ModelItem>(
+  item: Item,
+): item is Item & { readonly isLeaf: false } {
+  return !item.isLeaf;
+}
 
 /**
  A node in the marking menu tree: either the root or an item, discriminated by

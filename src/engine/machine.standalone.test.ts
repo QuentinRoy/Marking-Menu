@@ -245,7 +245,6 @@ describe('navigationMachine standalone phase', () => {
           'enter',
           'leave',
           'escape',
-          'exit',
           'close',
         ] as const) {
           host.send(intent);
@@ -633,14 +632,14 @@ describe('navigationMachine standalone phase', () => {
       expect(event.recognition).toBeUndefined();
     });
 
-    it('cancels on exit, whatever level it is on', () => {
+    it('cancels on close, whatever level it is on', () => {
       const host = startStandalone();
       openStandalone(host);
       host.send('focus', { key: rightItem.key });
       host.send('enter');
       const outputs = recordOutputs(host);
 
-      host.send('exit');
+      host.send('close');
 
       expect(host.current.name).toBe('idle');
       expect(namesOf(outputs)).toEqual(['cancel']);

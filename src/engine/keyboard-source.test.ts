@@ -89,7 +89,7 @@ describe('createKeyboardSource', () => {
     },
   );
 
-  it('turns Tab into the exit intent, and lets it move focus on', () => {
+  it('turns Tab into the close intent, and lets it move focus on', () => {
     using fixture = createFixture();
 
     const event = press(fixture.item, 'Tab');
@@ -98,7 +98,7 @@ describe('createKeyboardSource', () => {
     expect(fixture.send).toHaveBeenCalledTimes(2);
     expect(fixture.send).toHaveBeenCalledWith({
       type: 'keyboard',
-      intent: 'exit',
+      intent: 'close',
     });
     expect(event.defaultPrevented).toBe(false);
     expect(shifted.defaultPrevented).toBe(false);
