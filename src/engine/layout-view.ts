@@ -1,5 +1,5 @@
 import type { MenuLayoutModel } from '../layout/menu.js';
-import type { Point } from '../utils.js';
+import { last, type Point } from '../utils.js';
 import type { NavigationOptions, NavigationState } from './machine.js';
 
 /**
@@ -81,7 +81,7 @@ export function projectLayout<
         startedAt: state.dwellStartedAt,
         // The stroke's own tip: it keeps moving with sub-threshold jitter
         // even though startup's dwell (armed on `origin`) never restarts.
-        position: state.lastPosition,
+        position: last(state.stroke),
         delayMs: options.noviceDwellingTime,
       };
       return {
@@ -104,7 +104,7 @@ export function projectLayout<
         lowerStroke: undefined,
         indicator: {
           startedAt: state.dwellStartedAt,
-          position: state.lastPosition,
+          position: last(state.stroke),
           delayMs: options.noviceDwellingTime,
         },
       };

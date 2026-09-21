@@ -3,6 +3,7 @@ import {
   degreesToRadians,
   deltaAngle,
   dist,
+  last,
   mod,
   noOp,
   normalizeAngle,
@@ -130,5 +131,29 @@ describe('toPolar', () => {
 describe('noOp', () => {
   it('does nothing', () => {
     expect(noOp).not.toThrow();
+  });
+});
+
+describe('last', () => {
+  it('returns the last item of an array', () => {
+    expect(last([1, 2, 3])).toBe(3);
+    expect(
+      last([
+        [0, 0],
+        [10, 0],
+      ]),
+    ).toEqual([10, 0]);
+  });
+
+  it('returns the only item of an array that has just one', () => {
+    expect(last(['only'])).toBe('only');
+  });
+
+  it('returns a last item that is undefined, when that is what the array holds', () => {
+    expect(last([1, undefined])).toBeUndefined();
+  });
+
+  it('throws for an empty array', () => {
+    expect(() => last([])).toThrow('at least one item');
   });
 });
