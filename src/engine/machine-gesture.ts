@@ -81,8 +81,8 @@ export function toRecognition(
 }
 
 /**
- Shared body of the `startup` and `novice` dwell residencies: arm a `dwell`
- timer for `delayMs` and clear it on exit, whatever ends the residency,
+ Shared body of the `startup`, `expert`, and `novice` dwell residencies: arm a
+ `dwell` timer for `delayMs` and clear it on exit, whatever ends the residency,
  whether that is leaving the state or disposal.
  */
 export function armDwellTimer(
