@@ -101,7 +101,10 @@ function drawRecognition(
 ): void {
   const style = getComputedStyle(document.documentElement);
   const token = (name: string) => style.getPropertyValue(name).trim();
-  const tokenNumber = (name: string) => Number(token(name));
+  // `parseFloat` over `Number`: `--mm-stroke-width` carries a `px` suffix
+  // for `menu.css`'s own use, which `Number` would reject as NaN.
+  // eslint-disable-next-line unicorn/prefer-number-coercion -- the `px` suffix needs stripping, not rejecting
+  const tokenNumber = (name: string) => Number.parseFloat(token(name));
   const rect = overlay.getBoundingClientRect();
   const toLocal = ([x, y]: Point): Point => [x - rect.left, y - rect.top];
 
