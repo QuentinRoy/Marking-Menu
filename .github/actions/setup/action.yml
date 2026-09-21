@@ -17,6 +17,10 @@ runs:
       with:
         node-version-file: .tool-versions
         registry-url: ${{ inputs.registry-url }}
+        # The Yarn cache is restored by the explicit `actions/cache` step
+        # below; letting setup-node cache it too just saves the same 150 MB
+        # twice, for ~45s per job.
+        package-manager-cache: false
     - run: npm install --global corepack@0.36.0
       shell: bash
     - name: Get Yarn cache directory
