@@ -1,32 +1,22 @@
+import {
+  createMarkingMenu,
+  type MarkingMenuInput,
+  type MarkingMenuMode,
+  type MarkingMenuRecognition,
+  type Point,
+} from 'marking-menu';
 import { useCallback, useEffect, useRef } from 'react';
-import { createMarkingMenu } from '../../src/create-marking-menu.js';
-import type { MarkingMenuMode } from '../../src/events.js';
-import {
-  createStrokeSurface,
-  type StrokeSurface,
-  type StrokeSurfaceOptions,
-} from '../../src/layout/stroke.js';
-import {
-  analyzeMarkingMenuStroke,
-  type MarkingMenuStrokeAnalysis,
-} from '../../src/recognizer/recognize-mm-stroke.js';
-import { strokeLength } from '../../src/recognizer/stroke-length.js';
-import type { MarkingMenuInput } from '../../src/types.js';
-import { toLocalPoint, type Point } from '../../src/utils.js';
-import {
-  pathOfKey,
-  stepsAlong,
-  type MenuModel,
-  type MenuStep,
-} from './menu-model.js';
+import { pathToNode, stepsAlong, type MenuStep } from './menu-tree.js';
 import { useLatest } from './use-latest.js';
 
 /*
  The live half of the page: the shipped marking menu, on a surface of its
  own. Dwelling, sub-menu opening, expert detection, the highlight and the
  stroke are all the library's; what this file adds is the readout, and the
- recognizer overlay drawn once the gesture is over.
+ recognizer overlay drawn from what `select` and `cancel` report back.
  */
+
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 // A stroke shorter than this is pointer wobble between a press and a
 // release, not a gesture worth reporting on.
@@ -53,85 +43,121 @@ export const IDLE_RESULT: GestureResult = {
 };
 
 /**
- Draw a finished gesture: the stroke as it was made and, when the overlay is
- on, the pieces the recognizer cut it into and the corners it cut them at.
+ The total length of a path through `points`.
+
+ @param points - The path, in order.
+ @returns The sum of the distance between each consecutive pair.
+ */
+function pathLength(points: readonly Point[]): number {
+  let total = 0;
+  for (let index = 1; index < points.length; index++) {
+    const previous = points[index - 1];
+    const current = points[index];
+    if (previous !== undefined && current !== undefined) {
+      total += Math.hypot(current[0] - previous[0], current[1] - previous[1]);
+    }
+  }
+
+  return total;
+}
+
+function pathData(points: readonly Point[]): string {
+  const [first, ...rest] = points;
+  if (first === undefined) {
+    return '';
+  }
+
+  return `M ${first[0]} ${first[1]} ${rest
+    .map(([x, y]) => `L ${x} ${y}`)
+    .join(' ')}`;
+}
+
+/**
+ Draw a finished gesture: the stroke as it was made, dimmed, and on top of
+ it, the pieces the recognizer cut it into and the corners it cut them at.
 
  Colors come from the page's own custom properties, so the legend beside the
  surface cannot fall out of step with what is drawn.
 
  @param options - What to draw, and where.
- @param options.overlay - The layer the surfaces go in.
- @param options.stroke - The gesture, in coordinates local to `overlay`.
- @param options.analysis - What the recognizer made of that gesture.
- @returns The surfaces drawn, for the caller to remove.
+ @param options.overlay - The layer the drawing goes in.
+ @param options.toLocal - Converts a client-coordinate point to one local to
+ `overlay`.
+ @param options.recognition - What the recognizer made of the gesture.
+ @returns The `<svg>` drawn, for the caller to remove.
  */
 function drawGesture({
   overlay,
-  stroke,
-  analysis,
+  toLocal,
+  recognition,
 }: {
   overlay: HTMLElement;
-  stroke: readonly Point[];
-  analysis: MarkingMenuStrokeAnalysis<MenuModel>;
-}): StrokeSurface[] {
-  const style = getComputedStyle(document.documentElement);
+  toLocal: (point: Point) => Point;
+  recognition: MarkingMenuRecognition;
+}): SVGSVGElement {
+  const doc = overlay.ownerDocument;
+  const style = getComputedStyle(doc.documentElement);
   const token = (name: string) => style.getPropertyValue(name).trim();
   const tokenNumber = (name: string) => Number(token(name));
-  const surfaces: StrokeSurface[] = [];
-  const add = (options: Omit<StrokeSurfaceOptions, 'parent'>) => {
-    const surface = createStrokeSurface({ parent: overlay, ...options });
-    surfaces.push(surface);
-    return surface;
+
+  const svg = doc.createElementNS(SVG_NAMESPACE, 'svg');
+  svg.setAttribute('aria-hidden', 'true');
+  overlay.append(svg);
+
+  const addPath = (
+    points: readonly Point[],
+    color: string,
+    width: number,
+  ): void => {
+    const path = doc.createElementNS(SVG_NAMESPACE, 'path');
+    path.setAttribute('d', pathData(points));
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', String(width));
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    svg.append(path);
   };
 
   // The mark as the menu drew it, dimmed so the pieces read on top of it.
-  add({
-    lineColor: token('--color-stroke-trace'),
-    lineWidth: tokenNumber('--mm-stroke-width'),
-  }).drawStroke(stroke);
-
-  // Two surfaces alternate colors so consecutive pieces stay distinct
-  // where they meet.
-  const pieces = [token('--color-mark'), token('--color-piece-alt')].map(
-    (lineColor) =>
-      add({ lineColor, lineWidth: tokenNumber('--stroke-piece-width') }),
+  addPath(
+    recognition.stroke.map((point) => toLocal(point)),
+    token('--color-stroke-trace'),
+    tokenNumber('--mm-stroke-width'),
   );
-  for (const [index, segment] of analysis.segments.entries()) {
-    pieces[index % pieces.length]?.drawStroke(segment.points);
+
+  // Two colors alternate so consecutive pieces stay distinct where they
+  // meet.
+  const [colorA, colorB] = [token('--color-mark'), token('--color-piece-alt')];
+  for (const [index, segment] of recognition.analysis.segments.entries()) {
+    addPath(
+      segment.points.map((point) => toLocal(point)),
+      index % 2 === 0 ? colorA : colorB,
+      tokenNumber('--stroke-piece-width'),
+    );
   }
 
-  const corners = add({
-    lineColor: 'transparent',
-    pointColor: token('--color-ink'),
-    pointRadius: tokenNumber('--stroke-corner-radius'),
-  });
-  for (const point of analysis.articulationPoints) {
-    corners.drawPoint(point);
+  const cornerColor = token('--color-ink');
+  const cornerRadius = tokenNumber('--stroke-corner-radius');
+  for (const point of recognition.analysis.articulationPoints) {
+    const [x, y] = toLocal(point);
+    const circle = doc.createElementNS(SVG_NAMESPACE, 'circle');
+    circle.setAttribute('cx', String(x));
+    circle.setAttribute('cy', String(y));
+    circle.setAttribute('r', String(cornerRadius));
+    circle.setAttribute('fill', cornerColor);
+    svg.append(circle);
   }
 
-  return surfaces;
-}
-
-/**
- Whether the library reached this outcome by recognizing the stroke.
-
- It does so for an expert gesture, and for a startup one that moved at all.
- It does not for a novice release, which hit-tests the item the open menu
- already had highlighted, nor for a gesture the pointer interrupted (see the
- termination actions in `src/engine/machine.ts`). Novice mode does not even
- keep the path drawn inside the open menu: what reaches termination is the
- movement made before the menu opened, then its centre and the last point.
-
- @param mode - The mode the gesture ended in.
- @param wasInterrupted - Whether the pointer was cancelled outright.
- @returns Whether stroke recognition decided the outcome.
- */
-function didRecognize(mode: MarkingMenuMode, wasInterrupted: boolean): boolean {
-  return !wasInterrupted && mode !== 'novice';
+  return svg;
 }
 
 /**
  What settled a gesture the recognizer had no part in, for the readout.
+
+ A missing `recognition` is the only signal that the recognizer did not run:
+ it does not for a novice release, which hit-tests the item the open menu
+ already had highlighted, nor for a gesture the pointer interrupted outright.
 
  @param mode - The mode the gesture ended in.
  @param wasInterrupted - Whether the pointer was cancelled outright.
@@ -149,12 +175,10 @@ function decidedBy(mode: MarkingMenuMode, wasInterrupted: boolean): string {
 
 export function LiveSurface({
   menu,
-  model,
   showBreakdown,
   onResult,
 }: {
   menu: MarkingMenuInput;
-  model: MenuModel;
   /**
   Whether to draw the pieces and corners the recognizer worked from.
   */
@@ -167,78 +191,72 @@ export function LiveSurface({
   const menuParentRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   /* eslint-enable @typescript-eslint/no-restricted-types -- DOM refs */
-  const surfacesRef = useRef<StrokeSurface[]>([]);
+  const svgRef = useRef<SVGSVGElement | undefined>(undefined);
   const strokeRef = useRef<Point[]>([]);
   const interruptedRef = useRef(false);
-  // The last stroke the recognizer actually ran on, which is the only one
-  // the overlay may be redrawn from; `undefined` after a gesture it had no
-  // part in (see {@link didRecognize}).
-  const recognizedRef = useRef<readonly Point[] | undefined>(undefined);
-  const latestRef = useLatest({ model, showBreakdown, onResult });
+  // The last recognition the overlay may be redrawn from; `undefined` after a
+  // gesture the recognizer had no part in (see {@link decidedBy}).
+  const recognitionRef = useRef<MarkingMenuRecognition | undefined>(undefined);
+  const latestRef = useLatest({ menu, showBreakdown, onResult });
 
   const clearOverlay = useCallback(() => {
-    for (const surface of surfacesRef.current) {
-      surface.remove();
-    }
-
-    surfacesRef.current = [];
+    svgRef.current?.remove();
+    svgRef.current = undefined;
   }, []);
 
   useEffect(() => {
-    const draw = (
-      stroke: readonly Point[],
-      analysis: MarkingMenuStrokeAnalysis<MenuModel>,
-    ) => {
-      const overlay = overlayRef.current ?? undefined;
-      if (overlay !== undefined) {
-        surfacesRef.current = drawGesture({ overlay, stroke, analysis });
-      }
-    };
-
     const menuParent = menuParentRef.current ?? undefined;
     if (menuParent === undefined) {
       return;
     }
 
-    const local = (position: Point): Point =>
-      toLocalPoint(position, menuParent.getBoundingClientRect());
+    const toLocal = (point: Point): Point => {
+      const rect = menuParent.getBoundingClientRect();
+      return [point[0] - rect.left, point[1] - rect.top];
+    };
+
+    const draw = (recognition: MarkingMenuRecognition) => {
+      const overlay = overlayRef.current ?? undefined;
+      if (overlay !== undefined) {
+        svgRef.current = drawGesture({ overlay, toLocal, recognition });
+      }
+    };
 
     const finish = (
       position: Point,
       mode: MarkingMenuMode,
+      recognition: MarkingMenuRecognition | undefined,
       outcome: { steps: readonly MenuStep[] | undefined; message: string },
     ) => {
-      const { model: current, onResult: report } = latestRef.current;
-      const stroke = [...strokeRef.current, local(position)];
+      const { showBreakdown: showBreakdownNow, onResult: report } =
+        latestRef.current;
+      const stroke = [...strokeRef.current, toLocal(position)];
       strokeRef.current = stroke;
       clearOverlay();
-      if (strokeLength(stroke) < CLICK_MOVEMENT_PX) {
+      recognitionRef.current = undefined;
+      if (pathLength(stroke) < CLICK_MOVEMENT_PX) {
         report(IDLE_RESULT);
         return;
       }
 
       const depth = outcome.steps?.length ?? 0;
-      const wasInterrupted = interruptedRef.current;
-      recognizedRef.current = undefined;
-      if (!didRecognize(mode, wasInterrupted)) {
-        // Nothing is drawn and no piece, corner or threshold is quoted: the
-        // overlay is a picture of a recognition that did not happen, and the
-        // stroke it would be drawn from is not one the library kept.
+      if (recognition === undefined) {
+        // Nothing is drawn and no piece or corner is quoted: the overlay is a
+        // picture of a recognition that did not happen.
         report({
           ...outcome,
           metrics: [
             mode,
             `depth ${depth}`,
-            decidedBy(mode, wasInterrupted),
+            decidedBy(mode, interruptedRef.current),
           ].join(' · '),
         });
         return;
       }
 
-      recognizedRef.current = stroke;
-      const analysis = analyzeMarkingMenuStroke(stroke, current);
-      if (showBreakdown) {
-        draw(stroke, analysis);
+      recognitionRef.current = recognition;
+      if (showBreakdownNow) {
+        draw(recognition);
       }
 
       report({
@@ -246,9 +264,8 @@ export function LiveSurface({
         metrics: [
           mode,
           `depth ${depth}`,
-          `${analysis.segments.length} piece(s)`,
-          `${analysis.articulationPoints.length} corner(s)`,
-          `threshold ${analysis.angleThreshold.toFixed(1)}°`,
+          `${recognition.analysis.segments.length} piece(s)`,
+          `${recognition.analysis.articulationPoints.length} corner(s)`,
         ].join(' · '),
       });
     };
@@ -281,9 +298,9 @@ export function LiveSurface({
 
     controller.on('start', (event) => {
       interruptedRef.current = false;
-      recognizedRef.current = undefined;
+      recognitionRef.current = undefined;
       clearOverlay();
-      strokeRef.current = [local(event.position)];
+      strokeRef.current = [toLocal(event.position)];
       latestRef.current.onResult({
         steps: undefined,
         message: 'Drawing…',
@@ -291,17 +308,17 @@ export function LiveSurface({
       });
     });
     controller.on('move', (event) => {
-      strokeRef.current.push(local(event.position));
+      strokeRef.current.push(toLocal(event.position));
     });
     controller.on('select', (event) => {
-      // The playground never opens a standalone menu.
+      // The playground never opens a standalone menu on this surface.
       if (event.mode === 'standalone') {
         return;
       }
 
-      const path = pathOfKey(event.selection.key);
-      finish(event.position, event.mode, {
-        steps: stepsAlong(latestRef.current.model, path),
+      const path = pathToNode(event.selection);
+      finish(event.position, event.mode, event.recognition, {
+        steps: stepsAlong(latestRef.current.menu, path),
         message: '',
       });
     });
@@ -311,7 +328,7 @@ export function LiveSurface({
       }
 
       const { active } = event;
-      finish(event.position, event.mode, {
+      finish(event.position, event.mode, event.recognition, {
         steps: undefined,
         message:
           active === undefined
@@ -334,8 +351,13 @@ export function LiveSurface({
   // recognizer ran on has anything to redraw.
   useEffect(() => {
     const overlay = overlayRef.current ?? undefined;
-    const stroke = recognizedRef.current;
-    if (overlay === undefined || stroke === undefined || stroke.length < 2) {
+    const menuParent = menuParentRef.current ?? undefined;
+    const recognition = recognitionRef.current;
+    if (
+      overlay === undefined ||
+      menuParent === undefined ||
+      recognition === undefined
+    ) {
       return;
     }
 
@@ -344,12 +366,13 @@ export function LiveSurface({
       return;
     }
 
-    surfacesRef.current = drawGesture({
-      overlay,
-      stroke,
-      analysis: analyzeMarkingMenuStroke(stroke, model),
-    });
-  }, [clearOverlay, model, showBreakdown]);
+    const toLocal = (point: Point): Point => {
+      const rect = menuParent.getBoundingClientRect();
+      return [point[0] - rect.left, point[1] - rect.top];
+    };
+
+    svgRef.current = drawGesture({ overlay, toLocal, recognition });
+  }, [clearOverlay, showBreakdown]);
 
   return (
     <div className="relative min-h-85 flex-1 cursor-crosshair overflow-hidden bg-surface dot-grid wide:min-h-0">

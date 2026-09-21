@@ -1,9 +1,6 @@
 import type { FromSchema, JSONSchema } from 'json-schema-to-ts';
+import type { MarkingMenuInput, MarkingMenuItemInput } from 'marking-menu';
 import { describe, expectTypeOf, it } from 'vitest';
-import type {
-  MarkingMenuInput,
-  MarkingMenuItemInput,
-} from '../../src/types.js';
 import { menuSchema } from './menu-schema.js';
 
 /*

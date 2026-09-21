@@ -6,7 +6,12 @@
     "types": ["vite/client"],
     // Pulls in `demo/shared/menu-config.js`'s inferred types: that module
     // is native JS (see `demo/tsconfig.json`), not part of this project.
-    "allowJs": true
+    "allowJs": true,
+    // The playground resolves `marking-menu` through its import map (see
+    // `index.html`), the same way `demo/tsconfig.json` does. Type it from the
+    // matching declaration bundle so a type missing from what we publish
+    // fails here too.
+    "paths": { "marking-menu": ["../../dist/marking-menu.d.ts"] }
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }

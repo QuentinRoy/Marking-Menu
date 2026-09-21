@@ -1,7 +1,4 @@
-import type {
-  MarkingMenuInput,
-  MarkingMenuItemInput,
-} from '../../src/types.js';
+import type { MarkingMenuInput, MarkingMenuItemInput } from 'marking-menu';
 
 /**
  Print a menu as the editor shows it: leaves on one line each, so a level
