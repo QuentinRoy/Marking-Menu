@@ -236,10 +236,12 @@ describe('MarkingMenuCancelEvent', () => {
       position: [1, 2],
       active: menu.items[0],
       menu,
+      reason: 'no-selection',
     });
 
     expect(event.type).toBe('cancel');
     expect(event.mode).toBe('novice');
+    expect(event.reason).toBe('no-selection');
     expect(event.active).toBe(menu.items[0]);
     expect(event.menu).toBe(menu);
   });
@@ -250,10 +252,12 @@ describe('MarkingMenuCancelEvent', () => {
       position: undefined,
       active: undefined,
       menu,
+      reason: 'dismissed',
     });
 
     expect(event.mode).toBe('standalone');
     expect(event.position).toBeUndefined();
+    expect(event.reason).toBe('dismissed');
     expect(event.recognition).toBeUndefined();
   });
 
@@ -263,6 +267,7 @@ describe('MarkingMenuCancelEvent', () => {
       position: [1, 2],
       active: undefined,
       menu: undefined,
+      reason: 'no-selection',
       recognition,
     });
 
@@ -275,6 +280,7 @@ describe('MarkingMenuCancelEvent', () => {
       position: [1, 2],
       active: undefined,
       menu: undefined,
+      reason: 'interrupted',
     });
 
     expect(event.active).toBeUndefined();

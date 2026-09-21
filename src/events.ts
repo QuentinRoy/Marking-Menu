@@ -26,6 +26,16 @@ import type { Point } from './utils.js';
 export type MarkingMenuMode = 'startup' | 'novice' | 'expert' | 'standalone';
 
 /**
+ Why a gesture or menu ended without a selection. `interrupted`: the browser
+ canceled the pointer. `no-selection`: the gesture finished with nothing to
+ select. `dismissed`: a menu shown with `open()` was closed, by `close()`, the
+ Escape key, or Tab.
+ */
+export type MarkingMenuCancelReason<
+  Mode extends MarkingMenuMode = MarkingMenuMode,
+> = Mode extends 'standalone' ? 'dismissed' : 'interrupted' | 'no-selection';
+
+/**
  One piece of a stroke, between two corners.
 
  Its shape and meaning are covered by semver: a recognizer change that moves
@@ -399,18 +409,21 @@ export class MarkingMenuCancelEvent<
 
   readonly #active: ModelItems<Model> | undefined;
   readonly #menu: ModelMenus<Model> | undefined;
+  readonly #reason: MarkingMenuCancelReason<Mode>;
   readonly #recognition: MarkingMenuRecognition | undefined;
 
   declare readonly type: 'cancel';
 
   constructor(
     data: ActiveMenuData<Model, Mode> & {
+      readonly reason: MarkingMenuCancelReason<Mode>;
       readonly recognition?: MarkingMenuRecognition | undefined;
     },
   ) {
     super(MarkingMenuCancelEvent.type, data);
     this.#active = data.active;
     this.#menu = data.menu;
+    this.#reason = data.reason;
     this.#recognition = data.recognition;
   }
 
@@ -429,8 +442,15 @@ export class MarkingMenuCancelEvent<
   }
 
   /**
-   The recognition that found nothing, or `undefined` when none ran: a
-   canceled pointer, or a novice release, recognizes nothing.
+  Why the gesture or menu ended without a selection.
+  */
+  get reason(): MarkingMenuCancelReason<Mode> {
+    return this.#reason;
+  }
+
+  /**
+   The recognition that found nothing, or `undefined` when none ran: an
+   `interrupted` gesture, or a novice release, recognizes nothing.
    */
   get recognition(): MarkingMenuRecognition | undefined {
     return this.#recognition;

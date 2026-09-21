@@ -86,6 +86,7 @@ const cancelStandalone = new MarkingMenuCancelEvent<typeof model, 'standalone'>(
     position: undefined,
     active: undefined,
     menu: model,
+    reason: 'dismissed',
   },
 );
 const selectStandalone = new MarkingMenuSelectEvent<typeof model, 'standalone'>(

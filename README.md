@@ -106,7 +106,7 @@ Use `menu.on(type, listener)` to register a listener and `menu.off(type, listene
 | `select` | A gesture, or a menu shown with `open()`, ends with a selected item. |
 | `cancel` | A gesture, or a menu shown with `open()`, ends without a selection.  |
 
-`select` carries the selected item as `event.selection`, including its `id` and `label`.
+`select` carries the selected item as `event.selection`, including its `id` and `label`. `cancel` carries `event.reason`: `no-selection` when a gesture ends with nothing to select, `interrupted` when the browser cancels the pointer, or `dismissed` when `close()`, Escape, or Tab closes a menu shown with `open()`.
 
 Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close) instead of a gesture, and operated with the keyboard. Every event also includes `position`, a viewport `[x, y]` pair, except in `standalone` mode, where no pointer is involved and it is `undefined`. Checking `mode` narrows `position` in TypeScript:
 

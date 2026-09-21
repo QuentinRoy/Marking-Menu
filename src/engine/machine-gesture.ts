@@ -2,6 +2,7 @@ import {
   MarkingMenuCancelEvent,
   MarkingMenuMoveEvent,
   MarkingMenuSelectEvent,
+  type MarkingMenuCancelReason,
   type MarkingMenuMode,
   type MarkingMenuRecognition,
 } from '../events.js';
@@ -135,9 +136,8 @@ function terminationContext(
 /**
  Shared tail of every action that ends a gesture: `up`, `cancel`, and the
  expert dwell that finds nothing to switch to. Announce `feedback`, then
- `select` or `cancel` depending on whether a selection was found. The latter
- two callers always pass an undefined `selection`, since neither ever attempts
- one.
+ `select` or `cancel` depending on `outcome`: the leaf that was selected, or
+ why nothing was. The latter two callers never attempt a selection.
  */
 export function emitTermination(
   emit: {
@@ -151,7 +151,7 @@ export function emitTermination(
     stroke,
     menu,
     active,
-    selection,
+    outcome,
     recognition,
   }: {
     readonly from: Exclude<MarkingMenuMode, 'standalone'>;
@@ -159,13 +159,19 @@ export function emitTermination(
     readonly stroke: readonly Point[];
     readonly menu: ModelMenu | undefined;
     readonly active: ModelItem | undefined;
-    readonly selection: ModelLeaf | undefined;
+    readonly outcome:
+      | { readonly selection: ModelLeaf }
+      | {
+          readonly reason: MarkingMenuCancelReason<
+            Exclude<MarkingMenuMode, 'standalone'>
+          >;
+        };
     // Present exactly when recognition ran for this termination.
     readonly recognition: MarkingMenuRecognition | undefined;
   },
 ): void {
-  emit('feedback', { stroke, canceled: selection === undefined });
-  if (selection === undefined) {
+  emit('feedback', { stroke, canceled: 'reason' in outcome });
+  if ('reason' in outcome) {
     emit(
       'cancel',
       new MarkingMenuCancelEvent<ModelNode>({
@@ -173,6 +179,7 @@ export function emitTermination(
         position,
         active,
         menu,
+        reason: outcome.reason,
         recognition,
       }),
     );
@@ -182,7 +189,7 @@ export function emitTermination(
       new MarkingMenuSelectEvent({
         mode: from,
         position,
-        selection,
+        selection: outcome.selection,
         menu,
         recognition,
       }),
@@ -242,7 +249,8 @@ export function releaseGesture({
     stroke,
     menu,
     active,
-    selection,
+    outcome:
+      selection === undefined ? { reason: 'no-selection' } : { selection },
     recognition,
   });
 }
@@ -267,7 +275,7 @@ export function cancelGesture({
     stroke,
     menu,
     active,
-    selection: undefined,
+    outcome: { reason: 'interrupted' },
     recognition: undefined,
   });
 }
