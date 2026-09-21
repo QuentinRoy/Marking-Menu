@@ -97,14 +97,14 @@ Use `log: { error: handler }` to handle internal errors; the default is `console
 
 Use `menu.on(type, listener)` to register a listener and `menu.off(type, listener)` to remove that same listener.
 
-| Event    | When it fires                                                |
-| -------- | ------------------------------------------------------------ |
-| `start`  | A gesture begins.                                            |
-| `open`   | A menu or submenu opens, or a standalone menu shows a level. |
-| `move`   | The pointer moves during a gesture.                          |
-| `change` | The active item changes while a menu is open.                |
-| `select` | A gesture or standalone menu ends with a selected item.      |
-| `cancel` | A gesture or standalone menu ends without a selection.       |
+| Event    | When it fires                                                        |
+| -------- | -------------------------------------------------------------------- |
+| `start`  | A gesture begins.                                                    |
+| `open`   | A menu or submenu opens, or `open()` displays one.                   |
+| `move`   | The pointer moves during a gesture.                                  |
+| `change` | The active item changes while a menu is open.                        |
+| `select` | A gesture, or a menu shown with `open()`, ends with a selected item. |
+| `cancel` | A gesture, or a menu shown with `open()`, ends without a selection.  |
 
 `select` carries the selected item as `event.selection`, including its `id` and `label`.
 
@@ -118,7 +118,7 @@ menu.on('cancel', (event) => {
 });
 ```
 
-`open`, `select`, and `cancel` events also include `recognition` when the recognizer ran on a stroke, and `undefined` otherwise. It holds `stroke`, the points the recognizer was given, and `analysis`, how it cut them: `articulationPoints`, the corners of the stroke, and `segments`, the pieces between corners, each with the two `points` it spans. All points are in viewport pixels. The shape and meaning of `recognition` follow semver. See [the event types](src/events.ts) for each payload.
+`open`, `select`, and `cancel` events also include `recognition` when the recognizer ran on a stroke, and `undefined` otherwise. It holds `stroke`, the points the recognizer was given, and `analysis`, how it cut them: `articulationPoints`, the corners of the stroke, and `segments`, the pieces between corners, each with the two `points` it spans. All points are in viewport pixels. See [the event types](src/events.ts) for each payload.
 
 `dispose()` ends the controller's lifetime and can be called more than once. The controller also supports `using` where your toolchain supports it.
 

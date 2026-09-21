@@ -90,8 +90,6 @@ export function resolveEngineOptions(
 
 /**
  What {@link MarkingMenuController.open} accepts.
-
- Its shape and meaning are covered by semver.
  */
 export type MarkingMenuOpenOptions = {
   /**
