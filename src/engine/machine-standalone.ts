@@ -114,6 +114,7 @@ export function cancelStandalone({
       position: undefined,
       active,
       menu: currentMenu(menus),
+      reason: 'dismissed',
     }),
   );
 }

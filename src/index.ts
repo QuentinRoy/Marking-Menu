@@ -1,5 +1,6 @@
 export {
   MarkingMenuCancelEvent,
+  type MarkingMenuCancelReason,
   MarkingMenuChangeEvent,
   type MarkingMenuEvent,
   MarkingMenuEventBase,
