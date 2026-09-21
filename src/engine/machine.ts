@@ -636,7 +636,7 @@ export const navigationMachine = machine({
         stroke,
         menu: undefined,
         active: undefined,
-        selection: undefined,
+        outcome: { reason: 'no-selection' },
         recognition: toRecognition(stroke, fromData.analysis),
       });
     },
