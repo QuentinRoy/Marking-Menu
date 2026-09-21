@@ -1,5 +1,5 @@
 /**
-@import { MarkingMenuInput, MarkingMenuItemInput } from '../../src/types.js';
+@import { MarkingMenuInput, MarkingMenuItemInput } from 'marking-menu';
 */
 
 /*

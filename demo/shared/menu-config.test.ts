@@ -1,5 +1,5 @@
+import type { MarkingMenuInput } from 'marking-menu';
 import { describe, expect, it } from 'vitest';
-import type { MarkingMenuInput } from '../../src/types.js';
 import { readMenuConfig, writeMenuConfig } from './menu-config.js';
 
 const menu: MarkingMenuInput = {

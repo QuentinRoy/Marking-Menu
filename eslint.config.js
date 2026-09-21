@@ -130,6 +130,27 @@ export default defineConfig([
     },
   },
   {
+    // The demo and the end-to-end tests run against the build, so they must
+    // import `marking-menu`: that is where both their behavior and their types
+    // come from. The playground still imports the source. Linting them reads
+    // `dist/`, which is why `yarn lint` builds first.
+    files: ['demo/**', 'e2e/**'],
+    ignores: ['demo/playground/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/src/**'],
+              message: 'Import from `marking-menu`, not from the source.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['e2e/fixture/**'],
     rules: {
       // The fixture is a test harness, not a public page: it has no
