@@ -11,9 +11,9 @@
     // The fixture imports `marking-menu` as a bare specifier, resolved at
     // runtime through the browser import map (see `e2e/fixture/index.html`)
     // rather than from `node_modules` (the package doesn't depend on
-    // itself). Point the type-checker at the same source the map ultimately
-    // serves, unbundled.
-    "paths": { "marking-menu": ["../src/index.ts"] }
+    // itself). Type it from the declaration bundle next to the build the map
+    // serves, so a type missing from what we publish fails here too.
+    "paths": { "marking-menu": ["../dist/marking-menu.d.ts"] }
   },
   "include": ["**/*.ts"]
 }

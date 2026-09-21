@@ -1,3 +1,5 @@
+// This fixture tests the layout on its own, which the package does not export.
+// eslint-disable-next-line no-restricted-imports
 import { createMenu } from '../../src/layout/menu.js';
 
 const surface = document.querySelector('#surface');
