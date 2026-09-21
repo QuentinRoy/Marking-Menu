@@ -6,7 +6,9 @@
     "types": ["vite/client"],
     // Pulls in `demo/shared/menu-config.js`'s inferred types: that module
     // is native JS (see `demo/tsconfig.json`), not part of this project.
-    "allowJs": true
+    "allowJs": true,
+    // Typecheck the playground against published declarations.
+    "paths": { "marking-menu": ["../../dist/marking-menu.d.ts"] }
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }

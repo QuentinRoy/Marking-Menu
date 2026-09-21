@@ -1,3 +1,4 @@
+import { createMarkingMenu, type MarkingMenuInput } from 'marking-menu';
 import {
   useCallback,
   useEffect,
@@ -5,7 +6,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { MarkingMenuInput } from '../../src/types.js';
 import {
   DEFAULT_MENU,
   readMenuConfig,
@@ -26,15 +26,9 @@ import {
   LiveSurface,
   type GestureResult,
 } from './live-surface.js';
-import {
-  buildMenuModel,
-  nodeAt,
-  stepsAlong,
-  type MenuModel,
-  type MenuStep,
-} from './menu-model.js';
 import { validateMenuSource } from './menu-schema.js';
 import { formatMenu } from './menu-source.js';
+import { itemsAt, stepsAlong, type MenuStep } from './menu-tree.js';
 
 const REPOSITORY_URL = 'https://github.com/QuentinRoy/Marking-Menu';
 
@@ -42,7 +36,17 @@ const REPOSITORY_URL = 'https://github.com/QuentinRoy/Marking-Menu';
 // what it does.
 const COPIED_FEEDBACK_MS = 1600;
 
-type Applied = { menu: MarkingMenuInput; model: MenuModel };
+// Only the library validates duplicate ids, so build a detached menu to
+// surface its error.
+function checkMenu(menu: MarkingMenuInput): string | undefined {
+  const parent = document.createElement('div');
+  try {
+    createMarkingMenu({ parent, ...menu }).dispose();
+    return undefined;
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+}
 
 /**
 The two things the right pane can show, and the names its tabs go by.
@@ -59,35 +63,41 @@ function isMode(value: string): value is Mode {
 
 /**
  The menu the page opens on: the one the address names, or the demo's own.
-
- @returns The menu and its model.
  */
-function initialMenu(): Applied {
+function initialMenu(): MarkingMenuInput {
   const shared = readMenuConfig(location.search);
-  const fromAddress = shared === undefined ? undefined : buildMenuModel(shared);
-  if (shared !== undefined && fromAddress?.ok === true) {
-    return { menu: shared, model: fromAddress.model };
+  if (shared !== undefined && checkMenu(shared) === undefined) {
+    return shared;
   }
 
-  const fallback = buildMenuModel(DEFAULT_MENU);
-  if (!fallback.ok) {
-    throw new Error(`The default menu does not build: ${fallback.message}`);
+  const defaultError = checkMenu(DEFAULT_MENU);
+  if (defaultError !== undefined) {
+    throw new Error(`The default menu does not build: ${defaultError}`);
   }
 
-  return { menu: DEFAULT_MENU, model: fallback.model };
+  return DEFAULT_MENU;
 }
 
 export function App() {
-  const [applied, setApplied] = useState<Applied>(initialMenu);
-  const [source, setSource] = useState(() => formatMenu(applied.menu));
+  const [menu, setMenu] = useState<MarkingMenuInput>(initialMenu);
+  const [source, setSource] = useState(() => formatMenu(menu));
   const [status, setStatus] = useState('');
   const [mode, setMode] = useState<Mode>('live');
   const [focusPath, setFocusPath] = useState<readonly number[]>([]);
+  // `focusPath` plus however deep the standalone menu's own keyboard nav
+  // has taken it.
+  const [displayedPath, setDisplayedPath] = useState<readonly number[]>([]);
   // Off to begin with: the mark as the menu drew it is what a reader wants
   // to see first; the breakdown is for when they ask how it was read.
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [result, setResult] = useState<GestureResult>(IDLE_RESULT);
   const [copied, setCopied] = useState(false);
+
+  // Resets `displayedPath` too: a new level starts unnavigated.
+  const setLevel = useCallback((path: readonly number[]) => {
+    setFocusPath(path);
+    setDisplayedPath(path);
+  }, []);
 
   /**
    Take the editor's text as the new truth: show it, and, if it describes a
@@ -95,35 +105,34 @@ export function App() {
    Text that does not is kept on screen with the reason under it, so an edit
    in progress is never thrown away.
    */
-  const applySource = useCallback((next: string) => {
-    setSource(next);
-    const parsed = validateMenuSource(next);
-    if (!parsed.ok) {
-      setStatus(parsed.message);
-      return;
-    }
+  const applySource = useCallback(
+    (next: string) => {
+      setSource(next);
+      const parsed = validateMenuSource(next);
+      if (!parsed.ok) {
+        setStatus(parsed.message);
+        return;
+      }
 
-    const built = buildMenuModel(parsed.menu);
-    if (!built.ok) {
-      setStatus(built.message);
-      return;
-    }
+      const error = checkMenu(parsed.menu);
+      if (error !== undefined) {
+        setStatus(error);
+        return;
+      }
 
-    setStatus('');
-    setApplied({ menu: parsed.menu, model: built.model });
-    // A different menu is a different tree: the level the layout was
-    // looking at is not necessarily there any more.
-    setFocusPath([]);
-    setResult(IDLE_RESULT);
-  }, []);
+      setStatus('');
+      setMenu(parsed.menu);
+      // A different menu is a different tree: the level the layout was
+      // looking at is not necessarily there any more.
+      setLevel([]);
+      setResult(IDLE_RESULT);
+    },
+    [setLevel],
+  );
 
   useEffect(() => {
-    history.replaceState(
-      undefined,
-      '',
-      writeMenuConfig(location.search, applied.menu),
-    );
-  }, [applied]);
+    history.replaceState(undefined, '', writeMenuConfig(location.search, menu));
+  }, [menu]);
 
   // The back button, onto an address carrying a different menu: the editor
   // takes that menu, even mid-edit. The address is the shared thing.
@@ -154,7 +163,7 @@ export function App() {
   );
 
   const onCopy = () => {
-    const url = `${location.origin}${location.pathname}${writeMenuConfig(location.search, applied.menu)}`;
+    const url = `${location.origin}${location.pathname}${writeMenuConfig(location.search, menu)}`;
     void navigator.clipboard?.writeText(url).catch(() => {
       // A refused clipboard is not worth interrupting the page over; the
       // address bar already holds the same link.
@@ -170,12 +179,12 @@ export function App() {
   };
 
   const showLayoutAt = (path: readonly number[]) => {
-    setFocusPath(path);
+    setLevel(path);
     setMode('layout');
   };
 
   const isLive = mode === 'live';
-  const focusedCount = nodeAt(applied.model, focusPath).items.length;
+  const displayedCount = itemsAt(menu, displayedPath).length;
 
   return (
     <div className="flex min-h-dvh flex-col items-stretch wide:h-dvh wide:flex-row wide:overflow-hidden">
@@ -216,7 +225,7 @@ export function App() {
             // mid-edit would move the caret out from under the typist.
             onBlur={() => {
               if (status === '') {
-                applySource(formatMenu(applied.menu));
+                applySource(formatMenu(menu));
               }
             }}
           />
@@ -235,7 +244,7 @@ export function App() {
           <Button variant="outline" className="text-quiet" asChild>
             {/* The demo page reads the same parameter, so this carries the
                 menu across rather than dropping the reader on the default. */}
-            <a href={`../${writeMenuConfig('', applied.menu)}`}>Demo</a>
+            <a href={`../${writeMenuConfig('', menu)}`}>Demo</a>
           </Button>
           <Button variant="outline" className="text-quiet" asChild>
             <a href={REPOSITORY_URL}>GitHub</a>
@@ -291,8 +300,7 @@ export function App() {
 
         <TabsContent value="live" className="flex min-h-0 flex-1 flex-col">
           <LiveSurface
-            menu={applied.menu}
-            model={applied.model}
+            menu={menu}
             showBreakdown={showBreakdown}
             onResult={setResult}
           />
@@ -309,18 +317,18 @@ export function App() {
 
         <TabsContent value="layout" className="flex min-h-0 flex-1 flex-col">
           <LayoutSurface
-            model={applied.model}
-            focusPath={focusPath}
-            onFocus={setFocusPath}
+            menu={menu}
+            basePath={focusPath}
+            onDisplayedPathChange={setDisplayedPath}
           />
-          <Footer metrics={`${focusedCount} item(s) at this level`}>
+          <Footer metrics={`${displayedCount} item(s) at this level`}>
             <Path
               steps={[
                 { label: 'Top level', path: [], isLeaf: false },
-                ...stepsAlong(applied.model, focusPath),
+                ...stepsAlong(menu, displayedPath),
               ]}
-              current={focusPath.length}
-              onSelect={setFocusPath}
+              current={displayedPath.length}
+              onSelect={setLevel}
             />
           </Footer>
         </TabsContent>

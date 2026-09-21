@@ -130,12 +130,10 @@ export default defineConfig([
     },
   },
   {
-    // The demo and the end-to-end tests run against the build, so they must
-    // import `marking-menu`: that is where both their behavior and their types
-    // come from. The playground still imports the source. Linting them reads
-    // `dist/`, which is why `yarn lint` builds first.
+    // The demo, the playground and the end-to-end tests all run against the
+    // build, so they import `marking-menu`, never `src/`. Linting reads
+    // `dist/`, hence `yarn lint` builds first.
     files: ['demo/**', 'e2e/**'],
-    ignores: ['demo/playground/**'],
     rules: {
       'no-restricted-imports': [
         'error',
