@@ -97,20 +97,45 @@ Use `log: { error: handler }` to handle internal errors; the default is `console
 
 Use `menu.on(type, listener)` to register a listener and `menu.off(type, listener)` to remove that same listener.
 
-| Event    | When it fires                                 |
-| -------- | --------------------------------------------- |
-| `start`  | A gesture begins.                             |
-| `open`   | A menu or submenu opens.                      |
-| `move`   | The pointer moves during a gesture.           |
-| `change` | The active item changes while a menu is open. |
-| `select` | A gesture ends with a selected item.          |
-| `cancel` | A gesture ends without a selection.           |
+| Event    | When it fires                                                        |
+| -------- | -------------------------------------------------------------------- |
+| `start`  | A gesture begins.                                                    |
+| `open`   | A menu or submenu opens, or `open()` displays one.                   |
+| `move`   | The pointer moves during a gesture.                                  |
+| `change` | The active item changes while a menu is open.                        |
+| `select` | A gesture, or a menu shown with `open()`, ends with a selected item. |
+| `cancel` | A gesture, or a menu shown with `open()`, ends without a selection.  |
 
 `select` carries the selected item as `event.selection`, including its `id` and `label`.
 
-Every event includes `position`, a viewport `[x, y]` pair, and `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, or `expert` while drawing a gesture. See [the event types](src/events.ts) for each payload.
+Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close) instead of a gesture, and operated with the keyboard. Every event also includes `position`, a viewport `[x, y]` pair, except in `standalone` mode, where no pointer is involved and it is `undefined`. Checking `mode` narrows `position` in TypeScript:
+
+```js
+menu.on('cancel', (event) => {
+  if (event.mode !== 'standalone') {
+    const [x, y] = event.position;
+  }
+});
+```
+
+`open`, `select`, and `cancel` events also include `recognition` when the recognizer ran on a stroke, and `undefined` otherwise. It holds `stroke`, the points the recognizer was given, and `analysis`, how it cut them: `articulationPoints`, the corners of the stroke, and `segments`, the pieces between corners, each with the two `points` it spans. All points are in viewport pixels. See [the event types](src/events.ts) for each payload.
 
 `dispose()` ends the controller's lifetime and can be called more than once. The controller also supports `using` where your toolchain supports it.
+
+### `open()` and `close()`
+
+`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut, and lets the [keyboard](#keyboard) operate it. This is a standalone menu. `menu.close()` closes it and fires `cancel`. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input goes to the page and starts no gesture until the menu closes, by selection, cancellation, or `close()`.
+
+| Option     | Default              | Purpose                                                                                            |
+| ---------- | -------------------- | -------------------------------------------------------------------------------------------------- |
+| `position` | Center of the parent | Where the menu is centered, in viewport pixels. Read once: the menu does not follow.               |
+| `focus`    | `true`               | Whether the menu takes focus. With `false` the menu is only displayed, see [below](#display-only). |
+
+Events from a standalone menu have `mode: 'standalone'`. The menu fires `open` for the root and again each time the keyboard enters or leaves a submenu, `change` as the active item changes, then `select` or `cancel`. It never fires `start` or `move`.
+
+### Display only
+
+`menu.open({ focus: false })` only draws the menu. Focus stays where it is, the first item is reachable with Tab, and closing gives no focus back. Close it with `close()`, or with the keyboard once an item has focus.
 
 ## Item layout
 
@@ -263,21 +288,59 @@ While dwelling before novice mode opens, whether at the start of a gesture or pa
 
 ## Input behavior
 
-Gestures start with the primary mouse button, primary touch contact, or primary pen contact. The controller sets the parent's inline `touch-action` to `none !important` for its lifetime, preventing browser touch gestures in that area.
+Gestures start with the primary mouse button, primary touch contact, or primary pen contact. The controller sets the parent's inline `touch-action` to `none !important` for its lifetime, preventing browser touch gestures in that area. It lets go while a menu shown with [`open()`](#open-and-close) is displayed.
 
 Once all controllers sharing the parent are disposed, the previous inline value and priority are restored, unless your application changed the property in the meantime.
 
 ## Accessibility
 
-The menu container gets `role="menu"` and each item gets `role="menuitem"`, with its accessible name taken from the item's own label text. Non-leaf items get `aria-haspopup="menu"`. Wedges, connectors, the stroke, and the opening indicator are hidden from the accessibility tree; they are visual feedback, not content.
+The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections.
 
-In novice mode, focus moves to the menu container when it opens and to each item as it becomes active, so a screen reader speaks the active item's label. Focus returns to whatever had it before the gesture once the gesture ends, whether by selection or cancellation. Expert-mode gestures move too fast for this to help and never move focus.
+### Roles and names
 
-The menu also respects `prefers-reduced-motion` (the opening indicator fades in instead of growing) and `forced-colors` (wedges, connectors, the stroke, and the indicator switch to system colors), and its wedges and plates support an inset outline for extra contrast against the host page; see [Fill and outline colors](#fill-and-outline-colors).
+The menu container has `role="menu"`, and each item has `role="menuitem"` and takes its accessible name from its label text. Items with a submenu also have `aria-haspopup="menu"`. Wedges, connectors, the stroke, and the opening indicator are hidden from the accessibility tree; they are visual feedback, not content.
 
-A marking menu is a gesture technique and will not gain keyboard support. If an action must stay reachable without performing a gesture, provide that path yourself, outside the menu.
+The menu container has no accessible name yet. It cannot take one from an element on your page, because ID references such as `aria-labelledby` cannot cross its shadow root.
 
-The `select` event is not an announcement. Announce it yourself, for example with a live region:
+### Gestures
+
+When the menu is visible (novice mode), focus moves to the menu container as it opens, then to each item as it becomes active, so a screen reader speaks the item's label. When the gesture ends, by selection or cancellation, focus returns to the element that had it before the menu opened. Expert-mode gestures move too fast for this to help and never move focus.
+
+Screen reader touch passthrough (VoiceOver's hold, TalkBack's double-tap-and-hold-then-drag) sends touches to the page instead of interpreting them. This works for someone who already knows the item layout, but it does not help them discover the items, and whether the active item is announced mid-gesture is untested. Treat it as a bonus for experienced users. To reach every action without a gesture, see [Keyboard](#keyboard).
+
+### Keyboard
+
+A menu shown with [`open()`](#open-and-close) works with the keyboard. When it opens, focus moves to the first item. The focused item is the active one, so a screen reader speaks each label as you move. When the menu closes, focus returns to the element that had it before. Pass `focus: false` to show the menu without moving focus; see [Display only](#display-only).
+
+| Key           | Action                                                            |
+| ------------- | ----------------------------------------------------------------- |
+| `ArrowDown`   | Focus the next item, clockwise, wrapping around.                  |
+| `ArrowUp`     | Focus the previous item, counterclockwise, wrapping around.       |
+| `Home`, `End` | Focus the first or last item.                                     |
+| `ArrowRight`  | Enter the focused item's submenu. Does nothing on a leaf.         |
+| `Enter`       | Select a leaf, or enter a submenu.                                |
+| `ArrowLeft`   | Go back to the parent menu. Does nothing at the root.             |
+| `Escape`      | Go back to the parent menu, or close the menu from the root.      |
+| `Tab`         | Close the menu from any level and move focus to the next element. |
+
+The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working.
+
+Nothing opens the menu from the keyboard until you call `open()`, for example from a button or a hotkey. A hotkey listener also receives keys pressed inside the open menu. Ignore those, because `open()` throws while a menu is open:
+
+```js
+const parent = document.getElementById('menu-area');
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'm' && !parent.contains(event.target)) {
+    menu.open();
+  }
+});
+```
+
+If an action must stay reachable without a gesture, open the menu from a trigger like this one, or provide another path outside the menu.
+
+### Announcing selections
+
+The `select` event does not announce anything by itself, so announce the selection yourself, for example with a live region:
 
 ```js
 const status = document.querySelector('[aria-live="polite"]');
@@ -286,11 +349,11 @@ menu.on('select', (event) => {
 });
 ```
 
-or use your own pattern.
+### Motion, colors, and contrast
 
-Screen reader touch passthrough (VoiceOver's hold, TalkBack's double-tap-and-hold-then-drag) works for someone who already knows the item layout, but it is not a discovery path, and whether the active item is announced mid-gesture is untested. Treat it as a bonus for experienced users, not a substitute for the command path above.
-
-The menu cannot yet expose a name to the host page, since references cannot cross its shadow root.
+- When the user prefers reduced motion (`prefers-reduced-motion`), the opening indicator fades in instead of growing.
+- In forced colors mode (`forced-colors`), wedges, plates, connectors, the stroke, and the opening indicator use system colors.
+- Wedges and plates have an inset outline by default that helps them stand out against your page. [Fill and outline colors](#fill-and-outline-colors) lists the properties that change it.
 
 ## Upgrading from 0.10.1
 
