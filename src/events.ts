@@ -17,9 +17,11 @@ import type { Point } from './utils.js';
  * -------------------------------------------------------------------------- */
 
 /**
- The mode the menu interaction is in when an event is dispatched: one of the
- stages of a pointer gesture, or `standalone` for a menu opened with the
- controller's `open()` and driven by the keyboard rather than by a gesture.
+ The mode the menu interaction is in when an event is dispatched. A pointer
+ gesture starts in `startup`, then becomes `novice` once the menu is visible
+ or `expert` while a stroke is drawn without one. `standalone` is a menu
+ displayed with the controller's `open()` and operated with the keyboard:
+ no gesture is in progress and no pointer is involved.
  */
 export type MarkingMenuMode = 'startup' | 'novice' | 'expert' | 'standalone';
 
@@ -104,7 +106,8 @@ export abstract class MarkingMenuEventBase<
   }
 
   /**
-  The mode the interaction was in when this event was dispatched.
+  The mode the interaction was in when this event was dispatched. See
+  {@link MarkingMenuMode}.
   */
   get mode(): Mode {
     return this.#mode;

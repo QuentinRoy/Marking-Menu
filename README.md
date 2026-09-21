@@ -108,7 +108,7 @@ Use `menu.on(type, listener)` to register a listener and `menu.off(type, listene
 
 `select` carries the selected item as `event.selection`, including its `id` and `label`.
 
-Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close). Every event also includes `position`, a viewport `[x, y]` pair, except in `standalone` mode, where no pointer is involved and it is `undefined`. Checking `mode` narrows `position` in TypeScript:
+Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close) instead of a gesture, and operated with the keyboard. Every event also includes `position`, a viewport `[x, y]` pair, except in `standalone` mode, where no pointer is involved and it is `undefined`. Checking `mode` narrows `position` in TypeScript:
 
 ```js
 menu.on('cancel', (event) => {
@@ -124,14 +124,14 @@ menu.on('cancel', (event) => {
 
 ### `open()` and `close()`
 
-`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut, and lets the [keyboard](#accessibility) operate it. `menu.close()` closes it and fires `cancel`. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input goes to the page and starts no gesture until the menu closes, by selection, cancellation, or `close()`.
+`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut, and lets the [keyboard](#accessibility) operate it. This is a standalone menu. `menu.close()` closes it and fires `cancel`. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input goes to the page and starts no gesture until the menu closes, by selection, cancellation, or `close()`.
 
 | Option     | Default              | Purpose                                                                                            |
 | ---------- | -------------------- | -------------------------------------------------------------------------------------------------- |
 | `position` | Center of the parent | Where the menu is centered, in viewport pixels. Read once: the menu does not follow.               |
 | `focus`    | `true`               | Whether the menu takes focus. With `false` the menu is only displayed, see [below](#display-only). |
 
-A standalone menu dispatches events with `mode: 'standalone'`. It fires `open` for the root and again each time the keyboard enters or leaves a submenu, `change` as the active item changes, then `select` or `cancel`. It never fires `start` or `move`.
+Events from a standalone menu have `mode: 'standalone'`. The menu fires `open` for the root and again each time the keyboard enters or leaves a submenu, `change` as the active item changes, then `select` or `cancel`. It never fires `start` or `move`.
 
 ### Display only
 
