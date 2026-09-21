@@ -141,10 +141,10 @@
 
   /* The weights the gesture overlay draws with, read by `live-surface.tsx`.
      SVG presentation attributes take numbers rather than lengths, so these
-     are unitless pixels. The mark uses `--mm-stroke-width`, so the overlay
-     matches the menu with the breakdown off. */
-  --stroke-piece-width: 3;
-  --stroke-corner-radius: 4.5;
+     are unitless pixels. */
+  --breakdown-stroke-width: 2;
+  --breakdown-stroke-piece-width: 3;
+  --breakdown-stroke-corner-radius: 4.5;
 }
 
 /* The gesture surface's ground, shared by both modes. */

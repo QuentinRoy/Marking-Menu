@@ -101,21 +101,22 @@ function drawRecognition(
 ): void {
   const style = getComputedStyle(document.documentElement);
   const token = (name: string) => style.getPropertyValue(name).trim();
-  // `parseFloat` over `Number`: `--mm-stroke-width` carries a `px` suffix
-  // for `menu.css`'s own use, which `Number` would reject as NaN.
-  // eslint-disable-next-line unicorn/prefer-number-coercion -- the `px` suffix needs stripping, not rejecting
-  const tokenNumber = (name: string) => Number.parseFloat(token(name));
+  const tokenNumber = (name: string) => Number(token(name));
   const rect = overlay.getBoundingClientRect();
   const toLocal = ([x, y]: Point): Point => [x - rect.left, y - rect.top];
 
   const svg = document.createElementNS(svgNamespace, 'svg');
   svg.setAttribute('aria-hidden', 'true');
 
-  const addPath = (
-    points: readonly Point[],
-    lineColor: string,
-    lineWidth: number,
-  ) => {
+  const addPath = ({
+    points,
+    lineColor,
+    lineWidth,
+  }: {
+    points: readonly Point[];
+    lineColor: string;
+    lineWidth: number;
+  }) => {
     const path = document.createElementNS(svgNamespace, 'path');
     path.setAttribute('d', pathData(points.map((point) => toLocal(point))));
     path.setAttribute('fill', 'none');
@@ -127,27 +128,27 @@ function drawRecognition(
   };
 
   // The mark as the menu drew it, dimmed so the pieces read on top of it.
-  addPath(
-    recognition.stroke,
-    token('--color-stroke-trace'),
-    tokenNumber('--mm-stroke-width'),
-  );
+  addPath({
+    points: recognition.stroke,
+    lineColor: token('--color-stroke-trace'),
+    lineWidth: tokenNumber('--breakdown-stroke-width'),
+  });
 
   // Colors alternate so consecutive pieces stay distinct where they meet.
   const pieceColor = (index: number) =>
     token(index % 2 === 0 ? '--color-mark' : '--color-piece-alt');
   for (const [index, segment] of recognition.analysis.segments.entries()) {
-    addPath(
-      segment.points,
-      pieceColor(index),
-      tokenNumber('--stroke-piece-width'),
-    );
+    addPath({
+      points: segment.points,
+      lineColor: pieceColor(index),
+      lineWidth: tokenNumber('--breakdown-stroke-piece-width'),
+    });
   }
 
   // A fresh circle per corner, unlike the library's shared marker, so every
   // corner stays visible.
   const cornerColor = token('--color-ink');
-  const cornerRadius = tokenNumber('--stroke-corner-radius');
+  const cornerRadius = tokenNumber('--breakdown-stroke-corner-radius');
   for (const point of recognition.analysis.articulationPoints) {
     const [x, y] = toLocal(point);
     const circle = document.createElementNS(svgNamespace, 'circle');
