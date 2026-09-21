@@ -22,8 +22,12 @@ import type {
   MarkingMenuModel,
   MarkingMenuMoveEvent,
   MarkingMenuOpenEvent,
+  MarkingMenuOpenOptions,
+  MarkingMenuRecognition,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
+  MarkingMenuStrokeAnalysis,
+  MarkingMenuStrokeSegment,
   ModelItem,
   ModelItems,
   ModelLeaf,
@@ -59,8 +63,12 @@ export type PublicSurface = [
   MarkingMenuModel<MarkingMenuInput>,
   MarkingMenuMoveEvent<ModelNode>,
   MarkingMenuOpenEvent<ModelNode>,
+  MarkingMenuOpenOptions,
+  MarkingMenuRecognition,
   MarkingMenuSelectEvent<ModelNode>,
   MarkingMenuStartEvent,
+  MarkingMenuStrokeAnalysis,
+  MarkingMenuStrokeSegment,
   ModelItem,
   ModelItems<ModelNode>,
   ModelLeaf,
@@ -87,6 +95,23 @@ mm.on('select', (event) => {
 mm.on('open', (event) => {
   console.log(event.menu.items.length);
 });
+mm.on('cancel', (event) => {
+  if (event.mode === 'standalone') {
+    // Standalone events have no pointer, so `position` is narrowed on `mode`.
+    const noPosition: undefined = event.position;
+    console.log(noPosition);
+  } else {
+    const [x, y] = event.position;
+    console.log(x, y);
+  }
+  const recognition: MarkingMenuRecognition | undefined = event.recognition;
+  const analysis: MarkingMenuStrokeAnalysis | undefined = recognition?.analysis;
+  const segment: MarkingMenuStrokeSegment | undefined = analysis?.segments[0];
+  console.log(segment?.points);
+});
+const openOptions: MarkingMenuOpenOptions = { position: [0, 0], focus: false };
+mm.open(openOptions);
+mm.close();
 mm.dispose();
 
 // Duplicate ids must be a compile error at the consumer call site too.

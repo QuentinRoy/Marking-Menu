@@ -108,9 +108,34 @@ Use `menu.on(type, listener)` to register a listener and `menu.off(type, listene
 
 `select` carries the selected item as `event.selection`, including its `id` and `label`.
 
-Every event includes `position`, a viewport `[x, y]` pair, and `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, or `expert` while drawing a gesture. See [the event types](src/events.ts) for each payload.
+Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close). Every event also includes `position`, a viewport `[x, y]` pair, except in `standalone` mode, where no pointer is involved and it is `undefined`. Check `mode` and TypeScript narrows `position` for you:
+
+```js
+menu.on('cancel', (event) => {
+  if (event.mode !== 'standalone') {
+    const [x, y] = event.position;
+  }
+});
+```
+
+`open`, `select`, and `cancel` events also include `recognition` when the recognizer ran on a stroke, and `undefined` otherwise. It holds `stroke`, the points the recognizer was given, and `analysis`, how it cut them: `articulationPoints`, the corners of the stroke, and `segments`, the pieces between corners, each with the two `points` it spans. All points are in client coordinates (pixels). The shape and meaning of `recognition` follow semver. See [the event types](src/events.ts) for each payload.
 
 `dispose()` ends the controller's lifetime and can be called more than once. The controller also supports `using` where your toolchain supports it.
+
+### `open()` and `close()`
+
+`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut, and lets the [keyboard](#accessibility) operate it. `menu.close()` closes it and fires `cancel`. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input goes to the page and starts no gesture until the menu closes, by selection, cancellation, or `close()`.
+
+| Option     | Default              | Purpose                                                                                            |
+| ---------- | -------------------- | -------------------------------------------------------------------------------------------------- |
+| `position` | Center of the parent | Where the menu is centered, in client coordinates (pixels). Read once: the menu does not follow.   |
+| `focus`    | `true`               | Whether the menu takes focus. With `false` the menu is only displayed, see [below](#display-only). |
+
+A standalone menu dispatches events with `mode: 'standalone'`. It fires `open` for the root and again each time the keyboard enters or leaves a submenu, `change` as the active item changes, then `select` or `cancel`. It never fires `start` or `move`.
+
+#### Display only
+
+`menu.open({ focus: false })` only draws the menu. Focus stays where it is, the first item is reachable with Tab, and closing gives no focus back. Close it with `close()`, or with the keyboard once an item has focus.
 
 ## Item layout
 
@@ -275,7 +300,20 @@ In novice mode, focus moves to the menu container when it opens and to each item
 
 The menu also respects `prefers-reduced-motion` (the opening indicator fades in instead of growing) and `forced-colors` (wedges, connectors, the stroke, and the indicator switch to system colors), and its wedges and plates support an inset outline for extra contrast against the host page; see [Fill and outline colors](#fill-and-outline-colors).
 
-A marking menu is a gesture technique and will not gain keyboard support. If an action must stay reachable without performing a gesture, provide that path yourself, outside the menu.
+A gesture is a pointer technique, but a menu shown with [`open()`](#open-and-close) works with the keyboard. It takes focus when it opens, puts it on the first item, and gives it back to the previous element when it closes. Focused items are the active ones, so a screen reader speaks each label as you move.
+
+| Key           | Action                                                   |
+| ------------- | -------------------------------------------------------- |
+| `ArrowDown`   | Focus the next item, clockwise, wrapping around.         |
+| `ArrowUp`     | Focus the previous item, wrapping around.                |
+| `Home`, `End` | Focus the first or last item.                            |
+| `ArrowRight`  | Enter the focused item's submenu.                        |
+| `Enter`       | Select a leaf, or enter a submenu.                       |
+| `ArrowLeft`   | Go back to the parent menu.                              |
+| `Escape`      | Go back to the parent menu, or close from the root menu. |
+| `Tab`         | Close the menu from any level and let focus move on.     |
+
+Keys pressed with `Ctrl`, `Alt`, or `Meta` are left to the page. If an action must stay reachable without a gesture, offer a button that calls `open()`, or provide another path outside the menu.
 
 The `select` event is not an announcement. Announce it yourself, for example with a live region:
 

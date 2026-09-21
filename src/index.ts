@@ -8,10 +8,16 @@ export {
   type MarkingMenuMode,
   MarkingMenuMoveEvent,
   MarkingMenuOpenEvent,
+  type MarkingMenuRecognition,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
+  type MarkingMenuStrokeAnalysis,
+  type MarkingMenuStrokeSegment,
 } from './events.js';
-export type { MarkingMenuController } from './engine/controller.js';
+export type {
+  MarkingMenuController,
+  MarkingMenuOpenOptions,
+} from './engine/controller.js';
 export {
   createMarkingMenu,
   type MarkingMenuConfig,
