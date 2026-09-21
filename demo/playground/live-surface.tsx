@@ -21,10 +21,6 @@ const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 // release, not a gesture worth reporting on.
 const CLICK_MOVEMENT_PX = 8;
 
-/**
- What a finished gesture left on screen: the path it selected, or the
- sentence saying why it selected nothing, plus what the recognizer did.
- */
 export type GestureResult = {
   readonly steps: readonly MenuStep[] | undefined;
   readonly message: string;
@@ -167,8 +163,7 @@ export function LiveSurface({
   const svgRef = useRef<SVGSVGElement | undefined>(undefined);
   const strokeRef = useRef<Point[]>([]);
   const interruptedRef = useRef(false);
-  // Last recognition to redraw from; undefined when the recognizer had no
-  // part (see decidedBy).
+  // Save the latest recognition so the breakdown can be toggled.
   const recognitionRef = useRef<MarkingMenuRecognition | undefined>(undefined);
   const latestRef = useLatest({ menu, showBreakdown, onResult });
 

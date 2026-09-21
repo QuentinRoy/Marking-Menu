@@ -3,12 +3,6 @@ import { useEffect, useRef } from 'react';
 import { pathToNode, subtreeAt } from './menu-tree.js';
 import { useLatest } from './use-latest.js';
 
-/*
- Opens the shipped menu standalone (`open({ focus: false })`) on the subtree
- rooted at `basePath`. The library owns layout, keyboard nav and submenus;
- this file just keeps it open and reports the level it's showing.
- */
-
 export function LayoutSurface({
   menu,
   basePath,
@@ -35,8 +29,7 @@ export function LayoutSurface({
       ...subtreeAt(menu, basePath),
     });
 
-    // `close()` (called on resize, below) fires `cancel` too; skip it once
-    // so the listener doesn't reopen a second time.
+    // Ignore the `cancel` emitted by a resize close.
     let shouldSkipNextCancel = false;
 
     // The preview never really closes: it reopens at its base level

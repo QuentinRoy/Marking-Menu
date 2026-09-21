@@ -84,13 +84,7 @@ export function stepsAlong(
   return steps;
 }
 
-/**
- A node's path, read off the library's own `parent` chain rather than
- tracked separately: its sibling index in `parent.items`, root to node.
- Positional by construction, like the library's own keys (`src/model.ts`),
- which is what lets an event address an item in the raw menu this page
- built it from.
- */
+// Read a node's positional path from its parent chain.
 export function pathToNode(node: ModelNode): number[] {
   const path: number[] = [];
   let current = node;

@@ -36,11 +36,8 @@ const REPOSITORY_URL = 'https://github.com/QuentinRoy/Marking-Menu';
 // what it does.
 const COPIED_FEEDBACK_MS = 1600;
 
-/**
- The schema can't express that ids are unique, so this is the only check for
- a duplicate: build the menu for real, on a detached element, and report
- what only the library throws for.
- */
+// Only the library validates duplicate ids, so build a detached menu to
+// surface its error.
 function checkMenu(menu: MarkingMenuInput): string | undefined {
   const parent = document.createElement('div');
   try {

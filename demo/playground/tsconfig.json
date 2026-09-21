@@ -7,9 +7,7 @@
     // Pulls in `demo/shared/menu-config.js`'s inferred types: that module
     // is native JS (see `demo/tsconfig.json`), not part of this project.
     "allowJs": true,
-    // Resolved through the import map (`index.html`), like
-    // `demo/tsconfig.json`. Typed from the built declarations, so a type
-    // missing from what we publish fails here too.
+    // Typecheck the playground against published declarations.
     "paths": { "marking-menu": ["../../dist/marking-menu.d.ts"] }
   },
   "include": ["**/*.ts", "**/*.tsx"]
