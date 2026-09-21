@@ -28,8 +28,8 @@ export type MarkingMenuMode = 'startup' | 'novice' | 'expert' | 'standalone';
 /**
  Why a gesture or menu ended without a selection. `interrupted`: the browser
  canceled the pointer. `no-selection`: the gesture finished with nothing to
- select. `dismissed`: a menu shown with `open()` was closed, by `close()` or
- the Escape key.
+ select. `dismissed`: a menu shown with `open()` was closed, by `close()`, the
+ Escape key, or Tab.
  */
 export type MarkingMenuCancelReason<
   Mode extends MarkingMenuMode = MarkingMenuMode,
