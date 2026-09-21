@@ -1,6 +1,6 @@
 import { createMarkingMenu, type MarkingMenuInput } from 'marking-menu';
 import { useEffect, useRef } from 'react';
-import { pathToNode, subtreeAt } from './menu-tree.js';
+import { itemsAt, pathToNode } from './menu-tree.js';
 import { useLatest } from './use-latest.js';
 
 export function LayoutSurface({
@@ -26,11 +26,8 @@ export function LayoutSurface({
 
     const controller = createMarkingMenu({
       parent,
-      ...subtreeAt(menu, basePath),
+      items: itemsAt(menu, basePath),
     });
-
-    // Ignore the `cancel` emitted by a resize close.
-    let shouldSkipNextCancel = false;
 
     // The preview never really closes: it reopens at its base level
     // whatever ends it.
@@ -46,23 +43,14 @@ export function LayoutSurface({
       ]);
     });
     controller.on('select', reopen);
-    controller.on('cancel', () => {
-      if (shouldSkipNextCancel) {
-        shouldSkipNextCancel = false;
-        return;
-      }
-
-      reopen();
-    });
+    controller.on('cancel', reopen);
 
     reopen();
 
     // Anchored at a pixel centre, so a resize needs a close+reopen, not a
-    // restyle.
+    // restyle: closing cancels, and cancelling reopens.
     const observer = new ResizeObserver(() => {
-      shouldSkipNextCancel = true;
       controller.close();
-      reopen();
     });
     observer.observe(parent);
 

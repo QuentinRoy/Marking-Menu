@@ -37,16 +37,6 @@ export function itemsAt(
 }
 
 /**
-The subtree of `menu` rooted at `path`, as a menu of its own.
-*/
-export function subtreeAt(
-  menu: MarkingMenuInput,
-  path: readonly number[],
-): MarkingMenuInput {
-  return { items: itemsAt(menu, path) };
-}
-
-/**
 One step of a path, as the footer's chips and breadcrumb show it.
 */
 export type MenuStep = {
@@ -84,7 +74,9 @@ export function stepsAlong(
   return steps;
 }
 
-// Read a node's positional path from its parent chain.
+/**
+A node's positional path, read from its parent chain.
+*/
 export function pathToNode(node: ModelNode): number[] {
   const path: number[] = [];
   let current = node;
