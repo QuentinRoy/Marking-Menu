@@ -16,9 +16,33 @@ const menu = createModel({
 });
 type Model = typeof menu;
 
+const recognition = {
+  stroke: [
+    [0, 0],
+    [10, 0],
+  ],
+  analysis: {
+    articulationPoints: [
+      [0, 0],
+      [10, 0],
+    ],
+    segments: [
+      {
+        points: [
+          [0, 0],
+          [10, 0],
+        ],
+      },
+    ],
+  },
+} as const;
+
 describe('MarkingMenuStartEvent', () => {
   it('carries the mode and position it was constructed with', () => {
-    const event = new MarkingMenuStartEvent({ position: [10, 20] });
+    const event = new MarkingMenuStartEvent({
+      mode: 'startup',
+      position: [10, 20],
+    });
 
     expect(event.type).toBe('start');
     expect(event.mode).toBe('startup');
@@ -28,7 +52,10 @@ describe('MarkingMenuStartEvent', () => {
   it('exposes its type as a static, matching the instance type', () => {
     expect(MarkingMenuStartEvent.type).toBe('start');
 
-    const event = new MarkingMenuStartEvent({ position: [0, 0] });
+    const event = new MarkingMenuStartEvent({
+      mode: 'startup',
+      position: [0, 0],
+    });
     expect(event.type).toBe(MarkingMenuStartEvent.type);
   });
 });
@@ -36,6 +63,7 @@ describe('MarkingMenuStartEvent', () => {
 describe('MarkingMenuOpenEvent', () => {
   it('carries the menu, its center, and the position it was opened at', () => {
     const event = new MarkingMenuOpenEvent<Model>({
+      mode: 'novice',
       position: [5, 5],
       menu,
       menuCenter: [50, 50],
@@ -46,6 +74,31 @@ describe('MarkingMenuOpenEvent', () => {
     expect(event.position).toEqual([5, 5]);
     expect(event.menu).toBe(menu);
     expect(event.menuCenter).toEqual([50, 50]);
+    expect(event.recognition).toBeUndefined();
+  });
+
+  it('has no position in standalone mode', () => {
+    const event = new MarkingMenuOpenEvent<Model>({
+      mode: 'standalone',
+      position: undefined,
+      menu,
+      menuCenter: [50, 50],
+    });
+
+    expect(event.mode).toBe('standalone');
+    expect(event.position).toBeUndefined();
+  });
+
+  it('carries the recognition it was constructed with', () => {
+    const event = new MarkingMenuOpenEvent<Model>({
+      mode: 'novice',
+      position: [5, 5],
+      menu,
+      menuCenter: [50, 50],
+      recognition,
+    });
+
+    expect(event.recognition).toBe(recognition);
   });
 });
 
@@ -82,6 +135,7 @@ describe('MarkingMenuMoveEvent', () => {
 describe('MarkingMenuChangeEvent', () => {
   it('carries the new and previous active item, and the open menu', () => {
     const event = new MarkingMenuChangeEvent<Model>({
+      mode: 'novice',
       position: [1, 2],
       active: menu.items[1],
       previousActive: menu.items[0],
@@ -95,8 +149,22 @@ describe('MarkingMenuChangeEvent', () => {
     expect(event.menu).toBe(menu);
   });
 
+  it('has no position in standalone mode', () => {
+    const event = new MarkingMenuChangeEvent<Model>({
+      mode: 'standalone',
+      position: undefined,
+      active: menu.items[1],
+      previousActive: undefined,
+      menu,
+    });
+
+    expect(event.mode).toBe('standalone');
+    expect(event.position).toBeUndefined();
+  });
+
   it('allows an undefined active item, for a change onto or off of empty space', () => {
     const event = new MarkingMenuChangeEvent<Model>({
+      mode: 'novice',
       position: [1, 2],
       active: undefined,
       previousActive: menu.items[0],
@@ -121,6 +189,31 @@ describe('MarkingMenuSelectEvent', () => {
     expect(event.mode).toBe('novice');
     expect(event.selection).toBe(menu.items[0]);
     expect(event.menu).toBe(menu);
+  });
+
+  it('has no position in standalone mode', () => {
+    const event = new MarkingMenuSelectEvent<Model>({
+      mode: 'standalone',
+      position: undefined,
+      selection: menu.items[0],
+      menu,
+    });
+
+    expect(event.mode).toBe('standalone');
+    expect(event.position).toBeUndefined();
+    expect(event.recognition).toBeUndefined();
+  });
+
+  it('carries the recognition it was constructed with', () => {
+    const event = new MarkingMenuSelectEvent<Model>({
+      mode: 'expert',
+      position: [1, 2],
+      selection: menu.items[0],
+      menu: undefined,
+      recognition,
+    });
+
+    expect(event.recognition).toBe(recognition);
   });
 
   it('allows an undefined menu, for a selection made in expert mode', () => {
@@ -149,6 +242,31 @@ describe('MarkingMenuCancelEvent', () => {
     expect(event.mode).toBe('novice');
     expect(event.active).toBe(menu.items[0]);
     expect(event.menu).toBe(menu);
+  });
+
+  it('has no position in standalone mode', () => {
+    const event = new MarkingMenuCancelEvent<Model>({
+      mode: 'standalone',
+      position: undefined,
+      active: undefined,
+      menu,
+    });
+
+    expect(event.mode).toBe('standalone');
+    expect(event.position).toBeUndefined();
+    expect(event.recognition).toBeUndefined();
+  });
+
+  it('carries the recognition of a failed attempt', () => {
+    const event = new MarkingMenuCancelEvent<Model>({
+      mode: 'expert',
+      position: [1, 2],
+      active: undefined,
+      menu: undefined,
+      recognition,
+    });
+
+    expect(event.recognition).toBe(recognition);
   });
 
   it('allows an undefined active item and an undefined menu', () => {

@@ -1,7 +1,9 @@
+import type { Mock } from 'vitest';
 import { fakeTimers } from '../__fixtures__/timers.js';
 import { createModel } from '../model.js';
-import { recognizeMarkingMenuStroke } from '../recognizer/recognize-mm-stroke.js';
+import { recognizeStroke } from '../recognizer/recognize-mm-stroke.js';
 import type * as RecognizeModule from '../recognizer/recognize-mm-stroke.js';
+import type { Point } from '../utils.js';
 import {
   navigationMachine,
   type NavigationFeedbackAnnouncement,
@@ -16,11 +18,23 @@ vi.mock('../recognizer/recognize-mm-stroke.js', async (importOriginal) => {
   const actual = await importOriginal<typeof RecognizeModule>();
   return {
     ...actual,
-    recognizeMarkingMenuStroke: vi.fn(actual.recognizeMarkingMenuStroke),
+    recognizeStroke: vi.fn(actual.recognizeStroke),
   };
 });
 
-const mockRecognize = vi.mocked(recognizeMarkingMenuStroke);
+// The overloads collapse to one signature here, so a mock has to satisfy
+// both of the kinds' outcomes.
+const mockRecognize = vi.mocked(recognizeStroke) as unknown as Mock<
+  (...args: Parameters<typeof recognizeStroke>) => {
+    analysis: { articulationPoints: Point[]; segments: never[] };
+    outcome: unknown;
+  }
+>;
+
+const noRecognition = {
+  analysis: { articulationPoints: [], segments: [] },
+  outcome: undefined,
+};
 
 afterEach(() => {
   mockRecognize.mockClear();
@@ -195,7 +209,7 @@ describe('navigationMachine', () => {
   });
 
   it('dispatches cancel for a completed gesture that recognition does not match', () => {
-    mockRecognize.mockReturnValueOnce(undefined);
+    mockRecognize.mockReturnValueOnce(noRecognition);
     const host = startHost();
     const canceled = vi.fn<() => void>();
     host.on('cancel', canceled);
@@ -418,6 +432,267 @@ describe('navigationMachine', () => {
       vi.advanceTimersByTime(10);
 
       expect(host.current.name).toBe('idle');
+    });
+  });
+
+  describe('recognition records', () => {
+    /**
+    Collect the `recognition` of every event of `name`, in order.
+    */
+    const recordRecognitions = (
+      host: ReturnType<typeof startHost>,
+      name: 'open' | 'select' | 'cancel',
+    ): unknown[] => {
+      const recognitions: unknown[] = [];
+      host.on(name, ({ data }) => {
+        recognitions.push(data.recognition);
+      });
+      return recognitions;
+    };
+
+    it('reports the stroke and its corners on the select a release found', () => {
+      const host = startHost();
+      const recognitions = recordRecognitions(host, 'select');
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('up', { position: [200, 0] });
+
+      expect(recognitions).toEqual([
+        {
+          stroke: [
+            [0, 0],
+            [100, 0],
+            [200, 0],
+          ],
+          analysis: {
+            articulationPoints: [
+              [0, 0],
+              [200, 0],
+            ],
+            segments: [
+              {
+                points: [
+                  [0, 0],
+                  [200, 0],
+                ],
+              },
+            ],
+          },
+        },
+      ]);
+    });
+
+    it('reports the failed attempt on the cancel a release produced', () => {
+      mockRecognize.mockReturnValueOnce(noRecognition);
+      const host = startHost();
+      const recognitions = recordRecognitions(host, 'cancel');
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('up', { position: [120, 0] });
+
+      expect(recognitions).toEqual([
+        {
+          stroke: [
+            [0, 0],
+            [100, 0],
+            [120, 0],
+          ],
+          analysis: { articulationPoints: [], segments: [] },
+        },
+      ]);
+    });
+
+    it('recognizes the released stroke as a leaf, exactly once', () => {
+      const host = startHost();
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('up', { position: [200, 0] });
+
+      expect(mockRecognize).toHaveBeenCalledExactlyOnceWith(
+        [
+          [0, 0],
+          [100, 0],
+          [200, 0],
+        ],
+        model,
+        'leaf',
+      );
+    });
+
+    it('freezes the record so a listener cannot alter what the next one reads', () => {
+      const host = startHost();
+      const recognitions = recordRecognitions(host, 'select');
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('up', { position: [200, 0] });
+
+      const [recognition] = recognitions as [
+        {
+          stroke: unknown[];
+          analysis: { articulationPoints: unknown[]; segments: unknown[] };
+        },
+      ];
+      expect(Object.isFrozen(recognition)).toBe(true);
+      expect(Object.isFrozen(recognition.stroke)).toBe(true);
+      expect(Object.isFrozen(recognition.analysis)).toBe(true);
+      expect(Object.isFrozen(recognition.analysis.articulationPoints)).toBe(
+        true,
+      );
+      expect(Object.isFrozen(recognition.analysis.segments)).toBe(true);
+    });
+
+    it('copies every point, so a listener that alters one cannot reach the engine', () => {
+      const host = startHost();
+      const recognitions = recordRecognitions(host, 'select');
+      const down: Point = [0, 0];
+      const move: Point = [100, 0];
+      const up: Point = [200, 0];
+
+      host.send('down', { position: down });
+      host.send('move', { position: move });
+      host.send('up', { position: up });
+
+      const [recognition] = recognitions as [
+        {
+          stroke: Point[];
+          analysis: {
+            articulationPoints: Point[];
+            segments: Array<{ points: Point[] }>;
+          };
+        },
+      ];
+      const published = [
+        ...recognition.stroke,
+        ...recognition.analysis.articulationPoints,
+        ...recognition.analysis.segments.flatMap((segment) => segment.points),
+      ];
+      expect(published.length).toBeGreaterThan(0);
+      for (const point of published) {
+        expect(Object.isFrozen(point)).toBe(true);
+        expect([down, move, up]).not.toContain(point);
+      }
+
+      expect(Object.isFrozen(recognition.analysis.segments[0])).toBe(true);
+      expect(Object.isFrozen(recognition.analysis.segments[0]?.points)).toBe(
+        true,
+      );
+    });
+
+    it('carries no recognition when nothing was recognized', () => {
+      const host = startHost();
+      const selects = recordRecognitions(host, 'select');
+      const cancels = recordRecognitions(host, 'cancel');
+      const opens = recordRecognitions(host, 'open');
+
+      // A zero-length release, a pointer cancel, and a novice release
+      // recognize nothing.
+      host.send('down', { position: [0, 0] });
+      host.send('up', { position: [0, 0] });
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('cancel', { position: [100, 0] });
+      openNovice(host);
+      host.send('move', { position: [100, 0] });
+      host.send('up', { position: [100, 0] });
+
+      expect(cancels).toEqual([undefined, undefined]);
+      expect(selects).toEqual([undefined]);
+      expect(opens).toEqual([undefined]);
+      expect(mockRecognize).not.toHaveBeenCalled();
+    });
+
+    it('reports the menu attempt on the open an expert dwell produced', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      const recognitions = recordRecognitions(host, 'open');
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('dwell');
+
+      expect(recognitions).toEqual([
+        {
+          stroke: [
+            [0, 0],
+            [100, 0],
+          ],
+          analysis: {
+            articulationPoints: [
+              [0, 0],
+              [100, 0],
+            ],
+            segments: [
+              {
+                points: [
+                  [0, 0],
+                  [100, 0],
+                ],
+              },
+            ],
+          },
+        },
+      ]);
+    });
+
+    it('reports the menu attempt on the cancel an expert dwell produced', () => {
+      const host = startHost();
+      const recognitions = recordRecognitions(host, 'cancel');
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('dwell');
+
+      expect(recognitions).toHaveLength(1);
+      expect(recognitions[0]).toMatchObject({
+        stroke: [
+          [0, 0],
+          [100, 0],
+        ],
+      });
+    });
+
+    it('recognizes an expert dwell once, as a menu, whatever it finds', () => {
+      const withMenu = navigationMachine.start({
+        model: submenuModel,
+        options,
+      });
+      withMenu.send('down', { position: [0, 0] });
+      withMenu.send('move', { position: [100, 0] });
+      withMenu.send('dwell');
+      expect(mockRecognize).toHaveBeenCalledTimes(1);
+      expect(mockRecognize.mock.calls[0]?.[2]).toBe('menu');
+
+      mockRecognize.mockClear();
+      const withoutMenu = startHost();
+      withoutMenu.send('down', { position: [0, 0] });
+      withoutMenu.send('move', { position: [100, 0] });
+      withoutMenu.send('dwell');
+      expect(mockRecognize).toHaveBeenCalledTimes(1);
+    });
+
+    it('carries no recognition on the open a startup dwell produced', () => {
+      const host = startHost();
+      const recognitions = recordRecognitions(host, 'open');
+
+      host.send('down', { position: [0, 0] });
+      host.send('dwell');
+
+      expect(recognitions).toEqual([undefined]);
+    });
+
+    it('announces the layout of an expert dwell once, without an in-between one', () => {
+      const host = navigationMachine.start({ model: submenuModel, options });
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      const layouts = recordLayouts(host);
+
+      host.send('dwell');
+
+      expect(layouts).toHaveLength(1);
+      expect(layouts[0]?.menu?.center).toEqual([100, 0]);
     });
   });
 

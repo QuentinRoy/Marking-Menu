@@ -13,6 +13,7 @@ import {
   MINIMUM_RESOLVABLE_ANGLE,
   pointsToSegments,
   recognizeMarkingMenuStroke,
+  recognizeStroke,
   walkModel,
 } from './recognize-mm-stroke.js';
 import { strokeLength } from './stroke-length.js';
@@ -565,5 +566,48 @@ describe('analyzeMarkingMenuStroke', () => {
     for (const segment of segments) {
       expect(everyPossibleSegment).toContainEqual(segment.points);
     }
+  });
+});
+
+describe('recognizeStroke', () => {
+  it('finds the leaf a stroke ends on, and the corners it walked', async () => {
+    const stroke = await readStroke([225, 0, 135].join('-'));
+    const model = createMockModel(3);
+
+    const { analysis, outcome } = recognizeStroke(stroke, model, 'leaf');
+
+    const expected = recognizeMarkingMenuStroke(stroke, model);
+    expect(outcome?.isLeaf).toBe(true);
+    expect(outcome?.requestedAngle).toBe(expected?.requestedAngle);
+    expect(analysis.articulationPoints).toEqual(
+      analyzeMarkingMenuStroke(stroke, model).articulationPoints,
+    );
+  });
+
+  it('finds the menu a stroke leads to when asked for a menu', async () => {
+    const stroke = await readStroke('90');
+    const model = createMockModel(3);
+
+    const { outcome } = recognizeStroke(stroke, model, 'menu');
+
+    const expected = recognizeMarkingMenuStroke(stroke, model, {
+      maxDepth: -1,
+      requireMenu: true,
+    });
+    expect(outcome?.isLeaf).toBe(false);
+    expect(outcome?.requestedAngle).toBe(expected?.requestedAngle);
+  });
+
+  it('reports no outcome for a stroke that leads nowhere', async () => {
+    const stroke = await readStroke([225, 0, 135].join('-'));
+
+    const { outcome, analysis } = recognizeStroke(
+      stroke,
+      createMockModel(1),
+      'leaf',
+    );
+
+    expect(outcome).toBeUndefined();
+    expect(analysis.articulationPoints.length).toBeGreaterThan(0);
   });
 });

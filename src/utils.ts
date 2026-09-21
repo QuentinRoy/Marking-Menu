@@ -128,6 +128,22 @@ export function at<Item>(array: readonly Item[], index: number): Item {
 }
 
 /**
+ The last item of an array that is known not to be empty, checked instead of
+ asserted.
+
+ @param array - The array to read from.
+ @returns Its last item.
+ @throws If the array is empty.
+ */
+export function last<Item>(array: readonly Item[]): Item {
+  if (array.length === 0) {
+    throw new Error('An array needs at least one item to have a last one.');
+  }
+
+  return array.at(-1) as Item;
+}
+
+/**
  Converts the coordinates of a point in polar coordinates (angle in degrees).
 
  @param point - A point.

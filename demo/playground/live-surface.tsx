@@ -294,6 +294,11 @@ export function LiveSurface({
       strokeRef.current.push(local(event.position));
     });
     controller.on('select', (event) => {
+      // The playground never opens a standalone menu.
+      if (event.mode === 'standalone') {
+        return;
+      }
+
       const path = pathOfKey(event.selection.key);
       finish(event.position, event.mode, {
         steps: stepsAlong(latestRef.current.model, path),
@@ -301,6 +306,10 @@ export function LiveSurface({
       });
     });
     controller.on('cancel', (event) => {
+      if (event.mode === 'standalone') {
+        return;
+      }
+
       const { active } = event;
       finish(event.position, event.mode, {
         steps: undefined,

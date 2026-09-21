@@ -1,6 +1,7 @@
 import { fakeTimers } from '../__fixtures__/timers.js';
 import { createModel } from '../model.js';
-import { noOp } from '../utils.js';
+import { noOp, type Point } from '../utils.js';
+import type { LayoutView } from './layout-view.js';
 import type { EngineModelRoot } from './model-node.js';
 import { createRuntime as createRuntimeWithResolvedLog } from './runtime.js';
 
@@ -335,6 +336,133 @@ describe('createRuntime', () => {
 
       expect(didSelectFire).toBe(false);
       expect(emitted).toEqual(['start']);
+    });
+  });
+
+  describe('standalone', () => {
+    const menuModel = createModel({
+      items: [
+        { id: 'first', label: 'First', items: [{ id: 'leaf', label: 'Leaf' }] },
+        { id: 'second', label: 'Second' },
+      ],
+    });
+    const createStandaloneRuntime = () => {
+      const renderer = createFakeRenderer();
+      const runtime = createRuntime({ model: menuModel, options, renderer });
+      return { runtime, renderer };
+    };
+
+    it('reads its phase from the machine, as idle until something opens', () => {
+      const { runtime } = createStandaloneRuntime();
+      expect(runtime.phase).toBe('idle');
+
+      runtime.open([10, 20]);
+      expect(runtime.phase).toBe('standalone');
+
+      runtime.close();
+      expect(runtime.phase).toBe('idle');
+
+      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      expect(runtime.phase).toBe('startup');
+    });
+
+    it('opens the root, rendering it and announcing it, at the position it is given', () => {
+      const { runtime, renderer } = createStandaloneRuntime();
+      const rendered: Array<Point | undefined> = [];
+      renderer.render.mockImplementation((view: LayoutView) => {
+        rendered.push(view.menu?.center);
+      });
+      const centers: unknown[] = [];
+      runtime.on('open', (event) => {
+        centers.push(event.menuCenter);
+      });
+
+      runtime.open([10, 20]);
+
+      expect(rendered.at(-1)).toEqual([10, 20]);
+      expect(centers).toEqual([[10, 20]]);
+    });
+
+    it('forwards keyboard intents and focus to the machine', () => {
+      const { runtime } = createStandaloneRuntime();
+      const changes: unknown[] = [];
+      const selections: unknown[] = [];
+      runtime.on('change', (event) => {
+        changes.push(event.active?.id);
+      });
+      runtime.on('select', (event) => {
+        selections.push(event.selection.id);
+      });
+
+      runtime.open([0, 0]);
+      runtime.send({ type: 'keyboard', intent: 'last' });
+      runtime.send({ type: 'focus', key: menuModel.items[0].key });
+      runtime.send({ type: 'keyboard', intent: 'enter' });
+      runtime.send({ type: 'keyboard', intent: 'activate' });
+
+      expect(changes).toEqual(['second', 'first', 'leaf']);
+      expect(selections).toEqual(['leaf']);
+      expect(runtime.phase).toBe('idle');
+    });
+
+    it('announces a cancel when it is closed', () => {
+      const { runtime } = createStandaloneRuntime();
+      const emitted = recordEmitted(runtime);
+      runtime.open([0, 0]);
+
+      runtime.close();
+
+      expect(emitted).toEqual(['cancel']);
+    });
+
+    it('throws when opening while a gesture or a standalone menu is going on', () => {
+      const { runtime } = createStandaloneRuntime();
+
+      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      expect(() => {
+        runtime.open([0, 0]);
+      }).toThrow('idle');
+
+      runtime.send({ type: 'pointer.cancel', position: [0, 0] });
+      runtime.open([0, 0]);
+      expect(() => {
+        runtime.open([0, 0]);
+      }).toThrow('idle');
+    });
+
+    it('throws when closing anything but a standalone menu', () => {
+      const { runtime } = createStandaloneRuntime();
+
+      expect(() => {
+        runtime.close();
+      }).toThrow('standalone');
+
+      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      expect(() => {
+        runtime.close();
+      }).toThrow('standalone');
+    });
+
+    it('throws when opening or closing after disposal', () => {
+      const { runtime } = createStandaloneRuntime();
+      runtime.dispose();
+
+      expect(() => {
+        runtime.open([0, 0]);
+      }).toThrow('disposed');
+      expect(() => {
+        runtime.close();
+      }).toThrow('disposed');
+    });
+
+    it('announces nothing when disposed mid-interaction', () => {
+      const { runtime } = createStandaloneRuntime();
+      const emitted = recordEmitted(runtime);
+      runtime.open([0, 0]);
+
+      runtime.dispose();
+
+      expect(emitted).toEqual([]);
     });
   });
 });

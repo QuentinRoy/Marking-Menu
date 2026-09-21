@@ -285,6 +285,15 @@ const cutStroke = (
 };
 
 /**
+ The corners a stroke was cut at, and the pieces between them: what the
+ engine reports about a recognition attempt.
+ */
+export type StrokeCut = {
+  readonly articulationPoints: readonly Point[];
+  readonly segments: readonly LocatedStrokeSegment[];
+};
+
+/**
  Recognize the item selected by a marking menu stroke.
 
  @param stroke - A list of points.
@@ -327,6 +336,23 @@ export function recognizeMarkingMenuStroke<Node extends ModelNode>(
 export function recognizeMarkingMenuStroke(
   stroke: readonly Point[],
   model: ModelNode,
+  options: {
+    maxDepth?: number;
+    requireMenu?: boolean;
+    requireLeaf?: boolean;
+  } = {},
+): ModelNode | ModelItem | undefined {
+  return recognize(stroke, model, options).outcome;
+}
+
+/**
+ The recognition shared by {@link recognizeMarkingMenuStroke} and
+ {@link recognizeStroke}: the cut the outcome was found from, and the outcome
+ itself.
+ */
+function recognize(
+  stroke: readonly Point[],
+  model: ModelNode,
   {
     maxDepth: maxDepthOption = model.getMaxDepth(),
     requireMenu = false,
@@ -335,31 +361,75 @@ export function recognizeMarkingMenuStroke(
     maxDepth?: number;
     requireMenu?: boolean;
     requireLeaf?: boolean;
-  } = {},
-): ModelNode | ModelItem | undefined {
+  },
+): {
+  cut: ReturnType<typeof cutStroke>;
+  outcome: ModelNode | ModelItem | undefined;
+} {
   if (requireLeaf && requireMenu) {
     throw new Error('The result cannot be both a leaf and a menu');
   }
 
   const maxDepth =
     maxDepthOption < 0 ? model.getMaxDepth() + maxDepthOption : maxDepthOption;
-  const { segments } = cutStroke(stroke, model, maxDepth);
-  const path = findItem({ model, segments, maxDepth });
+  const cut = cutStroke(stroke, model, maxDepth);
+  const path = findItem({ model, segments: cut.segments, maxDepth });
   // Paths are never empty, so the item is only nullish when the path is.
   const item = path?.at(-1) ?? undefined;
   if (requireLeaf) {
-    return item?.isLeaf ? item : undefined;
+    return { cut, outcome: item?.isLeaf ? item : undefined };
   }
 
-  if (requireMenu) {
-    // The menu holding the leaf is the item the walk visited just before it.
-    // A leaf can only ever be the last item of a path (the walk stops on a
-    // leaf model), so this is the leaf's own parent menu, and `model` itself
-    // when the leaf was found at the first level.
-    return item?.isLeaf ? (path?.at(-2) ?? model) : item;
-  }
+  // A menu attempt that ended on a leaf wants the menu holding it: the item
+  // the walk visited just before it. A leaf can only ever be the last item of
+  // a path (the walk stops on a leaf model), so this is the leaf's own parent
+  // menu, and `model` itself when the leaf was found at the first level.
+  return {
+    cut,
+    outcome: requireMenu && item?.isLeaf ? (path?.at(-2) ?? model) : item,
+  };
+}
 
-  return item;
+/**
+ Recognize a stroke as a leaf (a completed gesture) or as a menu (an
+ unfinished one worth opening), and report the corners and pieces it was cut
+ into. The outcome derives from that same cut, so a caller displaying the
+ analysis never shows something the outcome did not come from.
+
+ @param stroke - A list of points.
+ @param model - The model to recognize the stroke against.
+ @param kind - What the stroke should lead to. A menu attempt walks one level
+ shallower than the model is deep, since the last level is the leaf.
+ @returns The analysis of the attempt, and its outcome if the stroke led
+ somewhere. A menu outcome may be the model itself.
+ */
+export function recognizeStroke<Node extends ModelNode>(
+  stroke: readonly Point[],
+  model: Node,
+  kind: 'leaf',
+): {
+  analysis: StrokeCut;
+  outcome: ModelLeaves<Node> | undefined;
+};
+export function recognizeStroke<Node extends ModelNode>(
+  stroke: readonly Point[],
+  model: Node,
+  kind: 'menu',
+): {
+  analysis: StrokeCut;
+  outcome: ModelMenus<Node> | undefined;
+};
+export function recognizeStroke(
+  stroke: readonly Point[],
+  model: ModelNode,
+  kind: 'leaf' | 'menu',
+): { analysis: StrokeCut; outcome: ModelNode | ModelItem | undefined } {
+  const { cut, outcome } = recognize(
+    stroke,
+    model,
+    kind === 'menu' ? { maxDepth: -1, requireMenu: true } : {},
+  );
+  return { analysis: cut, outcome };
 }
 
 /**

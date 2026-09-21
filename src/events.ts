@@ -17,29 +17,86 @@ import type { Point } from './utils.js';
  * -------------------------------------------------------------------------- */
 
 /**
-The navigation mode a gesture is in when an event is dispatched.
-*/
-export type MarkingMenuMode = 'startup' | 'novice' | 'expert';
+ The mode the menu interaction is in when an event is dispatched: one of the
+ stages of a pointer gesture, or `standalone` for a menu opened with the
+ controller's `open()` and driven by the keyboard rather than by a gesture.
+ */
+export type MarkingMenuMode = 'startup' | 'novice' | 'expert' | 'standalone';
+
+/**
+ One piece of a stroke, between two corners.
+
+ Its shape and meaning are covered by semver: a recognizer change that moves
+ the pieces cut from the same stroke and menu is a breaking change.
+ */
+export type MarkingMenuStrokeSegment = {
+  /**
+  The two points the piece spans, in client coordinates (pixels).
+  */
+  readonly points: readonly [Point, Point];
+};
+
+/**
+ What the recognizer made of a stroke.
+
+ Its shape and meaning are covered by semver: a recognizer change that moves
+ the corners or pieces for the same stroke and menu is a breaking change.
+ */
+export type MarkingMenuStrokeAnalysis = {
+  /**
+   The points along the stroke recognized as corners, start and end included,
+   in client coordinates (pixels).
+   */
+  readonly articulationPoints: readonly Point[];
+  /**
+   The pieces the stroke was cut into between corners. Pieces too short to be a
+   deliberate move are dropped.
+   */
+  readonly segments: readonly MarkingMenuStrokeSegment[];
+};
+
+/**
+ The stroke the recognizer was given, and how it cut it. Present on an event
+ exactly when recognition ran.
+
+ Its shape and meaning are covered by semver.
+ */
+export type MarkingMenuRecognition = {
+  /**
+  The stroke, in client coordinates (pixels).
+  */
+  readonly stroke: readonly Point[];
+  /**
+  How the stroke was cut into corners and pieces.
+  */
+  readonly analysis: MarkingMenuStrokeAnalysis;
+};
 
 /* -------------------------------------------------------------------------- *
  * Event classes
  * -------------------------------------------------------------------------- */
 
 /**
- What every marking menu event has in common: the mode the gesture was in, and
- the pointer position, both at dispatch time.
+ What every marking menu event has in common: the mode the interaction was in,
+ and the pointer position, both at dispatch time. `position` is `undefined` in
+ standalone mode, where no pointer is involved.
 
  Not a DOM `Event`: this library has no DOM target, no bubbling, and no
  default action to prevent, so `Event`'s machinery would all be dead weight.
  */
-export abstract class MarkingMenuEventBase {
-  readonly #mode: MarkingMenuMode;
-  readonly #position: Point;
+export abstract class MarkingMenuEventBase<
+  Mode extends MarkingMenuMode = MarkingMenuMode,
+> {
+  readonly #mode: Mode;
+  readonly #position: Mode extends 'standalone' ? undefined : Point;
   readonly type: string;
 
   constructor(
     type: string,
-    data: { readonly mode: MarkingMenuMode; readonly position: Point },
+    data: {
+      readonly mode: Mode;
+      readonly position: Mode extends 'standalone' ? undefined : Point;
+    },
   ) {
     this.type = type;
     this.#mode = data.mode;
@@ -47,16 +104,17 @@ export abstract class MarkingMenuEventBase {
   }
 
   /**
-  The navigation mode the gesture was in when this event was dispatched.
+  The mode the interaction was in when this event was dispatched.
   */
-  get mode(): MarkingMenuMode {
+  get mode(): Mode {
     return this.#mode;
   }
 
   /**
-  The pointer position at the time this event was dispatched.
-  */
-  get position(): Point {
+   The pointer position at the time this event was dispatched, or `undefined`
+   in standalone mode.
+   */
+  get position(): Mode extends 'standalone' ? undefined : Point {
     return this.#position;
   }
 }
@@ -65,7 +123,9 @@ export abstract class MarkingMenuEventBase {
  Dispatched once, as the first event of a gesture, when a primary pointer goes
  down.
  */
-export class MarkingMenuStartEvent extends MarkingMenuEventBase {
+export class MarkingMenuStartEvent<
+  Mode extends 'startup' = 'startup',
+> extends MarkingMenuEventBase<Mode> {
   /**
   This event's type, as a literal.
   */
@@ -75,25 +135,23 @@ export class MarkingMenuStartEvent extends MarkingMenuEventBase {
 
   declare readonly type: 'start';
 
-  constructor(data: { readonly position: Point }) {
-    super(MarkingMenuStartEvent.type, {
-      mode: 'startup',
-      position: data.position,
-    });
-  }
-
-  override get mode(): 'startup' {
-    return 'startup';
+  constructor(data: {
+    readonly mode: Mode;
+    readonly position: Mode extends 'standalone' ? undefined : Point;
+  }) {
+    super(MarkingMenuStartEvent.type, data);
   }
 }
 
 /**
- Dispatched once per gesture, when novice mode opens a menu: the dwell that
- starts novice mode, or a submenu dwell while already in novice mode.
+ Dispatched when a menu level is displayed: the dwell that starts novice mode,
+ a submenu dwell while already in novice mode, or, in standalone mode, the
+ root on `open()` and every level entered or left with the keyboard.
  */
 export class MarkingMenuOpenEvent<
   Model extends ModelNode = ModelNode,
-> extends MarkingMenuEventBase {
+  Mode extends 'novice' | 'standalone' = 'novice' | 'standalone',
+> extends MarkingMenuEventBase<Mode> {
   /**
   This event's type, as a literal.
   */
@@ -103,24 +161,21 @@ export class MarkingMenuOpenEvent<
 
   readonly #menu: ModelMenus<Model>;
   readonly #menuCenter: Point;
+  readonly #recognition: MarkingMenuRecognition | undefined;
 
   declare readonly type: 'open';
 
   constructor(data: {
-    readonly position: Point;
+    readonly mode: Mode;
+    readonly position: Mode extends 'standalone' ? undefined : Point;
     readonly menu: ModelMenus<Model>;
     readonly menuCenter: Point;
+    readonly recognition?: MarkingMenuRecognition | undefined;
   }) {
-    super(MarkingMenuOpenEvent.type, {
-      mode: 'novice',
-      position: data.position,
-    });
+    super(MarkingMenuOpenEvent.type, data);
     this.#menu = data.menu;
     this.#menuCenter = data.menuCenter;
-  }
-
-  override get mode(): 'novice' {
-    return 'novice';
+    this.#recognition = data.recognition;
   }
 
   /**
@@ -136,6 +191,14 @@ export class MarkingMenuOpenEvent<
   get menuCenter(): Point {
     return this.#menuCenter;
   }
+
+  /**
+   The recognition that led to this menu, or `undefined` when none ran. Only a
+   menu opened from an expert stroke that paused carries one.
+   */
+  get recognition(): MarkingMenuRecognition | undefined {
+    return this.#recognition;
+  }
 }
 
 /**
@@ -143,9 +206,12 @@ export class MarkingMenuOpenEvent<
  {@link MarkingMenuCancelEvent}: both carry the mode, position, active item
  and open menu at a moment where none of those is fixed by the event itself.
  */
-type ActiveMenuData<Model extends ModelNode = ModelNode> = {
-  readonly mode: MarkingMenuMode;
-  readonly position: Point;
+type ActiveMenuData<
+  Model extends ModelNode = ModelNode,
+  Mode extends MarkingMenuMode = MarkingMenuMode,
+> = {
+  readonly mode: Mode;
+  readonly position: Mode extends 'standalone' ? undefined : Point;
   readonly active: ModelItems<Model> | undefined;
   readonly menu: ModelMenus<Model> | undefined;
 };
@@ -157,7 +223,11 @@ type ActiveMenuData<Model extends ModelNode = ModelNode> = {
  */
 export class MarkingMenuMoveEvent<
   Model extends ModelNode = ModelNode,
-> extends MarkingMenuEventBase {
+  Mode extends Exclude<MarkingMenuMode, 'standalone'> = Exclude<
+    MarkingMenuMode,
+    'standalone'
+  >,
+> extends MarkingMenuEventBase<Mode> {
   /**
   This event's type, as a literal.
   */
@@ -170,11 +240,8 @@ export class MarkingMenuMoveEvent<
 
   declare readonly type: 'move';
 
-  constructor(data: ActiveMenuData<Model>) {
-    super(MarkingMenuMoveEvent.type, {
-      mode: data.mode,
-      position: data.position,
-    });
+  constructor(data: ActiveMenuData<Model, Mode>) {
+    super(MarkingMenuMoveEvent.type, data);
     this.#active = data.active;
     this.#menu = data.menu;
   }
@@ -195,14 +262,15 @@ export class MarkingMenuMoveEvent<
 }
 
 /**
- Dispatched in novice mode whenever the active item changes: the only event
- that carries both the new and the previous active item, so a consumer never
- has to remember the last `move`'s `active` to animate a highlight
- transition.
+ Dispatched in novice and standalone modes whenever the active item changes:
+ the only event that carries both the new and the previous active item, so a
+ consumer never has to remember the last `move`'s `active` to animate a
+ highlight transition.
  */
 export class MarkingMenuChangeEvent<
   Model extends ModelNode = ModelNode,
-> extends MarkingMenuEventBase {
+  Mode extends 'novice' | 'standalone' = 'novice' | 'standalone',
+> extends MarkingMenuEventBase<Mode> {
   /**
   This event's type, as a literal.
   */
@@ -217,22 +285,16 @@ export class MarkingMenuChangeEvent<
   declare readonly type: 'change';
 
   constructor(data: {
-    readonly position: Point;
+    readonly mode: Mode;
+    readonly position: Mode extends 'standalone' ? undefined : Point;
     readonly active: ModelItems<Model> | undefined;
     readonly previousActive: ModelItems<Model> | undefined;
     readonly menu: ModelMenus<Model>;
   }) {
-    super(MarkingMenuChangeEvent.type, {
-      mode: 'novice',
-      position: data.position,
-    });
+    super(MarkingMenuChangeEvent.type, data);
     this.#active = data.active;
     this.#previousActive = data.previousActive;
     this.#menu = data.menu;
-  }
-
-  override get mode(): 'novice' {
-    return 'novice';
   }
 
   /**
@@ -264,7 +326,8 @@ export class MarkingMenuChangeEvent<
  */
 export class MarkingMenuSelectEvent<
   Model extends ModelNode = ModelNode,
-> extends MarkingMenuEventBase {
+  Mode extends MarkingMenuMode = MarkingMenuMode,
+> extends MarkingMenuEventBase<Mode> {
   /**
   This event's type, as a literal.
   */
@@ -274,21 +337,21 @@ export class MarkingMenuSelectEvent<
 
   readonly #selection: ModelLeaves<Model>;
   readonly #menu: ModelMenus<Model> | undefined;
+  readonly #recognition: MarkingMenuRecognition | undefined;
 
   declare readonly type: 'select';
 
   constructor(data: {
-    readonly mode: MarkingMenuMode;
-    readonly position: Point;
+    readonly mode: Mode;
+    readonly position: Mode extends 'standalone' ? undefined : Point;
     readonly selection: ModelLeaves<Model>;
     readonly menu: ModelMenus<Model> | undefined;
+    readonly recognition?: MarkingMenuRecognition | undefined;
   }) {
-    super(MarkingMenuSelectEvent.type, {
-      mode: data.mode,
-      position: data.position,
-    });
+    super(MarkingMenuSelectEvent.type, data);
     this.#selection = data.selection;
     this.#menu = data.menu;
+    this.#recognition = data.recognition;
   }
 
   /**
@@ -304,6 +367,14 @@ export class MarkingMenuSelectEvent<
   get menu(): ModelMenus<Model> | undefined {
     return this.#menu;
   }
+
+  /**
+   The recognition that found the selection, or `undefined` when none ran: a
+   novice release picks the active item without recognizing anything.
+   */
+  get recognition(): MarkingMenuRecognition | undefined {
+    return this.#recognition;
+  }
 }
 
 /**
@@ -314,7 +385,8 @@ export class MarkingMenuSelectEvent<
  */
 export class MarkingMenuCancelEvent<
   Model extends ModelNode = ModelNode,
-> extends MarkingMenuEventBase {
+  Mode extends MarkingMenuMode = MarkingMenuMode,
+> extends MarkingMenuEventBase<Mode> {
   /**
   This event's type, as a literal.
   */
@@ -324,16 +396,19 @@ export class MarkingMenuCancelEvent<
 
   readonly #active: ModelItems<Model> | undefined;
   readonly #menu: ModelMenus<Model> | undefined;
+  readonly #recognition: MarkingMenuRecognition | undefined;
 
   declare readonly type: 'cancel';
 
-  constructor(data: ActiveMenuData<Model>) {
-    super(MarkingMenuCancelEvent.type, {
-      mode: data.mode,
-      position: data.position,
-    });
+  constructor(
+    data: ActiveMenuData<Model, Mode> & {
+      readonly recognition?: MarkingMenuRecognition | undefined;
+    },
+  ) {
+    super(MarkingMenuCancelEvent.type, data);
     this.#active = data.active;
     this.#menu = data.menu;
+    this.#recognition = data.recognition;
   }
 
   /**
@@ -349,6 +424,14 @@ export class MarkingMenuCancelEvent<
   get menu(): ModelMenus<Model> | undefined {
     return this.#menu;
   }
+
+  /**
+   The recognition that found nothing, or `undefined` when none ran: a
+   canceled pointer, or a novice release, recognizes nothing.
+   */
+  get recognition(): MarkingMenuRecognition | undefined {
+    return this.#recognition;
+  }
 }
 
 /* -------------------------------------------------------------------------- *
@@ -361,11 +444,19 @@ export class MarkingMenuCancelEvent<
  */
 export type MarkingMenuEventMap<Model extends ModelNode = ModelNode> = {
   start: MarkingMenuStartEvent;
-  open: MarkingMenuOpenEvent<Model>;
+  open:
+    | MarkingMenuOpenEvent<Model, 'novice'>
+    | MarkingMenuOpenEvent<Model, 'standalone'>;
   move: MarkingMenuMoveEvent<Model>;
-  change: MarkingMenuChangeEvent<Model>;
-  select: MarkingMenuSelectEvent<Model>;
-  cancel: MarkingMenuCancelEvent<Model>;
+  change:
+    | MarkingMenuChangeEvent<Model, 'novice'>
+    | MarkingMenuChangeEvent<Model, 'standalone'>;
+  select:
+    | MarkingMenuSelectEvent<Model, Exclude<MarkingMenuMode, 'standalone'>>
+    | MarkingMenuSelectEvent<Model, 'standalone'>;
+  cancel:
+    | MarkingMenuCancelEvent<Model, Exclude<MarkingMenuMode, 'standalone'>>
+    | MarkingMenuCancelEvent<Model, 'standalone'>;
 };
 
 /**

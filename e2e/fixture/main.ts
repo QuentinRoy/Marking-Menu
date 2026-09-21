@@ -58,7 +58,7 @@ const logEvent = (
   event: {
     readonly type: string;
     readonly mode: string;
-    readonly position: Point;
+    readonly position: Point | undefined;
   },
   fields: Record<string, string | undefined> = {},
 ): void => {

@@ -5,14 +5,16 @@ import {
   type MarkingMenuEvent,
   type MarkingMenuEventEmitter,
   type MarkingMenuEventMap,
+  type MarkingMenuMode,
   type MarkingMenuMoveEvent,
   type MarkingMenuOpenEvent,
+  type MarkingMenuRecognition,
   type MarkingMenuSelectEvent,
   type MarkingMenuStartEvent,
 } from './events.js';
 import { createModel } from './model.js';
 import type { MarkingMenuItemInput } from './types.js';
-import { noOp } from './utils.js';
+import { noOp, type Point } from './utils.js';
 
 /*
  Type level tests: they assert what the type system knows about the event map
@@ -28,15 +30,29 @@ declare const dynamicItems: MarkingMenuItemInput[];
 const dynamicMenu = createModel({ items: dynamicItems });
 type DynamicM = typeof dynamicMenu;
 
+type GestureMode = Exclude<MarkingMenuMode, 'standalone'>;
+type OpenEvent =
+  | MarkingMenuOpenEvent<Model, 'novice'>
+  | MarkingMenuOpenEvent<Model, 'standalone'>;
+type ChangeEvent =
+  | MarkingMenuChangeEvent<Model, 'novice'>
+  | MarkingMenuChangeEvent<Model, 'standalone'>;
+type SelectEvent =
+  | MarkingMenuSelectEvent<Model, GestureMode>
+  | MarkingMenuSelectEvent<Model, 'standalone'>;
+type CancelEvent =
+  | MarkingMenuCancelEvent<Model, GestureMode>
+  | MarkingMenuCancelEvent<Model, 'standalone'>;
+
 describe('MarkingMenuEventMap', () => {
   it('maps each event name to its exact event class', () => {
     expectTypeOf<MarkingMenuEventMap<Model>>().toEqualTypeOf<{
       start: MarkingMenuStartEvent;
-      open: MarkingMenuOpenEvent<Model>;
+      open: OpenEvent;
       move: MarkingMenuMoveEvent<Model>;
-      change: MarkingMenuChangeEvent<Model>;
-      select: MarkingMenuSelectEvent<Model>;
-      cancel: MarkingMenuCancelEvent<Model>;
+      change: ChangeEvent;
+      select: SelectEvent;
+      cancel: CancelEvent;
     }>();
   });
 
@@ -51,11 +67,11 @@ describe('MarkingMenuEvent', () => {
   it('is the union of every event in the map', () => {
     expectTypeOf<MarkingMenuEvent<Model>>().toEqualTypeOf<
       | MarkingMenuStartEvent
-      | MarkingMenuOpenEvent<Model>
+      | OpenEvent
       | MarkingMenuMoveEvent<Model>
-      | MarkingMenuChangeEvent<Model>
-      | MarkingMenuSelectEvent<Model>
-      | MarkingMenuCancelEvent<Model>
+      | ChangeEvent
+      | SelectEvent
+      | CancelEvent
     >();
   });
 
@@ -75,7 +91,7 @@ describe('MarkingMenuEvent', () => {
         }
 
         case 'open': {
-          expectTypeOf(event).toEqualTypeOf<MarkingMenuOpenEvent<Model>>();
+          expectTypeOf(event).toEqualTypeOf<OpenEvent>();
           return String(event.menu.isLeaf);
         }
 
@@ -85,23 +101,112 @@ describe('MarkingMenuEvent', () => {
         }
 
         case 'change': {
-          expectTypeOf(event).toEqualTypeOf<MarkingMenuChangeEvent<Model>>();
+          expectTypeOf(event).toEqualTypeOf<ChangeEvent>();
           return String(event.previousActive?.label);
         }
 
         case 'select': {
-          expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<Model>>();
+          expectTypeOf(event).toEqualTypeOf<SelectEvent>();
           return event.selection.label;
         }
 
         case 'cancel': {
-          expectTypeOf(event).toEqualTypeOf<MarkingMenuCancelEvent<Model>>();
+          expectTypeOf(event).toEqualTypeOf<CancelEvent>();
           return String(event.active?.label);
         }
       }
     }
 
     expectTypeOf(handle).returns.toBeString();
+  });
+});
+
+declare const anySelect: SelectEvent;
+
+describe('mode and position', () => {
+  it('accepts every mode, standalone included', () => {
+    expectTypeOf<MarkingMenuMode>().toEqualTypeOf<
+      'startup' | 'novice' | 'expert' | 'standalone'
+    >();
+  });
+
+  it('narrows `position` on `mode`: a point outside standalone, undefined in it', () => {
+    function positionOf(event: SelectEvent): Point | undefined {
+      if (event.mode === 'standalone') {
+        expectTypeOf(event.position).toEqualTypeOf<undefined>();
+        return event.position;
+      }
+
+      expectTypeOf(event.mode).toEqualTypeOf<GestureMode>();
+      expectTypeOf(event.position).toEqualTypeOf<Point>();
+      return event.position;
+    }
+
+    expectTypeOf(positionOf).returns.toEqualTypeOf<Point | undefined>();
+  });
+
+  it('leaves `position` possibly undefined until `mode` is narrowed', () => {
+    expectTypeOf(anySelect.position).toEqualTypeOf<Point | undefined>();
+  });
+
+  it('keeps `start` and `move` out of standalone mode', () => {
+    expectTypeOf<MarkingMenuStartEvent['mode']>().toEqualTypeOf<'startup'>();
+    expectTypeOf<
+      MarkingMenuMoveEvent<Model>['mode']
+    >().toEqualTypeOf<GestureMode>();
+    expectTypeOf<
+      MarkingMenuMoveEvent<Model>['position']
+    >().toEqualTypeOf<Point>();
+  });
+
+  it('gives `start` a mode type parameter too, which can only be startup', () => {
+    expectTypeOf<
+      MarkingMenuStartEvent<'startup'>
+    >().toEqualTypeOf<MarkingMenuStartEvent>();
+    expectTypeOf<MarkingMenuStartEvent['position']>().toEqualTypeOf<Point>();
+    // @ts-expect-error -- a gesture only ever starts in startup mode.
+    expectTypeOf<MarkingMenuStartEvent<'novice'>>().not.toBeNever();
+  });
+
+  it('keeps `open` and `change` to the modes with a menu open', () => {
+    expectTypeOf<OpenEvent['mode']>().toEqualTypeOf<'novice' | 'standalone'>();
+    expectTypeOf<ChangeEvent['mode']>().toEqualTypeOf<
+      'novice' | 'standalone'
+    >();
+  });
+});
+
+describe('recognition', () => {
+  it('is optional on open, select and cancel', () => {
+    expectTypeOf<OpenEvent['recognition']>().toEqualTypeOf<
+      MarkingMenuRecognition | undefined
+    >();
+    expectTypeOf<SelectEvent['recognition']>().toEqualTypeOf<
+      MarkingMenuRecognition | undefined
+    >();
+    expectTypeOf<CancelEvent['recognition']>().toEqualTypeOf<
+      MarkingMenuRecognition | undefined
+    >();
+  });
+
+  it('is absent from the events that never recognize', () => {
+    expectTypeOf<MarkingMenuStartEvent>().not.toHaveProperty('recognition');
+    expectTypeOf<MarkingMenuMoveEvent<Model>>().not.toHaveProperty(
+      'recognition',
+    );
+    expectTypeOf<ChangeEvent>().not.toHaveProperty('recognition');
+  });
+
+  it('is a read-only snapshot of the stroke and how it was cut, with no model in it', () => {
+    expectTypeOf<MarkingMenuRecognition>().toEqualTypeOf<{
+      readonly stroke: readonly Point[];
+      readonly analysis: {
+        readonly articulationPoints: readonly Point[];
+        readonly segments: ReadonlyArray<{
+          readonly points: readonly [Point, Point];
+        }>;
+      };
+    }>();
   });
 });
 
@@ -179,10 +284,10 @@ describe('Default generic and event payload narrowing', () => {
 describe('MarkingMenuEventEmitter', () => {
   it('types the listener parameter of `on` per event name', () => {
     target.on('select', (event) => {
-      expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<Model>>();
+      expectTypeOf(event).toEqualTypeOf<SelectEvent>();
     });
     target.on('open', (event) => {
-      expectTypeOf(event).toEqualTypeOf<MarkingMenuOpenEvent<Model>>();
+      expectTypeOf(event).toEqualTypeOf<OpenEvent>();
     });
   });
 

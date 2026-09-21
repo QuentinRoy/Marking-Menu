@@ -1,5 +1,5 @@
 import type { MenuLayoutModel } from '../layout/menu.js';
-import type { Point } from '../utils.js';
+import { last, type Point } from '../utils.js';
 import type { NavigationOptions, NavigationState } from './machine.js';
 
 /**
@@ -13,6 +13,9 @@ export type LayoutView<MenuModel = MenuLayoutModel> = {
         readonly model: MenuModel;
         readonly center: Point;
         readonly activeKey: string | undefined;
+        // The one item the keyboard can reach with Tab. Only a standalone
+        // menu has one: a gesture is driven by the pointer.
+        readonly tabStopKey: string | undefined;
       };
   readonly upperStroke: readonly Point[] | undefined;
   readonly lowerStroke: readonly Point[] | undefined;
@@ -42,8 +45,16 @@ export function noviceUpperStroke({
   return [menuCenter, lastPosition];
 }
 
+/**
+ The menu level a standalone interaction is displaying: the last of the
+ stack, which always holds at least the root.
+ */
+export function currentMenu<Menu>(menus: readonly Menu[]): Menu {
+  return last(menus);
+}
+
 export function projectLayout<
-  MenuModel,
+  MenuModel extends MenuLayoutModel,
   Active extends { readonly key: string; readonly isLeaf: boolean },
 >(
   state: NavigationState<MenuModel, Active>,
@@ -65,7 +76,7 @@ export function projectLayout<
         startedAt: state.dwellStartedAt,
         // The stroke's own tip: it keeps moving with sub-threshold jitter
         // even though startup's dwell (armed on `origin`) never restarts.
-        position: state.stroke.at(-1) as Point,
+        position: last(state.stroke),
         delayMs: options.noviceDwellingTime,
       };
       return {
@@ -88,7 +99,7 @@ export function projectLayout<
         lowerStroke: undefined,
         indicator: {
           startedAt: state.dwellStartedAt,
-          position: state.stroke.at(-1) as Point,
+          position: last(state.stroke),
           delayMs: options.noviceDwellingTime,
         },
       };
@@ -102,6 +113,7 @@ export function projectLayout<
           model: state.menu,
           center: state.menuCenter,
           activeKey: active?.key ?? undefined,
+          tabStopKey: undefined,
         },
         upperStroke: noviceUpperStroke(state),
         lowerStroke: state.lowerStroke,
@@ -113,6 +125,24 @@ export function projectLayout<
                 position: state.lastPosition,
                 delayMs: options.submenuOpeningDelay,
               },
+      };
+    }
+
+    case 'standalone': {
+      const menu = currentMenu(state.menus);
+      const activeKey = state.active?.key;
+      return {
+        cursor: 'default',
+        menu: {
+          model: menu,
+          center: state.menuCenter,
+          activeKey,
+          // With nothing active yet, Tab lands on the first item.
+          tabStopKey: activeKey ?? menu.items[0]?.key,
+        },
+        upperStroke: undefined,
+        lowerStroke: undefined,
+        indicator: undefined,
       };
     }
   }
