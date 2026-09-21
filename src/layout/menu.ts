@@ -73,6 +73,14 @@ export type Menu = {
   */
   focusItem: (key: string) => void;
   /**
+  Make the item with the given key the only one Tab reaches, or none.
+  */
+  setTabStop: (key: string | undefined) => void;
+  /**
+  Move focus to the tab stop, or to the menu layer while there is none.
+  */
+  focusTabStop: () => void;
+  /**
   Mark the item with the given id as active (or none if nullish).
   */
   setActive: (itemId: string | number | undefined) => void;
@@ -643,12 +651,33 @@ export function createMenu({
     setItemActive(itemDom, true);
   };
 
+  let tabStopKey: string | undefined;
+
+  const setTabStop = (key: string | undefined) => {
+    if (key !== undefined && !itemElements.has(key)) {
+      throw new TypeError(`No menu item found for key: ${key}`);
+    }
+
+    tabStopKey = key;
+    for (const [itemKey, itemDom] of itemElements) {
+      itemDom.tabIndex = itemKey === key ? 0 : -1;
+    }
+  };
+
   const focusMenu = () => {
     main.focus({ preventScroll: true });
   };
 
   const focusItem = (key: string) => {
     itemElements.get(key)?.focus({ preventScroll: true });
+  };
+
+  const focusTabStop = () => {
+    if (tabStopKey === undefined) {
+      focusMenu();
+    } else {
+      focusItem(tabStopKey);
+    }
   };
 
   const remove = () => {
@@ -664,6 +693,8 @@ export function createMenu({
     layer: main,
     focusMenu,
     focusItem,
+    setTabStop,
+    focusTabStop,
     setActive,
     remove,
   };

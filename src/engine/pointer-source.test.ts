@@ -77,4 +77,106 @@ describe('createPointerSource', () => {
 
     expect(send).not.toHaveBeenCalled();
   });
+
+  describe('while suspended', () => {
+    it('leaves pointer input to the page: nothing is sent, prevented or captured', () => {
+      const parent = createParent();
+      const send = vi.fn<(input: NavigationInput) => void>();
+      const source = createPointerSource({ parent, runtime: { send } });
+
+      source.suspend();
+      const down = pointer('pointerdown', {
+        pointerId: 1,
+        clientX: 0,
+        clientY: 0,
+        cancelable: true,
+      });
+      parent.dispatchEvent(down);
+
+      expect(send).not.toHaveBeenCalled();
+      expect(down.defaultPrevented).toBe(false);
+      expect(parent.hasPointerCapture(1)).toBe(false);
+    });
+
+    it('lets touch gestures through, and gives touch-action back', () => {
+      const parent = createParent();
+      parent.style.touchAction = 'pan-y';
+      const source = createPointerSource({
+        parent,
+        runtime: { send: vi.fn<(input: NavigationInput) => void>() },
+      });
+      expect(parent.style.touchAction).toBe('none');
+
+      source.suspend();
+
+      const touch = new Event('touchstart', { cancelable: true });
+      expect(parent.dispatchEvent(touch)).toBe(true);
+      expect(parent.style.touchAction).toBe('pan-y');
+    });
+
+    it('takes pointer input and touch-action back once resumed', () => {
+      const parent = createParent();
+      const send = vi.fn<(input: NavigationInput) => void>();
+      const source = createPointerSource({ parent, runtime: { send } });
+      source.suspend();
+
+      source.resume();
+      parent.dispatchEvent(
+        pointer('pointerdown', { pointerId: 1, clientX: 3, clientY: 4 }),
+      );
+
+      expect(send).toHaveBeenCalledExactlyOnceWith({
+        type: 'pointer.down',
+        position: [3, 4],
+      });
+      expect(parent.style.touchAction).toBe('none');
+      const touch = new Event('touchstart', { cancelable: true });
+      expect(parent.dispatchEvent(touch)).toBe(false);
+    });
+
+    it('tolerates being suspended or resumed twice in a row', () => {
+      const parent = createParent();
+      parent.style.touchAction = 'pan-y';
+      const source = createPointerSource({
+        parent,
+        runtime: { send: vi.fn<(input: NavigationInput) => void>() },
+      });
+
+      source.suspend();
+      source.suspend();
+      expect(parent.style.touchAction).toBe('pan-y');
+
+      source.resume();
+      source.resume();
+      source.dispose();
+      expect(parent.style.touchAction).toBe('pan-y');
+    });
+
+    it('does not take touch-action back once disposed', () => {
+      const parent = createParent();
+      const source = createPointerSource({
+        parent,
+        runtime: { send: vi.fn<(input: NavigationInput) => void>() },
+      });
+      source.suspend();
+      source.dispose();
+
+      source.resume();
+
+      expect(parent.style.touchAction).toBe('');
+    });
+
+    it('still gives touch-action back on disposal', () => {
+      const parent = createParent();
+      const source = createPointerSource({
+        parent,
+        runtime: { send: vi.fn<(input: NavigationInput) => void>() },
+      });
+
+      source.suspend();
+      source.dispose();
+
+      expect(parent.style.touchAction).toBe('');
+    });
+  });
 });

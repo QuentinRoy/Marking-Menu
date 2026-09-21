@@ -3,6 +3,16 @@ import type { Point } from '../utils.js';
 import type { NavigationInputSink } from './runtime.js';
 
 export type PointerSource = {
+  /**
+   Leave pointer input to the page while a standalone menu is displayed: no
+   gesture starts, nothing is prevented or captured, and `touch-action` goes
+   back to what it was.
+   */
+  suspend: () => void;
+  /**
+  Take pointer input back after {@link PointerSource.suspend}.
+  */
+  resume: () => void;
   dispose: () => void;
 };
 
@@ -22,7 +32,8 @@ export function createPointerSource({
   runtime: NavigationInputSink;
 }): PointerSource {
   let activePointerId: number | undefined;
-  const releaseTouchAction = claimTouchAction(parent);
+  let isDisposed = false;
+  let releaseTouchAction: (() => void) | undefined = claimTouchAction(parent);
 
   /**
    Give back the capture the active gesture took, if it still holds one.
@@ -42,6 +53,7 @@ export function createPointerSource({
 
   const onPointerDown = (event: PointerEvent): void => {
     if (
+      releaseTouchAction === undefined ||
       activePointerId !== undefined ||
       !event.isPrimary ||
       event.button !== 0
@@ -88,7 +100,9 @@ export function createPointerSource({
   // WebKit only suppresses its long-press loupe when touchstart itself is
   // canceled; canceling the corresponding pointerdown is not enough.
   const onTouchStart = (event: TouchEvent): void => {
-    event.preventDefault();
+    if (releaseTouchAction !== undefined) {
+      event.preventDefault();
+    }
   };
 
   parent.addEventListener('pointerdown', onPointerDown);
@@ -97,7 +111,21 @@ export function createPointerSource({
   parent.addEventListener('pointercancel', onPointerCancel);
   parent.addEventListener('touchstart', onTouchStart, { passive: false });
 
+  // Suspended exactly when `touch-action` is not claimed: one fact, so the
+  // two can never disagree.
+  const suspend = (): void => {
+    releaseTouchAction?.();
+    releaseTouchAction = undefined;
+  };
+
+  const resume = (): void => {
+    if (!isDisposed) {
+      releaseTouchAction ??= claimTouchAction(parent);
+    }
+  };
+
   const dispose = (): void => {
+    isDisposed = true;
     parent.removeEventListener('pointerdown', onPointerDown);
     parent.removeEventListener('pointermove', onPointerMove);
     parent.removeEventListener('pointerup', onPointerUp);
@@ -106,8 +134,8 @@ export function createPointerSource({
     // Disposing mid-gesture: the listeners that would have released the
     // capture are gone, so nothing else ever would.
     releaseCapture();
-    releaseTouchAction();
+    suspend();
   };
 
-  return { dispose };
+  return { suspend, resume, dispose };
 }

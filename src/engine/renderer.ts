@@ -208,8 +208,10 @@ export function createRenderer({
 }: RendererOptions): LayoutRenderer {
   const { element: host, root } = createMenuHost({ parent });
   let menuHandle: MenuHandle | undefined;
-  // Reference-equality cache: an unchanged active key needs no menu update.
+  // Reference-equality caches: an unchanged active or tab stop key needs no
+  // menu update.
   let previousActiveKey: string | undefined;
+  let previousTabStopKey: string | undefined;
   // Fixed slots in paint order, plus the one conversion every layer shares.
   // Each layer mounts into its own slot and stays there, so nothing
   // reorders the DOM.
@@ -255,6 +257,7 @@ export function createRenderer({
         menuHandle?.menu.remove();
         menuHandle = undefined;
         previousActiveKey = undefined;
+        previousTabStopKey = undefined;
       } else {
         if (menuHandle?.model !== view.menu.model) {
           menuHandle?.menu.remove();
@@ -274,11 +277,17 @@ export function createRenderer({
           };
           menuHandle = handle;
           previousActiveKey = undefined;
+          previousTabStopKey = undefined;
         }
 
         if (view.menu.activeKey !== previousActiveKey) {
           previousActiveKey = view.menu.activeKey;
           menuHandle?.menu.setActive(view.menu.activeKey);
+        }
+
+        if (view.menu.tabStopKey !== previousTabStopKey) {
+          previousTabStopKey = view.menu.tabStopKey;
+          menuHandle?.menu.setTabStop(view.menu.tabStopKey);
         }
       }
 

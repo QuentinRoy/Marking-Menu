@@ -10,6 +10,7 @@ import type {
 } from '../events.js';
 import type { MarkingMenuModel } from '../model.js';
 import type { ModelLeaves, ModelMenus, ModelNode } from '../types.js';
+import type { Point } from '../utils.js';
 import { type navigationMachine, type NavigationOptions } from './machine.js';
 import type { EngineModelMenu, EngineModelRoot } from './model-node.js';
 
@@ -27,9 +28,9 @@ type States = StatesOf<typeof navigationMachine>;
 type Outputs = OutputsOf<typeof navigationMachine>;
 
 describe('StatesOf<typeof navigationMachine>', () => {
-  it('names exactly the four phases', () => {
+  it('names exactly the phases, and the recognition pseudostate', () => {
     expectTypeOf<keyof States>().toEqualTypeOf<
-      'idle' | 'startup' | 'expert' | 'novice'
+      'idle' | 'startup' | 'expert' | 'recognizing' | 'novice' | 'standalone'
     >();
   });
 
@@ -73,6 +74,15 @@ describe('StatesOf<typeof navigationMachine>', () => {
     expectTypeOf<States['startup']>().not.toHaveProperty('menu');
     expectTypeOf<States['expert']>().not.toHaveProperty('menu');
     expectTypeOf<States['novice']['menu']>().toEqualTypeOf<EngineModelMenu>();
+  });
+
+  it('holds the stack of displayed menus, and a fixed center, only in standalone', () => {
+    expectTypeOf<States['standalone']['menus']>().toEqualTypeOf<
+      readonly EngineModelMenu[]
+    >();
+    expectTypeOf<States['standalone']['menuCenter']>().toEqualTypeOf<Point>();
+    expectTypeOf<States['standalone']>().not.toHaveProperty('stroke');
+    expectTypeOf<States['novice']>().not.toHaveProperty('menus');
   });
 
   it("is generic-safe: a caller's own model still threads through `model`", () => {

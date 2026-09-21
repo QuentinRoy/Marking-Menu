@@ -9,7 +9,12 @@ import {
 } from '../model.js';
 import type { TypedEventListener } from '../typed-event-emitter.js';
 import type { MarkingMenuInput, ModelNode } from '../types.js';
+import type { Point } from '../utils.js';
 import { manageFocus, type FocusManager } from './focus.js';
+import {
+  createKeyboardSource,
+  type KeyboardSource,
+} from './keyboard-source.js';
 import {
   defaultLogger,
   type MarkingMenuLogger,
@@ -84,6 +89,24 @@ export function resolveEngineOptions(
 }
 
 /**
+ What {@link MarkingMenuController.open} accepts.
+ */
+export type MarkingMenuOpenOptions = {
+  /**
+   Where the menu is centered, in client coordinates (pixels). Defaults to
+   the center of the parent, read when `open()` is called: the menu does not
+   follow the parent afterward.
+   */
+  readonly position?: Point;
+  /**
+   Whether the menu takes focus. Defaults to `true`. With `false` the menu is
+   only displayed: focus stays where it is, the first item stays reachable
+   with Tab, and closing the menu gives no focus back.
+   */
+  readonly focus?: boolean;
+};
+
+/**
  `dispose()` is the whole disposal contract, both terminal and idempotent;
  `[Symbol.dispose]()` delegates to it so `using controller = createController(
  config)` works wherever Explicit Resource Management is supported. Neither
@@ -92,6 +115,18 @@ export function resolveEngineOptions(
  */
 export type MarkingMenuController<Model extends ModelNode = ModelNode> =
   MarkingMenuEventEmitter<Model> & {
+    /**
+     Display the root menu on its own, without a pointer gesture, and let the
+     keyboard operate it. Throws unless the controller is idle, and after
+     `dispose()`. Pointer input is left to the page until the menu is selected
+     from, canceled, or closed.
+     */
+    open(options?: MarkingMenuOpenOptions): void;
+    /**
+     Close a menu displayed with {@link MarkingMenuController.open}. This
+     dispatches a `cancel` event. Throws unless one is open.
+     */
+    close(): void;
     dispose(): void;
     [Symbol.dispose](): void;
   };
@@ -120,9 +155,17 @@ type EventName<Config extends EngineConfig> = keyof EventMap<Config> & string;
 class Controller<Config extends EngineConfig> implements MarkingMenuController<
   MarkingMenuModel<Config>
 > {
+  readonly #parent: HTMLElement;
   readonly #pointerSource: PointerSource;
+  readonly #keyboardSource: KeyboardSource;
   readonly #runtime: NavigationRuntime<MarkingMenuModel<Config>>;
   readonly #focusManager: FocusManager;
+  // Resuming is harmless when nothing suspended the pointer: a gesture ends
+  // with the same events.
+  readonly #resumePointer = (): void => {
+    this.#pointerSource.resume();
+  };
+
   #disposed = false;
 
   constructor(config: Config & ValidateInput<Config>) {
@@ -147,8 +190,18 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       renderer,
       log: options.log,
     });
+    this.#parent = config.parent;
     this.#pointerSource = createPointerSource({
       parent: config.parent,
+      runtime: this.#runtime,
+    });
+    // Registered before any consumer can listen, so the pointer is back by
+    // the time a `select` or `cancel` listener reopens the menu.
+    this.#runtime.on('select', this.#resumePointer);
+    this.#runtime.on('cancel', this.#resumePointer);
+    this.#keyboardSource = createKeyboardSource({
+      parent: config.parent,
+      getMenu: renderer.getMenu,
       runtime: this.#runtime,
     });
     this.#focusManager = manageFocus({
@@ -156,6 +209,28 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       getMenu: renderer.getMenu,
       runtime: this.#runtime,
     });
+  }
+
+  #parentCenter(): Point {
+    const { left, top, width, height } = this.#parent.getBoundingClientRect();
+    return [left + width / 2, top + height / 2];
+  }
+
+  open({ position, focus = true }: MarkingMenuOpenOptions = {}): void {
+    // Suspended before opening, not after: a listener reacting to `open` may
+    // already close the menu, and resuming must come last.
+    this.#pointerSource.suspend();
+    this.#focusManager.willOpenStandalone({ focus });
+    try {
+      this.#runtime.open(position ?? this.#parentCenter());
+    } catch (error) {
+      this.#pointerSource.resume();
+      throw error;
+    }
+  }
+
+  close(): void {
+    this.#runtime.close();
   }
 
   on<Name extends EventName<Config>>(
@@ -180,9 +255,10 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     this.#disposed = true;
     this.#focusManager.dispose();
     // Runtime first: it unsubscribes, sends `dispose`, and tears down the
-    // rendered DOM before the pointer source releases capture and the
-    // touch-action claim.
+    // rendered DOM before the sources release capture and the touch-action
+    // claim.
     this.#runtime.dispose();
+    this.#keyboardSource.dispose();
     this.#pointerSource.dispose();
   }
 

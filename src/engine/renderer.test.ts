@@ -60,7 +60,12 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'none',
-      menu: { model, center: [0, 0], activeKey: undefined },
+      menu: {
+        model,
+        center: [0, 0],
+        activeKey: undefined,
+        tabStopKey: undefined,
+      },
       upperStroke: undefined,
       lowerStroke: undefined,
       indicator: undefined,
@@ -241,6 +246,7 @@ describe('createRenderer', () => {
         model,
         center: [0, 0] as [number, number],
         activeKey: undefined,
+        tabStopKey: undefined,
       },
       upperStroke: [
         [0, 0],
@@ -277,6 +283,46 @@ describe('createRenderer', () => {
     renderer.dispose();
   });
 
+  it("makes the item named by the view the menu's tab stop, and keeps it across a new menu", () => {
+    const parent = document.createElement('div');
+    const renderer = createRenderer({ parent });
+    const other = createModel({
+      items: [
+        { id: 'x', label: 'X' },
+        { id: 'y', label: 'Y' },
+      ],
+    });
+    const tabIndexes = () =>
+      [
+        ...slotOf(parent, 'menu').querySelectorAll<HTMLElement>(
+          '.marking-menu-item',
+        ),
+      ].map((item) => item.tabIndex);
+    const view = (menuModel: typeof model, tabStopKey: string | undefined) => ({
+      cursor: 'default' as const,
+      menu: {
+        model: menuModel,
+        center: [0, 0] as [number, number],
+        activeKey: undefined,
+        tabStopKey,
+      },
+      upperStroke: undefined,
+      lowerStroke: undefined,
+      indicator: undefined,
+    });
+
+    renderer.render(view(model, model.items[0].key));
+    expect(tabIndexes()).toEqual([0, -1]);
+
+    renderer.render(view(model, model.items[1].key));
+    expect(tabIndexes()).toEqual([-1, 0]);
+
+    renderer.render(view(other as unknown as typeof model, other.items[1].key));
+    expect(tabIndexes()).toEqual([-1, 0]);
+
+    renderer.dispose();
+  });
+
   it('converts the menu center and feedback eagerly against the parent rect', () => {
     const parent = document.createElement('div');
     parent.getBoundingClientRect = () =>
@@ -285,7 +331,12 @@ describe('createRenderer', () => {
 
     renderer.render({
       cursor: 'none',
-      menu: { model, center: [220, 60], activeKey: undefined },
+      menu: {
+        model,
+        center: [220, 60],
+        activeKey: undefined,
+        tabStopKey: undefined,
+      },
       upperStroke: undefined,
       lowerStroke: undefined,
       indicator: undefined,

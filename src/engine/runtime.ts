@@ -1,10 +1,12 @@
 import type { MarkingMenuEventEmitter } from '../events.js';
 import type { ModelNode, ModelRoot } from '../types.js';
+import type { Point } from '../utils.js';
 import type { ResolvedLogger } from './logger.js';
 import {
   navigationMachine,
   type NavigationInput,
   type NavigationOptions,
+  type NavigationPhase,
 } from './machine.js';
 import type { EngineModelRoot } from './model-node.js';
 import type { LayoutRenderer } from './renderer.js';
@@ -26,6 +28,19 @@ export type NavigationInputSink = {
 export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
   NavigationInputSink &
     MarkingMenuEventEmitter<Model> & {
+      /**
+      What the machine is doing right now.
+      */
+      readonly phase: NavigationPhase;
+      /**
+      Display the root menu on its own, centered at `position` (client
+      coordinates). Throws unless the runtime is idle.
+      */
+      open: (position: Point) => void;
+      /**
+      Close a standalone menu. Throws unless one is open.
+      */
+      close: () => void;
       dispose: () => void;
     };
 
@@ -119,6 +134,16 @@ export function createRuntime<Model extends EngineModelRoot>({
     }
 
     switch (input.type) {
+      case 'keyboard': {
+        host.send(input.intent);
+        break;
+      }
+
+      case 'focus': {
+        host.send('focus', { key: input.key });
+        break;
+      }
+
       case 'pointer.down': {
         host.send('down', { position: input.position });
         break;
@@ -139,6 +164,38 @@ export function createRuntime<Model extends EngineModelRoot>({
         break;
       }
     }
+  };
+
+  // The machine declines what does not apply and never throws, so misuse is
+  // caught here, where the caller can be told about it. The phase is read at
+  // call time: a send made from a listener is queued, so two calls made from
+  // one listener can both pass, and the second is silently declined.
+  const open = (position: Point): void => {
+    if (isDisposed) {
+      throw new Error('Cannot open a disposed controller.');
+    }
+
+    if (host.current.name !== 'idle') {
+      throw new Error(
+        `Cannot open the menu unless the controller is idle (it is ${host.current.name}).`,
+      );
+    }
+
+    host.send('open', { position });
+  };
+
+  const close = (): void => {
+    if (isDisposed) {
+      throw new Error('Cannot close a disposed controller.');
+    }
+
+    if (host.current.name !== 'standalone') {
+      throw new Error(
+        `Cannot close the menu unless it is standalone (the controller is ${host.current.name}).`,
+      );
+    }
+
+    host.send('close');
   };
 
   const on = (type: string, listener: (event: never) => void): void => {
@@ -191,7 +248,12 @@ export function createRuntime<Model extends EngineModelRoot>({
   };
 
   return {
+    get phase() {
+      return host.current.name;
+    },
     send,
+    open,
+    close,
     dispose,
     on,
     off,

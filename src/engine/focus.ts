@@ -1,11 +1,17 @@
 import type {
   MarkingMenuChangeEvent,
   MarkingMenuEventEmitter,
+  MarkingMenuOpenEvent,
 } from '../events.js';
 import type { Menu } from '../layout/menu.js';
 import type { ModelNode } from '../types.js';
 
 export type FocusManager = {
+  /**
+   Say whether the standalone menu about to open takes focus, or is only
+   displayed. Call it before the menu opens.
+   */
+  willOpenStandalone: (options: { focus: boolean }) => void;
   dispose: () => void;
 };
 
@@ -40,11 +46,14 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   runtime,
 }: {
   doc: Document;
-  getMenu: () => Pick<Menu, 'focusMenu' | 'focusItem'> | undefined;
+  getMenu: () =>
+    Pick<Menu, 'focusMenu' | 'focusItem' | 'focusTabStop'> | undefined;
   runtime: MarkingMenuEventEmitter<Model>;
 }): FocusManager {
   let pendingFocus: ReturnType<typeof setTimeout> | undefined;
   let savedFocus: HTMLElement | undefined;
+  let isStandaloneOpen = false;
+  let willStandaloneTakeFocus = true;
 
   const clearPendingFocus = (): void => {
     clearTimeout(pendingFocus);
@@ -53,20 +62,47 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
 
   const restoreFocus = (): void => {
     clearPendingFocus();
+    isStandaloneOpen = false;
     savedFocus?.focus({ preventScroll: true });
     savedFocus = undefined;
   };
 
-  const onOpen = (): void => {
+  const onOpen = (event: MarkingMenuOpenEvent<Model>): void => {
     clearPendingFocus();
+    if (event.mode !== 'standalone') {
+      savedFocus ??= deepActiveElement(doc) as HTMLElement | undefined;
+      getMenu()?.focusMenu();
+      return;
+    }
+
+    // A level entered or left with the keyboard: the `change` that follows
+    // puts focus on the item it lands on.
+    if (isStandaloneOpen) {
+      return;
+    }
+
+    isStandaloneOpen = true;
+    if (!willStandaloneTakeFocus) {
+      return;
+    }
+
     savedFocus ??= deepActiveElement(doc) as HTMLElement | undefined;
-    getMenu()?.focusMenu();
+    // Nothing is active yet, so this is the first item. The platform reports
+    // that focus back as a `focus` input, which is what makes it active.
+    getMenu()?.focusTabStop();
   };
 
   const onChange = (event: MarkingMenuChangeEvent<Model>): void => {
     clearPendingFocus();
     const { active } = event;
     if (active === undefined) {
+      return;
+    }
+
+    // Keyboard navigation moves at the pace of the keys. A gesture waits, so
+    // an item the pointer only passes over is not announced.
+    if (event.mode === 'standalone') {
+      getMenu()?.focusItem(active.key);
       return;
     }
 
@@ -81,6 +117,9 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   runtime.on('cancel', restoreFocus);
 
   return {
+    willOpenStandalone({ focus }) {
+      willStandaloneTakeFocus = focus;
+    },
     dispose() {
       // Disposing mid-gesture: nothing else will ever give the focus this
       // manager moved back to its owner, so this is the last chance to.

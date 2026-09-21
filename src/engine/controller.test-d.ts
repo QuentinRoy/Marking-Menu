@@ -1,12 +1,12 @@
 import { describe, expectTypeOf, it } from 'vitest';
-import type {
-  MarkingMenuChangeEvent,
-  MarkingMenuSelectEvent,
-  MarkingMenuStartEvent,
-} from '../events.js';
+import type { MarkingMenuEventMap, MarkingMenuStartEvent } from '../events.js';
 import type { MarkingMenuModel } from '../model.js';
-import { noOp } from '../utils.js';
-import { createController, type MarkingMenuController } from './controller.js';
+import { noOp, type Point } from '../utils.js';
+import {
+  createController,
+  type MarkingMenuController,
+  type MarkingMenuOpenOptions,
+} from './controller.js';
 
 /*
  Type level tests: the model the controller's events carry is the one the
@@ -42,17 +42,52 @@ describe('createController', () => {
     expectTypeOf(controller.dispose).toEqualTypeOf<() => void>();
   });
 
-  it('exposes exactly the listen-only facade and both forms of disposal, nothing else', () => {
+  it('exposes exactly the listen-only facade, open and close, and both forms of disposal, nothing else', () => {
     expectTypeOf<keyof MarkingMenuController<Model>>().toEqualTypeOf<
-      'on' | 'off' | 'dispose' | typeof Symbol.dispose
+      'on' | 'off' | 'open' | 'close' | 'dispose' | typeof Symbol.dispose
     >();
+  });
+
+  it('shows no phase or open flag: a consumer follows the events', () => {
+    expectTypeOf<MarkingMenuController<Model>>().not.toHaveProperty('phase');
+    expectTypeOf<MarkingMenuController<Model>>().not.toHaveProperty('isOpen');
+  });
+});
+
+describe('createController open and close', () => {
+  it('opens with no argument, or with optional options', () => {
+    expectTypeOf(controller.open).toBeCallableWith();
+    expectTypeOf(controller.open).toBeCallableWith({});
+    expectTypeOf(controller.open).toBeCallableWith({
+      position: [1, 2],
+      focus: false,
+    });
+    expectTypeOf(controller.open).returns.toBeVoid();
+  });
+
+  it('takes a position in client coordinates and whether to take focus, nothing else', () => {
+    expectTypeOf<MarkingMenuOpenOptions>().toEqualTypeOf<{
+      readonly position?: Point;
+      readonly focus?: boolean;
+    }>();
+  });
+
+  it('rejects options it does not know', () => {
+    // @ts-expect-error -- there is no such option.
+    controller.open({ label: 'Menu' });
+    // @ts-expect-error -- a position is a point, not a pair of options.
+    controller.open({ position: { x: 1, y: 2 } });
+  });
+
+  it('closes with no argument', () => {
+    expectTypeOf(controller.close).toEqualTypeOf<() => void>();
   });
 });
 
 describe('createController listeners', () => {
   it('narrows `select` to the literal leaf ids, not `string`', () => {
     controller.on('select', (event) => {
-      expectTypeOf(event).toEqualTypeOf<MarkingMenuSelectEvent<Model>>();
+      expectTypeOf(event).toEqualTypeOf<MarkingMenuEventMap<Model>['select']>();
       // The assertion that actually fails if the model widens to
       // `MarkingMenuModel<EngineConfig>`: `id` collapses to `string` there.
       expectTypeOf(event.selection.id).toEqualTypeOf<
@@ -64,9 +99,19 @@ describe('createController listeners', () => {
 
   it('narrows `change` to this model, including the open menu', () => {
     controller.on('change', (event) => {
-      expectTypeOf(event).toEqualTypeOf<MarkingMenuChangeEvent<Model>>();
+      expectTypeOf(event).toEqualTypeOf<MarkingMenuEventMap<Model>['change']>();
       expectTypeOf(event.menu.isLeaf).toEqualTypeOf<false>();
-      expectTypeOf(event.mode).toEqualTypeOf<'novice'>();
+      expectTypeOf(event.mode).toEqualTypeOf<'novice' | 'standalone'>();
+    });
+  });
+
+  it('narrows `position` on `mode`, so a standalone event has none', () => {
+    controller.on('cancel', (event) => {
+      if (event.mode === 'standalone') {
+        expectTypeOf(event.position).toEqualTypeOf<undefined>();
+      } else {
+        expectTypeOf(event.position).toEqualTypeOf<Point>();
+      }
     });
   });
 
@@ -86,14 +131,16 @@ describe('createController listeners', () => {
     controller.on(
       'select',
       // @ts-expect-error -- a `select` listener cannot take a `change` event.
-      (event: MarkingMenuChangeEvent<Model>) => {
-        expectTypeOf(event).toEqualTypeOf<MarkingMenuChangeEvent<Model>>();
+      (event: MarkingMenuEventMap<Model>['change']) => {
+        expectTypeOf(event).toEqualTypeOf<
+          MarkingMenuEventMap<Model>['change']
+        >();
       },
     );
   });
 
   it('removes listeners under the same narrowing', () => {
-    const onSelect = (event: MarkingMenuSelectEvent<Model>): void => {
+    const onSelect = (event: MarkingMenuEventMap<Model>['select']): void => {
       expectTypeOf(event.selection.id).toEqualTypeOf<
         'right' | 'down' | 'left' | 'up'
       >();

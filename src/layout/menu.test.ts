@@ -220,6 +220,80 @@ describe('createMenu', () => {
     }
   });
 
+  it('reaches no item with Tab until one is made the tab stop', () => {
+    const div = document.createElement('div');
+    const menu = createMenu({
+      parent: div,
+      model: createModel(3),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(getItems(div).map((item) => item.tabIndex)).toEqual([-1, -1, -1]);
+
+    menu.remove();
+  });
+
+  it('makes exactly one item the tab stop, and moves it', () => {
+    const div = document.createElement('div');
+    const menu = createMenu({
+      parent: div,
+      model: createModel(3),
+      center: [30, 50],
+      doc: document,
+    });
+
+    menu.setTabStop('item-1-key');
+    expect(getItems(div).map((item) => item.tabIndex)).toEqual([-1, 0, -1]);
+
+    menu.setTabStop('item-2-key');
+    expect(getItems(div).map((item) => item.tabIndex)).toEqual([-1, -1, 0]);
+
+    menu.setTabStop(undefined);
+    expect(getItems(div).map((item) => item.tabIndex)).toEqual([-1, -1, -1]);
+
+    menu.remove();
+  });
+
+  it('focuses the tab stop, or the menu layer while there is none', () => {
+    const div = document.createElement('div');
+    document.body.append(div);
+
+    try {
+      const menu = createMenu({
+        parent: div,
+        model: createModel(3),
+        center: [30, 50],
+        doc: document,
+      });
+
+      menu.focusTabStop();
+      expect(getShadowRoot(div).activeElement).toBe(menu.layer);
+
+      menu.setTabStop('item-1-key');
+      menu.focusTabStop();
+      expect(getShadowRoot(div).activeElement).toBe(getItems(div)[1]);
+    } finally {
+      div.remove();
+    }
+  });
+
+  it('throws for a tab stop that is not an item of the menu', () => {
+    const div = document.createElement('div');
+    const menu = createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(() => {
+      menu.setTabStop('nope');
+    }).toThrow('nope');
+
+    menu.remove();
+  });
+
   it('creates a menu host in an anchor parent', () => {
     const anchor = document.createElement('a');
 
