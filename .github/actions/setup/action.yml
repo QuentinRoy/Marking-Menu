@@ -13,6 +13,19 @@ inputs:
 runs:
   using: composite
   steps:
+    # No runner image ships the Node version pinned in `.tool-versions`, so
+    # setup-node otherwise downloads it and unpacks it into the tool cache on
+    # every job. The unpacking is the slow half, and on `ubuntu-slim` it has
+    # taken anywhere from 6 to 48 seconds. Restoring the unpacked tree turns
+    # the step into a cache hit.
+    - name: Restore Node tool cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ runner.tool_cache }}/node
+        key: >-
+          ${{ runner.os }}-${{ runner.arch }}-node-tool-${{
+            hashFiles('.tool-versions')
+          }}
     - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
       with:
         node-version-file: .tool-versions
