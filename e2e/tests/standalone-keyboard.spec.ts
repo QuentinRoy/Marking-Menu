@@ -1,16 +1,14 @@
-import type { Page } from '@playwright/test';
+import type { JSHandle, Page } from '@playwright/test';
 import { expect, test } from '../helpers/fixtures.js';
-
-type StandaloneTestGlobal = { __standaloneEvents: string[] };
 
 /**
  Opens a menu with a submenu on its own, through the built package, after
  focusing a button so tests can tell where focus goes back to. Each `open`,
  `change`, `select`, and `cancel` event is logged as `type:mode`, with the
- selection's `id` appended for `select`.
+ selection's `id` appended for `select`. Returns a handle on that log.
  */
-async function openStandaloneMenu(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+async function openStandaloneMenu(page: Page): Promise<JSHandle<string[]>> {
+  return page.evaluateHandle(async () => {
     const { createMarkingMenu } = await import('marking-menu');
     const trigger = document.createElement('button');
     trigger.id = 'standalone-trigger';
@@ -44,21 +42,16 @@ async function openStandaloneMenu(page: Page): Promise<void> {
       });
     }
 
-    Object.assign(globalThis, { __standaloneEvents: events });
     trigger.focus();
     mm.open();
+    return events;
   });
 }
-
-const readEvents = async (page: Page): Promise<string[]> =>
-  page.evaluate(
-    () => (globalThis as unknown as StandaloneTestGlobal).__standaloneEvents,
-  );
 
 test('standalone menu: the arrow keys walk its items and submenus, and Enter selects a leaf', async ({
   page,
 }) => {
-  await openStandaloneMenu(page);
+  const events = await openStandaloneMenu(page);
   await expect(page.getByRole('menuitem', { name: 'Right' })).toBeFocused();
 
   await page.keyboard.press('ArrowDown');
@@ -74,28 +67,48 @@ test('standalone menu: the arrow keys walk its items and submenus, and Enter sel
   await page.keyboard.press('End');
   await expect(page.getByRole('menuitem', { name: 'Sub Down' })).toBeFocused();
 
+  await page.keyboard.press('Home');
+  await expect(page.getByRole('menuitem', { name: 'Sub Right' })).toBeFocused();
+
+  await page.keyboard.press('ArrowUp');
+  await expect(page.getByRole('menuitem', { name: 'Sub Down' })).toBeFocused();
+
   await page.keyboard.press('Enter');
   await expect(page.getByRole('menu')).toHaveCount(0);
   await expect(page.locator('#standalone-trigger')).toBeFocused();
-  const events = await readEvents(page);
-  expect(events.at(-1)).toBe('select:standalone:sub-down');
+  const log = await events.jsonValue();
+  expect(log.at(-1)).toBe('select:standalone:sub-down');
 });
 
 test('standalone menu: Escape goes up a level, then closes the menu with a cancel', async ({
   page,
 }) => {
-  await openStandaloneMenu(page);
+  const events = await openStandaloneMenu(page);
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('menuitem', { name: 'Sub Right' })).toBeFocused();
 
   await page.keyboard.press('Escape');
   await expect(page.getByRole('menuitem', { name: 'Others' })).toBeFocused();
-  expect(await readEvents(page)).not.toContain('cancel:standalone');
+  expect(await events.jsonValue()).not.toContain('cancel:standalone');
 
   await page.keyboard.press('Escape');
   await expect(page.getByRole('menu')).toHaveCount(0);
   await expect(page.locator('#standalone-trigger')).toBeFocused();
-  const events = await readEvents(page);
-  expect(events.at(-1)).toBe('cancel:standalone');
+  const log = await events.jsonValue();
+  expect(log.at(-1)).toBe('cancel:standalone');
+});
+
+test('standalone menu: Tab closes the menu from a submenu with a cancel', async ({
+  page,
+}) => {
+  const events = await openStandaloneMenu(page);
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('menuitem', { name: 'Sub Right' })).toBeFocused();
+
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('menu')).toHaveCount(0);
+  const log = await events.jsonValue();
+  expect(log.at(-1)).toBe('cancel:standalone');
 });

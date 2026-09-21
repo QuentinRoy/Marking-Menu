@@ -97,18 +97,18 @@ Use `log: { error: handler }` to handle internal errors; the default is `console
 
 Use `menu.on(type, listener)` to register a listener and `menu.off(type, listener)` to remove that same listener.
 
-| Event    | When it fires                                 |
-| -------- | --------------------------------------------- |
-| `start`  | A gesture begins.                             |
-| `open`   | A menu or submenu opens.                      |
-| `move`   | The pointer moves during a gesture.           |
-| `change` | The active item changes while a menu is open. |
-| `select` | A gesture ends with a selected item.          |
-| `cancel` | A gesture ends without a selection.           |
+| Event    | When it fires                                                |
+| -------- | ------------------------------------------------------------ |
+| `start`  | A gesture begins.                                            |
+| `open`   | A menu or submenu opens, or a standalone menu shows a level. |
+| `move`   | The pointer moves during a gesture.                          |
+| `change` | The active item changes while a menu is open.                |
+| `select` | A gesture or standalone menu ends with a selected item.      |
+| `cancel` | A gesture or standalone menu ends without a selection.       |
 
 `select` carries the selected item as `event.selection`, including its `id` and `label`.
 
-Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close). Every event also includes `position`, a viewport `[x, y]` pair, except in `standalone` mode, where no pointer is involved and it is `undefined`. Check `mode` and TypeScript narrows `position` for you:
+Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close). Every event also includes `position`, a viewport `[x, y]` pair, except in `standalone` mode, where no pointer is involved and it is `undefined`. Checking `mode` narrows `position` in TypeScript:
 
 ```js
 menu.on('cancel', (event) => {
@@ -118,7 +118,7 @@ menu.on('cancel', (event) => {
 });
 ```
 
-`open`, `select`, and `cancel` events also include `recognition` when the recognizer ran on a stroke, and `undefined` otherwise. It holds `stroke`, the points the recognizer was given, and `analysis`, how it cut them: `articulationPoints`, the corners of the stroke, and `segments`, the pieces between corners, each with the two `points` it spans. All points are in client coordinates (pixels). The shape and meaning of `recognition` follow semver. See [the event types](src/events.ts) for each payload.
+`open`, `select`, and `cancel` events also include `recognition` when the recognizer ran on a stroke, and `undefined` otherwise. It holds `stroke`, the points the recognizer was given, and `analysis`, how it cut them: `articulationPoints`, the corners of the stroke, and `segments`, the pieces between corners, each with the two `points` it spans. All points are in viewport pixels. The shape and meaning of `recognition` follow semver. See [the event types](src/events.ts) for each payload.
 
 `dispose()` ends the controller's lifetime and can be called more than once. The controller also supports `using` where your toolchain supports it.
 
@@ -128,12 +128,12 @@ menu.on('cancel', (event) => {
 
 | Option     | Default              | Purpose                                                                                            |
 | ---------- | -------------------- | -------------------------------------------------------------------------------------------------- |
-| `position` | Center of the parent | Where the menu is centered, in client coordinates (pixels). Read once: the menu does not follow.   |
+| `position` | Center of the parent | Where the menu is centered, in viewport pixels. Read once: the menu does not follow.               |
 | `focus`    | `true`               | Whether the menu takes focus. With `false` the menu is only displayed, see [below](#display-only). |
 
 A standalone menu dispatches events with `mode: 'standalone'`. It fires `open` for the root and again each time the keyboard enters or leaves a submenu, `change` as the active item changes, then `select` or `cancel`. It never fires `start` or `move`.
 
-#### Display only
+### Display only
 
 `menu.open({ focus: false })` only draws the menu. Focus stays where it is, the first item is reachable with Tab, and closing gives no focus back. Close it with `close()`, or with the keyboard once an item has focus.
 
@@ -288,7 +288,7 @@ While dwelling before novice mode opens, whether at the start of a gesture or pa
 
 ## Input behavior
 
-Gestures start with the primary mouse button, primary touch contact, or primary pen contact. The controller sets the parent's inline `touch-action` to `none !important` for its lifetime, preventing browser touch gestures in that area.
+Gestures start with the primary mouse button, primary touch contact, or primary pen contact. The controller sets the parent's inline `touch-action` to `none !important` for its lifetime, preventing browser touch gestures in that area. It lets go while a menu shown with [`open()`](#open-and-close) is displayed.
 
 Once all controllers sharing the parent are disposed, the previous inline value and priority are restored, unless your application changed the property in the meantime.
 
