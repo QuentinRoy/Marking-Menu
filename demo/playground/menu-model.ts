@@ -137,13 +137,12 @@ type ParentedNode = {
 };
 
 /**
- Read a node's position in its own model, one index per level, by climbing
- its `parent` chain and locating each step in `parent.items`.
+ A node's position in its own model: one index per level, found by
+ climbing its `parent` chain and locating each step in `parent.items`.
 
- Nodes are positional by construction (see `src/model.ts`), which is what
- lets a node from the live menu's own model — e.g. the leaf off a `select`
- event — address the same position in the model this page built from the
- same description.
+ Nodes are positional by construction (see `src/model.ts`), so a node from
+ the live menu's model — e.g. the leaf off a `select` event — maps to the
+ same position in the model this page built from the same description.
 
  @param node - The node whose path to read.
  @returns One index per level, from the top down.

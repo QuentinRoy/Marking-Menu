@@ -15,11 +15,10 @@ import {
 import { useLatest } from './use-latest.js';
 
 /*
- The live half of the page: the shipped marking menu, on a surface of its
- own. Dwelling, sub-menu opening, expert detection, the highlight and the
- stroke are all the library's; what this file adds is the readout, and the
- recognizer overlay this page draws itself from what `select` and `cancel`
- report on `event.recognition`.
+ The live half of the page: the shipped marking menu. Dwelling, sub-menu
+ opening, expert detection and the stroke are the library's; this file adds
+ the readout and draws the recognizer overlay from `select` and `cancel`'s
+ `event.recognition`.
  */
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
@@ -49,11 +48,10 @@ export const IDLE_RESULT: GestureResult = {
 };
 
 /**
- The length of a pointer path: the sum of the distances between its
- consecutive points.
+ The length of a pointer path.
 
  @param points - An ordered list of points.
- @returns The summed distance between each point and the one before it.
+ @returns The summed distance between consecutive points.
  */
 function pathLength(points: readonly Point[]): number {
   let length = 0;
@@ -73,7 +71,7 @@ function pathLength(points: readonly Point[]): number {
  An SVG path's `d` attribute tracing straight segments through `points`.
 
  @param points - The points to connect, in order.
- @returns The path data, or the empty string for no points.
+ @returns The path data, or `''` for no points.
  */
 function pathData(points: readonly Point[]): string {
   const [first, ...rest] = points;
@@ -87,15 +85,14 @@ function pathData(points: readonly Point[]): string {
 }
 
 /**
- Draw a finished gesture's recognizer breakdown: the stroke as it was made,
- the pieces the recognizer cut it into, and the corners it cut them at.
+ Draw a gesture's recognizer breakdown: the stroke, its pieces, and the
+ corners between them.
 
- Colors come from the page's own custom properties, so the legend beside the
- surface cannot fall out of step with what is drawn. `recognition`'s points
- are in client coordinates, so each is placed relative to `overlay`'s own
- box before it is drawn.
+ Colors read from the page's custom properties, so the legend beside the
+ surface can't drift from what's drawn. `recognition`'s points are in
+ client coordinates, so each is offset against `overlay`'s own box first.
 
- @param overlay - The element to draw the breakdown into.
+ @param overlay - Where to draw the breakdown.
  @param recognition - What the recognizer made of the gesture.
  */
 function drawRecognition(
@@ -144,8 +141,8 @@ function drawRecognition(
     );
   }
 
-  // One circle per corner: unlike the library's own reusable marker, this
-  // is drawn fresh for each point, so every corner stays on screen at once.
+  // A fresh circle per corner, unlike the library's shared marker, so every
+  // corner stays visible.
   const cornerColor = token('--color-ink');
   const cornerRadius = tokenNumber('--stroke-corner-radius');
   for (const point of recognition.analysis.articulationPoints) {
@@ -200,9 +197,8 @@ export function LiveSurface({
   /* eslint-enable @typescript-eslint/no-restricted-types -- DOM refs */
   const strokeRef = useRef<Point[]>([]);
   const interruptedRef = useRef(false);
-  // The recognition behind the overlay currently on screen, redrawn as-is
-  // when the breakdown is toggled back on; `undefined` after a gesture the
-  // recognizer had no part in.
+  // The recognition currently drawn, redrawn as-is when the breakdown is
+  // toggled back on; `undefined` when the recognizer took no part.
   const lastRecognitionRef = useRef<MarkingMenuRecognition | undefined>(
     undefined,
   );
@@ -244,8 +240,7 @@ export function LiveSurface({
       const wasInterrupted = interruptedRef.current;
       lastRecognitionRef.current = recognition;
       if (recognition === undefined) {
-        // Nothing is drawn and no piece or corner is quoted: the overlay is
-        // a picture of a recognition that did not happen.
+        // No recognition: nothing to draw or quote.
         report({
           ...outcome,
           metrics: [
