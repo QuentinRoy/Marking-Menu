@@ -1,20 +1,23 @@
-import { machine, type, type Skip } from 'totorobot';
+import { machine, type } from 'totorobot';
 import {
-  MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
   MarkingMenuMoveEvent,
   MarkingMenuOpenEvent,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
-  type MarkingMenuMode,
-  type MarkingMenuRecognition,
+  type MarkingMenuCancelEvent,
 } from '../events.js';
 import {
   recognizeStroke,
   type StrokeCut,
 } from '../recognizer/recognize-mm-stroke.js';
-import { strokeLength } from '../recognizer/stroke-length.js';
-import type { ModelItem, ModelLeaf, ModelMenu, ModelNode } from '../types.js';
+import {
+  isModelLeaf,
+  isModelMenuItem,
+  type ModelItem,
+  type ModelMenu,
+  type ModelNode,
+} from '../types.js';
 import { dist, last, toPolar, type Point } from '../utils.js';
 import {
   currentMenu,
@@ -22,6 +25,21 @@ import {
   projectLayout,
   type LayoutView,
 } from './layout-view.js';
+import {
+  armDwellTimer,
+  cancelGesture,
+  emitInactiveMove,
+  emitTermination,
+  releaseGesture,
+  toRecognition,
+} from './machine-gesture.js';
+import {
+  cancelStandalone,
+  emitStandaloneOpen,
+  enterActive,
+  leaveLevel,
+  moveActive,
+} from './machine-standalone.js';
 import type {
   EngineModelItem,
   EngineModelMenu,
@@ -64,7 +82,6 @@ type MachineInputs = {
   enter: undefined;
   leave: undefined;
   escape: undefined;
-  exit: undefined;
   // The platform moved focus onto the item with this key.
   focus: { readonly key: string };
 };
@@ -76,7 +93,7 @@ type PointerInputName = 'down' | 'move' | 'up' | 'cancel';
  `next` and `previous` walk the items clockwise, `first` and `last`
  jump to the ends, `activate` selects a leaf or enters a submenu, `enter` and
  `leave` go down and up a level, `escape` goes up a level or cancels, and
- `exit` cancels from any level.
+ `close` cancels from any level.
  */
 export type KeyboardIntent =
   | 'next'
@@ -87,7 +104,7 @@ export type KeyboardIntent =
   | 'enter'
   | 'leave'
   | 'escape'
-  | 'exit';
+  | 'close';
 
 /**
  The boundary input shape `pointer-source.ts` sends: unrelated to the
@@ -188,7 +205,7 @@ export type NavigationState<Menu = ModelMenu, Active = ModelItem> = {
  */
 export type NavigationPhase = keyof MachineStates;
 
-type MachineStates = {
+export type MachineStates = {
   [K in keyof NavigationPhaseFields<EngineModelMenu, EngineModelItem>]: {
     readonly model: EngineModelRoot;
     readonly options: NavigationOptions;
@@ -230,377 +247,6 @@ function toNavigationState(
     EngineModelMenu,
     EngineModelItem
   >;
-}
-
-/**
- Shared body of the three startup/expert move actions: no menu is open in
- either state, so `move` always carries an undefined `active` and `menu`
- there.
- */
-function emitInactiveMove(
-  emit: (name: 'move', data: MarkingMenuMoveEvent) => void,
-  mode: 'startup' | 'expert',
-  position: Point,
-): void {
-  emit(
-    'move',
-    new MarkingMenuMoveEvent<ModelNode>({
-      mode,
-      position,
-      active: undefined,
-      menu: undefined,
-    }),
-  );
-}
-
-/**
- A frozen copy of a point: the engine keeps its own, and a consumer that
- alters what an event publishes must not reach it.
- */
-const copyPoint = (point: Point): Point =>
-  Object.freeze([point[0], point[1]] as const);
-
-/**
- Copy a recognition attempt into the frozen shape events publish. The
- recognizer's own analysis carries fields (each piece's length and angle) the
- public contract leaves out, and events must not leak them at run time.
- */
-function toRecognition(
-  stroke: readonly Point[],
-  { articulationPoints, segments }: StrokeCut,
-): MarkingMenuRecognition {
-  const frozenSegments = segments.map((segment) => {
-    const points = Object.freeze([
-      copyPoint(segment.points[0]),
-      copyPoint(segment.points[1]),
-    ] as const);
-    return Object.freeze({ points });
-  });
-  const analysis = Object.freeze({
-    articulationPoints: Object.freeze(
-      articulationPoints.map((point) => copyPoint(point)),
-    ),
-    segments: Object.freeze(frozenSegments),
-  });
-  return Object.freeze({
-    stroke: Object.freeze(stroke.map((point) => copyPoint(point))),
-    analysis,
-  });
-}
-
-function isModelLeaf(item: ModelItem): item is ModelLeaf {
-  return item.isLeaf;
-}
-
-function isModelMenuItem<Item extends ModelItem>(
-  item: Item,
-): item is Item & { readonly isLeaf: false } {
-  return !item.isLeaf;
-}
-
-/**
- Shared body of the `startup` and `novice` dwell residencies: arm a `dwell`
- timer for `delayMs` and clear it on exit, whatever ends the residency,
- whether that is leaving the state or disposal.
- */
-function armDwellTimer(
-  delayMs: number,
-  send: (input: 'dwell') => void,
-): () => void {
-  const timer = setTimeout(() => {
-    send('dwell');
-  }, delayMs);
-  return () => {
-    clearTimeout(timer);
-  };
-}
-
-/**
- The context every termination action needs: the stroke drawn so far
- (including the release/cancel position), the menu open when it ended (if
- any), and the item that was active (if any). That active item is precisely
- the thing that is not selected once a termination action decides not to
- select it. Narrows structurally on `'lowerStroke' in fromData` rather than
- taking `from` as a parameter: `from` and `fromData` are only correlated
- inside totorobot's own transition record, and splitting them across two
- parameters here decorrelates them, so novice is picked out by the field
- only it has.
- */
-function terminationContext(
-  fromData: MachineStates['startup' | 'expert' | 'novice'],
-  position: Point,
-): {
-  readonly stroke: readonly Point[];
-  readonly menu: ModelMenu | undefined;
-  readonly active: ModelItem | undefined;
-} {
-  if ('lowerStroke' in fromData) {
-    const { lowerStroke, menu, active } = fromData;
-    return {
-      stroke: [...lowerStroke, ...noviceUpperStroke(fromData), position],
-      menu,
-      active,
-    };
-  }
-
-  return {
-    stroke: [...fromData.stroke, position],
-    menu: undefined,
-    active: undefined,
-  };
-}
-
-/**
- Shared tail of every action that ends a gesture — `up`, `cancel`, and the
- expert dwell that finds nothing to switch to: announce `feedback`, then
- `select` or `cancel` depending on whether a selection was found. The
- latter two callers always pass an undefined `selection`, since neither ever
- attempts one.
- */
-function emitTermination(
-  emit: {
-    (name: 'feedback', data: NavigationFeedbackAnnouncement): void;
-    (name: 'cancel', data: MarkingMenuCancelEvent): void;
-    (name: 'select', data: MarkingMenuSelectEvent): void;
-  },
-  {
-    from,
-    position,
-    stroke,
-    menu,
-    active,
-    selection,
-    recognition,
-  }: {
-    readonly from: Exclude<MarkingMenuMode, 'standalone'>;
-    readonly position: Point;
-    readonly stroke: readonly Point[];
-    readonly menu: ModelMenu | undefined;
-    readonly active: ModelItem | undefined;
-    readonly selection: ModelLeaf | undefined;
-    // Present exactly when recognition ran for this termination.
-    readonly recognition: MarkingMenuRecognition | undefined;
-  },
-): void {
-  emit('feedback', { stroke, canceled: selection === undefined });
-  if (selection === undefined) {
-    emit(
-      'cancel',
-      new MarkingMenuCancelEvent<ModelNode>({
-        mode: from,
-        position,
-        active,
-        menu,
-        recognition,
-      }),
-    );
-  } else {
-    emit(
-      'select',
-      new MarkingMenuSelectEvent({
-        mode: from,
-        position,
-        selection,
-        menu,
-        recognition,
-      }),
-    );
-  }
-}
-
-type StandaloneData = MachineStates['standalone'];
-
-type StandaloneRow = (context: {
-  readonly fromData: StandaloneData;
-  readonly skip: () => Skip;
-}) => StandaloneData | Skip;
-
-/**
- A row moving the active item along the menu's items, which are listed
- clockwise. It declines when there is nowhere to go, so a menu with a single
- item announces no change.
- */
-const moveActive =
-  (step: 'next' | 'previous' | 'first' | 'last'): StandaloneRow =>
-  ({ fromData, skip }) => {
-    const { items } = currentMenu(fromData.menus);
-    const index =
-      fromData.active === undefined ? -1 : items.indexOf(fromData.active);
-    let target: EngineModelItem | undefined;
-    switch (step) {
-      case 'next': {
-        target = items[(index + 1) % items.length];
-        break;
-      }
-
-      case 'previous': {
-        // From nothing, or from the first item, back to the last one.
-        target = items[(index <= 0 ? items.length : index) - 1];
-        break;
-      }
-
-      case 'first': {
-        target = items[0];
-        break;
-      }
-
-      case 'last': {
-        target = items.at(-1);
-        break;
-      }
-    }
-
-    return target === undefined || target === fromData.active
-      ? skip()
-      : { ...fromData, active: target };
-  };
-
-/**
- Go down into the active submenu, keeping the center, and land on its first
- item.
- */
-const enterActive: StandaloneRow = ({ fromData, skip }) => {
-  const { active } = fromData;
-  if (active === undefined || !isModelMenuItem(active)) {
-    return skip();
-  }
-
-  return {
-    ...fromData,
-    menus: [...fromData.menus, active],
-    active: active.items[0],
-  };
-};
-
-/**
- Go back up to the parent, landing on the item the level was entered from.
- */
-const leaveLevel: StandaloneRow = ({ fromData, skip }) => {
-  const left = currentMenu(fromData.menus);
-  return fromData.menus.length < 2 || left.isRoot
-    ? skip()
-    : { ...fromData, menus: fromData.menus.slice(0, -1), active: left };
-};
-
-/**
- Announce a standalone menu level as displayed.
- */
-function emitStandaloneOpen(
-  emit: (name: 'open', data: MarkingMenuOpenEvent) => void,
-  { menuCenter, menus }: Pick<StandaloneData, 'menuCenter' | 'menus'>,
-): void {
-  emit(
-    'open',
-    new MarkingMenuOpenEvent<ModelNode, 'standalone'>({
-      mode: 'standalone',
-      position: undefined,
-      menu: currentMenu(menus),
-      menuCenter,
-    }),
-  );
-}
-
-/**
- Announce that a standalone interaction ended without a selection.
- */
-function cancelStandalone({
-  fromData: { menus, active },
-  emit,
-}: {
-  readonly fromData: StandaloneData;
-  readonly emit: (name: 'cancel', data: MarkingMenuCancelEvent) => void;
-}): void {
-  emit(
-    'cancel',
-    new MarkingMenuCancelEvent<ModelNode, 'standalone'>({
-      mode: 'standalone',
-      position: undefined,
-      active,
-      menu: currentMenu(menus),
-    }),
-  );
-}
-
-type GestureState = 'startup' | 'expert' | 'novice';
-
-/**
- What an action ending a gesture receives, whichever state it ends from.
- `from` and `fromData` are only correlated inside totorobot's own transition
- record, so `terminationContext` picks the state's own data out structurally.
- */
-type GestureEndContext = {
-  readonly from: GestureState;
-  readonly fromData: MachineStates[GestureState];
-  readonly inputData: { readonly position: Point };
-  readonly emit: Parameters<typeof emitTermination>[0];
-};
-
-/**
- The shared termination policy of a released gesture: recognize the gesture
- drawn so far (unless skipped) and announce `select` or `cancel`.
- */
-function releaseGesture({
-  from,
-  fromData,
-  inputData,
-  emit,
-}: GestureEndContext): void {
-  const { position } = inputData;
-  const { stroke, menu, active } = terminationContext(fromData, position);
-
-  // Novice release hit-tests the item already tracked as active rather than
-  // running stroke recognition: only a leaf can be selected, and a non-leaf
-  // (or absent) active item carries straight through to `cancel.active`
-  // unchanged, since it is precisely the thing that was not selected. Startup
-  // with zero movement has nothing to recognize; expert, and startup with
-  // sub-threshold movement, always attempt it.
-  let selection: ModelLeaf | undefined;
-  let recognition: MarkingMenuRecognition | undefined;
-  if (from === 'novice') {
-    selection =
-      active !== undefined && isModelLeaf(active) ? active : undefined;
-  } else if (from === 'startup' && strokeLength(stroke) === 0) {
-    selection = undefined;
-  } else {
-    const attempt = recognizeStroke(stroke, fromData.model, 'leaf');
-    selection = attempt.outcome;
-    recognition = toRecognition(stroke, attempt.analysis);
-  }
-
-  emitTermination(emit, {
-    from,
-    position,
-    stroke,
-    menu,
-    active,
-    selection,
-    recognition,
-  });
-}
-
-/**
- A pointer canceled outright never selects, regardless of what was active or
- what the stroke looks like: recognition never runs, and a novice active item,
- leaf or not, carries through to `cancel.active` unchanged.
- */
-function cancelGesture({
-  from,
-  fromData,
-  inputData,
-  emit,
-}: GestureEndContext): void {
-  const { position } = inputData;
-  const { stroke, menu, active } = terminationContext(fromData, position);
-
-  emitTermination(emit, {
-    from,
-    position,
-    stroke,
-    menu,
-    active,
-    selection: undefined,
-    recognition: undefined,
-  });
 }
 
 /**
@@ -815,7 +461,6 @@ export const navigationMachine = machine({
       return menus.length > 1 ? skip() : { model, options };
     },
 
-    'standalone -exit> idle': backToIdle,
     'standalone -close> idle': backToIdle,
 
     // Every state a gesture can be in ends the same way, back to idle's own
@@ -935,7 +580,6 @@ export const navigationMachine = machine({
       );
     },
     'standalone -escape> idle': cancelStandalone,
-    'standalone -exit> idle': cancelStandalone,
     'standalone -close> idle': cancelStandalone,
 
     // No menu is open in startup or expert, so nothing can be active: `move`

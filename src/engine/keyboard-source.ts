@@ -14,7 +14,7 @@ const intents = new Map<string, KeyboardIntent>([
   ['ArrowRight', 'enter'],
   ['ArrowLeft', 'leave'],
   ['Escape', 'escape'],
-  ['Tab', 'exit'],
+  ['Tab', 'close'],
 ]);
 
 /**
@@ -65,8 +65,8 @@ export function createKeyboardSource({
       return;
     }
 
-    // Tab is what moves focus on to the next element once the menu closed.
-    if (intent !== 'exit') {
+    // Tab moves focus to the next element after the menu closes.
+    if (intent !== 'close') {
       event.preventDefault();
     }
 
