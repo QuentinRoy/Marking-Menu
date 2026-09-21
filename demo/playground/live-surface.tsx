@@ -116,10 +116,9 @@ function drawRecognition(
     const element = document.createElementNS(svgNamespace, 'path');
     element.setAttribute('d', pathData(points.map((point) => toLocal(point))));
     parent.append(element);
-    return element;
   };
 
-  path(svg, recognition.stroke).setAttribute('class', 'trace');
+  path(group('trace'), recognition.stroke);
 
   const pieces = group('pieces');
   for (const segment of recognition.analysis.segments) {
@@ -189,14 +188,14 @@ export function LiveSurface({
     overlayRef.current?.replaceChildren();
   }, []);
 
-  useEffect(() => {
-    const draw = (recognition: MarkingMenuRecognition) => {
-      const overlay = overlayRef.current ?? undefined;
-      if (overlay !== undefined) {
-        drawRecognition(overlay, recognition);
-      }
-    };
+  const draw = useCallback((recognition: MarkingMenuRecognition) => {
+    const overlay = overlayRef.current ?? undefined;
+    if (overlay !== undefined) {
+      drawRecognition(overlay, recognition);
+    }
+  }, []);
 
+  useEffect(() => {
     const menuParent = menuParentRef.current ?? undefined;
     if (menuParent === undefined) {
       return;
@@ -313,25 +312,22 @@ export function LiveSurface({
       controller.dispose();
       clearOverlay();
     };
-  }, [clearOverlay, latestRef, menu, showBreakdown]);
+  }, [clearOverlay, draw, latestRef, menu, showBreakdown]);
 
   // Turning the overlay off, or back on, redraws the gesture already on
   // screen rather than waiting for the next one. Only a gesture the
   // recognizer ran on has anything to redraw.
   useEffect(() => {
-    const overlay = overlayRef.current ?? undefined;
     const recognition = lastRecognitionRef.current;
-    if (overlay === undefined || recognition === undefined) {
+    if (recognition === undefined) {
       return;
     }
 
     clearOverlay();
-    if (!showBreakdown) {
-      return;
+    if (showBreakdown) {
+      draw(recognition);
     }
-
-    drawRecognition(overlay, recognition);
-  }, [clearOverlay, showBreakdown]);
+  }, [clearOverlay, draw, showBreakdown]);
 
   return (
     <div className="relative min-h-85 flex-1 cursor-crosshair overflow-hidden bg-surface dot-grid wide:min-h-0">
