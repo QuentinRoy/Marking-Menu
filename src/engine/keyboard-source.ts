@@ -5,49 +5,17 @@ export type KeyboardSource = {
   dispose: () => void;
 };
 
-const intentOf = (key: string): KeyboardIntent | undefined => {
-  switch (key) {
-    case 'ArrowDown': {
-      return 'next';
-    }
-
-    case 'ArrowUp': {
-      return 'previous';
-    }
-
-    case 'Home': {
-      return 'first';
-    }
-
-    case 'End': {
-      return 'last';
-    }
-
-    case 'Enter': {
-      return 'activate';
-    }
-
-    case 'ArrowRight': {
-      return 'enter';
-    }
-
-    case 'ArrowLeft': {
-      return 'leave';
-    }
-
-    case 'Escape': {
-      return 'escape';
-    }
-
-    case 'Tab': {
-      return 'exit';
-    }
-
-    default: {
-      return undefined;
-    }
-  }
-};
+const intents = new Map<string, KeyboardIntent>([
+  ['ArrowDown', 'next'],
+  ['ArrowUp', 'previous'],
+  ['Home', 'first'],
+  ['End', 'last'],
+  ['Enter', 'activate'],
+  ['ArrowRight', 'enter'],
+  ['ArrowLeft', 'leave'],
+  ['Escape', 'escape'],
+  ['Tab', 'exit'],
+]);
 
 /**
  Native keyboard listeners: turns `keydown` into the machine's intents and
@@ -86,7 +54,7 @@ export function createKeyboardSource({
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
-    const intent = intentOf(event.key);
+    const intent = intents.get(event.key);
     // Shortcuts of the page or the browser are none of the menu's business.
     const isShortcut = event.ctrlKey || event.altKey || event.metaKey;
     if (

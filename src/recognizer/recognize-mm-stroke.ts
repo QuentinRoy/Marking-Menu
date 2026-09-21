@@ -429,13 +429,7 @@ export function recognizeStroke(
     model,
     kind === 'menu' ? { maxDepth: -1, requireMenu: true } : {},
   );
-  return {
-    analysis: {
-      articulationPoints: cut.articulationPoints,
-      segments: cut.segments,
-    },
-    outcome,
-  };
+  return { analysis: cut, outcome };
 }
 
 /**

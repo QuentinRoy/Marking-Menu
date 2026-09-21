@@ -261,10 +261,9 @@ export class MarkingMenuMoveEvent<
 
 /**
  Dispatched in novice and standalone modes whenever the active item changes:
- the only event
- that carries both the new and the previous active item, so a consumer never
- has to remember the last `move`'s `active` to animate a highlight
- transition.
+ the only event that carries both the new and the previous active item, so a
+ consumer never has to remember the last `move`'s `active` to animate a
+ highlight transition.
  */
 export class MarkingMenuChangeEvent<
   Model extends ModelNode = ModelNode,

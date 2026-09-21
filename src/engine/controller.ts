@@ -160,6 +160,14 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
   readonly #keyboardSource: KeyboardSource;
   readonly #runtime: NavigationRuntime<MarkingMenuModel<Config>>;
   readonly #focusManager: FocusManager;
+  readonly #suspendPointerForStandalone = (event: {
+    readonly mode: string;
+  }): void => {
+    if (event.mode === 'standalone') {
+      this.#pointerSource.suspend();
+    }
+  };
+
   // Resuming is harmless when nothing suspended the pointer: a gesture ends
   // with the same events.
   readonly #resumePointer = (): void => {
@@ -195,8 +203,11 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       parent: config.parent,
       runtime: this.#runtime,
     });
-    // Registered before any consumer can listen, so the pointer is back by
-    // the time a `select` or `cancel` listener reopens the menu.
+    // Registered before any consumer can listen: the pointer is left to the
+    // page as soon as the menu is displayed, and is back by the time a
+    // `select` or `cancel` listener reopens it. Driven by the events rather
+    // than by `open()`, so a refused `open()` never touches it.
+    this.#runtime.on('open', this.#suspendPointerForStandalone);
     this.#runtime.on('select', this.#resumePointer);
     this.#runtime.on('cancel', this.#resumePointer);
     this.#keyboardSource = createKeyboardSource({
@@ -217,16 +228,8 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
   }
 
   open({ position, focus = true }: MarkingMenuOpenOptions = {}): void {
-    // Suspended before opening, not after: a listener reacting to `open` may
-    // already close the menu, and resuming must come last.
-    this.#pointerSource.suspend();
     this.#focusManager.willOpenStandalone({ focus });
-    try {
-      this.#runtime.open(position ?? this.#parentCenter());
-    } catch (error) {
-      this.#pointerSource.resume();
-      throw error;
-    }
+    this.#runtime.open(position ?? this.#parentCenter());
   }
 
   close(): void {

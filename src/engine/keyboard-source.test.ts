@@ -9,7 +9,10 @@ import type {
  A parent holding a menu layer of two items, the way the renderer lays them
  out, plus something else that is not part of the menu.
  */
-const createFixture = (phase: NavigationPhase = 'standalone') => {
+const createFixture = (
+  phase: NavigationPhase = 'standalone',
+  { hasMenu = true }: { hasMenu?: boolean } = {},
+) => {
   const parent = document.createElement('div');
   const layer = document.createElement('div');
   const item = document.createElement('div');
@@ -25,7 +28,7 @@ const createFixture = (phase: NavigationPhase = 'standalone') => {
   const runtime = { phase, send };
   const source = createKeyboardSource({
     parent,
-    getMenu: () => ({ layer }),
+    getMenu: () => (hasMenu ? { layer } : undefined),
     runtime,
   });
   return {
@@ -192,24 +195,12 @@ describe('createKeyboardSource', () => {
   });
 
   it('ignores everything once there is no menu to read', () => {
-    const parent = document.createElement('div');
-    const item = document.createElement('div');
-    item.tabIndex = -1;
-    parent.append(item);
-    document.body.append(parent);
-    const send = vi.fn<(input: NavigationInput) => void>();
-    const source = createKeyboardSource({
-      parent,
-      getMenu: () => undefined,
-      runtime: { phase: 'standalone', send },
-    });
+    using fixture = createFixture('standalone', { hasMenu: false });
 
-    press(item, 'ArrowDown');
-    item.focus();
+    press(fixture.item, 'ArrowDown');
+    fixture.item.focus();
 
-    expect(send).not.toHaveBeenCalled();
-    source.dispose();
-    parent.remove();
+    expect(fixture.send).not.toHaveBeenCalled();
   });
 
   it('stops listening once disposed', () => {

@@ -50,7 +50,12 @@ export function noviceUpperStroke({
  stack, which always holds at least the root.
  */
 export function currentMenu<Menu>(menus: readonly Menu[]): Menu {
-  return menus.at(-1) as Menu;
+  const menu = menus.at(-1);
+  if (menu === undefined) {
+    throw new Error('A standalone menu displays at least the root.');
+  }
+
+  return menu;
 }
 
 export function projectLayout<

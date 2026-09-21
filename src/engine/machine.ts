@@ -139,7 +139,8 @@ type NavigationPhaseFields<Menu, Active> = {
     readonly menuCenter: Point;
     readonly active: Active | undefined;
   };
-  // A pseudostate: the expert dwell recognizes the stroke here, once, and the
+  // A step the machine only passes through: the expert dwell recognizes the
+  // stroke here, once, and the
   // immediate rows below carry the result on to `novice` or `idle`. The
   // machine never rests in it, and it is never rendered.
   recognizing: {
@@ -182,8 +183,8 @@ export type NavigationState<Menu = ModelMenu, Active = ModelItem> = {
 }[Exclude<keyof NavigationPhaseFields<Menu, Active>, 'recognizing'>];
 
 /**
- What the machine can be observed doing. The recognizing pseudostate is part
- of it for completeness only: the machine never rests there.
+ What the machine can be observed doing. `recognizing` is listed for
+ completeness only: the machine never rests there.
  */
 export type NavigationPhase = keyof MachineStates;
 
@@ -488,10 +489,13 @@ function emitStandaloneOpen(
 /**
  Announce that a standalone interaction ended without a selection.
  */
-function emitStandaloneCancel(
-  emit: (name: 'cancel', data: MarkingMenuCancelEvent) => void,
-  { menus, active }: StandaloneData,
-): void {
+function cancelStandalone({
+  fromData: { menus, active },
+  emit,
+}: {
+  readonly fromData: StandaloneData;
+  readonly emit: (name: 'cancel', data: MarkingMenuCancelEvent) => void;
+}): void {
   emit(
     'cancel',
     new MarkingMenuCancelEvent<ModelNode, 'standalone'>({
@@ -910,15 +914,9 @@ export const navigationMachine = machine({
         }),
       );
     },
-    'standalone -escape> idle'({ fromData, emit }) {
-      emitStandaloneCancel(emit, fromData);
-    },
-    'standalone -exit> idle'({ fromData, emit }) {
-      emitStandaloneCancel(emit, fromData);
-    },
-    'standalone -close> idle'({ fromData, emit }) {
-      emitStandaloneCancel(emit, fromData);
-    },
+    'standalone -escape> idle': cancelStandalone,
+    'standalone -exit> idle': cancelStandalone,
+    'standalone -close> idle': cancelStandalone,
 
     // No menu is open in startup or expert, so nothing can be active: `move`
     // always carries `active: undefined` and `menu: undefined` here, and

@@ -60,6 +60,10 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     pendingFocus = undefined;
   };
 
+  const saveFocus = (): void => {
+    savedFocus ??= deepActiveElement(doc) as HTMLElement | undefined;
+  };
+
   const restoreFocus = (): void => {
     clearPendingFocus();
     isStandaloneOpen = false;
@@ -70,7 +74,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   const onOpen = (event: MarkingMenuOpenEvent<Model>): void => {
     clearPendingFocus();
     if (event.mode !== 'standalone') {
-      savedFocus ??= deepActiveElement(doc) as HTMLElement | undefined;
+      saveFocus();
       getMenu()?.focusMenu();
       return;
     }
@@ -86,7 +90,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
       return;
     }
 
-    savedFocus ??= deepActiveElement(doc) as HTMLElement | undefined;
+    saveFocus();
     // Nothing is active yet, so this is the first item. The platform reports
     // that focus back as a `focus` input, which is what makes it active.
     getMenu()?.focusTabStop();
@@ -100,7 +104,8 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     }
 
     // Keyboard navigation moves at the pace of the keys. A gesture waits, so
-    // an item the pointer only passes over is not announced.
+    // an item the pointer only passes over is not announced. A menu that did
+    // not take focus follows too: a `change` means the user is on it.
     if (event.mode === 'standalone') {
       getMenu()?.focusItem(active.key);
       return;

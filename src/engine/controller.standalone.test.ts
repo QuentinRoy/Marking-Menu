@@ -161,6 +161,23 @@ describe('a standalone menu', () => {
     }).toThrow();
   });
 
+  it('keeps leaving the pointer to the page when a second open() is refused', () => {
+    using fixture = setup();
+    fixture.controller.open();
+
+    expect(() => {
+      fixture.controller.open();
+    }).toThrow();
+
+    expect(fixture.parent.style.getPropertyValue('touch-action')).toBe('');
+    const started = voidMock<[MarkingMenuStartEvent]>();
+    fixture.controller.on('start', started);
+    fixture.parent.dispatchEvent(
+      pointer('pointerdown', { clientX: 0, clientY: 0 }),
+    );
+    expect(started).not.toHaveBeenCalled();
+  });
+
   it('can be opened again once closed', () => {
     using fixture = setup();
 
