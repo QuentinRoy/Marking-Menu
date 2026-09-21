@@ -313,7 +313,20 @@ A gesture is a pointer technique, but a menu shown with [`open()`](#open-and-clo
 | `Escape`      | Go back to the parent menu, or close from the root menu. |
 | `Tab`         | Close the menu from any level and let focus move on.     |
 
-Keys pressed with `Ctrl`, `Alt`, or `Meta` are left to the page. If an action must stay reachable without a gesture, offer a button that calls `open()`, or provide another path outside the menu.
+Keys pressed with `Ctrl`, `Alt`, or `Meta` are left to the page.
+
+Nothing opens the menu from the keyboard until you call `open()` yourself, from a button or a hotkey. Ignore keys pressed inside the menu, which belong to it:
+
+```js
+const parent = document.getElementById('menu-area');
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'm' && !parent.contains(event.target)) {
+    menu.open();
+  }
+});
+```
+
+If an action must stay reachable without a gesture, offer such a trigger, or provide another path outside the menu.
 
 The `select` event is not an announcement. Announce it yourself, for example with a live region:
 

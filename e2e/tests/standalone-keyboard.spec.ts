@@ -112,3 +112,33 @@ test('standalone menu: Tab closes the menu from a submenu with a cancel', async 
   const log = await events.jsonValue();
   expect(log.at(-1)).toBe('cancel:standalone');
 });
+
+test('standalone menu: a hotkey opens it, and keys pressed inside it do not reopen it', async ({
+  page,
+}) => {
+  await page.evaluate(async () => {
+    const { createMarkingMenu } = await import('marking-menu');
+    const parent = document.createElement('div');
+    parent.style.cssText =
+      'position:fixed;top:0;left:0;width:400px;height:400px;';
+    document.body.append(parent);
+    const menu = createMarkingMenu({
+      parent,
+      items: [
+        { id: 'a', label: 'A' },
+        { id: 'b', label: 'B' },
+      ],
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'm' && !parent.contains(event.target as Node)) {
+        menu.open();
+      }
+    });
+  });
+
+  await page.keyboard.press('m');
+  await expect(page.getByRole('menuitem', { name: 'A' })).toBeFocused();
+
+  await page.keyboard.press('m');
+  await expect(page.getByRole('menuitem', { name: 'A' })).toBeFocused();
+});
