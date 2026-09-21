@@ -4,12 +4,9 @@ import { pathToNode, subtreeAt } from './menu-tree.js';
 import { useLatest } from './use-latest.js';
 
 /*
- The other half of the page: the shipped menu itself, opened standalone
- (`open({ focus: false })`) on the subtree of the edited menu rooted at
- `basePath`, and left displayed without taking focus so it can be read rather
- than performed. The library owns layout, keyboard navigation and submenu
- opening; this file only keeps it open and reports which level it is
- currently showing.
+ Opens the shipped menu standalone (`open({ focus: false })`) on the subtree
+ rooted at `basePath`. The library owns layout, keyboard nav and submenus;
+ this file just keeps it open and reports the level it's showing.
  */
 
 export function LayoutSurface({
@@ -21,8 +18,7 @@ export function LayoutSurface({
   basePath: readonly number[];
   onDisplayedPathChange: (path: readonly number[]) => void;
 }) {
-  // Bound to JSX via `ref={}` below: React itself sets `.current` to `null`
-  // on unmount, so this must stay `null`-typed.
+  // React nulls `.current` on unmount, so this stays `null`-typed.
   /* eslint-disable @typescript-eslint/no-restricted-types -- DOM refs */
   const parentRef = useRef<HTMLDivElement | null>(null);
   /* eslint-enable @typescript-eslint/no-restricted-types -- DOM refs */
@@ -39,13 +35,12 @@ export function LayoutSurface({
       ...subtreeAt(menu, basePath),
     });
 
-    // A `close()` this effect calls itself (on resize) fires `cancel` like
-    // any other; skipped once so the listener below does not race it with a
-    // second, redundant `open()`.
+    // `close()` (called on resize, below) fires `cancel` too; skip it once
+    // so the listener doesn't reopen a second time.
     let shouldSkipNextCancel = false;
 
-    // The preview stays open: whatever ends it, the base level it was opened
-    // on is shown again right away, unless a resize already reopened it.
+    // The preview never really closes: it reopens at its base level
+    // whatever ends it.
     const reopen = () => {
       latestRef.current.onDisplayedPathChange(latestRef.current.basePath);
       controller.open({ focus: false });
@@ -69,8 +64,8 @@ export function LayoutSurface({
 
     reopen();
 
-    // The menu is anchored at a pixel centre, so a resized surface needs it
-    // closed and reopened rather than merely restyled.
+    // Anchored at a pixel centre, so a resize needs a close+reopen, not a
+    // restyle.
     const observer = new ResizeObserver(() => {
       shouldSkipNextCancel = true;
       controller.close();

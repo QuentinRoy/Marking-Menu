@@ -10,10 +10,9 @@ import { pathToNode, stepsAlong, type MenuStep } from './menu-tree.js';
 import { useLatest } from './use-latest.js';
 
 /*
- The live half of the page: the shipped marking menu, on a surface of its
- own. Dwelling, sub-menu opening, expert detection, the highlight and the
- stroke are all the library's; what this file adds is the readout, and the
- recognizer overlay drawn from what `select` and `cancel` report back.
+ The shipped menu, on its own surface. The library owns dwelling, sub-menu
+ opening, expert detection and the stroke; this file adds the readout and
+ the recognizer overlay drawn from `select`/`cancel`.
  */
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
@@ -42,12 +41,6 @@ export const IDLE_RESULT: GestureResult = {
   metrics: '',
 };
 
-/**
- The total length of a path through `points`.
-
- @param points - The path, in order.
- @returns The sum of the distance between each consecutive pair.
- */
 function pathLength(points: readonly Point[]): number {
   let total = 0;
   for (let index = 1; index < points.length; index++) {
@@ -73,18 +66,9 @@ function pathData(points: readonly Point[]): string {
 }
 
 /**
- Draw a finished gesture: the stroke as it was made, dimmed, and on top of
- it, the pieces the recognizer cut it into and the corners it cut them at.
-
- Colors come from the page's own custom properties, so the legend beside the
- surface cannot fall out of step with what is drawn.
-
- @param options - What to draw, and where.
- @param options.overlay - The layer the drawing goes in.
- @param options.toLocal - Converts a client-coordinate point to one local to
- `overlay`.
- @param options.recognition - What the recognizer made of the gesture.
- @returns The `<svg>` drawn, for the caller to remove.
+ Draws a finished gesture: the stroke, dimmed, then the pieces and corners
+ on top. Colors read from the page's own CSS properties, so the legend can't
+ drift from what's drawn.
  */
 function drawGesture({
   overlay,
@@ -119,15 +103,14 @@ function drawGesture({
     svg.append(path);
   };
 
-  // The mark as the menu drew it, dimmed so the pieces read on top of it.
+  // Dimmed, so the pieces on top of it stay legible.
   addPath(
     recognition.stroke.map((point) => toLocal(point)),
     token('--color-stroke-trace'),
     tokenNumber('--mm-stroke-width'),
   );
 
-  // Two colors alternate so consecutive pieces stay distinct where they
-  // meet.
+  // Alternate colors: consecutive pieces stay distinct where they meet.
   const [colorA, colorB] = [token('--color-mark'), token('--color-piece-alt')];
   for (const [index, segment] of recognition.analysis.segments.entries()) {
     addPath(
@@ -153,15 +136,9 @@ function drawGesture({
 }
 
 /**
- What settled a gesture the recognizer had no part in, for the readout.
-
- A missing `recognition` is the only signal that the recognizer did not run:
- it does not for a novice release, which hit-tests the item the open menu
- already had highlighted, nor for a gesture the pointer interrupted outright.
-
- @param mode - The mode the gesture ended in.
- @param wasInterrupted - Whether the pointer was cancelled outright.
- @returns A phrase naming what decided.
+ What decided a gesture the recognizer had no part in: a novice release
+ hit-tests the already-highlighted item, an interrupted pointer never
+ reaches the recognizer either. A missing `recognition` is the only signal.
  */
 function decidedBy(mode: MarkingMenuMode, wasInterrupted: boolean): string {
   if (wasInterrupted) {
@@ -179,14 +156,10 @@ export function LiveSurface({
   onResult,
 }: {
   menu: MarkingMenuInput;
-  /**
-  Whether to draw the pieces and corners the recognizer worked from.
-  */
   showBreakdown: boolean;
   onResult: (result: GestureResult) => void;
 }) {
-  // Bound to JSX via `ref={}` below: React itself sets `.current` to `null`
-  // on unmount, so these two must stay `null`-typed.
+  // React nulls `.current` on unmount, so these stay `null`-typed.
   /* eslint-disable @typescript-eslint/no-restricted-types -- DOM refs */
   const menuParentRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
@@ -194,8 +167,8 @@ export function LiveSurface({
   const svgRef = useRef<SVGSVGElement | undefined>(undefined);
   const strokeRef = useRef<Point[]>([]);
   const interruptedRef = useRef(false);
-  // The last recognition the overlay may be redrawn from; `undefined` after a
-  // gesture the recognizer had no part in (see {@link decidedBy}).
+  // Last recognition to redraw from; undefined when the recognizer had no
+  // part (see decidedBy).
   const recognitionRef = useRef<MarkingMenuRecognition | undefined>(undefined);
   const latestRef = useLatest({ menu, showBreakdown, onResult });
 
@@ -241,8 +214,7 @@ export function LiveSurface({
 
       const depth = outcome.steps?.length ?? 0;
       if (recognition === undefined) {
-        // Nothing is drawn and no piece or corner is quoted: the overlay is a
-        // picture of a recognition that did not happen.
+        // No recognition, nothing to draw or quote.
         report({
           ...outcome,
           metrics: [
@@ -273,21 +245,15 @@ export function LiveSurface({
     const controller = createMarkingMenu({
       parent: menuParent,
       ...menu,
-      // Nothing here times the menu or touches its layout: the point of this
-      // page is what the shipped one looks like and does.
-      //
-      // With the breakdown off the page draws nothing at all, so the library
-      // keeps its own completed-gesture trace and what is on screen is the
-      // technique untouched. With it on, the overlay covers that same
-      // stroke, so the library's copy is switched off rather than drawn
-      // twice over.
+      // Off: the library draws its own completed-gesture trace untouched.
+      // On: the overlay covers that same stroke, so the library's copy is
+      // switched off instead of drawn twice.
       ...(showBreakdown && { gestureFeedbackDuration: 0 }),
     });
 
-    // A gesture the pointer never finished: the library announces `cancel`
-    // without recognizing anything, and the event says no more than any
-    // other cancel does. Captured, so the flag is set before the library's
-    // own listener runs and dispatches that event.
+    // Captured so this runs before the library's own listener dispatches
+    // `cancel` — the event itself can't tell an interrupted pointer from any
+    // other cancel.
     const onPointerCancel = () => {
       interruptedRef.current = true;
     };
@@ -311,7 +277,7 @@ export function LiveSurface({
       strokeRef.current.push(toLocal(event.position));
     });
     controller.on('select', (event) => {
-      // The playground never opens a standalone menu on this surface.
+      // This surface never opens a standalone menu.
       if (event.mode === 'standalone') {
         return;
       }
@@ -346,9 +312,8 @@ export function LiveSurface({
     };
   }, [clearOverlay, latestRef, menu, showBreakdown]);
 
-  // Turning the overlay off, or back on, redraws the gesture already on
-  // screen rather than waiting for the next one. Only a gesture the
-  // recognizer ran on has anything to redraw.
+  // Toggling the breakdown redraws the last gesture instead of waiting for
+  // the next one; only one the recognizer ran on has anything to redraw.
   useEffect(() => {
     const overlay = overlayRef.current ?? undefined;
     const menuParent = menuParentRef.current ?? undefined;

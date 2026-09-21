@@ -37,14 +37,9 @@ const REPOSITORY_URL = 'https://github.com/QuentinRoy/Marking-Menu';
 const COPIED_FEEDBACK_MS = 1600;
 
 /**
- Whether `menu` builds. The schema cannot express that ids are unique across
- the whole menu, so this is the only thing that catches a duplicate: it
- builds the menu for real, on a detached element the page never mounts, and
- reports what only the library itself throws for.
-
- @param menu - The menu to check.
- @returns The message explaining why it does not build, or `undefined` if it
- does.
+ The schema can't express that ids are unique, so this is the only check for
+ a duplicate: build the menu for real, on a detached element, and report
+ what only the library throws for.
  */
 function checkMenu(menu: MarkingMenuInput): string | undefined {
   const parent = document.createElement('div');
@@ -92,8 +87,8 @@ export function App() {
   const [status, setStatus] = useState('');
   const [mode, setMode] = useState<Mode>('live');
   const [focusPath, setFocusPath] = useState<readonly number[]>([]);
-  // What the layout preview is actually showing: `focusPath` plus however
-  // deep the standalone menu's own keyboard navigation has since taken it.
+  // `focusPath` plus however deep the standalone menu's own keyboard nav
+  // has taken it.
   const [displayedPath, setDisplayedPath] = useState<readonly number[]>([]);
   // Off to begin with: the mark as the menu drew it is what a reader wants
   // to see first; the breakdown is for when they ask how it was read.
@@ -101,10 +96,7 @@ export function App() {
   const [result, setResult] = useState<GestureResult>(IDLE_RESULT);
   const [copied, setCopied] = useState(false);
 
-  /**
-   Set the level the layout preview opens on, and what it shows before the
-   keyboard takes it any deeper.
-   */
+  // Resets `displayedPath` too: a new level starts unnavigated.
   const setLevel = useCallback((path: readonly number[]) => {
     setFocusPath(path);
     setDisplayedPath(path);

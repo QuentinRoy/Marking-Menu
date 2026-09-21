@@ -5,10 +5,8 @@ import type {
 } from 'marking-menu';
 
 /*
- Plain navigation over the menu as JSON, the same shape `createMarkingMenu`
- itself accepts, plus reading a path back off a live menu's own `parent`
- chain. Nothing here builds a model of its own: there is nothing here that
- could drift from what the library builds.
+ Navigates the menu as plain JSON — no model of its own, so nothing here can
+ drift from what the library builds.
  */
 
 function childrenOf(
@@ -18,12 +16,8 @@ function childrenOf(
 }
 
 /**
- Follow `path` down from `menu`'s root, one index per level.
-
- @param menu - The menu to walk.
- @param path - The index to follow at each level.
- @returns The items at that level, or the root's if the path no longer
- resolves, e.g. the item at that index was just edited away.
+ Items at `path`, or the root's if it no longer resolves (e.g. the item
+ there was just edited away).
  */
 export function itemsAt(
   menu: MarkingMenuInput,
@@ -43,12 +37,8 @@ export function itemsAt(
 }
 
 /**
- The subtree of `menu` rooted at `path`, as a menu of its own.
-
- @param menu - The menu to walk.
- @param path - The index to follow at each level.
- @returns A menu whose top level is the items at `path`.
- */
+The subtree of `menu` rooted at `path`, as a menu of its own.
+*/
 export function subtreeAt(
   menu: MarkingMenuInput,
   path: readonly number[],
@@ -57,25 +47,20 @@ export function subtreeAt(
 }
 
 /**
- A step of a path through the menu, as the footer's chips and breadcrumb
- show it.
- */
+One step of a path, as the footer's chips and breadcrumb show it.
+*/
 export type MenuStep = {
   readonly label: string;
   /**
-  The path from the root down to this step, for a control that jumps to it.
+  Path to this step, for jumping to it.
   */
   readonly path: readonly number[];
   readonly isLeaf: boolean;
 };
 
 /**
- Name every step along `path`.
-
- @param menu - The menu to walk.
- @param path - The index to follow at each level.
- @returns One step per level, stopping early if the path no longer resolves.
- */
+One step per level of `path`, stopping early if it no longer resolves.
+*/
 export function stepsAlong(
   menu: MarkingMenuInput,
   path: readonly number[],
@@ -100,17 +85,11 @@ export function stepsAlong(
 }
 
 /**
- Read a node's position in its own menu off the library's own `parent`
- chain, one index per level: the sibling index the node has in `parent.items`,
- for each ancestor up to the root of the tree `node` belongs to.
-
- Positional by construction, the same way the library assigns each node's key
- (see `src/model.ts`), which is what lets an event from a live menu address an
- item in the raw menu this page built it from.
-
- @param node - A node from a marking menu event, e.g. `event.menu` or
- `event.selection`.
- @returns One index per level, from the top down.
+ A node's path, read off the library's own `parent` chain rather than
+ tracked separately: its sibling index in `parent.items`, root to node.
+ Positional by construction, like the library's own keys (`src/model.ts`),
+ which is what lets an event address an item in the raw menu this page
+ built it from.
  */
 export function pathToNode(node: ModelNode): number[] {
   const path: number[] = [];
