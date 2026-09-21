@@ -86,10 +86,7 @@ function drawRecognition(
 
   const path = (parent: Element, points: readonly Point[]) => {
     const element = document.createElementNS(SVG_NAMESPACE, 'path');
-    element.setAttribute(
-      'd',
-      pathData(points.map((point) => toLocal(point))),
-    );
+    element.setAttribute('d', pathData(points.map((point) => toLocal(point))));
     parent.append(element);
   };
 
