@@ -77,7 +77,7 @@ export type MenuNode<Items extends readonly unknown[]> = {
 
 /**
  `getChild` accepts the ids of the sub-items it can actually find. When the
- sub-items are not a tuple because the menu was built at runtime. Its ids are
+ sub-items are not a tuple because the menu was built at runtime, their ids are
  unknown, so it falls back to accepting any string and possibly returning
  `undefined`.
  */
