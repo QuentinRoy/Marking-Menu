@@ -116,12 +116,16 @@ type NavigationPhaseFields<Menu, Active> = {
   startup: {
     readonly origin: Point;
     readonly stroke: readonly Point[];
+    // Where the pointer is now: the tip of the stroke, kept beside it so
+    // nothing has to dig it out of the stroke.
+    readonly lastPosition: Point;
     // When the pending novice-dwell timer was armed. Startup's own residency
     // never restarts, so this is set once, on arrival.
     readonly dwellStartedAt: number;
   };
   expert: {
     readonly stroke: readonly Point[];
+    readonly lastPosition: Point;
     // The last position significant movement was measured from, feeding the
     // `movementsThreshold` check below.
     readonly dwellAnchor: Point;
@@ -140,11 +144,12 @@ type NavigationPhaseFields<Menu, Active> = {
     readonly active: Active | undefined;
   };
   // A step the machine only passes through: the expert dwell recognizes the
-  // stroke here, once, and the
-  // immediate rows below carry the result on to `novice` or `idle`. The
-  // machine never rests in it, and it is never rendered.
+  // stroke here, once, and the immediate rows below carry the result on to
+  // `novice` or `idle`. The machine never rests in it, and it is never
+  // rendered.
   recognizing: {
     readonly stroke: readonly Point[];
+    readonly lastPosition: Point;
     readonly analysis: StrokeCut;
     readonly menu: Menu | undefined;
   };
@@ -567,7 +572,7 @@ function releaseGesture({
 /**
  A pointer canceled outright never selects, regardless of what was active or
  what the stroke looks like: recognition never runs, and a novice active item,
- leaf or not, carries through to `cancel.active` unchanged (objective 8).
+ leaf or not, carries through to `cancel.active` unchanged.
  */
 function cancelGesture({
   from,
@@ -614,6 +619,7 @@ export const navigationMachine = machine({
       options,
       origin: position,
       stroke: [position],
+      lastPosition: position,
       dwellStartedAt: Date.now(),
     }),
 
@@ -628,6 +634,7 @@ export const navigationMachine = machine({
             model,
             options,
             stroke: newStroke,
+            lastPosition: position,
             dwellAnchor: position,
             dwellStartedAt: Date.now(),
           }
@@ -637,6 +644,7 @@ export const navigationMachine = machine({
     'startup -move> startup': ({ fromData, inputData }) => ({
       ...fromData,
       stroke: [...fromData.stroke, inputData.position],
+      lastPosition: inputData.position,
     }),
 
     // The dwell wins the startup race: open novice mode at the root menu,
@@ -663,6 +671,7 @@ export const navigationMachine = machine({
       return {
         ...fromData,
         stroke: [...fromData.stroke, position],
+        lastPosition: position,
         dwellAnchor: hasMovedSignificantly ? position : dwellAnchor,
         dwellStartedAt: hasMovedSignificantly ? Date.now() : dwellStartedAt,
       };
@@ -670,30 +679,31 @@ export const navigationMachine = machine({
 
     // Mid-expert dwell recognizes the stroke drawn so far as a menu, not a
     // leaf, once, and hands the attempt to the immediate rows below.
-    'expert -dwell> recognizing'({ fromData: { model, options, stroke } }) {
+    'expert -dwell> recognizing'({
+      fromData: { model, options, stroke, lastPosition },
+    }) {
       const { analysis, outcome } = recognizeStroke(stroke, model, 'menu');
-      return { model, options, stroke, analysis, menu: outcome };
+      return { model, options, stroke, lastPosition, analysis, menu: outcome };
     },
 
     // A non-root match switches to novice rooted there.
     'recognizing -> novice'({
-      fromData: { model, options, stroke, menu },
+      fromData: { model, options, stroke, lastPosition, menu },
       skip,
     }) {
       if (menu === undefined || menu.isRoot) {
         return skip();
       }
 
-      const position = stroke.at(-1) as Point;
       return {
         model,
         options,
         menu,
-        menuCenter: position,
+        menuCenter: lastPosition,
         active: undefined,
-        lastPosition: position,
+        lastPosition,
         lowerStroke: stroke,
-        dwellAnchor: position,
+        dwellAnchor: lastPosition,
         dwellStartedAt: Date.now(),
       };
     },
@@ -935,9 +945,8 @@ export const navigationMachine = machine({
         new MarkingMenuOpenEvent({
           mode: 'novice',
           // `dwell` carries no position of its own; the machine holds the
-          // last committed one instead. `fromData.stroke` always starts with
-          // the origin and is only ever appended to, so it is never empty.
-          position: fromData.stroke.at(-1) as Point,
+          // last committed one instead.
+          position: fromData.lastPosition,
           menu: toData.menu,
           menuCenter: toData.menuCenter,
         }),
@@ -955,7 +964,7 @@ export const navigationMachine = machine({
         'open',
         new MarkingMenuOpenEvent({
           mode: 'novice',
-          position: fromData.stroke.at(-1) as Point,
+          position: fromData.lastPosition,
           menu: toData.menu,
           menuCenter: toData.menuCenter,
           recognition: toRecognition(fromData.stroke, fromData.analysis),
@@ -969,7 +978,7 @@ export const navigationMachine = machine({
       const { stroke } = fromData;
       emitTermination(emit, {
         from: 'expert',
-        position: stroke.at(-1) as Point,
+        position: fromData.lastPosition,
         stroke,
         menu: undefined,
         active: undefined,

@@ -81,7 +81,7 @@ export function projectLayout<
         startedAt: state.dwellStartedAt,
         // The stroke's own tip: it keeps moving with sub-threshold jitter
         // even though startup's dwell (armed on `origin`) never restarts.
-        position: state.stroke.at(-1) as Point,
+        position: state.lastPosition,
         delayMs: options.noviceDwellingTime,
       };
       return {
@@ -104,7 +104,7 @@ export function projectLayout<
         lowerStroke: undefined,
         indicator: {
           startedAt: state.dwellStartedAt,
-          position: state.stroke.at(-1) as Point,
+          position: state.lastPosition,
           delayMs: options.noviceDwellingTime,
         },
       };
