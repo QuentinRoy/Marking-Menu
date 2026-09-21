@@ -88,9 +88,9 @@ function pathData(points: readonly Point[]): string {
  Draw a gesture's recognizer breakdown: the stroke, its pieces, and the
  corners between them.
 
- Colors read from the page's custom properties, so the legend beside the
- surface can't drift from what's drawn. `recognition`'s points are in
- client coordinates, so each is offset against `overlay`'s own box first.
+ Colors and weights come from `styles.css`, so the legend beside the surface
+ can't drift from what's drawn. `recognition`'s points are in client
+ coordinates, so each is offset against `overlay`'s own box first.
 
  @param overlay - Where to draw the breakdown.
  @param recognition - What the recognizer made of the gesture.
@@ -99,64 +99,42 @@ function drawRecognition(
   overlay: HTMLElement,
   recognition: MarkingMenuRecognition,
 ): void {
-  const style = getComputedStyle(document.documentElement);
-  const token = (name: string) => style.getPropertyValue(name).trim();
-  const tokenNumber = (name: string) => Number(token(name));
   const rect = overlay.getBoundingClientRect();
   const toLocal = ([x, y]: Point): Point => [x - rect.left, y - rect.top];
 
   const svg = document.createElementNS(svgNamespace, 'svg');
   svg.setAttribute('aria-hidden', 'true');
 
-  const addPath = ({
-    points,
-    lineColor,
-    lineWidth,
-  }: {
-    points: readonly Point[];
-    lineColor: string;
-    lineWidth: number;
-  }) => {
-    const path = document.createElementNS(svgNamespace, 'path');
-    path.setAttribute('d', pathData(points.map((point) => toLocal(point))));
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', lineColor);
-    path.setAttribute('stroke-width', String(lineWidth));
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('stroke-linejoin', 'round');
-    svg.append(path);
+  const group = (className: string) => {
+    const g = document.createElementNS(svgNamespace, 'g');
+    g.setAttribute('class', className);
+    svg.append(g);
+    return g;
   };
 
-  // The mark as the menu drew it, dimmed so the pieces read on top of it.
-  addPath({
-    points: recognition.stroke,
-    lineColor: token('--color-stroke-trace'),
-    lineWidth: tokenNumber('--breakdown-stroke-width'),
-  });
+  const path = (parent: Element, points: readonly Point[]) => {
+    const element = document.createElementNS(svgNamespace, 'path');
+    element.setAttribute('d', pathData(points.map((point) => toLocal(point))));
+    parent.append(element);
+    return element;
+  };
 
-  // Colors alternate so consecutive pieces stay distinct where they meet.
-  const pieceColor = (index: number) =>
-    token(index % 2 === 0 ? '--color-mark' : '--color-piece-alt');
-  for (const [index, segment] of recognition.analysis.segments.entries()) {
-    addPath({
-      points: segment.points,
-      lineColor: pieceColor(index),
-      lineWidth: tokenNumber('--breakdown-stroke-piece-width'),
-    });
+  path(svg, recognition.stroke).setAttribute('class', 'trace');
+
+  const pieces = group('pieces');
+  for (const segment of recognition.analysis.segments) {
+    path(pieces, segment.points);
   }
 
   // A fresh circle per corner, unlike the library's shared marker, so every
   // corner stays visible.
-  const cornerColor = token('--color-ink');
-  const cornerRadius = tokenNumber('--breakdown-stroke-corner-radius');
+  const corners = group('corners');
   for (const point of recognition.analysis.articulationPoints) {
     const [x, y] = toLocal(point);
     const circle = document.createElementNS(svgNamespace, 'circle');
     circle.setAttribute('cx', String(x));
     circle.setAttribute('cy', String(y));
-    circle.setAttribute('r', String(cornerRadius));
-    circle.setAttribute('fill', cornerColor);
-    svg.append(circle);
+    corners.append(circle);
   }
 
   overlay.append(svg);
