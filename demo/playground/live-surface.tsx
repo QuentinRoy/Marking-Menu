@@ -144,7 +144,7 @@ function drawRecognition(
  What settled a gesture the recognizer had no part in, for the readout.
 
  @param mode - The mode the gesture ended in.
- @param wasInterrupted - Whether the pointer was cancelled outright.
+ @param wasInterrupted - Whether the pointer was canceled.
  @returns A phrase naming what decided.
  */
 function decidedBy(mode: MarkingMenuMode, wasInterrupted: boolean): string {
@@ -178,7 +178,6 @@ export function LiveSurface({
   const overlayRef = useRef<HTMLDivElement | null>(null);
   /* eslint-enable @typescript-eslint/no-restricted-types -- DOM refs */
   const strokeRef = useRef<Point[]>([]);
-  const interruptedRef = useRef(false);
   // The recognition currently drawn, redrawn as-is when the breakdown is
   // toggled back on; `undefined` when the recognizer took no part.
   const lastRecognitionRef = useRef<MarkingMenuRecognition | undefined>(
@@ -207,7 +206,14 @@ export function LiveSurface({
       position: Point,
       mode: MarkingMenuMode,
       recognition: MarkingMenuRecognition | undefined,
-      outcome: { steps: readonly MenuStep[] | undefined; message: string },
+      {
+        wasInterrupted = false,
+        ...outcome
+      }: {
+        steps: readonly MenuStep[] | undefined;
+        message: string;
+        wasInterrupted?: boolean;
+      },
     ) => {
       const { onResult: report } = latestRef.current;
       const stroke = [...strokeRef.current, position];
@@ -219,7 +225,6 @@ export function LiveSurface({
       }
 
       const depth = outcome.steps?.length ?? 0;
-      const wasInterrupted = interruptedRef.current;
       lastRecognitionRef.current = recognition;
       if (recognition === undefined) {
         // No recognition: nothing to draw or quote.
@@ -263,20 +268,7 @@ export function LiveSurface({
       ...(showBreakdown && { gestureFeedbackDuration: 0 }),
     });
 
-    // A gesture the pointer never finished: the library announces `cancel`
-    // without recognizing anything, and the event says no more than any
-    // other cancel does. Captured, so the flag is set before the library's
-    // own listener runs and dispatches that event.
-    const onPointerCancel = () => {
-      interruptedRef.current = true;
-    };
-
-    menuParent.addEventListener('pointercancel', onPointerCancel, {
-      capture: true,
-    });
-
     controller.on('start', (event) => {
-      interruptedRef.current = false;
       lastRecognitionRef.current = undefined;
       clearOverlay();
       strokeRef.current = [event.position];
@@ -313,13 +305,11 @@ export function LiveSurface({
           active === undefined
             ? 'No selection: the stroke does not lead to an item.'
             : `No selection: released on the sub-menu “${active.label}”.`,
+        wasInterrupted: event.reason === 'interrupted',
       });
     });
 
     return () => {
-      menuParent.removeEventListener('pointercancel', onPointerCancel, {
-        capture: true,
-      });
       controller.dispose();
       clearOverlay();
     };
