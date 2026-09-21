@@ -128,16 +128,33 @@ export function stepsAlong(
 }
 
 /**
- Read an item's position in the menu off the key the library gave it.
+ A node with the same parent/items shape as this page's own {@link
+ MenuModelNode}: the root, or one of its (possibly deeply nested) items.
+ */
+type ParentedNode = {
+  readonly parent: ParentedNode | undefined;
+  readonly items: readonly unknown[];
+};
 
- Keys are positional by construction (`"1-0-2"` is the third child of the
- first child of the second top-level item, see `src/model.ts`), which is what
- lets an event from the live menu's own model address an item in the model
- this page built from the same description.
+/**
+ Read a node's position in its own model, one index per level, by climbing
+ its `parent` chain and locating each step in `parent.items`.
 
- @param key - The item's key.
+ Nodes are positional by construction (see `src/model.ts`), which is what
+ lets a node from the live menu's own model — e.g. the leaf off a `select`
+ event — address the same position in the model this page built from the
+ same description.
+
+ @param node - The node whose path to read.
  @returns One index per level, from the top down.
  */
-export function pathOfKey(key: string): number[] {
-  return key.split('-').map(Number);
+export function pathOfNode(node: ParentedNode): number[] {
+  const path: number[] = [];
+  let current = node;
+  while (current.parent !== undefined) {
+    path.unshift(current.parent.items.indexOf(current));
+    current = current.parent;
+  }
+
+  return path;
 }
