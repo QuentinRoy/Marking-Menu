@@ -145,6 +145,24 @@ describe('mode and position', () => {
     expectTypeOf(positionOf).returns.toEqualTypeOf<Point | undefined>();
   });
 
+  it('narrows `reason` on `mode`: `dismissed` in standalone, the other two outside it', () => {
+    function reasonOf(event: CancelEvent) {
+      if (event.mode === 'standalone') {
+        expectTypeOf(event.reason).toEqualTypeOf<'dismissed'>();
+        return event.reason;
+      }
+
+      expectTypeOf(event.reason).toEqualTypeOf<
+        'interrupted' | 'no-selection'
+      >();
+      return event.reason;
+    }
+
+    expectTypeOf(reasonOf).returns.toEqualTypeOf<
+      'dismissed' | 'interrupted' | 'no-selection'
+    >();
+  });
+
   it('leaves `position` possibly undefined until `mode` is narrowed', () => {
     expectTypeOf(anySelect.position).toEqualTypeOf<Point | undefined>();
   });

@@ -79,6 +79,7 @@ describe('navigationMachine standalone phase', () => {
     readonly active: unknown;
     readonly previousActive: unknown;
     readonly selection: unknown;
+    readonly reason: unknown;
     readonly recognition: unknown;
   };
 
@@ -629,6 +630,7 @@ describe('navigationMachine standalone phase', () => {
       expect(event.position).toBeUndefined();
       expect(event.active).toBe(rightUpItem);
       expect(event.menu).toBe(rightItem);
+      expect(event.reason).toBe('dismissed');
       expect(event.recognition).toBeUndefined();
     });
 
@@ -644,6 +646,7 @@ describe('navigationMachine standalone phase', () => {
       expect(namesOf(outputs)).toEqual(['cancel']);
       expect(event.active).toBeUndefined();
       expect(event.menu).toBe(standaloneModel);
+      expect(event.reason).toBe('dismissed');
     });
 
     it('goes back up a level on escape below the root, instead of canceling', () => {

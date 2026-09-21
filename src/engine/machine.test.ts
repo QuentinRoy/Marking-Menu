@@ -257,6 +257,50 @@ describe('navigationMachine', () => {
     expect(canceled).toHaveBeenCalledTimes(1);
   });
 
+  describe('cancel reason', () => {
+    const recordReasons = (host: ReturnType<typeof startHost>): unknown[] => {
+      const reasons: unknown[] = [];
+      host.on('cancel', ({ data }) => {
+        reasons.push(data.reason);
+      });
+      return reasons;
+    };
+
+    it('is no-selection when a release finds nothing to select', () => {
+      mockRecognize.mockReturnValueOnce(noRecognition);
+      const host = startHost();
+      const reasons = recordReasons(host);
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('up', { position: [120, 0] });
+
+      expect(reasons).toEqual(['no-selection']);
+    });
+
+    it('is no-selection when an expert dwell finds nothing to open', () => {
+      const host = startHost();
+      const reasons = recordReasons(host);
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('dwell');
+
+      expect(reasons).toEqual(['no-selection']);
+    });
+
+    it('is interrupted when the pointer is canceled', () => {
+      const host = startHost();
+      const reasons = recordReasons(host);
+
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('cancel', { position: [100, 0] });
+
+      expect(reasons).toEqual(['interrupted']);
+    });
+  });
+
   it('dispatches start as the very first output a gesture ever produces', () => {
     const host = startHost();
     const emitted = recordEmitted(host);
