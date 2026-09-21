@@ -139,12 +139,10 @@
   --dot-grid-gap: calc(var(--spacing) * 5.5);
   --dot-grid-dot: 1px;
 
-  /* The weights the gesture overlay draws with, read by `live-surface.tsx`.
-     SVG presentation attributes take numbers rather than lengths, so these
-     are unitless pixels. The mark uses `--mm-stroke-width`, so the overlay
-     matches the menu with the breakdown off. */
-  --stroke-piece-width: 3;
-  --stroke-corner-radius: 4.5;
+  /* The weights the recognizer overlay draws with. */
+  --breakdown-stroke-width: 2px;
+  --breakdown-stroke-piece-width: 3px;
+  --breakdown-stroke-corner-radius: 4.5px;
 }
 
 /* The gesture surface's ground, shared by both modes. */
@@ -371,4 +369,35 @@
 
 .cm-tooltip.cm-tooltip .cm6-json-schema-hover--description p + p {
   margin-top: calc(var(--spacing) * 0.75);
+}
+
+/* The breakdown `live-surface.tsx` draws: the mark, dimmed, under its pieces
+   and the corners between them. Colors alternate between pieces so
+   consecutive ones stay distinct where they meet. */
+.recognizer-overlay path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.recognizer-overlay .trace {
+  stroke: var(--color-stroke-trace);
+  stroke-width: var(--breakdown-stroke-width);
+}
+
+.recognizer-overlay .pieces {
+  stroke: var(--color-mark);
+  stroke-width: var(--breakdown-stroke-piece-width);
+}
+
+.recognizer-overlay .pieces path:nth-child(even) {
+  stroke: var(--color-piece-alt);
+}
+
+.recognizer-overlay .corners {
+  fill: var(--color-ink);
+}
+
+.recognizer-overlay .corners circle {
+  r: var(--breakdown-stroke-corner-radius);
 }
