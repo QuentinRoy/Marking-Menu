@@ -27,9 +27,8 @@ const pointerCaptureMocks = (
     setPointerCapture: Mock;
   };
 
-// Listed starting from "up": items without a stated `angle` spread evenly
-// starting at the top, so the array order alone (not a stated `angle`) is
-// what keeps a rightward pointer move (`dy: 0`) activating `right`.
+// Listed starting from "up": default angles start at the top, so this order
+// alone keeps a rightward move activating `right`.
 const items = [
   { id: 'up', label: 'Up' },
   { id: 'right', label: 'Right' },
@@ -900,9 +899,9 @@ describe('createController', () => {
     expect(parent.querySelector('.marking-menu')).toBe(menuBefore);
     const activeItems = activeMenuItems(parent);
     expect(activeItems).toHaveLength(1);
-    // "right" is the first described item, so its library-assigned key is
-    // "0", `dataset.itemId` is keyed on that, not on the caller's own `id`.
-    expect((activeItems[0] as HTMLElement).dataset.itemId).toBe('0');
+    // `dataset.itemId` is keyed on the item's index ("1" for "right", the
+    // second described item), not on the caller's own `id`.
+    expect((activeItems[0] as HTMLElement).dataset.itemId).toBe('1');
 
     // Continued pointing at the same item: another `move`, no further `change`.
     parent.dispatchEvent(pointer('pointermove', { clientX: 110, clientY: 0 }));

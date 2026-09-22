@@ -40,9 +40,8 @@ afterEach(() => {
   mockRecognize.mockClear();
 });
 
-// Listed starting from "up": items without a stated `angle` spread evenly
-// starting at the top, so the array order alone (not a stated `angle`) is
-// what keeps a rightward pointer move (`dy: 0`) activating `right`.
+// Listed starting from "up": default angles start at the top, so this order
+// alone keeps a rightward move activating `right`.
 const model = createModel({
   items: [
     { id: 'up', label: 'Up' },
@@ -392,7 +391,7 @@ describe('navigationMachine', () => {
       const data =
         host.current.name === 'novice' ? host.current.data : undefined;
       const rightMenu = (submenuModel as unknown as { items: unknown[] })
-        .items[0];
+        .items[1];
       expect(data?.menu).toBe(rightMenu);
       expect(data?.menuCenter).toEqual([100, 0]);
       expect(data?.active).toBeUndefined();

@@ -28,10 +28,8 @@ surface.id = 'surface';
 Object.assign(surface.style, { height: '100%', width: '100%' });
 frameDocument.body.append(surface);
 
-// Listed starting from "up": items without a stated `angle` spread evenly
-// starting at the top, so the array order alone is what keeps each label
-// sitting at its own name's direction (see `e2e/tests/cross-document.spec.ts`,
-// which moves right and expects "right").
+// Listed starting from "up": default angles start at the top, so this order
+// alone keeps "right" at angle 0.
 const mm = createMarkingMenu({
   items: [
     { id: 'up', label: 'Up' },

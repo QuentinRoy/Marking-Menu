@@ -29,9 +29,8 @@ export const CONFIG_PARAM = 'config';
  The eight-direction menu, with a sub-menu at the bottom, that either page
  opens on when the address carries no menu of its own.
 
- Listed starting from "Up": items without a stated `angle` spread evenly
- starting at the top, so the array order alone (not a stated `angle`) is
- what keeps each label sitting at its own name's direction.
+ Listed starting from "Up": default angles now start at the top, so this
+ order alone keeps each label at its own direction.
 
  @type {MarkingMenuInput}
  */

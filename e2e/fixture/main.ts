@@ -2,9 +2,8 @@ import { createMarkingMenu, type Point } from 'marking-menu';
 
 // The demo's eight-direction topology (see `demo/script.js`), with stable
 // ids added: tests key off `id`, not display order or label text. Listed
-// starting from "up": items without a stated `angle` spread evenly starting
-// at the top, so the array order alone is what keeps each label sitting at
-// its own name's direction.
+// starting from "up": default angles start at the top, so this order alone
+// keeps each label at its own direction.
 const items = [
   { id: 'up', label: 'Up' },
   { id: 'up-right', label: 'Up-Right' },

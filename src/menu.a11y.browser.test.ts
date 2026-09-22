@@ -10,10 +10,8 @@ import {
 } from './__fixtures__/browser-menu.js';
 import { fakeTimers } from './__fixtures__/timers.js';
 
-// Listed starting from "up": items without a stated `angle` spread evenly
-// starting at the top, so the array order alone is what keeps each label
-// sitting at its own name's direction, matching the `offset(..., angle,
-// ...)` gestures below.
+// Listed starting from "up": default angles start at the top, so this order
+// alone keeps each label at its own direction.
 const items = [
   { id: 'up', label: 'Up' },
   { id: 'right', label: 'Right' },
