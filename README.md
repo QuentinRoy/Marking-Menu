@@ -296,7 +296,7 @@ Once all controllers sharing the parent are disposed, the previous inline value 
 
 The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections.
 
-A marking menu puts its items in directions around a center, and that is the whole point of it: you learn where an item sits and later flick toward it without looking. The same design is what makes it a poor fit for someone who cannot see the ring, and no key mapping fixes that. Give those users another way to reach the same actions, through a control that never asks where an item sits, and keep the marking menu as the fast path for people who can see it. Which control that is depends on your application and on the assistive technology your users run. The keyboard support below is a second way into this menu, not that alternative.
+A marking menu identifies items by direction. That is the point of it, and its limit: it asks you to know where an item sits, and someone who cannot see the ring has no way to know. No key mapping changes that. Keep every action reachable through a control that does not depend on position, and treat this menu as the fast path rather than the only one.
 
 ### Roles and names
 
@@ -304,7 +304,7 @@ The menu container has `role="menu"`, and each item has `role="menuitem"` and ta
 
 The menu container has no accessible name yet. It cannot take one from an element on your page, because ID references such as `aria-labelledby` cannot cross its shadow root.
 
-The arrow keys are the one place the menu leaves the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/), which defines them for menus laid out as vertical lists. This one is a ring, so the arrows follow the ring instead; see [Keyboard](#keyboard). Everything else about the pattern holds, including the roles above and `Enter`, `Escape`, `Tab`, `Home`, and `End`.
+The menu follows the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/) apart from the arrow keys, which that pattern defines for vertical lists. This one is a ring, so they follow the ring; see [Keyboard](#keyboard).
 
 ### Gestures
 
@@ -324,13 +324,9 @@ A menu shown with [`open()`](#open-and-close) works with the keyboard. When it o
 | `Escape`                                          | Go back to the parent menu, or close the menu from the root.      |
 | `Tab`                                             | Close the menu from any level and move focus to the next element. |
 
-The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working.
+An arrow moves focus from the item that has it to the nearest item further that way, and stops at the edge of the ring rather than wrapping. No single arrow reaches every item, so covering a level takes more than one. Each press is a step, not a jump: on a four item menu, `ArrowLeft` from the right item passes through the bottom item.
 
-An arrow moves focus relative to the item that already has it, to the item the smallest turn away among those lying further in that direction. Hold a direction and focus stops at the edge of the ring rather than wrapping. With nothing focused yet, the first arrow jumps to the item nearest that direction.
-
-So no single arrow walks a whole level, and reaching every item means changing direction. Crossing a four item ring takes two presses: from the right item, `ArrowLeft` steps to the bottom item first.
-
-Nothing opens the menu from the keyboard until you call [`open()`](#open-and-close), for example from a button or a hotkey. A hotkey listener keeps firing while the menu is open, so have it skip keys that come from inside the menu.
+The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working. Nothing opens the menu from the keyboard until you call [`open()`](#open-and-close), for example from a button or a hotkey; a hotkey listener keeps firing while the menu is open, so have it skip keys from inside the menu.
 
 ### Announcing selections
 
