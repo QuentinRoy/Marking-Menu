@@ -296,7 +296,7 @@ Once all controllers sharing the parent are disposed, the previous inline value 
 
 The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections.
 
-A marking menu puts its items in directions around a center, and that is the whole point of it: you learn where an item sits and later flick toward it without looking. The same design is what makes it a poor fit for someone who cannot see the ring, and no key mapping fixes that. Give those users a different control for the same actions, such as a plain list, a menu bar, or a command palette, and keep the marking menu as the fast path for people who can see it. The keyboard support below is a second way into this menu, not that alternative.
+A marking menu puts its items in directions around a center, and that is the whole point of it: you learn where an item sits and later flick toward it without looking. The same design is what makes it a poor fit for someone who cannot see the ring, and no key mapping fixes that. Give those users another way to reach the same actions, through a control that never asks where an item sits, and keep the marking menu as the fast path for people who can see it. Which control that is depends on your application and on the assistive technology your users run. The keyboard support below is a second way into this menu, not that alternative.
 
 ### Roles and names
 
@@ -330,18 +330,7 @@ An arrow moves focus relative to the item that already has it, to the item the s
 
 So no single arrow walks a whole level, and reaching every item means changing direction. Crossing a four item ring takes two presses: from the right item, `ArrowLeft` steps to the bottom item first.
 
-Nothing opens the menu from the keyboard until you call `open()`, for example from a button or a hotkey. A hotkey listener also receives keys pressed inside the open menu. Ignore those, because `open()` throws while a menu is open:
-
-```js
-const parent = document.getElementById('menu-area');
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'm' && !parent.contains(event.target)) {
-    menu.open();
-  }
-});
-```
-
-If an action must stay reachable without a gesture, open the menu from a trigger like this one, or provide another path outside the menu.
+Nothing opens the menu from the keyboard until you call [`open()`](#open-and-close), for example from a button or a hotkey. A hotkey listener keeps firing while the menu is open, so have it skip keys that come from inside the menu.
 
 ### Announcing selections
 
