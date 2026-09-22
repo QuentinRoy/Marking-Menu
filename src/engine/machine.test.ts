@@ -40,12 +40,15 @@ afterEach(() => {
   mockRecognize.mockClear();
 });
 
+// Angles are stated explicitly so a rightward pointer move (`dy: 0`) always
+// activates `right`, regardless of the model's default spread for unstated
+// angles.
 const model = createModel({
   items: [
-    { id: 'right', label: 'Right' },
-    { id: 'down', label: 'Down' },
-    { id: 'left', label: 'Left' },
-    { id: 'up', label: 'Up' },
+    { id: 'right', label: 'Right', angle: 0 },
+    { id: 'down', label: 'Down', angle: 90 },
+    { id: 'left', label: 'Left', angle: 180 },
+    { id: 'up', label: 'Up', angle: 270 },
   ],
 });
 
@@ -56,14 +59,15 @@ const submenuModel = createModel({
     {
       id: 'right',
       label: 'Right',
+      angle: 0,
       items: [
         { id: 'rightUp', label: 'Right Up' },
         { id: 'rightDown', label: 'Right Down' },
       ],
     },
-    { id: 'down', label: 'Down' },
-    { id: 'left', label: 'Left' },
-    { id: 'up', label: 'Up' },
+    { id: 'down', label: 'Down', angle: 90 },
+    { id: 'left', label: 'Left', angle: 180 },
+    { id: 'up', label: 'Up', angle: 270 },
   ],
 });
 

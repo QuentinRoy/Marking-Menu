@@ -20,25 +20,29 @@ afterEach(async () => {
 });
 
 // Mirrors `e2e/fixture/main.ts`'s eight-direction topology, with stable ids:
-// tests key off `id`, not display order or label text.
+// tests key off `id`, not display order or label text. Angles are stated
+// explicitly so each label keeps sitting at its own name's direction,
+// matching `TOP_LEVEL_ITEMS`/`SUBMENU_ITEMS` regardless of the model's
+// default spread for unstated angles.
 const items = [
-  { id: 'right', label: 'Right' },
-  { id: 'down-right', label: 'Down-Right' },
+  { id: 'right', label: 'Right', angle: 0 },
+  { id: 'down-right', label: 'Down-Right', angle: 45 },
   {
     id: 'others',
     label: 'Others...',
+    angle: 90,
     items: [
-      { id: 'sub-right', label: 'Sub Right' },
-      { id: 'sub-down', label: 'Sub Down' },
-      { id: 'sub-left', label: 'Sub Left' },
-      { id: 'sub-up', label: 'Sub Up' },
+      { id: 'sub-right', label: 'Sub Right', angle: 0 },
+      { id: 'sub-down', label: 'Sub Down', angle: 90 },
+      { id: 'sub-left', label: 'Sub Left', angle: 180 },
+      { id: 'sub-up', label: 'Sub Up', angle: 270 },
     ],
   },
-  { id: 'down-left', label: 'Down-Left' },
-  { id: 'left', label: 'Left' },
-  { id: 'up-left', label: 'Up-Left' },
-  { id: 'up', label: 'Up' },
-  { id: 'up-right', label: 'Up-Right' },
+  { id: 'down-left', label: 'Down-Left', angle: 135 },
+  { id: 'left', label: 'Left', angle: 180 },
+  { id: 'up-left', label: 'Up-Left', angle: 225 },
+  { id: 'up', label: 'Up', angle: 270 },
+  { id: 'up-right', label: 'Up-Right', angle: 315 },
 ] as const;
 
 const ACTIVE_RADIUS = 100;

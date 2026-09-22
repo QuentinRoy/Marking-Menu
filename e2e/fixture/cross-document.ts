@@ -30,10 +30,10 @@ frameDocument.body.append(surface);
 
 const mm = createMarkingMenu({
   items: [
-    { id: 'right', label: 'Right' },
-    { id: 'down', label: 'Down' },
-    { id: 'left', label: 'Left' },
-    { id: 'up', label: 'Up' },
+    { id: 'right', label: 'Right', angle: 0 },
+    { id: 'down', label: 'Down', angle: 90 },
+    { id: 'left', label: 'Left', angle: 180 },
+    { id: 'up', label: 'Up', angle: 270 },
   ],
   parent: surface,
 });

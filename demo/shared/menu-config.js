@@ -29,26 +29,31 @@ export const CONFIG_PARAM = 'config';
  The eight-direction menu, with a sub-menu at the bottom, that either page
  opens on when the address carries no menu of its own.
 
+ Angles are stated explicitly so each label keeps sitting at its own name's
+ direction (see `e2e/tests/deployed-demo.spec.ts`), regardless of the
+ model's default spread for unstated angles.
+
  @type {MarkingMenuInput}
  */
 export const DEFAULT_MENU = {
   items: [
-    { label: 'Right' },
-    { label: 'Down-Right' },
+    { label: 'Right', angle: 0 },
+    { label: 'Down-Right', angle: 45 },
     {
       label: 'Others...',
+      angle: 90,
       items: [
-        { label: 'Sub Right' },
-        { label: 'Sub Down' },
-        { label: 'Sub Left' },
-        { label: 'Sub Up' },
+        { label: 'Sub Right', angle: 0 },
+        { label: 'Sub Down', angle: 90 },
+        { label: 'Sub Left', angle: 180 },
+        { label: 'Sub Up', angle: 270 },
       ],
     },
-    { label: 'Down-Left' },
-    { label: 'Left' },
-    { label: 'Up-Left' },
-    { label: 'Up' },
-    { label: 'Up-Right' },
+    { label: 'Down-Left', angle: 135 },
+    { label: 'Left', angle: 180 },
+    { label: 'Up-Left', angle: 225 },
+    { label: 'Up', angle: 270 },
+    { label: 'Up-Right', angle: 315 },
   ],
 };
 
