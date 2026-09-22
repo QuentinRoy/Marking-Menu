@@ -36,7 +36,7 @@ type Host = ReturnType<typeof navigationMachine.start>;
 Dwell into novice mode at the origin, from a fresh host.
 */
 const openNovice = (host: Host): void => {
-  host.send('down', { position: [0, 0] });
+  host.send('pointerDown', { position: [0, 0] });
   host.send('dwell');
 };
 
@@ -185,18 +185,18 @@ describe('navigationMachine standalone phase', () => {
       openStandalone(host, [1, 1]);
       expect(host.current).toEqual(opened);
 
-      host.send('close');
-      host.send('down', { position: [0, 0] });
+      host.send('dismiss');
+      host.send('pointerDown', { position: [0, 0] });
       const startup = host.current;
       openStandalone(host, [1, 1]);
       expect(host.current).toEqual(startup);
 
-      host.send('move', { position: [100, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       const expert = host.current;
       openStandalone(host, [1, 1]);
       expect(host.current).toEqual(expert);
 
-      host.send('cancel', { position: [100, 0] });
+      host.send('pointerCancel', { position: [100, 0] });
       openNovice(host);
       const novice = host.current;
       openStandalone(host, [1, 1]);
@@ -207,7 +207,7 @@ describe('navigationMachine standalone phase', () => {
       const host = startStandalone();
 
       openStandalone(host);
-      host.send('close');
+      host.send('dismiss');
       openStandalone(host, [5, 5]);
 
       expect(host.current.name).toBe('standalone');
@@ -222,10 +222,10 @@ describe('navigationMachine standalone phase', () => {
       const layouts = recordLayouts(host);
       const opened = host.current;
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
-      host.send('up', { position: [100, 0] });
-      host.send('cancel', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
+      host.send('pointerUp', { position: [100, 0] });
+      host.send('pointerCancel', { position: [100, 0] });
       host.send('dwell');
 
       expect(host.current).toEqual(opened);
@@ -245,8 +245,8 @@ describe('navigationMachine standalone phase', () => {
           'activate',
           'enter',
           'leave',
-          'escape',
-          'close',
+          'back',
+          'dismiss',
         ] as const) {
           host.send(intent);
         }
@@ -270,7 +270,7 @@ describe('navigationMachine standalone phase', () => {
       const outputs = recordOutputs(host);
 
       openStandalone(host);
-      host.send('close');
+      host.send('dismiss');
       openStandalone(host);
       host.send('first');
       host.send('activate');
@@ -621,7 +621,7 @@ describe('navigationMachine standalone phase', () => {
       host.send('enter');
       const outputs = recordOutputs(host);
 
-      host.send('close');
+      host.send('dismiss');
 
       expect(host.current.name).toBe('idle');
       expect(namesOf(outputs)).toEqual(['cancel']);
@@ -639,7 +639,7 @@ describe('navigationMachine standalone phase', () => {
       openStandalone(host);
       const outputs = recordOutputs(host);
 
-      host.send('escape');
+      host.send('back');
 
       expect(host.current.name).toBe('idle');
       const event = dataAt(outputs, 0);
@@ -656,7 +656,7 @@ describe('navigationMachine standalone phase', () => {
       host.send('enter');
       const outputs = recordOutputs(host);
 
-      host.send('escape');
+      host.send('back');
 
       expect(host.current.name).toBe('standalone');
       expect(namesOf(outputs)).toEqual(['open', 'change']);
