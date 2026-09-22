@@ -19,10 +19,10 @@ type StandaloneRow = (context: {
  announces no change.
  */
 export const moveToEnd =
-  (step: 'first' | 'last'): StandaloneRow =>
+  (end: 'first' | 'last'): StandaloneRow =>
   ({ fromData, skip }) => {
     const { items } = currentMenu(fromData.menus);
-    const target = step === 'first' ? items[0] : items.at(-1);
+    const target = end === 'first' ? items[0] : items.at(-1);
     return target === undefined || target === fromData.active
       ? skip()
       : { ...fromData, active: target };
@@ -40,12 +40,13 @@ export type Direction = keyof typeof axes;
  A row moving the active item toward one of the four directions: among the
  items that are strictly closer to that axis than the active one, the one
  the smallest angular step away. Ties go to the item closer to the axis,
- then to the first one the menu lists.
+ then to the one clockwise of the active item, so the walk does not depend
+ on where the menu's item order happens to start.
 
  Stepping rather than jumping to the item nearest the axis is what keeps
  every item reachable: a menu of more than four items has directions no
- item sits on, and an absolute mapping would strand the items no axis
- elects. Being strictly closer is also what ends the walk, so holding a
+ item sits on, and jumping would only ever land on the four items nearest
+ the axes. Being strictly closer is also what ends the walk, so holding a
  direction settles on its axis instead of going round.
 
  With nothing active yet, there is no step to measure, and the press lands
@@ -62,19 +63,17 @@ export const moveActiveToward =
       return nearest === undefined ? skip() : { ...fromData, active: nearest };
     }
 
-    const toAxis = (item: EngineModelItem): number =>
-      Math.abs(deltaAngle(item.angle, axis));
-    const reach = toAxis(active);
+    const activeToAxis = toAxis(active, axis);
     let target: EngineModelItem | undefined;
     for (const item of menu.items) {
-      // The active item is `reach` from the axis, so this excludes it too.
-      if (toAxis(item) >= reach) {
+      // The active item sits exactly `activeToAxis` away, so this drops it too.
+      if (toAxis(item, axis) >= activeToAxis) {
         continue;
       }
 
       if (
         target === undefined ||
-        isCloserStep(item, target, active.angle, toAxis)
+        isCloserStep(item, target, active.angle, axis)
       ) {
         target = item;
       }
@@ -84,17 +83,29 @@ export const moveActiveToward =
   };
 
 /**
- Whether `item` beats `rival` as the next step from `angle`.
+ How far an item lies from an axis, whichever way round.
+ */
+function toAxis(item: EngineModelItem, axis: number): number {
+  return Math.abs(deltaAngle(item.angle, axis));
+}
+
+/**
+ Whether `item` beats `rival` as the next step from `angle` toward `axis`.
  */
 function isCloserStep(
   item: EngineModelItem,
   rival: EngineModelItem,
   angle: number,
-  toAxis: (item: EngineModelItem) => number,
+  axis: number,
 ): boolean {
   const step = Math.abs(deltaAngle(angle, item.angle));
   const rivalStep = Math.abs(deltaAngle(angle, rival.angle));
-  return step === rivalStep ? toAxis(item) < toAxis(rival) : step < rivalStep;
+  if (step !== rivalStep) {
+    return step < rivalStep;
+  }
+
+  const toAxisGap = toAxis(item, axis) - toAxis(rival, axis);
+  return toAxisGap === 0 ? deltaAngle(angle, item.angle) > 0 : toAxisGap < 0;
 }
 
 /**

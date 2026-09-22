@@ -322,9 +322,9 @@ A menu shown with [`open()`](#open-and-close) works with the keyboard. When it o
 
 The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working.
 
-An arrow moves focus relative to the item that has it, to the item the smallest turn away that lies closer to the direction you pressed. Hold a direction and focus walks that way until nothing lies further, then stops rather than wrapping around. With no item focused yet, the first arrow goes straight to the item nearest that direction.
+An arrow moves focus relative to the item that already has it. Of the items that lie closer to the direction you pressed, focus goes to the one the smallest turn away. Hold a direction and focus keeps walking that way until nothing lies further, then stops instead of wrapping around. With no item focused yet, the first arrow goes straight to the item nearest that direction.
 
-Stepping rather than jumping to the item nearest the direction is what keeps every item reachable. A menu of more than four items has directions no item sits on, and the four items nearest the axes would be the only ones any arrow could ever elect. The cost is that a four item menu takes two presses to cross the ring: from the right item, `ArrowLeft` steps to the bottom item first.
+Stepping around the ring, rather than jumping straight to the item nearest the direction, is what keeps every item reachable. A menu of more than four items has directions no item sits on, and jumping would only ever land on the four items nearest the axes. The cost is that a four item menu takes two presses to cross the ring: from the right item, `ArrowLeft` steps to the bottom item first.
 
 This departs from the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/), which defines arrow keys for menus laid out as vertical lists. A marking menu is a ring, so `ArrowDown` walking an item order nothing draws top to bottom would be a list metaphor pasted over a circle. Everything else, including the roles, `Enter`, `Escape`, `Tab`, `Home`, and `End`, follows the pattern.
 

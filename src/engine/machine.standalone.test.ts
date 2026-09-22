@@ -122,16 +122,14 @@ describe('navigationMachine standalone phase', () => {
     return output[1];
   };
 
-  const keyOf = (id: 'right' | 'down' | 'left' | 'up') => {
-    const item = standaloneModel.items.find((candidate) => candidate.id === id);
-    if (item === undefined) {
-      throw new Error(`No item with id ${id}.`);
-    }
-
-    return item.key;
+  const itemsById = {
+    right: rightItem,
+    down: downItem,
+    left: leftItem,
+    up: upItem,
   };
 
-  const evenItems = (itemCount: number) =>
+  const evenItems = (itemCount: number): Array<{ id: string; label: string }> =>
     Array.from({ length: itemCount }, (_, index) => ({
       id: `item-${index}`,
       label: `Item ${index}`,
@@ -139,19 +137,19 @@ describe('navigationMachine standalone phase', () => {
 
   const openMenu = (
     model: Parameters<typeof navigationMachine.start>[0]['model'],
-  ) => {
+  ): Host => {
     const host = navigationMachine.start({ model, options });
     host.send('open', { position: [0, 0] });
     return host;
   };
 
-  const openEvenMenu = (itemCount: number) =>
+  const openEvenMenu = (itemCount: number): Host =>
     openMenu(createModel({ items: evenItems(itemCount) }));
 
-  const activeIdOf = (host: ReturnType<typeof startStandalone>) =>
-    host.current.name === 'standalone'
-      ? host.current.data.active?.id
-      : undefined;
+  const activeOf = (host: Host) =>
+    host.current.name === 'standalone' ? host.current.data.active : undefined;
+
+  const activeIdOf = (host: Host): string | undefined => activeOf(host)?.id;
 
   /**
    Every item some sequence of arrow presses can reach from a freshly opened
@@ -186,10 +184,7 @@ describe('navigationMachine standalone phase', () => {
     return model.items.map((item) => item.id).filter((id) => reached.has(id));
   };
 
-  const activeKeyOf = (host: ReturnType<typeof startStandalone>) =>
-    host.current.name === 'standalone'
-      ? host.current.data.active?.key
-      : undefined;
+  const activeKeyOf = (host: Host): string | undefined => activeOf(host)?.key;
 
   describe('opening', () => {
     it('opens the root at a fixed center, with nothing active and no pointer position', () => {
@@ -350,10 +345,10 @@ describe('navigationMachine standalone phase', () => {
       ['right', 'left', 'down'],
       ['down', 'right', 'right'],
       ['down', 'left', 'left'],
-      ['down', 'up', 'right'],
+      ['down', 'up', 'left'],
       ['left', 'up', 'up'],
       ['left', 'down', 'down'],
-      ['left', 'right', 'down'],
+      ['left', 'right', 'up'],
       ['up', 'right', 'right'],
       ['up', 'left', 'left'],
       ['up', 'down', 'right'],
@@ -362,11 +357,11 @@ describe('navigationMachine standalone phase', () => {
       (from, direction, expected) => {
         const host = startStandalone();
         openStandalone(host);
-        host.send('focus', { key: keyOf(from) });
+        host.send('focus', { key: itemsById[from].key });
 
         host.send(direction);
 
-        expect(activeKeyOf(host)).toBe(keyOf(expected));
+        expect(activeKeyOf(host)).toBe(itemsById[expected].key);
       },
     );
 
@@ -461,6 +456,26 @@ describe('navigationMachine standalone phase', () => {
       expect([afterUp, activeIdOf(host)]).toEqual(['up-ish', 'down-right']);
     });
 
+    it.each([
+      ['right', 'right'],
+      ['down', 'down'],
+      ['left', 'left'],
+      ['up', 'up'],
+    ] as const)(
+      'declines %s on the item already furthest that way',
+      (from, direction) => {
+        const host = startStandalone();
+        openStandalone(host);
+        host.send('focus', { key: itemsById[from].key });
+        const outputs = recordOutputs(host);
+
+        host.send(direction);
+
+        expect(activeKeyOf(host)).toBe(itemsById[from].key);
+        expect(outputs).toEqual([]);
+      },
+    );
+
     it('crosses a four item ring in two presses, through the item in between', () => {
       const host = startStandalone();
       openStandalone(host);
@@ -523,8 +538,7 @@ describe('navigationMachine standalone phase', () => {
 
     it('keeps a single item active, announcing nothing when there is nothing to move to', () => {
       const single = createModel({ items: [{ id: 'only', label: 'Only' }] });
-      const host = navigationMachine.start({ model: single, options });
-      host.send('open', { position: [0, 0] });
+      const host = openMenu(single);
       host.send('right');
       const outputs = recordOutputs(host);
 
@@ -637,8 +651,7 @@ describe('navigationMachine standalone phase', () => {
           },
         ],
       });
-      const host = navigationMachine.start({ model: deep, options });
-      host.send('open', { position: [0, 0] });
+      const host = openMenu(deep);
       host.send('right');
       host.send('activate');
       host.send('activate');

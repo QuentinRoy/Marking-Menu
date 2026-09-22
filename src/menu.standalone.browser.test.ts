@@ -58,6 +58,10 @@ test('each arrow key moves focus that way around the ring', async () => {
   await expectFocused('menuitem', { name: 'Up' });
   await userEvent.keyboard('{ArrowRight}');
   await expectFocused('menuitem', { name: 'Right' });
+  expect(menu.events).toEqual([
+    'open:standalone',
+    ...Array.from({ length: 5 }, () => 'change:standalone'),
+  ]);
 });
 
 test('an arrow with nowhere further to go leaves focus and the event log alone', async () => {
