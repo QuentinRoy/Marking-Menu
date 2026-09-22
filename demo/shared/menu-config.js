@@ -29,26 +29,29 @@ export const CONFIG_PARAM = 'config';
  The eight-direction menu, with a sub-menu at the bottom, that either page
  opens on when the address carries no menu of its own.
 
+ Listed starting from "Up": default angles now start at the top, so this
+ order alone keeps each label at its own direction.
+
  @type {MarkingMenuInput}
  */
 export const DEFAULT_MENU = {
   items: [
+    { label: 'Up' },
+    { label: 'Up-Right' },
     { label: 'Right' },
     { label: 'Down-Right' },
     {
       label: 'Others...',
       items: [
+        { label: 'Sub Up' },
         { label: 'Sub Right' },
         { label: 'Sub Down' },
         { label: 'Sub Left' },
-        { label: 'Sub Up' },
       ],
     },
     { label: 'Down-Left' },
     { label: 'Left' },
     { label: 'Up-Left' },
-    { label: 'Up' },
-    { label: 'Up-Right' },
   ],
 };
 

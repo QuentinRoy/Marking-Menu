@@ -10,11 +10,13 @@ import {
 } from './__fixtures__/browser-menu.js';
 import { fakeTimers } from './__fixtures__/timers.js';
 
+// Listed starting from "up": default angles start at the top, so this order
+// alone keeps each label at its own direction.
 const items = [
+  { id: 'up', label: 'Up' },
   { id: 'right', label: 'Right' },
   { id: 'others', label: 'Others...', items: [{ label: 'Sub Right' }] },
   { id: 'left', label: 'Left' },
-  { id: 'up', label: 'Up' },
 ] as const;
 
 const ACTIVE_RADIUS = 100;

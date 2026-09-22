@@ -40,12 +40,14 @@ afterEach(() => {
   mockRecognize.mockClear();
 });
 
+// Listed starting from "up": default angles start at the top, so this order
+// alone keeps a rightward move activating `right`.
 const model = createModel({
   items: [
+    { id: 'up', label: 'Up' },
     { id: 'right', label: 'Right' },
     { id: 'down', label: 'Down' },
     { id: 'left', label: 'Left' },
-    { id: 'up', label: 'Up' },
   ],
 });
 
@@ -53,6 +55,7 @@ const model = createModel({
 // tests that need to end a gesture on a non-leaf active item.
 const submenuModel = createModel({
   items: [
+    { id: 'up', label: 'Up' },
     {
       id: 'right',
       label: 'Right',
@@ -63,7 +66,6 @@ const submenuModel = createModel({
     },
     { id: 'down', label: 'Down' },
     { id: 'left', label: 'Left' },
-    { id: 'up', label: 'Up' },
   ],
 });
 
@@ -389,7 +391,7 @@ describe('navigationMachine', () => {
       const data =
         host.current.name === 'novice' ? host.current.data : undefined;
       const rightMenu = (submenuModel as unknown as { items: unknown[] })
-        .items[0];
+        .items[1];
       expect(data?.menu).toBe(rightMenu);
       expect(data?.menuCenter).toEqual([100, 0]);
       expect(data?.active).toBeUndefined();

@@ -445,7 +445,9 @@ const collectStatedAngles = (
 
 const spreadEvenly = (itemCount: number): number[] => {
   const angleStep = 360 / itemCount;
-  return Array.from({ length: itemCount }, (_, index) => index * angleStep);
+  return Array.from({ length: itemCount }, (_, index) =>
+    normalizeAngle(index * angleStep - 90),
+  );
 };
 
 const rotateAroundOne = (

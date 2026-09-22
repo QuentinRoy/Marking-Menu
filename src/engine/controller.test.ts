@@ -27,11 +27,13 @@ const pointerCaptureMocks = (
     setPointerCapture: Mock;
   };
 
+// Listed starting from "up": default angles start at the top, so this order
+// alone keeps a rightward move activating `right`.
 const items = [
+  { id: 'up', label: 'Up' },
   { id: 'right', label: 'Right' },
   { id: 'down', label: 'Down' },
   { id: 'left', label: 'Left' },
-  { id: 'up', label: 'Up' },
 ] as const;
 
 // `vi.fn()` alone infers a value-returning signature, which an event
@@ -724,7 +726,9 @@ describe('createController', () => {
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
+      // Listed starting from "up": see the top-level `items` comment above.
       items: [
+        { id: 'up', label: 'Up' },
         {
           id: 'right',
           label: 'Right',
@@ -735,7 +739,6 @@ describe('createController', () => {
         },
         { id: 'down', label: 'Down' },
         { id: 'left', label: 'Left' },
-        { id: 'up', label: 'Up' },
       ],
       parent,
       noviceDwellingTime: 100,
@@ -896,9 +899,9 @@ describe('createController', () => {
     expect(parent.querySelector('.marking-menu')).toBe(menuBefore);
     const activeItems = activeMenuItems(parent);
     expect(activeItems).toHaveLength(1);
-    // "right" is the first described item, so its library-assigned key is
-    // "0", `dataset.itemId` is keyed on that, not on the caller's own `id`.
-    expect((activeItems[0] as HTMLElement).dataset.itemId).toBe('0');
+    // `dataset.itemId` is keyed on the item's index ("1" for "right", the
+    // second described item), not on the caller's own `id`.
+    expect((activeItems[0] as HTMLElement).dataset.itemId).toBe('1');
 
     // Continued pointing at the same item: another `move`, no further `change`.
     parent.dispatchEvent(pointer('pointermove', { clientX: 110, clientY: 0 }));
@@ -981,20 +984,22 @@ describe('createController', () => {
   });
 
   describe('dwelling into a submenu (objectives 9, 11)', () => {
+    // Listed starting from "up"/"subUp": see the top-level `items` comment
+    // above.
     const submenuItems = [
+      { id: 'up', label: 'Up' },
       {
         id: 'right',
         label: 'Right',
         items: [
+          { id: 'subUp', label: 'Sub Up' },
           { id: 'subRight', label: 'Sub Right' },
           { id: 'subDown', label: 'Sub Down' },
           { id: 'subLeft', label: 'Sub Left' },
-          { id: 'subUp', label: 'Sub Up' },
         ],
       },
       { id: 'down', label: 'Down' },
       { id: 'left', label: 'Left' },
-      { id: 'up', label: 'Up' },
     ] as const;
 
     it('dispatches open for the submenu and recreates the menu DOM for it, once the pointer dwells past the dead zone on it', () => {
@@ -1116,20 +1121,22 @@ describe('createController', () => {
   });
 
   describe('mid-expert dwell falling back to novice, or canceling', () => {
+    // Listed starting from "up"/"subUp": see the top-level `items` comment
+    // above.
     const submenuItems = [
+      { id: 'up', label: 'Up' },
       {
         id: 'right',
         label: 'Right',
         items: [
+          { id: 'subUp', label: 'Sub Up' },
           { id: 'subRight', label: 'Sub Right' },
           { id: 'subDown', label: 'Sub Down' },
           { id: 'subLeft', label: 'Sub Left' },
-          { id: 'subUp', label: 'Sub Up' },
         ],
       },
       { id: 'down', label: 'Down' },
       { id: 'left', label: 'Left' },
-      { id: 'up', label: 'Up' },
     ] as const;
 
     it('switches to novice, rooted at the menu the dwell recognizes', () => {
