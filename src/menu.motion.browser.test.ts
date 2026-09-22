@@ -9,11 +9,14 @@ import {
 } from './__fixtures__/browser-menu.js';
 import { fakeTimers } from './__fixtures__/timers.js';
 
+// Listed starting from "left": items without a stated `angle` spread evenly
+// starting at the top, so the array order alone is what keeps "right" (the
+// only one of these referenced by direction below) sitting at angle 0.
 const items = [
+  { id: 'left', label: 'Left' },
   { id: 'right', label: 'Right' },
   { id: 'down-right', label: 'Down-Right' },
   { id: 'down-left', label: 'Down-Left' },
-  { id: 'left', label: 'Left' },
 ] as const;
 
 const ACTIVE_RADIUS = 100;

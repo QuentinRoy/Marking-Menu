@@ -40,12 +40,15 @@ afterEach(() => {
   mockRecognize.mockClear();
 });
 
+// Listed starting from "up": items without a stated `angle` spread evenly
+// starting at the top, so the array order alone (not a stated `angle`) is
+// what keeps a rightward pointer move (`dy: 0`) activating `right`.
 const model = createModel({
   items: [
+    { id: 'up', label: 'Up' },
     { id: 'right', label: 'Right' },
     { id: 'down', label: 'Down' },
     { id: 'left', label: 'Left' },
-    { id: 'up', label: 'Up' },
   ],
 });
 
@@ -53,6 +56,7 @@ const model = createModel({
 // tests that need to end a gesture on a non-leaf active item.
 const submenuModel = createModel({
   items: [
+    { id: 'up', label: 'Up' },
     {
       id: 'right',
       label: 'Right',
@@ -63,7 +67,6 @@ const submenuModel = createModel({
     },
     { id: 'down', label: 'Down' },
     { id: 'left', label: 'Left' },
-    { id: 'up', label: 'Up' },
   ],
 });
 

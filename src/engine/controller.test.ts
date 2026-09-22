@@ -27,11 +27,14 @@ const pointerCaptureMocks = (
     setPointerCapture: Mock;
   };
 
+// Listed starting from "up": items without a stated `angle` spread evenly
+// starting at the top, so the array order alone (not a stated `angle`) is
+// what keeps a rightward pointer move (`dy: 0`) activating `right`.
 const items = [
+  { id: 'up', label: 'Up' },
   { id: 'right', label: 'Right' },
   { id: 'down', label: 'Down' },
   { id: 'left', label: 'Left' },
-  { id: 'up', label: 'Up' },
 ] as const;
 
 // `vi.fn()` alone infers a value-returning signature, which an event
@@ -724,7 +727,9 @@ describe('createController', () => {
     using _timers = fakeTimers();
     const parent = createParent();
     const controller = createController({
+      // Listed starting from "up": see the top-level `items` comment above.
       items: [
+        { id: 'up', label: 'Up' },
         {
           id: 'right',
           label: 'Right',
@@ -735,7 +740,6 @@ describe('createController', () => {
         },
         { id: 'down', label: 'Down' },
         { id: 'left', label: 'Left' },
-        { id: 'up', label: 'Up' },
       ],
       parent,
       noviceDwellingTime: 100,
@@ -981,20 +985,22 @@ describe('createController', () => {
   });
 
   describe('dwelling into a submenu (objectives 9, 11)', () => {
+    // Listed starting from "up"/"subUp": see the top-level `items` comment
+    // above.
     const submenuItems = [
+      { id: 'up', label: 'Up' },
       {
         id: 'right',
         label: 'Right',
         items: [
+          { id: 'subUp', label: 'Sub Up' },
           { id: 'subRight', label: 'Sub Right' },
           { id: 'subDown', label: 'Sub Down' },
           { id: 'subLeft', label: 'Sub Left' },
-          { id: 'subUp', label: 'Sub Up' },
         ],
       },
       { id: 'down', label: 'Down' },
       { id: 'left', label: 'Left' },
-      { id: 'up', label: 'Up' },
     ] as const;
 
     it('dispatches open for the submenu and recreates the menu DOM for it, once the pointer dwells past the dead zone on it', () => {
@@ -1116,20 +1122,22 @@ describe('createController', () => {
   });
 
   describe('mid-expert dwell falling back to novice, or canceling', () => {
+    // Listed starting from "up"/"subUp": see the top-level `items` comment
+    // above.
     const submenuItems = [
+      { id: 'up', label: 'Up' },
       {
         id: 'right',
         label: 'Right',
         items: [
+          { id: 'subUp', label: 'Sub Up' },
           { id: 'subRight', label: 'Sub Right' },
           { id: 'subDown', label: 'Sub Down' },
           { id: 'subLeft', label: 'Sub Left' },
-          { id: 'subUp', label: 'Sub Up' },
         ],
       },
       { id: 'down', label: 'Down' },
       { id: 'left', label: 'Left' },
-      { id: 'up', label: 'Up' },
     ] as const;
 
     it('switches to novice, rooted at the menu the dwell recognizes', () => {
