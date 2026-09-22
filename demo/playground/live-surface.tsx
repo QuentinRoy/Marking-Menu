@@ -1,36 +1,26 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { createMarkingMenu } from '../../src/create-marking-menu.js';
-import type {
-  MarkingMenuMode,
-  MarkingMenuRecognition,
-} from '../../src/events.js';
-import type { MarkingMenuInput } from '../../src/types.js';
-import type { Point } from '../../src/utils.js';
 import {
-  pathOfNode,
-  stepsAlong,
-  type MenuModel,
-  type MenuStep,
-} from './menu-model.js';
+  createMarkingMenu,
+  type MarkingMenuInput,
+  type MarkingMenuMode,
+  type MarkingMenuRecognition,
+  type Point,
+} from 'marking-menu';
+import { useCallback, useEffect, useRef } from 'react';
+import { pathToNode, stepsAlong, type MenuStep } from './menu-tree.js';
 import { useLatest } from './use-latest.js';
 
 /*
- The live half of the page: the shipped marking menu. Dwelling, sub-menu
- opening, expert detection and the stroke are the library's; this file adds
- the readout and draws the recognizer overlay from `select` and `cancel`'s
- `event.recognition`.
+ The shipped menu, on its own surface. The library owns dwelling, sub-menu
+ opening, expert detection and the stroke; this file adds the readout and
+ the recognizer overlay drawn from `select`/`cancel`.
  */
 
-const svgNamespace = 'http://www.w3.org/2000/svg';
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 // A stroke shorter than this is pointer wobble between a press and a
 // release, not a gesture worth reporting on.
 const CLICK_MOVEMENT_PX = 8;
 
-/**
- What a finished gesture left on screen: the path it selected, or the
- sentence saying why it selected nothing, plus what the recognizer did.
- */
 export type GestureResult = {
   readonly steps: readonly MenuStep[] | undefined;
   readonly message: string;
@@ -47,32 +37,20 @@ export const IDLE_RESULT: GestureResult = {
   metrics: '',
 };
 
-/**
- The length of a pointer path.
-
- @param points - An ordered list of points.
- @returns The summed distance between consecutive points.
- */
 function pathLength(points: readonly Point[]): number {
-  let length = 0;
+  let total = 0;
   let previous: Point | undefined;
   for (const point of points) {
     if (previous !== undefined) {
-      length += Math.hypot(point[0] - previous[0], point[1] - previous[1]);
+      total += Math.hypot(point[0] - previous[0], point[1] - previous[1]);
     }
 
     previous = point;
   }
 
-  return length;
+  return total;
 }
 
-/**
- An SVG path's `d` attribute tracing straight segments through `points`.
-
- @param points - The points to connect, in order.
- @returns The path data, or `''` for no points.
- */
 function pathData(points: readonly Point[]): string {
   const [first, ...rest] = points;
   if (first === undefined) {
@@ -85,15 +63,9 @@ function pathData(points: readonly Point[]): string {
 }
 
 /**
- Draw a gesture's recognizer breakdown: the stroke, its pieces, and the
- corners between them.
-
- Colors and weights come from `styles.css`, so the legend beside the surface
- can't drift from what's drawn. `recognition`'s points are in client
- coordinates, so each is offset against `overlay`'s own box first.
-
- @param overlay - Where to draw the breakdown.
- @param recognition - What the recognizer made of the gesture.
+ Draws a gesture's recognizer breakdown: the stroke, its pieces, and the
+ corners between them. Colors and weights come from `styles.css`, so the
+ legend beside the surface can't drift from what's drawn.
  */
 function drawRecognition(
   overlay: HTMLElement,
@@ -102,18 +74,18 @@ function drawRecognition(
   const rect = overlay.getBoundingClientRect();
   const toLocal = ([x, y]: Point): Point => [x - rect.left, y - rect.top];
 
-  const svg = document.createElementNS(svgNamespace, 'svg');
+  const svg = document.createElementNS(SVG_NAMESPACE, 'svg');
   svg.setAttribute('aria-hidden', 'true');
 
   const group = (className: string) => {
-    const g = document.createElementNS(svgNamespace, 'g');
+    const g = document.createElementNS(SVG_NAMESPACE, 'g');
     g.setAttribute('class', className);
     svg.append(g);
     return g;
   };
 
   const path = (parent: Element, points: readonly Point[]) => {
-    const element = document.createElementNS(svgNamespace, 'path');
+    const element = document.createElementNS(SVG_NAMESPACE, 'path');
     element.setAttribute('d', pathData(points.map((point) => toLocal(point))));
     parent.append(element);
   };
@@ -130,7 +102,7 @@ function drawRecognition(
   const corners = group('corners');
   for (const point of recognition.analysis.articulationPoints) {
     const [x, y] = toLocal(point);
-    const circle = document.createElementNS(svgNamespace, 'circle');
+    const circle = document.createElementNS(SVG_NAMESPACE, 'circle');
     circle.setAttribute('cx', String(x));
     circle.setAttribute('cy', String(y));
     corners.append(circle);
@@ -140,11 +112,9 @@ function drawRecognition(
 }
 
 /**
- What settled a gesture the recognizer had no part in, for the readout.
-
- @param mode - The mode the gesture ended in.
- @param wasInterrupted - Whether the pointer was canceled.
- @returns A phrase naming what decided.
+ What decided a gesture the recognizer had no part in: a novice release
+ hit-tests the already-highlighted item, an interrupted pointer never
+ reaches the recognizer either. A missing `recognition` is the only signal.
  */
 function decidedBy(mode: MarkingMenuMode, wasInterrupted: boolean): string {
   if (wasInterrupted) {
@@ -158,31 +128,24 @@ function decidedBy(mode: MarkingMenuMode, wasInterrupted: boolean): string {
 
 export function LiveSurface({
   menu,
-  model,
   showBreakdown,
   onResult,
 }: {
   menu: MarkingMenuInput;
-  model: MenuModel;
-  /**
-  Whether to draw the pieces and corners the recognizer worked from.
-  */
   showBreakdown: boolean;
   onResult: (result: GestureResult) => void;
 }) {
-  // Bound to JSX via `ref={}` below: React itself sets `.current` to `null`
-  // on unmount, so these two must stay `null`-typed.
+  // React nulls `.current` on unmount, so these stay `null`-typed.
   /* eslint-disable @typescript-eslint/no-restricted-types -- DOM refs */
   const menuParentRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   /* eslint-enable @typescript-eslint/no-restricted-types -- DOM refs */
   const strokeRef = useRef<Point[]>([]);
-  // The recognition currently drawn, redrawn as-is when the breakdown is
-  // toggled back on; `undefined` when the recognizer took no part.
+  // Save the latest recognition so the breakdown can be toggled.
   const lastRecognitionRef = useRef<MarkingMenuRecognition | undefined>(
     undefined,
   );
-  const latestRef = useLatest({ model, showBreakdown, onResult });
+  const latestRef = useLatest({ menu, showBreakdown, onResult });
 
   const clearOverlay = useCallback(() => {
     overlayRef.current?.replaceChildren();
@@ -226,7 +189,7 @@ export function LiveSurface({
       const depth = outcome.steps?.length ?? 0;
       lastRecognitionRef.current = recognition;
       if (recognition === undefined) {
-        // No recognition: nothing to draw or quote.
+        // No recognition, nothing to draw or quote.
         report({
           ...outcome,
           metrics: [
@@ -256,14 +219,9 @@ export function LiveSurface({
     const controller = createMarkingMenu({
       parent: menuParent,
       ...menu,
-      // Nothing here times the menu or touches its layout: the point of this
-      // page is what the shipped one looks like and does.
-      //
-      // With the breakdown off the page draws nothing at all, so the library
-      // keeps its own completed-gesture trace and what is on screen is the
-      // technique untouched. With it on, the overlay covers that same
-      // stroke, so the library's copy is switched off rather than drawn
-      // twice over.
+      // Off: the library draws its own completed-gesture trace untouched.
+      // On: the overlay covers that same stroke, so the library's copy is
+      // switched off instead of drawn twice.
       ...(showBreakdown && { gestureFeedbackDuration: 0 }),
     });
 
@@ -281,14 +239,14 @@ export function LiveSurface({
       strokeRef.current.push(event.position);
     });
     controller.on('select', (event) => {
-      // The playground never opens a standalone menu.
+      // This surface never opens a standalone menu.
       if (event.mode === 'standalone') {
         return;
       }
 
-      const path = pathOfNode(event.selection);
+      const path = pathToNode(event.selection);
       finish(event.position, event.mode, event.recognition, {
-        steps: stepsAlong(latestRef.current.model, path),
+        steps: stepsAlong(latestRef.current.menu, path),
         message: '',
       });
     });
@@ -314,9 +272,8 @@ export function LiveSurface({
     };
   }, [clearOverlay, draw, latestRef, menu, showBreakdown]);
 
-  // Turning the overlay off, or back on, redraws the gesture already on
-  // screen rather than waiting for the next one. Only a gesture the
-  // recognizer ran on has anything to redraw.
+  // Toggling the breakdown redraws the last gesture instead of waiting for
+  // the next one; only one the recognizer ran on has anything to redraw.
   useEffect(() => {
     const recognition = lastRecognitionRef.current;
     if (recognition === undefined) {

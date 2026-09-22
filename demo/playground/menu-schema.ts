@@ -1,5 +1,5 @@
 import { compileSchema, draft2020, type JsonError } from 'json-schema-library';
-import type { MarkingMenuInput } from '../../src/types.js';
+import type { MarkingMenuInput } from 'marking-menu';
 
 /*
  The JSON Schema describing `MarkingMenuInput`, the value the editor holds
