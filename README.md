@@ -294,7 +294,7 @@ Once all controllers sharing the parent are disposed, the previous inline value 
 
 ## Accessibility
 
-The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections.
+The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections. Picking an item by direction stays awkward without sight, so read [Keyboard](#keyboard) before you count this as the accessible path to an action.
 
 ### Roles and names
 
@@ -312,18 +312,25 @@ Screen reader touch passthrough (VoiceOver's hold, TalkBack's double-tap-and-hol
 
 A menu shown with [`open()`](#open-and-close) works with the keyboard. When it opens, focus moves to the first item. The focused item is the active one, so a screen reader speaks each label as you move. When the menu closes, focus returns to the element that had it before, unless focus moved elsewhere to close it. Pass `focus: false` to show the menu without moving focus; see [Display only](#display-only).
 
-| Key           | Action                                                            |
-| ------------- | ----------------------------------------------------------------- |
-| `ArrowDown`   | Focus the next item, clockwise, wrapping around.                  |
-| `ArrowUp`     | Focus the previous item, counterclockwise, wrapping around.       |
-| `Home`, `End` | Focus the first or last item.                                     |
-| `ArrowRight`  | Enter the focused item's submenu. Does nothing on a leaf.         |
-| `Enter`       | Select a leaf, or enter a submenu.                                |
-| `ArrowLeft`   | Go back to the parent menu. Does nothing at the root.             |
-| `Escape`      | Go back to the parent menu, or close the menu from the root.      |
-| `Tab`         | Close the menu from any level and move focus to the next element. |
+| Key                                               | Action                                                            |
+| ------------------------------------------------- | ----------------------------------------------------------------- |
+| `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight` | Move focus that way around the ring.                              |
+| `Home`, `End`                                     | Focus the first or last item.                                     |
+| `Enter`                                           | Select a leaf, or open a submenu.                                 |
+| `Escape`                                          | Go back to the parent menu, or close the menu from the root.      |
+| `Tab`                                             | Close the menu from any level and move focus to the next element. |
 
 The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working.
+
+An arrow moves focus relative to the item that already has it. Of the items that lie closer to the direction you pressed, focus goes to the one the smallest turn away. Hold a direction and focus keeps walking that way until nothing lies further, then stops instead of wrapping around. With no item focused yet, the first arrow goes straight to the item nearest that direction.
+
+Stepping around the ring, rather than jumping straight to the item nearest the direction, is what keeps every item reachable. A menu of more than four items has directions no item sits on, and jumping would only ever land on the four items nearest the axes. The cost is that a four item menu takes two presses to cross the ring: from the right item, `ArrowLeft` steps to the bottom item first.
+
+This departs from the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/), which defines arrow keys for menus laid out as vertical lists. A marking menu is a ring, so `ArrowDown` walking an item order nothing draws top to bottom would be a list metaphor pasted over a circle. Everything else, including the roles, `Enter`, `Escape`, `Tab`, `Home`, and `End`, follows the pattern.
+
+The arrows are spatial because that is what the widget is, and that choice has a cost. They ask you to know where the items sit, so they work best when you can see the ring. No single arrow walks a whole level: pressing one repeatedly settles on the item nearest that direction and then stops, so reaching every item means changing direction, and knowing when to change it means seeing the layout. Every item is reachable, but not findable by feel.
+
+Treat the keyboard as a second way to use a marking menu, not as the accessible version of one. A menu whose items are chosen by direction is awkward without sight, whatever the keys do. If an action has to work for someone who cannot see the ring, give them a plain list or another path to it, and keep the marking menu as the fast route for people who can.
 
 Nothing opens the menu from the keyboard until you call `open()`, for example from a button or a hotkey. A hotkey listener also receives keys pressed inside the open menu. Ignore those, because `open()` throws while a menu is open:
 

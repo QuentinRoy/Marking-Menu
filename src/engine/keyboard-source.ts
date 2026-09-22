@@ -6,13 +6,13 @@ export type KeyboardSource = {
 };
 
 const intents = new Map<string, KeyboardIntent>([
-  ['ArrowDown', 'next'],
-  ['ArrowUp', 'previous'],
+  ['ArrowUp', 'up'],
+  ['ArrowDown', 'down'],
+  ['ArrowLeft', 'left'],
+  ['ArrowRight', 'right'],
   ['Home', 'first'],
   ['End', 'last'],
   ['Enter', 'activate'],
-  ['ArrowRight', 'enter'],
-  ['ArrowLeft', 'leave'],
   ['Escape', 'back'],
   ['Tab', 'dismiss'],
 ]);

@@ -74,13 +74,13 @@ const press = (
 
 describe('createKeyboardSource', () => {
   it.each<[string, KeyboardIntent]>([
-    ['ArrowDown', 'next'],
-    ['ArrowUp', 'previous'],
+    ['ArrowUp', 'up'],
+    ['ArrowDown', 'down'],
+    ['ArrowLeft', 'left'],
+    ['ArrowRight', 'right'],
     ['Home', 'first'],
     ['End', 'last'],
     ['Enter', 'activate'],
-    ['ArrowRight', 'enter'],
-    ['ArrowLeft', 'leave'],
     ['Escape', 'back'],
   ])(
     'turns %s into the %s intent, and keeps the page from acting on it',

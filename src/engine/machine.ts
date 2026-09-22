@@ -38,7 +38,9 @@ import {
   emitStandaloneOpen,
   enterActive,
   leaveLevel,
-  moveActive,
+  moveActiveToward,
+  moveToEnd,
+  type Direction,
 } from './machine-standalone.js';
 import type {
   EngineModelItem,
@@ -64,9 +66,9 @@ export type NavigationOptions = {
 };
 
 type MachineInputs = {
-  // A gesture's pointer. Prefixed because `move` and `cancel` are also
-  // output names, meaning something else there, and because a bare `up` or
-  // `down` next to the keyboard intents below reads as a direction.
+  // A gesture's pointer. Prefixed because `up` and `down` name directions
+  // to the keyboard below, and because `move` and `cancel` are output names
+  // that mean something else.
   pointerDown: { readonly position: Point };
   pointerMove: { readonly position: Point };
   pointerUp: { readonly position: Point };
@@ -76,13 +78,13 @@ type MachineInputs = {
   // Standalone: a menu displayed without a pointer gesture.
   open: { readonly position: Point };
   // The keyboard intents, moving through the displayed levels and items.
-  next: undefined;
-  previous: undefined;
+  up: undefined;
+  down: undefined;
+  left: undefined;
+  right: undefined;
   first: undefined;
   last: undefined;
   activate: undefined;
-  enter: undefined;
-  leave: undefined;
   back: undefined;
   dismiss: undefined;
   // The platform moved focus onto the item with this key.
@@ -102,31 +104,23 @@ type PointerInputNames = {
 
 /**
  What the keyboard asks of a standalone menu, once its keys are translated:
- `next` and `previous` walk the items clockwise, `first` and `last`
- jump to the ends, `activate` selects a leaf or enters a submenu, `enter` and
- `leave` go down and up a level, `back` goes up a level or cancels from the
- root, and `dismiss` cancels from any level.
+ `up`, `down`, `left` and `right` move the active item toward that side of
+ the ring, `first` and `last` jump to the ends of the item order, `activate`
+ selects a leaf or enters a submenu, `back` goes up a level or cancels from
+ the root, and `dismiss` cancels from any level.
 
- Named for what the menu does rather than for the key that asks it, so the
- keyboard source stays a translation and nothing here has to change when a
- key is rebound.
+ The four directions are named, not resolved, here: which item lies that
+ way depends on the angles the displayed level was laid out at, and only
+ the machine knows them.
  */
 export type KeyboardIntent =
-  | 'next'
-  | 'previous'
-  | 'first'
-  | 'last'
-  | 'activate'
-  | 'enter'
-  | 'leave'
-  | 'back'
-  | 'dismiss';
+  Direction | 'first' | 'last' | 'activate' | 'back' | 'dismiss';
 
 /**
  The boundary input shape `pointer-source.ts` sends: unrelated to the
  machine's own input vocabulary, so that layer never has to know about it.
- Each one carries the payload {@link PointerInputNames} pairs it with, so
- the two can't drift apart.
+ Each pointer input carries the payload {@link PointerInputNames} pairs it
+ with, so the two can't drift apart.
  */
 export type NavigationInput =
   | {
@@ -440,10 +434,12 @@ export const navigationMachine = machine({
       active: undefined,
     }),
 
-    'standalone -next> standalone': moveActive('next'),
-    'standalone -previous> standalone': moveActive('previous'),
-    'standalone -first> standalone': moveActive('first'),
-    'standalone -last> standalone': moveActive('last'),
+    'standalone -up> standalone': moveActiveToward('up'),
+    'standalone -down> standalone': moveActiveToward('down'),
+    'standalone -left> standalone': moveActiveToward('left'),
+    'standalone -right> standalone': moveActiveToward('right'),
+    'standalone -first> standalone': moveToEnd('first'),
+    'standalone -last> standalone': moveToEnd('last'),
 
     // The platform moved focus: follow it. Declined for the item that is
     // already active (the echo of focus the machine asked for itself) and for
@@ -456,9 +452,6 @@ export const navigationMachine = machine({
         ? skip()
         : { ...fromData, active: item };
     },
-
-    'standalone -enter> standalone': enterActive,
-    'standalone -leave> standalone': leaveLevel,
 
     // Activating a submenu goes into it, a leaf selects it.
     'standalone -activate> standalone': enterActive,
