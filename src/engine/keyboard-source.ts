@@ -28,6 +28,7 @@ export function createKeyboardSource({
   parent,
   getMenu,
   runtime,
+  onFocusLoss,
 }: {
   parent: HTMLElement;
   /**
@@ -35,7 +36,10 @@ export function createKeyboardSource({
   */
   getMenu: () => { readonly layer: HTMLElement } | undefined;
   runtime: NavigationInputSink & { readonly phase: NavigationPhase };
+  onFocusLoss: () => void;
 }): KeyboardSource {
+  let isHandlingKeyboardIntent = false;
+
   /**
    The first node an event went through, when the event started inside the
    menu that is displayed and a standalone menu is what is open. `parent` is
@@ -70,7 +74,12 @@ export function createKeyboardSource({
       event.preventDefault();
     }
 
-    runtime.send({ type: 'keyboard', intent });
+    isHandlingKeyboardIntent = true;
+    try {
+      runtime.send({ type: 'keyboard', intent });
+    } finally {
+      isHandlingKeyboardIntent = false;
+    }
   };
 
   const onFocusIn = (event: FocusEvent): void => {
@@ -87,13 +96,46 @@ export function createKeyboardSource({
     }
   };
 
+  const closeForFocusLoss = (): void => {
+    onFocusLoss();
+    runtime.send({ type: 'keyboard', intent: 'close' });
+  };
+
+  const onFocusOut = (event: FocusEvent): void => {
+    const layer = getMenu()?.layer;
+    if (
+      layer === undefined ||
+      isHandlingKeyboardIntent ||
+      originInMenu(event) === undefined
+    ) {
+      return;
+    }
+
+    if (!event.relatedTarget) {
+      closeForFocusLoss();
+      return;
+    }
+
+    const root = layer.getRootNode();
+    if (
+      layer.contains(event.relatedTarget as Node) ||
+      ('host' in root && event.relatedTarget === root.host)
+    ) {
+      return;
+    }
+
+    closeForFocusLoss();
+  };
+
   parent.addEventListener('keydown', onKeyDown);
   parent.addEventListener('focusin', onFocusIn);
+  parent.addEventListener('focusout', onFocusOut);
 
   return {
     dispose() {
       parent.removeEventListener('keydown', onKeyDown);
       parent.removeEventListener('focusin', onFocusIn);
+      parent.removeEventListener('focusout', onFocusOut);
     },
   };
 }

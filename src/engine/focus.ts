@@ -12,6 +12,7 @@ export type FocusManager = {
    displayed. Call it before the menu opens.
    */
   willOpenStandalone: (options: { focus: boolean }) => void;
+  willCloseStandaloneForFocusLoss: () => void;
   dispose: () => void;
 };
 
@@ -54,6 +55,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   let savedFocus: HTMLElement | undefined;
   let isStandaloneOpen = false;
   let willStandaloneTakeFocus = true;
+  let willRestoreFocus = true;
 
   const clearPendingFocus = (): void => {
     clearTimeout(pendingFocus);
@@ -67,8 +69,13 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   const restoreFocus = (): void => {
     clearPendingFocus();
     isStandaloneOpen = false;
-    savedFocus?.focus({ preventScroll: true });
+
+    if (willRestoreFocus) {
+      savedFocus?.focus({ preventScroll: true });
+    }
+
     savedFocus = undefined;
+    willRestoreFocus = true;
   };
 
   const onOpen = (event: MarkingMenuOpenEvent<Model>): void => {
@@ -124,6 +131,9 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   return {
     willOpenStandalone({ focus }) {
       willStandaloneTakeFocus = focus;
+    },
+    willCloseStandaloneForFocusLoss() {
+      willRestoreFocus = false;
     },
     dispose() {
       // Disposing mid-gesture: nothing else will ever give the focus this
