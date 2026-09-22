@@ -210,15 +210,16 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     this.#runtime.on('open', this.#suspendPointerForStandalone);
     this.#runtime.on('select', this.#resumePointer);
     this.#runtime.on('cancel', this.#resumePointer);
-    this.#keyboardSource = createKeyboardSource({
-      parent: config.parent,
-      getMenu: renderer.getMenu,
-      runtime: this.#runtime,
-    });
     this.#focusManager = manageFocus({
       doc: config.parent.ownerDocument,
       getMenu: renderer.getMenu,
       runtime: this.#runtime,
+    });
+    this.#keyboardSource = createKeyboardSource({
+      parent: config.parent,
+      getMenu: renderer.getMenu,
+      runtime: this.#runtime,
+      onFocusLoss: this.#focusManager.willCloseStandaloneForFocusLoss,
     });
   }
 
@@ -256,12 +257,12 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     }
 
     this.#disposed = true;
+    this.#keyboardSource.dispose();
     this.#focusManager.dispose();
     // Runtime first: it unsubscribes, sends `dispose`, and tears down the
-    // rendered DOM before the sources release capture and the touch-action
-    // claim.
+    // rendered DOM before the pointer source releases capture and the
+    // touch-action claim.
     this.#runtime.dispose();
-    this.#keyboardSource.dispose();
     this.#pointerSource.dispose();
   }
 
