@@ -41,20 +41,8 @@ is already displayed.
 @param {ReturnType<typeof openMenu>} menu - The menu to open.
 */
 function bindOpenHotkey(menu) {
-  let isOpen = false;
-  menu.on('open', () => {
-    isOpen = true;
-  });
-  menu.on('select', () => {
-    isOpen = false;
-  });
-  menu.on('cancel', () => {
-    isOpen = false;
-  });
-
   document.addEventListener('keydown', (event) => {
     if (
-      isOpen ||
       event.key.toLowerCase() !== 'k' ||
       event.ctrlKey ||
       event.altKey ||
@@ -64,7 +52,14 @@ function bindOpenHotkey(menu) {
     }
 
     event.preventDefault();
-    menu.open();
+    try {
+      // `open()` throws unless the controller is idle: its own guard is the
+      // single source of truth for whether a menu is already displayed,
+      // rather than this tracking that state a second time.
+      menu.open();
+    } catch {
+      // Already open, or mid-gesture: nothing to do.
+    }
   });
 }
 
