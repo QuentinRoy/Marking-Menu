@@ -106,7 +106,7 @@ Use `menu.on(type, listener)` to register a listener and `menu.off(type, listene
 | `select` | A gesture, or a menu shown with `open()`, ends with a selected item. |
 | `cancel` | A gesture, or a menu shown with `open()`, ends without a selection.  |
 
-`select` carries the selected item as `event.selection`, including its `id` and `label`. `cancel` carries `event.reason`: `no-selection` when a gesture ends with nothing to select, `interrupted` when the browser cancels the pointer, or `dismissed` when `close()`, Escape, or Tab closes a menu shown with `open()`.
+`select` carries the selected item as `event.selection`, including its `id` and `label`. `cancel` carries `event.reason`: `no-selection` when a gesture ends with nothing to select, `interrupted` when the browser cancels the pointer, or `dismissed` when `close()`, Escape, Tab, or focus leaving the menu closes one shown with `open()`.
 
 Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close) instead of a gesture, and operated with the keyboard. Every event also includes `position`, a viewport `[x, y]` pair, except in `standalone` mode, where no pointer is involved and it is `undefined`. Checking `mode` narrows `position` in TypeScript:
 
@@ -124,7 +124,7 @@ menu.on('cancel', (event) => {
 
 ### `open()` and `close()`
 
-`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut, and lets the [keyboard](#keyboard) operate it. This is a standalone menu. `menu.close()` closes it and fires `cancel`. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input goes to the page and starts no gesture until the menu closes, by selection, cancellation, or `close()`.
+`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut, and lets the [keyboard](#keyboard) operate it. This is a standalone menu. `menu.close()` closes it and fires `cancel`. The menu also closes when focus leaves it. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input goes to the page and starts no gesture until the menu closes, by selection, cancellation, or `close()`.
 
 | Option     | Default              | Purpose                                                                                            |
 | ---------- | -------------------- | -------------------------------------------------------------------------------------------------- |
@@ -135,7 +135,7 @@ Events from a standalone menu have `mode: 'standalone'`. The menu fires `open` f
 
 ### Display only
 
-`menu.open({ focus: false })` only draws the menu. Focus stays where it is, the first item is reachable with Tab, and closing gives no focus back. Close it with `close()`, or with the keyboard once an item has focus.
+`menu.open({ focus: false })` only draws the menu. Focus stays where it is, the first item is reachable with Tab, and closing gives no focus back. Close it with `close()`, with the keyboard once an item has focus, or by moving focus away after entering the menu.
 
 ## Item layout
 
@@ -310,7 +310,7 @@ Screen reader touch passthrough (VoiceOver's hold, TalkBack's double-tap-and-hol
 
 ### Keyboard
 
-A menu shown with [`open()`](#open-and-close) works with the keyboard. When it opens, focus moves to the first item. The focused item is the active one, so a screen reader speaks each label as you move. When the menu closes, focus returns to the element that had it before. Pass `focus: false` to show the menu without moving focus; see [Display only](#display-only).
+A menu shown with [`open()`](#open-and-close) works with the keyboard. When it opens, focus moves to the first item. The focused item is the active one, so a screen reader speaks each label as you move. When the menu closes, focus returns to the element that had it before, unless focus moved elsewhere to close it. Pass `focus: false` to show the menu without moving focus; see [Display only](#display-only).
 
 | Key                                               | Action                                                            |
 | ------------------------------------------------- | ----------------------------------------------------------------- |

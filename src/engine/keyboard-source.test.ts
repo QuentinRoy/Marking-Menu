@@ -19,24 +19,32 @@ const createFixture = (
   item.className = 'marking-menu-item';
   item.dataset.itemId = 'item-key';
   item.tabIndex = -1;
-  layer.append(item);
+  const nextItem = document.createElement('div');
+  nextItem.className = 'marking-menu-item';
+  nextItem.dataset.itemId = 'next-item-key';
+  nextItem.tabIndex = -1;
+  layer.append(item, nextItem);
   const outside = document.createElement('button');
   parent.append(layer, outside);
   document.body.append(parent);
 
   const send = vi.fn<(input: NavigationInput) => void>();
+  const onFocusLoss = vi.fn<() => void>();
   const runtime = { phase, send };
   const source = createKeyboardSource({
     parent,
     getMenu: () => (hasMenu ? { layer } : undefined),
     runtime,
+    onFocusLoss,
   });
   return {
     parent,
     layer,
     item,
+    nextItem,
     outside,
     send,
+    onFocusLoss,
     source,
     setPhase(next: NavigationPhase) {
       runtime.phase = next;
@@ -192,6 +200,49 @@ describe('createKeyboardSource', () => {
     fixture.item.focus();
 
     expect(fixture.send).not.toHaveBeenCalled();
+  });
+
+  it('closes the standalone menu when focus moves outside it', () => {
+    using fixture = createFixture();
+
+    fixture.item.focus();
+    fixture.outside.focus();
+
+    expect(fixture.onFocusLoss).toHaveBeenCalledExactlyOnceWith();
+    expect(fixture.send).toHaveBeenNthCalledWith(1, {
+      type: 'focus',
+      key: 'item-key',
+    });
+    expect(fixture.send).toHaveBeenNthCalledWith(2, {
+      type: 'keyboard',
+      intent: 'dismiss',
+    });
+  });
+
+  it('closes the standalone menu when focus clears', () => {
+    using fixture = createFixture();
+
+    fixture.item.focus();
+    fixture.item.blur();
+
+    expect(fixture.onFocusLoss).toHaveBeenCalledExactlyOnceWith();
+    expect(fixture.send).toHaveBeenLastCalledWith({
+      type: 'keyboard',
+      intent: 'dismiss',
+    });
+  });
+
+  it('keeps a standalone menu open while focus moves between its items', () => {
+    using fixture = createFixture();
+
+    fixture.item.focus();
+    fixture.nextItem.focus();
+
+    expect(fixture.onFocusLoss).not.toHaveBeenCalled();
+    expect(fixture.send).not.toHaveBeenCalledWith({
+      type: 'keyboard',
+      intent: 'dismiss',
+    });
   });
 
   it('ignores everything once there is no menu to read', () => {

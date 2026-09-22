@@ -201,6 +201,22 @@ describe('manageFocus', () => {
       expect(document.activeElement).toBe(fixture.opener);
     });
 
+    it('leaves focus where it moved when focus loss closes the menu', () => {
+      using fixture = createOpener();
+      const { emit, focusManager } = createFixture();
+      emit('open', openStandalone);
+
+      const elsewhere = document.createElement('button');
+      document.body.append(elsewhere);
+      elsewhere.focus();
+      focusManager.willCloseStandaloneForFocusLoss();
+      emit('cancel', cancelStandalone);
+
+      expect(document.activeElement).toBe(elsewhere);
+      elsewhere.remove();
+      expect(fixture.opener).not.toBe(document.activeElement);
+    });
+
     it('takes no focus, and gives none back, when asked to just display', () => {
       using fixture = createOpener();
       const { emit, menu, focusManager } = createFixture();

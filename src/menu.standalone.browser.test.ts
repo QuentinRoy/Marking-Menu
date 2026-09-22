@@ -27,13 +27,17 @@ const mountBetweenButtons = () => {
   before.focus();
 
   const events: string[] = [];
+  const cancellationReasons: string[] = [];
   for (const type of ['open', 'change', 'select', 'cancel'] as const) {
     menu.mm.on(type, (event) => {
       events.push(`${type}:${event.mode}`);
+      if (event.type === 'cancel') {
+        cancellationReasons.push(event.reason);
+      }
     });
   }
 
-  return Object.assign(menu, { before, after, events });
+  return Object.assign(menu, { before, after, events, cancellationReasons });
 };
 
 test('taking focus puts it on the first item, and the item becomes active', async () => {
@@ -167,5 +171,33 @@ test('close() cancels an open menu and gives focus back', async () => {
   menu.mm.close();
 
   expect(document.activeElement).toBe(menu.before);
+  expect(menu.events.at(-1)).toBe('cancel:standalone');
+});
+
+test('losing focus cancels a standalone menu without moving it back', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+  await expectFocused('menuitem', { name: 'Right' });
+
+  menu.after.focus();
+
+  await expect.poll(() => menu.after === document.activeElement).toBe(true);
+  expect(menu.events.at(-1)).toBe('cancel:standalone');
+  expect(menu.cancellationReasons).toEqual(['dismissed']);
+});
+
+test('a display-only menu closes on focus loss only after focus enters it', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open({ focus: false });
+
+  menu.after.focus();
+  expect(menu.events).toEqual(['open:standalone']);
+
+  menu.before.focus();
+  await userEvent.tab();
+  await expectFocused('menuitem', { name: 'Right' });
+  menu.after.focus();
+
+  await expect.poll(() => menu.after === document.activeElement).toBe(true);
   expect(menu.events.at(-1)).toBe('cancel:standalone');
 });
