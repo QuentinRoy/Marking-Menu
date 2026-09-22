@@ -132,13 +132,15 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
     }
 
     return {
-      down: wedge(2),
+      // Indices into the fixture's array order (`e2e/fixture/main.ts`):
+      // "others" (index 4) points down, "up" (index 0) points up.
+      down: wedge(4),
       innerColor: getComputedStyle(innerConnector).backgroundColor,
       innerWidth: innerConnector.getBoundingClientRect().width,
       outerOffset:
         outerConnector.getBoundingClientRect().x -
         innerConnector.getBoundingClientRect().x,
-      up: wedge(6),
+      up: wedge(0),
     };
   });
 
