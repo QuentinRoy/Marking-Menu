@@ -9,11 +9,13 @@ import {
 } from './__fixtures__/browser-menu.js';
 import { fakeTimers } from './__fixtures__/timers.js';
 
+// Listed starting from "left": default angles start at the top, so this
+// order alone keeps "right" at angle 0.
 const items = [
+  { id: 'left', label: 'Left' },
   { id: 'right', label: 'Right' },
   { id: 'down-right', label: 'Down-Right' },
   { id: 'down-left', label: 'Down-Left' },
-  { id: 'left', label: 'Left' },
 ] as const;
 
 const ACTIVE_RADIUS = 100;
@@ -112,7 +114,13 @@ test('the outer connector switches from a system color to another when active, u
   await using drag = await openMenu(menu.surface);
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
-  const connector = root?.querySelector(
+  const rightItem = [
+    ...(root?.querySelectorAll('.marking-menu-item') ?? []),
+  ].find(
+    (item) =>
+      item.querySelector('.marking-menu-label')?.textContent === 'Right',
+  );
+  const connector = rightItem?.querySelector(
     '.marking-menu-outer-connector',
   ) as Element;
   const restingColor = getComputedStyle(connector).backgroundColor;

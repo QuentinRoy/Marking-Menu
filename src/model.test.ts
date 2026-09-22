@@ -9,19 +9,19 @@ const fourItems = [
 ] as const;
 
 describe('createModel', () => {
-  it('lays out four items every 90 degrees', () => {
+  it('lays out four items every 90 degrees, starting at the top', () => {
     const menu = createModel({ items: fourItems });
-    expect(menu.items.map((item) => item.angle)).toEqual([0, 90, 180, 270]);
+    expect(menu.items.map((item) => item.angle)).toEqual([270, 0, 90, 180]);
   });
 
-  it('spreads three items evenly around the circle', () => {
+  it('spreads three items evenly around the circle, starting at the top', () => {
     const menu = createModel({
       items: [{ label: 'One' }, { label: 'Two' }, { label: 'Three' }],
     });
-    expect(menu.items.map((item) => item.angle)).toEqual([0, 120, 240]);
+    expect(menu.items.map((item) => item.angle)).toEqual([270, 30, 150]);
   });
 
-  it('spreads five items evenly around the circle', () => {
+  it('spreads five items evenly around the circle, starting at the top', () => {
     const menu = createModel({
       items: [
         { label: 'One' },
@@ -32,17 +32,17 @@ describe('createModel', () => {
       ],
     });
     expect(menu.items.map((item) => item.angle)).toEqual([
-      0, 72, 144, 216, 288,
+      270, 342, 54, 126, 198,
     ]);
   });
 
   it.each([
-    { count: 6, angles: [0, 60, 120, 180, 240, 300] },
+    { count: 6, angles: [270, 330, 30, 90, 150, 210] },
     {
       count: 7,
       angles: [
-        0, 51.42857142857143, 102.85714285714286, 154.28571428571428,
-        205.71428571428572, 257.14285714285717, 308.57142857142856,
+        270, 321.42857142857144, 12.85714285714289, 64.28571428571428,
+        115.71428571428572, 167.1428571428571, 218.57142857142856,
       ],
     },
   ])('spreads $count items evenly around the circle', ({ count, angles }) => {
@@ -133,13 +133,13 @@ describe('createModel', () => {
         { label: 'Third' },
       ],
     });
-    expect(menu.items.map((item) => item.angle)).toEqual([0, 120, 240]);
+    expect(menu.items.map((item) => item.angle)).toEqual([270, 30, 150]);
     expect(menu.items[0].items.map((item) => item.angle)).toEqual([
-      0, 72, 144, 216, 288,
+      270, 342, 54, 126, 198,
     ]);
   });
 
-  it('lays out eight items every 45 degrees', () => {
+  it('lays out eight items every 45 degrees, starting at the top', () => {
     const menu = createModel({
       items: [
         { label: 'Sub 1' },
@@ -153,7 +153,7 @@ describe('createModel', () => {
       ],
     });
     expect(menu.items.map((item) => item.angle)).toEqual([
-      0, 45, 90, 135, 180, 225, 270, 315,
+      270, 315, 0, 45, 90, 135, 180, 225,
     ]);
   });
 
@@ -322,15 +322,15 @@ describe('createModel', () => {
 
   it('retrieves the sub-item the closest to an angle', () => {
     const menu = createModel({ items: fourItems });
-    expect(menu.getNearestChild(0)).toBe(menu.items[0]);
-    expect(menu.getNearestChild(100)).toBe(menu.items[1]);
-    expect(menu.getNearestChild(220)).toBe(menu.items[2]);
+    expect(menu.getNearestChild(0)).toBe(menu.items[1]);
+    expect(menu.getNearestChild(100)).toBe(menu.items[2]);
+    expect(menu.getNearestChild(220)).toBe(menu.items[3]);
   });
 
   it('compares the angles across the 0/360 boundary', () => {
     const menu = createModel({ items: fourItems });
-    expect(menu.getNearestChild(350)).toBe(menu.items[0]);
-    expect(menu.getNearestChild(-100)).toBe(menu.items[3]);
+    expect(menu.getNearestChild(350)).toBe(menu.items[1]);
+    expect(menu.getNearestChild(-100)).toBe(menu.items[0]);
   });
 
   it('has no sub-item to retrieve on a leaf', () => {
@@ -497,9 +497,9 @@ describe('createModel', () => {
     });
 
     expect(dynamic).toEqual(literal);
-    expect(dynamic.getChild('right')?.angle).toBe(0);
+    expect(dynamic.getChild('right')?.angle).toBe(270);
     expect(dynamic.getChild('unknown')).toBeUndefined();
-    expect(dynamic.getNearestChild(90)?.label).toBe('Right');
+    expect(dynamic.getNearestChild(0)?.label).toBe('Right');
     expect(dynamic.getMaxDepth()).toBe(2);
   });
 });
