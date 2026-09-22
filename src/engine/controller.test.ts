@@ -27,14 +27,11 @@ const pointerCaptureMocks = (
     setPointerCapture: Mock;
   };
 
-// Angles are stated explicitly so a rightward pointer move (`dy: 0`) always
-// activates `right`, regardless of the model's default spread for unstated
-// angles.
 const items = [
-  { id: 'right', label: 'Right', angle: 0 },
-  { id: 'down', label: 'Down', angle: 90 },
-  { id: 'left', label: 'Left', angle: 180 },
-  { id: 'up', label: 'Up', angle: 270 },
+  { id: 'right', label: 'Right' },
+  { id: 'down', label: 'Down' },
+  { id: 'left', label: 'Left' },
+  { id: 'up', label: 'Up' },
 ] as const;
 
 // `vi.fn()` alone infers a value-returning signature, which an event
@@ -731,15 +728,14 @@ describe('createController', () => {
         {
           id: 'right',
           label: 'Right',
-          angle: 0,
           items: [
             { id: 'rightUp', label: 'Right Up' },
             { id: 'rightDown', label: 'Right Down' },
           ],
         },
-        { id: 'down', label: 'Down', angle: 90 },
-        { id: 'left', label: 'Left', angle: 180 },
-        { id: 'up', label: 'Up', angle: 270 },
+        { id: 'down', label: 'Down' },
+        { id: 'left', label: 'Left' },
+        { id: 'up', label: 'Up' },
       ],
       parent,
       noviceDwellingTime: 100,
@@ -989,17 +985,16 @@ describe('createController', () => {
       {
         id: 'right',
         label: 'Right',
-        angle: 0,
         items: [
-          { id: 'subRight', label: 'Sub Right', angle: 0 },
-          { id: 'subDown', label: 'Sub Down', angle: 90 },
-          { id: 'subLeft', label: 'Sub Left', angle: 180 },
-          { id: 'subUp', label: 'Sub Up', angle: 270 },
+          { id: 'subRight', label: 'Sub Right' },
+          { id: 'subDown', label: 'Sub Down' },
+          { id: 'subLeft', label: 'Sub Left' },
+          { id: 'subUp', label: 'Sub Up' },
         ],
       },
-      { id: 'down', label: 'Down', angle: 90 },
-      { id: 'left', label: 'Left', angle: 180 },
-      { id: 'up', label: 'Up', angle: 270 },
+      { id: 'down', label: 'Down' },
+      { id: 'left', label: 'Left' },
+      { id: 'up', label: 'Up' },
     ] as const;
 
     it('dispatches open for the submenu and recreates the menu DOM for it, once the pointer dwells past the dead zone on it', () => {
@@ -1125,17 +1120,16 @@ describe('createController', () => {
       {
         id: 'right',
         label: 'Right',
-        angle: 0,
         items: [
-          { id: 'subRight', label: 'Sub Right', angle: 0 },
-          { id: 'subDown', label: 'Sub Down', angle: 90 },
-          { id: 'subLeft', label: 'Sub Left', angle: 180 },
-          { id: 'subUp', label: 'Sub Up', angle: 270 },
+          { id: 'subRight', label: 'Sub Right' },
+          { id: 'subDown', label: 'Sub Down' },
+          { id: 'subLeft', label: 'Sub Left' },
+          { id: 'subUp', label: 'Sub Up' },
         ],
       },
-      { id: 'down', label: 'Down', angle: 90 },
-      { id: 'left', label: 'Left', angle: 180 },
-      { id: 'up', label: 'Up', angle: 270 },
+      { id: 'down', label: 'Down' },
+      { id: 'left', label: 'Left' },
+      { id: 'up', label: 'Up' },
     ] as const;
 
     it('switches to novice, rooted at the menu the dwell recognizes', () => {

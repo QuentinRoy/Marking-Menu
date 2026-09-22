@@ -10,19 +10,11 @@ import {
 } from './__fixtures__/browser-menu.js';
 import { fakeTimers } from './__fixtures__/timers.js';
 
-// Angles are stated explicitly so each label keeps sitting at its own name's
-// direction, matching the `offset(..., angle, ...)` gestures below regardless
-// of the model's default spread for unstated angles.
 const items = [
-  { id: 'right', label: 'Right', angle: 0 },
-  {
-    id: 'others',
-    label: 'Others...',
-    angle: 90,
-    items: [{ label: 'Sub Right' }],
-  },
-  { id: 'left', label: 'Left', angle: 180 },
-  { id: 'up', label: 'Up', angle: 270 },
+  { id: 'right', label: 'Right' },
+  { id: 'others', label: 'Others...', items: [{ label: 'Sub Right' }] },
+  { id: 'left', label: 'Left' },
+  { id: 'up', label: 'Up' },
 ] as const;
 
 const ACTIVE_RADIUS = 100;

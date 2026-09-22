@@ -9,14 +9,11 @@ import {
 } from './__fixtures__/browser-menu.js';
 import { fakeTimers } from './__fixtures__/timers.js';
 
-// Angles are stated explicitly so each label keeps sitting at its own name's
-// direction, matching `TOP_LEVEL_ITEMS` regardless of the model's default
-// spread for unstated angles.
 const items = [
-  { id: 'right', label: 'Right', angle: 0 },
-  { id: 'down-right', label: 'Down-Right', angle: 45 },
-  { id: 'down-left', label: 'Down-Left', angle: 135 },
-  { id: 'left', label: 'Left', angle: 180 },
+  { id: 'right', label: 'Right' },
+  { id: 'down-right', label: 'Down-Right' },
+  { id: 'down-left', label: 'Down-Left' },
+  { id: 'left', label: 'Left' },
 ] as const;
 
 const ACTIVE_RADIUS = 100;
@@ -30,9 +27,7 @@ afterEach(async () => {
 
 test('opening indicator stays a fixed size and fades in under reduced motion', async () => {
   await commands.emulateMedia({ reducedMotion: 'reduce' });
-  using menu = mountMenu({
-    items: [{ id: 'right', label: 'Right', angle: 0 }],
-  });
+  using menu = mountMenu({ items: [{ id: 'right', label: 'Right' }] });
   using _timers = fakeTimers();
   const center = centerOf(menu.surface);
   await using _drag = await press(center);
@@ -54,9 +49,7 @@ test('opening indicator stays a fixed size and fades in under reduced motion', a
 
 test('opening indicator mid-dwell under reduced motion', async () => {
   await commands.emulateMedia({ reducedMotion: 'reduce' });
-  using menu = mountMenu({
-    items: [{ id: 'right', label: 'Right', angle: 0 }],
-  });
+  using menu = mountMenu({ items: [{ id: 'right', label: 'Right' }] });
   using _timers = fakeTimers();
   const center = centerOf(menu.surface);
   await using _drag = await press(center);
