@@ -294,13 +294,17 @@ Once all controllers sharing the parent are disposed, the previous inline value 
 
 ## Accessibility
 
-The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections. Picking an item by direction stays awkward without sight, so read [Keyboard](#keyboard) before you count this as the accessible path to an action.
+The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections.
+
+A marking menu puts its items in directions around a center, and that is the whole point of it: you learn where an item sits and later flick toward it without looking. The same design is what makes it a poor fit for someone who cannot see the ring, and no key mapping fixes that. Give those users a different control for the same actions, such as a plain list, a menu bar, or a command palette, and keep the marking menu as the fast path for people who can see it. The keyboard support below is a second way into this menu, not that alternative.
 
 ### Roles and names
 
 The menu container has `role="menu"`, and each item has `role="menuitem"` and takes its accessible name from its label text. Items with a submenu also have `aria-haspopup="menu"`. Wedges, connectors, the stroke, and the opening indicator are hidden from the accessibility tree; they are visual feedback, not content.
 
 The menu container has no accessible name yet. It cannot take one from an element on your page, because ID references such as `aria-labelledby` cannot cross its shadow root.
+
+The arrow keys are the one place the menu leaves the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/), which defines them for menus laid out as vertical lists. This one is a ring, so the arrows follow the ring instead; see [Keyboard](#keyboard). Everything else about the pattern holds, including the roles above and `Enter`, `Escape`, `Tab`, `Home`, and `End`.
 
 ### Gestures
 
@@ -322,15 +326,9 @@ A menu shown with [`open()`](#open-and-close) works with the keyboard. When it o
 
 The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working.
 
-An arrow moves focus relative to the item that already has it. Of the items that lie closer to the direction you pressed, focus goes to the one the smallest turn away. Hold a direction and focus keeps walking that way until nothing lies further, then stops instead of wrapping around. With no item focused yet, the first arrow goes straight to the item nearest that direction.
+An arrow moves focus relative to the item that already has it, to the item the smallest turn away among those lying further in that direction. Hold a direction and focus stops at the edge of the ring rather than wrapping. With nothing focused yet, the first arrow jumps to the item nearest that direction.
 
-Stepping around the ring, rather than jumping straight to the item nearest the direction, is what keeps every item reachable. A menu of more than four items has directions no item sits on, and jumping would only ever land on the four items nearest the axes. The cost is that a four item menu takes two presses to cross the ring: from the right item, `ArrowLeft` steps to the bottom item first.
-
-This departs from the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/), which defines arrow keys for menus laid out as vertical lists. A marking menu is a ring, so `ArrowDown` walking an item order nothing draws top to bottom would be a list metaphor pasted over a circle. Everything else, including the roles, `Enter`, `Escape`, `Tab`, `Home`, and `End`, follows the pattern.
-
-The arrows are spatial because that is what the widget is, and that choice has a cost. They ask you to know where the items sit, so they work best when you can see the ring. No single arrow walks a whole level: pressing one repeatedly settles on the item nearest that direction and then stops, so reaching every item means changing direction, and knowing when to change it means seeing the layout. Every item is reachable, but not findable by feel.
-
-Treat the keyboard as a second way to use a marking menu, not as the accessible version of one. A menu whose items are chosen by direction is awkward without sight, whatever the keys do. If an action has to work for someone who cannot see the ring, give them a plain list or another path to it, and keep the marking menu as the fast route for people who can.
+So no single arrow walks a whole level, and reaching every item means changing direction. Crossing a four item ring takes two presses: from the right item, `ArrowLeft` steps to the bottom item first.
 
 Nothing opens the menu from the keyboard until you call `open()`, for example from a button or a hotkey. A hotkey listener also receives keys pressed inside the open menu. Ignore those, because `open()` throws while a menu is open:
 
