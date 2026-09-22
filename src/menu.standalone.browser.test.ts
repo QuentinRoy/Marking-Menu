@@ -1,12 +1,17 @@
 import { userEvent } from 'vitest/browser';
 import { expectFocused, mountMenu } from './__fixtures__/browser-menu.js';
 
+// "Right" is pinned to the right, so the labels match the ring whatever the
+// default start is.
 const items = [
-  { id: 'right', label: 'Right' },
+  { id: 'right', label: 'Right', angle: 0 },
   {
     id: 'others',
     label: 'Others...',
-    items: [{ id: 'sub-right', label: 'Sub Right' }, { label: 'Sub Down' }],
+    items: [
+      { id: 'sub-right', label: 'Sub Right', angle: 0 },
+      { label: 'Sub Left' },
+    ],
   },
   { id: 'left', label: 'Left' },
   { id: 'up', label: 'Up' },
@@ -49,40 +54,51 @@ test('taking focus puts it on the first item, and the item becomes active', asyn
   expect(menu.events).toEqual(['open:standalone', 'change:standalone']);
 });
 
-test('the arrow keys, Home and End move focus around the ring', async () => {
+test('each arrow key moves focus that way around the ring', async () => {
   using menu = mountBetweenButtons();
   menu.mm.open();
   await expectFocused('menuitem', { name: 'Right' });
 
   await userEvent.keyboard('{ArrowDown}');
   await expectFocused('menuitem', { name: 'Others...' });
-  await userEvent.keyboard('{End}');
-  await expectFocused('menuitem', { name: 'Up' });
-  await userEvent.keyboard('{ArrowDown}');
-  await expectFocused('menuitem', { name: 'Right' });
+  await userEvent.keyboard('{ArrowLeft}');
+  await expectFocused('menuitem', { name: 'Left' });
   await userEvent.keyboard('{ArrowUp}');
+  await expectFocused('menuitem', { name: 'Up' });
+  await userEvent.keyboard('{ArrowRight}');
+  await expectFocused('menuitem', { name: 'Right' });
+  expect(menu.events).toEqual([
+    'open:standalone',
+    ...Array.from({ length: 5 }, () => 'change:standalone'),
+  ]);
+});
+
+test('an arrow with nowhere further to go leaves focus and the event log alone', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+  await expectFocused('menuitem', { name: 'Right' });
+  const before = [...menu.events];
+
+  await userEvent.keyboard('{ArrowRight}');
+
+  await expectFocused('menuitem', { name: 'Right' });
+  expect(menu.events).toEqual(before);
+});
+
+test('Home and End jump to the ends of the item order', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+
+  await userEvent.keyboard('{End}');
   await expectFocused('menuitem', { name: 'Up' });
   await userEvent.keyboard('{Home}');
   await expectFocused('menuitem', { name: 'Right' });
 });
 
-test('ArrowRight goes into a submenu and ArrowLeft comes back to its item', async () => {
-  using menu = mountBetweenButtons();
-  menu.mm.open();
-  await userEvent.keyboard('{ArrowDown}');
-  await expectFocused('menuitem', { name: 'Others...' });
-
-  await userEvent.keyboard('{ArrowRight}');
-  await expectFocused('menuitem', { name: 'Sub Right' });
-
-  await userEvent.keyboard('{ArrowLeft}');
-  await expectFocused('menuitem', { name: 'Others...' });
-});
-
 test('Enter on a leaf selects it, and focus goes back to where it was', async () => {
   using menu = mountBetweenButtons();
   menu.mm.open();
-  await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+  await userEvent.keyboard('{ArrowDown}{ArrowLeft}');
   await expectFocused('menuitem', { name: 'Left' });
 
   await userEvent.keyboard('{Enter}');
@@ -103,7 +119,7 @@ test('Enter on a submenu item opens it instead of selecting', async () => {
 test('Escape backs out of a submenu, then cancels from the root and gives focus back', async () => {
   using menu = mountBetweenButtons();
   menu.mm.open();
-  await userEvent.keyboard('{ArrowDown}{ArrowRight}');
+  await userEvent.keyboard('{ArrowDown}{Enter}');
   await expectFocused('menuitem', { name: 'Sub Right' });
 
   await userEvent.keyboard('{Escape}');

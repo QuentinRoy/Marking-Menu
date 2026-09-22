@@ -38,7 +38,9 @@ import {
   emitStandaloneOpen,
   enterActive,
   leaveLevel,
-  moveActive,
+  moveActiveToward,
+  moveToEnd,
+  type Direction,
 } from './machine-standalone.js';
 import type {
   EngineModelItem,
@@ -64,60 +66,68 @@ export type NavigationOptions = {
 };
 
 type MachineInputs = {
-  down: { readonly position: Point };
-  move: { readonly position: Point };
-  up: { readonly position: Point };
-  cancel: { readonly position: Point };
+  // A gesture's pointer. Prefixed because `up` and `down` name directions
+  // to the keyboard below, and because `move` and `cancel` are output names
+  // that mean something else.
+  pointerDown: { readonly position: Point };
+  pointerMove: { readonly position: Point };
+  pointerUp: { readonly position: Point };
+  pointerCancel: { readonly position: Point };
   dwell: undefined;
   dispose: undefined;
   // Standalone: a menu displayed without a pointer gesture.
   open: { readonly position: Point };
-  close: undefined;
   // The keyboard intents, moving through the displayed levels and items.
-  next: undefined;
-  previous: undefined;
+  up: undefined;
+  down: undefined;
+  left: undefined;
+  right: undefined;
   first: undefined;
   last: undefined;
   activate: undefined;
-  enter: undefined;
-  leave: undefined;
-  escape: undefined;
+  back: undefined;
+  dismiss: undefined;
   // The platform moved focus onto the item with this key.
   focus: { readonly key: string };
 };
 
-type PointerInputName = 'down' | 'move' | 'up' | 'cancel';
+/**
+ The machine's pointer inputs, under the boundary names
+ `pointer-source.ts` sends them by.
+ */
+type PointerInputNames = {
+  down: 'pointerDown';
+  move: 'pointerMove';
+  up: 'pointerUp';
+  cancel: 'pointerCancel';
+};
 
 /**
  What the keyboard asks of a standalone menu, once its keys are translated:
- `next` and `previous` walk the items clockwise, `first` and `last`
- jump to the ends, `activate` selects a leaf or enters a submenu, `enter` and
- `leave` go down and up a level, `escape` goes up a level or cancels, and
- `close` cancels from any level.
+ `up`, `down`, `left` and `right` move the active item toward that side of
+ the ring, `first` and `last` jump to the ends of the item order, `activate`
+ selects a leaf or enters a submenu, `back` goes up a level or cancels from
+ the root, and `dismiss` cancels from any level.
+
+ The four directions are named, not resolved, here: which item lies that
+ way depends on the angles the displayed level was laid out at, and only
+ the machine knows them.
  */
 export type KeyboardIntent =
-  | 'next'
-  | 'previous'
-  | 'first'
-  | 'last'
-  | 'activate'
-  | 'enter'
-  | 'leave'
-  | 'escape'
-  | 'close';
+  Direction | 'first' | 'last' | 'activate' | 'back' | 'dismiss';
 
 /**
  The boundary input shape `pointer-source.ts` sends: unrelated to the
- machine's own (shorter) input vocabulary, so that layer never has to know
- about it. Derived from `MachineInputs`' pointer keys with a `pointer.`
- prefix, so the two can't drift apart.
+ machine's own input vocabulary, so that layer never has to know about it.
+ Each pointer input carries the payload {@link PointerInputNames} pairs it
+ with, so the two can't drift apart.
  */
 export type NavigationInput =
   | {
-      [K in PointerInputName]: {
+      [K in keyof PointerInputNames]: {
         readonly type: `pointer.${K}`;
-      } & MachineInputs[K];
-    }[PointerInputName]
+      } & MachineInputs[PointerInputNames[K]];
+    }[keyof PointerInputNames]
   | { readonly type: 'keyboard'; readonly intent: KeyboardIntent }
   | { readonly type: 'focus'; readonly key: string };
 
@@ -266,7 +276,7 @@ export const navigationMachine = machine({
   initial: 'idle',
 
   transitions: {
-    'idle -down> startup': ({
+    'idle -pointerDown> startup': ({
       fromData: { model, options },
       inputData: { position },
     }) => ({
@@ -277,7 +287,7 @@ export const navigationMachine = machine({
       dwellStartedAt: Date.now(),
     }),
 
-    'startup -move> expert'({
+    'startup -pointerMove> expert'({
       fromData: { model, options, origin, stroke },
       inputData: { position },
       skip,
@@ -294,7 +304,7 @@ export const navigationMachine = machine({
         : skip();
     },
 
-    'startup -move> startup': ({ fromData, inputData }) => ({
+    'startup -pointerMove> startup': ({ fromData, inputData }) => ({
       ...fromData,
       stroke: [...fromData.stroke, inputData.position],
     }),
@@ -316,7 +326,7 @@ export const navigationMachine = machine({
       dwellStartedAt: Date.now(),
     }),
 
-    'expert -move> expert'({ fromData, inputData: { position } }) {
+    'expert -pointerMove> expert'({ fromData, inputData: { position } }) {
       const { dwellAnchor, dwellStartedAt, options } = fromData;
       const hasMovedSignificantly =
         dist(dwellAnchor, position) >= options.movementsThreshold;
@@ -363,7 +373,7 @@ export const navigationMachine = machine({
     // knows will fail.
     'recognizing -> idle': backToIdle,
 
-    'novice -move> novice'({ fromData, inputData: { position } }) {
+    'novice -pointerMove> novice'({ fromData, inputData: { position } }) {
       const { menuCenter, options, menu, dwellAnchor, dwellStartedAt } =
         fromData;
       const { azymuth, radius } = toPolar(position, menuCenter);
@@ -424,10 +434,12 @@ export const navigationMachine = machine({
       active: undefined,
     }),
 
-    'standalone -next> standalone': moveActive('next'),
-    'standalone -previous> standalone': moveActive('previous'),
-    'standalone -first> standalone': moveActive('first'),
-    'standalone -last> standalone': moveActive('last'),
+    'standalone -up> standalone': moveActiveToward('up'),
+    'standalone -down> standalone': moveActiveToward('down'),
+    'standalone -left> standalone': moveActiveToward('left'),
+    'standalone -right> standalone': moveActiveToward('right'),
+    'standalone -first> standalone': moveToEnd('first'),
+    'standalone -last> standalone': moveToEnd('last'),
 
     // The platform moved focus: follow it. Declined for the item that is
     // already active (the echo of focus the machine asked for itself) and for
@@ -441,9 +453,6 @@ export const navigationMachine = machine({
         : { ...fromData, active: item };
     },
 
-    'standalone -enter> standalone': enterActive,
-    'standalone -leave> standalone': leaveLevel,
-
     // Activating a submenu goes into it, a leaf selects it.
     'standalone -activate> standalone': enterActive,
     'standalone -activate> idle'({
@@ -455,23 +464,23 @@ export const navigationMachine = machine({
         : { model, options };
     },
 
-    // Escape backs out one level, and cancels only from the root.
-    'standalone -escape> standalone': leaveLevel,
-    'standalone -escape> idle'({ fromData: { model, options, menus }, skip }) {
+    // Backing out goes up one level, and cancels only from the root.
+    'standalone -back> standalone': leaveLevel,
+    'standalone -back> idle'({ fromData: { model, options, menus }, skip }) {
       return menus.length > 1 ? skip() : { model, options };
     },
 
-    'standalone -close> idle': backToIdle,
+    'standalone -dismiss> idle': backToIdle,
 
     // Every state a gesture can be in ends the same way, back to idle's own
     // shape. Idle has no gesture to end, and a standalone menu never receives
     // them (its pointer source is suspended).
-    'startup -up> idle': backToIdle,
-    'expert -up> idle': backToIdle,
-    'novice -up> idle': backToIdle,
-    'startup -cancel> idle': backToIdle,
-    'expert -cancel> idle': backToIdle,
-    'novice -cancel> idle': backToIdle,
+    'startup -pointerUp> idle': backToIdle,
+    'expert -pointerUp> idle': backToIdle,
+    'novice -pointerUp> idle': backToIdle,
+    'startup -pointerCancel> idle': backToIdle,
+    'expert -pointerCancel> idle': backToIdle,
+    'novice -pointerCancel> idle': backToIdle,
     // Dispose resets to idle's shape from anywhere, idle included: every
     // state already carries `model`/`options`, so one row covers all four.
     '* -dispose> idle': backToIdle,
@@ -519,7 +528,7 @@ export const navigationMachine = machine({
         fromData.dwellStartedAt !== toData.dwellStartedAt,
     },
 
-    'idle -down> startup'({ toData, emit }) {
+    'idle -pointerDown> startup'({ toData, emit }) {
       emit(
         'start',
         new MarkingMenuStartEvent({
@@ -579,17 +588,17 @@ export const navigationMachine = machine({
         }),
       );
     },
-    'standalone -escape> idle': cancelStandalone,
-    'standalone -close> idle': cancelStandalone,
+    'standalone -back> idle': cancelStandalone,
+    'standalone -dismiss> idle': cancelStandalone,
 
     // No menu is open in startup or expert, so nothing can be active: `move`
     // always carries `active: undefined` and `menu: undefined` here, and
     // `change` never
     // fires outside novice.
-    'startup -move> expert'({ inputData, emit }) {
+    'startup -pointerMove> expert'({ inputData, emit }) {
       emitInactiveMove(emit, 'expert', inputData.position);
     },
-    'startup -move> startup'({ inputData, emit }) {
+    'startup -pointerMove> startup'({ inputData, emit }) {
       emitInactiveMove(emit, 'startup', inputData.position);
     },
 
@@ -607,7 +616,7 @@ export const navigationMachine = machine({
       );
     },
 
-    'expert -move> expert'({ inputData, emit }) {
+    'expert -pointerMove> expert'({ inputData, emit }) {
       emitInactiveMove(emit, 'expert', inputData.position);
     },
 
@@ -663,7 +672,7 @@ export const navigationMachine = machine({
 
     // `move` always fires; `change` only when the nearest item differs from
     // the one the previous commit landed on.
-    'novice -move> novice'({ fromData, toData, inputData, emit }) {
+    'novice -pointerMove> novice'({ fromData, toData, inputData, emit }) {
       emit(
         'move',
         new MarkingMenuMoveEvent<ModelNode>({
@@ -688,11 +697,11 @@ export const navigationMachine = machine({
       }
     },
 
-    'startup -up> idle': releaseGesture,
-    'expert -up> idle': releaseGesture,
-    'novice -up> idle': releaseGesture,
-    'startup -cancel> idle': cancelGesture,
-    'expert -cancel> idle': cancelGesture,
-    'novice -cancel> idle': cancelGesture,
+    'startup -pointerUp> idle': releaseGesture,
+    'expert -pointerUp> idle': releaseGesture,
+    'novice -pointerUp> idle': releaseGesture,
+    'startup -pointerCancel> idle': cancelGesture,
+    'expert -pointerCancel> idle': cancelGesture,
+    'novice -pointerCancel> idle': cancelGesture,
   },
 });

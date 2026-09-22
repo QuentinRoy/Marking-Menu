@@ -294,7 +294,9 @@ Once all controllers sharing the parent are disposed, the previous inline value 
 
 ## Accessibility
 
-The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections.
+The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. It follows the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/) apart from the arrow keys: that pattern defines them for vertical lists, and this menu is a ring. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections.
+
+A marking menu identifies items by direction. That is the point of it, and its limit: it asks you to know where an item sits, and someone who cannot see the ring has no way to know. No key mapping changes that. Keep every action reachable through a control that does not depend on position, and treat this menu as the fast path rather than the only one.
 
 ### Roles and names
 
@@ -312,31 +314,17 @@ Screen reader touch passthrough (VoiceOver's hold, TalkBack's double-tap-and-hol
 
 A menu shown with [`open()`](#open-and-close) works with the keyboard. When it opens, focus moves to the first item. The focused item is the active one, so a screen reader speaks each label as you move. When the menu closes, focus returns to the element that had it before, unless focus moved elsewhere to close it. Pass `focus: false` to show the menu without moving focus; see [Display only](#display-only).
 
-| Key           | Action                                                            |
-| ------------- | ----------------------------------------------------------------- |
-| `ArrowDown`   | Focus the next item, clockwise, wrapping around.                  |
-| `ArrowUp`     | Focus the previous item, counterclockwise, wrapping around.       |
-| `Home`, `End` | Focus the first or last item.                                     |
-| `ArrowRight`  | Enter the focused item's submenu. Does nothing on a leaf.         |
-| `Enter`       | Select a leaf, or enter a submenu.                                |
-| `ArrowLeft`   | Go back to the parent menu. Does nothing at the root.             |
-| `Escape`      | Go back to the parent menu, or close the menu from the root.      |
-| `Tab`         | Close the menu from any level and move focus to the next element. |
+| Key                                               | Action                                                            |
+| ------------------------------------------------- | ----------------------------------------------------------------- |
+| `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight` | Move focus that way around the ring.                              |
+| `Home`, `End`                                     | Focus the first or last item.                                     |
+| `Enter`                                           | Select a leaf, or open a submenu.                                 |
+| `Escape`                                          | Go back to the parent menu, or close the menu from the root.      |
+| `Tab`                                             | Close the menu from any level and move focus to the next element. |
 
-The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working.
+An arrow moves focus from the item that has it to the nearest item further that way, and stops at the edge of the ring rather than wrapping. No single arrow reaches every item, so covering a level takes more than one. Each press is a step, not a jump: on a four item menu, `ArrowLeft` from the right item passes through the bottom item.
 
-Nothing opens the menu from the keyboard until you call `open()`, for example from a button or a hotkey. A hotkey listener also receives keys pressed inside the open menu. Ignore those, because `open()` throws while a menu is open:
-
-```js
-const parent = document.getElementById('menu-area');
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'm' && !parent.contains(event.target)) {
-    menu.open();
-  }
-});
-```
-
-If an action must stay reachable without a gesture, open the menu from a trigger like this one, or provide another path outside the menu.
+The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working. Nothing opens the menu from the keyboard until you call [`open()`](#open-and-close), for example from a button or a hotkey.
 
 ### Announcing selections
 

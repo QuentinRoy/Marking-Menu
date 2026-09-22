@@ -85,7 +85,7 @@ const startHost = () => navigationMachine.start({ model, options });
 Dwell into novice mode at the origin, from a fresh host.
 */
 const openNovice = (host: ReturnType<typeof startHost>): void => {
-  host.send('down', { position: [0, 0] });
+  host.send('pointerDown', { position: [0, 0] });
   host.send('dwell');
 };
 
@@ -141,8 +141,8 @@ describe('navigationMachine', () => {
     const host = startHost();
     const emitted = recordEmitted(host);
 
-    host.send('down', { position: [0, 0] });
-    host.send('up', { position: [100, 0] });
+    host.send('pointerDown', { position: [0, 0] });
+    host.send('pointerUp', { position: [100, 0] });
 
     expect(host.current.name).toBe('idle');
     expect(emitted).toEqual(['start', 'select']);
@@ -151,8 +151,8 @@ describe('navigationMachine', () => {
   it('stays in startup for movement below the threshold', () => {
     const host = startHost();
 
-    host.send('down', { position: [0, 0] });
-    host.send('move', { position: [1, 0] });
+    host.send('pointerDown', { position: [0, 0] });
+    host.send('pointerMove', { position: [1, 0] });
 
     expect(host.current.name).toBe('startup');
   });
@@ -161,20 +161,20 @@ describe('navigationMachine', () => {
   it('ignores a second down mid-gesture, in startup, expert, and novice alike', () => {
     const host = startHost();
 
-    host.send('down', { position: [0, 0] });
+    host.send('pointerDown', { position: [0, 0] });
     const afterFirstDown = host.current;
-    host.send('down', { position: [5, 5] });
+    host.send('pointerDown', { position: [5, 5] });
     expect(host.current).toEqual(afterFirstDown);
 
-    host.send('move', { position: [100, 0] });
+    host.send('pointerMove', { position: [100, 0] });
     const afterExpert = host.current;
-    host.send('down', { position: [5, 5] });
+    host.send('pointerDown', { position: [5, 5] });
     expect(host.current).toEqual(afterExpert);
 
-    host.send('up', { position: [100, 0] });
+    host.send('pointerUp', { position: [100, 0] });
     openNovice(host);
     const afterNovice = host.current;
-    host.send('down', { position: [5, 5] });
+    host.send('pointerDown', { position: [5, 5] });
     expect(host.current).toEqual(afterNovice);
   });
 
@@ -182,13 +182,13 @@ describe('navigationMachine', () => {
     const host = startHost();
     const idle = host.current;
 
-    host.send('move', { position: [1, 1] });
+    host.send('pointerMove', { position: [1, 1] });
     expect(host.current).toEqual(idle);
 
-    host.send('up', { position: [1, 1] });
+    host.send('pointerUp', { position: [1, 1] });
     expect(host.current).toEqual(idle);
 
-    host.send('cancel', { position: [1, 1] });
+    host.send('pointerCancel', { position: [1, 1] });
     expect(host.current).toEqual(idle);
   });
 
@@ -201,8 +201,8 @@ describe('navigationMachine', () => {
     const selected = vi.fn<() => void>();
     host.on('select', selected);
 
-    host.send('down', { position: [0, 0] });
-    host.send('up', { position: [0, 0] });
+    host.send('pointerDown', { position: [0, 0] });
+    host.send('pointerUp', { position: [0, 0] });
 
     expect(host.current.name).toBe('idle');
     expect(mockRecognize).not.toHaveBeenCalled();
@@ -216,9 +216,9 @@ describe('navigationMachine', () => {
     const canceled = vi.fn<() => void>();
     host.on('cancel', canceled);
 
-    host.send('down', { position: [0, 0] });
-    host.send('move', { position: [100, 0] });
-    host.send('up', { position: [120, 0] });
+    host.send('pointerDown', { position: [0, 0] });
+    host.send('pointerMove', { position: [100, 0] });
+    host.send('pointerUp', { position: [120, 0] });
 
     expect(host.current.name).toBe('idle');
     expect(mockRecognize).toHaveBeenCalledTimes(1);
@@ -234,11 +234,11 @@ describe('navigationMachine', () => {
       cancelActive = data.active;
     });
 
-    host.send('down', { position: [0, 0] });
-    host.send('move', { position: [100, 0] });
+    host.send('pointerDown', { position: [0, 0] });
+    host.send('pointerMove', { position: [100, 0] });
     expect(host.current.name).toBe('expert');
 
-    host.send('cancel', { position: [100, 0] });
+    host.send('pointerCancel', { position: [100, 0] });
 
     expect(host.current.name).toBe('idle');
     expect(mockRecognize).not.toHaveBeenCalled();
@@ -251,8 +251,8 @@ describe('navigationMachine', () => {
     const canceled = vi.fn<() => void>();
     host.on('cancel', canceled);
 
-    host.send('down', { position: [0, 0] });
-    host.send('cancel', { position: [0, 0] });
+    host.send('pointerDown', { position: [0, 0] });
+    host.send('pointerCancel', { position: [0, 0] });
 
     expect(host.current.name).toBe('idle');
     expect(mockRecognize).not.toHaveBeenCalled();
@@ -273,9 +273,9 @@ describe('navigationMachine', () => {
       const host = startHost();
       const reasons = recordReasons(host);
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
-      host.send('up', { position: [120, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
+      host.send('pointerUp', { position: [120, 0] });
 
       expect(reasons).toEqual(['no-selection']);
     });
@@ -284,8 +284,8 @@ describe('navigationMachine', () => {
       const host = startHost();
       const reasons = recordReasons(host);
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       host.send('dwell');
 
       expect(reasons).toEqual(['no-selection']);
@@ -295,9 +295,9 @@ describe('navigationMachine', () => {
       const host = startHost();
       const reasons = recordReasons(host);
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
-      host.send('cancel', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
+      host.send('pointerCancel', { position: [100, 0] });
 
       expect(reasons).toEqual(['interrupted']);
     });
@@ -307,7 +307,7 @@ describe('navigationMachine', () => {
     const host = startHost();
     const emitted = recordEmitted(host);
 
-    host.send('down', { position: [0, 0] });
+    host.send('pointerDown', { position: [0, 0] });
 
     expect(emitted[0]).toBe('start');
   });
@@ -317,10 +317,10 @@ describe('navigationMachine', () => {
       using _timers = fakeTimers();
       const host = startHost();
 
-      host.send('down', { position: [0, 0] });
+      host.send('pointerDown', { position: [0, 0] });
       expect(vi.getTimerCount()).toBe(1);
 
-      host.send('move', { position: [1, 0] });
+      host.send('pointerMove', { position: [1, 0] });
       expect(host.current.name).toBe('startup');
       expect(vi.getTimerCount()).toBe(1);
     });
@@ -332,8 +332,8 @@ describe('navigationMachine', () => {
         opened(data);
       });
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [1, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [1, 0] });
       host.send('dwell');
 
       expect(host.current.name).toBe('novice');
@@ -362,10 +362,10 @@ describe('navigationMachine', () => {
       using _timers = fakeTimers();
       const host = startHost();
 
-      host.send('down', { position: [0, 0] });
+      host.send('pointerDown', { position: [0, 0] });
       expect(vi.getTimerCount()).toBe(1);
 
-      host.send('move', { position: [100, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       expect(host.current.name).toBe('expert');
       // The startup dwell is gone, replaced by expert's own mid-gesture
       // dwell: still exactly one timer, never zero or two.
@@ -381,8 +381,8 @@ describe('navigationMachine', () => {
         opened.push(data);
       });
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] }); // Crosses the threshold, onto "right"
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] }); // Crosses the threshold, onto "right"
       expect(host.current.name).toBe('expert');
 
       host.send('dwell');
@@ -410,8 +410,8 @@ describe('navigationMachine', () => {
     it('accumulates the expert stroke into the lower stroke when switching to novice', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       host.send('dwell');
 
       const data =
@@ -435,8 +435,8 @@ describe('navigationMachine', () => {
         cancelData = data;
       });
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       expect(host.current.name).toBe('expert');
 
       host.send('dwell');
@@ -453,12 +453,12 @@ describe('navigationMachine', () => {
       using _timers = fakeTimers();
       const host = startHost();
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] }); // Enters expert, arms the dwell
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] }); // Enters expert, arms the dwell
       expect(vi.getTimerCount()).toBe(1);
 
       vi.advanceTimersByTime(options.noviceDwellingTime - 10);
-      host.send('move', { position: [200, 0] }); // Significant: restarts it
+      host.send('pointerMove', { position: [200, 0] }); // Significant: restarts it
       vi.advanceTimersByTime(10);
 
       expect(host.current.name).toBe('expert'); // Would have fired here without the reset.
@@ -471,10 +471,10 @@ describe('navigationMachine', () => {
       using _timers = fakeTimers();
       const host = startHost();
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       vi.advanceTimersByTime(options.noviceDwellingTime - 10);
-      host.send('move', { position: [102, 0] }); // Insignificant (<5px): must not reset it
+      host.send('pointerMove', { position: [102, 0] }); // Insignificant (<5px): must not reset it
       vi.advanceTimersByTime(10);
 
       expect(host.current.name).toBe('idle');
@@ -500,9 +500,9 @@ describe('navigationMachine', () => {
       const host = startHost();
       const recognitions = recordRecognitions(host, 'select');
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
-      host.send('up', { position: [200, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
+      host.send('pointerUp', { position: [200, 0] });
 
       expect(recognitions).toEqual([
         {
@@ -534,9 +534,9 @@ describe('navigationMachine', () => {
       const host = startHost();
       const recognitions = recordRecognitions(host, 'cancel');
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
-      host.send('up', { position: [120, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
+      host.send('pointerUp', { position: [120, 0] });
 
       expect(recognitions).toEqual([
         {
@@ -553,9 +553,9 @@ describe('navigationMachine', () => {
     it('recognizes the released stroke as a leaf, exactly once', () => {
       const host = startHost();
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
-      host.send('up', { position: [200, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
+      host.send('pointerUp', { position: [200, 0] });
 
       expect(mockRecognize).toHaveBeenCalledExactlyOnceWith(
         [
@@ -572,9 +572,9 @@ describe('navigationMachine', () => {
       const host = startHost();
       const recognitions = recordRecognitions(host, 'select');
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
-      host.send('up', { position: [200, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
+      host.send('pointerUp', { position: [200, 0] });
 
       const [recognition] = recognitions as [
         {
@@ -598,9 +598,9 @@ describe('navigationMachine', () => {
       const move: Point = [100, 0];
       const up: Point = [200, 0];
 
-      host.send('down', { position: down });
-      host.send('move', { position: move });
-      host.send('up', { position: up });
+      host.send('pointerDown', { position: down });
+      host.send('pointerMove', { position: move });
+      host.send('pointerUp', { position: up });
 
       const [recognition] = recognitions as [
         {
@@ -636,14 +636,14 @@ describe('navigationMachine', () => {
 
       // A zero-length release, a pointer cancel, and a novice release
       // recognize nothing.
-      host.send('down', { position: [0, 0] });
-      host.send('up', { position: [0, 0] });
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
-      host.send('cancel', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerUp', { position: [0, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
+      host.send('pointerCancel', { position: [100, 0] });
       openNovice(host);
-      host.send('move', { position: [100, 0] });
-      host.send('up', { position: [100, 0] });
+      host.send('pointerMove', { position: [100, 0] });
+      host.send('pointerUp', { position: [100, 0] });
 
       expect(cancels).toEqual([undefined, undefined]);
       expect(selects).toEqual([undefined]);
@@ -655,8 +655,8 @@ describe('navigationMachine', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       const recognitions = recordRecognitions(host, 'open');
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       host.send('dwell');
 
       expect(recognitions).toEqual([
@@ -687,8 +687,8 @@ describe('navigationMachine', () => {
       const host = startHost();
       const recognitions = recordRecognitions(host, 'cancel');
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       host.send('dwell');
 
       expect(recognitions).toHaveLength(1);
@@ -705,16 +705,16 @@ describe('navigationMachine', () => {
         model: submenuModel,
         options,
       });
-      withMenu.send('down', { position: [0, 0] });
-      withMenu.send('move', { position: [100, 0] });
+      withMenu.send('pointerDown', { position: [0, 0] });
+      withMenu.send('pointerMove', { position: [100, 0] });
       withMenu.send('dwell');
       expect(mockRecognize).toHaveBeenCalledTimes(1);
       expect(mockRecognize.mock.calls[0]?.[2]).toBe('menu');
 
       mockRecognize.mockClear();
       const withoutMenu = startHost();
-      withoutMenu.send('down', { position: [0, 0] });
-      withoutMenu.send('move', { position: [100, 0] });
+      withoutMenu.send('pointerDown', { position: [0, 0] });
+      withoutMenu.send('pointerMove', { position: [100, 0] });
       withoutMenu.send('dwell');
       expect(mockRecognize).toHaveBeenCalledTimes(1);
     });
@@ -723,7 +723,7 @@ describe('navigationMachine', () => {
       const host = startHost();
       const recognitions = recordRecognitions(host, 'open');
 
-      host.send('down', { position: [0, 0] });
+      host.send('pointerDown', { position: [0, 0] });
       host.send('dwell');
 
       expect(recognitions).toEqual([undefined]);
@@ -731,8 +731,8 @@ describe('navigationMachine', () => {
 
     it('announces the layout of an expert dwell once, without an in-between one', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       const layouts = recordLayouts(host);
 
       host.send('dwell');
@@ -753,7 +753,7 @@ describe('navigationMachine', () => {
       host.on('change', changed);
 
       openNovice(host);
-      host.send('move', { position: [10, 0] });
+      host.send('pointerMove', { position: [10, 0] });
 
       expect(host.current.name).toBe('novice');
       expect(
@@ -777,7 +777,7 @@ describe('navigationMachine', () => {
       });
 
       openNovice(host);
-      host.send('move', { position: [100, 0] });
+      host.send('pointerMove', { position: [100, 0] });
 
       expect(host.current.name).toBe('novice');
       const active =
@@ -794,7 +794,7 @@ describe('navigationMachine', () => {
       expect(changeData.previousActive).toBeUndefined();
 
       // Continued pointing at the same item: another `move`, no further `change`.
-      host.send('move', { position: [110, 0] });
+      host.send('pointerMove', { position: [110, 0] });
       expect(moved).toEqual([active, active]);
       expect(changed).toHaveBeenCalledTimes(1);
     });
@@ -810,7 +810,7 @@ describe('navigationMachine', () => {
       });
 
       openNovice(host);
-      host.send('up', { position: [0, 0] });
+      host.send('pointerUp', { position: [0, 0] });
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
@@ -826,7 +826,7 @@ describe('navigationMachine', () => {
       host.on('cancel', canceled);
 
       openNovice(host);
-      host.send('cancel', { position: [0, 0] });
+      host.send('pointerCancel', { position: [0, 0] });
 
       expect(canceled).toHaveBeenCalledTimes(1);
     });
@@ -837,7 +837,7 @@ describe('navigationMachine', () => {
       openNovice(host);
       const inNovice = host.current;
 
-      host.send('down', { position: [1, 1] });
+      host.send('pointerDown', { position: [1, 1] });
       expect(host.current).toEqual(inNovice);
 
       host.send('dwell');
@@ -856,8 +856,8 @@ describe('navigationMachine', () => {
       });
 
       openNovice(host);
-      host.send('move', { position: [100, 0] }); // Activates "right"
-      host.send('up', { position: [100, 0] });
+      host.send('pointerMove', { position: [100, 0] }); // Activates "right"
+      host.send('pointerUp', { position: [100, 0] });
 
       expect(host.current.name).toBe('idle');
       expect(canceled).not.toHaveBeenCalled();
@@ -875,13 +875,13 @@ describe('navigationMachine', () => {
       });
 
       openNovice(host);
-      host.send('move', { position: [100, 0] }); // Activates "right", a submenu
+      host.send('pointerMove', { position: [100, 0] }); // Activates "right", a submenu
       expect(
         host.current.name === 'novice' &&
           (host.current.data.active as { isLeaf: boolean } | undefined)?.isLeaf,
       ).toBe(false);
 
-      host.send('up', { position: [100, 0] });
+      host.send('pointerUp', { position: [100, 0] });
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
@@ -901,9 +901,9 @@ describe('navigationMachine', () => {
       });
 
       openNovice(host);
-      host.send('move', { position: [100, 0] }); // Activates "right", a leaf
+      host.send('pointerMove', { position: [100, 0] }); // Activates "right", a leaf
 
-      host.send('cancel', { position: [100, 0] });
+      host.send('pointerCancel', { position: [100, 0] });
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
@@ -922,9 +922,9 @@ describe('navigationMachine', () => {
       });
 
       openNovice(host);
-      host.send('move', { position: [100, 0] }); // Activates "right", a submenu
+      host.send('pointerMove', { position: [100, 0] }); // Activates "right", a submenu
 
-      host.send('cancel', { position: [100, 0] });
+      host.send('pointerCancel', { position: [100, 0] });
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
@@ -943,7 +943,7 @@ describe('navigationMachine', () => {
       });
 
       openNovice(host);
-      host.send('move', { position: [100, 0] }); // Past the dead zone, activates "right"
+      host.send('pointerMove', { position: [100, 0] }); // Past the dead zone, activates "right"
       const submenu =
         host.current.name === 'novice' ? host.current.data.active : undefined;
       expect(submenu).not.toBeUndefined();
@@ -976,7 +976,7 @@ describe('navigationMachine', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
 
       openNovice(host);
-      host.send('move', { position: [100, 0] });
+      host.send('pointerMove', { position: [100, 0] });
       host.send('dwell');
 
       const data =
@@ -996,7 +996,7 @@ describe('navigationMachine', () => {
       host.on('open', opened);
 
       // Just past the dead zone (40): activation and dwelling share it.
-      host.send('move', { position: [41, 0] });
+      host.send('pointerMove', { position: [41, 0] });
       const submenu =
         host.current.name === 'novice' ? host.current.data.active : undefined;
 
@@ -1014,7 +1014,7 @@ describe('navigationMachine', () => {
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
-      host.send('move', { position: [200, 0] });
+      host.send('pointerMove', { position: [200, 0] });
       host.send('dwell');
 
       expect(opened).not.toHaveBeenCalled();
@@ -1027,7 +1027,7 @@ describe('navigationMachine', () => {
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
-      host.send('move', { position: [10, 0] }); // Within the dead zone: active stays undefined
+      host.send('pointerMove', { position: [10, 0] }); // Within the dead zone: active stays undefined
       host.send('dwell');
 
       expect(opened).not.toHaveBeenCalled();
@@ -1039,13 +1039,13 @@ describe('navigationMachine', () => {
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
-      host.send('down', { position: [0, 0] });
+      host.send('pointerDown', { position: [0, 0] });
       vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice
       opened.mockClear();
 
-      host.send('move', { position: [100, 0] }); // Significant: activates "right", (re)starts the submenu dwell
+      host.send('pointerMove', { position: [100, 0] }); // Significant: activates "right", (re)starts the submenu dwell
       vi.advanceTimersByTime(options.submenuOpeningDelay - 10);
-      host.send('move', { position: [102, 0] }); // Insignificant (<5px): must not reset it
+      host.send('pointerMove', { position: [102, 0] }); // Insignificant (<5px): must not reset it
       vi.advanceTimersByTime(10);
 
       expect(opened).toHaveBeenCalledTimes(1);
@@ -1057,13 +1057,13 @@ describe('navigationMachine', () => {
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
-      host.send('down', { position: [0, 0] });
+      host.send('pointerDown', { position: [0, 0] });
       vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice
       opened.mockClear();
 
-      host.send('move', { position: [100, 0] }); // Starts the submenu dwell
+      host.send('pointerMove', { position: [100, 0] }); // Starts the submenu dwell
       vi.advanceTimersByTime(options.submenuOpeningDelay - 10);
-      host.send('move', { position: [200, 0] }); // Significant: restarts it
+      host.send('pointerMove', { position: [200, 0] }); // Significant: restarts it
       vi.advanceTimersByTime(10);
 
       // Would have fired here without the reset.
@@ -1078,11 +1078,11 @@ describe('navigationMachine', () => {
       using _timers = fakeTimers();
       const host = navigationMachine.start({ model: submenuModel, options });
 
-      host.send('down', { position: [0, 0] });
+      host.send('pointerDown', { position: [0, 0] });
       vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice at [0, 0]
       expect(vi.getTimerCount()).toBe(1); // The root menu's own submenu-dwell timer
 
-      host.send('move', { position: [100, 0] }); // One significant move, straight onto "right"
+      host.send('pointerMove', { position: [100, 0] }); // One significant move, straight onto "right"
       expect(vi.getTimerCount()).toBe(1); // Restarted, not doubled or dropped
 
       vi.advanceTimersByTime(options.submenuOpeningDelay);
@@ -1103,13 +1103,13 @@ describe('navigationMachine', () => {
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
-      host.send('down', { position: [0, 0] });
+      host.send('pointerDown', { position: [0, 0] });
       vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice
       opened.mockClear();
 
       // Just past the boundary between "down" (a leaf) and "right" (a
       // submenu): activates "down".
-      host.send('move', { position: [69.47, 71.93] });
+      host.send('pointerMove', { position: [69.47, 71.93] });
       expect(
         host.current.name === 'novice' &&
           (host.current.data.active as { id: string } | undefined)?.id,
@@ -1122,7 +1122,7 @@ describe('navigationMachine', () => {
 
       // Less than `movementsThreshold` away, crossing the boundary onto
       // "right".
-      host.send('move', { position: [71.93, 69.47] });
+      host.send('pointerMove', { position: [71.93, 69.47] });
       expect(
         host.current.name === 'novice' &&
           (host.current.data.active as { id: string } | undefined)?.id,
@@ -1139,8 +1139,8 @@ describe('navigationMachine', () => {
       const layouts = recordLayouts(host);
 
       openNovice(host);
-      host.send('move', { position: [30, 20] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerMove', { position: [30, 20] });
+      host.send('pointerMove', { position: [100, 0] });
 
       expect(layouts.at(-1)?.upperStroke).toEqual([
         [0, 0],
@@ -1152,10 +1152,10 @@ describe('navigationMachine', () => {
       const host = startHost();
       const layouts = recordLayouts(host);
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [1, 0] }); // Below the threshold: still startup.
-      host.send('move', { position: [100, 0] }); // Crosses it: expert.
-      host.send('move', { position: [100, 40] });
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [1, 0] }); // Below the threshold: still startup.
+      host.send('pointerMove', { position: [100, 0] }); // Crosses it: expert.
+      host.send('pointerMove', { position: [100, 40] });
 
       expect(layouts.at(-1)?.upperStroke).toEqual([
         [0, 0],
@@ -1170,8 +1170,8 @@ describe('navigationMachine', () => {
       const layouts = recordLayouts(host);
 
       openNovice(host);
-      host.send('move', { position: [30, 20] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerMove', { position: [30, 20] });
+      host.send('pointerMove', { position: [100, 0] });
       host.send('dwell');
 
       expect(layouts.at(-1)?.lowerStroke).toEqual([
@@ -1192,12 +1192,12 @@ describe('navigationMachine', () => {
       const feedback = recordFeedback(host);
 
       openNovice(host);
-      host.send('move', { position: [30, 20] });
-      host.send('move', { position: [100, 0] });
+      host.send('pointerMove', { position: [30, 20] });
+      host.send('pointerMove', { position: [100, 0] });
       host.send('dwell'); // Opens the "right" submenu, centered on [100, 0].
-      host.send('move', { position: [70, -60] });
-      host.send('move', { position: [100, -100] });
-      host.send('up', { position: [100, -100] });
+      host.send('pointerMove', { position: [70, -60] });
+      host.send('pointerMove', { position: [100, -100] });
+      host.send('pointerUp', { position: [100, -100] });
 
       // Each menu center repeats where one level's segment ends and the
       // next begins, and the release position repeats the last move.
@@ -1217,7 +1217,7 @@ describe('navigationMachine', () => {
       const host = startHost();
       const layouts = recordLayouts(host);
 
-      host.send('down', { position: [0, 0] });
+      host.send('pointerDown', { position: [0, 0] });
 
       const indicator = layouts.at(-1)?.indicator;
       expect(typeof indicator?.startedAt).toBe('number');
@@ -1229,8 +1229,8 @@ describe('navigationMachine', () => {
       const host = startHost();
       const layouts = recordLayouts(host);
 
-      host.send('down', { position: [0, 0] });
-      host.send('move', { position: [100, 0] }); // Crosses the threshold: expert.
+      host.send('pointerDown', { position: [0, 0] });
+      host.send('pointerMove', { position: [100, 0] }); // Crosses the threshold: expert.
 
       const indicator = layouts.at(-1)?.indicator;
       expect(typeof indicator?.startedAt).toBe('number');
@@ -1252,7 +1252,7 @@ describe('navigationMachine', () => {
       const layouts = recordLayouts(host);
 
       openNovice(host);
-      host.send('move', { position: [200, 0] }); // Activates the leaf "right".
+      host.send('pointerMove', { position: [200, 0] }); // Activates the leaf "right".
 
       expect(layouts.at(-1)?.indicator).toBeUndefined();
     });
@@ -1262,7 +1262,7 @@ describe('navigationMachine', () => {
       const layouts = recordLayouts(host);
 
       openNovice(host);
-      host.send('move', { position: [100, 0] }); // Activates the submenu "right".
+      host.send('pointerMove', { position: [100, 0] }); // Activates the submenu "right".
 
       const indicator = layouts.at(-1)?.indicator;
       expect(typeof indicator?.startedAt).toBe('number');
@@ -1276,11 +1276,11 @@ describe('navigationMachine', () => {
       const layouts = recordLayouts(host);
 
       openNovice(host);
-      host.send('move', { position: [100, 0] }); // Activates the submenu "right".
+      host.send('pointerMove', { position: [100, 0] }); // Activates the submenu "right".
       const firstStartedAt = layouts.at(-1)?.indicator?.startedAt;
 
       vi.advanceTimersByTime(10);
-      host.send('move', { position: [102, 0] }); // Insignificant (<5px).
+      host.send('pointerMove', { position: [102, 0] }); // Insignificant (<5px).
 
       expect(layouts.at(-1)?.indicator?.startedAt).toBe(firstStartedAt);
       expect(layouts.at(-1)?.indicator?.position).toEqual([102, 0]);

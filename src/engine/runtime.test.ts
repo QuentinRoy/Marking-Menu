@@ -397,7 +397,7 @@ describe('createRuntime', () => {
       runtime.open([0, 0]);
       runtime.send({ type: 'keyboard', intent: 'last' });
       runtime.send({ type: 'focus', key: menuModel.items[0].key });
-      runtime.send({ type: 'keyboard', intent: 'enter' });
+      runtime.send({ type: 'keyboard', intent: 'activate' });
       runtime.send({ type: 'keyboard', intent: 'activate' });
 
       expect(changes).toEqual(['second', 'first', 'leaf']);
