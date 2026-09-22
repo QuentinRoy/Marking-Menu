@@ -235,11 +235,11 @@ describe('a standalone menu', () => {
       centers.push(event.menuCenter);
     });
 
-    fixture.press('ArrowRight');
+    fixture.press('Enter');
     expect(fixture.items()).toHaveLength(2);
     expect(fixture.focusedLabel()).toBe('Right Up');
 
-    fixture.press('ArrowLeft');
+    fixture.press('Escape');
     expect(fixture.items()).toHaveLength(4);
     expect(fixture.focusedLabel()).toBe('Right');
     expect(centers).toEqual([
@@ -279,7 +279,7 @@ describe('a standalone menu', () => {
   it('backs out of a submenu on Escape instead of canceling', () => {
     using fixture = setup();
     fixture.controller.open();
-    fixture.press('ArrowRight');
+    fixture.press('Enter');
     const events = record(fixture.controller);
 
     fixture.press('Escape');

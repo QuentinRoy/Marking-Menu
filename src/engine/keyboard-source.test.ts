@@ -66,14 +66,14 @@ const press = (
 
 describe('createKeyboardSource', () => {
   it.each<[string, KeyboardIntent]>([
-    ['ArrowDown', 'next'],
-    ['ArrowUp', 'previous'],
+    ['ArrowUp', 'up'],
+    ['ArrowDown', 'down'],
+    ['ArrowLeft', 'left'],
+    ['ArrowRight', 'right'],
     ['Home', 'first'],
     ['End', 'last'],
     ['Enter', 'activate'],
-    ['ArrowRight', 'enter'],
-    ['ArrowLeft', 'leave'],
-    ['Escape', 'escape'],
+    ['Escape', 'back'],
   ])(
     'turns %s into the %s intent, and keeps the page from acting on it',
     (key, intent) => {
@@ -89,7 +89,7 @@ describe('createKeyboardSource', () => {
     },
   );
 
-  it('turns Tab into the close intent, and lets it move focus on', () => {
+  it('turns Tab into the dismiss intent, and lets it move focus on', () => {
     using fixture = createFixture();
 
     const event = press(fixture.item, 'Tab');
@@ -98,7 +98,7 @@ describe('createKeyboardSource', () => {
     expect(fixture.send).toHaveBeenCalledTimes(2);
     expect(fixture.send).toHaveBeenCalledWith({
       type: 'keyboard',
-      intent: 'close',
+      intent: 'dismiss',
     });
     expect(event.defaultPrevented).toBe(false);
     expect(shifted.defaultPrevented).toBe(false);

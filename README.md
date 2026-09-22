@@ -312,18 +312,21 @@ Screen reader touch passthrough (VoiceOver's hold, TalkBack's double-tap-and-hol
 
 A menu shown with [`open()`](#open-and-close) works with the keyboard. When it opens, focus moves to the first item. The focused item is the active one, so a screen reader speaks each label as you move. When the menu closes, focus returns to the element that had it before. Pass `focus: false` to show the menu without moving focus; see [Display only](#display-only).
 
-| Key           | Action                                                            |
-| ------------- | ----------------------------------------------------------------- |
-| `ArrowDown`   | Focus the next item, clockwise, wrapping around.                  |
-| `ArrowUp`     | Focus the previous item, counterclockwise, wrapping around.       |
-| `Home`, `End` | Focus the first or last item.                                     |
-| `ArrowRight`  | Enter the focused item's submenu. Does nothing on a leaf.         |
-| `Enter`       | Select a leaf, or enter a submenu.                                |
-| `ArrowLeft`   | Go back to the parent menu. Does nothing at the root.             |
-| `Escape`      | Go back to the parent menu, or close the menu from the root.      |
-| `Tab`         | Close the menu from any level and move focus to the next element. |
+| Key                                               | Action                                                            |
+| ------------------------------------------------- | ----------------------------------------------------------------- |
+| `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight` | Move focus that way around the ring.                              |
+| `Home`, `End`                                     | Focus the first or last item.                                     |
+| `Enter`                                           | Select a leaf, or open a submenu.                                 |
+| `Escape`                                          | Go back to the parent menu, or close the menu from the root.      |
+| `Tab`                                             | Close the menu from any level and move focus to the next element. |
 
 The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working.
+
+An arrow moves focus relative to the item that has it, to the item the smallest turn away that lies closer to the direction you pressed. Hold a direction and focus walks that way until nothing lies further, then stops rather than wrapping around. With no item focused yet, the first arrow goes straight to the item nearest that direction.
+
+Stepping rather than jumping to the item nearest the direction is what keeps every item reachable. A menu of more than four items has directions no item sits on, and the four items nearest the axes would be the only ones any arrow could ever elect. The cost is that a four item menu takes two presses to cross the ring: from the right item, `ArrowLeft` steps to the bottom item first.
+
+This departs from the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/), which defines arrow keys for menus laid out as vertical lists. A marking menu is a ring, so `ArrowDown` walking an item order nothing draws top to bottom would be a list metaphor pasted over a circle. Everything else, including the roles, `Enter`, `Escape`, `Tab`, `Home`, and `End`, follows the pattern.
 
 Nothing opens the menu from the keyboard until you call `open()`, for example from a button or a hotkey. A hotkey listener also receives keys pressed inside the open menu. Ignore those, because `open()` throws while a menu is open:
 
