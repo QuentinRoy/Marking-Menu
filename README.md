@@ -357,7 +357,7 @@ menu.on('select', (event) => {
 
 ## Upgrading from 0.10.1
 
-Default item positions change in every menu: an item without a stated `angle` now starts from the top (`270`) instead of the right (`0`), so every level rotates 90 degrees counterclockwise. In 2-, 3-, 5-, 6-, and 7-item menus, this compounds with an earlier layout change. The rotation causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
+Default item positions change in every menu level where no item states an `angle`: it now starts from the top (`270`) instead of the right (`0`), rotating 90 degrees counterclockwise. Levels with at least one stated angle are unaffected. In 2-, 3-, 5-, 6-, and 7-item levels with no stated angles, this compounds with an earlier layout change. The rotation causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
 
 The release also changes imports, menu configuration, and event handling. Use the named `createMarkingMenu` export with a configuration object and register listeners with `on`. Replace subscription cleanup with `dispose()`.
 
