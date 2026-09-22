@@ -36,7 +36,7 @@ type Host = ReturnType<typeof navigationMachine.start>;
 Dwell into novice mode at the origin, from a fresh host.
 */
 const openNovice = (host: Host): void => {
-  host.send('pointerDown', { position: [0, 0] });
+  host.send('down', { position: [0, 0] });
   host.send('dwell');
 };
 
@@ -122,69 +122,10 @@ describe('navigationMachine standalone phase', () => {
     return output[1];
   };
 
-  const itemsById = {
-    right: rightItem,
-    down: downItem,
-    left: leftItem,
-    up: upItem,
-  };
-
-  const evenItems = (itemCount: number): Array<{ id: string; label: string }> =>
-    Array.from({ length: itemCount }, (_, index) => ({
-      id: `item-${index}`,
-      label: `Item ${index}`,
-    }));
-
-  const openMenu = (
-    model: Parameters<typeof navigationMachine.start>[0]['model'],
-  ): Host => {
-    const host = navigationMachine.start({ model, options });
-    host.send('open', { position: [0, 0] });
-    return host;
-  };
-
-  const openEvenMenu = (itemCount: number): Host =>
-    openMenu(createModel({ items: evenItems(itemCount) }));
-
-  const activeOf = (host: Host) =>
-    host.current.name === 'standalone' ? host.current.data.active : undefined;
-
-  const activeIdOf = (host: Host): string | undefined => activeOf(host)?.id;
-
-  /**
-   Every item some sequence of arrow presses can reach from a freshly opened
-   menu, in the order the menu lists them. Each sequence is replayed from a
-   new machine, since the arrows are the only way in.
-   */
-  const reachableIds = (itemCount: number): string[] => {
-    const model = createModel({ items: evenItems(itemCount) });
-    const reached = new Set<string>();
-    const pending: Array<Array<'up' | 'down' | 'left' | 'right'>> = [[]];
-    while (pending.length > 0) {
-      const presses = pending.shift() ?? [];
-      const host = openMenu(model);
-      for (const press of presses) {
-        host.send(press);
-      }
-
-      const id = activeIdOf(host);
-      if (id !== undefined) {
-        if (reached.has(id)) {
-          continue;
-        }
-
-        reached.add(id);
-      }
-
-      for (const press of ['up', 'down', 'left', 'right'] as const) {
-        pending.push([...presses, press]);
-      }
-    }
-
-    return model.items.map((item) => item.id).filter((id) => reached.has(id));
-  };
-
-  const activeKeyOf = (host: Host): string | undefined => activeOf(host)?.key;
+  const activeKeyOf = (host: ReturnType<typeof startStandalone>) =>
+    host.current.name === 'standalone'
+      ? host.current.data.active?.key
+      : undefined;
 
   describe('opening', () => {
     it('opens the root at a fixed center, with nothing active and no pointer position', () => {
@@ -244,18 +185,18 @@ describe('navigationMachine standalone phase', () => {
       openStandalone(host, [1, 1]);
       expect(host.current).toEqual(opened);
 
-      host.send('dismiss');
-      host.send('pointerDown', { position: [0, 0] });
+      host.send('close');
+      host.send('down', { position: [0, 0] });
       const startup = host.current;
       openStandalone(host, [1, 1]);
       expect(host.current).toEqual(startup);
 
-      host.send('pointerMove', { position: [100, 0] });
+      host.send('move', { position: [100, 0] });
       const expert = host.current;
       openStandalone(host, [1, 1]);
       expect(host.current).toEqual(expert);
 
-      host.send('pointerCancel', { position: [100, 0] });
+      host.send('cancel', { position: [100, 0] });
       openNovice(host);
       const novice = host.current;
       openStandalone(host, [1, 1]);
@@ -266,7 +207,7 @@ describe('navigationMachine standalone phase', () => {
       const host = startStandalone();
 
       openStandalone(host);
-      host.send('dismiss');
+      host.send('close');
       openStandalone(host, [5, 5]);
 
       expect(host.current.name).toBe('standalone');
@@ -281,10 +222,10 @@ describe('navigationMachine standalone phase', () => {
       const layouts = recordLayouts(host);
       const opened = host.current;
 
-      host.send('pointerDown', { position: [0, 0] });
-      host.send('pointerMove', { position: [100, 0] });
-      host.send('pointerUp', { position: [100, 0] });
-      host.send('pointerCancel', { position: [100, 0] });
+      host.send('down', { position: [0, 0] });
+      host.send('move', { position: [100, 0] });
+      host.send('up', { position: [100, 0] });
+      host.send('cancel', { position: [100, 0] });
       host.send('dwell');
 
       expect(host.current).toEqual(opened);
@@ -297,15 +238,15 @@ describe('navigationMachine standalone phase', () => {
       const outputs = recordOutputs(host);
       const send = () => {
         for (const intent of [
-          'up',
-          'down',
-          'left',
-          'right',
+          'next',
+          'previous',
           'first',
           'last',
           'activate',
-          'back',
-          'dismiss',
+          'enter',
+          'leave',
+          'escape',
+          'close',
         ] as const) {
           host.send(intent);
         }
@@ -329,7 +270,7 @@ describe('navigationMachine standalone phase', () => {
       const outputs = recordOutputs(host);
 
       openStandalone(host);
-      host.send('dismiss');
+      host.send('close');
       openStandalone(host);
       host.send('first');
       host.send('activate');
@@ -339,152 +280,36 @@ describe('navigationMachine standalone phase', () => {
   });
 
   describe('moving the active item with the keyboard', () => {
-    it.each([
-      ['right', 'up', 'up'],
-      ['right', 'down', 'down'],
-      ['right', 'left', 'down'],
-      ['down', 'right', 'right'],
-      ['down', 'left', 'left'],
-      ['down', 'up', 'left'],
-      ['left', 'up', 'up'],
-      ['left', 'down', 'down'],
-      ['left', 'right', 'up'],
-      ['up', 'right', 'right'],
-      ['up', 'left', 'left'],
-      ['up', 'down', 'right'],
-    ] as const)(
-      'goes from %s to %s on the %s item',
-      (from, direction, expected) => {
-        const host = startStandalone();
-        openStandalone(host);
-        host.send('focus', { key: itemsById[from].key });
-
-        host.send(direction);
-
-        expect(activeKeyOf(host)).toBe(itemsById[expected].key);
-      },
-    );
-
-    it('takes the first press to the item nearest that direction, with nothing active yet', () => {
+    it('walks the items clockwise, wrapping around, on next', () => {
       const host = startStandalone();
       openStandalone(host);
-
-      host.send('left');
-
-      expect(activeKeyOf(host)).toBe(leftItem.key);
-    });
-
-    it('declines a press with no item further that way, announcing nothing', () => {
-      const host = startStandalone();
-      openStandalone(host);
-      host.send('focus', { key: upItem.key });
-      const outputs = recordOutputs(host);
-      const layouts = recordLayouts(host);
-
-      host.send('up');
-
-      expect(activeKeyOf(host)).toBe(upItem.key);
-      expect(outputs).toEqual([]);
-      expect(layouts).toEqual([]);
-    });
-
-    it('moves up a five item menu, where no item sits straight up', () => {
-      const host = openEvenMenu(5);
-      host.send('right');
-
-      host.send('up');
-      const afterOne = activeIdOf(host);
-      host.send('up');
-
-      expect(afterOne).toBe('item-4');
-      expect(activeIdOf(host)).toBe('item-4');
-    });
-
-    it('climbs an eight item menu one item at a time, and stops at the top', () => {
-      const host = openEvenMenu(8);
-      host.send('right');
 
       const visited: Array<string | undefined> = [];
-      for (let index = 0; index < 3; index += 1) {
-        host.send('up');
-        visited.push(activeIdOf(host));
+      for (let i = 0; i < 5; i += 1) {
+        host.send('next');
+        visited.push(activeKeyOf(host));
       }
 
-      expect(visited).toEqual(['item-7', 'item-6', 'item-6']);
-    });
-
-    it.each([6, 8])(
-      'reaches every item of a %i item menu with the arrows alone',
-      (itemCount) => {
-        expect(reachableIds(itemCount)).toEqual(
-          evenItems(itemCount).map((item) => item.id),
-        );
-      },
-    );
-
-    it('moves both ways in a two item menu', () => {
-      const host = openEvenMenu(2);
-
-      host.send('up');
-      const afterUp = activeIdOf(host);
-      host.send('left');
-      const afterLeft = activeIdOf(host);
-      host.send('right');
-
-      expect([afterUp, afterLeft, activeIdOf(host)]).toEqual([
-        'item-0',
-        'item-1',
-        'item-0',
+      expect(visited).toEqual([
+        rightItem.key,
+        downItem.key,
+        leftItem.key,
+        upItem.key,
+        rightItem.key,
       ]);
     });
 
-    it('follows the angles the items were given, not the order they are listed in', () => {
-      const host = openMenu(
-        createModel({
-          items: [
-            { id: 'left-ish', label: 'Left-ish', angle: 200 },
-            { id: 'up-ish', label: 'Up-ish', angle: 280 },
-            { id: 'down-right', label: 'Down-right', angle: 60 },
-          ],
-        }),
-      );
-
-      host.send('up');
-      const afterUp = activeIdOf(host);
-      host.send('right');
-
-      expect([afterUp, activeIdOf(host)]).toEqual(['up-ish', 'down-right']);
-    });
-
-    it.each([
-      ['right', 'right'],
-      ['down', 'down'],
-      ['left', 'left'],
-      ['up', 'up'],
-    ] as const)(
-      'declines %s on the item already furthest that way',
-      (from, direction) => {
-        const host = startStandalone();
-        openStandalone(host);
-        host.send('focus', { key: itemsById[from].key });
-        const outputs = recordOutputs(host);
-
-        host.send(direction);
-
-        expect(activeKeyOf(host)).toBe(itemsById[from].key);
-        expect(outputs).toEqual([]);
-      },
-    );
-
-    it('crosses a four item ring in two presses, through the item in between', () => {
+    it('walks the items counterclockwise, wrapping around, on previous', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: rightItem.key });
 
-      host.send('left');
-      host.send('left');
+      const visited: Array<string | undefined> = [];
+      for (let i = 0; i < 3; i += 1) {
+        host.send('previous');
+        visited.push(activeKeyOf(host));
+      }
 
-      expect(activeKeyOf(host)).toBe(leftItem.key);
+      expect(visited).toEqual([upItem.key, leftItem.key, downItem.key]);
     });
 
     it('goes to the first and last item on first and last', () => {
@@ -497,13 +322,40 @@ describe('navigationMachine standalone phase', () => {
       expect(activeKeyOf(host)).toBe(rightItem.key);
     });
 
+    it('walks the items in the order the menu lists them, which is clockwise from the first', () => {
+      const startedAtBottom = createModel({
+        items: [
+          { id: 'bottom', label: 'Bottom', angle: 90 },
+          { id: 'left', label: 'Left', angle: 180 },
+          { id: 'right', label: 'Right', angle: 0 },
+        ],
+      });
+      const host = navigationMachine.start({
+        model: startedAtBottom,
+        options,
+      });
+      host.send('open', { position: [0, 0] });
+
+      const visited: Array<string | undefined> = [];
+      for (let i = 0; i < 3; i += 1) {
+        host.send('next');
+        visited.push(
+          host.current.name === 'standalone'
+            ? host.current.data.active?.id
+            : undefined,
+        );
+      }
+
+      expect(visited).toEqual(['bottom', 'left', 'right']);
+    });
+
     it('announces a change, with no pointer position, each time the active item moves', () => {
       const host = startStandalone();
       openStandalone(host);
       const outputs = recordOutputs(host);
 
-      host.send('right');
-      host.send('down');
+      host.send('next');
+      host.send('next');
 
       const changes = outputs.filter(([name]) => name === 'change');
       expect(changes).toHaveLength(2);
@@ -523,8 +375,8 @@ describe('navigationMachine standalone phase', () => {
       openStandalone(host);
       const layouts = recordLayouts(host);
 
-      host.send('right');
-      host.send('down');
+      host.send('next');
+      host.send('next');
 
       expect(layouts.map((layout) => layout.menu?.activeKey)).toEqual([
         rightItem.key,
@@ -538,14 +390,13 @@ describe('navigationMachine standalone phase', () => {
 
     it('keeps a single item active, announcing nothing when there is nothing to move to', () => {
       const single = createModel({ items: [{ id: 'only', label: 'Only' }] });
-      const host = openMenu(single);
-      host.send('right');
+      const host = navigationMachine.start({ model: single, options });
+      host.send('open', { position: [0, 0] });
+      host.send('next');
       const outputs = recordOutputs(host);
 
-      host.send('up');
-      host.send('down');
-      host.send('left');
-      host.send('right');
+      host.send('next');
+      host.send('previous');
       host.send('first');
       host.send('last');
 
@@ -600,7 +451,7 @@ describe('navigationMachine standalone phase', () => {
       const outputs = recordOutputs(host);
       const layouts = recordLayouts(host);
 
-      host.send('activate');
+      host.send('enter');
 
       expect(namesOf(outputs)).toEqual(['open', 'change']);
       const opened = dataAt(outputs, 0);
@@ -620,15 +471,42 @@ describe('navigationMachine standalone phase', () => {
       });
     });
 
+    it('treats activate on a submenu like enter', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      host.send('focus', { key: rightItem.key });
+      const outputs = recordOutputs(host);
+
+      host.send('activate');
+
+      expect(host.current.name).toBe('standalone');
+      expect(namesOf(outputs)).toEqual(['open', 'change']);
+    });
+
+    it('declines enter when no item, or a leaf, is active', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      const outputs = recordOutputs(host);
+
+      host.send('enter');
+      host.send('focus', { key: downItem.key });
+      outputs.length = 0;
+      host.send('enter');
+
+      expect(activeKeyOf(host)).toBe(downItem.key);
+      expect(outputs).toEqual([]);
+    });
+
     it('leaves back to the parent, with the submenu item active again', () => {
       const host = startStandalone();
       openStandalone(host, [50, 60]);
       host.send('focus', { key: rightItem.key });
-      host.send('activate');
+      host.send('enter');
+      host.send('next');
       const outputs = recordOutputs(host);
       const layouts = recordLayouts(host);
 
-      host.send('back');
+      host.send('leave');
 
       expect(namesOf(outputs)).toEqual(['open', 'change']);
       const opened = dataAt(outputs, 0);
@@ -641,6 +519,18 @@ describe('navigationMachine standalone phase', () => {
       expect(layouts[0]?.menu?.activeKey).toBe(rightItem.key);
     });
 
+    it('declines leave at the root', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      host.send('next');
+      const outputs = recordOutputs(host);
+
+      host.send('leave');
+
+      expect(host.current.name).toBe('standalone');
+      expect(outputs).toEqual([]);
+    });
+
     it('goes down and up several levels, one at a time', () => {
       const deep = createModel({
         items: [
@@ -651,17 +541,18 @@ describe('navigationMachine standalone phase', () => {
           },
         ],
       });
-      const host = openMenu(deep);
-      host.send('right');
-      host.send('activate');
-      host.send('activate');
+      const host = navigationMachine.start({ model: deep, options });
+      host.send('open', { position: [0, 0] });
+      host.send('next');
+      host.send('enter');
+      host.send('enter');
       const menus: unknown[] = [];
       host.on('open', ({ data }) => {
         menus.push(data.menu);
       });
 
-      host.send('back');
-      host.send('back');
+      host.send('leave');
+      host.send('leave');
 
       expect(menus).toEqual([deep.items[0], deep]);
     });
@@ -690,7 +581,7 @@ describe('navigationMachine standalone phase', () => {
       const host = startStandalone();
       openStandalone(host);
       host.send('focus', { key: rightItem.key });
-      host.send('activate');
+      host.send('enter');
       const outputs = recordOutputs(host);
 
       host.send('activate');
@@ -727,10 +618,10 @@ describe('navigationMachine standalone phase', () => {
       const host = startStandalone();
       openStandalone(host);
       host.send('focus', { key: rightItem.key });
-      host.send('activate');
+      host.send('enter');
       const outputs = recordOutputs(host);
 
-      host.send('dismiss');
+      host.send('close');
 
       expect(host.current.name).toBe('idle');
       expect(namesOf(outputs)).toEqual(['cancel']);
@@ -748,7 +639,7 @@ describe('navigationMachine standalone phase', () => {
       openStandalone(host);
       const outputs = recordOutputs(host);
 
-      host.send('back');
+      host.send('escape');
 
       expect(host.current.name).toBe('idle');
       const event = dataAt(outputs, 0);
@@ -762,10 +653,10 @@ describe('navigationMachine standalone phase', () => {
       const host = startStandalone();
       openStandalone(host);
       host.send('focus', { key: rightItem.key });
-      host.send('activate');
+      host.send('enter');
       const outputs = recordOutputs(host);
 
-      host.send('back');
+      host.send('escape');
 
       expect(host.current.name).toBe('standalone');
       expect(namesOf(outputs)).toEqual(['open', 'change']);
@@ -777,7 +668,7 @@ describe('navigationMachine standalone phase', () => {
     const host = startStandalone();
     openStandalone(host);
     host.send('focus', { key: rightItem.key });
-    host.send('activate');
+    host.send('enter');
 
     host.send('dispose');
 

@@ -145,22 +145,22 @@ export function createRuntime<Model extends EngineModelRoot>({
       }
 
       case 'pointer.down': {
-        host.send('pointerDown', { position: input.position });
+        host.send('down', { position: input.position });
         break;
       }
 
       case 'pointer.move': {
-        host.send('pointerMove', { position: input.position });
+        host.send('move', { position: input.position });
         break;
       }
 
       case 'pointer.up': {
-        host.send('pointerUp', { position: input.position });
+        host.send('up', { position: input.position });
         break;
       }
 
       case 'pointer.cancel': {
-        host.send('pointerCancel', { position: input.position });
+        host.send('cancel', { position: input.position });
         break;
       }
     }
@@ -195,7 +195,7 @@ export function createRuntime<Model extends EngineModelRoot>({
       );
     }
 
-    host.send('dismiss');
+    host.send('close');
   };
 
   const on = (type: string, listener: (event: never) => void): void => {

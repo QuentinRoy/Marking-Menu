@@ -65,7 +65,7 @@ menu.on('select', (event) => {
 });
 ```
 
-The menu listens immediately. Here, Copy is right, More is down, Paste is left, and Undo is up. Pause over More to open its submenu.
+The menu listens immediately. Here, Copy is up, More is right, Paste is down, and Undo is left. Pause over More to open its submenu.
 
 Call `menu.dispose()` when the container is removed or you no longer need the menu. It stops listening and removes the elements the menu created.
 
@@ -149,7 +149,7 @@ Items without an `angle` are spaced as follows. Results below follow array order
 
 | Stated angles | Placement                                                                                 | Example                                                               |
 | ------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| None          | Equal spacing around the circle, starting at `0`.                                         | Four items: `0, 90, 180, 270`.                                        |
+| None          | Equal spacing around the circle, starting at the top (`270`).                             | Four items: `270, 0, 90, 180`.                                        |
 | One           | Equal spacing, rotated to keep that item at its angle.                                    | Four items, third at `90`: `270, 0, 90, 180`.                         |
 | Several       | Equal spacing within each gap between stated angles, including the gap back to the first. | Five items, first at `0` and fourth at `180`: `0, 60, 120, 180, 270`. |
 
@@ -312,21 +312,18 @@ Screen reader touch passthrough (VoiceOver's hold, TalkBack's double-tap-and-hol
 
 A menu shown with [`open()`](#open-and-close) works with the keyboard. When it opens, focus moves to the first item. The focused item is the active one, so a screen reader speaks each label as you move. When the menu closes, focus returns to the element that had it before, unless focus moved elsewhere to close it. Pass `focus: false` to show the menu without moving focus; see [Display only](#display-only).
 
-| Key                                               | Action                                                            |
-| ------------------------------------------------- | ----------------------------------------------------------------- |
-| `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight` | Move focus that way around the ring.                              |
-| `Home`, `End`                                     | Focus the first or last item.                                     |
-| `Enter`                                           | Select a leaf, or open a submenu.                                 |
-| `Escape`                                          | Go back to the parent menu, or close the menu from the root.      |
-| `Tab`                                             | Close the menu from any level and move focus to the next element. |
+| Key           | Action                                                            |
+| ------------- | ----------------------------------------------------------------- |
+| `ArrowDown`   | Focus the next item, clockwise, wrapping around.                  |
+| `ArrowUp`     | Focus the previous item, counterclockwise, wrapping around.       |
+| `Home`, `End` | Focus the first or last item.                                     |
+| `ArrowRight`  | Enter the focused item's submenu. Does nothing on a leaf.         |
+| `Enter`       | Select a leaf, or enter a submenu.                                |
+| `ArrowLeft`   | Go back to the parent menu. Does nothing at the root.             |
+| `Escape`      | Go back to the parent menu, or close the menu from the root.      |
+| `Tab`         | Close the menu from any level and move focus to the next element. |
 
 The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working.
-
-An arrow moves focus relative to the item that already has it. Of the items that lie closer to the direction you pressed, focus goes to the one the smallest turn away. Hold a direction and focus keeps walking that way until nothing lies further, then stops instead of wrapping around. With no item focused yet, the first arrow goes straight to the item nearest that direction.
-
-Stepping around the ring, rather than jumping straight to the item nearest the direction, is what keeps every item reachable. A menu of more than four items has directions no item sits on, and jumping would only ever land on the four items nearest the axes. The cost is that a four item menu takes two presses to cross the ring: from the right item, `ArrowLeft` steps to the bottom item first.
-
-This departs from the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/), which defines arrow keys for menus laid out as vertical lists. A marking menu is a ring, so `ArrowDown` walking an item order nothing draws top to bottom would be a list metaphor pasted over a circle. Everything else, including the roles, `Enter`, `Escape`, `Tab`, `Home`, and `End`, follows the pattern.
 
 Nothing opens the menu from the keyboard until you call `open()`, for example from a button or a hotkey. A hotkey listener also receives keys pressed inside the open menu. Ignore those, because `open()` throws while a menu is open:
 
@@ -360,7 +357,7 @@ menu.on('select', (event) => {
 
 ## Upgrading from 0.10.1
 
-Default item positions change in 2-, 3-, 5-, 6-, and 7-item menus. The layout change causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
+Default item positions change in every menu level where no item states an `angle`: it now starts from the top (`270`) instead of the right (`0`), rotating 90 degrees counterclockwise. Levels with at least one stated angle are unaffected. In 2-, 3-, 5-, 6-, and 7-item levels with no stated angles, this compounds with an earlier layout change. The rotation causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
 
 The release also changes imports, menu configuration, and event handling. Use the named `createMarkingMenu` export with a configuration object and register listeners with `on`. Replace subscription cleanup with `dispose()`.
 

@@ -6,15 +6,15 @@ export type KeyboardSource = {
 };
 
 const intents = new Map<string, KeyboardIntent>([
-  ['ArrowUp', 'up'],
-  ['ArrowDown', 'down'],
-  ['ArrowLeft', 'left'],
-  ['ArrowRight', 'right'],
+  ['ArrowDown', 'next'],
+  ['ArrowUp', 'previous'],
   ['Home', 'first'],
   ['End', 'last'],
   ['Enter', 'activate'],
-  ['Escape', 'back'],
-  ['Tab', 'dismiss'],
+  ['ArrowRight', 'enter'],
+  ['ArrowLeft', 'leave'],
+  ['Escape', 'escape'],
+  ['Tab', 'close'],
 ]);
 
 /**
@@ -70,7 +70,7 @@ export function createKeyboardSource({
     }
 
     // Tab moves focus to the next element after the menu closes.
-    if (intent !== 'dismiss') {
+    if (intent !== 'close') {
       event.preventDefault();
     }
 
@@ -98,7 +98,7 @@ export function createKeyboardSource({
 
   const closeForFocusLoss = (): void => {
     onFocusLoss();
-    runtime.send({ type: 'keyboard', intent: 'dismiss' });
+    runtime.send({ type: 'keyboard', intent: 'close' });
   };
 
   const onFocusOut = (event: FocusEvent): void => {

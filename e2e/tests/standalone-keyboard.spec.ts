@@ -48,7 +48,7 @@ async function openStandaloneMenu(page: Page): Promise<JSHandle<string[]>> {
   });
 }
 
-test('standalone menu: the arrow keys move focus around the ring, and Enter goes in and selects', async ({
+test('standalone menu: the arrow keys walk its items and submenus, and Enter selects a leaf', async ({
   page,
 }) => {
   const events = await openStandaloneMenu(page);
@@ -57,20 +57,20 @@ test('standalone menu: the arrow keys move focus around the ring, and Enter goes
   await page.keyboard.press('ArrowDown');
   await expect(page.getByRole('menuitem', { name: 'Others' })).toBeFocused();
 
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('menuitem', { name: 'Sub Right' })).toBeFocused();
 
-  await page.keyboard.press('Escape');
+  await page.keyboard.press('ArrowLeft');
   await expect(page.getByRole('menuitem', { name: 'Others' })).toBeFocused();
 
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
   await page.keyboard.press('End');
   await expect(page.getByRole('menuitem', { name: 'Sub Down' })).toBeFocused();
 
   await page.keyboard.press('Home');
   await expect(page.getByRole('menuitem', { name: 'Sub Right' })).toBeFocused();
 
-  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('ArrowUp');
   await expect(page.getByRole('menuitem', { name: 'Sub Down' })).toBeFocused();
 
   await page.keyboard.press('Enter');
@@ -85,7 +85,7 @@ test('standalone menu: Escape goes up a level, then closes the menu with a cance
 }) => {
   const events = await openStandaloneMenu(page);
   await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('menuitem', { name: 'Sub Right' })).toBeFocused();
 
   await page.keyboard.press('Escape');
@@ -104,7 +104,7 @@ test('standalone menu: Tab closes the menu from a submenu with a cancel', async 
 }) => {
   const events = await openStandaloneMenu(page);
   await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('menuitem', { name: 'Sub Right' })).toBeFocused();
 
   await page.keyboard.press('Tab');
