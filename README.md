@@ -294,7 +294,7 @@ Once all controllers sharing the parent are disposed, the previous inline value 
 
 ## Accessibility
 
-The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections.
+The menu exposes standard menu roles and moves focus so a screen reader speaks the active item. It follows the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/) apart from the arrow keys: that pattern defines them for vertical lists, and this menu is a ring. A gesture needs a pointer, so keyboard users get a menu shown with [`open()`](#open-and-close) instead. Your application provides the trigger and announces selections.
 
 A marking menu identifies items by direction. That is the point of it, and its limit: it asks you to know where an item sits, and someone who cannot see the ring has no way to know. No key mapping changes that. Keep every action reachable through a control that does not depend on position, and treat this menu as the fast path rather than the only one.
 
@@ -303,8 +303,6 @@ A marking menu identifies items by direction. That is the point of it, and its l
 The menu container has `role="menu"`, and each item has `role="menuitem"` and takes its accessible name from its label text. Items with a submenu also have `aria-haspopup="menu"`. Wedges, connectors, the stroke, and the opening indicator are hidden from the accessibility tree; they are visual feedback, not content.
 
 The menu container has no accessible name yet. It cannot take one from an element on your page, because ID references such as `aria-labelledby` cannot cross its shadow root.
-
-The menu follows the [WAI-ARIA menu pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu/) apart from the arrow keys, which that pattern defines for vertical lists. This one is a ring, so they follow the ring; see [Keyboard](#keyboard).
 
 ### Gestures
 
@@ -326,7 +324,7 @@ A menu shown with [`open()`](#open-and-close) works with the keyboard. When it o
 
 An arrow moves focus from the item that has it to the nearest item further that way, and stops at the edge of the ring rather than wrapping. No single arrow reaches every item, so covering a level takes more than one. Each press is a step, not a jump: on a four item menu, `ArrowLeft` from the right item passes through the bottom item.
 
-The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working. Nothing opens the menu from the keyboard until you call [`open()`](#open-and-close), for example from a button or a hotkey; a hotkey listener keeps firing while the menu is open, so have it skip keys from inside the menu.
+The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working. Nothing opens the menu from the keyboard until you call [`open()`](#open-and-close), for example from a button or a hotkey.
 
 ### Announcing selections
 
