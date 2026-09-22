@@ -65,7 +65,7 @@ menu.on('select', (event) => {
 });
 ```
 
-The menu listens immediately. Here, Copy is right, More is down, Paste is left, and Undo is up. Pause over More to open its submenu.
+The menu listens immediately. Here, Copy is up, More is right, Paste is down, and Undo is left. Pause over More to open its submenu.
 
 Call `menu.dispose()` when the container is removed or you no longer need the menu. It stops listening and removes the elements the menu created.
 
