@@ -121,11 +121,19 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
       return { height, y };
     };
 
+    // Scoped to "right" specifically: its connector points horizontally, the
+    // orientation `innerWidth`/`outerOffset` below assume.
+    const rightItem = [
+      ...(root?.querySelectorAll('.marking-menu-item') ?? []),
+    ].find(
+      (item) =>
+        item.querySelector('.marking-menu-label')?.textContent === 'Right',
+    );
     const innerConnector =
-      root?.querySelector<HTMLElement>('.marking-menu-inner-connector') ??
+      rightItem?.querySelector<HTMLElement>('.marking-menu-inner-connector') ??
       undefined;
     const outerConnector =
-      root?.querySelector<HTMLElement>('.marking-menu-outer-connector') ??
+      rightItem?.querySelector<HTMLElement>('.marking-menu-outer-connector') ??
       undefined;
     if (innerConnector === undefined || outerConnector === undefined) {
       throw new Error('Menu connector is missing.');
@@ -158,7 +166,7 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
       item.classList.contains('active'),
     );
   });
-  expect(activeWedge).toBe(6);
+  expect(activeWedge).toBe(0); // "up" is the fixture's first item.
 
   await menu.evaluate((host) => {
     host.style.setProperty('--mm-inner-connector-color', 'rgb(1, 2, 3)');
@@ -167,12 +175,18 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
   });
   const colors = await menu.evaluate((host) => {
     const root = host.shadowRoot;
+    // Scoped to a resting item: "up" (first in DOM order) is active here.
+    const restingItem = [
+      ...(root?.querySelectorAll<HTMLElement>('.marking-menu-item') ?? []),
+    ].find((item) => !item.classList.contains('active'));
     const innerConnector =
-      root?.querySelector<HTMLElement>('.marking-menu-inner-connector') ??
-      undefined;
+      restingItem?.querySelector<HTMLElement>(
+        ':scope > .marking-menu-inner-connector',
+      ) ?? undefined;
     const outerConnector =
-      root?.querySelector<HTMLElement>('.marking-menu-outer-connector') ??
-      undefined;
+      restingItem?.querySelector<HTMLElement>(
+        ':scope > .marking-menu-outer-connector',
+      ) ?? undefined;
     const activeItem =
       root?.querySelector<HTMLElement>('.marking-menu-item.active') ??
       undefined;
