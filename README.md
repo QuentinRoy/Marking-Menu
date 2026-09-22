@@ -149,7 +149,7 @@ Items without an `angle` are spaced as follows. Results below follow array order
 
 | Stated angles | Placement                                                                                 | Example                                                               |
 | ------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| None          | Equal spacing around the circle, starting at `0`.                                         | Four items: `0, 90, 180, 270`.                                        |
+| None          | Equal spacing around the circle, starting at the top (`270`).                             | Four items: `270, 0, 90, 180`.                                        |
 | One           | Equal spacing, rotated to keep that item at its angle.                                    | Four items, third at `90`: `270, 0, 90, 180`.                         |
 | Several       | Equal spacing within each gap between stated angles, including the gap back to the first. | Five items, first at `0` and fourth at `180`: `0, 60, 120, 180, 270`. |
 
@@ -357,7 +357,7 @@ menu.on('select', (event) => {
 
 ## Upgrading from 0.10.1
 
-Default item positions change in 2-, 3-, 5-, 6-, and 7-item menus. The layout change causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
+Default item positions change in every menu: an item without a stated `angle` now starts from the top (`270`) instead of the right (`0`), so every level rotates 90 degrees counterclockwise. In 2-, 3-, 5-, 6-, and 7-item menus, this compounds with an earlier layout change. The rotation causes no error or build failure, but learned gestures can select different items. Set each item's `angle` to preserve its previous direction.
 
 The release also changes imports, menu configuration, and event handling. Use the named `createMarkingMenu` export with a configuration object and register listeners with `on`. Replace subscription cleanup with `dispose()`.
 
