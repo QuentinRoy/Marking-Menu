@@ -35,6 +35,40 @@ function openMenu() {
 }
 
 /**
+Opens `menu` on its own, from the keyboard, when `K` is pressed and no menu
+is already displayed.
+
+@param {ReturnType<typeof openMenu>} menu - The menu to open.
+*/
+function bindOpenHotkey(menu) {
+  let isOpen = false;
+  menu.on('open', () => {
+    isOpen = true;
+  });
+  menu.on('select', () => {
+    isOpen = false;
+  });
+  menu.on('cancel', () => {
+    isOpen = false;
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (
+      isOpen ||
+      event.key.toLowerCase() !== 'k' ||
+      event.ctrlKey ||
+      event.altKey ||
+      event.metaKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    menu.open();
+  });
+}
+
+/**
 @type {ReturnType<typeof setTimeout> | undefined}
 */
 let toastTimeoutId;
@@ -56,4 +90,4 @@ function toastMessage(message) {
   }, 1000);
 }
 
-openMenu();
+bindOpenHotkey(openMenu());
