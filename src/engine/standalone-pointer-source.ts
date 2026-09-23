@@ -33,8 +33,9 @@ const resolveItemKey = (event: PointerEvent): string | undefined => {
  contact, and release, resolved through `composedPath()` rather than
  pointer capture, so a drag keeps reporting whichever item is actually
  under it. Unlike a gesture, it never captures the pointer, prevents a
- default, or claims `touch-action`; it only reads what the standalone
- pointer source's own primary contact is doing while one is displayed.
+ default, or claims `touch-action`, and it lets go of the capture the
+ browser takes on its own; it only reads what the standalone pointer
+ source's own primary contact is doing while one is displayed.
  */
 export function createStandalonePointerSource({
   parent,
@@ -85,6 +86,17 @@ export function createStandalonePointerSource({
 
     activePointerId = event.pointerId;
     pressedMenu = getMenu();
+    // Browsers capture a touch or pen contact to the element it pressed.
+    // Letting go makes each later event report what is under the contact.
+    const [target] = event.composedPath();
+    if (
+      target !== undefined &&
+      isElement(target) &&
+      target.hasPointerCapture(event.pointerId)
+    ) {
+      target.releasePointerCapture(event.pointerId);
+    }
+
     runtime.send({
       type: 'standalonePointer.move',
       position: toClientPoint(event),
