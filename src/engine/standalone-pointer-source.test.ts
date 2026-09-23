@@ -251,6 +251,44 @@ describe('createStandalonePointerSource', () => {
     expect(fixture.send).not.toHaveBeenCalled();
   });
 
+  it('does not mistake an inside press for an outside one when parent lives inside a shadow root', () => {
+    using fixture = createFixture();
+    const shadowHost = document.createElement('div');
+    document.body.append(shadowHost);
+    // A listener outside a shadow tree (the document-level outside-press
+    // one below) sees a retargeted `.target` on any event from inside it,
+    // so this only proves anything once `parent` itself is nested that way.
+    shadowHost.attachShadow({ mode: 'open' }).append(fixture.parent);
+
+    fixture.leaf.dispatchEvent(
+      pointer('pointerdown', { clientX: 0, clientY: 0 }),
+    );
+
+    expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
+      type: 'standalonePointer.move',
+      position: [0, 0],
+      itemKey: 'leaf-key',
+    });
+  });
+
+  it('still sends an outside press for a genuinely outside one when parent lives inside a shadow root', () => {
+    using fixture = createFixture();
+    const shadowHost = document.createElement('div');
+    document.body.append(shadowHost);
+    shadowHost.attachShadow({ mode: 'open' }).append(fixture.parent);
+    const trulyOutside = document.createElement('button');
+    document.body.append(trulyOutside);
+
+    trulyOutside.dispatchEvent(
+      pointer('pointerdown', { clientX: 9, clientY: 9 }),
+    );
+
+    expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
+      type: 'standaloneOutsidePress',
+      position: [9, 9],
+    });
+  });
+
   it('never takes gesture capture, prevents nothing, and never touches touch-action', () => {
     using fixture = createFixture();
 

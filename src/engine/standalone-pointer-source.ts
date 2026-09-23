@@ -6,6 +6,12 @@ export type StandalonePointerSource = {
   dispose: () => void;
 };
 
+// `instanceof HTMLElement` would use this module's realm's constructor,
+// which a node from another document/window (a `parent` inside an iframe)
+// never matches; see the same pitfall worked around in `layout/menu.ts`.
+const isElement = (node: EventTarget): node is HTMLElement =>
+  'nodeType' in node && node.nodeType === Node.ELEMENT_NODE;
+
 /**
  The item under an event, resolved by walking its `composedPath()` for the
  nearest `.marking-menu-item` ancestor of the actual target: unlike focus,
@@ -14,10 +20,7 @@ export type StandalonePointerSource = {
  */
 const resolveItemKey = (event: PointerEvent): string | undefined => {
   for (const node of event.composedPath()) {
-    if (
-      node instanceof HTMLElement &&
-      node.classList.contains('marking-menu-item')
-    ) {
+    if (isElement(node) && node.classList.contains('marking-menu-item')) {
       return node.dataset.itemId;
     }
   }
@@ -138,7 +141,12 @@ export function createStandalonePointerSource({
     if (
       !isOpen() ||
       !isPrimaryPress(event) ||
-      parent.contains(event.target as Node)
+      // `composedPath()`, not `.target`: a listener outside `parent`'s own
+      // shadow tree (this one, on `doc`) sees `.target` retargeted to that
+      // tree's host, which `parent.contains()` never finds as a descendant
+      // even though the real target is one, wrongly flagging every inside
+      // press on a shadow-hosted `parent` as outside.
+      event.composedPath().includes(parent)
     ) {
       return;
     }
