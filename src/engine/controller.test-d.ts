@@ -13,10 +13,11 @@ import {
  Type level tests: the model the controller's events carry is the one the
  *literal* config describes, not a widened one. Checked by `tsc`, not run.
 
- `Model` appears only in input positions on the controller, so
- `MarkingMenuController<A>` and `MarkingMenuController<B>` stay mutually
- assignable and no plain assignment can catch the model widening. Reading a
- narrowed payload off a listener parameter is what catches it.
+ `Model` appears in listener parameters, which method bivariance keeps loose,
+ and in `state`, which is covariant. A controller for a literal config always
+ assigns to one for a wider model, so no plain assignment can catch the model
+ widening. Reading a narrowed payload off a listener parameter is what
+ catches it.
  */
 
 const parent = undefined as unknown as HTMLElement;
