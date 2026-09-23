@@ -553,6 +553,7 @@ describe('a standalone menu', () => {
         fixture.controller.off('cancel', reopen);
         fixture.controller.open();
       };
+
       fixture.controller.on('cancel', reopen);
       fixture.press('Escape');
       const events = record(fixture.controller);
