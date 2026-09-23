@@ -5,7 +5,6 @@ import { currentMenu } from './layout-view.js';
 import type { ResolvedLogger } from './logger.js';
 import {
   navigationMachine,
-  type MachineStates,
   type NavigationInput,
   type NavigationOptions,
   type NavigationPhase,
@@ -35,7 +34,7 @@ export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
       */
       readonly phase: NavigationPhase;
       /**
-      What the machine is doing right now, as the controller reports it.
+      What the controller reports as its state.
       */
       get state(): MarkingMenuState<Model>;
       /**
@@ -57,19 +56,18 @@ export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
       dispose: () => void;
     };
 
-const toState = (current: {
-  readonly name: NavigationPhase;
-  readonly data: MachineStates[NavigationPhase];
-}): MarkingMenuState<EngineModelRoot> => {
+const toState = (
+  current: ReturnType<typeof navigationMachine.start>['current'],
+): MarkingMenuState<EngineModelRoot> => {
   const { name, data } = current;
   switch (name) {
     case 'novice': {
-      const { menu, active } = data as MachineStates['novice'];
+      const { menu, active } = data;
       return { mode: name, menu, activeItem: active };
     }
 
     case 'standalone': {
-      const { menus, active } = data as MachineStates['standalone'];
+      const { menus, active } = data;
       return { mode: name, menu: currentMenu(menus), activeItem: active };
     }
 
