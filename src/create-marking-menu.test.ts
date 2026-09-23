@@ -6,7 +6,9 @@ vi.mock('./engine/controller.js');
 describe('createMarkingMenu', () => {
   it('forwards the config unchanged to the engine controller', () => {
     const controller = { dispose: vi.fn(), off: vi.fn(), on: vi.fn() };
-    vi.mocked(createController).mockReturnValue(controller);
+    vi.mocked(createController).mockReturnValue(
+      controller as unknown as ReturnType<typeof createController>,
+    );
     const parent = document.createElement('div');
     const items = [{ id: 'right', label: 'Right' }] as const;
     const config = { items, parent };

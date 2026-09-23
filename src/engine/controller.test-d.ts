@@ -40,6 +40,11 @@ describe('createController', () => {
     expectTypeOf(controller).toEqualTypeOf<MarkingMenuController<Model>>();
   });
 
+  it('keeps its ReturnType typed, state included', () => {
+    expectTypeOf<ReturnType<typeof createController>>().not.toBeAny();
+    expectTypeOf<ReturnType<typeof createController>['state']>().not.toBeAny();
+  });
+
   it('exposes disposal as a plain method', () => {
     expectTypeOf(controller.dispose).toEqualTypeOf<() => void>();
   });
