@@ -11,6 +11,13 @@ import { currentMenu } from './layout-view.js';
 import type { MachineStates } from './machine.js';
 import type { EngineModelItem, EngineModelMenu } from './model-node.js';
 
+/*
+ Standalone mode's rows live in `machine.ts`, inline so totorobot can type
+ them; this module holds what they call. The pointer and keyboard sources and
+ `focus.ts` feed it inputs. It is one state because levels and the active
+ item are data. See #483.
+ */
+
 type StandaloneData = MachineStates['standalone'];
 
 type StandaloneRow = (context: {
