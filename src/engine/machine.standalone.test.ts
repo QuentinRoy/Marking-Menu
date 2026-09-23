@@ -226,6 +226,7 @@ describe('navigationMachine standalone phase', () => {
             center: [50, 60],
             activeKey: undefined,
             tabStopKey: rightItem.key,
+            pointerTarget: true,
           },
           upperStroke: undefined,
           lowerStroke: undefined,
@@ -627,6 +628,7 @@ describe('navigationMachine standalone phase', () => {
         center: [50, 60],
         activeKey: rightUpItem.key,
         tabStopKey: rightUpItem.key,
+        pointerTarget: true,
       });
     });
 
@@ -796,6 +798,248 @@ describe('navigationMachine standalone phase', () => {
       expect(host.current.name).toBe('standalone');
       expect(namesOf(outputs)).toEqual(['open', 'change']);
       expect(activeKeyOf(host)).toBe(rightItem.key);
+    });
+  });
+
+  describe('moving and activating the active item with the pointer', () => {
+    it('sets the active item on hover, with its position, and announces a change', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      const outputs = recordOutputs(host);
+
+      host.send('standalonePointerMove', {
+        position: [10, 20],
+        itemKey: rightItem.key,
+      });
+
+      expect(activeKeyOf(host)).toBe(rightItem.key);
+      expect(namesOf(outputs)).toEqual(['move', 'change']);
+      const move = dataAt(outputs, 0);
+      expect(move.mode).toBe('standalone');
+      expect(move.position).toEqual([10, 20]);
+      expect(move.source).toBe('pointer');
+      expect(move.active).toBe(rightItem);
+      expect(move.menu).toBe(standaloneModel);
+      const change = dataAt(outputs, 1);
+      expect(change.position).toEqual([10, 20]);
+      expect(change.source).toBe('pointer');
+      expect(change.active).toBe(rightItem);
+      expect(change.previousActive).toBeUndefined();
+    });
+
+    it('keeps emitting move with no further change while hovering the same item', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      host.send('standalonePointerMove', {
+        position: [10, 20],
+        itemKey: rightItem.key,
+      });
+      const outputs = recordOutputs(host);
+
+      host.send('standalonePointerMove', {
+        position: [11, 21],
+        itemKey: rightItem.key,
+      });
+
+      expect(namesOf(outputs)).toEqual(['move']);
+    });
+
+    it('announces one change crossing directly onto an adjacent item', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      host.send('standalonePointerMove', {
+        position: [0, 0],
+        itemKey: rightItem.key,
+      });
+      const outputs = recordOutputs(host);
+
+      host.send('standalonePointerMove', {
+        position: [0, 1],
+        itemKey: downItem.key,
+      });
+
+      expect(namesOf(outputs)).toEqual(['move', 'change']);
+      const change = dataAt(outputs, 1);
+      expect(change.active).toBe(downItem);
+      expect(change.previousActive).toBe(rightItem);
+    });
+
+    it('clears the active item on leaving it, announcing a change', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      host.send('standalonePointerMove', {
+        position: [0, 0],
+        itemKey: rightItem.key,
+      });
+      const outputs = recordOutputs(host);
+
+      host.send('standalonePointerMove', {
+        position: [0, 1],
+        itemKey: undefined,
+      });
+
+      expect(activeKeyOf(host)).toBeUndefined();
+      expect(namesOf(outputs)).toEqual(['move', 'change']);
+      expect(dataAt(outputs, 1).active).toBeUndefined();
+      expect(dataAt(outputs, 1).previousActive).toBe(rightItem);
+    });
+
+    it('sets the active item on contact-down, the same as a hover preview', () => {
+      const host = startStandalone();
+      openStandalone(host);
+
+      host.send('standalonePointerMove', {
+        position: [0, 0],
+        itemKey: downItem.key,
+      });
+
+      expect(activeKeyOf(host)).toBe(downItem.key);
+    });
+
+    it('follows the finger as a drag retargets, landing back on the original item', () => {
+      const host = startStandalone();
+      openStandalone(host);
+
+      host.send('standalonePointerMove', {
+        position: [0, 0],
+        itemKey: rightItem.key,
+      });
+      host.send('standalonePointerMove', {
+        position: [1, 1],
+        itemKey: leftItem.key,
+      });
+      host.send('standalonePointerMove', {
+        position: [2, 2],
+        itemKey: rightItem.key,
+      });
+
+      expect(activeKeyOf(host)).toBe(rightItem.key);
+    });
+
+    it('selects a leaf released over it, with the pointer position and source', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      host.send('standalonePointerMove', {
+        position: [0, 0],
+        itemKey: downItem.key,
+      });
+      const outputs = recordOutputs(host);
+
+      host.send('standalonePointerActivate', {
+        position: [5, 6],
+        itemKey: downItem.key,
+      });
+
+      expect(host.current.name).toBe('idle');
+      expect(namesOf(outputs)).toEqual(['select']);
+      const event = dataAt(outputs, 0);
+      expect(event.mode).toBe('standalone');
+      expect(event.position).toEqual([5, 6]);
+      expect(event.source).toBe('pointer');
+      expect(event.selection).toBe(downItem);
+      expect(event.menu).toBe(standaloneModel);
+    });
+
+    it('opens a submenu released over it, with the entered item as the previous active one', () => {
+      const host = startStandalone();
+      openStandalone(host, [50, 60]);
+      host.send('standalonePointerMove', {
+        position: [0, 0],
+        itemKey: rightItem.key,
+      });
+      const outputs = recordOutputs(host);
+
+      host.send('standalonePointerActivate', {
+        position: [5, 6],
+        itemKey: rightItem.key,
+      });
+
+      expect(host.current.name).toBe('standalone');
+      expect(namesOf(outputs)).toEqual(['open', 'change']);
+      const opened = dataAt(outputs, 0);
+      expect(opened.mode).toBe('standalone');
+      expect(opened.position).toBeUndefined();
+      expect(opened.source).toBe('pointer');
+      expect(opened.menu).toBe(rightItem);
+      expect(opened.menuCenter).toEqual([50, 60]);
+      const changed = dataAt(outputs, 1);
+      expect(changed.position).toEqual([5, 6]);
+      expect(changed.source).toBe('pointer');
+      expect(changed.active).toBeUndefined();
+      expect(changed.previousActive).toBe(rightItem);
+      expect(changed.menu).toBe(rightItem);
+      expect(activeKeyOf(host)).toBeUndefined();
+    });
+
+    it('clears the active item, announcing a change, when released over empty space', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      host.send('standalonePointerMove', {
+        position: [0, 0],
+        itemKey: rightItem.key,
+      });
+      const outputs = recordOutputs(host);
+
+      host.send('standalonePointerActivate', {
+        position: [5, 6],
+        itemKey: undefined,
+      });
+
+      expect(host.current.name).toBe('standalone');
+      expect(namesOf(outputs)).toEqual(['change']);
+      expect(activeKeyOf(host)).toBeUndefined();
+      expect(dataAt(outputs, 0).previousActive).toBe(rightItem);
+    });
+
+    it('clears the active item on a canceled contact, staying open, with no move', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      host.send('standalonePointerMove', {
+        position: [0, 0],
+        itemKey: rightItem.key,
+      });
+      const outputs = recordOutputs(host);
+
+      host.send('standalonePointerCancel', { position: [5, 6] });
+
+      expect(host.current.name).toBe('standalone');
+      expect(activeKeyOf(host)).toBeUndefined();
+      expect(namesOf(outputs)).toEqual(['change']);
+      const event = dataAt(outputs, 0);
+      expect(event.position).toEqual([5, 6]);
+      expect(event.source).toBe('pointer');
+      expect(event.active).toBeUndefined();
+      expect(event.previousActive).toBe(rightItem);
+    });
+
+    it('declines a cancel with nothing active, announcing nothing', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      const outputs = recordOutputs(host);
+
+      host.send('standalonePointerCancel', { position: [5, 6] });
+
+      expect(outputs).toEqual([]);
+    });
+
+    it('cancels the whole session on an outside press, with its position', () => {
+      const host = startStandalone();
+      openStandalone(host);
+      host.send('focus', { key: rightItem.key });
+      host.send('activate');
+      const outputs = recordOutputs(host);
+
+      host.send('standaloneOutsidePress', { position: [7, 8] });
+
+      expect(host.current.name).toBe('idle');
+      expect(namesOf(outputs)).toEqual(['cancel']);
+      const event = dataAt(outputs, 0);
+      expect(event.mode).toBe('standalone');
+      expect(event.position).toEqual([7, 8]);
+      expect(event.source).toBe('pointer');
+      expect(event.active).toBe(rightUpItem);
+      expect(event.menu).toBe(rightItem);
+      expect(event.reason).toBe('dismissed');
     });
   });
 

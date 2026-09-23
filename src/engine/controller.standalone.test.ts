@@ -173,10 +173,13 @@ describe('a standalone menu', () => {
     expect(fixture.parent.style.getPropertyValue('touch-action')).toBe('');
     const started = voidMock<[MarkingMenuStartEvent]>();
     fixture.controller.on('start', started);
-    fixture.parent.dispatchEvent(
-      pointer('pointerdown', { clientX: 0, clientY: 0 }),
-    );
+    // On an item rather than bare `parent`: a press there is the menu's
+    // own, not one an outside press would otherwise dismiss it for.
+    fixture
+      .items()[0]
+      ?.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     expect(started).not.toHaveBeenCalled();
+    expect(fixture.items()).toHaveLength(4);
   });
 
   it('can be opened again once closed', () => {
@@ -334,12 +337,14 @@ describe('a standalone menu', () => {
     fixture.controller.on('start', started);
 
     fixture.controller.open();
+    // On an item rather than bare `parent`: a press there is the menu's
+    // own, not one an outside press would otherwise dismiss it for.
     const down = pointer('pointerdown', {
       clientX: 0,
       clientY: 0,
       cancelable: true,
     });
-    fixture.parent.dispatchEvent(down);
+    fixture.items()[0]?.dispatchEvent(down);
 
     expect(started).not.toHaveBeenCalled();
     expect(down.defaultPrevented).toBe(false);
@@ -411,5 +416,151 @@ describe('a standalone menu', () => {
     expect(fixture.items()).toHaveLength(0);
     expect(document.activeElement).toBe(fixture.opener);
     expect(fixture.parent.style.getPropertyValue('touch-action')).toBe('');
+  });
+
+  describe('operated with the pointer', () => {
+    it('hovering an item makes it active, without moving focus', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      const events = record(fixture.controller);
+
+      fixture
+        .items()[1]
+        ?.dispatchEvent(pointer('pointermove', { clientX: 0, clientY: 0 }));
+
+      expect(
+        fixture.items().map((item) => item.classList.contains('active')),
+      ).toEqual([false, true, false, false]);
+      expect(fixture.focusedLabel()).toBe('Right');
+      expect(events).toEqual([['change', 'standalone', [0, 0]]]);
+    });
+
+    it('leaving an item for the rest of the layer clears the active one', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      fixture
+        .items()[1]
+        ?.dispatchEvent(pointer('pointermove', { clientX: 0, clientY: 0 }));
+      const events = record(fixture.controller);
+      const layer = fixture.parent
+        .querySelector('.marking-menu')
+        ?.shadowRoot?.querySelector('.marking-menu-layer');
+
+      layer?.dispatchEvent(pointer('pointermove', { clientX: 1, clientY: 1 }));
+
+      expect(
+        fixture.items().some((item) => item.classList.contains('active')),
+      ).toBe(false);
+      expect(events).toEqual([['change', 'standalone', [1, 1]]]);
+    });
+
+    it('a completed press on a leaf selects it and gives focus back', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      const selected: MarkingMenuSelectEvent[] = [];
+      fixture.controller.on('select', (event) => {
+        selected.push(event);
+      });
+      const down = pointer('pointerdown', {
+        pointerId: 1,
+        clientX: 0,
+        clientY: 0,
+      });
+      fixture.items()[1]?.dispatchEvent(down);
+
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerup', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+
+      expect(selected.map((event) => event.selection.id)).toEqual(['down']);
+      expect(selected[0]?.source).toBe('pointer');
+      expect(fixture.items()).toHaveLength(0);
+      expect(document.activeElement).toBe(fixture.opener);
+    });
+
+    it('a completed press on a submenu item opens it and focuses the container', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      const events = record(fixture.controller);
+      fixture
+        .items()[0]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+
+      fixture
+        .items()[0]
+        ?.dispatchEvent(
+          pointer('pointerup', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+
+      expect(fixture.items()).toHaveLength(2);
+      const shadowRoot =
+        fixture.parent.querySelector('.marking-menu')?.shadowRoot;
+      expect(shadowRoot?.activeElement).toBe(
+        shadowRoot?.querySelector('.marking-menu-layer'),
+      );
+      expect(events.map(([type]) => type)).toEqual(['open', 'change']);
+      expect(events[1]).toEqual(['change', 'standalone', [0, 0]]);
+    });
+
+    it('a canceled contact clears the active item and stays open', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+      const events = record(fixture.controller);
+
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointercancel', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+
+      expect(fixture.items()).toHaveLength(4);
+      expect(
+        fixture.items().some((item) => item.classList.contains('active')),
+      ).toBe(false);
+      expect(events).toEqual([['change', 'standalone', [0, 0]]]);
+    });
+
+    it('a primary press outside the menu dismisses it without restoring focus', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      const events = record(fixture.controller);
+
+      fixture.parent.dispatchEvent(
+        pointer('pointerdown', { clientX: 5, clientY: 6 }),
+      );
+
+      expect(fixture.items()).toHaveLength(0);
+      expect(events).toEqual([['cancel', 'standalone', [5, 6]]]);
+      // Never restored to the original opener, whatever the press left
+      // focus on (jsdom, unlike a real browser, leaves it exactly where it
+      // was: still the previously active item, now removed from the
+      // document).
+      expect(document.activeElement).not.toBe(fixture.opener);
+    });
+
+    it('an outside press resumes the page pointer for the very next press', () => {
+      using fixture = setup();
+      const started = voidMock<[MarkingMenuStartEvent]>();
+      fixture.controller.on('start', started);
+      fixture.controller.open();
+
+      fixture.parent.dispatchEvent(
+        pointer('pointerdown', { pointerId: 7, clientX: 5, clientY: 6 }),
+      );
+      fixture.parent.dispatchEvent(
+        pointer('pointerdown', { pointerId: 8, clientX: 1, clientY: 1 }),
+      );
+
+      expect(started).toHaveBeenCalledTimes(1);
+    });
   });
 });

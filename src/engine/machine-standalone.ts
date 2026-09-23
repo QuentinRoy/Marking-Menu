@@ -1,14 +1,15 @@
 import type { Skip } from 'totorobot';
 import {
   MarkingMenuCancelEvent,
+  MarkingMenuChangeEvent,
   MarkingMenuOpenEvent,
   type MarkingMenuEventSource,
 } from '../events.js';
 import { isModelMenuItem, type ModelNode } from '../types.js';
-import { deltaAngle } from '../utils.js';
+import { deltaAngle, type Point } from '../utils.js';
 import { currentMenu } from './layout-view.js';
 import type { MachineStates } from './machine.js';
-import type { EngineModelItem } from './model-node.js';
+import type { EngineModelItem, EngineModelMenu } from './model-node.js';
 
 type StandaloneData = MachineStates['standalone'];
 
@@ -140,6 +141,71 @@ export const leaveLevel: StandaloneRow = ({ fromData, skip }) => {
 };
 
 /**
+ Resolve a pointer event's item key against the displayed level, or
+ `undefined` when it names none (empty space, or a stale key from a level
+ that has since changed).
+ */
+export function findPointerItem(
+  fromData: StandaloneData,
+  key: string | undefined,
+): EngineModelItem | undefined {
+  return key === undefined
+    ? undefined
+    : currentMenu(fromData.menus).items.find((item) => item.key === key);
+}
+
+/**
+ A pointer moving over the displayed level: hover, or a held contact
+ dragging across it. Always commits, since `move` fires on every pointer
+ move regardless of whether the active item it lands on changed.
+ */
+export const pointerMove = ({
+  fromData,
+  inputData,
+}: {
+  readonly fromData: StandaloneData;
+  readonly inputData: { readonly itemKey: string | undefined };
+}): StandaloneData => ({
+  ...fromData,
+  active: findPointerItem(fromData, inputData.itemKey),
+});
+
+/**
+ A held contact interrupted by the platform (`pointercancel`): clears the
+ item it activated, the same way leaving it under a hover would, and leaves
+ the session open. Declines when nothing was active, since there is then
+ nothing to clear.
+ */
+export const pointerCancel: StandaloneRow = ({ fromData, skip }) =>
+  fromData.active === undefined ? skip() : { ...fromData, active: undefined };
+
+/**
+ A pointer released while the session stays open: over a submenu item, it
+ opens it, keeping the center, with nothing active in the new level yet;
+ over empty space or an unresolved key, it just clears the active item, the
+ same way a hover leaving the plate does. Declines a leaf, selected by the
+ machine's `-> idle` row for this same input instead.
+ */
+export const pointerRelease = ({
+  fromData,
+  inputData,
+  skip,
+}: {
+  readonly fromData: StandaloneData;
+  readonly inputData: { readonly itemKey: string | undefined };
+  readonly skip: () => Skip;
+}): StandaloneData | Skip => {
+  const item = findPointerItem(fromData, inputData.itemKey);
+  if (item === undefined) {
+    return { ...fromData, active: undefined };
+  }
+
+  return isModelMenuItem(item)
+    ? { ...fromData, menus: [...fromData.menus, item], active: undefined }
+    : skip();
+};
+
+/**
  Announce a standalone menu level as displayed.
  */
 export function emitStandaloneOpen(
@@ -160,22 +226,105 @@ export function emitStandaloneOpen(
 }
 
 /**
+ The action every keyboard-driven standalone→standalone row shares (see
+ `machine.ts`'s transition table for the full list: the four directions,
+ `first`/`last`, `focus`, entering a submenu, and leaving one): announce
+ `open` for a new level, then `change` once the item it lands on differs.
+ Not a wildcard action keyed to every standalone→standalone edge, so that
+ the standalone pointer source's own edges — a different source, and, for a
+ hover or drag, an extra `move` — can carry their own actions without this
+ one needing to know to decline them.
+ */
+export function emitStandaloneMove({
+  fromData,
+  toData,
+  emit,
+}: {
+  readonly fromData: StandaloneData;
+  readonly toData: StandaloneData;
+  readonly emit: {
+    (name: 'open', data: MarkingMenuOpenEvent): void;
+    (name: 'change', data: MarkingMenuChangeEvent): void;
+  };
+}): void {
+  const menu = currentMenu(toData.menus);
+  const isNewLevel = toData.menus.length !== fromData.menus.length;
+  if (isNewLevel) {
+    emitStandaloneOpen(emit, toData, 'keyboard');
+  }
+
+  if (
+    toData.active !== undefined &&
+    (isNewLevel || toData.active !== fromData.active)
+  ) {
+    emit(
+      'change',
+      new MarkingMenuChangeEvent<ModelNode, 'standalone'>({
+        mode: 'standalone',
+        position: undefined,
+        source: 'keyboard',
+        active: toData.active,
+        // A new level starts over: `open` already reset the active item.
+        previousActive: isNewLevel ? undefined : fromData.active,
+        menu,
+      }),
+    );
+  }
+}
+
+/**
+ Announce a standalone active-item change caused by the pointer: hovering,
+ dragging, a canceled contact, or a release that stays in the same level.
+ Shared so the three call sites don't each restate `mode`/`source`.
+ */
+export function emitStandalonePointerChange(
+  emit: (name: 'change', data: MarkingMenuChangeEvent) => void,
+  {
+    position,
+    active,
+    previousActive,
+    menu,
+  }: {
+    readonly position: Point;
+    readonly active: EngineModelItem | undefined;
+    readonly previousActive: EngineModelItem | undefined;
+    readonly menu: EngineModelMenu;
+  },
+): void {
+  emit(
+    'change',
+    new MarkingMenuChangeEvent<ModelNode, 'standalone'>({
+      mode: 'standalone',
+      position,
+      source: 'pointer',
+      active,
+      previousActive,
+      menu,
+    }),
+  );
+}
+
+/**
  Announce that a standalone interaction ended without a selection.
  */
 export function cancelStandalone({
   fromData: { menus, active },
   emit,
   source,
+  // Every cause but a pointer's own outside-press dismissal carries no
+  // position, per the public contract.
+  position,
 }: {
   readonly fromData: StandaloneData;
   readonly emit: (name: 'cancel', data: MarkingMenuCancelEvent) => void;
   readonly source: MarkingMenuEventSource;
+  readonly position?: Point | undefined;
 }): void {
   emit(
     'cancel',
     new MarkingMenuCancelEvent<ModelNode, 'standalone'>({
       mode: 'standalone',
-      position: undefined,
+      position,
       source,
       active,
       menu: currentMenu(menus),
