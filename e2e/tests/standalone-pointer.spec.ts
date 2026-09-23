@@ -209,6 +209,21 @@ test('standalone menu: releasing a drag outside it cancels without restoring foc
   expect(log.at(-1)).toBe('cancel:standalone');
 });
 
+test('standalone menu: releasing a drag outside its iframe cancels', async ({
+  page,
+}) => {
+  const events = await openStandaloneMenu(page, 'iframe');
+  const frame = page.frameLocator('iframe');
+  await hoverItem(page, itemLabel(frame, 'Left'));
+  await page.mouse.down();
+  await page.mouse.move(780, 580, { steps: 5 });
+  await page.mouse.up();
+
+  await expect(frame.getByRole('menu')).toHaveCount(0);
+  const log = await events.jsonValue();
+  expect(log.at(-1)).toBe('cancel:standalone');
+});
+
 for (const pointerType of ['touch', 'pen'] as const) {
   test(`standalone menu: a ${pointerType} contact selects a leaf`, async ({
     page,
