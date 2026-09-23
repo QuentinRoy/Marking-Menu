@@ -98,7 +98,7 @@ type MachineInputs = {
     readonly itemKey: string | undefined;
   };
   standalonePointerCancel: { readonly position: Point };
-  standaloneOutsidePress: { readonly position: Point };
+  standalonePointerOutside: { readonly position: Point };
   // The keyboard intents, moving through the displayed levels and items.
   up: undefined;
   down: undefined;
@@ -168,8 +168,8 @@ export type NavigationInput =
       readonly type: 'standalonePointer.cancel';
     } & MachineInputs['standalonePointerCancel'])
   | ({
-      readonly type: 'standaloneOutsidePress';
-    } & MachineInputs['standaloneOutsidePress']);
+      readonly type: 'standalonePointer.outside';
+    } & MachineInputs['standalonePointerOutside']);
 
 /**
  Each phase's fields, factored out before `NavigationState` tags on a
@@ -537,7 +537,7 @@ export const navigationMachine = machine({
 
     // An outside primary press dismisses the session from any level,
     // independently of focus loss.
-    'standalone -standaloneOutsidePress> idle': backToIdle,
+    'standalone -standalonePointerOutside> idle': backToIdle,
 
     // Every state a gesture can be in ends the same way, back to idle's own
     // shape. Idle has no gesture to end, and a standalone menu never receives
@@ -698,7 +698,11 @@ export const navigationMachine = machine({
       }
     },
 
-    'standalone -standaloneOutsidePress> idle'({ fromData, inputData, emit }) {
+    'standalone -standalonePointerOutside> idle'({
+      fromData,
+      inputData,
+      emit,
+    }) {
       cancelStandalone({
         fromData,
         emit,

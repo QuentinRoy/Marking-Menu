@@ -78,7 +78,7 @@ export function createStandalonePointerSource({
     // cannot make it run again for an event it already saw.
     if (!isInLayer(event)) {
       runtime.send({
-        type: 'standaloneOutsidePress',
+        type: 'standalonePointer.outside',
         position: toClientPoint(event),
       });
       return;
@@ -108,16 +108,40 @@ export function createStandalonePointerSource({
     });
   };
 
+  // On the document: a held contact can be released anywhere.
   const onPointerUp = (event: PointerEvent): void => {
     if (!isOpen() || event.pointerId !== activePointerId) {
       return;
     }
 
     activePointerId = undefined;
+    runtime.send(
+      isInLayer(event)
+        ? {
+            type: 'standalonePointer.activate',
+            position: toClientPoint(event),
+            itemKey: resolveItemKey(event),
+          }
+        : { type: 'standalonePointer.outside', position: toClientPoint(event) },
+    );
+  };
+
+  // Moves between parts of the menu never reach `parent`: their target and
+  // `relatedTarget` both retarget to the shadow host, which stops the event
+  // there. So any `pointerout` from the layer seen here left the menu.
+  const onPointerOut = (event: PointerEvent): void => {
+    if (
+      !isOpen() ||
+      (activePointerId !== undefined && event.pointerId !== activePointerId) ||
+      !isInLayer(event)
+    ) {
+      return;
+    }
+
     runtime.send({
-      type: 'standalonePointer.activate',
+      type: 'standalonePointer.move',
       position: toClientPoint(event),
-      itemKey: resolveItemKey(event),
+      itemKey: undefined,
     });
   };
 
@@ -152,26 +176,28 @@ export function createStandalonePointerSource({
     }
 
     runtime.send({
-      type: 'standaloneOutsidePress',
+      type: 'standalonePointer.outside',
       position: toClientPoint(event),
     });
   };
 
   parent.addEventListener('pointerdown', onPointerDown);
   parent.addEventListener('pointermove', onPointerMove);
-  parent.addEventListener('pointerup', onPointerUp);
+  parent.addEventListener('pointerout', onPointerOut);
   parent.addEventListener('pointercancel', onPointerCancel);
   doc.addEventListener('pointerdown', onOutsidePointerDown, { capture: true });
+  doc.addEventListener('pointerup', onPointerUp, { capture: true });
 
   return {
     dispose() {
       parent.removeEventListener('pointerdown', onPointerDown);
       parent.removeEventListener('pointermove', onPointerMove);
-      parent.removeEventListener('pointerup', onPointerUp);
+      parent.removeEventListener('pointerout', onPointerOut);
       parent.removeEventListener('pointercancel', onPointerCancel);
       doc.removeEventListener('pointerdown', onOutsidePointerDown, {
         capture: true,
       });
+      doc.removeEventListener('pointerup', onPointerUp, { capture: true });
     },
   };
 }

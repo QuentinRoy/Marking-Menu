@@ -193,7 +193,7 @@ describe('createStandalonePointerSource', () => {
     );
 
     expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
-      type: 'standaloneOutsidePress',
+      type: 'standalonePointer.outside',
       position: [2, 3],
     });
   });
@@ -284,7 +284,7 @@ describe('createStandalonePointerSource', () => {
     );
 
     expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
-      type: 'standaloneOutsidePress',
+      type: 'standalonePointer.outside',
       position: [9, 9],
     });
   });

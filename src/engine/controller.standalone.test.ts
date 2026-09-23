@@ -486,14 +486,11 @@ describe('a standalone menu', () => {
         );
       const events = record(fixture.controller);
 
-      fixture.items()[1]?.dispatchEvent(
-        pointer('pointerout', {
-          pointerId: 1,
-          clientX: 1,
-          clientY: 1,
-          relatedTarget: null,
-        }),
-      );
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerout', { pointerId: 1, clientX: 1, clientY: 1 }),
+        );
 
       expect(fixture.items()).toHaveLength(4);
       expect(
