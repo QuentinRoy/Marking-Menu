@@ -42,6 +42,7 @@ describe('MarkingMenuStartEvent', () => {
     const event = new MarkingMenuStartEvent({
       mode: 'startup',
       position: [10, 20],
+      source: 'gesture',
     });
 
     expect(event.type).toBe('start');
@@ -55,6 +56,7 @@ describe('MarkingMenuStartEvent', () => {
     const event = new MarkingMenuStartEvent({
       mode: 'startup',
       position: [0, 0],
+      source: 'gesture',
     });
     expect(event.type).toBe(MarkingMenuStartEvent.type);
   });
@@ -65,6 +67,7 @@ describe('MarkingMenuOpenEvent', () => {
     const event = new MarkingMenuOpenEvent<Model>({
       mode: 'novice',
       position: [5, 5],
+      source: 'gesture',
       menu,
       menuCenter: [50, 50],
     });
@@ -77,10 +80,11 @@ describe('MarkingMenuOpenEvent', () => {
     expect(event.recognition).toBeUndefined();
   });
 
-  it('has no position in standalone mode', () => {
+  it('allows an undefined position in standalone mode', () => {
     const event = new MarkingMenuOpenEvent<Model>({
       mode: 'standalone',
       position: undefined,
+      source: 'api',
       menu,
       menuCenter: [50, 50],
     });
@@ -93,6 +97,7 @@ describe('MarkingMenuOpenEvent', () => {
     const event = new MarkingMenuOpenEvent<Model>({
       mode: 'novice',
       position: [5, 5],
+      source: 'gesture',
       menu,
       menuCenter: [50, 50],
       recognition,
@@ -107,6 +112,7 @@ describe('MarkingMenuMoveEvent', () => {
     const event = new MarkingMenuMoveEvent<Model>({
       mode: 'novice',
       position: [1, 2],
+      source: 'gesture',
       active: menu.items[0],
       menu,
     });
@@ -122,6 +128,7 @@ describe('MarkingMenuMoveEvent', () => {
     const event = new MarkingMenuMoveEvent<Model>({
       mode: 'expert',
       position: [1, 2],
+      source: 'gesture',
       active: undefined,
       menu: undefined,
     });
@@ -137,6 +144,7 @@ describe('MarkingMenuChangeEvent', () => {
     const event = new MarkingMenuChangeEvent<Model>({
       mode: 'novice',
       position: [1, 2],
+      source: 'gesture',
       active: menu.items[1],
       previousActive: menu.items[0],
       menu,
@@ -149,10 +157,11 @@ describe('MarkingMenuChangeEvent', () => {
     expect(event.menu).toBe(menu);
   });
 
-  it('has no position in standalone mode', () => {
+  it('allows an undefined position in standalone mode', () => {
     const event = new MarkingMenuChangeEvent<Model>({
       mode: 'standalone',
       position: undefined,
+      source: 'keyboard',
       active: menu.items[1],
       previousActive: undefined,
       menu,
@@ -166,6 +175,7 @@ describe('MarkingMenuChangeEvent', () => {
     const event = new MarkingMenuChangeEvent<Model>({
       mode: 'novice',
       position: [1, 2],
+      source: 'gesture',
       active: undefined,
       previousActive: menu.items[0],
       menu,
@@ -181,6 +191,7 @@ describe('MarkingMenuSelectEvent', () => {
     const event = new MarkingMenuSelectEvent<Model>({
       mode: 'novice',
       position: [1, 2],
+      source: 'gesture',
       selection: menu.items[0],
       menu,
     });
@@ -191,10 +202,11 @@ describe('MarkingMenuSelectEvent', () => {
     expect(event.menu).toBe(menu);
   });
 
-  it('has no position in standalone mode', () => {
+  it('allows an undefined position in standalone mode', () => {
     const event = new MarkingMenuSelectEvent<Model>({
       mode: 'standalone',
       position: undefined,
+      source: 'keyboard',
       selection: menu.items[0],
       menu,
     });
@@ -208,6 +220,7 @@ describe('MarkingMenuSelectEvent', () => {
     const event = new MarkingMenuSelectEvent<Model>({
       mode: 'expert',
       position: [1, 2],
+      source: 'gesture',
       selection: menu.items[0],
       menu: undefined,
       recognition,
@@ -220,6 +233,7 @@ describe('MarkingMenuSelectEvent', () => {
     const event = new MarkingMenuSelectEvent<Model>({
       mode: 'expert',
       position: [1, 2],
+      source: 'gesture',
       selection: menu.items[0],
       menu: undefined,
     });
@@ -234,6 +248,7 @@ describe('MarkingMenuCancelEvent', () => {
     const event = new MarkingMenuCancelEvent<Model>({
       mode: 'novice',
       position: [1, 2],
+      source: 'gesture',
       active: menu.items[0],
       menu,
       reason: 'no-selection',
@@ -246,10 +261,11 @@ describe('MarkingMenuCancelEvent', () => {
     expect(event.menu).toBe(menu);
   });
 
-  it('has no position in standalone mode', () => {
+  it('allows an undefined position in standalone mode', () => {
     const event = new MarkingMenuCancelEvent<Model>({
       mode: 'standalone',
       position: undefined,
+      source: 'focus-loss',
       active: undefined,
       menu,
       reason: 'dismissed',
@@ -257,6 +273,7 @@ describe('MarkingMenuCancelEvent', () => {
 
     expect(event.mode).toBe('standalone');
     expect(event.position).toBeUndefined();
+    expect(event.source).toBe('focus-loss');
     expect(event.reason).toBe('dismissed');
     expect(event.recognition).toBeUndefined();
   });
@@ -265,6 +282,7 @@ describe('MarkingMenuCancelEvent', () => {
     const event = new MarkingMenuCancelEvent<Model>({
       mode: 'expert',
       position: [1, 2],
+      source: 'gesture',
       active: undefined,
       menu: undefined,
       reason: 'no-selection',
@@ -278,6 +296,7 @@ describe('MarkingMenuCancelEvent', () => {
     const event = new MarkingMenuCancelEvent<Model>({
       mode: 'startup',
       position: [1, 2],
+      source: 'gesture',
       active: undefined,
       menu: undefined,
       reason: 'interrupted',

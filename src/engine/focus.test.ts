@@ -69,6 +69,7 @@ const createFixture = () => {
 const openStandalone = new MarkingMenuOpenEvent<typeof model, 'standalone'>({
   mode: 'standalone',
   position: undefined,
+  source: 'api',
   menu: model,
   menuCenter: [0, 0],
 });
@@ -76,6 +77,7 @@ const changeStandalone = (active: (typeof model.items)[number] | undefined) =>
   new MarkingMenuChangeEvent<typeof model, 'standalone'>({
     mode: 'standalone',
     position: undefined,
+    source: 'keyboard',
     active,
     previousActive: undefined,
     menu: model,
@@ -84,6 +86,7 @@ const cancelStandalone = new MarkingMenuCancelEvent<typeof model, 'standalone'>(
   {
     mode: 'standalone',
     position: undefined,
+    source: 'keyboard',
     active: undefined,
     menu: model,
     reason: 'dismissed',
@@ -93,6 +96,7 @@ const selectStandalone = new MarkingMenuSelectEvent<typeof model, 'standalone'>(
   {
     mode: 'standalone',
     position: undefined,
+    source: 'keyboard',
     selection: down,
     menu: model,
   },
@@ -124,6 +128,7 @@ describe('manageFocus', () => {
         new MarkingMenuOpenEvent<typeof model, 'novice'>({
           mode: 'novice',
           position: [0, 0],
+          source: 'gesture',
           menu: model,
           menuCenter: [0, 0],
         }),
@@ -133,6 +138,7 @@ describe('manageFocus', () => {
         new MarkingMenuChangeEvent<typeof model, 'novice'>({
           mode: 'novice',
           position: [0, 0],
+          source: 'gesture',
           active: right,
           previousActive: undefined,
           menu: model,

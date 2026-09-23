@@ -40,6 +40,7 @@ export function emitInactiveMove(
     new MarkingMenuMoveEvent<ModelNode>({
       mode,
       position,
+      source: 'gesture',
       active: undefined,
       menu: undefined,
     }),
@@ -177,6 +178,7 @@ export function emitTermination(
       new MarkingMenuCancelEvent<ModelNode>({
         mode: from,
         position,
+        source: 'gesture',
         active,
         menu,
         reason: outcome.reason,
@@ -189,6 +191,7 @@ export function emitTermination(
       new MarkingMenuSelectEvent({
         mode: from,
         position,
+        source: 'gesture',
         selection: outcome.selection,
         menu,
         recognition,

@@ -105,10 +105,10 @@ describe('createController listeners', () => {
     });
   });
 
-  it('narrows `position` on `mode`, so a standalone event has none', () => {
+  it('widens `position` on `mode`: a point or undefined in standalone, always a point outside it', () => {
     controller.on('cancel', (event) => {
       if (event.mode === 'standalone') {
-        expectTypeOf(event.position).toEqualTypeOf<undefined>();
+        expectTypeOf(event.position).toEqualTypeOf<Point | undefined>();
       } else {
         expectTypeOf(event.position).toEqualTypeOf<Point>();
       }
