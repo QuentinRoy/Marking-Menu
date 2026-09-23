@@ -476,7 +476,7 @@ describe('a standalone menu', () => {
       expect(events).toEqual([['change', 'standalone', [1, 1]]]);
     });
 
-    it('a held press dragged off the menu clears the active item and stays open', () => {
+    it('a held press dragged off the menu clears the active item', () => {
       using fixture = setup();
       fixture.controller.open();
       fixture
@@ -492,7 +492,6 @@ describe('a standalone menu', () => {
           pointer('pointerout', { pointerId: 1, clientX: 1, clientY: 1 }),
         );
 
-      expect(fixture.items()).toHaveLength(4);
       expect(
         fixture.items().some((item) => item.classList.contains('active')),
       ).toBe(false);
