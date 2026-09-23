@@ -541,6 +541,31 @@ describe('a standalone menu', () => {
       expect(events).toEqual([['change', 'standalone', [0, 0]]]);
     });
 
+    it('a press held across a reopen does not act on the new menu when released', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+      const reopen = () => {
+        fixture.controller.off('cancel', reopen);
+        fixture.controller.open();
+      };
+      fixture.controller.on('cancel', reopen);
+      fixture.press('Escape');
+      const events = record(fixture.controller);
+
+      fixture
+        .items()[2]
+        ?.dispatchEvent(
+          pointer('pointerup', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+
+      expect(events).toEqual([]);
+    });
+
     it('a completed press on a leaf selects it and gives focus back', () => {
       using fixture = setup();
       fixture.controller.open();
