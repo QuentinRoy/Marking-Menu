@@ -226,6 +226,7 @@ describe('navigationMachine standalone phase', () => {
             center: [50, 60],
             activeKey: undefined,
             tabStopKey: rightItem.key,
+            pointerTarget: true,
           },
           upperStroke: undefined,
           lowerStroke: undefined,
@@ -627,6 +628,7 @@ describe('navigationMachine standalone phase', () => {
         center: [50, 60],
         activeKey: rightUpItem.key,
         tabStopKey: rightUpItem.key,
+        pointerTarget: true,
       });
     });
 

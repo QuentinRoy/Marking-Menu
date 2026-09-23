@@ -124,7 +124,7 @@ menu.on('cancel', (event) => {
 
 ### `open()` and `close()`
 
-`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut, and lets the [keyboard](#keyboard) operate it. This is a standalone menu. `menu.close()` closes it and fires `cancel`. The menu also closes when focus leaves it. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input goes to the page and starts no gesture until the menu closes, by selection, cancellation, or `close()`.
+`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut, and lets the [keyboard](#keyboard) operate it. This is a standalone menu. `menu.close()` closes it and fires `cancel`. The menu also closes when focus leaves it. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input landing on the menu's own items stays with it; everywhere else it reaches the page. Either way, it starts no gesture until the menu closes, by selection, cancellation, or `close()`.
 
 | Option     | Default              | Purpose                                                                                            |
 | ---------- | -------------------- | -------------------------------------------------------------------------------------------------- |
@@ -245,12 +245,15 @@ Browsers without `text-box-trim` and `text-box-edge` support add `0.2em` to the 
 
 ### Connector properties
 
-| Property                            | Default           | Purpose                               |
-| ----------------------------------- | ----------------- | ------------------------------------- |
-| `--mm-connector-thickness`          | `4px`             | Connector thickness.                  |
-| `--mm-inner-connector-color`        | `transparent`     | Center-to-ring connector color.       |
-| `--mm-outer-connector-color`        | Fill color        | Ring-to-plate connector color.        |
-| `--mm-outer-connector-color-active` | Active fill color | Active ring-to-plate connector color. |
+| Property                            | Default                       | Purpose                                  |
+| ----------------------------------- | ----------------------------- | ---------------------------------------- |
+| `--mm-inner-connector-thickness`    | `0`                           | Center-to-ring connector thickness.      |
+| `--mm-outer-connector-thickness`    | `4px`                         | Ring-to-plate connector thickness.       |
+| `--mm-connector-color`              | Fill color                    | Fallback color for both connectors.      |
+| `--mm-connector-color-active`       | Active fill color             | Fallback color for the active connector. |
+| `--mm-inner-connector-color`        | `--mm-connector-color`        | Center-to-ring connector color.          |
+| `--mm-outer-connector-color`        | `--mm-connector-color`        | Ring-to-plate connector color.           |
+| `--mm-outer-connector-color-active` | `--mm-connector-color-active` | Active ring-to-plate connector color.    |
 
 ### Layout clearance properties
 
@@ -376,7 +379,7 @@ Replace the old custom properties as follows:
 | `--item-radius`            | `--mm-plate-corner-radius`.                                     |
 | `--menu-radius`            | `--mm-wedge-thickness`, measured outward from `deadZoneRadius`. |
 | `--center-radius`          | None. It was unused.                                            |
-| `--line-thickness`         | `--mm-connector-thickness`.                                     |
+| `--line-thickness`         | `--mm-outer-connector-thickness`.                               |
 | `--line-color`             | `--mm-outer-connector-color`.                                   |
 | `--active-line-color`      | `--mm-outer-connector-color-active`.                            |
 

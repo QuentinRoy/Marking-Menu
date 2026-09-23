@@ -147,9 +147,11 @@ test('outer connector defaults to the plate background', async () => {
   await using _drag = await openMenu(menu.surface);
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
-  const connector = root?.querySelector('.marking-menu-outer-connector');
+  // `:scope` doesn't resolve against a bare `ShadowRoot`, only an `Element`.
+  // eslint-disable-next-line unicorn/prefer-scoped-selector
+  const connector = root?.querySelector('.marking-menu-outer-connector rect');
   const plate = root?.querySelector('.marking-menu-plate');
-  expect(getComputedStyle(connector as Element).backgroundColor).toBe(
+  expect(getComputedStyle(connector as Element).fill).toBe(
     getComputedStyle(plate as Element).backgroundColor,
   );
 });
@@ -160,10 +162,10 @@ test('outer connector follows --mm-fill', async () => {
   await using _drag = await openMenu(menu.surface);
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
-  const connector = root?.querySelector('.marking-menu-outer-connector');
-  expect(getComputedStyle(connector as Element).backgroundColor).toBe(
-    'rgb(18, 52, 86)',
-  );
+  // `:scope` doesn't resolve against a bare `ShadowRoot`, only an `Element`.
+  // eslint-disable-next-line unicorn/prefer-scoped-selector
+  const connector = root?.querySelector('.marking-menu-outer-connector rect');
+  expect(getComputedStyle(connector as Element).fill).toBe('rgb(18, 52, 86)');
 });
 
 test('default menu open', async () => {

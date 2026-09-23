@@ -37,18 +37,27 @@
   );
 
   /* Connectors */
-  --resolved-connector-thickness: var(--mm-connector-thickness, 4px);
+  --resolved-connector-color: var(--mm-connector-color, var(--resolved-fill));
+  --resolved-connector-color-active: var(
+    --mm-connector-color-active,
+    var(--resolved-fill-active)
+  );
   --resolved-inner-connector-color: var(
     --mm-inner-connector-color,
-    transparent
+    var(--resolved-connector-color)
   );
   --resolved-outer-connector-color: var(
     --mm-outer-connector-color,
-    var(--resolved-fill)
+    var(--resolved-connector-color)
   );
   --resolved-outer-connector-color-active: var(
     --mm-outer-connector-color-active,
-    var(--resolved-fill-active)
+    var(--resolved-connector-color-active)
+  );
+  --resolved-inner-connector-thickness: var(--mm-inner-connector-thickness, 0);
+  --resolved-outer-connector-thickness: var(
+    --mm-outer-connector-thickness,
+    4px
   );
 
   /* Plates */
@@ -179,6 +188,10 @@
   pointer-events: auto;
 }
 
+.marking-menu-layer.marking-menu--pointer-target .marking-menu-item {
+  cursor: pointer;
+}
+
 .marking-menu-item {
   --angle: 0deg;
   --cosine: 1;
@@ -274,25 +287,54 @@
 .marking-menu-inner-connector,
 .marking-menu-outer-connector {
   position: absolute;
-  top: calc(var(--resolved-connector-thickness) / -2);
-  height: var(--resolved-connector-thickness);
+  overflow: visible;
+  pointer-events: none;
   transform-origin: center left;
 }
 
 .marking-menu-inner-connector {
-  width: var(--inner-radius);
-  background-color: var(--resolved-inner-connector-color);
+  top: calc(var(--resolved-inner-connector-thickness) / -2);
+  height: var(--resolved-inner-connector-thickness);
   transform: rotate(var(--angle));
 }
 
 .marking-menu-outer-connector {
+  top: calc(var(--resolved-outer-connector-thickness) / -2);
+  height: var(--resolved-outer-connector-thickness);
+  transform: rotate(var(--angle)) translateX(var(--resolved-outer-radius));
+}
+
+/* `width`/`height` are CSS-stylable on `rect` (SVG2), so every existing
+   sizing expression carries over unchanged from the old connector `<div>`s
+   onto the `<rect>` painting each one: a transparent fill or zero size
+   genuinely receives no pointer events, the same guarantee the wedge above
+   already has. `height` repeats the wrapper's own (rather than `100%`,
+   resolved against the wrapper's viewport): WebKit zeroes a `<rect>`'s
+   *whole* box, width included, when its height is a percentage of a
+   zero-height SVG viewport, which the inner connector is by default. */
+.marking-menu-inner-connector rect {
+  width: var(--inner-radius);
+  height: var(--resolved-inner-connector-thickness);
+  fill: var(--resolved-inner-connector-color);
+}
+
+.marking-menu-outer-connector rect {
   width: calc(
     var(--layout-connector-contact-radius, var(--resolved-outer-radius)) +
       var(--resolved-plate-corner-radius) +
-      var(--resolved-connector-thickness) - var(--resolved-outer-radius)
+      var(--resolved-outer-connector-thickness) - var(--resolved-outer-radius)
   );
-  background-color: var(--resolved-outer-connector-color);
-  transform: rotate(var(--angle)) translateX(var(--resolved-outer-radius));
+  height: var(--resolved-outer-connector-thickness);
+  fill: var(--resolved-outer-connector-color);
+}
+
+.marking-menu-layer.marking-menu--pointer-target
+  .marking-menu-inner-connector
+  rect,
+.marking-menu-layer.marking-menu--pointer-target
+  .marking-menu-outer-connector
+  rect {
+  pointer-events: auto;
 }
 
 .marking-menu-item.active {
@@ -310,8 +352,8 @@
   font-weight: bolder;
 }
 
-.marking-menu-item.active .marking-menu-outer-connector {
-  background-color: var(--resolved-outer-connector-color-active);
+.marking-menu-item.active .marking-menu-outer-connector rect {
+  fill: var(--resolved-outer-connector-color-active);
 }
 
 .marking-menu-layout-probe {

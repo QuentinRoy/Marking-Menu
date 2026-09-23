@@ -1,5 +1,9 @@
-import { userEvent } from 'vitest/browser';
+import { commands, userEvent } from 'vitest/browser';
 import { expectFocused, mountMenu } from './__fixtures__/browser-menu.js';
+
+afterEach(async () => {
+  await commands.emulateMedia({ forcedColors: 'none' });
+});
 
 // "Right" is pinned to the right, so the labels match the ring whatever the
 // default start is.
@@ -205,4 +209,38 @@ test('a display-only menu closes on focus loss only after focus enters it', asyn
 
   await expect.poll(() => menu.after === document.activeElement).toBe(true);
   expect(menu.events.at(-1)).toBe('cancel:standalone');
+});
+
+test('a standalone menu is a pointer target, with items showing a pointer cursor', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+  await expectFocused('menuitem', { name: 'Right' });
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  const layer = root?.querySelector('.marking-menu-layer');
+  expect(layer?.classList.contains('marking-menu--pointer-target')).toBe(true);
+
+  const item = root?.querySelector('.marking-menu-item');
+  expect(getComputedStyle(item as Element).cursor).toBe('pointer');
+});
+
+test('in a standalone menu, the outer connector switches from a system color to another when active, under forced colors', async () => {
+  await commands.emulateMedia({ forcedColors: 'active' });
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+  await expectFocused('menuitem', { name: 'Right' });
+
+  const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
+  // `:scope` doesn't resolve against a bare `ShadowRoot`, only an `Element`.
+  // eslint-disable-next-line unicorn/prefer-scoped-selector
+  const connector = root?.querySelector(
+    '.marking-menu-item.active .marking-menu-outer-connector rect',
+  ) as Element;
+  const activeColor = getComputedStyle(connector).fill;
+
+  await userEvent.keyboard('{ArrowDown}');
+  const restingColor = getComputedStyle(connector).fill;
+
+  expect(activeColor).not.toBe(restingColor);
+  expect(activeColor).not.toBe('none');
 });

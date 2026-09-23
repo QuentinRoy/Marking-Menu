@@ -114,9 +114,8 @@ test('decorative surfaces stay out of the accessibility tree', async () => {
     .poll(() => root?.querySelector('.marking-menu-indicator-background'))
     .not.toBeNull();
 
-  const decorations = root?.querySelectorAll(
-    'svg, .marking-menu-inner-connector, .marking-menu-outer-connector',
-  );
+  // Connectors are `<svg>` wrappers now too, same as wedges and strokes.
+  const decorations = root?.querySelectorAll('svg');
   // 4 wedges, 8 connectors, 2 strokes, 2 indicator layers, 1 feedback.
   expect(decorations).toHaveLength(17);
   for (const element of decorations ?? []) {

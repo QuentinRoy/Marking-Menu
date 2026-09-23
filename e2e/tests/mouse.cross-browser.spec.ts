@@ -130,12 +130,18 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
         item.querySelector('.marking-menu-label')?.textContent === 'Right',
     );
     const innerConnector =
-      rightItem?.querySelector<HTMLElement>('.marking-menu-inner-connector') ??
+      rightItem?.querySelector<SVGElement>('.marking-menu-inner-connector') ??
       undefined;
     const outerConnector =
-      rightItem?.querySelector<HTMLElement>('.marking-menu-outer-connector') ??
+      rightItem?.querySelector<SVGElement>('.marking-menu-outer-connector') ??
       undefined;
-    if (innerConnector === undefined || outerConnector === undefined) {
+    const innerRect =
+      innerConnector?.querySelector<SVGRectElement>('rect') ?? undefined;
+    if (
+      innerConnector === undefined ||
+      outerConnector === undefined ||
+      innerRect === undefined
+    ) {
       throw new Error('Menu connector is missing.');
     }
 
@@ -143,8 +149,16 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
       // Indices into the fixture's array order (`e2e/fixture/main.ts`):
       // "others" (index 4) points down, "up" (index 0) points up.
       down: wedge(4),
-      innerColor: getComputedStyle(innerConnector).backgroundColor,
-      innerWidth: innerConnector.getBoundingClientRect().width,
+      // Read via computed style, not `getBoundingClientRect()`/`getBBox()`:
+      // WebKit's `getBoundingClientRect()` zeroes a zero-height `<rect>`'s
+      // width too, and its `getBBox()` ignores CSS-set geometry (SVG2)
+      // entirely, reporting only XML geometry attributes.
+      // Zero-thickness by default: invisible without needing a transparent
+      // fill (paint-based hit-testing, same guarantee as the wedge).
+      // eslint-disable-next-line unicorn/prefer-number-coercion -- strips "px"
+      innerHeight: Number.parseFloat(getComputedStyle(innerRect).height),
+      // eslint-disable-next-line unicorn/prefer-number-coercion -- strips "px"
+      innerWidth: Number.parseFloat(getComputedStyle(innerRect).width),
       outerOffset:
         outerConnector.getBoundingClientRect().x -
         innerConnector.getBoundingClientRect().x,
@@ -154,7 +168,7 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
 
   expect(geometry.down.y + geometry.down.height / 2).toBeGreaterThan(0);
   expect(geometry.up.y + geometry.up.height / 2).toBeLessThan(0);
-  expect(geometry.innerColor).toBe('rgba(0, 0, 0, 0)');
+  expect(geometry.innerHeight).toBe(0);
   expect(geometry.innerWidth).toBe(40);
   expect(geometry.outerOffset).toBe(80);
 
@@ -180,19 +194,19 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
       ...(root?.querySelectorAll<HTMLElement>('.marking-menu-item') ?? []),
     ].find((item) => !item.classList.contains('active'));
     const innerConnector =
-      restingItem?.querySelector<HTMLElement>(
-        ':scope > .marking-menu-inner-connector',
+      restingItem?.querySelector<SVGRectElement>(
+        ':scope > .marking-menu-inner-connector rect',
       ) ?? undefined;
     const outerConnector =
-      restingItem?.querySelector<HTMLElement>(
-        ':scope > .marking-menu-outer-connector',
+      restingItem?.querySelector<SVGRectElement>(
+        ':scope > .marking-menu-outer-connector rect',
       ) ?? undefined;
     const activeItem =
       root?.querySelector<HTMLElement>('.marking-menu-item.active') ??
       undefined;
     const activeOuterConnector =
-      activeItem?.querySelector<HTMLElement>(
-        ':scope > .marking-menu-outer-connector',
+      activeItem?.querySelector<SVGRectElement>(
+        ':scope > .marking-menu-outer-connector rect',
       ) ?? undefined;
     if (
       innerConnector === undefined ||
@@ -203,9 +217,9 @@ test('novice mode: wedges and connectors follow the menu directions', async ({
     }
 
     return {
-      inner: getComputedStyle(innerConnector).backgroundColor,
-      outer: getComputedStyle(outerConnector).backgroundColor,
-      outerActive: getComputedStyle(activeOuterConnector).backgroundColor,
+      inner: getComputedStyle(innerConnector).fill,
+      outer: getComputedStyle(outerConnector).fill,
+      outerActive: getComputedStyle(activeOuterConnector).fill,
     };
   });
   expect(colors).toEqual({

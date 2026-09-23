@@ -500,7 +500,7 @@ describe('createMenu', () => {
     expect(items).toHaveLength(8);
     for (const item of items) {
       const plate = item.querySelector<HTMLElement>('.marking-menu-plate');
-      const connector = item.querySelector<HTMLElement>(
+      const connector = item.querySelector<SVGElement>(
         '.marking-menu-outer-connector',
       );
       expect(plate?.style.getPropertyValue('--layout-left')).not.toBe('');
@@ -563,7 +563,7 @@ describe('createMenu', () => {
     const connectorContactRadius = (parent: HTMLElement): number => {
       const width =
         getItems(parent)[0]
-          ?.querySelector<HTMLElement>('.marking-menu-outer-connector')
+          ?.querySelector<SVGElement>('.marking-menu-outer-connector')
           ?.style.getPropertyValue('--layout-connector-contact-radius') ?? '';
 
       return Number(width.slice(0, -2));

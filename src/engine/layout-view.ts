@@ -16,6 +16,11 @@ export type LayoutView<MenuModel = MenuLayoutModel> = {
         // The one item the keyboard can reach with Tab. Only a standalone
         // menu has one: a gesture is driven by the pointer.
         readonly tabStopKey: string | undefined;
+        // Whether the menu's items and wedges accept pointer events (see
+        // `createMenu`'s `pointerTarget` option). Only a standalone menu is
+        // operated directly by the pointer; a gesture reads strokes on the
+        // surface behind the menu instead.
+        readonly pointerTarget: boolean;
       };
   readonly upperStroke: readonly Point[] | undefined;
   readonly lowerStroke: readonly Point[] | undefined;
@@ -114,6 +119,7 @@ export function projectLayout<
           center: state.menuCenter,
           activeKey: active?.key ?? undefined,
           tabStopKey: undefined,
+          pointerTarget: false,
         },
         upperStroke: noviceUpperStroke(state),
         lowerStroke: state.lowerStroke,
@@ -139,6 +145,7 @@ export function projectLayout<
           activeKey,
           // With nothing active yet, Tab lands on the first item.
           tabStopKey: activeKey ?? menu.items[0]?.key,
+          pointerTarget: true,
         },
         upperStroke: undefined,
         lowerStroke: undefined,
