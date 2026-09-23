@@ -122,8 +122,8 @@ export function createStandalonePointerSource({
     });
   };
 
-  // On the document: a held contact can be released anywhere.
-  const onPointerUp = (event: PointerEvent): void => {
+  // A held contact can be released anywhere.
+  const onDocumentPointerUp = (event: PointerEvent): void => {
     if (event.pointerId !== activePointerId) {
       return;
     }
@@ -192,7 +192,7 @@ export function createStandalonePointerSource({
   parent.addEventListener('pointerout', onPointerOut);
   parent.addEventListener('pointercancel', onPointerCancel);
   doc.addEventListener('pointerdown', onOutsidePointerDown, { capture: true });
-  doc.addEventListener('pointerup', onPointerUp, { capture: true });
+  doc.addEventListener('pointerup', onDocumentPointerUp, { capture: true });
 
   return {
     dispose() {
@@ -203,7 +203,9 @@ export function createStandalonePointerSource({
       doc.removeEventListener('pointerdown', onOutsidePointerDown, {
         capture: true,
       });
-      doc.removeEventListener('pointerup', onPointerUp, { capture: true });
+      doc.removeEventListener('pointerup', onDocumentPointerUp, {
+        capture: true,
+      });
     },
   };
 }

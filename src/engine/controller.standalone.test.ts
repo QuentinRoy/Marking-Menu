@@ -476,7 +476,7 @@ describe('a standalone menu', () => {
       expect(events).toEqual([['change', 'standalone', [1, 1]]]);
     });
 
-    it('a held press dragged off the menu clears the active item', () => {
+    it('a held press dragged off the menu clears the active item and stays open', () => {
       using fixture = setup();
       fixture.controller.open();
       fixture
