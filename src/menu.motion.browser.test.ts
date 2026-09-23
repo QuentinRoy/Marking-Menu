@@ -121,17 +121,17 @@ test('the outer connector switches from a system color to another when active, u
       item.querySelector('.marking-menu-label')?.textContent === 'Right',
   );
   const connector = rightItem?.querySelector(
-    '.marking-menu-outer-connector',
+    ':scope .marking-menu-outer-connector rect',
   ) as Element;
-  const restingColor = getComputedStyle(connector).backgroundColor;
+  const restingColor = getComputedStyle(connector).fill;
 
   await drag.moveTo(
     offset(drag.at, TOP_LEVEL_ITEMS.right.angle, ACTIVE_RADIUS),
   );
-  const activeColor = getComputedStyle(connector).backgroundColor;
+  const activeColor = getComputedStyle(connector).fill;
 
   expect(activeColor).not.toBe(restingColor);
-  expect(activeColor).not.toBe('rgba(0, 0, 0, 0)');
+  expect(activeColor).not.toBe('none');
 });
 
 test('menu open with no active item under forced colors', async () => {

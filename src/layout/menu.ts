@@ -154,6 +154,25 @@ const isElement = (parent: HTMLElement | ShadowRoot): parent is HTMLElement =>
 const isShadowRoot = (node: Node): node is ShadowRoot =>
   node.nodeType === Node.DOCUMENT_FRAGMENT_NODE && 'host' in node;
 
+const svgNamespace = 'http://www.w3.org/2000/svg';
+
+// `className` (the existing `marking-menu-inner-connector`/
+// `marking-menu-outer-connector` selector) stays on the `<svg>` wrapper, not
+// the `<rect>`: `menu.css` and callers' `.style.setProperty` keep targeting
+// the same element as before, and the custom properties they set still
+// reach the `rect` by inheritance.
+function appendConnector(
+  itemElement: HTMLElement,
+  className: string,
+  doc: Document,
+): void {
+  const svg = doc.createElementNS(svgNamespace, 'svg');
+  svg.classList.add(className);
+  svg.ariaHidden = 'true';
+  svg.append(doc.createElementNS(svgNamespace, 'rect'));
+  itemElement.append(svg);
+}
+
 const template = (
   {
     items,
@@ -232,15 +251,8 @@ const template = (
     // CSS y grows downward, unlike label layout's y-axis.
     elt.style.setProperty('--cosine', `${Math.cos(-radAngle)}`);
     elt.style.setProperty('--sine', `${Math.sin(-radAngle)}`);
-    const innerConnector = doc.createElement('div');
-    innerConnector.className = 'marking-menu-inner-connector';
-    innerConnector.ariaHidden = 'true';
-    elt.append(innerConnector);
-
-    const outerConnector = doc.createElement('div');
-    outerConnector.className = 'marking-menu-outer-connector';
-    outerConnector.ariaHidden = 'true';
-    elt.append(outerConnector);
+    appendConnector(elt, 'marking-menu-inner-connector', doc);
+    appendConnector(elt, 'marking-menu-outer-connector', doc);
 
     const plateElt = doc.createElement('div');
     plateElt.className = 'marking-menu-plate';
@@ -255,8 +267,6 @@ const template = (
 
   return { main, root, probes, itemElements, isOwnHost };
 };
-
-const svgNamespace = 'http://www.w3.org/2000/svg';
 
 const polar = (angle: number, radius: number): Point => [
   Math.cos(angle) * radius,
@@ -536,7 +546,7 @@ function applySolvedLayout(
   });
   const connectorElements = itemElements.map((element) => {
     const connector =
-      element.querySelector<HTMLElement>('.marking-menu-outer-connector') ??
+      element.querySelector<SVGElement>('.marking-menu-outer-connector') ??
       undefined;
     if (connector === undefined) {
       throw new Error('Menu item element is missing its connector.');
