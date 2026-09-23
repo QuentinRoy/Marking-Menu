@@ -87,9 +87,9 @@ type MachineInputs = {
   // The standalone pointer source's own four intents: the pointer moving
   // over the displayed level (hover, or a held contact dragging across it),
   // a completed activation, a canceled contact, and a press or release
-  // outside the menu. Named
-  // apart from the gesture's `pointer*` family above: a standalone menu's
-  // pointer source is a distinct listener, never a live gesture's.
+  // outside the menu. Named apart from the gesture's `pointer*` family
+  // above: a standalone menu's pointer source is a distinct listener, never
+  // a live gesture's.
   standalonePointerMove: {
     readonly position: Point;
     readonly itemKey: string | undefined;
@@ -535,8 +535,8 @@ export const navigationMachine = machine({
         : { model, options };
     },
 
-    // An outside primary press dismisses the session from any level,
-    // independently of focus loss.
+    // A primary press, or a held one released, outside the menu dismisses
+    // the session from any level, independently of focus loss.
     'standalone -standalonePointerOutside> idle': backToIdle,
 
     // Every state a gesture can be in ends the same way, back to idle's own

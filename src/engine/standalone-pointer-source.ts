@@ -55,10 +55,8 @@ export function createStandalonePointerSource({
     event.isPrimary && event.button === 0;
 
   /**
-   Whether `event` originated inside the displayed level's own layer: a
-   press or move over the rest of `parent` (outside the menu entirely, or
-   over a gap between items the menu leaves unpainted) is none of this
-   source's business, and, for a press, is the outside listener's instead.
+   Whether `event` originated inside the displayed level's own layer. The
+   rest of `parent`, gaps between items included, is outside the menu.
    */
   const isInLayer = (event: PointerEvent): boolean => {
     const layer = getMenu()?.layer;

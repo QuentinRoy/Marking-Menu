@@ -149,7 +149,7 @@ Events from a standalone menu have `mode: 'standalone'`. The menu fires `open` f
 
 ### Display only
 
-`menu.open({ focus: false })` only draws the menu. Focus stays where it is and the first item is reachable with Tab, but a deliberate keyboard or pointer interaction can still move focus into the menu, for example on entering a submenu. Closing the menu restores focus to whatever held it before `open()`, the same as when the menu takes focus itself — except a press outside the menu, which leaves focus wherever it landed instead. Close the menu with `close()`, with the keyboard once an item has focus, with the pointer, or by moving focus away after entering it.
+`menu.open({ focus: false })` only draws the menu. Focus stays where it is and the first item is reachable with Tab, but a deliberate keyboard or pointer interaction can still move focus into the menu, for example on entering a submenu. Closing the menu restores focus to whatever held it before `open()`, the same as when the menu takes focus itself — except a press or release outside the menu, which leaves focus wherever it landed instead. Close the menu with `close()`, with the keyboard once an item has focus, with the pointer, or by moving focus away after entering it.
 
 ## Item layout
 
