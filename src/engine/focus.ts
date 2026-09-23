@@ -115,7 +115,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
 
   const onChange = (event: MarkingMenuChangeEvent<Model>): void => {
     clearPendingFocus();
-    const { active } = event;
+    const { activeItem: active } = event;
     if (active === undefined) {
       return;
     }

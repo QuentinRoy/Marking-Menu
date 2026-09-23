@@ -74,7 +74,7 @@ test('commit → render → dispatch ordering: a listener observes the complete 
     // `change`: the DOM's active item must already match what the event
     // itself reports as active. `data-item-id` carries the model's internal
     // per-level `key`, not the consumer-supplied `id`, hence comparing
-    // against `event.active.key`.
+    // against `event.activeItem.key`.
     mm.on('change', (event) => {
       const activeElement = element
         .querySelector('.marking-menu')
@@ -84,7 +84,7 @@ test('commit → render → dispatch ordering: a listener observes the complete 
           activeElement instanceof HTMLElement
             ? (activeElement.dataset.itemId ?? undefined)
             : undefined,
-        eventActiveId: event.active?.key ?? undefined,
+        eventActiveId: event.activeItem?.key ?? undefined,
         type: 'change',
       });
     });

@@ -120,7 +120,7 @@ Use `menu.on(type, listener)` to register a listener and `menu.off(type, listene
 | `select` | A gesture, or a menu shown with `open()`, ends with a selected item. |
 | `cancel` | A gesture, or a menu shown with `open()`, ends without a selection.  |
 
-`select` carries the selected item as `event.selection`, including its `id` and `label`. `cancel` carries `event.reason`: `no-selection` when a gesture ends with nothing to select, `interrupted` when the browser cancels the pointer, or `dismissed` when `close()`, Escape, Tab, or focus leaving the menu closes one shown with `open()`.
+`select` carries the selected item as `event.selection`, including its `id` and `label`. `move`, `change`, and `cancel` carry the item under the pointer as `event.activeItem`, and `change` also carries `event.previousActiveItem`. Both are `undefined` when no item is under the pointer. `cancel` carries `event.reason`: `no-selection` when a gesture ends with nothing to select, `interrupted` when the browser cancels the pointer, or `dismissed` when `close()`, Escape, Tab, or focus leaving the menu closes one shown with `open()`.
 
 Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close), operated with the keyboard or a pointer. Every event also includes `source`, what caused it: `gesture` for a drawn stroke, `pointer`, `keyboard`, `api` for an `open()` or `close()` call, or `focus-loss`. Every event also includes `position`, a viewport `[x, y]` pair; outside `standalone` mode it is always one, and inside it, only when `source` is `pointer`. Checking `mode` narrows `position` in TypeScript:
 

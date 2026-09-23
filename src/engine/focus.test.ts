@@ -78,8 +78,8 @@ const changeStandalone = (active: (typeof model.items)[number] | undefined) =>
     mode: 'standalone',
     position: undefined,
     source: 'keyboard',
-    active,
-    previousActive: undefined,
+    activeItem: active,
+    previousActiveItem: undefined,
     menu: model,
   });
 const cancelStandalone = new MarkingMenuCancelEvent<typeof model, 'standalone'>(
@@ -87,7 +87,7 @@ const cancelStandalone = new MarkingMenuCancelEvent<typeof model, 'standalone'>(
     mode: 'standalone',
     position: undefined,
     source: 'keyboard',
-    active: undefined,
+    activeItem: undefined,
     menu: model,
     reason: 'dismissed',
   },
@@ -99,7 +99,7 @@ const cancelStandaloneOutsidePress = new MarkingMenuCancelEvent<
   mode: 'standalone',
   position: [0, 0],
   source: 'pointer',
-  active: undefined,
+  activeItem: undefined,
   menu: model,
   reason: 'dismissed',
 });
@@ -110,8 +110,8 @@ const changeStandalonePointer = (
     mode: 'standalone',
     position: [0, 0],
     source: 'pointer',
-    active,
-    previousActive: undefined,
+    activeItem: active,
+    previousActiveItem: undefined,
     menu: model,
   });
 // A new level entered by a pointer release, where the machine's own
@@ -174,8 +174,8 @@ describe('manageFocus', () => {
           mode: 'novice',
           position: [0, 0],
           source: 'gesture',
-          active: right,
-          previousActive: undefined,
+          activeItem: right,
+          previousActiveItem: undefined,
           menu: model,
         }),
       );

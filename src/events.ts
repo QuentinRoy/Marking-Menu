@@ -259,14 +259,14 @@ type ActiveMenuData<
   readonly mode: Mode;
   readonly position: StandalonePosition<Mode>;
   readonly source: MarkingMenuEventSource;
-  readonly active: ModelItems<Model> | undefined;
+  readonly activeItem: ModelItems<Model> | undefined;
   readonly menu: ModelMenus<Model> | undefined;
 };
 
 /**
- Dispatched on pointer movement, in every mode. `active` and `menu` are always
- `undefined` in startup and expert, since no menu is open yet for anything to
- be active in.
+ Dispatched on pointer movement, in every mode. `activeItem` and `menu` are
+ always `undefined` in startup and expert, since no menu is open yet for
+ anything to be active in.
  */
 export class MarkingMenuMoveEvent<
   Model extends ModelNode = ModelNode,
@@ -279,22 +279,22 @@ export class MarkingMenuMoveEvent<
     return 'move';
   }
 
-  readonly #active: ModelItems<Model> | undefined;
+  readonly #activeItem: ModelItems<Model> | undefined;
   readonly #menu: ModelMenus<Model> | undefined;
 
   declare readonly type: 'move';
 
   constructor(data: ActiveMenuData<Model, Mode>) {
     super(MarkingMenuMoveEvent.type, data);
-    this.#active = data.active;
+    this.#activeItem = data.activeItem;
     this.#menu = data.menu;
   }
 
   /**
   The item under the pointer, or `undefined` if none is.
   */
-  get active(): ModelItems<Model> | undefined {
-    return this.#active;
+  get activeItem(): ModelItems<Model> | undefined {
+    return this.#activeItem;
   }
 
   /**
@@ -308,7 +308,7 @@ export class MarkingMenuMoveEvent<
 /**
  Dispatched in novice and standalone modes whenever the active item changes:
  the only event that carries both the new and the previous active item, so a
- consumer never has to remember the last `move`'s `active` to animate a
+ consumer never has to remember the last `move`'s `activeItem` to animate a
  highlight transition.
  */
 export class MarkingMenuChangeEvent<
@@ -322,8 +322,8 @@ export class MarkingMenuChangeEvent<
     return 'change';
   }
 
-  readonly #active: ModelItems<Model> | undefined;
-  readonly #previousActive: ModelItems<Model> | undefined;
+  readonly #activeItem: ModelItems<Model> | undefined;
+  readonly #previousActiveItem: ModelItems<Model> | undefined;
   readonly #menu: ModelMenus<Model>;
 
   declare readonly type: 'change';
@@ -332,28 +332,28 @@ export class MarkingMenuChangeEvent<
     readonly mode: Mode;
     readonly position: StandalonePosition<Mode>;
     readonly source: MarkingMenuEventSource;
-    readonly active: ModelItems<Model> | undefined;
-    readonly previousActive: ModelItems<Model> | undefined;
+    readonly activeItem: ModelItems<Model> | undefined;
+    readonly previousActiveItem: ModelItems<Model> | undefined;
     readonly menu: ModelMenus<Model>;
   }) {
     super(MarkingMenuChangeEvent.type, data);
-    this.#active = data.active;
-    this.#previousActive = data.previousActive;
+    this.#activeItem = data.activeItem;
+    this.#previousActiveItem = data.previousActiveItem;
     this.#menu = data.menu;
   }
 
   /**
   The item under the pointer after the change, or `undefined` if none is.
   */
-  get active(): ModelItems<Model> | undefined {
-    return this.#active;
+  get activeItem(): ModelItems<Model> | undefined {
+    return this.#activeItem;
   }
 
   /**
   The item that was active before this change, or `undefined` if none was.
   */
-  get previousActive(): ModelItems<Model> | undefined {
-    return this.#previousActive;
+  get previousActiveItem(): ModelItems<Model> | undefined {
+    return this.#previousActiveItem;
   }
 
   /**
@@ -425,7 +425,7 @@ export class MarkingMenuSelectEvent<
 
 /**
  Dispatched once, as the last event of a gesture, when it ends without a
- selection. `active` is the item that was active at the moment the gesture
+ selection. `activeItem` is the item that was active at the moment the gesture
  was abandoned: `ModelItems`, not `ModelLeaves`, since it need not be one.
  `undefined` carries the genuine "nothing under the pointer" case.
  */
@@ -440,7 +440,7 @@ export class MarkingMenuCancelEvent<
     return 'cancel';
   }
 
-  readonly #active: ModelItems<Model> | undefined;
+  readonly #activeItem: ModelItems<Model> | undefined;
   readonly #menu: ModelMenus<Model> | undefined;
   readonly #reason: MarkingMenuCancelReason<Mode>;
   readonly #recognition: MarkingMenuRecognition | undefined;
@@ -454,7 +454,7 @@ export class MarkingMenuCancelEvent<
     },
   ) {
     super(MarkingMenuCancelEvent.type, data);
-    this.#active = data.active;
+    this.#activeItem = data.activeItem;
     this.#menu = data.menu;
     this.#reason = data.reason;
     this.#recognition = data.recognition;
@@ -463,8 +463,8 @@ export class MarkingMenuCancelEvent<
   /**
   The item that was active when the gesture was abandoned, or `undefined`.
   */
-  get active(): ModelItems<Model> | undefined {
-    return this.#active;
+  get activeItem(): ModelItems<Model> | undefined {
+    return this.#activeItem;
   }
 
   /**

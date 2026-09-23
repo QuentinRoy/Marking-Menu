@@ -269,9 +269,9 @@ export function emitStandaloneMove({
         mode: 'standalone',
         position: undefined,
         source: 'keyboard',
-        active: toData.active,
+        activeItem: toData.active,
         // A new level starts over: `open` already reset the active item.
-        previousActive: isNewLevel ? undefined : fromData.active,
+        previousActiveItem: isNewLevel ? undefined : fromData.active,
         menu,
       }),
     );
@@ -303,8 +303,8 @@ export function emitStandalonePointerChange(
       mode: 'standalone',
       position,
       source: 'pointer',
-      active,
-      previousActive,
+      activeItem: active,
+      previousActiveItem: previousActive,
       menu,
     }),
   );
@@ -332,7 +332,7 @@ export function cancelStandalone({
       mode: 'standalone',
       position,
       source,
-      active,
+      activeItem: active,
       menu: currentMenu(menus),
       reason: 'dismissed',
     }),

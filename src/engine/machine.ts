@@ -640,7 +640,7 @@ export const navigationMachine = machine({
           mode: 'standalone',
           position: inputData.position,
           source: 'pointer',
-          active: toData.active,
+          activeItem: toData.active,
           menu,
         }),
       );
@@ -851,7 +851,7 @@ export const navigationMachine = machine({
           mode: 'novice',
           position: inputData.position,
           source: 'gesture',
-          active: toData.active,
+          activeItem: toData.active,
           menu: toData.menu,
         }),
       );
@@ -863,8 +863,8 @@ export const navigationMachine = machine({
             mode: 'novice',
             position: inputData.position,
             source: 'gesture',
-            active: toData.active,
-            previousActive: fromData.active,
+            activeItem: toData.active,
+            previousActiveItem: fromData.active,
             menu: toData.menu,
           }),
         );

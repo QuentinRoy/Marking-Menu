@@ -79,8 +79,8 @@ describe('navigationMachine standalone phase', () => {
     readonly source: unknown;
     readonly menu: unknown;
     readonly menuCenter: unknown;
-    readonly active: unknown;
-    readonly previousActive: unknown;
+    readonly activeItem: unknown;
+    readonly previousActiveItem: unknown;
     readonly selection: unknown;
     readonly reason: unknown;
     readonly recognition: unknown;
@@ -521,12 +521,12 @@ describe('navigationMachine standalone phase', () => {
       expect(first.mode).toBe('standalone');
       expect(first.position).toBeUndefined();
       expect(first.source).toBe('keyboard');
-      expect(first.active).toBe(rightItem);
-      expect(first.previousActive).toBeUndefined();
+      expect(first.activeItem).toBe(rightItem);
+      expect(first.previousActiveItem).toBeUndefined();
       expect(first.menu).toBe(standaloneModel);
       const second = dataAt(changes, 1);
-      expect(second.active).toBe(downItem);
-      expect(second.previousActive).toBe(rightItem);
+      expect(second.activeItem).toBe(downItem);
+      expect(second.previousActiveItem).toBe(rightItem);
     });
 
     it('highlights the active item in the layout and makes it the tab stop', () => {
@@ -574,7 +574,7 @@ describe('navigationMachine standalone phase', () => {
 
       expect(activeKeyOf(host)).toBe(leftItem.key);
       expect(namesOf(outputs)).toEqual(['change']);
-      expect(outputs[0]?.[1].active).toBe(leftItem);
+      expect(outputs[0]?.[1].activeItem).toBe(leftItem);
     });
 
     it('declines the focus of the item that is already active, so an echo changes nothing', () => {
@@ -619,8 +619,8 @@ describe('navigationMachine standalone phase', () => {
       expect(opened.menu).toBe(rightItem);
       expect(opened.menuCenter).toEqual([50, 60]);
       const changed = dataAt(outputs, 1);
-      expect(changed.active).toBe(rightUpItem);
-      expect(changed.previousActive).toBeUndefined();
+      expect(changed.activeItem).toBe(rightUpItem);
+      expect(changed.previousActiveItem).toBeUndefined();
       expect(changed.menu).toBe(rightItem);
       expect(layouts).toHaveLength(1);
       expect(layouts[0]?.menu).toEqual({
@@ -647,8 +647,8 @@ describe('navigationMachine standalone phase', () => {
       expect(opened.menu).toBe(standaloneModel);
       expect(opened.menuCenter).toEqual([50, 60]);
       const changed = dataAt(outputs, 1);
-      expect(changed.active).toBe(rightItem);
-      expect(changed.previousActive).toBeUndefined();
+      expect(changed.activeItem).toBe(rightItem);
+      expect(changed.previousActiveItem).toBeUndefined();
       expect(layouts[0]?.menu?.model).toBe(standaloneModel);
       expect(layouts[0]?.menu?.activeKey).toBe(rightItem.key);
     });
@@ -751,7 +751,7 @@ describe('navigationMachine standalone phase', () => {
       expect(event.mode).toBe('standalone');
       expect(event.position).toBeUndefined();
       expect(event.source).toBe('api');
-      expect(event.active).toBe(rightUpItem);
+      expect(event.activeItem).toBe(rightUpItem);
       expect(event.menu).toBe(rightItem);
       expect(event.reason).toBe('dismissed');
       expect(event.recognition).toBeUndefined();
@@ -780,7 +780,7 @@ describe('navigationMachine standalone phase', () => {
       expect(host.current.name).toBe('idle');
       const event = dataAt(outputs, 0);
       expect(namesOf(outputs)).toEqual(['cancel']);
-      expect(event.active).toBeUndefined();
+      expect(event.activeItem).toBeUndefined();
       expect(event.menu).toBe(standaloneModel);
       expect(event.source).toBe('keyboard');
       expect(event.reason).toBe('dismissed');
@@ -818,13 +818,13 @@ describe('navigationMachine standalone phase', () => {
       expect(move.mode).toBe('standalone');
       expect(move.position).toEqual([10, 20]);
       expect(move.source).toBe('pointer');
-      expect(move.active).toBe(rightItem);
+      expect(move.activeItem).toBe(rightItem);
       expect(move.menu).toBe(standaloneModel);
       const change = dataAt(outputs, 1);
       expect(change.position).toEqual([10, 20]);
       expect(change.source).toBe('pointer');
-      expect(change.active).toBe(rightItem);
-      expect(change.previousActive).toBeUndefined();
+      expect(change.activeItem).toBe(rightItem);
+      expect(change.previousActiveItem).toBeUndefined();
     });
 
     it('keeps emitting move with no further change while hovering the same item', () => {
@@ -860,8 +860,8 @@ describe('navigationMachine standalone phase', () => {
 
       expect(namesOf(outputs)).toEqual(['move', 'change']);
       const change = dataAt(outputs, 1);
-      expect(change.active).toBe(downItem);
-      expect(change.previousActive).toBe(rightItem);
+      expect(change.activeItem).toBe(downItem);
+      expect(change.previousActiveItem).toBe(rightItem);
     });
 
     it('clears the active item on leaving it, announcing a change', () => {
@@ -880,8 +880,8 @@ describe('navigationMachine standalone phase', () => {
 
       expect(activeKeyOf(host)).toBeUndefined();
       expect(namesOf(outputs)).toEqual(['move', 'change']);
-      expect(dataAt(outputs, 1).active).toBeUndefined();
-      expect(dataAt(outputs, 1).previousActive).toBe(rightItem);
+      expect(dataAt(outputs, 1).activeItem).toBeUndefined();
+      expect(dataAt(outputs, 1).previousActiveItem).toBe(rightItem);
     });
 
     it('sets the active item on contact-down, the same as a hover preview', () => {
@@ -965,8 +965,8 @@ describe('navigationMachine standalone phase', () => {
       const changed = dataAt(outputs, 1);
       expect(changed.position).toEqual([5, 6]);
       expect(changed.source).toBe('pointer');
-      expect(changed.active).toBeUndefined();
-      expect(changed.previousActive).toBe(rightItem);
+      expect(changed.activeItem).toBeUndefined();
+      expect(changed.previousActiveItem).toBe(rightItem);
       expect(changed.menu).toBe(rightItem);
       expect(activeKeyOf(host)).toBeUndefined();
     });
@@ -988,7 +988,7 @@ describe('navigationMachine standalone phase', () => {
       expect(host.current.name).toBe('standalone');
       expect(namesOf(outputs)).toEqual(['change']);
       expect(activeKeyOf(host)).toBeUndefined();
-      expect(dataAt(outputs, 0).previousActive).toBe(rightItem);
+      expect(dataAt(outputs, 0).previousActiveItem).toBe(rightItem);
     });
 
     it('clears the active item on a canceled contact, staying open, with no move', () => {
@@ -1008,8 +1008,8 @@ describe('navigationMachine standalone phase', () => {
       const event = dataAt(outputs, 0);
       expect(event.position).toEqual([5, 6]);
       expect(event.source).toBe('pointer');
-      expect(event.active).toBeUndefined();
-      expect(event.previousActive).toBe(rightItem);
+      expect(event.activeItem).toBeUndefined();
+      expect(event.previousActiveItem).toBe(rightItem);
     });
 
     it('declines a cancel with nothing active, announcing nothing', () => {
@@ -1037,7 +1037,7 @@ describe('navigationMachine standalone phase', () => {
       expect(event.mode).toBe('standalone');
       expect(event.position).toEqual([7, 8]);
       expect(event.source).toBe('pointer');
-      expect(event.active).toBe(rightUpItem);
+      expect(event.activeItem).toBe(rightUpItem);
       expect(event.menu).toBe(rightItem);
       expect(event.reason).toBe('dismissed');
     });

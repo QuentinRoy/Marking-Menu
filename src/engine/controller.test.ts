@@ -412,7 +412,7 @@ describe('createController', () => {
     controller.dispose();
   });
 
-  it('dispatches cancel carrying an undefined active, not select, for a gesture with no movement at all', () => {
+  it('dispatches cancel carrying an undefined activeItem, not select, for a gesture with no movement at all', () => {
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -429,7 +429,7 @@ describe('createController', () => {
 
     expect(selected).not.toHaveBeenCalled();
     expect(cancelEvent?.mode).toBe('startup');
-    expect(cancelEvent?.active).toBeUndefined();
+    expect(cancelEvent?.activeItem).toBeUndefined();
 
     controller.dispose();
   });
@@ -454,7 +454,7 @@ describe('createController', () => {
 
     expect(selected).not.toHaveBeenCalled();
     expect(cancelEvent?.mode).toBe('expert');
-    expect(cancelEvent?.active).toBeUndefined();
+    expect(cancelEvent?.activeItem).toBeUndefined();
 
     controller.dispose();
   });
@@ -670,7 +670,7 @@ describe('createController', () => {
 
     expect(selected).not.toHaveBeenCalled();
     expect(cancelEvent?.mode).toBe('novice');
-    expect(cancelEvent?.active).toBeUndefined();
+    expect(cancelEvent?.activeItem).toBeUndefined();
     expect(cancelEvent?.menu).not.toBeUndefined();
     expect(
       parent
@@ -754,7 +754,7 @@ describe('createController', () => {
     let canceledActiveId: string | undefined;
     let cancelMenu: unknown;
     controller.on('cancel', (event) => {
-      canceledActiveId = event.active?.id;
+      canceledActiveId = event.activeItem?.id;
       cancelMenu = event.menu;
     });
 
@@ -788,7 +788,7 @@ describe('createController', () => {
     controller.on('select', selected);
     let canceledActiveId: string | undefined;
     controller.on('cancel', (event) => {
-      canceledActiveId = event.active?.id;
+      canceledActiveId = event.activeItem?.id;
     });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
@@ -851,7 +851,7 @@ describe('createController', () => {
     parent.dispatchEvent(pointer('pointermove', { clientX: 10, clientY: 0 }));
 
     expect(moved).toHaveBeenCalledTimes(1);
-    expect(moved.mock.calls[0]?.[0].active).toBeUndefined();
+    expect(moved.mock.calls[0]?.[0].activeItem).toBeUndefined();
     expect(changed).not.toHaveBeenCalled();
     expect(activeMenuItems(parent)).toHaveLength(0);
 
@@ -872,15 +872,15 @@ describe('createController', () => {
     let lastMoveActiveId: string | undefined;
     controller.on('move', (event) => {
       moved();
-      lastMoveActiveId = event.active?.id;
+      lastMoveActiveId = event.activeItem?.id;
     });
     const changed = vi.fn<() => void>();
     let lastChangeActiveId: string | undefined;
     let lastChangePreviousActive: unknown;
     controller.on('change', (event) => {
       changed();
-      lastChangeActiveId = event.active?.id;
-      lastChangePreviousActive = event.previousActive;
+      lastChangeActiveId = event.activeItem?.id;
+      lastChangePreviousActive = event.previousActiveItem;
     });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
@@ -930,8 +930,8 @@ describe('createController', () => {
     let lastChangePreviousActive: unknown;
     controller.on('change', (event) => {
       seen.push('change');
-      lastChangeActiveId = event.active?.id;
-      lastChangePreviousActive = event.previousActive;
+      lastChangeActiveId = event.activeItem?.id;
+      lastChangePreviousActive = event.previousActiveItem;
     });
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
@@ -956,7 +956,7 @@ describe('createController', () => {
     controller.dispose();
   });
 
-  it('never fires change, and always reports an undefined active, for move events dispatched in startup and expert', () => {
+  it('never fires change, and always reports an undefined activeItem, for move events dispatched in startup and expert', () => {
     const parent = createParent();
     const controller = createController({ items, parent });
 
@@ -973,10 +973,10 @@ describe('createController', () => {
 
     expect(moved).toHaveLength(2);
     expect(moved[0]?.mode).toBe('startup');
-    expect(moved[0]?.active).toBeUndefined();
+    expect(moved[0]?.activeItem).toBeUndefined();
     expect(moved[0]?.menu).toBeUndefined();
     expect(moved[1]?.mode).toBe('expert');
-    expect(moved[1]?.active).toBeUndefined();
+    expect(moved[1]?.activeItem).toBeUndefined();
     expect(moved[1]?.menu).toBeUndefined();
     expect(changed).not.toHaveBeenCalled();
 
@@ -1113,7 +1113,7 @@ describe('createController', () => {
 
       expect(selected).not.toHaveBeenCalled();
       expect(cancelEvent?.mode).toBe('novice');
-      expect(cancelEvent?.active).toBeUndefined();
+      expect(cancelEvent?.activeItem).toBeUndefined();
       expect(cancelEvent?.menu).toBe(submenu);
 
       controller.dispose();
@@ -1207,7 +1207,7 @@ describe('createController', () => {
       expect(opened).not.toHaveBeenCalled();
       expect(selected).not.toHaveBeenCalled();
       expect(cancelEvent?.mode).toBe('expert');
-      expect(cancelEvent?.active).toBeUndefined();
+      expect(cancelEvent?.activeItem).toBeUndefined();
       expect(cancelEvent?.menu).toBeUndefined();
       expect(
         parent

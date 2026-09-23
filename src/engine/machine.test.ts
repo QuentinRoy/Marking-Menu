@@ -196,7 +196,7 @@ describe('navigationMachine', () => {
     const host = startHost();
     let cancelActive: unknown;
     host.on('cancel', ({ data }) => {
-      cancelActive = data.active;
+      cancelActive = data.activeItem;
     });
     const selected = vi.fn<() => void>();
     host.on('select', selected);
@@ -231,7 +231,7 @@ describe('navigationMachine', () => {
     host.on('select', selected);
     let cancelActive: unknown;
     host.on('cancel', ({ data }) => {
-      cancelActive = data.active;
+      cancelActive = data.activeItem;
     });
 
     host.send('pointerDown', { position: [0, 0] });
@@ -430,7 +430,7 @@ describe('navigationMachine', () => {
       const opened = vi.fn<() => void>();
       host.on('open', opened);
       let cancelData:
-        { active: unknown; menu: unknown; mode: string } | undefined;
+        { activeItem: unknown; menu: unknown; mode: string } | undefined;
       host.on('cancel', ({ data }) => {
         cancelData = data;
       });
@@ -445,7 +445,7 @@ describe('navigationMachine', () => {
       expect(opened).not.toHaveBeenCalled();
       expect(selected).not.toHaveBeenCalled();
       expect(cancelData?.mode).toBe('expert');
-      expect(cancelData?.active).toBeUndefined();
+      expect(cancelData?.activeItem).toBeUndefined();
       expect(cancelData?.menu).toBeUndefined();
     });
 
@@ -745,7 +745,7 @@ describe('navigationMachine', () => {
   describe('novice phase: pointing at items', () => {
     it('stays inactive while the pointer is within the dead zone (objective 5)', () => {
       const host = startHost();
-      const moved = vi.fn<(event: { active: unknown }) => void>();
+      const moved = vi.fn<(event: { activeItem: unknown }) => void>();
       host.on('move', ({ data }) => {
         moved(data);
       });
@@ -760,7 +760,7 @@ describe('navigationMachine', () => {
         host.current.name === 'novice' && host.current.data.active,
       ).toBeUndefined();
       expect(moved).toHaveBeenCalledTimes(1);
-      expect(moved.mock.calls[0]?.[0].active).toBeUndefined();
+      expect(moved.mock.calls[0]?.[0].activeItem).toBeUndefined();
       expect(changed).not.toHaveBeenCalled();
     });
 
@@ -768,10 +768,12 @@ describe('navigationMachine', () => {
       const host = startHost();
       const moved: unknown[] = [];
       host.on('move', ({ data }) => {
-        moved.push(data.active);
+        moved.push(data.activeItem);
       });
       const changed =
-        vi.fn<(event: { active: unknown; previousActive: unknown }) => void>();
+        vi.fn<
+          (event: { activeItem: unknown; previousActiveItem: unknown }) => void
+        >();
       host.on('change', ({ data }) => {
         changed(data);
       });
@@ -787,11 +789,11 @@ describe('navigationMachine', () => {
       expect(moved).toEqual([active]);
       expect(changed).toHaveBeenCalledTimes(1);
       const changeData = changed.mock.calls[0]?.[0] as {
-        active: unknown;
-        previousActive: unknown;
+        activeItem: unknown;
+        previousActiveItem: unknown;
       };
-      expect(changeData.active).toBe(active);
-      expect(changeData.previousActive).toBeUndefined();
+      expect(changeData.activeItem).toBe(active);
+      expect(changeData.previousActiveItem).toBeUndefined();
 
       // Continued pointing at the same item: another `move`, no further `change`.
       host.send('pointerMove', { position: [110, 0] });
@@ -804,7 +806,7 @@ describe('navigationMachine', () => {
       const selected = vi.fn<() => void>();
       host.on('select', selected);
       let cancelData:
-        { active: unknown; menu: unknown; mode: string } | undefined;
+        { activeItem: unknown; menu: unknown; mode: string } | undefined;
       host.on('cancel', ({ data }) => {
         cancelData = data;
       });
@@ -814,7 +816,7 @@ describe('navigationMachine', () => {
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
-      expect(cancelData?.active).toBeUndefined();
+      expect(cancelData?.activeItem).toBeUndefined();
       expect(cancelData?.menu).toBe(model);
       expect(cancelData?.mode).toBe('novice');
       expect(mockRecognize).not.toHaveBeenCalled();
@@ -869,7 +871,7 @@ describe('navigationMachine', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       const selected = vi.fn<() => void>();
       host.on('select', selected);
-      let cancelData: { active: unknown; menu: unknown } | undefined;
+      let cancelData: { activeItem: unknown; menu: unknown } | undefined;
       host.on('cancel', ({ data }) => {
         cancelData = data;
       });
@@ -885,7 +887,7 @@ describe('navigationMachine', () => {
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
-      expect((cancelData?.active as { id: string } | undefined)?.id).toBe(
+      expect((cancelData?.activeItem as { id: string } | undefined)?.id).toBe(
         'right',
       );
       expect(cancelData?.menu).toBe(submenuModel);
@@ -895,7 +897,7 @@ describe('navigationMachine', () => {
       const host = startHost();
       const selected = vi.fn<() => void>();
       host.on('select', selected);
-      let cancelData: { active: unknown } | undefined;
+      let cancelData: { activeItem: unknown } | undefined;
       host.on('cancel', ({ data }) => {
         cancelData = data;
       });
@@ -907,7 +909,7 @@ describe('navigationMachine', () => {
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
-      expect((cancelData?.active as { id: string } | undefined)?.id).toBe(
+      expect((cancelData?.activeItem as { id: string } | undefined)?.id).toBe(
         'right',
       );
     });
@@ -916,7 +918,7 @@ describe('navigationMachine', () => {
       const host = navigationMachine.start({ model: submenuModel, options });
       const selected = vi.fn<() => void>();
       host.on('select', selected);
-      let cancelData: { active: unknown } | undefined;
+      let cancelData: { activeItem: unknown } | undefined;
       host.on('cancel', ({ data }) => {
         cancelData = data;
       });
@@ -928,7 +930,7 @@ describe('navigationMachine', () => {
 
       expect(host.current.name).toBe('idle');
       expect(selected).not.toHaveBeenCalled();
-      expect((cancelData?.active as { id: string } | undefined)?.id).toBe(
+      expect((cancelData?.activeItem as { id: string } | undefined)?.id).toBe(
         'right',
       );
     });
