@@ -535,6 +535,57 @@ describe('createController', () => {
     controller.dispose();
   });
 
+  it('reports the mode of the gesture through state, with a menu once one is displayed', () => {
+    using _timers = fakeTimers();
+    const parent = createParent();
+    const controller = createController({
+      items,
+      parent,
+      noviceDwellingTime: 100,
+    });
+    expect(controller.state).toEqual({ mode: 'idle' });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    expect(controller.state).toEqual({ mode: 'startup' });
+
+    parent.dispatchEvent(pointer('pointermove', { clientX: 50, clientY: 0 }));
+    expect(controller.state).toEqual({ mode: 'expert' });
+
+    parent.dispatchEvent(pointer('pointerup', { clientX: 50, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    vi.advanceTimersByTime(100);
+    expect(controller.state).toMatchObject({
+      mode: 'novice',
+      menu: { isRoot: true },
+      activeItem: undefined,
+    });
+
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    expect(controller.state).toMatchObject({
+      mode: 'novice',
+      activeItem: { id: 'right' },
+    });
+
+    controller.dispose();
+  });
+
+  it('is already idle inside a select listener', () => {
+    const parent = createParent();
+    const controller = createController({ items, parent });
+    let modeInListener: string | undefined;
+    controller.on('select', () => {
+      modeInListener = controller.state.mode;
+    });
+
+    parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 0 }));
+    parent.dispatchEvent(pointer('pointerup', { clientX: 120, clientY: 0 }));
+
+    expect(modeInListener).toBe('idle');
+
+    controller.dispose();
+  });
+
   it('opens novice mode at the gesture origin after the pointer dwells without moving', () => {
     using _timers = fakeTimers();
     const parent = createParent();
@@ -555,7 +606,7 @@ describe('createController', () => {
     expect(openEvent?.mode).toBe('novice');
     expect(openEvent?.menuCenter).toEqual([50, 60]);
     expect(openEvent?.position).toEqual([50, 60]);
-    expect(parent.querySelector('.marking-menu')).not.toBeNull();
+    expect(controller.state.mode).toBe('novice');
 
     controller.dispose();
   });
@@ -1163,7 +1214,7 @@ describe('createController', () => {
       expect(opened).toHaveLength(1);
       expect(opened[0]?.mode).toBe('novice');
       expect(opened[0]?.menuCenter).toEqual([100, 0]);
-      expect(parent.querySelector('.marking-menu')).not.toBeNull();
+      expect(controller.state.mode).toBe('novice');
 
       // Selection now works at this depth, exactly as if novice had opened
       // the submenu by dwelling on it directly.
@@ -1230,7 +1281,7 @@ describe('createController', () => {
 
     parent.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     vi.advanceTimersByTime(100);
-    expect(parent.querySelector('.marking-menu')).not.toBeNull();
+    expect(controller.state.mode).toBe('novice');
 
     controller.dispose();
 

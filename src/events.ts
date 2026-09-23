@@ -26,6 +26,22 @@ import type { Point } from './utils.js';
 export type MarkingMenuMode = 'startup' | 'novice' | 'expert' | 'standalone';
 
 /**
+ What the menu interaction is doing between events, narrowed by `mode`.
+ `idle` means nothing is in progress. `novice` and `standalone` display a
+ menu level, so they carry the `menu` and the `activeItem` in it. `startup`
+ and `expert` display none yet.
+ */
+export type MarkingMenuState<Model extends ModelNode = ModelNode> =
+  | { readonly mode: 'idle' }
+  | { readonly mode: 'startup' }
+  | { readonly mode: 'expert' }
+  | {
+      readonly mode: 'novice' | 'standalone';
+      readonly menu: ModelMenus<Model>;
+      readonly activeItem: ModelItems<Model> | undefined;
+    };
+
+/**
  Why a gesture or menu ended without a selection. `interrupted`: the browser
  canceled the pointer. `no-selection`: the gesture finished with nothing to
  select. `dismissed`: a menu shown with `open()` was closed, by `close()`, the

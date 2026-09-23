@@ -13,6 +13,7 @@ export {
   type MarkingMenuRecognition,
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
+  type MarkingMenuState,
   type MarkingMenuStrokeAnalysis,
   type MarkingMenuStrokeSegment,
 } from './events.js';

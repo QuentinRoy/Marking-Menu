@@ -134,6 +134,14 @@ menu.on('cancel', (event) => {
 
 `open`, `select`, and `cancel` events also include `recognition` when the recognizer ran on a stroke, and `undefined` otherwise. It holds `stroke`, the points the recognizer was given, and `analysis`, how it cut them: `articulationPoints`, the corners of the stroke, and `segments`, the pieces between corners, each with the two `points` it spans. All points are in viewport pixels. See [the event types](src/events.ts) for each payload.
 
+`menu.state` reports what the menu is doing right now. Its `mode` is `idle` when nothing is in progress, or one of the modes above. In `novice` and `standalone` mode it also has `menu`, the level on display, and `activeItem`. Inside a listener it already reflects the event being dispatched, so `mode` is `idle` in a `select` listener.
+
+```js
+if (menu.state.mode === 'standalone') {
+  console.log(menu.state.menu.id, menu.state.activeItem?.label);
+}
+```
+
 `dispose()` ends the controller's lifetime and can be called more than once. The controller also supports `using` where your toolchain supports it.
 
 ### `open()` and `close()`

@@ -1,6 +1,7 @@
 import type {
   MarkingMenuEventEmitter,
   MarkingMenuEventMap,
+  MarkingMenuState,
 } from '../events.js';
 import {
   createModel,
@@ -134,6 +135,12 @@ export type MarkingMenuController<Model extends ModelNode = ModelNode> =
      dispatches a `cancel` event. Throws unless one is open.
      */
     close(): void;
+    /**
+     What the menu is doing right now. Inside a listener, it already reflects
+     the event being dispatched: `mode` is `'idle'` in a `select` listener.
+     Values tied to a single moment stay on the events.
+     */
+    readonly state: MarkingMenuState<Model>;
     dispose(): void;
     [Symbol.dispose](): void;
   };
@@ -248,6 +255,10 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
 
   close(): void {
     this.#runtime.close();
+  }
+
+  get state(): MarkingMenuState<MarkingMenuModel<Config>> {
+    return this.#runtime.state;
   }
 
   on<Name extends EventName<Config>>(

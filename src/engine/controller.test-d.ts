@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import type { MarkingMenuEventMap, MarkingMenuStartEvent } from '../events.js';
 import type { MarkingMenuModel } from '../model.js';
+import type { ModelItems, ModelMenus } from '../types.js';
 import { noOp, type Point } from '../utils.js';
 import {
   createController,
@@ -12,10 +13,11 @@ import {
  Type level tests: the model the controller's events carry is the one the
  *literal* config describes, not a widened one. Checked by `tsc`, not run.
 
- `Model` appears only in input positions on the controller, so
- `MarkingMenuController<A>` and `MarkingMenuController<B>` stay mutually
- assignable and no plain assignment can catch the model widening. Reading a
- narrowed payload off a listener parameter is what catches it.
+ `Model` appears in listener parameters, which method bivariance keeps loose,
+ and in `state`, which is covariant. A controller for a literal config always
+ assigns to one for a wider model, so no plain assignment can catch the model
+ widening. Reading a narrowed payload off a listener parameter is what
+ catches it.
  */
 
 const parent = undefined as unknown as HTMLElement;
@@ -38,13 +40,24 @@ describe('createController', () => {
     expectTypeOf(controller).toEqualTypeOf<MarkingMenuController<Model>>();
   });
 
+  it('keeps its ReturnType typed, state included', () => {
+    expectTypeOf<ReturnType<typeof createController>>().not.toBeAny();
+    expectTypeOf<ReturnType<typeof createController>['state']>().not.toBeAny();
+  });
+
   it('exposes disposal as a plain method', () => {
     expectTypeOf(controller.dispose).toEqualTypeOf<() => void>();
   });
 
-  it('exposes exactly the listen-only facade, open and close, and both forms of disposal, nothing else', () => {
+  it('exposes exactly the listen-only facade, open and close, state, and both forms of disposal, nothing else', () => {
     expectTypeOf<keyof MarkingMenuController<Model>>().toEqualTypeOf<
-      'on' | 'off' | 'open' | 'close' | 'dispose' | typeof Symbol.dispose
+      | 'on'
+      | 'off'
+      | 'open'
+      | 'close'
+      | 'state'
+      | 'dispose'
+      | typeof Symbol.dispose
     >();
   });
 
@@ -120,6 +133,21 @@ describe('createController listeners', () => {
       expectTypeOf(event).toEqualTypeOf<MarkingMenuStartEvent>();
       expectTypeOf(event.mode).toEqualTypeOf<'startup'>();
     });
+  });
+
+  it('narrows `state` on `mode`: only novice and standalone carry a menu, typed to this model', () => {
+    const { state } = controller;
+    expectTypeOf(state.mode).toEqualTypeOf<
+      'idle' | 'startup' | 'expert' | 'novice' | 'standalone'
+    >();
+    if (state.mode === 'novice' || state.mode === 'standalone') {
+      expectTypeOf(state.menu).toEqualTypeOf<ModelMenus<Model>>();
+      expectTypeOf(state.activeItem).toEqualTypeOf<
+        ModelItems<Model> | undefined
+      >();
+    } else {
+      expectTypeOf(state).not.toHaveProperty('menu');
+    }
   });
 
   it('rejects an unknown event name', () => {
