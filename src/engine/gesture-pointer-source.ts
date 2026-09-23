@@ -1,8 +1,8 @@
 import { claimTouchAction } from '../move/touch-action.js';
-import type { Point } from '../utils.js';
+import { toClientPoint } from '../utils.js';
 import type { NavigationInputSink } from './runtime.js';
 
-export type PointerSource = {
+export type GesturePointerSource = {
   /**
    Leave pointer input to the page while a standalone menu is displayed: no
    gesture starts, nothing is prevented or captured, and `touch-action` goes
@@ -10,27 +10,24 @@ export type PointerSource = {
    */
   suspend: () => void;
   /**
-  Take pointer input back after {@link PointerSource.suspend}.
+  Take pointer input back after {@link GesturePointerSource.suspend}.
   */
   resume: () => void;
   dispose: () => void;
 };
-
-const toPosition = (event: PointerEvent): Point =>
-  Object.freeze([event.clientX, event.clientY] as const);
 
 /**
  Native pointer listeners: accepts only the primary pointer and primary
  button, owns capture, and enforces the one-active-gesture policy before
  inputs reach the machine.
  */
-export function createPointerSource({
+export function createGesturePointerSource({
   parent,
   runtime,
 }: {
   parent: HTMLElement;
   runtime: NavigationInputSink;
-}): PointerSource {
+}): GesturePointerSource {
   let activePointerId: number | undefined;
   let isDisposed = false;
   let releaseTouchAction: (() => void) | undefined = claimTouchAction(parent);
@@ -64,7 +61,7 @@ export function createPointerSource({
     event.preventDefault();
     activePointerId = event.pointerId;
     parent.setPointerCapture(event.pointerId);
-    runtime.send({ type: 'pointer.down', position: toPosition(event) });
+    runtime.send({ type: 'pointer.down', position: toClientPoint(event) });
   };
 
   const onPointerMove = (event: PointerEvent): void => {
@@ -72,7 +69,7 @@ export function createPointerSource({
       return;
     }
 
-    runtime.send({ type: 'pointer.move', position: toPosition(event) });
+    runtime.send({ type: 'pointer.move', position: toClientPoint(event) });
   };
 
   const onPointerUp = (event: PointerEvent): void => {
@@ -84,7 +81,7 @@ export function createPointerSource({
     // a listener must observe fully committed state, including capture
     // ownership, so that it may start a gesture of its own.
     releaseCapture();
-    runtime.send({ type: 'pointer.up', position: toPosition(event) });
+    runtime.send({ type: 'pointer.up', position: toClientPoint(event) });
   };
 
   const onPointerCancel = (event: PointerEvent): void => {
@@ -94,7 +91,7 @@ export function createPointerSource({
 
     // Same ordering rationale as `onPointerUp`: release before dispatching.
     releaseCapture();
-    runtime.send({ type: 'pointer.cancel', position: toPosition(event) });
+    runtime.send({ type: 'pointer.cancel', position: toClientPoint(event) });
   };
 
   // WebKit only suppresses its long-press loupe when touchstart itself is

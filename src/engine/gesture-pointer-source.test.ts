@@ -1,12 +1,12 @@
 import { createParent, pointer } from './__fixtures__/pointer.js';
+import { createGesturePointerSource } from './gesture-pointer-source.js';
 import type { NavigationInput } from './machine.js';
-import { createPointerSource } from './pointer-source.js';
 
-describe('createPointerSource', () => {
+describe('createGesturePointerSource', () => {
   it('prevents native touch gestures until disposed', () => {
     const parent = createParent();
     const send = vi.fn<(input: NavigationInput) => void>();
-    const source = createPointerSource({ parent, runtime: { send } });
+    const source = createGesturePointerSource({ parent, runtime: { send } });
 
     const whileActive = new Event('touchstart', { cancelable: true });
     expect(parent.dispatchEvent(whileActive)).toBe(false);
@@ -22,7 +22,7 @@ describe('createPointerSource', () => {
   it('ignores move and up events from a pointer that is not the active gesture owner', () => {
     const parent = createParent();
     const send = vi.fn<(input: NavigationInput) => void>();
-    createPointerSource({ parent, runtime: { send } });
+    createGesturePointerSource({ parent, runtime: { send } });
 
     parent.dispatchEvent(
       pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
@@ -42,7 +42,7 @@ describe('createPointerSource', () => {
   it('sends pointer.cancel for a native pointercancel on the active gesture, and releases capture beforehand', () => {
     const parent = createParent();
     const send = vi.fn<(input: NavigationInput) => void>();
-    createPointerSource({ parent, runtime: { send } });
+    createGesturePointerSource({ parent, runtime: { send } });
 
     parent.dispatchEvent(
       pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
@@ -64,7 +64,7 @@ describe('createPointerSource', () => {
   it('ignores a pointercancel from a pointer that is not the active gesture owner', () => {
     const parent = createParent();
     const send = vi.fn<(input: NavigationInput) => void>();
-    createPointerSource({ parent, runtime: { send } });
+    createGesturePointerSource({ parent, runtime: { send } });
 
     parent.dispatchEvent(
       pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
@@ -82,7 +82,7 @@ describe('createPointerSource', () => {
     it('leaves pointer input to the page: nothing is sent, prevented or captured', () => {
       const parent = createParent();
       const send = vi.fn<(input: NavigationInput) => void>();
-      const source = createPointerSource({ parent, runtime: { send } });
+      const source = createGesturePointerSource({ parent, runtime: { send } });
 
       source.suspend();
       const down = pointer('pointerdown', {
@@ -101,7 +101,7 @@ describe('createPointerSource', () => {
     it('lets touch gestures through, and gives touch-action back', () => {
       const parent = createParent();
       parent.style.touchAction = 'pan-y';
-      const source = createPointerSource({
+      const source = createGesturePointerSource({
         parent,
         runtime: { send: vi.fn<(input: NavigationInput) => void>() },
       });
@@ -117,7 +117,7 @@ describe('createPointerSource', () => {
     it('takes pointer input and touch-action back once resumed', () => {
       const parent = createParent();
       const send = vi.fn<(input: NavigationInput) => void>();
-      const source = createPointerSource({ parent, runtime: { send } });
+      const source = createGesturePointerSource({ parent, runtime: { send } });
       source.suspend();
 
       source.resume();
@@ -137,7 +137,7 @@ describe('createPointerSource', () => {
     it('tolerates being suspended or resumed twice in a row', () => {
       const parent = createParent();
       parent.style.touchAction = 'pan-y';
-      const source = createPointerSource({
+      const source = createGesturePointerSource({
         parent,
         runtime: { send: vi.fn<(input: NavigationInput) => void>() },
       });
@@ -154,7 +154,7 @@ describe('createPointerSource', () => {
 
     it('does not take touch-action back once disposed', () => {
       const parent = createParent();
-      const source = createPointerSource({
+      const source = createGesturePointerSource({
         parent,
         runtime: { send: vi.fn<(input: NavigationInput) => void>() },
       });
@@ -168,7 +168,7 @@ describe('createPointerSource', () => {
 
     it('still gives touch-action back on disposal', () => {
       const parent = createParent();
-      const source = createPointerSource({
+      const source = createGesturePointerSource({
         parent,
         runtime: { send: vi.fn<(input: NavigationInput) => void>() },
       });

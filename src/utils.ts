@@ -182,6 +182,14 @@ export const toLocalPoint = (
 ): Point => [point[0] - rect.left, point[1] - rect.top];
 
 /**
+ A pointer event's position, in client coordinates. Frozen: the engine
+ keeps its own copy, and a consumer that alters what an event publishes
+ must not reach it.
+ */
+export const toClientPoint = (event: PointerEvent): Point =>
+  Object.freeze([event.clientX, event.clientY] as const);
+
+/**
 A function that does nothing. Useful as a default callback.
 */
 export const noOp = (): void => {

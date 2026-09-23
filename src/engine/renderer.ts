@@ -273,6 +273,7 @@ export function createRenderer({
               deadZoneRadius,
               model: view.menu.model,
               center: scene.toLocal(view.menu.center),
+              pointerTarget: view.menu.pointerTarget,
             }),
           };
           menuHandle = handle;

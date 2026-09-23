@@ -1,7 +1,7 @@
 import type { KeyboardIntent, NavigationPhase } from './machine.js';
 import type { NavigationInputSink } from './runtime.js';
 
-export type KeyboardSource = {
+export type StandaloneKeyboardSource = {
   dispose: () => void;
 };
 
@@ -24,7 +24,7 @@ const intents = new Map<string, KeyboardIntent>([
  a gesture is driven by the pointer, and its own focus moves must not come
  back as input.
  */
-export function createKeyboardSource({
+export function createStandaloneKeyboardSource({
   parent,
   getMenu,
   runtime,
@@ -35,11 +35,12 @@ export function createKeyboardSource({
   The menu currently displayed. Input only counts when it comes from inside its layer.
   */
   getMenu: () => { readonly layer: HTMLElement } | undefined;
-  runtime: NavigationInputSink & { readonly phase: NavigationPhase };
+  runtime: NavigationInputSink & {
+    readonly phase: NavigationPhase;
+    readonly isSending: boolean;
+  };
   onFocusLoss: () => void;
-}): KeyboardSource {
-  let isHandlingKeyboardIntent = false;
-
+}): StandaloneKeyboardSource {
   /**
    The first node an event went through, when the event started inside the
    menu that is displayed and a standalone menu is what is open. `parent` is
@@ -74,12 +75,7 @@ export function createKeyboardSource({
       event.preventDefault();
     }
 
-    isHandlingKeyboardIntent = true;
-    try {
-      runtime.send({ type: 'keyboard', intent });
-    } finally {
-      isHandlingKeyboardIntent = false;
-    }
+    runtime.send({ type: 'keyboard', intent });
   };
 
   const onFocusIn = (event: FocusEvent): void => {
@@ -103,9 +99,12 @@ export function createKeyboardSource({
 
   const onFocusOut = (event: FocusEvent): void => {
     const layer = getMenu()?.layer;
+    // A blur fired as a side effect of our own send — a level's DOM
+    // swapped out from under the item that held focus, keyboard- or
+    // pointer-caused alike — is not a real focus loss.
     if (
       layer === undefined ||
-      isHandlingKeyboardIntent ||
+      runtime.isSending ||
       originInMenu(event) === undefined
     ) {
       return;

@@ -50,6 +50,11 @@ export type MenuLayoutModel = {
   The items of the (sub-)menu to display.
   */
   readonly items: readonly MenuLayoutItem[];
+  /**
+   The menu's accessible name: the label of the item it is a submenu of, or
+   `undefined` for the root.
+   */
+  readonly label?: string | undefined;
 };
 
 /**
@@ -150,7 +155,15 @@ const isShadowRoot = (node: Node): node is ShadowRoot =>
   node.nodeType === Node.DOCUMENT_FRAGMENT_NODE && 'host' in node;
 
 const template = (
-  { items, center }: { items: readonly MenuLayoutItem[]; center: Point },
+  {
+    items,
+    label,
+    center,
+  }: {
+    items: readonly MenuLayoutItem[];
+    label: string | undefined;
+    center: Point;
+  },
   doc: Document,
   parent: HTMLElement | ShadowRoot,
 ): MenuDom => {
@@ -182,6 +195,12 @@ const template = (
   main.className = 'marking-menu-layer';
   main.role = 'menu';
   main.tabIndex = -1;
+  // The root's own container stays unlabeled: `ModelRoot` has no label to
+  // give it, a pre-existing gap independent of pointer support.
+  if (label !== undefined) {
+    main.ariaLabel = label;
+  }
+
   main.style.setProperty('--center-x', `${center[0]}px`);
   main.style.setProperty('--center-y', `${center[1]}px`);
   layerParent.append(main);
@@ -607,7 +626,11 @@ export function createMenu({
   deadZoneRadius: number;
   pointerTarget?: boolean;
 }): Menu {
-  const menuDom = template({ items: model.items, center }, doc, parent);
+  const menuDom = template(
+    { items: model.items, label: model.label, center },
+    doc,
+    parent,
+  );
   const { main, root, itemElements, isOwnHost } = menuDom;
   (root.host as HTMLElement).style.setProperty(
     '--inner-radius',

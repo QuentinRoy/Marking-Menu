@@ -266,3 +266,49 @@ test("canceling a gesture restores the host's previously focused element", async
     .element(page.getByRole('button', { name: 'Before' }))
     .toHaveFocus();
 });
+
+describe('standalone, operated with the pointer', () => {
+  // The item's own container is a zero-size positioning anchor; its plate
+  // is the real, visibly sized hit target a pointer action needs.
+  const plateOf = (name: string): Element => {
+    const plate =
+      page
+        .getByRole('menuitem', { name })
+        .element()
+        .querySelector('.marking-menu-plate') ?? undefined;
+    if (plate === undefined) {
+      throw new Error(`No plate found for the "${name}" item.`);
+    }
+
+    return plate;
+  };
+
+  test('a standalone menu with a hovered item has no axe violations', async () => {
+    using menu = mountMenu({ items });
+    menu.mm.open();
+    await userEvent.hover(plateOf('Right'));
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Right' }))
+      .toHaveClass('active');
+
+    await expectNoViolations(menu.surface);
+  });
+
+  test('the roving tab stop follows a hover, not only keyboard focus', async () => {
+    using menu = mountMenu({ items });
+    menu.mm.open();
+    await expectFocused('menuitem', { name: 'Up' });
+
+    await userEvent.hover(plateOf('Left'));
+
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Left' }))
+      .toHaveAttribute('tabindex', '0');
+    await expect
+      .element(page.getByRole('menuitem', { name: 'Up' }))
+      .toHaveAttribute('tabindex', '-1');
+    // Real focus stays exactly where the keyboard left it: hover is a
+    // silent preview, not an announcement.
+    await expectFocused('menuitem', { name: 'Up' });
+  });
+});
