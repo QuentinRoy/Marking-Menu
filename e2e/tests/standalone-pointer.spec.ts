@@ -174,6 +174,42 @@ test('standalone menu: a click outside it cancels without restoring focus to the
   expect(log.at(-1)).toBe('cancel:standalone');
 });
 
+test('standalone menu: moving the mouse off the menu clears the active item', async ({
+  page,
+}) => {
+  await openStandaloneMenu(page);
+  const box = await itemLabel(page, 'Left').boundingBox();
+  if (!box) {
+    throw new TypeError('Item has no bounding box.');
+  }
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.move(780, 580, { steps: 5 });
+
+  await expect(page.locator('.marking-menu-item.active')).toHaveCount(0);
+  await expect(page.getByRole('menu')).toHaveCount(1);
+});
+
+test('standalone menu: releasing a drag outside it cancels without restoring focus to the trigger', async ({
+  page,
+}) => {
+  const events = await openStandaloneMenu(page);
+  const box = await itemLabel(page, 'Left').boundingBox();
+  if (!box) {
+    throw new TypeError('Item has no bounding box.');
+  }
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(780, 580, { steps: 5 });
+  await page.mouse.up();
+
+  await expect(page.getByRole('menu')).toHaveCount(0);
+  await expect(page.locator('#standalone-trigger')).not.toBeFocused();
+  const log = await events.jsonValue();
+  expect(log.at(-1)).toBe('cancel:standalone');
+});
+
 for (const pointerType of ['touch', 'pen'] as const) {
   test(`standalone menu: a ${pointerType} contact selects a leaf`, async ({
     page,
