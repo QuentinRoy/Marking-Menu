@@ -6,6 +6,7 @@ export {
   MarkingMenuEventBase,
   type MarkingMenuEventEmitter,
   type MarkingMenuEventMap,
+  type MarkingMenuEventSource,
   type MarkingMenuMode,
   MarkingMenuMoveEvent,
   MarkingMenuOpenEvent,

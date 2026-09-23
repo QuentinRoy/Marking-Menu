@@ -98,7 +98,7 @@ export function createKeyboardSource({
 
   const closeForFocusLoss = (): void => {
     onFocusLoss();
-    runtime.send({ type: 'keyboard', intent: 'dismiss' });
+    runtime.send({ type: 'focus-loss' });
   };
 
   const onFocusOut = (event: FocusEvent): void => {

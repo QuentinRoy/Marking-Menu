@@ -76,6 +76,7 @@ describe('navigationMachine standalone phase', () => {
   type OutputData = {
     readonly mode: string;
     readonly position: unknown;
+    readonly source: unknown;
     readonly menu: unknown;
     readonly menuCenter: unknown;
     readonly active: unknown;
@@ -204,6 +205,7 @@ describe('navigationMachine standalone phase', () => {
       const event = dataAt(outputs, 0);
       expect(event.mode).toBe('standalone');
       expect(event.position).toBeUndefined();
+      expect(event.source).toBe('api');
       expect(event.menu).toBe(standaloneModel);
       expect(event.menuCenter).toEqual([50, 60]);
       expect(event.recognition).toBeUndefined();
@@ -251,7 +253,7 @@ describe('navigationMachine standalone phase', () => {
       openStandalone(host, [1, 1]);
       expect(host.current).toEqual(opened);
 
-      host.send('dismiss');
+      host.send('dismiss', { source: 'keyboard' });
       host.send('pointerDown', { position: [0, 0] });
       const startup = host.current;
       openStandalone(host, [1, 1]);
@@ -273,7 +275,7 @@ describe('navigationMachine standalone phase', () => {
       const host = startStandalone();
 
       openStandalone(host);
-      host.send('dismiss');
+      host.send('dismiss', { source: 'keyboard' });
       openStandalone(host, [5, 5]);
 
       expect(host.current.name).toBe('standalone');
@@ -312,11 +314,11 @@ describe('navigationMachine standalone phase', () => {
           'last',
           'activate',
           'back',
-          'dismiss',
         ] as const) {
           host.send(intent);
         }
 
+        host.send('dismiss', { source: 'keyboard' });
         host.send('focus', { key: rightItem.key });
       };
 
@@ -336,7 +338,7 @@ describe('navigationMachine standalone phase', () => {
       const outputs = recordOutputs(host);
 
       openStandalone(host);
-      host.send('dismiss');
+      host.send('dismiss', { source: 'keyboard' });
       openStandalone(host);
       host.send('first');
       host.send('activate');
@@ -517,6 +519,7 @@ describe('navigationMachine standalone phase', () => {
       const first = dataAt(changes, 0);
       expect(first.mode).toBe('standalone');
       expect(first.position).toBeUndefined();
+      expect(first.source).toBe('keyboard');
       expect(first.active).toBe(rightItem);
       expect(first.previousActive).toBeUndefined();
       expect(first.menu).toBe(standaloneModel);
@@ -688,6 +691,7 @@ describe('navigationMachine standalone phase', () => {
       const event = dataAt(outputs, 0);
       expect(event.mode).toBe('standalone');
       expect(event.position).toBeUndefined();
+      expect(event.source).toBe('keyboard');
       expect(event.selection).toBe(downItem);
       expect(event.menu).toBe(standaloneModel);
       expect(event.recognition).toBeUndefined();
@@ -737,18 +741,32 @@ describe('navigationMachine standalone phase', () => {
       host.send('activate');
       const outputs = recordOutputs(host);
 
-      host.send('dismiss');
+      host.send('dismiss', { source: 'api' });
 
       expect(host.current.name).toBe('idle');
       expect(namesOf(outputs)).toEqual(['cancel']);
       const event = dataAt(outputs, 0);
       expect(event.mode).toBe('standalone');
       expect(event.position).toBeUndefined();
+      expect(event.source).toBe('api');
       expect(event.active).toBe(rightUpItem);
       expect(event.menu).toBe(rightItem);
       expect(event.reason).toBe('dismissed');
       expect(event.recognition).toBeUndefined();
     });
+
+    it.each([['keyboard'], ['focus-loss']] as const)(
+      'carries the %s source of a dismiss through to the cancel event',
+      (source) => {
+        const host = startStandalone();
+        openStandalone(host);
+        const outputs = recordOutputs(host);
+
+        host.send('dismiss', { source });
+
+        expect(dataAt(outputs, 0).source).toBe(source);
+      },
+    );
 
     it('cancels on escape at the root, with nothing active', () => {
       const host = startStandalone();
@@ -762,6 +780,7 @@ describe('navigationMachine standalone phase', () => {
       expect(namesOf(outputs)).toEqual(['cancel']);
       expect(event.active).toBeUndefined();
       expect(event.menu).toBe(standaloneModel);
+      expect(event.source).toBe('keyboard');
       expect(event.reason).toBe('dismissed');
     });
 

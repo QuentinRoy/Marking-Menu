@@ -236,6 +236,13 @@ export function LiveSurface({
       });
     });
     controller.on('move', (event) => {
+      // This surface never opens a standalone menu, so `position` is always
+      // defined in practice; the type only allows `undefined` because a
+      // standalone `move` can be keyboard- or API-caused too.
+      if (event.position === undefined) {
+        return;
+      }
+
       strokeRef.current.push(event.position);
     });
     controller.on('select', (event) => {

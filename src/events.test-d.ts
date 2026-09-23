@@ -5,6 +5,7 @@ import {
   type MarkingMenuEvent,
   type MarkingMenuEventEmitter,
   type MarkingMenuEventMap,
+  type MarkingMenuEventSource,
   type MarkingMenuMode,
   type MarkingMenuMoveEvent,
   type MarkingMenuOpenEvent,
@@ -130,10 +131,10 @@ describe('mode and position', () => {
     >();
   });
 
-  it('narrows `position` on `mode`: a point outside standalone, undefined in it', () => {
+  it('widens `position` on `mode`: always a point outside standalone, a point or undefined in it', () => {
     function positionOf(event: SelectEvent): Point | undefined {
       if (event.mode === 'standalone') {
-        expectTypeOf(event.position).toEqualTypeOf<undefined>();
+        expectTypeOf(event.position).toEqualTypeOf<Point | undefined>();
         return event.position;
       }
 
@@ -167,14 +168,17 @@ describe('mode and position', () => {
     expectTypeOf(anySelect.position).toEqualTypeOf<Point | undefined>();
   });
 
-  it('keeps `start` and `move` out of standalone mode', () => {
+  it('keeps `start` out of standalone mode', () => {
     expectTypeOf<MarkingMenuStartEvent['mode']>().toEqualTypeOf<'startup'>();
+  });
+
+  it('accepts every mode on `move`, standalone included, since it fires there too', () => {
     expectTypeOf<
       MarkingMenuMoveEvent<Model>['mode']
-    >().toEqualTypeOf<GestureMode>();
-    expectTypeOf<
-      MarkingMenuMoveEvent<Model>['position']
-    >().toEqualTypeOf<Point>();
+    >().toEqualTypeOf<MarkingMenuMode>();
+    expectTypeOf<MarkingMenuMoveEvent<Model>['position']>().toEqualTypeOf<
+      Point | undefined
+    >();
   });
 
   it('gives `start` a mode type parameter too, which can only be startup', () => {
@@ -191,6 +195,33 @@ describe('mode and position', () => {
     expectTypeOf<ChangeEvent['mode']>().toEqualTypeOf<
       'novice' | 'standalone'
     >();
+  });
+});
+
+describe('source', () => {
+  it('is the five known causes', () => {
+    expectTypeOf<MarkingMenuEventSource>().toEqualTypeOf<
+      'pointer' | 'keyboard' | 'gesture' | 'api' | 'focus-loss'
+    >();
+  });
+
+  it('is on every event, independent of mode', () => {
+    expectTypeOf<
+      MarkingMenuStartEvent['source']
+    >().toEqualTypeOf<MarkingMenuEventSource>();
+    expectTypeOf<
+      MarkingMenuMoveEvent<Model>['source']
+    >().toEqualTypeOf<MarkingMenuEventSource>();
+    expectTypeOf<OpenEvent['source']>().toEqualTypeOf<MarkingMenuEventSource>();
+    expectTypeOf<
+      ChangeEvent['source']
+    >().toEqualTypeOf<MarkingMenuEventSource>();
+    expectTypeOf<
+      SelectEvent['source']
+    >().toEqualTypeOf<MarkingMenuEventSource>();
+    expectTypeOf<
+      CancelEvent['source']
+    >().toEqualTypeOf<MarkingMenuEventSource>();
   });
 });
 

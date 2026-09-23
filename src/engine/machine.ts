@@ -6,6 +6,7 @@ import {
   MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
   type MarkingMenuCancelEvent,
+  type MarkingMenuEventSource,
 } from '../events.js';
 import {
   recognizeStroke,
@@ -86,7 +87,12 @@ type MachineInputs = {
   last: undefined;
   activate: undefined;
   back: undefined;
-  dismiss: undefined;
+  // Shared by a Tab press, a `close()` API call, and a focus-loss dismissal:
+  // the only standalone ending three different callers can reach, so it is
+  // the only input that must carry its own source.
+  dismiss: {
+    readonly source: Exclude<MarkingMenuEventSource, 'pointer' | 'gesture'>;
+  };
   // The platform moved focus onto the item with this key.
   focus: { readonly key: string };
 };
@@ -129,7 +135,8 @@ export type NavigationInput =
       } & MachineInputs[PointerInputNames[K]];
     }[keyof PointerInputNames]
   | { readonly type: 'keyboard'; readonly intent: KeyboardIntent }
-  | { readonly type: 'focus'; readonly key: string };
+  | { readonly type: 'focus'; readonly key: string }
+  | { readonly type: 'focus-loss' };
 
 /**
  Each phase's fields, factored out before `NavigationState` tags on a
@@ -534,22 +541,25 @@ export const navigationMachine = machine({
         new MarkingMenuStartEvent({
           mode: 'startup',
           position: toData.origin,
+          source: 'gesture',
         }),
       );
     },
 
+    // The only way into standalone, so its `open` is always API-caused.
     'idle -open> standalone'({ toData, emit }) {
-      emitStandaloneOpen(emit, toData);
+      emitStandaloneOpen(emit, toData, 'api');
     },
 
-    // Every way to go from one standalone level or item to another. A new
-    // level announces `open` first, like novice does, then the item it
-    // landed on.
+    // Every way to go from one standalone level or item to another, all of
+    // them keyboard-driven today: nothing else can reach this transition
+    // until pointer input joins standalone. A new level announces `open`
+    // first, like novice does, then the item it landed on.
     'standalone -> standalone'({ fromData, toData, emit }) {
       const menu = currentMenu(toData.menus);
       const isNewLevel = toData.menus.length !== fromData.menus.length;
       if (isNewLevel) {
-        emitStandaloneOpen(emit, toData);
+        emitStandaloneOpen(emit, toData, 'keyboard');
       }
 
       if (
@@ -561,6 +571,7 @@ export const navigationMachine = machine({
           new MarkingMenuChangeEvent<ModelNode, 'standalone'>({
             mode: 'standalone',
             position: undefined,
+            source: 'keyboard',
             active: toData.active,
             // A new level starts over: `open` already reset the active item.
             previousActive: isNewLevel ? undefined : fromData.active,
@@ -583,13 +594,18 @@ export const navigationMachine = machine({
         new MarkingMenuSelectEvent<ModelNode, 'standalone'>({
           mode: 'standalone',
           position: undefined,
+          source: 'keyboard',
           selection: active,
           menu: currentMenu(menus),
         }),
       );
     },
-    'standalone -back> idle': cancelStandalone,
-    'standalone -dismiss> idle': cancelStandalone,
+    'standalone -back> idle'({ fromData, emit }) {
+      cancelStandalone({ fromData, emit, source: 'keyboard' });
+    },
+    'standalone -dismiss> idle'({ fromData, inputData, emit }) {
+      cancelStandalone({ fromData, emit, source: inputData.source });
+    },
 
     // No menu is open in startup or expert, so nothing can be active: `move`
     // always carries `active: undefined` and `menu: undefined` here, and
@@ -610,6 +626,7 @@ export const navigationMachine = machine({
           // `dwell` carries no position of its own; the machine holds the
           // last committed one instead.
           position: last(fromData.stroke),
+          source: 'gesture',
           menu: toData.menu,
           menuCenter: toData.menuCenter,
         }),
@@ -628,6 +645,7 @@ export const navigationMachine = machine({
         new MarkingMenuOpenEvent({
           mode: 'novice',
           position: last(fromData.stroke),
+          source: 'gesture',
           menu: toData.menu,
           menuCenter: toData.menuCenter,
           recognition: toRecognition(fromData.stroke, fromData.analysis),
@@ -664,6 +682,7 @@ export const navigationMachine = machine({
         new MarkingMenuOpenEvent({
           mode: 'novice',
           position: toData.menuCenter,
+          source: 'gesture',
           menu: toData.menu,
           menuCenter: toData.menuCenter,
         }),
@@ -678,6 +697,7 @@ export const navigationMachine = machine({
         new MarkingMenuMoveEvent<ModelNode>({
           mode: 'novice',
           position: inputData.position,
+          source: 'gesture',
           active: toData.active,
           menu: toData.menu,
         }),
@@ -689,6 +709,7 @@ export const navigationMachine = machine({
           new MarkingMenuChangeEvent<ModelNode>({
             mode: 'novice',
             position: inputData.position,
+            source: 'gesture',
             active: toData.active,
             previousActive: fromData.active,
             menu: toData.menu,

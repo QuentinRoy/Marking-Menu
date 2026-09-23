@@ -214,8 +214,7 @@ describe('createKeyboardSource', () => {
       key: 'item-key',
     });
     expect(fixture.send).toHaveBeenNthCalledWith(2, {
-      type: 'keyboard',
-      intent: 'dismiss',
+      type: 'focus-loss',
     });
   });
 
@@ -226,10 +225,7 @@ describe('createKeyboardSource', () => {
     fixture.item.blur();
 
     expect(fixture.onFocusLoss).toHaveBeenCalledExactlyOnceWith();
-    expect(fixture.send).toHaveBeenLastCalledWith({
-      type: 'keyboard',
-      intent: 'dismiss',
-    });
+    expect(fixture.send).toHaveBeenLastCalledWith({ type: 'focus-loss' });
   });
 
   it('keeps a standalone menu open while focus moves between its items', () => {
@@ -239,10 +235,7 @@ describe('createKeyboardSource', () => {
     fixture.nextItem.focus();
 
     expect(fixture.onFocusLoss).not.toHaveBeenCalled();
-    expect(fixture.send).not.toHaveBeenCalledWith({
-      type: 'keyboard',
-      intent: 'dismiss',
-    });
+    expect(fixture.send).not.toHaveBeenCalledWith({ type: 'focus-loss' });
   });
 
   it('ignores everything once there is no menu to read', () => {

@@ -1,5 +1,9 @@
 import type { Skip } from 'totorobot';
-import { MarkingMenuCancelEvent, MarkingMenuOpenEvent } from '../events.js';
+import {
+  MarkingMenuCancelEvent,
+  MarkingMenuOpenEvent,
+  type MarkingMenuEventSource,
+} from '../events.js';
 import { isModelMenuItem, type ModelNode } from '../types.js';
 import { deltaAngle } from '../utils.js';
 import { currentMenu } from './layout-view.js';
@@ -141,12 +145,14 @@ export const leaveLevel: StandaloneRow = ({ fromData, skip }) => {
 export function emitStandaloneOpen(
   emit: (name: 'open', data: MarkingMenuOpenEvent) => void,
   { menuCenter, menus }: Pick<StandaloneData, 'menuCenter' | 'menus'>,
+  source: MarkingMenuEventSource,
 ): void {
   emit(
     'open',
     new MarkingMenuOpenEvent<ModelNode, 'standalone'>({
       mode: 'standalone',
       position: undefined,
+      source,
       menu: currentMenu(menus),
       menuCenter,
     }),
@@ -159,15 +165,18 @@ export function emitStandaloneOpen(
 export function cancelStandalone({
   fromData: { menus, active },
   emit,
+  source,
 }: {
   readonly fromData: StandaloneData;
   readonly emit: (name: 'cancel', data: MarkingMenuCancelEvent) => void;
+  readonly source: MarkingMenuEventSource;
 }): void {
   emit(
     'cancel',
     new MarkingMenuCancelEvent<ModelNode, 'standalone'>({
       mode: 'standalone',
       position: undefined,
+      source,
       active,
       menu: currentMenu(menus),
       reason: 'dismissed',

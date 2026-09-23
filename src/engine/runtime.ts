@@ -135,12 +135,22 @@ export function createRuntime<Model extends EngineModelRoot>({
 
     switch (input.type) {
       case 'keyboard': {
-        host.send(input.intent);
+        if (input.intent === 'dismiss') {
+          host.send('dismiss', { source: 'keyboard' });
+        } else {
+          host.send(input.intent);
+        }
+
         break;
       }
 
       case 'focus': {
         host.send('focus', { key: input.key });
+        break;
+      }
+
+      case 'focus-loss': {
+        host.send('dismiss', { source: 'focus-loss' });
         break;
       }
 
@@ -195,7 +205,7 @@ export function createRuntime<Model extends EngineModelRoot>({
       );
     }
 
-    host.send('dismiss');
+    host.send('dismiss', { source: 'api' });
   };
 
   const on = (type: string, listener: (event: never) => void): void => {
