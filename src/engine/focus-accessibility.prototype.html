@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PROTOTYPE — standalone focus & accessibility (throwaway)</title>
+<style>
+  :root { --accent: #6d4aff; --bg: #fafafa; --panel: #fff; --border: #e2e2e6; --dim: #8a8a93; }
+  * { box-sizing: border-box; }
+  body { font: 15px/1.5 -apple-system, system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1.25rem 4rem; color: #1c1c22; background: var(--bg); }
+  h1 { font-size: 1.35rem; margin-bottom: .25rem; }
+  h2 { font-size: 1rem; margin: 2rem 0 .5rem; }
+  .intro { background: #f1ecff; border: 1px solid #d9ccff; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+  .intro p { margin: .35rem 0; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 0; padding: .6rem .8rem; }
+  legend { font-size: .8rem; color: var(--dim); padding: 0 .3rem; }
+  label.opt { font-size: .85rem; margin-right: .9rem; white-space: nowrap; }
+  button { font: inherit; border: 1px solid var(--border); background: #fff; border-radius: 7px; padding: .4rem .7rem; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .group-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); margin: .8rem 0 .3rem; }
+  .state-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: .75rem; }
+  .stat { border: 1px solid var(--border); border-radius: 8px; padding: .5rem .7rem; background: #fcfcff; }
+  .stat .k { font-size: .72rem; color: var(--dim); text-transform: uppercase; letter-spacing: .03em; }
+  .stat .v { font-size: .95rem; margin-top: .15rem; font-weight: 600; }
+  .stat .v.hot { color: var(--accent); }
+  .level { border: 1px dashed var(--border); border-radius: 8px; padding: .5rem .7rem; margin-top: .5rem; }
+  .level .name { font-size: .75rem; color: var(--dim); }
+  .item-chip { display: inline-block; padding: .15rem .5rem; border-radius: 6px; margin: .2rem .3rem 0 0; font-size: .82rem; border: 1px solid var(--border); }
+  .item-chip.active { background: #ece4ff; border-color: var(--accent); font-weight: 600; }
+  .item-chip .tag { font-size: .68rem; color: var(--dim); margin-left: .3rem; }
+  .log { max-height: 220px; overflow-y: auto; font-family: ui-monospace, monospace; font-size: .78rem; background: #14141a; color: #d7d7e0; border-radius: 8px; padding: .6rem .8rem; }
+  .log div { padding: .1rem 0; border-bottom: 1px solid #24242e; }
+  .log .public { color: #ffd479; }
+  .log .focus { color: #7fd6ff; }
+  .log .announce { color: #8fff9e; }
+  .log .note { color: #b9b9c6; font-style: italic; }
+  .tabs { display: flex; gap: .3rem; flex-wrap: wrap; margin-bottom: .5rem; }
+  .tabs button { font-size: .82rem; }
+  .tabs button.active { background: #1c1c22; color: #fff; border-color: #1c1c22; }
+  .scenario-desc { font-size: .88rem; color: #444; margin-bottom: .6rem; }
+  .step-btns { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .step-btns button.done { opacity: .45; }
+  .badge { display: inline-block; font-size: .68rem; padding: .05rem .4rem; border-radius: 5px; background: #eee; color: #555; margin-left: .4rem; }
+</style>
+</head>
+<body>
+
+<h1>PROTOTYPE — mixed pointer/keyboard focus &amp; accessibility <span class="badge">throwaway, wayfinder issue #465</span></h1>
+<div class="intro">
+  <p><strong>Question:</strong> in a standalone session mixing pointer and keyboard, which actions move
+  <em>real DOM focus</em> vs only the <em>active item</em>? Where does the roving tab stop sit when they
+  disagree? When is focus saved to be restored later, deliberately left where the user's click put it, or
+  never captured at all?</p>
+  <p>This is a state model, not real code: press buttons, watch the panels below change, and see if any
+  transition looks wrong. Two policy switches below encode the two genuinely open questions — flip them and
+  re-run a scenario to compare.</p>
+</div>
+
+<div class="panel">
+  <div class="row">
+    <fieldset>
+      <legend>Roving tab stop follows…</legend>
+      <label class="opt"><input type="radio" name="tabStopPolicy" value="active" checked> active item (incl. hover)</label>
+      <label class="opt"><input type="radio" name="tabStopPolicy" value="real-focus"> real DOM focus only</label>
+    </fieldset>
+    <fieldset>
+      <legend>open({ focus: false }) captures saved focus…</legend>
+      <label class="opt"><input type="radio" name="savedFocusPolicy" value="eager" checked> eagerly, at open()</label>
+      <label class="opt"><input type="radio" name="savedFocusPolicy" value="lazy"> lazily, on first focus-moving action</label>
+      <label class="opt"><input type="radio" name="savedFocusPolicy" value="never"> never</label>
+    </fieldset>
+    <button id="reset">Reset</button>
+  </div>
+</div>
+
+<h2>Current state</h2>
+<div class="panel state-grid" id="stateGrid"></div>
+<div class="panel" id="levelsPanel"></div>
+
+<h2>Free play</h2>
+<div class="panel" id="controls"></div>
+
+<h2>Guided walkthroughs</h2>
+<div class="panel">
+  <div class="tabs" id="tabs"></div>
+  <div class="scenario-desc" id="scenarioDesc"></div>
+  <div class="step-btns" id="scenarioSteps"></div>
+</div>
+
+<h2>Event / focus / announcement log</h2>
+<div class="panel"><div class="log" id="log"></div></div>
+
+<script>
+// ============================================================
+// PURE MODEL — no DOM. This is the part meant to survive past
+// the prototype (as a description of the decided behavior, not
+// as code to lift verbatim — the real logic lives in focus.ts).
+// ============================================================
+const TREE = {
+  A: { label: 'Cut', kind: 'leaf' },
+  B: { label: 'Copy', kind: 'leaf' },
+  C: { label: 'Paste More', kind: 'submenu', children: ['D', 'E'] },
+  D: { label: 'Style', kind: 'leaf' },
+  E: { label: 'Format', kind: 'leaf' },
+};
+const ROOT_ITEMS = ['A', 'B', 'C'];
+
+function initialState(policy) {
+  return {
+    policy,
+    open: false,
+    levels: [{ items: ROOT_ITEMS, active: undefined, parentLabel: undefined }],
+    realFocus: 'trigger', // 'trigger' | 'outside-el' | { level, on: 'container'|'item', itemId? }
+    savedFocus: undefined, // undefined | 'trigger'
+    tabStop: undefined, // itemId
+    contact: false,
+    log: [],
+  };
+}
+
+function withLog(state, entries) {
+  return { ...state, log: [...state.log, ...entries.map((e) => ({ ...e, t: state.log.length }))] };
+}
+
+function front(state) {
+  return state.levels[state.levels.length - 1];
+}
+
+function setActive(state, itemId, cause) {
+  const levels = state.levels.slice();
+  const i = levels.length - 1;
+  levels[i] = { ...levels[i], active: itemId };
+  let next = { ...state, levels };
+  const entries = [];
+  const label = itemId ? TREE[itemId].label : 'undefined';
+  entries.push({ kind: 'public', text: `change → active: ${label} (${cause})` });
+
+  if (cause === 'keyboard' && itemId !== undefined) {
+    next.realFocus = { level: i, on: 'item', itemId };
+    next.tabStop = itemId;
+    entries.push({ kind: 'focus', text: `real focus → item "${label}"` });
+    entries.push({ kind: 'announce', text: `screen reader announces "${label}"` });
+  } else if (cause === 'pointer') {
+    // #462: no pointer-caused change ever moves real focus, hover or press.
+    if (next.policy.tabStop === 'active' && itemId !== undefined) {
+      next.tabStop = itemId;
+      entries.push({ kind: 'note', text: `tab stop follows active item → now "${label}" (real focus untouched)` });
+    } else {
+      entries.push({ kind: 'note', text: `real focus untouched, tab stop unchanged` });
+    }
+  }
+  return withLog(next, entries);
+}
+
+function ensureSavedFocus(state) {
+  if (state.savedFocus !== undefined) return state;
+  return withLog({ ...state, savedFocus: 'trigger' }, [
+    { kind: 'note', text: 'saved focus captured now (lazy policy): "trigger"' },
+  ]);
+}
+
+const actions = {
+  openFocus(state) {
+    let s = withLog({ ...state, open: true, savedFocus: 'trigger' }, [
+      { kind: 'public', text: 'open({ focus: true })' },
+      { kind: 'note', text: 'saved focus captured: "trigger"' },
+    ]);
+    // Nothing active yet: the platform reports the tab-stop grab back as a
+    // focus input, which is what makes the first item active.
+    s.tabStop = ROOT_ITEMS[0];
+    s = withLog(s, [{ kind: 'focus', text: `real focus → tab stop, item "${TREE[ROOT_ITEMS[0]].label}"` }]);
+    s = setActive(s, ROOT_ITEMS[0], 'keyboard');
+    return s;
+  },
+
+  openNoFocus(state) {
+    let s = { ...state, open: true, tabStop: ROOT_ITEMS[0] };
+    const entries = [{ kind: 'public', text: 'open({ focus: false }) — display only' }];
+    if (state.policy.savedFocus === 'eager') {
+      s.savedFocus = 'trigger';
+      entries.push({ kind: 'note', text: 'saved focus captured eagerly: "trigger"' });
+    } else {
+      entries.push({ kind: 'note', text: 'real focus untouched; saved focus not captured yet' });
+    }
+    return withLog(s, entries);
+  },
+
+  hover(state, itemId) {
+    let s = withLog(state, [{ kind: 'public', text: `move (pointer over "${TREE[itemId].label}")` }]);
+    return setActive(s, itemId, 'pointer');
+  },
+
+  pressDown(state, itemId) {
+    let s = withLog({ ...state, contact: true }, [
+      { kind: 'note', text: `pointer contact begins on "${TREE[itemId].label}" — still just a preview` },
+    ]);
+    return setActive(s, itemId, 'pointer');
+  },
+
+  dragTo(state, itemId) {
+    let s = withLog(state, [{ kind: 'note', text: `drag follows finger onto "${TREE[itemId].label}"` }]);
+    return setActive(s, itemId, 'pointer');
+  },
+
+  leaveAll(state) {
+    return setActive(withLog(state, [{ kind: 'public', text: 'move (pointer leaves the plate)' }]), undefined, 'pointer');
+  },
+
+  pointerCancel(state) {
+    let s = withLog({ ...state, contact: false }, [
+      { kind: 'note', text: 'pointercancel — active clears, session stays open (per map Notes)' },
+    ]);
+    return setActive(s, undefined, 'pointer');
+  },
+
+  release(state, itemId) {
+    let s = { ...state, contact: false };
+    if (itemId === undefined) {
+      return withLog(setActive(s, undefined, 'pointer'), [
+        { kind: 'note', text: 'released over empty space — nothing activated' },
+      ]);
+    }
+    const def = TREE[itemId];
+    if (def.kind === 'leaf') {
+      s = withLog(s, [{ kind: 'public', text: `select (${def.label})` }]);
+      return restoreFocusAfterSelectOrCancel(s, 'select');
+    }
+    // Submenu: new level starts with no active item; a NEW focusMenu() call
+    // (not yet in focus.ts today) moves real focus to the new container.
+    const newLevel = { items: def.children, active: undefined, parentLabel: def.label };
+    s = { ...s, levels: [...s.levels, newLevel] };
+    const levelIndex = s.levels.length - 1;
+    s.tabStop = def.children[0];
+    s = withLog(s, [
+      { kind: 'public', text: `open (level ${levelIndex}, entered by pointer)` },
+      { kind: 'public', text: 'change → active: undefined' },
+      { kind: 'focus', text: `real focus → container "${def.label}" (aria-label="${def.label}")` },
+    ]);
+    return s;
+  },
+
+  arrow(state, dir) {
+    const items = front(state).items;
+    const cur = front(state).active;
+    const idx = cur === undefined ? -1 : items.indexOf(cur);
+    const nextIdx = dir === 'next' ? (idx + 1) % items.length : (idx - 1 + items.length) % items.length;
+    const itemId = items[nextIdx];
+    return setActive(state, itemId, 'keyboard');
+  },
+
+  tab(state) {
+    const stop = state.tabStop ?? front(state).items[0];
+    const level = state.levels.length - 1;
+    let s = withLog(state, [{ kind: 'focus', text: `Tab → real focus lands on tab stop, item "${TREE[stop].label}"` }]);
+    s = { ...s, realFocus: { level, on: 'item', itemId: stop } };
+    // Landing via Tab is reported back as a focus input, same as arrow keys.
+    return setActive(s, stop, 'keyboard');
+  },
+
+  escape(state) {
+    let s = withLog(state, [{ kind: 'public', text: 'cancel (Escape)' }]);
+    return restoreFocusAfterSelectOrCancel(s, 'cancel');
+  },
+
+  outsidePressFocusable(state) {
+    let s = withLog(state, [
+      { kind: 'public', text: 'cancel (outside press, position captured)' },
+      { kind: 'focus', text: 'browser moves real focus to the clicked element (outside-button)' },
+      { kind: 'note', text: 'saved focus discarded, NOT reapplied — matches standard light-dismiss behavior: click-outside sends focus wherever the click landed, only Escape returns it to the trigger' },
+    ]);
+    return {
+      ...s,
+      open: false,
+      levels: [{ items: ROOT_ITEMS, active: undefined, parentLabel: undefined }],
+      realFocus: 'outside-el',
+      savedFocus: undefined,
+      tabStop: undefined,
+    };
+  },
+
+  outsidePressNonFocusable(state) {
+    let s = withLog(state, [
+      { kind: 'public', text: 'cancel (outside press on non-focusable area)' },
+      { kind: 'note', text: 'saved focus discarded, NOT reapplied — same rule as the focusable case; focus lands on <body>, which is the ordinary (if unglamorous) recovery point' },
+    ]);
+    return {
+      ...s,
+      open: false,
+      levels: [{ items: ROOT_ITEMS, active: undefined, parentLabel: undefined }],
+      realFocus: 'outside-el',
+      savedFocus: undefined,
+      tabStop: undefined,
+    };
+  },
+
+  closeProgrammatic(state) {
+    let s = withLog(state, [{ kind: 'public', text: 'cancel (controller.close() called by app code)' }]);
+    return restoreFocusAfterSelectOrCancel(s, 'cancel');
+  },
+};
+
+function restoreFocusAfterSelectOrCancel(state, publicEvent) {
+  const entries = [];
+  let realFocus = state.realFocus;
+  if (state.savedFocus !== undefined) {
+    realFocus = 'trigger';
+    entries.push({ kind: 'focus', text: 'restoreFocus() → real focus returns to "trigger"' });
+  } else {
+    entries.push({ kind: 'note', text: 'restoreFocus() has nothing saved — focus stays wherever it currently is (possibly stranded)' });
+  }
+  return withLog(
+    {
+      ...state,
+      open: false,
+      levels: [{ items: ROOT_ITEMS, active: undefined, parentLabel: undefined }],
+      realFocus,
+      savedFocus: undefined,
+      tabStop: undefined,
+      contact: false,
+    },
+    entries,
+  );
+}
+
+// ============================================================
+// THIN DOM SHELL below this line — throwaway, not meant to survive.
+// ============================================================
+let policy = { tabStop: 'active', savedFocus: 'eager' };
+let state = initialState(policy);
+let activeScenario = null;
+let scenarioStep = 0;
+
+const SCENARIOS = [
+  {
+    name: '1. Display-only, then commit',
+    desc: 'Open without focus, hover around, then click a submenu. Watch whether saved focus exists when we later Escape — with the "never" policy, focus ends up stranded in the removed submenu container.',
+    steps: [
+      ['open({ focus:false })', (s) => actions.openNoFocus(s)],
+      ['hover "Cut"', (s) => actions.hover(s, 'A')],
+      ['press down "Paste More"', (s) => actions.pressDown(s, 'C')],
+      ['release on "Paste More"', (s) => actions.release(s, 'C')],
+      ['Escape', (s) => actions.escape(s)],
+    ],
+  },
+  {
+    name: '2. Hover then Tab away and back',
+    desc: 'Open with focus, hover a different item without pressing, then Tab. Compare the two tab-stop policies to see whether Tab lands on the hovered item or stays pinned to real focus.',
+    steps: [
+      ['open({ focus:true })', (s) => actions.openFocus(s)],
+      ['hover "Paste More"', (s) => actions.hover(s, 'C')],
+      ['Tab', (s) => actions.tab(s)],
+    ],
+  },
+  {
+    name: '3. Drag into a submenu',
+    desc: 'Press on one leaf, drag onto a submenu item, release. The submenu should open exactly as a tap would.',
+    steps: [
+      ['open({ focus:true })', (s) => actions.openFocus(s)],
+      ['press down "Cut"', (s) => actions.pressDown(s, 'A')],
+      ['drag to "Paste More"', (s) => actions.dragTo(s, 'C')],
+      ['release on "Paste More"', (s) => actions.release(s, 'C')],
+    ],
+  },
+  {
+    name: '4. Touch interrupted',
+    desc: 'A contact starts, then the OS cancels it (e.g. a system gesture takes over). The session must stay open.',
+    steps: [
+      ['open({ focus:true })', (s) => actions.openFocus(s)],
+      ['press down "Copy"', (s) => actions.pressDown(s, 'B')],
+      ['pointercancel', (s) => actions.pointerCancel(s)],
+    ],
+  },
+  {
+    name: '5a. Outside press — focusable target',
+    desc: 'Open, then the user clicks a focusable element elsewhere on the page. Focus should land there, not snap back.',
+    steps: [
+      ['open({ focus:true })', (s) => actions.openFocus(s)],
+      ['outside press (focusable)', (s) => actions.outsidePressFocusable(s)],
+    ],
+  },
+  {
+    name: '5b. Outside press — non-focusable target',
+    desc: 'Same, but the outside target cannot take focus. The browser would otherwise strand focus on <body>, so saved focus is reapplied.',
+    steps: [
+      ['open({ focus:true })', (s) => actions.openFocus(s)],
+      ['outside press (non-focusable)', (s) => actions.outsidePressNonFocusable(s)],
+    ],
+  },
+  {
+    name: '6. Keyboard after pointer',
+    desc: 'Hover flickers the active item without moving real focus, then an arrow key grabs real focus from wherever hover left it.',
+    steps: [
+      ['open({ focus:true })', (s) => actions.openFocus(s)],
+      ['hover "Copy"', (s) => actions.hover(s, 'B')],
+      ['hover "Paste More"', (s) => actions.hover(s, 'C')],
+      ['Arrow → next', (s) => actions.arrow(s, 'next')],
+    ],
+  },
+];
+
+function dispatch(fn) {
+  state = fn(state);
+  render();
+}
+
+function reset() {
+  state = initialState(policy);
+  activeScenario = null;
+  scenarioStep = 0;
+  render();
+}
+
+function describeRealFocus(rf) {
+  if (rf === 'trigger') return 'the trigger element (outside the menu)';
+  if (rf === 'outside-el') return 'an outside page element the user clicked';
+  const lvl = state.levels[rf.level];
+  if (rf.on === 'container') return `container of level ${rf.level}${lvl.parentLabel ? ` ("${lvl.parentLabel}")` : ' (root, unlabeled)'}`;
+  return `item "${TREE[rf.itemId].label}" (level ${rf.level})`;
+}
+
+function render() {
+  const grid = document.getElementById('stateGrid');
+  grid.innerHTML = `
+    <div class="stat"><div class="k">Session</div><div class="v ${state.open ? 'hot' : ''}">${state.open ? 'open' : 'closed'}</div></div>
+    <div class="stat"><div class="k">Real DOM focus</div><div class="v hot">${describeRealFocus(state.realFocus)}</div></div>
+    <div class="stat"><div class="k">Saved focus</div><div class="v">${state.savedFocus ?? 'not captured'}</div></div>
+    <div class="stat"><div class="k">Pointer contact</div><div class="v">${state.contact ? 'down / touching' : 'up'}</div></div>
+    <div class="stat"><div class="k">Tab stop (front level)</div><div class="v">${state.tabStop ? `"${TREE[state.tabStop].label}"` : '—'}</div></div>
+  `;
+
+  const lp = document.getElementById('levelsPanel');
+  lp.innerHTML = state.levels
+    .map((lvl, i) => {
+      const label = lvl.parentLabel ? `"${lvl.parentLabel}"` : i === 0 ? '(root, unlabeled — known gap)' : '';
+      const chips = lvl.items
+        .map((id) => {
+          const isActive = lvl.active === id;
+          const isTabStop = state.tabStop === id && i === state.levels.length - 1;
+          return `<span class="item-chip ${isActive ? 'active' : ''}">${TREE[id].label}${isTabStop ? '<span class="tag">tabindex=0</span>' : '<span class="tag">tabindex=-1</span>'}</span>`;
+        })
+        .join('');
+      return `<div class="level"><div class="name">level ${i} · container aria-label: ${label}</div>${chips}</div>`;
+    })
+    .join('');
+
+  const c = document.getElementById('controls');
+  const f = front(state);
+  const btn = (label, onClick, extra = '') => `<button data-a="${extra}" onclick="__act(this)">${label}</button>`;
+  window.__acts = [];
+  const register = (fn) => {
+    window.__acts.push(fn);
+    return window.__acts.length - 1;
+  };
+  window.__act = (el) => window.__acts[Number(el.dataset.a)]();
+  let html = '';
+  html += `<div class="group-label">Open</div><div class="row">`;
+  html += `<button data-a="${register(() => dispatch(actions.openFocus))}" onclick="__act(this)">open({ focus: true })</button>`;
+  html += `<button data-a="${register(() => dispatch(actions.openNoFocus))}" onclick="__act(this)">open({ focus: false })</button>`;
+  html += `</div>`;
+
+  html += `<div class="group-label">Pointer — current level (${state.levels.length - 1})</div><div class="row">`;
+  for (const id of f.items) {
+    html += `<button data-a="${register(() => dispatch((s) => actions.hover(s, id)))}" onclick="__act(this)">hover "${TREE[id].label}"</button>`;
+  }
+  for (const id of f.items) {
+    html += `<button data-a="${register(() => dispatch((s) => actions.pressDown(s, id)))}" onclick="__act(this)">press "${TREE[id].label}"</button>`;
+  }
+  for (const id of f.items) {
+    html += `<button data-a="${register(() => dispatch((s) => actions.dragTo(s, id)))}" onclick="__act(this)">drag to "${TREE[id].label}"</button>`;
+  }
+  for (const id of f.items) {
+    html += `<button data-a="${register(() => dispatch((s) => actions.release(s, id)))}" onclick="__act(this)">release on "${TREE[id].label}"</button>`;
+  }
+  html += `<button data-a="${register(() => dispatch((s) => actions.release(s, undefined)))}" onclick="__act(this)">release on empty space</button>`;
+  html += `<button data-a="${register(() => dispatch(actions.leaveAll))}" onclick="__act(this)">pointer leaves plate</button>`;
+  html += `<button data-a="${register(() => dispatch(actions.pointerCancel))}" onclick="__act(this)">pointercancel</button>`;
+  html += `</div>`;
+
+  html += `<div class="group-label">Keyboard</div><div class="row">`;
+  html += `<button data-a="${register(() => dispatch((s) => actions.arrow(s, 'next')))}" onclick="__act(this)">Arrow → next</button>`;
+  html += `<button data-a="${register(() => dispatch((s) => actions.arrow(s, 'prev')))}" onclick="__act(this)">Arrow → prev</button>`;
+  html += `<button data-a="${register(() => dispatch(actions.tab))}" onclick="__act(this)">Tab</button>`;
+  html += `<button data-a="${register(() => dispatch(actions.escape))}" onclick="__act(this)">Escape</button>`;
+  html += `</div>`;
+
+  html += `<div class="group-label">Outside / programmatic</div><div class="row">`;
+  html += `<button data-a="${register(() => dispatch(actions.outsidePressFocusable))}" onclick="__act(this)">outside press (focusable target)</button>`;
+  html += `<button data-a="${register(() => dispatch(actions.outsidePressNonFocusable))}" onclick="__act(this)">outside press (non-focusable target)</button>`;
+  html += `<button data-a="${register(() => dispatch(actions.closeProgrammatic))}" onclick="__act(this)">controller.close()</button>`;
+  html += `</div>`;
+  c.innerHTML = html;
+
+  const log = document.getElementById('log');
+  log.innerHTML = state.log
+    .map((e) => `<div class="${e.kind}">${e.text}</div>`)
+    .join('');
+  log.scrollTop = log.scrollHeight;
+
+  renderScenarios();
+}
+
+function renderScenarios() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = SCENARIOS.map(
+    (sc, i) => `<button class="${activeScenario === i ? 'active' : ''}" data-i="${i}" onclick="__pickScenario(this)">${sc.name}</button>`,
+  ).join('');
+  window.__pickScenario = (el) => {
+    activeScenario = Number(el.dataset.i);
+    scenarioStep = 0;
+    reset();
+    activeScenario = Number(el.dataset.i);
+    renderScenarios();
+  };
+  const desc = document.getElementById('scenarioDesc');
+  const steps = document.getElementById('scenarioSteps');
+  if (activeScenario === null) {
+    desc.textContent = 'Pick a walkthrough above, or just use free play.';
+    steps.innerHTML = '';
+    return;
+  }
+  const sc = SCENARIOS[activeScenario];
+  desc.textContent = sc.desc;
+  steps.innerHTML = sc.steps
+    .map(([label], i) => `<button class="${i < scenarioStep ? 'done' : ''}" data-i="${i}" onclick="__runStep(this)" ${i !== scenarioStep ? 'disabled' : ''}>${i + 1}. ${label}</button>`)
+    .join('');
+  window.__runStep = (el) => {
+    const i = Number(el.dataset.i);
+    state = SCENARIOS[activeScenario].steps[i][1](state);
+    scenarioStep = i + 1;
+    render();
+  };
+}
+
+document.querySelectorAll('input[name="tabStopPolicy"]').forEach((r) =>
+  r.addEventListener('change', (e) => {
+    policy = { ...policy, tabStop: e.target.value };
+    reset();
+  }),
+);
+document.querySelectorAll('input[name="savedFocusPolicy"]').forEach((r) =>
+  r.addEventListener('change', (e) => {
+    policy = { ...policy, savedFocus: e.target.value };
+    reset();
+  }),
+);
+document.getElementById('reset').addEventListener('click', reset);
+
+render();
+</script>
+</body>
+</html>
