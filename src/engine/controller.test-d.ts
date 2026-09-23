@@ -1,6 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import type { MarkingMenuEventMap, MarkingMenuStartEvent } from '../events.js';
 import type { MarkingMenuModel } from '../model.js';
+import type { ModelItems, ModelMenus } from '../types.js';
 import { noOp, type Point } from '../utils.js';
 import {
   createController,
@@ -42,9 +43,15 @@ describe('createController', () => {
     expectTypeOf(controller.dispose).toEqualTypeOf<() => void>();
   });
 
-  it('exposes exactly the listen-only facade, open and close, and both forms of disposal, nothing else', () => {
+  it('exposes exactly the listen-only facade, open and close, state, and both forms of disposal, nothing else', () => {
     expectTypeOf<keyof MarkingMenuController<Model>>().toEqualTypeOf<
-      'on' | 'off' | 'open' | 'close' | 'dispose' | typeof Symbol.dispose
+      | 'on'
+      | 'off'
+      | 'open'
+      | 'close'
+      | 'state'
+      | 'dispose'
+      | typeof Symbol.dispose
     >();
   });
 
@@ -120,6 +127,21 @@ describe('createController listeners', () => {
       expectTypeOf(event).toEqualTypeOf<MarkingMenuStartEvent>();
       expectTypeOf(event.mode).toEqualTypeOf<'startup'>();
     });
+  });
+
+  it('narrows `state` on `mode`: only novice and standalone carry a menu, typed to this model', () => {
+    const { state } = controller;
+    expectTypeOf(state.mode).toEqualTypeOf<
+      'idle' | 'startup' | 'expert' | 'novice' | 'standalone'
+    >();
+    if (state.mode === 'novice' || state.mode === 'standalone') {
+      expectTypeOf(state.menu).toEqualTypeOf<ModelMenus<Model>>();
+      expectTypeOf(state.activeItem).toEqualTypeOf<
+        ModelItems<Model> | undefined
+      >();
+    } else {
+      expectTypeOf(state).not.toHaveProperty('menu');
+    }
   });
 
   it('rejects an unknown event name', () => {

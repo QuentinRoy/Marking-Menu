@@ -133,11 +133,14 @@ describe('a standalone menu', () => {
     const events = record(fixture.controller);
 
     fixture.controller.open();
-    expect(fixture.items()).toHaveLength(4);
+    expect(fixture.controller.state).toMatchObject({
+      mode: 'standalone',
+      menu: { isRoot: true },
+    });
 
     fixture.controller.close();
 
-    expect(fixture.items()).toHaveLength(0);
+    expect(fixture.controller.state.mode).toBe('idle');
     expect(events.map(([type]) => type)).toContain('cancel');
     expect(events.at(-1)?.[1]).toBe('standalone');
   });
@@ -179,7 +182,10 @@ describe('a standalone menu', () => {
       .items()[0]
       ?.dispatchEvent(pointer('pointerdown', { clientX: 0, clientY: 0 }));
     expect(started).not.toHaveBeenCalled();
-    expect(fixture.items()).toHaveLength(4);
+    expect(fixture.controller.state).toMatchObject({
+      mode: 'standalone',
+      menu: { isRoot: true },
+    });
   });
 
   it('can be opened again once closed', () => {
@@ -189,7 +195,10 @@ describe('a standalone menu', () => {
     fixture.controller.close();
     fixture.controller.open();
 
-    expect(fixture.items()).toHaveLength(4);
+    expect(fixture.controller.state).toMatchObject({
+      mode: 'standalone',
+      menu: { isRoot: true },
+    });
   });
 
   it('takes focus onto the first item, which becomes active', () => {
@@ -240,11 +249,17 @@ describe('a standalone menu', () => {
     });
 
     fixture.press('Enter');
-    expect(fixture.items()).toHaveLength(2);
+    expect(fixture.controller.state).toMatchObject({
+      mode: 'standalone',
+      menu: { id: 'right' },
+    });
     expect(fixture.focusedLabel()).toBe('Right Up');
 
     fixture.press('Escape');
-    expect(fixture.items()).toHaveLength(4);
+    expect(fixture.controller.state).toMatchObject({
+      mode: 'standalone',
+      menu: { isRoot: true },
+    });
     expect(fixture.focusedLabel()).toBe('Right');
     expect(centers).toEqual([
       [10, 20],
@@ -265,7 +280,7 @@ describe('a standalone menu', () => {
 
     expect(selected.map((event) => event.selection.id)).toEqual(['down']);
     expect(selected[0]?.mode).toBe('standalone');
-    expect(fixture.items()).toHaveLength(0);
+    expect(fixture.controller.state.mode).toBe('idle');
     expect(document.activeElement).toBe(fixture.opener);
   });
 
@@ -289,7 +304,10 @@ describe('a standalone menu', () => {
     fixture.press('Escape');
 
     expect(events.map(([type]) => type)).toEqual(['open', 'change']);
-    expect(fixture.items()).toHaveLength(4);
+    expect(fixture.controller.state).toMatchObject({
+      mode: 'standalone',
+      menu: { isRoot: true },
+    });
   });
 
   it('cancels on Tab, leaving Tab to move focus on', () => {
@@ -299,7 +317,7 @@ describe('a standalone menu', () => {
     const event = fixture.press('Tab');
 
     expect(event.defaultPrevented).toBe(false);
-    expect(fixture.items()).toHaveLength(0);
+    expect(fixture.controller.state.mode).toBe('idle');
   });
 
   it('only displays the menu, taking no focus, and leaving a tab stop, with focus: false', () => {
@@ -389,7 +407,10 @@ describe('a standalone menu', () => {
     fixture.controller.open({ focus: false });
     fixture.controller.close();
 
-    expect(fixture.items()).toHaveLength(4);
+    expect(fixture.controller.state).toMatchObject({
+      mode: 'standalone',
+      menu: { isRoot: true },
+    });
     expect(fixture.parent.style.getPropertyValue('touch-action')).toBe('');
   });
 
@@ -413,7 +434,7 @@ describe('a standalone menu', () => {
     fixture.controller.dispose();
 
     expect(events).toEqual([]);
-    expect(fixture.items()).toHaveLength(0);
+    expect(fixture.controller.state.mode).toBe('idle');
     expect(document.activeElement).toBe(fixture.opener);
     expect(fixture.parent.style.getPropertyValue('touch-action')).toBe('');
   });
@@ -512,7 +533,7 @@ describe('a standalone menu', () => {
         pointer('pointerup', { pointerId: 1, clientX: 5, clientY: 6 }),
       );
 
-      expect(fixture.items()).toHaveLength(0);
+      expect(fixture.controller.state.mode).toBe('idle');
       expect(events).toEqual([['cancel', 'standalone', [5, 6]]]);
       expect(document.activeElement).not.toBe(fixture.opener);
     });
@@ -589,7 +610,7 @@ describe('a standalone menu', () => {
 
       expect(selected.map((event) => event.selection.id)).toEqual(['down']);
       expect(selected[0]?.source).toBe('pointer');
-      expect(fixture.items()).toHaveLength(0);
+      expect(fixture.controller.state.mode).toBe('idle');
       expect(document.activeElement).toBe(fixture.opener);
     });
 
@@ -609,7 +630,10 @@ describe('a standalone menu', () => {
           pointer('pointerup', { pointerId: 1, clientX: 0, clientY: 0 }),
         );
 
-      expect(fixture.items()).toHaveLength(2);
+      expect(fixture.controller.state).toMatchObject({
+        mode: 'standalone',
+        menu: { id: 'right' },
+      });
       const shadowRoot =
         fixture.parent.querySelector('.marking-menu')?.shadowRoot;
       expect(shadowRoot?.activeElement).toBe(
@@ -635,7 +659,10 @@ describe('a standalone menu', () => {
           pointer('pointercancel', { pointerId: 1, clientX: 0, clientY: 0 }),
         );
 
-      expect(fixture.items()).toHaveLength(4);
+      expect(fixture.controller.state).toMatchObject({
+        mode: 'standalone',
+        menu: { isRoot: true },
+      });
       expect(
         fixture.items().some((item) => item.classList.contains('active')),
       ).toBe(false);
@@ -651,7 +678,7 @@ describe('a standalone menu', () => {
         pointer('pointerdown', { clientX: 5, clientY: 6 }),
       );
 
-      expect(fixture.items()).toHaveLength(0);
+      expect(fixture.controller.state.mode).toBe('idle');
       expect(events).toEqual([['cancel', 'standalone', [5, 6]]]);
       // Never restored to the original opener, whatever the press left
       // focus on (jsdom, unlike a real browser, leaves it exactly where it

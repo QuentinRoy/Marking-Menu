@@ -1,9 +1,11 @@
-import type { MarkingMenuEventEmitter } from '../events.js';
+import type { MarkingMenuEventEmitter, MarkingMenuState } from '../events.js';
 import type { ModelNode, ModelRoot } from '../types.js';
 import type { Point } from '../utils.js';
+import { currentMenu } from './layout-view.js';
 import type { ResolvedLogger } from './logger.js';
 import {
   navigationMachine,
+  type MachineStates,
   type NavigationInput,
   type NavigationOptions,
   type NavigationPhase,
@@ -33,6 +35,10 @@ export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
       */
       readonly phase: NavigationPhase;
       /**
+      What the machine is doing right now, as the controller reports it.
+      */
+      get state(): MarkingMenuState<Model>;
+      /**
        Whether a `send` from a source is currently being processed: true for
        the whole synchronous cascade a call triggers, render included, so a
        side effect of that render (for example, focus moving as a menu level
@@ -50,6 +56,35 @@ export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
       close: () => void;
       dispose: () => void;
     };
+
+const toState = (current: {
+  readonly name: NavigationPhase;
+  readonly data: MachineStates[NavigationPhase];
+}): MarkingMenuState<EngineModelRoot> => {
+  const { name, data } = current;
+  switch (name) {
+    case 'novice': {
+      const { menu, active } = data as MachineStates['novice'];
+      return { mode: name, menu, activeItem: active };
+    }
+
+    case 'standalone': {
+      const { menus, active } = data as MachineStates['standalone'];
+      return { mode: name, menu: currentMenu(menus), activeItem: active };
+    }
+
+    case 'startup':
+    case 'expert': {
+      return { mode: name };
+    }
+
+    // The machine never rests in `recognizing`.
+    case 'idle':
+    case 'recognizing': {
+      return { mode: 'idle' };
+    }
+  }
+};
 
 const publicOutputs = [
   'start',
@@ -310,6 +345,11 @@ export function createRuntime<Model extends EngineModelRoot>({
     },
     get phase() {
       return host.current.name;
+    },
+    get state() {
+      // The machine is typed over the erased model, the caller's exact type
+      // is only known here.
+      return toState(host.current) as MarkingMenuState<Model>;
     },
     send,
     open,

@@ -37,7 +37,7 @@ const createFakeRenderer = () => ({
 Record every event the runtime emits, in order, by name.
 */
 const recordEmitted = (
-  runtime: ReturnType<typeof createRuntime<typeof model>>,
+  runtime: Pick<ReturnType<typeof createRuntime<typeof model>>, 'on'>,
 ): string[] => {
   const emitted: string[] = [];
   for (const type of ['start', 'select', 'cancel'] as const) {
