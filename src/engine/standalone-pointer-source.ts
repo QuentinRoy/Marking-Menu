@@ -111,11 +111,16 @@ export function createStandalonePointerSource({
 
   // On the document: a held contact can be released anywhere.
   const onPointerUp = (event: PointerEvent): void => {
-    if (!isOpen() || event.pointerId !== activePointerId) {
+    if (event.pointerId !== activePointerId) {
       return;
     }
 
+    // Cleared even once closed, or the next session would ignore its press.
     activePointerId = undefined;
+    if (!isOpen()) {
+      return;
+    }
+
     const position = toClientPoint(event);
     if (!isInLayer(event)) {
       runtime.send({ type: 'standalonePointer.outside', position });
@@ -130,11 +135,15 @@ export function createStandalonePointerSource({
   };
 
   const onPointerCancel = (event: PointerEvent): void => {
-    if (!isOpen() || event.pointerId !== activePointerId) {
+    if (event.pointerId !== activePointerId) {
       return;
     }
 
     activePointerId = undefined;
+    if (!isOpen()) {
+      return;
+    }
+
     runtime.send({
       type: 'standalonePointer.cancel',
       position: toClientPoint(event),
