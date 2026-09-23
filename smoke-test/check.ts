@@ -15,6 +15,7 @@ import type {
   MarkingMenuEventBase,
   MarkingMenuEventEmitter,
   MarkingMenuEventMap,
+  MarkingMenuEventSource,
   MarkingMenuInput,
   MarkingMenuItemInput,
   MarkingMenuLogger,
@@ -56,6 +57,7 @@ export type PublicSurface = [
   MarkingMenuEventBase,
   MarkingMenuEventEmitter<ModelNode>,
   MarkingMenuEventMap<ModelNode>,
+  MarkingMenuEventSource,
   MarkingMenuInput,
   MarkingMenuItemInput,
   MarkingMenuLogger,
@@ -96,10 +98,11 @@ mm.on('open', (event) => {
   console.log(event.menu.items.length);
 });
 mm.on('cancel', (event) => {
+  const source: MarkingMenuEventSource = event.source;
   if (event.mode === 'standalone') {
-    // Standalone events have no pointer, so `position` is narrowed on `mode`.
-    const noPosition: undefined = event.position;
-    console.log(noPosition);
+    // Standalone `position` is a point or `undefined`, not narrowed by `mode`.
+    const position: Point | undefined = event.position;
+    console.log(source, position);
   } else {
     const [x, y] = event.position;
     console.log(x, y);
