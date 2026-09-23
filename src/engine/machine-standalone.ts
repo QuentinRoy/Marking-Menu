@@ -182,9 +182,8 @@ export const pointerCancel: StandaloneRow = ({ fromData, skip }) =>
 /**
  A pointer released while the session stays open: over a submenu item, it
  opens it, keeping the center, with nothing active in the new level yet;
- over empty space or an unresolved key, it just clears the active item, the
- same way a hover leaving the plate does. Declines a leaf, selected by the
- machine's `-> idle` row for this same input instead.
+ over an unresolved key, it just clears the active item. Declines a leaf,
+ selected by the machine's `-> idle` row for this same input instead.
  */
 export const pointerRelease = ({
   fromData,
@@ -311,7 +310,7 @@ export function cancelStandalone({
   fromData: { menus, active },
   emit,
   source,
-  // Every cause but a pointer's own outside-press dismissal carries no
+  // Every cause but a pointer's own dismissal outside the menu carries no
   // position, per the public contract.
   position,
 }: {

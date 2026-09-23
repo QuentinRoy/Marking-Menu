@@ -86,7 +86,8 @@ type MachineInputs = {
   open: { readonly position: Point };
   // The standalone pointer source's own four intents: the pointer moving
   // over the displayed level (hover, or a held contact dragging across it),
-  // a completed activation, a canceled contact, and an outside press. Named
+  // a completed activation, a canceled contact, and a press or release
+  // outside the menu. Named
   // apart from the gesture's `pointer*` family above: a standalone menu's
   // pointer source is a distinct listener, never a live gesture's.
   standalonePointerMove: {
@@ -519,9 +520,8 @@ export const navigationMachine = machine({
     'standalone -standalonePointerCancel> standalone': pointerCancel,
 
     // A release completes over whichever item currently sits under the
-    // pointer: a submenu goes into it, empty space or an unresolved key
-    // just clears the active item, and a leaf instead selects it, via the
-    // row below.
+    // pointer: a submenu goes into it, an unresolved key just clears the
+    // active item, and a leaf instead selects it, via the row below.
     'standalone -standalonePointerActivate> standalone': pointerRelease,
     'standalone -standalonePointerActivate> idle'({
       fromData,
