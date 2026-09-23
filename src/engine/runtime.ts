@@ -36,7 +36,7 @@ export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
       /**
       What the controller reports as its state.
       */
-      get state(): MarkingMenuState<Model>;
+      readonly state: MarkingMenuState<Model>;
       /**
        Whether a `send` from a source is currently being processed: true for
        the whole synchronous cascade a call triggers, render included, so a

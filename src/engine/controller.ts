@@ -140,7 +140,7 @@ export type MarkingMenuController<Model extends ModelNode = ModelNode> =
      the event being dispatched: `mode` is `'idle'` in a `select` listener.
      Values tied to a single moment stay on the events.
      */
-    get state(): MarkingMenuState<Model>;
+    readonly state: MarkingMenuState<Model>;
     dispose(): void;
     [Symbol.dispose](): void;
   };
