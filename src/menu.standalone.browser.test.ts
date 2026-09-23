@@ -1,5 +1,10 @@
 import { commands, page, userEvent } from 'vitest/browser';
-import { expectFocused, mountMenu } from './__fixtures__/browser-menu.js';
+import {
+  centerOf,
+  expectFocused,
+  mountMenu,
+  press,
+} from './__fixtures__/browser-menu.js';
 
 afterEach(async () => {
   await commands.emulateMedia({ forcedColors: 'none' });
@@ -299,6 +304,44 @@ test('a canceled touch contact clears the active item and leaves the menu open',
     .not.toHaveClass('active');
   expect(menu.events.at(-1)).toBe('change:standalone');
   await expect.element(page.getByRole('menu')).toBeInTheDocument();
+});
+
+// With `touch-action: none`, the browser keeps a touch drag instead of
+// canceling it to pan, and routes every event of that drag to the item
+// first pressed unless the menu lets go of it.
+test('a touch drag under touch-action: none follows the finger onto another item', async () => {
+  using menu = mountBetweenButtons();
+  menu.surface.style.touchAction = 'none';
+  const selections: Array<string | undefined> = [];
+  menu.mm.on('select', (event) => {
+    selections.push(event.selection.id);
+  });
+  menu.mm.open();
+  await expectFocused('menuitem', { name: 'Right' });
+
+  await using drag = await press(centerOf(plateOf('Left')));
+  await drag.moveTo(centerOf(plateOf('Up')));
+  await expect
+    .element(page.getByRole('menuitem', { name: 'Up' }))
+    .toHaveClass('active');
+  await drag.release();
+
+  await expect.poll(() => selections).toEqual(['up']);
+});
+
+test('a touch drag under touch-action: none released off the menu cancels it', async () => {
+  using menu = mountBetweenButtons();
+  menu.surface.style.touchAction = 'none';
+  menu.mm.open();
+  await expectFocused('menuitem', { name: 'Right' });
+
+  await using drag = await press(centerOf(plateOf('Left')));
+  const surfaceBox = menu.surface.getBoundingClientRect();
+  await drag.moveTo({ x: surfaceBox.x + 5, y: surfaceBox.y + 5 });
+  await drag.release();
+
+  await expect.poll(() => menu.events.at(-1)).toBe('cancel:standalone');
+  expect(menu.events).not.toContain('select:standalone');
 });
 
 test('clicking outside the menu dismisses it without restoring focus', async () => {
