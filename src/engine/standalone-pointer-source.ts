@@ -92,6 +92,9 @@ export function createStandalonePointerSource({
     });
   };
 
+  // Also handles `pointerout`, which never reaches `parent` for a move between
+  // parts of the menu: its target and `relatedTarget` both retarget to the
+  // shadow host, which stops it there. One seen here left the menu.
   const onPointerMove = (event: PointerEvent): void => {
     if (
       !isOpen() ||
@@ -104,7 +107,7 @@ export function createStandalonePointerSource({
     runtime.send({
       type: 'standalonePointer.move',
       position: toClientPoint(event),
-      itemKey: resolveItemKey(event),
+      itemKey: event.type === 'pointerout' ? undefined : resolveItemKey(event),
     });
   };
 
@@ -115,33 +118,16 @@ export function createStandalonePointerSource({
     }
 
     activePointerId = undefined;
-    runtime.send(
-      isInLayer(event)
-        ? {
-            type: 'standalonePointer.activate',
-            position: toClientPoint(event),
-            itemKey: resolveItemKey(event),
-          }
-        : { type: 'standalonePointer.outside', position: toClientPoint(event) },
-    );
-  };
-
-  // Moves between parts of the menu never reach `parent`: their target and
-  // `relatedTarget` both retarget to the shadow host, which stops the event
-  // there. So any `pointerout` from the layer seen here left the menu.
-  const onPointerOut = (event: PointerEvent): void => {
-    if (
-      !isOpen() ||
-      (activePointerId !== undefined && event.pointerId !== activePointerId) ||
-      !isInLayer(event)
-    ) {
+    const position = toClientPoint(event);
+    if (!isInLayer(event)) {
+      runtime.send({ type: 'standalonePointer.outside', position });
       return;
     }
 
     runtime.send({
-      type: 'standalonePointer.move',
-      position: toClientPoint(event),
-      itemKey: undefined,
+      type: 'standalonePointer.activate',
+      position,
+      itemKey: resolveItemKey(event),
     });
   };
 
@@ -183,7 +169,7 @@ export function createStandalonePointerSource({
 
   parent.addEventListener('pointerdown', onPointerDown);
   parent.addEventListener('pointermove', onPointerMove);
-  parent.addEventListener('pointerout', onPointerOut);
+  parent.addEventListener('pointerout', onPointerMove);
   parent.addEventListener('pointercancel', onPointerCancel);
   doc.addEventListener('pointerdown', onOutsidePointerDown, { capture: true });
   doc.addEventListener('pointerup', onPointerUp, { capture: true });
@@ -192,7 +178,7 @@ export function createStandalonePointerSource({
     dispose() {
       parent.removeEventListener('pointerdown', onPointerDown);
       parent.removeEventListener('pointermove', onPointerMove);
-      parent.removeEventListener('pointerout', onPointerOut);
+      parent.removeEventListener('pointerout', onPointerMove);
       parent.removeEventListener('pointercancel', onPointerCancel);
       doc.removeEventListener('pointerdown', onOutsidePointerDown, {
         capture: true,
