@@ -118,10 +118,10 @@ type IdOf<Input> = Input extends { id?: infer Id }
 /**
 The sub-items an input item resolves to.
 */
-type ItemsOf<Input> = Input extends {
-  items: infer Items extends readonly MarkingMenuItemInput[];
-}
-  ? Items
+type ItemsOf<Input> = Input extends { items?: infer Items }
+  ? Items extends readonly MarkingMenuItemInput[]
+    ? Items
+    : EmptyTuple
   : EmptyTuple;
 
 /**
