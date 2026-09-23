@@ -264,9 +264,9 @@ type ActiveMenuData<
 };
 
 /**
- Dispatched on pointer movement, in every mode. `activeItem` and `menu` are always
- `undefined` in startup and expert, since no menu is open yet for anything to
- be active in.
+ Dispatched on pointer movement, in every mode. `activeItem` and `menu` are
+ always `undefined` in startup and expert, since no menu is open yet for
+ anything to be active in.
  */
 export class MarkingMenuMoveEvent<
   Model extends ModelNode = ModelNode,
