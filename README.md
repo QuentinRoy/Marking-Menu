@@ -8,6 +8,20 @@ A JavaScript marking menu for mouse, touch, and pen input. Press and pause to sh
 
 [Try the demo](https://quentinroy.github.io/Marking-Menu/) or [build your own menu in the playground](https://quentinroy.github.io/Marking-Menu/playground/).
 
+## Contents
+
+- [Install](#install)
+- [Browser support](#browser-support)
+- [Usage](#usage)
+- [API](#api)
+- [Item layout](#item-layout)
+- [Appearance](#appearance)
+- [Input behavior](#input-behavior)
+- [Accessibility](#accessibility)
+- [Upgrading from 0.10.1](#upgrading-from-0101)
+- [Development](#development)
+- [Background and license](#background-and-license)
+
 ## Install
 
 ```sh
