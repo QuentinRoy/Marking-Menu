@@ -49,6 +49,7 @@ const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-fill', '#2d6a4f');
   surface.style.setProperty('--mm-wedge-fill-active', '#d00000');
   surface.style.setProperty('--mm-inner-connector-color', '#ffb703');
+  surface.style.setProperty('--mm-inner-connector-thickness', '4px');
   surface.style.setProperty('--mm-outer-connector-color', '#023e8a');
   surface.style.setProperty('--mm-plate-fill', '#9b2226');
   surface.style.setProperty('--mm-plate-fill-active', '#f8c8dc');
