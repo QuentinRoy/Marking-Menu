@@ -103,12 +103,21 @@ const itemLabel = (root: FrameLocator | Page, label: string): Locator =>
  bounding box in top-page viewport coordinates already).
  */
 async function clickItem(page: Page, item: Locator): Promise<void> {
+  await hoverItem(page, item);
+  await page.mouse.down();
+  await page.mouse.up();
+}
+
+/**
+ Moves the mouse to `item`'s center, the same way `clickItem` targets it.
+ */
+async function hoverItem(page: Page, item: Locator): Promise<void> {
   const box = await item.boundingBox();
   if (!box) {
     throw new TypeError('Item has no bounding box.');
   }
 
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
 }
 
 /**
@@ -170,6 +179,47 @@ test('standalone menu: a click outside it cancels without restoring focus to the
 
   await expect(page.getByRole('menu')).toHaveCount(0);
   await expect(page.locator('#standalone-trigger')).not.toBeFocused();
+  const log = await events.jsonValue();
+  expect(log.at(-1)).toBe('cancel:standalone');
+});
+
+test('standalone menu: moving the mouse off the menu clears the active item', async ({
+  page,
+}) => {
+  await openStandaloneMenu(page);
+  await hoverItem(page, itemLabel(page, 'Left'));
+  await page.mouse.move(780, 580, { steps: 5 });
+
+  await expect(page.locator('.marking-menu-item.active')).toHaveCount(0);
+  await expect(page.getByRole('menu')).toHaveCount(1);
+});
+
+test('standalone menu: releasing a drag outside it cancels without restoring focus to the trigger', async ({
+  page,
+}) => {
+  const events = await openStandaloneMenu(page);
+  await hoverItem(page, itemLabel(page, 'Left'));
+  await page.mouse.down();
+  await page.mouse.move(780, 580, { steps: 5 });
+  await page.mouse.up();
+
+  await expect(page.getByRole('menu')).toHaveCount(0);
+  await expect(page.locator('#standalone-trigger')).not.toBeFocused();
+  const log = await events.jsonValue();
+  expect(log.at(-1)).toBe('cancel:standalone');
+});
+
+test('standalone menu: releasing a drag outside its iframe cancels', async ({
+  page,
+}) => {
+  const events = await openStandaloneMenu(page, 'iframe');
+  const frame = page.frameLocator('iframe');
+  await hoverItem(page, itemLabel(frame, 'Left'));
+  await page.mouse.down();
+  await page.mouse.move(780, 580, { steps: 5 });
+  await page.mouse.up();
+
+  await expect(frame.getByRole('menu')).toHaveCount(0);
   const log = await events.jsonValue();
   expect(log.at(-1)).toBe('cancel:standalone');
 });

@@ -137,9 +137,8 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     }, ACTIVE_ITEM_FOCUS_DELAY_MS);
   };
 
-  // An outside press is a light dismissal: focus lands wherever it put it,
-  // never back on the trigger, the same way a real menu's own light-dismiss
-  // convention does.
+  // A press or release outside is a light dismissal: focus stays wherever
+  // the pointer put it, never back on the trigger, as with a native menu.
   const onCancel = (event: MarkingMenuCancelEvent<Model>): void => {
     if (event.mode === 'standalone' && event.source === 'pointer') {
       willRestoreFocus = false;

@@ -454,6 +454,119 @@ describe('a standalone menu', () => {
       expect(events).toEqual([['change', 'standalone', [1, 1]]]);
     });
 
+    it('a hover leaving the menu clears the active item', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      fixture
+        .items()[1]
+        ?.dispatchEvent(pointer('pointermove', { clientX: 0, clientY: 0 }));
+      const events = record(fixture.controller);
+
+      fixture.items()[1]?.dispatchEvent(
+        pointer('pointerout', {
+          clientX: 1,
+          clientY: 1,
+          relatedTarget: fixture.parent,
+        }),
+      );
+
+      expect(
+        fixture.items().some((item) => item.classList.contains('active')),
+      ).toBe(false);
+      expect(events).toEqual([['change', 'standalone', [1, 1]]]);
+    });
+
+    it('a held press dragged off the menu clears the active item', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+      const events = record(fixture.controller);
+
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerout', { pointerId: 1, clientX: 1, clientY: 1 }),
+        );
+
+      expect(
+        fixture.items().some((item) => item.classList.contains('active')),
+      ).toBe(false);
+      expect(events).toEqual([['change', 'standalone', [1, 1]]]);
+    });
+
+    it('a held press released outside the menu dismisses it without restoring focus', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+      const events = record(fixture.controller);
+
+      document.body.dispatchEvent(
+        pointer('pointerup', { pointerId: 1, clientX: 5, clientY: 6 }),
+      );
+
+      expect(fixture.items()).toHaveLength(0);
+      expect(events).toEqual([['cancel', 'standalone', [5, 6]]]);
+      expect(document.activeElement).not.toBe(fixture.opener);
+    });
+
+    it('a press still held when the menu closes does not block the next one', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+      fixture.press('Escape');
+      document.body.dispatchEvent(
+        pointer('pointerup', { pointerId: 1, clientX: 0, clientY: 0 }),
+      );
+      fixture.controller.open();
+      const events = record(fixture.controller);
+
+      fixture
+        .items()[2]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+
+      expect(events).toEqual([['change', 'standalone', [0, 0]]]);
+    });
+
+    it('a press held across a reopen does not act on the new menu when released', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+      const reopen = () => {
+        fixture.controller.off('cancel', reopen);
+        fixture.controller.open();
+      };
+
+      fixture.controller.on('cancel', reopen);
+      fixture.press('Escape');
+      const events = record(fixture.controller);
+
+      fixture
+        .items()[2]
+        ?.dispatchEvent(
+          pointer('pointerup', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+
+      expect(events).toEqual([]);
+    });
+
     it('a completed press on a leaf selects it and gives focus back', () => {
       using fixture = setup();
       fixture.controller.open();

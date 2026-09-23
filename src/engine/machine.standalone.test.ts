@@ -1029,7 +1029,7 @@ describe('navigationMachine standalone phase', () => {
       host.send('activate');
       const outputs = recordOutputs(host);
 
-      host.send('standaloneOutsidePress', { position: [7, 8] });
+      host.send('standalonePointerOutside', { position: [7, 8] });
 
       expect(host.current.name).toBe('idle');
       expect(namesOf(outputs)).toEqual(['cancel']);

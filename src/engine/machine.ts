@@ -86,9 +86,10 @@ type MachineInputs = {
   open: { readonly position: Point };
   // The standalone pointer source's own four intents: the pointer moving
   // over the displayed level (hover, or a held contact dragging across it),
-  // a completed activation, a canceled contact, and an outside press. Named
-  // apart from the gesture's `pointer*` family above: a standalone menu's
-  // pointer source is a distinct listener, never a live gesture's.
+  // a completed activation, a canceled contact, and a press or release
+  // outside the menu. Named apart from the gesture's `pointer*` family
+  // above: a standalone menu's pointer source is a distinct listener, never
+  // a live gesture's.
   standalonePointerMove: {
     readonly position: Point;
     readonly itemKey: string | undefined;
@@ -98,7 +99,7 @@ type MachineInputs = {
     readonly itemKey: string | undefined;
   };
   standalonePointerCancel: { readonly position: Point };
-  standaloneOutsidePress: { readonly position: Point };
+  standalonePointerOutside: { readonly position: Point };
   // The keyboard intents, moving through the displayed levels and items.
   up: undefined;
   down: undefined;
@@ -168,8 +169,8 @@ export type NavigationInput =
       readonly type: 'standalonePointer.cancel';
     } & MachineInputs['standalonePointerCancel'])
   | ({
-      readonly type: 'standaloneOutsidePress';
-    } & MachineInputs['standaloneOutsidePress']);
+      readonly type: 'standalonePointer.outside';
+    } & MachineInputs['standalonePointerOutside']);
 
 /**
  Each phase's fields, factored out before `NavigationState` tags on a
@@ -519,9 +520,8 @@ export const navigationMachine = machine({
     'standalone -standalonePointerCancel> standalone': pointerCancel,
 
     // A release completes over whichever item currently sits under the
-    // pointer: a submenu goes into it, empty space or an unresolved key
-    // just clears the active item, and a leaf instead selects it, via the
-    // row below.
+    // pointer: a submenu goes into it, an unresolved key just clears the
+    // active item, and a leaf instead selects it, via the row below.
     'standalone -standalonePointerActivate> standalone': pointerRelease,
     'standalone -standalonePointerActivate> idle'({
       fromData,
@@ -535,9 +535,9 @@ export const navigationMachine = machine({
         : { model, options };
     },
 
-    // An outside primary press dismisses the session from any level,
-    // independently of focus loss.
-    'standalone -standaloneOutsidePress> idle': backToIdle,
+    // A primary press, or a held one released, outside the menu dismisses
+    // the session from any level, independently of focus loss.
+    'standalone -standalonePointerOutside> idle': backToIdle,
 
     // Every state a gesture can be in ends the same way, back to idle's own
     // shape. Idle has no gesture to end, and a standalone menu never receives
@@ -698,7 +698,11 @@ export const navigationMachine = machine({
       }
     },
 
-    'standalone -standaloneOutsidePress> idle'({ fromData, inputData, emit }) {
+    'standalone -standalonePointerOutside> idle'({
+      fromData,
+      inputData,
+      emit,
+    }) {
       cancelStandalone({
         fromData,
         emit,

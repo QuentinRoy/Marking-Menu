@@ -216,8 +216,8 @@ export function createRuntime<Model extends EngineModelRoot>({
         break;
       }
 
-      case 'standaloneOutsidePress': {
-        host.send('standaloneOutsidePress', { position: input.position });
+      case 'standalonePointer.outside': {
+        host.send('standalonePointerOutside', { position: input.position });
         break;
       }
     }

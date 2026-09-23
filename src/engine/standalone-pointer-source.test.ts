@@ -29,9 +29,10 @@ const createFixture = (phase: NavigationPhase = 'standalone') => {
 
   const send = vi.fn<(input: NavigationInput) => void>();
   const runtime = { phase, send };
+  const menu = { layer };
   const source = createStandalonePointerSource({
     parent,
-    getMenu: () => ({ layer }),
+    getMenu: () => menu,
     runtime,
   });
   return {
@@ -193,7 +194,7 @@ describe('createStandalonePointerSource', () => {
     );
 
     expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
-      type: 'standaloneOutsidePress',
+      type: 'standalonePointer.outside',
       position: [2, 3],
     });
   });
@@ -284,7 +285,7 @@ describe('createStandalonePointerSource', () => {
     );
 
     expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
-      type: 'standaloneOutsidePress',
+      type: 'standalonePointer.outside',
       position: [9, 9],
     });
   });

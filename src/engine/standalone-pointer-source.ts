@@ -48,6 +48,7 @@ export function createStandalonePointerSource({
   runtime: NavigationInputSink & { readonly phase: NavigationPhase };
 }): StandalonePointerSource {
   let activePointerId: number | undefined;
+  let pressedMenu: ReturnType<typeof getMenu>;
 
   const isOpen = (): boolean => runtime.phase === 'standalone';
 
@@ -55,10 +56,8 @@ export function createStandalonePointerSource({
     event.isPrimary && event.button === 0;
 
   /**
-   Whether `event` originated inside the displayed level's own layer: a
-   press or move over the rest of `parent` (outside the menu entirely, or
-   over a gap between items the menu leaves unpainted) is none of this
-   source's business, and, for a press, is the outside listener's instead.
+   Whether `event` originated inside the displayed level's own layer. The
+   rest of `parent`, gaps between items included, is outside the menu.
    */
   const isInLayer = (event: PointerEvent): boolean => {
     const layer = getMenu()?.layer;
@@ -78,26 +77,28 @@ export function createStandalonePointerSource({
     // cannot make it run again for an event it already saw.
     if (!isInLayer(event)) {
       runtime.send({
-        type: 'standaloneOutsidePress',
+        type: 'standalonePointer.outside',
         position: toClientPoint(event),
       });
       return;
     }
 
     activePointerId = event.pointerId;
+    pressedMenu = getMenu();
     runtime.send({
       type: 'standalonePointer.move',
       position: toClientPoint(event),
       itemKey: resolveItemKey(event),
     });
   };
+
+  const isTrackedInLayer = (event: PointerEvent): boolean =>
+    isOpen() &&
+    (activePointerId === undefined || event.pointerId === activePointerId) &&
+    isInLayer(event);
 
   const onPointerMove = (event: PointerEvent): void => {
-    if (
-      !isOpen() ||
-      (activePointerId !== undefined && event.pointerId !== activePointerId) ||
-      !isInLayer(event)
-    ) {
+    if (!isTrackedInLayer(event)) {
       return;
     }
 
@@ -108,25 +109,58 @@ export function createStandalonePointerSource({
     });
   };
 
-  const onPointerUp = (event: PointerEvent): void => {
-    if (!isOpen() || event.pointerId !== activePointerId) {
+  // A move between parts of the menu never reaches `parent`: its target and
+  // `relatedTarget` both retarget to the shadow host, which stops it there.
+  // So one seen here left the menu.
+  const onPointerOut = (event: PointerEvent): void => {
+    if (!isTrackedInLayer(event)) {
       return;
     }
 
+    runtime.send({
+      type: 'standalonePointer.move',
+      position: toClientPoint(event),
+      itemKey: undefined,
+    });
+  };
+
+  // A held contact can be released anywhere.
+  const onDocumentPointerUp = (event: PointerEvent): void => {
+    if (event.pointerId !== activePointerId) {
+      return;
+    }
+
+    // Cleared regardless, or the next session would ignore its press. A
+    // release acts only on the level it was pressed on, not one that
+    // replaced it: a submenu, or a menu reopened after a close.
     activePointerId = undefined;
+    if (!isOpen() || getMenu() !== pressedMenu) {
+      return;
+    }
+
+    const position = toClientPoint(event);
+    if (!isInLayer(event)) {
+      runtime.send({ type: 'standalonePointer.outside', position });
+      return;
+    }
+
     runtime.send({
       type: 'standalonePointer.activate',
-      position: toClientPoint(event),
+      position,
       itemKey: resolveItemKey(event),
     });
   };
 
   const onPointerCancel = (event: PointerEvent): void => {
-    if (!isOpen() || event.pointerId !== activePointerId) {
+    if (event.pointerId !== activePointerId) {
       return;
     }
 
     activePointerId = undefined;
+    if (!isOpen()) {
+      return;
+    }
+
     runtime.send({
       type: 'standalonePointer.cancel',
       position: toClientPoint(event),
@@ -152,24 +186,28 @@ export function createStandalonePointerSource({
     }
 
     runtime.send({
-      type: 'standaloneOutsidePress',
+      type: 'standalonePointer.outside',
       position: toClientPoint(event),
     });
   };
 
   parent.addEventListener('pointerdown', onPointerDown);
   parent.addEventListener('pointermove', onPointerMove);
-  parent.addEventListener('pointerup', onPointerUp);
+  parent.addEventListener('pointerout', onPointerOut);
   parent.addEventListener('pointercancel', onPointerCancel);
   doc.addEventListener('pointerdown', onOutsidePointerDown, { capture: true });
+  doc.addEventListener('pointerup', onDocumentPointerUp, { capture: true });
 
   return {
     dispose() {
       parent.removeEventListener('pointerdown', onPointerDown);
       parent.removeEventListener('pointermove', onPointerMove);
-      parent.removeEventListener('pointerup', onPointerUp);
+      parent.removeEventListener('pointerout', onPointerOut);
       parent.removeEventListener('pointercancel', onPointerCancel);
       doc.removeEventListener('pointerdown', onOutsidePointerDown, {
+        capture: true,
+      });
+      doc.removeEventListener('pointerup', onDocumentPointerUp, {
         capture: true,
       });
     },
