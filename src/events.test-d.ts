@@ -98,12 +98,12 @@ describe('MarkingMenuEvent', () => {
 
         case 'move': {
           expectTypeOf(event).toEqualTypeOf<MarkingMenuMoveEvent<Model>>();
-          return String(event.active?.label);
+          return String(event.activeItem?.label);
         }
 
         case 'change': {
           expectTypeOf(event).toEqualTypeOf<ChangeEvent>();
-          return String(event.previousActive?.label);
+          return String(event.previousActiveItem?.label);
         }
 
         case 'select': {
@@ -113,7 +113,7 @@ describe('MarkingMenuEvent', () => {
 
         case 'cancel': {
           expectTypeOf(event).toEqualTypeOf<CancelEvent>();
-          return String(event.active?.label);
+          return String(event.activeItem?.label);
         }
       }
     }
@@ -286,16 +286,16 @@ describe('Default generic and event payload narrowing', () => {
     }
   });
 
-  it('exposes item fields on generic move event active', () => {
-    if (!genericMove.active) {
+  it('exposes item fields on generic move event activeItem', () => {
+    if (!genericMove.activeItem) {
       return;
     }
 
-    expectTypeOf(genericMove.active.key).toEqualTypeOf<string>();
-    expectTypeOf(genericMove.active.label).toEqualTypeOf<string>();
-    expectTypeOf(genericMove.active.isRoot).toEqualTypeOf<false>();
-    if (genericMove.active.isLeaf) {
-      expectTypeOf(genericMove.active.isLeaf).toEqualTypeOf<true>();
+    expectTypeOf(genericMove.activeItem.key).toEqualTypeOf<string>();
+    expectTypeOf(genericMove.activeItem.label).toEqualTypeOf<string>();
+    expectTypeOf(genericMove.activeItem.isRoot).toEqualTypeOf<false>();
+    if (genericMove.activeItem.isLeaf) {
+      expectTypeOf(genericMove.activeItem.isLeaf).toEqualTypeOf<true>();
     }
   });
 
@@ -318,14 +318,14 @@ describe('Default generic and event payload narrowing', () => {
   });
 
   it('narrows dynamic menu change active item', () => {
-    if (!dynamicChange.active) {
+    if (!dynamicChange.activeItem) {
       return;
     }
 
-    expectTypeOf(dynamicChange.active.key).toEqualTypeOf<string>();
-    expectTypeOf(dynamicChange.active.label).toEqualTypeOf<string>();
-    if (dynamicChange.active.isLeaf) {
-      expectTypeOf(dynamicChange.active.isLeaf).toEqualTypeOf<true>();
+    expectTypeOf(dynamicChange.activeItem.key).toEqualTypeOf<string>();
+    expectTypeOf(dynamicChange.activeItem.label).toEqualTypeOf<string>();
+    if (dynamicChange.activeItem.isLeaf) {
+      expectTypeOf(dynamicChange.activeItem.isLeaf).toEqualTypeOf<true>();
     }
   });
 });

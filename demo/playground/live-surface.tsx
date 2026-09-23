@@ -262,13 +262,13 @@ export function LiveSurface({
         return;
       }
 
-      const { active } = event;
+      const { activeItem } = event;
       finish(event.position, event.mode, event.recognition, {
         steps: undefined,
         message:
-          active === undefined
+          activeItem === undefined
             ? 'No selection: the stroke does not lead to an item.'
-            : `No selection: released on the sub-menu “${active.label}”.`,
+            : `No selection: released on the sub-menu “${activeItem.label}”.`,
         wasInterrupted: event.reason === 'interrupted',
       });
     });

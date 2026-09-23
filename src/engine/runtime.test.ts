@@ -433,7 +433,7 @@ describe('createRuntime', () => {
       const changes: unknown[] = [];
       const selections: unknown[] = [];
       runtime.on('change', (event) => {
-        changes.push(event.active?.id);
+        changes.push(event.activeItem?.id);
       });
       runtime.on('select', (event) => {
         selections.push(event.selection.id);

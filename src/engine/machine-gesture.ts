@@ -41,7 +41,7 @@ export function emitInactiveMove(
       mode,
       position,
       source: 'gesture',
-      active: undefined,
+      activeItem: undefined,
       menu: undefined,
     }),
   );
@@ -179,7 +179,7 @@ export function emitTermination(
         mode: from,
         position,
         source: 'gesture',
-        active,
+        activeItem: active,
         menu,
         reason: outcome.reason,
         recognition,

@@ -113,14 +113,14 @@ describe('MarkingMenuMoveEvent', () => {
       mode: 'novice',
       position: [1, 2],
       source: 'gesture',
-      active: menu.items[0],
+      activeItem: menu.items[0],
       menu,
     });
 
     expect(event.type).toBe('move');
     expect(event.mode).toBe('novice');
     expect(event.position).toEqual([1, 2]);
-    expect(event.active).toBe(menu.items[0]);
+    expect(event.activeItem).toBe(menu.items[0]);
     expect(event.menu).toBe(menu);
   });
 
@@ -129,12 +129,12 @@ describe('MarkingMenuMoveEvent', () => {
       mode: 'expert',
       position: [1, 2],
       source: 'gesture',
-      active: undefined,
+      activeItem: undefined,
       menu: undefined,
     });
 
     expect(event.mode).toBe('expert');
-    expect(event.active).toBeUndefined();
+    expect(event.activeItem).toBeUndefined();
     expect(event.menu).toBeUndefined();
   });
 });
@@ -145,15 +145,15 @@ describe('MarkingMenuChangeEvent', () => {
       mode: 'novice',
       position: [1, 2],
       source: 'gesture',
-      active: menu.items[1],
-      previousActive: menu.items[0],
+      activeItem: menu.items[1],
+      previousActiveItem: menu.items[0],
       menu,
     });
 
     expect(event.type).toBe('change');
     expect(event.mode).toBe('novice');
-    expect(event.active).toBe(menu.items[1]);
-    expect(event.previousActive).toBe(menu.items[0]);
+    expect(event.activeItem).toBe(menu.items[1]);
+    expect(event.previousActiveItem).toBe(menu.items[0]);
     expect(event.menu).toBe(menu);
   });
 
@@ -162,8 +162,8 @@ describe('MarkingMenuChangeEvent', () => {
       mode: 'standalone',
       position: undefined,
       source: 'keyboard',
-      active: menu.items[1],
-      previousActive: undefined,
+      activeItem: menu.items[1],
+      previousActiveItem: undefined,
       menu,
     });
 
@@ -176,13 +176,13 @@ describe('MarkingMenuChangeEvent', () => {
       mode: 'novice',
       position: [1, 2],
       source: 'gesture',
-      active: undefined,
-      previousActive: menu.items[0],
+      activeItem: undefined,
+      previousActiveItem: menu.items[0],
       menu,
     });
 
-    expect(event.active).toBeUndefined();
-    expect(event.previousActive).toBe(menu.items[0]);
+    expect(event.activeItem).toBeUndefined();
+    expect(event.previousActiveItem).toBe(menu.items[0]);
   });
 });
 
@@ -249,7 +249,7 @@ describe('MarkingMenuCancelEvent', () => {
       mode: 'novice',
       position: [1, 2],
       source: 'gesture',
-      active: menu.items[0],
+      activeItem: menu.items[0],
       menu,
       reason: 'no-selection',
     });
@@ -257,7 +257,7 @@ describe('MarkingMenuCancelEvent', () => {
     expect(event.type).toBe('cancel');
     expect(event.mode).toBe('novice');
     expect(event.reason).toBe('no-selection');
-    expect(event.active).toBe(menu.items[0]);
+    expect(event.activeItem).toBe(menu.items[0]);
     expect(event.menu).toBe(menu);
   });
 
@@ -266,7 +266,7 @@ describe('MarkingMenuCancelEvent', () => {
       mode: 'standalone',
       position: undefined,
       source: 'focus-loss',
-      active: undefined,
+      activeItem: undefined,
       menu,
       reason: 'dismissed',
     });
@@ -283,7 +283,7 @@ describe('MarkingMenuCancelEvent', () => {
       mode: 'expert',
       position: [1, 2],
       source: 'gesture',
-      active: undefined,
+      activeItem: undefined,
       menu: undefined,
       reason: 'no-selection',
       recognition,
@@ -297,12 +297,12 @@ describe('MarkingMenuCancelEvent', () => {
       mode: 'startup',
       position: [1, 2],
       source: 'gesture',
-      active: undefined,
+      activeItem: undefined,
       menu: undefined,
       reason: 'interrupted',
     });
 
-    expect(event.active).toBeUndefined();
+    expect(event.activeItem).toBeUndefined();
     expect(event.menu).toBeUndefined();
   });
 });

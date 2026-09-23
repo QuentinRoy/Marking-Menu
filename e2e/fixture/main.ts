@@ -76,10 +76,10 @@ const logEvent = (
 
 // `move`, `change`, and `cancel` all log the same pair of fields.
 const activeAndMenuFields = (event: {
-  readonly active: unknown;
+  readonly activeItem: unknown;
   readonly menu: unknown;
 }): Record<string, string | undefined> => ({
-  activeId: idOf(event.active),
+  activeId: idOf(event.activeItem),
   menuId: idOf(event.menu),
 });
 
