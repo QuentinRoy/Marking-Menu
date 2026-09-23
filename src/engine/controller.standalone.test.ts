@@ -518,6 +518,30 @@ describe('a standalone menu', () => {
       expect(document.activeElement).not.toBe(fixture.opener);
     });
 
+    it('a press still held when the menu closes does not block the next one', () => {
+      using fixture = setup();
+      fixture.controller.open();
+      fixture
+        .items()[1]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+      fixture.press('Escape');
+      document.body.dispatchEvent(
+        pointer('pointerup', { pointerId: 1, clientX: 0, clientY: 0 }),
+      );
+      fixture.controller.open();
+      const events = record(fixture.controller);
+
+      fixture
+        .items()[2]
+        ?.dispatchEvent(
+          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
+        );
+
+      expect(events).toEqual([['change', 'standalone', [0, 0]]]);
+    });
+
     it('a completed press on a leaf selects it and gives focus back', () => {
       using fixture = setup();
       fixture.controller.open();
