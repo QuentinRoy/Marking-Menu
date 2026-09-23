@@ -108,7 +108,7 @@ Use `menu.on(type, listener)` to register a listener and `menu.off(type, listene
 
 `select` carries the selected item as `event.selection`, including its `id` and `label`. `cancel` carries `event.reason`: `no-selection` when a gesture ends with nothing to select, `interrupted` when the browser cancels the pointer, or `dismissed` when `close()`, Escape, Tab, or focus leaving the menu closes one shown with `open()`.
 
-Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close) instead of a gesture, and operated with the keyboard. Every event also includes `position`, a viewport `[x, y]` pair, except in `standalone` mode, where no pointer is involved and it is `undefined`. Checking `mode` narrows `position` in TypeScript:
+Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close), operated with the keyboard or a pointer. Every event also includes `source`, what caused it: `gesture` for a drawn stroke, `pointer`, `keyboard`, `api` for an `open()` or `close()` call, or `focus-loss`. Every event also includes `position`, a viewport `[x, y]` pair; outside `standalone` mode it is always one, and inside it, only when `source` is `pointer`. Checking `mode` narrows `position` in TypeScript:
 
 ```js
 menu.on('cancel', (event) => {
@@ -124,18 +124,18 @@ menu.on('cancel', (event) => {
 
 ### `open()` and `close()`
 
-`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut, and lets the [keyboard](#keyboard) operate it. This is a standalone menu. `menu.close()` closes it and fires `cancel`. The menu also closes when focus leaves it. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input landing on the menu's own items stays with it; everywhere else it reaches the page. Either way, it starts no gesture until the menu closes, by selection, cancellation, or `close()`.
+`menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut. This is a standalone menu; mouse, touch, pen, and the [keyboard](#keyboard) all operate it. `menu.close()` closes it and fires `cancel`. The menu also closes when focus leaves it. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input otherwise goes to the page and starts no gesture until the menu closes, by selection, cancellation, or `close()`.
 
 | Option     | Default              | Purpose                                                                                            |
 | ---------- | -------------------- | -------------------------------------------------------------------------------------------------- |
 | `position` | Center of the parent | Where the menu is centered, in viewport pixels. Read once: the menu does not follow.               |
 | `focus`    | `true`               | Whether the menu takes focus. With `false` the menu is only displayed, see [below](#display-only). |
 
-Events from a standalone menu have `mode: 'standalone'`. The menu fires `open` for the root and again each time the keyboard enters or leaves a submenu, `change` as the active item changes, then `select` or `cancel`. It never fires `start` or `move`.
+Events from a standalone menu have `mode: 'standalone'`. The menu fires `open` for the root and again each time a submenu is entered or left, `change` as the active item changes, `move` on pointer movement, then `select` or `cancel`. It never fires `start`.
 
 ### Display only
 
-`menu.open({ focus: false })` only draws the menu. Focus stays where it is, the first item is reachable with Tab, and closing gives no focus back. Close it with `close()`, with the keyboard once an item has focus, or by moving focus away after entering the menu.
+`menu.open({ focus: false })` only draws the menu. Focus stays where it is and the first item is reachable with Tab, but a deliberate keyboard or pointer interaction can still move focus into the menu, for example on entering a submenu. Closing the menu restores focus to whatever held it before `open()`, the same as when the menu takes focus itself — except a press outside the menu, which leaves focus wherever it landed instead. Close the menu with `close()`, with the keyboard once an item has focus, with the pointer, or by moving focus away after entering it.
 
 ## Item layout
 
@@ -305,7 +305,7 @@ A marking menu identifies items by direction. That is the point of it, and its l
 
 The menu container has `role="menu"`, and each item has `role="menuitem"` and takes its accessible name from its label text. Items with a submenu also have `aria-haspopup="menu"`. Wedges, connectors, the stroke, and the opening indicator are hidden from the accessibility tree; they are visual feedback, not content.
 
-The menu container has no accessible name yet. It cannot take one from an element on your page, because ID references such as `aria-labelledby` cannot cross its shadow root.
+A submenu level's container takes its accessible name from the item that opens it. The root container has no accessible name yet: it cannot take one from an element on your page, because ID references such as `aria-labelledby` cannot cross its shadow root.
 
 ### Gestures
 
@@ -328,6 +328,12 @@ A menu shown with [`open()`](#open-and-close) works with the keyboard. When it o
 An arrow moves focus from the item that has it to the nearest item further that way, and stops at the edge of the ring rather than wrapping. No single arrow reaches every item, so covering a level takes more than one. Each press is a step, not a jump: on a four item menu, `ArrowLeft` from the right item passes through the bottom item.
 
 The menu ignores keys pressed with `Ctrl`, `Alt`, or `Meta`, so page and browser shortcuts keep working. Nothing opens the menu from the keyboard until you call [`open()`](#open-and-close), for example from a button or a hotkey.
+
+### Pointer
+
+A menu shown with [`open()`](#open-and-close) also works with the mouse, touch, or a pen. Hovering an item makes it active; unlike the keyboard, this never moves focus, so a screen reader stays silent, matching how other accessible menus treat hover. The item Tab reaches follows the active item instead, hover included, so it always picks up from wherever the pointer left off.
+
+A press on a leaf selects it. A press on a submenu opens it and moves focus to its container, since the new level starts with nothing active. Dragging a held press off an item follows the finger, changing the active item live, including back onto the item you started on; releasing over empty space clears the active item without ending the session, and so does a touch or pen contact the browser cancels. Pressing outside the menu closes it, but, unlike every other way of closing it, does not return focus to where it was before `open()`; it leaves focus wherever the press put it, the way dismissing a native menu by clicking away does.
 
 ### Announcing selections
 

@@ -1,4 +1,4 @@
-import { commands, userEvent } from 'vitest/browser';
+import { commands, page, userEvent } from 'vitest/browser';
 import { expectFocused, mountMenu } from './__fixtures__/browser-menu.js';
 
 afterEach(async () => {
@@ -20,6 +20,26 @@ const items = [
   { id: 'left', label: 'Left' },
   { id: 'up', label: 'Up' },
 ] as const;
+
+/**
+ The item's own container is a zero-size positioning anchor (see
+ `browser-menu.ts`'s `waitForMenuOpen` comment), which Playwright refuses to
+ hover or click as not visible. Its plate is the item's real, visibly sized
+ hit target; a pointer landing on it still resolves to the item, since the
+ source walks up from wherever the event actually lands.
+ */
+const plateOf = (name: string): Element => {
+  const plate =
+    page
+      .getByRole('menuitem', { name })
+      .element()
+      .querySelector('.marking-menu-plate') ?? undefined;
+  if (plate === undefined) {
+    throw new Error(`No plate found for the "${name}" item.`);
+  }
+
+  return plate;
+};
 
 /**
  A menu between two buttons: one holding focus before it opens, and one
@@ -161,14 +181,14 @@ test('a menu only displayed leaves focus alone, and stays reachable with Tab', a
     .toEqual(['open:standalone', 'change:standalone']);
 });
 
-test('a menu only displayed hands no focus back when it closes', async () => {
+test('a menu only displayed still restores focus to its trigger when closed', async () => {
   using menu = mountBetweenButtons();
   menu.mm.open({ focus: false });
   menu.after.focus();
 
   menu.mm.close();
 
-  expect(document.activeElement).toBe(menu.after);
+  expect(document.activeElement).toBe(menu.before);
   expect(menu.events.at(-1)).toBe('cancel:standalone');
 });
 
@@ -209,6 +229,106 @@ test('a display-only menu closes on focus loss only after focus enters it', asyn
 
   await expect.poll(() => menu.after === document.activeElement).toBe(true);
   expect(menu.events.at(-1)).toBe('cancel:standalone');
+});
+
+test('hovering an item with the mouse makes it active, without moving focus', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+  await expectFocused('menuitem', { name: 'Right' });
+
+  await userEvent.hover(plateOf('Left'));
+
+  await expect
+    .element(page.getByRole('menuitem', { name: 'Left' }))
+    .toHaveClass('active');
+  await expectFocused('menuitem', { name: 'Right' });
+  expect(menu.events.at(-1)).toBe('change:standalone');
+});
+
+test('clicking a leaf selects it and gives focus back to where it was', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+
+  await userEvent.click(plateOf('Left'));
+
+  await expect.poll(() => menu.before === document.activeElement).toBe(true);
+  expect(menu.events.at(-1)).toBe('select:standalone');
+});
+
+test('clicking a submenu item opens it and focuses the new level, not any item', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+
+  await userEvent.click(plateOf('Others...'));
+
+  await expect
+    .element(page.getByRole('menuitem', { name: 'Sub Right' }))
+    .toBeInTheDocument();
+  await expectFocused('menu');
+  expect(menu.events).toContain('change:standalone');
+  expect(menu.events).not.toContain('select:standalone');
+});
+
+test('a canceled touch contact clears the active item and leaves the menu open', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+  const item = page.getByRole('menuitem', { name: 'Left' }).element();
+  const contactInit = { isPrimary: true, pointerId: 7 };
+
+  item.dispatchEvent(
+    new PointerEvent('pointerdown', {
+      bubbles: true,
+      composed: true,
+      ...contactInit,
+    }),
+  );
+  await expect
+    .element(page.getByRole('menuitem', { name: 'Left' }))
+    .toHaveClass('active');
+
+  item.dispatchEvent(
+    new PointerEvent('pointercancel', {
+      bubbles: true,
+      composed: true,
+      ...contactInit,
+    }),
+  );
+
+  await expect
+    .element(page.getByRole('menuitem', { name: 'Left' }))
+    .not.toHaveClass('active');
+  expect(menu.events.at(-1)).toBe('change:standalone');
+  await expect.element(page.getByRole('menu')).toBeInTheDocument();
+});
+
+test('clicking outside the menu dismisses it without restoring focus', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+  await expectFocused('menuitem', { name: 'Right' });
+
+  await userEvent.click(menu.after);
+
+  await expect.poll(() => menu.after === document.activeElement).toBe(true);
+  expect(menu.events.at(-1)).toBe('cancel:standalone');
+  expect(menu.cancellationReasons).toEqual(['dismissed']);
+});
+
+test('the page pointer draws a gesture again right after an outside press dismisses the menu', async () => {
+  using menu = mountBetweenButtons();
+  const started: string[] = [];
+  menu.mm.on('start', () => {
+    started.push('start');
+  });
+  menu.mm.open();
+
+  // The very outside press that dismisses the menu must not itself also be
+  // read as the start of a new gesture on the now-resumed surface.
+  await userEvent.click(menu.after);
+  expect(started).toEqual([]);
+
+  // A later, independent press does start one.
+  await userEvent.click(menu.surface);
+  expect(started).toEqual(['start']);
 });
 
 test('a standalone menu is a pointer target, with items showing a pointer cursor', async () => {

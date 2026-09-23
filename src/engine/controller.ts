@@ -12,17 +12,24 @@ import type { MarkingMenuInput, ModelNode } from '../types.js';
 import type { Point } from '../utils.js';
 import { manageFocus, type FocusManager } from './focus.js';
 import {
-  createKeyboardSource,
-  type KeyboardSource,
-} from './keyboard-source.js';
+  createGesturePointerSource,
+  type GesturePointerSource,
+} from './gesture-pointer-source.js';
 import {
   defaultLogger,
   type MarkingMenuLogger,
   type ResolvedLogger,
 } from './logger.js';
-import { createPointerSource, type PointerSource } from './pointer-source.js';
 import { createRenderer } from './renderer.js';
 import { createRuntime, type NavigationRuntime } from './runtime.js';
+import {
+  createStandaloneKeyboardSource,
+  type StandaloneKeyboardSource,
+} from './standalone-keyboard-source.js';
+import {
+  createStandalonePointerSource,
+  type StandalonePointerSource,
+} from './standalone-pointer-source.js';
 
 export type EngineConfig = MarkingMenuInput & {
   /**
@@ -156,8 +163,9 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
   MarkingMenuModel<Config>
 > {
   readonly #parent: HTMLElement;
-  readonly #pointerSource: PointerSource;
-  readonly #keyboardSource: KeyboardSource;
+  readonly #pointerSource: GesturePointerSource;
+  readonly #keyboardSource: StandaloneKeyboardSource;
+  readonly #standalonePointerSource: StandalonePointerSource;
   readonly #runtime: NavigationRuntime<MarkingMenuModel<Config>>;
   readonly #focusManager: FocusManager;
   readonly #suspendPointerForStandalone = (event: {
@@ -199,7 +207,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       log: options.log,
     });
     this.#parent = config.parent;
-    this.#pointerSource = createPointerSource({
+    this.#pointerSource = createGesturePointerSource({
       parent: config.parent,
       runtime: this.#runtime,
     });
@@ -215,11 +223,16 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       getMenu: renderer.getMenu,
       runtime: this.#runtime,
     });
-    this.#keyboardSource = createKeyboardSource({
+    this.#keyboardSource = createStandaloneKeyboardSource({
       parent: config.parent,
       getMenu: renderer.getMenu,
       runtime: this.#runtime,
       onFocusLoss: this.#focusManager.willCloseStandaloneForFocusLoss,
+    });
+    this.#standalonePointerSource = createStandalonePointerSource({
+      parent: config.parent,
+      getMenu: renderer.getMenu,
+      runtime: this.#runtime,
     });
   }
 
@@ -258,6 +271,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
 
     this.#disposed = true;
     this.#keyboardSource.dispose();
+    this.#standalonePointerSource.dispose();
     this.#focusManager.dispose();
     // Runtime first: it unsubscribes, sends `dispose`, and tears down the
     // rendered DOM before the pointer source releases capture and the

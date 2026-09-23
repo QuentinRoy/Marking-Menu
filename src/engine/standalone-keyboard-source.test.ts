@@ -1,9 +1,9 @@
-import { createKeyboardSource } from './keyboard-source.js';
 import type {
   KeyboardIntent,
   NavigationInput,
   NavigationPhase,
 } from './machine.js';
+import { createStandaloneKeyboardSource } from './standalone-keyboard-source.js';
 
 /**
  A parent holding a menu layer of two items, the way the renderer lays them
@@ -30,8 +30,8 @@ const createFixture = (
 
   const send = vi.fn<(input: NavigationInput) => void>();
   const onFocusLoss = vi.fn<() => void>();
-  const runtime = { phase, send };
-  const source = createKeyboardSource({
+  const runtime = { phase, send, isSending: false };
+  const source = createStandaloneKeyboardSource({
     parent,
     getMenu: () => (hasMenu ? { layer } : undefined),
     runtime,
@@ -48,6 +48,9 @@ const createFixture = (
     source,
     setPhase(next: NavigationPhase) {
       runtime.phase = next;
+    },
+    setIsSending(isSending: boolean) {
+      runtime.isSending = isSending;
     },
     [Symbol.dispose]() {
       source.dispose();
@@ -72,7 +75,7 @@ const press = (
   return event;
 };
 
-describe('createKeyboardSource', () => {
+describe('createStandaloneKeyboardSource', () => {
   it.each<[string, KeyboardIntent]>([
     ['ArrowUp', 'up'],
     ['ArrowDown', 'down'],
@@ -233,6 +236,20 @@ describe('createKeyboardSource', () => {
 
     fixture.item.focus();
     fixture.nextItem.focus();
+
+    expect(fixture.onFocusLoss).not.toHaveBeenCalled();
+    expect(fixture.send).not.toHaveBeenCalledWith({ type: 'focus-loss' });
+  });
+
+  it('ignores a blur fired as a side effect of a source-driven send, keyboard or not', () => {
+    using fixture = createFixture();
+    fixture.item.focus();
+
+    // A pointer release entering a submenu swaps the DOM out from under the
+    // focused item mid-send, the same way `isHandlingKeyboardIntent` used to
+    // guard only for a keyboard-driven one.
+    fixture.setIsSending(true);
+    fixture.outside.focus();
 
     expect(fixture.onFocusLoss).not.toHaveBeenCalled();
     expect(fixture.send).not.toHaveBeenCalledWith({ type: 'focus-loss' });

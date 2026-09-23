@@ -1,4 +1,5 @@
 import type {
+  MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
   MarkingMenuEventEmitter,
   MarkingMenuOpenEvent,
@@ -86,18 +87,27 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
       return;
     }
 
-    // A level entered or left with the keyboard: the `change` that follows
-    // puts focus on the item it lands on.
     if (isStandaloneOpen) {
+      // A level entered or left with the keyboard needs nothing here: the
+      // `change` that follows puts focus on the item it lands on. A pointer
+      // release opening a submenu carries no such `change` (it starts with
+      // nothing active), so it takes the container itself instead.
+      if (event.source === 'pointer') {
+        getMenu()?.focusMenu();
+      }
+
       return;
     }
 
     isStandaloneOpen = true;
+    // Captured whether or not this menu takes focus: a pointer release may
+    // still move real focus later (into a submenu it opens), and restoring
+    // on close needs somewhere to return to even then.
+    saveFocus();
     if (!willStandaloneTakeFocus) {
       return;
     }
 
-    saveFocus();
     // Nothing is active yet, so this is the first item. The platform reports
     // that focus back as a `focus` input, which is what makes it active.
     getMenu()?.focusTabStop();
@@ -112,9 +122,13 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
 
     // Keyboard navigation moves at the pace of the keys. A gesture waits, so
     // an item the pointer only passes over is not announced. A menu that did
-    // not take focus follows too: a `change` means the user is on it.
+    // not take focus follows too: a `change` means the user is on it. A
+    // pointer-caused change, hover or press, never moves real focus.
     if (event.mode === 'standalone') {
-      getMenu()?.focusItem(active.key);
+      if (event.source === 'keyboard') {
+        getMenu()?.focusItem(active.key);
+      }
+
       return;
     }
 
@@ -123,10 +137,21 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     }, ACTIVE_ITEM_FOCUS_DELAY_MS);
   };
 
+  // An outside press is a light dismissal: focus lands wherever it put it,
+  // never back on the trigger, the same way a real menu's own light-dismiss
+  // convention does.
+  const onCancel = (event: MarkingMenuCancelEvent<Model>): void => {
+    if (event.mode === 'standalone' && event.source === 'pointer') {
+      willRestoreFocus = false;
+    }
+
+    restoreFocus();
+  };
+
   runtime.on('open', onOpen);
   runtime.on('change', onChange);
   runtime.on('select', restoreFocus);
-  runtime.on('cancel', restoreFocus);
+  runtime.on('cancel', onCancel);
 
   return {
     willOpenStandalone({ focus }) {
@@ -142,7 +167,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
       runtime.off('open', onOpen);
       runtime.off('change', onChange);
       runtime.off('select', restoreFocus);
-      runtime.off('cancel', restoreFocus);
+      runtime.off('cancel', onCancel);
     },
   };
 }

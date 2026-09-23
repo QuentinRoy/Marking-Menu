@@ -36,11 +36,17 @@ import {
 } from './machine-gesture.js';
 import {
   cancelStandalone,
+  emitStandaloneMove,
   emitStandaloneOpen,
+  emitStandalonePointerChange,
   enterActive,
+  findPointerItem,
   leaveLevel,
   moveActiveToward,
   moveToEnd,
+  pointerCancel,
+  pointerMove,
+  pointerRelease,
   type Direction,
 } from './machine-standalone.js';
 import type {
@@ -78,6 +84,21 @@ type MachineInputs = {
   dispose: undefined;
   // Standalone: a menu displayed without a pointer gesture.
   open: { readonly position: Point };
+  // The standalone pointer source's own four intents: the pointer moving
+  // over the displayed level (hover, or a held contact dragging across it),
+  // a completed activation, a canceled contact, and an outside press. Named
+  // apart from the gesture's `pointer*` family above: a standalone menu's
+  // pointer source is a distinct listener, never a live gesture's.
+  standalonePointerMove: {
+    readonly position: Point;
+    readonly itemKey: string | undefined;
+  };
+  standalonePointerActivate: {
+    readonly position: Point;
+    readonly itemKey: string | undefined;
+  };
+  standalonePointerCancel: { readonly position: Point };
+  standaloneOutsidePress: { readonly position: Point };
   // The keyboard intents, moving through the displayed levels and items.
   up: undefined;
   down: undefined;
@@ -99,7 +120,7 @@ type MachineInputs = {
 
 /**
  The machine's pointer inputs, under the boundary names
- `pointer-source.ts` sends them by.
+ `gesture-pointer-source.ts` sends them by.
  */
 type PointerInputNames = {
   down: 'pointerDown';
@@ -123,7 +144,7 @@ export type KeyboardIntent =
   Direction | 'first' | 'last' | 'activate' | 'back' | 'dismiss';
 
 /**
- The boundary input shape `pointer-source.ts` sends: unrelated to the
+ The boundary input shape `gesture-pointer-source.ts` sends: unrelated to the
  machine's own input vocabulary, so that layer never has to know about it.
  Each pointer input carries the payload {@link PointerInputNames} pairs it
  with, so the two can't drift apart.
@@ -136,7 +157,19 @@ export type NavigationInput =
     }[keyof PointerInputNames]
   | { readonly type: 'keyboard'; readonly intent: KeyboardIntent }
   | { readonly type: 'focus'; readonly key: string }
-  | { readonly type: 'focus-loss' };
+  | { readonly type: 'focus-loss' }
+  | ({
+      readonly type: 'standalonePointer.move';
+    } & MachineInputs['standalonePointerMove'])
+  | ({
+      readonly type: 'standalonePointer.activate';
+    } & MachineInputs['standalonePointerActivate'])
+  | ({
+      readonly type: 'standalonePointer.cancel';
+    } & MachineInputs['standalonePointerCancel'])
+  | ({
+      readonly type: 'standaloneOutsidePress';
+    } & MachineInputs['standaloneOutsidePress']);
 
 /**
  Each phase's fields, factored out before `NavigationState` tags on a
@@ -479,6 +512,33 @@ export const navigationMachine = machine({
 
     'standalone -dismiss> idle': backToIdle,
 
+    // The standalone pointer source's own four intents. Hover and a held
+    // contact's live retargeting share one row: both just move the active
+    // item, the difference is only in what caused it.
+    'standalone -standalonePointerMove> standalone': pointerMove,
+    'standalone -standalonePointerCancel> standalone': pointerCancel,
+
+    // A release completes over whichever item currently sits under the
+    // pointer: a submenu goes into it, empty space or an unresolved key
+    // just clears the active item, and a leaf instead selects it, via the
+    // row below.
+    'standalone -standalonePointerActivate> standalone': pointerRelease,
+    'standalone -standalonePointerActivate> idle'({
+      fromData,
+      inputData: { itemKey },
+      skip,
+    }) {
+      const item = findPointerItem(fromData, itemKey);
+      const { model, options } = fromData;
+      return item === undefined || !isModelLeaf(item)
+        ? skip()
+        : { model, options };
+    },
+
+    // An outside primary press dismisses the session from any level,
+    // independently of focus loss.
+    'standalone -standaloneOutsidePress> idle': backToIdle,
+
     // Every state a gesture can be in ends the same way, back to idle's own
     // shape. Idle has no gesture to end, and a standalone menu never receives
     // them (its pointer source is suspended).
@@ -551,34 +611,100 @@ export const navigationMachine = machine({
       emitStandaloneOpen(emit, toData, 'api');
     },
 
-    // Every way to go from one standalone level or item to another, all of
-    // them keyboard-driven today: nothing else can reach this transition
-    // until pointer input joins standalone. A new level announces `open`
-    // first, like novice does, then the item it landed on.
-    'standalone -> standalone'({ fromData, toData, emit }) {
+    // Every keyboard-driven way to go from one standalone level or item to
+    // another shares one action (see `emitStandaloneMove`'s own comment for
+    // why this is nine exact rows rather than one wildcard). A new level
+    // announces `open` first, like novice does, then the item it landed on.
+    'standalone -up> standalone': emitStandaloneMove,
+    'standalone -down> standalone': emitStandaloneMove,
+    'standalone -left> standalone': emitStandaloneMove,
+    'standalone -right> standalone': emitStandaloneMove,
+    'standalone -first> standalone': emitStandaloneMove,
+    'standalone -last> standalone': emitStandaloneMove,
+    'standalone -focus> standalone': emitStandaloneMove,
+    'standalone -activate> standalone': emitStandaloneMove,
+    'standalone -back> standalone': emitStandaloneMove,
+
+    // A pointer move always announces `move`; `change` only when the item
+    // it lands on differs from the one the previous commit landed on.
+    'standalone -standalonePointerMove> standalone'({
+      fromData,
+      toData,
+      inputData,
+      emit,
+    }) {
+      const menu = currentMenu(toData.menus);
+      emit(
+        'move',
+        new MarkingMenuMoveEvent<ModelNode, 'standalone'>({
+          mode: 'standalone',
+          position: inputData.position,
+          source: 'pointer',
+          active: toData.active,
+          menu,
+        }),
+      );
+
+      if (toData.active !== fromData.active) {
+        emitStandalonePointerChange(emit, {
+          position: inputData.position,
+          active: toData.active,
+          previousActive: fromData.active,
+          menu,
+        });
+      }
+    },
+
+    // The transition already declined a cancel with nothing active, so this
+    // always has a previous item to report clearing.
+    'standalone -standalonePointerCancel> standalone'({
+      fromData,
+      toData,
+      inputData,
+      emit,
+    }) {
+      emitStandalonePointerChange(emit, {
+        position: inputData.position,
+        active: undefined,
+        previousActive: fromData.active,
+        menu: currentMenu(toData.menus),
+      });
+    },
+
+    // A release that stays in standalone either opens a new level (the
+    // clicked item becomes both `menu`, the level entered, and
+    // `previousActive`, the item it was clicked as) or, at the same level,
+    // just clears the active item.
+    'standalone -standalonePointerActivate> standalone'({
+      fromData,
+      toData,
+      inputData,
+      emit,
+    }) {
       const menu = currentMenu(toData.menus);
       const isNewLevel = toData.menus.length !== fromData.menus.length;
       if (isNewLevel) {
-        emitStandaloneOpen(emit, toData, 'keyboard');
+        emitStandaloneOpen(emit, toData, 'pointer');
       }
 
-      if (
-        toData.active !== undefined &&
-        (isNewLevel || toData.active !== fromData.active)
-      ) {
-        emit(
-          'change',
-          new MarkingMenuChangeEvent<ModelNode, 'standalone'>({
-            mode: 'standalone',
-            position: undefined,
-            source: 'keyboard',
-            active: toData.active,
-            // A new level starts over: `open` already reset the active item.
-            previousActive: isNewLevel ? undefined : fromData.active,
-            menu,
-          }),
-        );
+      if (toData.active !== fromData.active) {
+        emitStandalonePointerChange(emit, {
+          position: inputData.position,
+          active: toData.active,
+          // Entering a level never lands on the root, so this narrows.
+          previousActive: isNewLevel && !menu.isRoot ? menu : fromData.active,
+          menu,
+        });
       }
+    },
+
+    'standalone -standaloneOutsidePress> idle'({ fromData, inputData, emit }) {
+      cancelStandalone({
+        fromData,
+        emit,
+        source: 'pointer',
+        position: inputData.position,
+      });
     },
 
     // Selecting is only ever attempted on a leaf, so a non-leaf active item
@@ -605,6 +731,29 @@ export const navigationMachine = machine({
     },
     'standalone -dismiss> idle'({ fromData, inputData, emit }) {
       cancelStandalone({ fromData, emit, source: inputData.source });
+    },
+
+    // The transition already declined anything but a leaf.
+    'standalone -standalonePointerActivate> idle'({
+      fromData,
+      inputData,
+      emit,
+    }) {
+      const item = findPointerItem(fromData, inputData.itemKey);
+      if (item === undefined || !isModelLeaf(item)) {
+        return;
+      }
+
+      emit(
+        'select',
+        new MarkingMenuSelectEvent<ModelNode, 'standalone'>({
+          mode: 'standalone',
+          position: inputData.position,
+          source: 'pointer',
+          selection: item,
+          menu: currentMenu(fromData.menus),
+        }),
+      );
     },
 
     // No menu is open in startup or expert, so nothing can be active: `move`

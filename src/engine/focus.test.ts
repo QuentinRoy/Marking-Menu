@@ -92,6 +92,41 @@ const cancelStandalone = new MarkingMenuCancelEvent<typeof model, 'standalone'>(
     reason: 'dismissed',
   },
 );
+const cancelStandaloneOutsidePress = new MarkingMenuCancelEvent<
+  typeof model,
+  'standalone'
+>({
+  mode: 'standalone',
+  position: [0, 0],
+  source: 'pointer',
+  active: undefined,
+  menu: model,
+  reason: 'dismissed',
+});
+const changeStandalonePointer = (
+  active: (typeof model.items)[number] | undefined,
+) =>
+  new MarkingMenuChangeEvent<typeof model, 'standalone'>({
+    mode: 'standalone',
+    position: [0, 0],
+    source: 'pointer',
+    active,
+    previousActive: undefined,
+    menu: model,
+  });
+// A new level entered by a pointer release, where the machine's own
+// `active: undefined` means the `change` that follows a keyboard entry
+// never fires here.
+const openStandaloneLevelByPointer = new MarkingMenuOpenEvent<
+  typeof model,
+  'standalone'
+>({
+  mode: 'standalone',
+  position: [0, 0],
+  source: 'pointer',
+  menu: model,
+  menuCenter: [0, 0],
+});
 const selectStandalone = new MarkingMenuSelectEvent<typeof model, 'standalone'>(
   {
     mode: 'standalone',
@@ -223,7 +258,7 @@ describe('manageFocus', () => {
       expect(fixture.opener).not.toBe(document.activeElement);
     });
 
-    it('takes no focus, and gives none back, when asked to just display', () => {
+    it('takes no focus when asked to just display, but still saves it to give back later', () => {
       using fixture = createOpener();
       const { emit, menu, focusManager } = createFixture();
 
@@ -237,9 +272,8 @@ describe('manageFocus', () => {
       elsewhere.focus();
       emit('cancel', cancelStandalone);
 
-      expect(document.activeElement).toBe(elsewhere);
+      expect(document.activeElement).toBe(fixture.opener);
       elsewhere.remove();
-      expect(fixture.opener).not.toBe(document.activeElement);
     });
 
     it('still follows the keyboard once someone tabbed into a display-only menu', () => {
@@ -273,6 +307,52 @@ describe('manageFocus', () => {
       emit('open', openStandalone);
 
       expect(menu.focusTabStop).toHaveBeenCalledTimes(1);
+    });
+
+    it('never moves focus for a pointer-caused change, hover or press', () => {
+      const { emit, menu } = createFixture();
+      emit('open', openStandalone);
+      menu.focusItem.mockClear();
+
+      emit('change', changeStandalonePointer(down));
+
+      expect(menu.focusItem).not.toHaveBeenCalled();
+    });
+
+    it("focuses the new level's container when a pointer release opens one", () => {
+      const { emit, menu } = createFixture();
+      emit('open', openStandalone);
+      menu.focusMenu.mockClear();
+
+      emit('open', openStandaloneLevelByPointer);
+
+      expect(menu.focusMenu).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not restore focus after an outside press dismisses the menu', () => {
+      using fixture = createOpener();
+      const { emit } = createFixture();
+      emit('open', openStandalone);
+
+      const elsewhere = document.createElement('button');
+      document.body.append(elsewhere);
+      elsewhere.focus();
+      emit('cancel', cancelStandaloneOutsidePress);
+
+      expect(document.activeElement).toBe(elsewhere);
+      elsewhere.remove();
+      expect(fixture.opener).not.toBe(document.activeElement);
+    });
+
+    it('still restores focus normally for the next menu after an outside press', () => {
+      const { emit, menu } = createFixture();
+      emit('open', openStandalone);
+      emit('cancel', cancelStandaloneOutsidePress);
+
+      emit('open', openStandalone);
+      emit('cancel', cancelStandalone);
+
+      expect(menu.focusTabStop).toHaveBeenCalledTimes(2);
     });
   });
 

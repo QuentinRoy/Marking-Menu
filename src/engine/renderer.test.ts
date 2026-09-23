@@ -307,7 +307,7 @@ describe('createRenderer', () => {
         center: [0, 0] as [number, number],
         activeKey: undefined,
         tabStopKey,
-        pointerTarget: false,
+        pointerTarget: true,
       },
       upperStroke: undefined,
       lowerStroke: undefined,

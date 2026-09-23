@@ -180,6 +180,59 @@ describe('createMenu', () => {
     expect(menu.element.shadowRoot?.querySelectorAll('[part]')).toHaveLength(0);
   });
 
+  it("labels the menu layer with the model's label, when it has one", () => {
+    const div = document.createElement('div');
+    const menu = createMenu({
+      parent: div,
+      model: { ...createModel(1), label: 'Paste More' },
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(menu.layer.ariaLabel).toBe('Paste More');
+  });
+
+  it('leaves the menu layer unlabeled when the model has none, such as the root', () => {
+    const div = document.createElement('div');
+    const menu = createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(menu.layer.ariaLabel).toBeNull();
+  });
+
+  it('accepts pointer input on its items and wedges only when told to', () => {
+    const div = document.createElement('div');
+    const menu = createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+      pointerTarget: true,
+    });
+
+    expect(menu.layer.classList.contains('marking-menu--pointer-target')).toBe(
+      true,
+    );
+  });
+
+  it('does not accept pointer input by default', () => {
+    const div = document.createElement('div');
+    const menu = createMenu({
+      parent: div,
+      model: createModel(1),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(menu.layer.classList.contains('marking-menu--pointer-target')).toBe(
+      false,
+    );
+  });
+
   it('focuses its menu layer', () => {
     const div = document.createElement('div');
     document.body.append(div);
