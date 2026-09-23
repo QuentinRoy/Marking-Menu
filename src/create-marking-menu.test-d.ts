@@ -13,6 +13,10 @@ import type { MarkingMenuItemInput } from './types.js';
 declare const parent: HTMLElement;
 
 describe('createMarkingMenu', () => {
+  it('keeps its ReturnType typed', () => {
+    expectTypeOf<ReturnType<typeof createMarkingMenu>>().not.toBeAny();
+  });
+
   it('rejects sibling items sharing the same id', () => {
     // @ts-expect-error -- two items share the id `duplicate`.
     createMarkingMenu({
