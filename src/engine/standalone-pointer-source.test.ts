@@ -29,9 +29,10 @@ const createFixture = (phase: NavigationPhase = 'standalone') => {
 
   const send = vi.fn<(input: NavigationInput) => void>();
   const runtime = { phase, send };
+  const menu = { layer };
   const source = createStandalonePointerSource({
     parent,
-    getMenu: () => ({ layer }),
+    getMenu: () => menu,
     runtime,
   });
   return {

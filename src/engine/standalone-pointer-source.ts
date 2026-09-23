@@ -48,6 +48,7 @@ export function createStandalonePointerSource({
   runtime: NavigationInputSink & { readonly phase: NavigationPhase };
 }): StandalonePointerSource {
   let activePointerId: number | undefined;
+  let pressedMenu: ReturnType<typeof getMenu>;
 
   const isOpen = (): boolean => runtime.phase === 'standalone';
 
@@ -83,6 +84,7 @@ export function createStandalonePointerSource({
     }
 
     activePointerId = event.pointerId;
+    pressedMenu = getMenu();
     runtime.send({
       type: 'standalonePointer.move',
       position: toClientPoint(event),
@@ -128,9 +130,11 @@ export function createStandalonePointerSource({
       return;
     }
 
-    // Cleared even once closed, or the next session would ignore its press.
+    // Cleared regardless, or the next session would ignore its press. A
+    // release acts only on the level it was pressed on, not one that
+    // replaced it: a submenu, or a menu reopened after a close.
     activePointerId = undefined;
-    if (!isOpen()) {
+    if (!isOpen() || getMenu() !== pressedMenu) {
       return;
     }
 
