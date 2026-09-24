@@ -157,7 +157,7 @@ Events from a standalone menu have `mode: 'standalone'`. The menu fires `open` f
 
 ### Opening without autofocus
 
-`menu.open({ autoFocus: false })` leaves focus where it is as the menu opens, and the first item stays reachable with Tab. It only affects the first opening: entering a submenu always leaves focus in the menu. Closing the menu restores focus to whatever held it before `open()`, except after a press or release outside the menu, which leaves focus where it landed. Close the menu with `close()`, with the keyboard once an item has focus, with the pointer, or by moving focus away after entering it.
+`menu.open({ autoFocus: false })` leaves focus where it is as the menu opens. The first item stays reachable with Tab, and the pointer still works. It only affects the first opening: entering a submenu always leaves focus in the menu. Closing the menu restores focus to whatever held it before `open()`, except after a press or release outside the menu, which leaves focus where it landed. Close the menu with `close()`, with the keyboard once an item has focus, with the pointer, or by moving focus away after entering it.
 
 ## Item layout
 
