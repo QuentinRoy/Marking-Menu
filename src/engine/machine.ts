@@ -230,7 +230,8 @@ type NavigationPhaseFields<Menu, Active> = {
     // from `menuCenter`, which stays fixed for the life of this menu.
     readonly dwellAnchor: Point;
     // When the pending submenu-dwell timer was last armed: bumped on
-    // significant movement, on opening a new menu, and when a dwell fires on
+    // significant movement, when the active item changes, on opening a new
+    // menu, and when a dwell fires on
     // a leaf and is consumed without a phase change. Without that last case,
     // the residency's `restart` predicate below would see an unchanged value
     // and never re-arm. Also what the layout announces as the indicator's
@@ -424,12 +425,19 @@ export const navigationMachine = machine({
           : menu.getNearestChild(azymuth);
       const hasMovedSignificantly =
         dist(dwellAnchor, position) >= options.movementsThreshold;
+      // A new active item restarts the dwell even below the threshold, so its
+      // submenu cannot open before the item's announcement. `dwellAnchor` stays
+      // put: it only tracks the movement threshold.
+      const hasChangedActive = active !== fromData.active;
       return {
         ...fromData,
         active,
         lastPosition: position,
         dwellAnchor: hasMovedSignificantly ? position : dwellAnchor,
-        dwellStartedAt: hasMovedSignificantly ? Date.now() : dwellStartedAt,
+        dwellStartedAt:
+          hasMovedSignificantly || hasChangedActive
+            ? Date.now()
+            : dwellStartedAt,
       };
     },
 

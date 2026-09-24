@@ -1330,6 +1330,89 @@ describe('createController', () => {
       }
     });
 
+    describe('announcing an item whose submenu is about to open', () => {
+      // Two points either side of the up/right boundary, closer than
+      // `movementsThreshold`: moving from one to the other changes the active
+      // item without a significant move.
+      const beforeBoundary = { clientX: 33, clientY: -36 };
+      const afterBoundary = { clientX: 36, clientY: -34 };
+
+      const setup = (submenuOpeningDelay: number) => {
+        const parent = createParent();
+        document.body.append(parent);
+        const controller = createController({
+          items: [
+            { id: 'up', label: 'Up' },
+            {
+              id: 'right',
+              label: 'Right',
+              items: [{ id: 'sub', label: 'Sub' }],
+            },
+            { id: 'down', label: 'Down' },
+            { id: 'left', label: 'Left' },
+          ],
+          parent,
+          noviceDwellingTime: 100,
+          submenuOpeningDelay,
+        });
+        const opened = vi.fn<() => void>();
+        controller.on('open', () => {
+          opened();
+        });
+        parent.dispatchEvent(
+          pointer('pointerdown', { clientX: 0, clientY: 0 }),
+        );
+        vi.advanceTimersByTime(100);
+        opened.mockClear();
+        return {
+          parent,
+          opened,
+          focusedLabel: () =>
+            parent
+              .querySelector('.marking-menu')
+              ?.shadowRoot?.activeElement?.querySelector('.marking-menu-label')
+              ?.textContent,
+          [Symbol.dispose]() {
+            controller.dispose();
+            parent.remove();
+          },
+        };
+      };
+
+      it('announces an item that became active through a small move', () => {
+        using _timers = fakeTimers();
+        using menu = setup(300);
+        const { parent, opened, focusedLabel } = menu;
+
+        parent.dispatchEvent(pointer('pointermove', beforeBoundary));
+        vi.advanceTimersByTime(270);
+        parent.dispatchEvent(pointer('pointermove', afterBoundary));
+
+        // The dwell restarted with the item, so its announcement comes
+        // before its submenu.
+        vi.advanceTimersByTime(60);
+        expect(focusedLabel()).toBe('Right');
+        expect(opened).not.toHaveBeenCalled();
+
+        vi.advanceTimersByTime(300);
+        expect(opened).toHaveBeenCalledTimes(1);
+      });
+
+      it('announces the item even when the submenu opens without delay', () => {
+        using _timers = fakeTimers();
+        using menu = setup(0);
+        const { parent, opened, focusedLabel } = menu;
+
+        parent.dispatchEvent(pointer('pointermove', afterBoundary));
+        vi.advanceTimersByTime(0);
+
+        expect(focusedLabel()).toBe('Right');
+        expect(opened).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(1000);
+        expect(opened).toHaveBeenCalledTimes(1);
+      });
+    });
+
     it('restores focus that was moved when the controller is disposed mid-gesture', () => {
       using _timers = fakeTimers();
       const parent = createParent();
