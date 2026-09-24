@@ -216,7 +216,11 @@ export const pointerRelease = ({
  */
 export function emitStandaloneOpen(
   emit: (name: 'open', data: MarkingMenuOpenEvent) => void,
-  { menuCenter, menus }: Pick<StandaloneData, 'menuCenter' | 'menus'>,
+  {
+    menuCenter,
+    menus,
+    focus,
+  }: Pick<StandaloneData, 'menuCenter' | 'menus' | 'focus'>,
   source: MarkingMenuEventSource,
 ): void {
   emit(
@@ -227,6 +231,7 @@ export function emitStandaloneOpen(
       source,
       menu: currentMenu(menus),
       menuCenter,
+      focus,
     }),
   );
 }

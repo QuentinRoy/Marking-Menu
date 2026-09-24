@@ -110,6 +110,24 @@ describe('a standalone menu', () => {
     expect(opened[0]?.menuCenter).toEqual([130, 220]);
   });
 
+  it.each([
+    [undefined, true],
+    [{ focus: false }, false],
+  ] as const)(
+    'reports whether the menu takes focus on the open event (%j)',
+    (options, focus) => {
+      using fixture = setup();
+      const opened: MarkingMenuOpenEvent[] = [];
+      fixture.controller.on('open', (event) => {
+        opened.push(event);
+      });
+
+      fixture.controller.open(options);
+
+      expect(opened[0]?.focus).toBe(focus);
+    },
+  );
+
   it('opens at the client position it is given', () => {
     using fixture = setup();
     const opened: MarkingMenuOpenEvent[] = [];

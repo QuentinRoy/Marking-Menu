@@ -229,12 +229,12 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       doc: config.parent.ownerDocument,
       getMenu: renderer.getMenu,
       runtime: this.#runtime,
+      submenuOpeningDelay: options.submenuOpeningDelay,
     });
     this.#keyboardSource = createStandaloneKeyboardSource({
       parent: config.parent,
       getMenu: renderer.getMenu,
       runtime: this.#runtime,
-      onFocusLoss: this.#focusManager.willCloseStandaloneForFocusLoss,
     });
     this.#standalonePointerSource = createStandalonePointerSource({
       parent: config.parent,
@@ -249,8 +249,7 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
   }
 
   open({ position, focus = true }: MarkingMenuOpenOptions = {}): void {
-    this.#focusManager.willOpenStandalone({ focus });
-    this.#runtime.open(position ?? this.#parentCenter());
+    this.#runtime.open(position ?? this.#parentCenter(), { focus });
   }
 
   close(): void {

@@ -29,13 +29,11 @@ const createFixture = (
   document.body.append(parent);
 
   const send = vi.fn<(input: NavigationInput) => void>();
-  const onFocusLoss = vi.fn<() => void>();
   const runtime = { phase, send, isSending: false };
   const source = createStandaloneKeyboardSource({
     parent,
     getMenu: () => (hasMenu ? { layer } : undefined),
     runtime,
-    onFocusLoss,
   });
   return {
     parent,
@@ -44,7 +42,6 @@ const createFixture = (
     nextItem,
     outside,
     send,
-    onFocusLoss,
     source,
     setPhase(next: NavigationPhase) {
       runtime.phase = next;
@@ -211,7 +208,6 @@ describe('createStandaloneKeyboardSource', () => {
     fixture.item.focus();
     fixture.outside.focus();
 
-    expect(fixture.onFocusLoss).toHaveBeenCalledExactlyOnceWith();
     expect(fixture.send).toHaveBeenNthCalledWith(1, {
       type: 'focus',
       key: 'item-key',
@@ -227,7 +223,6 @@ describe('createStandaloneKeyboardSource', () => {
     fixture.item.focus();
     fixture.item.blur();
 
-    expect(fixture.onFocusLoss).toHaveBeenCalledExactlyOnceWith();
     expect(fixture.send).toHaveBeenLastCalledWith({ type: 'focus-loss' });
   });
 
@@ -237,7 +232,6 @@ describe('createStandaloneKeyboardSource', () => {
     fixture.item.focus();
     fixture.nextItem.focus();
 
-    expect(fixture.onFocusLoss).not.toHaveBeenCalled();
     expect(fixture.send).not.toHaveBeenCalledWith({ type: 'focus-loss' });
   });
 
@@ -251,7 +245,6 @@ describe('createStandaloneKeyboardSource', () => {
     fixture.setIsSending(true);
     fixture.outside.focus();
 
-    expect(fixture.onFocusLoss).not.toHaveBeenCalled();
     expect(fixture.send).not.toHaveBeenCalledWith({ type: 'focus-loss' });
   });
 

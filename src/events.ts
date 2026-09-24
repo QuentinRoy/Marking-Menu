@@ -222,6 +222,7 @@ export class MarkingMenuOpenEvent<
 
   readonly #menu: ModelMenus<Model>;
   readonly #menuCenter: Point;
+  readonly #focus: boolean;
   readonly #recognition: MarkingMenuRecognition | undefined;
 
   declare readonly type: 'open';
@@ -232,11 +233,13 @@ export class MarkingMenuOpenEvent<
     readonly source: MarkingMenuEventSource;
     readonly menu: ModelMenus<Model>;
     readonly menuCenter: Point;
+    readonly focus?: boolean | undefined;
     readonly recognition?: MarkingMenuRecognition | undefined;
   }) {
     super(MarkingMenuOpenEvent.type, data);
     this.#menu = data.menu;
     this.#menuCenter = data.menuCenter;
+    this.#focus = data.focus ?? true;
     this.#recognition = data.recognition;
   }
 
@@ -252,6 +255,14 @@ export class MarkingMenuOpenEvent<
   */
   get menuCenter(): Point {
     return this.#menuCenter;
+  }
+
+  /**
+   Whether the menu takes focus. `false` only for a menu shown with
+   `open({ focus: false })`.
+   */
+  get focus(): boolean {
+    return this.#focus;
   }
 
   /**

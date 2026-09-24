@@ -28,7 +28,6 @@ export function createStandaloneKeyboardSource({
   parent,
   getMenu,
   runtime,
-  onFocusLoss,
 }: {
   parent: HTMLElement;
   /**
@@ -39,7 +38,6 @@ export function createStandaloneKeyboardSource({
     readonly phase: NavigationPhase;
     readonly isSending: boolean;
   };
-  onFocusLoss: () => void;
 }): StandaloneKeyboardSource {
   /**
    The first node an event went through, when the event started inside the
@@ -92,11 +90,6 @@ export function createStandaloneKeyboardSource({
     }
   };
 
-  const closeForFocusLoss = (): void => {
-    onFocusLoss();
-    runtime.send({ type: 'focus-loss' });
-  };
-
   const onFocusOut = (event: FocusEvent): void => {
     const layer = getMenu()?.layer;
     // A blur fired as a side effect of our own send — a level's DOM
@@ -111,7 +104,7 @@ export function createStandaloneKeyboardSource({
     }
 
     if (!event.relatedTarget) {
-      closeForFocusLoss();
+      runtime.send({ type: 'focus-loss' });
       return;
     }
 
@@ -123,7 +116,7 @@ export function createStandaloneKeyboardSource({
       return;
     }
 
-    closeForFocusLoss();
+    runtime.send({ type: 'focus-loss' });
   };
 
   parent.addEventListener('keydown', onKeyDown);
