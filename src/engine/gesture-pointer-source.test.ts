@@ -1,11 +1,11 @@
 import { createParent, pointer } from './__fixtures__/pointer.js';
 import { createGesturePointerSource } from './gesture-pointer-source.js';
-import type { NavigationInput } from './machine.js';
+import type { NavigationSend } from './runtime.js';
 
 describe('createGesturePointerSource', () => {
   it('prevents native touch gestures until disposed', () => {
     const parent = createParent();
-    const send = vi.fn<(input: NavigationInput) => void>();
+    const send = vi.fn<NavigationSend>();
     const source = createGesturePointerSource({ parent, runtime: { send } });
 
     const whileActive = new Event('touchstart', { cancelable: true });
@@ -21,7 +21,7 @@ describe('createGesturePointerSource', () => {
 
   it('ignores move and up events from a pointer that is not the active gesture owner', () => {
     const parent = createParent();
-    const send = vi.fn<(input: NavigationInput) => void>();
+    const send = vi.fn<NavigationSend>();
     createGesturePointerSource({ parent, runtime: { send } });
 
     parent.dispatchEvent(
@@ -39,9 +39,9 @@ describe('createGesturePointerSource', () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it('sends pointer.cancel for a native pointercancel on the active gesture, and releases capture beforehand', () => {
+  it('sends pointerCancel for a native pointercancel on the active gesture, and releases capture beforehand', () => {
     const parent = createParent();
-    const send = vi.fn<(input: NavigationInput) => void>();
+    const send = vi.fn<NavigationSend>();
     createGesturePointerSource({ parent, runtime: { send } });
 
     parent.dispatchEvent(
@@ -55,15 +55,14 @@ describe('createGesturePointerSource', () => {
     );
 
     expect(parent.hasPointerCapture(1)).toBe(false);
-    expect(send).toHaveBeenCalledExactlyOnceWith({
-      type: 'pointer.cancel',
+    expect(send).toHaveBeenCalledExactlyOnceWith('pointerCancel', {
       position: [10, 10],
     });
   });
 
   it('ignores a pointercancel from a pointer that is not the active gesture owner', () => {
     const parent = createParent();
-    const send = vi.fn<(input: NavigationInput) => void>();
+    const send = vi.fn<NavigationSend>();
     createGesturePointerSource({ parent, runtime: { send } });
 
     parent.dispatchEvent(
@@ -81,7 +80,7 @@ describe('createGesturePointerSource', () => {
   describe('while suspended', () => {
     it('leaves pointer input to the page: nothing is sent, prevented or captured', () => {
       const parent = createParent();
-      const send = vi.fn<(input: NavigationInput) => void>();
+      const send = vi.fn<NavigationSend>();
       const source = createGesturePointerSource({ parent, runtime: { send } });
 
       source.suspend();
@@ -103,7 +102,7 @@ describe('createGesturePointerSource', () => {
       parent.style.touchAction = 'pan-y';
       const source = createGesturePointerSource({
         parent,
-        runtime: { send: vi.fn<(input: NavigationInput) => void>() },
+        runtime: { send: vi.fn<NavigationSend>() },
       });
       expect(parent.style.touchAction).toBe('none');
 
@@ -116,7 +115,7 @@ describe('createGesturePointerSource', () => {
 
     it('takes pointer input and touch-action back once resumed', () => {
       const parent = createParent();
-      const send = vi.fn<(input: NavigationInput) => void>();
+      const send = vi.fn<NavigationSend>();
       const source = createGesturePointerSource({ parent, runtime: { send } });
       source.suspend();
 
@@ -125,8 +124,7 @@ describe('createGesturePointerSource', () => {
         pointer('pointerdown', { pointerId: 1, clientX: 3, clientY: 4 }),
       );
 
-      expect(send).toHaveBeenCalledExactlyOnceWith({
-        type: 'pointer.down',
+      expect(send).toHaveBeenCalledExactlyOnceWith('pointerDown', {
         position: [3, 4],
       });
       expect(parent.style.touchAction).toBe('none');
@@ -139,7 +137,7 @@ describe('createGesturePointerSource', () => {
       parent.style.touchAction = 'pan-y';
       const source = createGesturePointerSource({
         parent,
-        runtime: { send: vi.fn<(input: NavigationInput) => void>() },
+        runtime: { send: vi.fn<NavigationSend>() },
       });
 
       source.suspend();
@@ -156,7 +154,7 @@ describe('createGesturePointerSource', () => {
       const parent = createParent();
       const source = createGesturePointerSource({
         parent,
-        runtime: { send: vi.fn<(input: NavigationInput) => void>() },
+        runtime: { send: vi.fn<NavigationSend>() },
       });
       source.suspend();
       source.dispose();
@@ -170,7 +168,7 @@ describe('createGesturePointerSource', () => {
       const parent = createParent();
       const source = createGesturePointerSource({
         parent,
-        runtime: { send: vi.fn<(input: NavigationInput) => void>() },
+        runtime: { send: vi.fn<NavigationSend>() },
       });
 
       source.suspend();

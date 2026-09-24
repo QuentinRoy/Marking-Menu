@@ -5,7 +5,7 @@ import { currentMenu } from './layout-view.js';
 import type { ResolvedLogger } from './logger.js';
 import {
   navigationMachine,
-  type NavigationInput,
+  type MachineInputs,
   type NavigationOptions,
   type NavigationPhase,
 } from './machine.js';
@@ -15,11 +15,25 @@ import type { LayoutRenderer } from './renderer.js';
 const toError = (value: unknown): Error =>
   value instanceof Error ? value : new Error(String(value));
 
+type SourceInputs = Omit<MachineInputs, 'open' | 'dwell' | 'dispose'>;
+
+/**
+ Send the machine an input, named and shaped as it declares it. The runtime
+ keeps `open`, `dwell` and `dispose` to itself.
+ */
+export type NavigationSend = (
+  ...input: {
+    [Name in keyof SourceInputs]: undefined extends SourceInputs[Name]
+      ? [name: Name, data?: SourceInputs[Name]]
+      : [name: Name, data: SourceInputs[Name]];
+  }[keyof SourceInputs]
+) => void;
+
 /**
 All an input source needs of the runtime: no events, no model.
 */
 export type NavigationInputSink = {
-  send: (input: NavigationInput) => void;
+  send: NavigationSend;
 };
 
 /**
@@ -164,78 +178,12 @@ export function createRuntime<Model extends EngineModelRoot>({
 
   let isDisposed = false;
 
-  const send = (input: NavigationInput): void => {
+  const send: NavigationSend = (...input) => {
     if (isDisposed) {
       throw new Error('Cannot send an input to a disposed controller.');
     }
 
-    switch (input.type) {
-      case 'keyboard': {
-        if (input.intent === 'dismiss') {
-          host.send('dismiss', { source: 'keyboard' });
-        } else {
-          host.send(input.intent);
-        }
-
-        break;
-      }
-
-      case 'focus': {
-        host.send('focus', { key: input.key });
-        break;
-      }
-
-      case 'focus-loss': {
-        host.send('dismiss', { source: 'focus-loss' });
-        break;
-      }
-
-      case 'pointer.down': {
-        host.send('pointerDown', { position: input.position });
-        break;
-      }
-
-      case 'pointer.move': {
-        host.send('pointerMove', { position: input.position });
-        break;
-      }
-
-      case 'pointer.up': {
-        host.send('pointerUp', { position: input.position });
-        break;
-      }
-
-      case 'pointer.cancel': {
-        host.send('pointerCancel', { position: input.position });
-        break;
-      }
-
-      case 'standalonePointer.move': {
-        host.send('standalonePointerMove', {
-          position: input.position,
-          itemKey: input.itemKey,
-        });
-        break;
-      }
-
-      case 'standalonePointer.activate': {
-        host.send('standalonePointerActivate', {
-          position: input.position,
-          itemKey: input.itemKey,
-        });
-        break;
-      }
-
-      case 'standalonePointer.cancel': {
-        host.send('standalonePointerCancel', { position: input.position });
-        break;
-      }
-
-      case 'standalonePointer.outside': {
-        host.send('standalonePointerOutside', { position: input.position });
-        break;
-      }
-    }
+    host.send(...input);
   };
 
   // The machine declines what does not apply and never throws, so misuse is

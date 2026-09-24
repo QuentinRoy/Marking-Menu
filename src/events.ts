@@ -149,6 +149,15 @@ export abstract class MarkingMenuEventBase<
       readonly source: MarkingMenuEventSource;
     },
   ) {
+    if (
+      data.mode === 'standalone' &&
+      (data.source === 'pointer') !== (data.position !== undefined)
+    ) {
+      throw new Error(
+        `A standalone event has a position exactly when its source is 'pointer' (source: '${data.source}').`,
+      );
+    }
+
     this.type = type;
     this.#mode = data.mode;
     this.#position = data.position;
