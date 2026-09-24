@@ -61,7 +61,7 @@ export function createGesturePointerSource({
     event.preventDefault();
     activePointerId = event.pointerId;
     parent.setPointerCapture(event.pointerId);
-    runtime.send({ type: 'pointer.down', position: toClientPoint(event) });
+    runtime.send('pointerDown', { position: toClientPoint(event) });
   };
 
   const onPointerMove = (event: PointerEvent): void => {
@@ -69,7 +69,7 @@ export function createGesturePointerSource({
       return;
     }
 
-    runtime.send({ type: 'pointer.move', position: toClientPoint(event) });
+    runtime.send('pointerMove', { position: toClientPoint(event) });
   };
 
   const onPointerUp = (event: PointerEvent): void => {
@@ -81,7 +81,7 @@ export function createGesturePointerSource({
     // a listener must observe fully committed state, including capture
     // ownership, so that it may start a gesture of its own.
     releaseCapture();
-    runtime.send({ type: 'pointer.up', position: toClientPoint(event) });
+    runtime.send('pointerUp', { position: toClientPoint(event) });
   };
 
   const onPointerCancel = (event: PointerEvent): void => {
@@ -91,7 +91,7 @@ export function createGesturePointerSource({
 
     // Same ordering rationale as `onPointerUp`: release before dispatching.
     releaseCapture();
-    runtime.send({ type: 'pointer.cancel', position: toClientPoint(event) });
+    runtime.send('pointerCancel', { position: toClientPoint(event) });
   };
 
   // WebKit only suppresses its long-press loupe when touchstart itself is

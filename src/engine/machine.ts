@@ -3,10 +3,9 @@ import {
   MarkingMenuChangeEvent,
   MarkingMenuMoveEvent,
   MarkingMenuOpenEvent,
-  MarkingMenuSelectEvent,
   MarkingMenuStartEvent,
   type MarkingMenuCancelEvent,
-  type MarkingMenuEventSource,
+  type MarkingMenuSelectEvent,
 } from '../events.js';
 import {
   recognizeStroke,
@@ -36,9 +35,10 @@ import {
 } from './machine-gesture.js';
 import {
   cancelStandalone,
+  emitStandaloneChange,
   emitStandaloneMove,
   emitStandaloneOpen,
-  emitStandalonePointerChange,
+  emitStandaloneSelect,
   enterActive,
   findPointerItem,
   leaveLevel,
@@ -48,6 +48,7 @@ import {
   pointerMove,
   pointerRelease,
   type Direction,
+  type NonPointerSource,
 } from './machine-standalone.js';
 import type {
   EngineModelItem,
@@ -72,7 +73,7 @@ export type NavigationOptions = {
   readonly submenuOpeningDelay: number;
 };
 
-type MachineInputs = {
+export type MachineInputs = {
   // A gesture's pointer. Prefixed because `up` and `down` name directions
   // to the keyboard below, and because `move` and `cancel` are output names
   // that mean something else.
@@ -108,25 +109,14 @@ type MachineInputs = {
   last: undefined;
   activate: undefined;
   back: undefined;
-  // Shared by a Tab press, a `close()` API call, and a focus-loss dismissal:
-  // the only standalone ending three different callers can reach, so it is
-  // the only input that must carry its own source.
-  dismiss: {
-    readonly source: Exclude<MarkingMenuEventSource, 'pointer' | 'gesture'>;
+  // Shared by a Tab press, a `close()` API call, and a focus-loss dismissal.
+  dismiss: { readonly source: NonPointerSource };
+  // The platform moved focus onto the item with this key, because of a key
+  // press or of an API call (`open()` focusing the first item).
+  focus: {
+    readonly key: string;
+    readonly source: 'keyboard' | 'api';
   };
-  // The platform moved focus onto the item with this key.
-  focus: { readonly key: string };
-};
-
-/**
- The machine's pointer inputs, under the boundary names
- `gesture-pointer-source.ts` sends them by.
- */
-type PointerInputNames = {
-  down: 'pointerDown';
-  move: 'pointerMove';
-  up: 'pointerUp';
-  cancel: 'pointerCancel';
 };
 
 /**
@@ -142,34 +132,6 @@ type PointerInputNames = {
  */
 export type KeyboardIntent =
   Direction | 'first' | 'last' | 'activate' | 'back' | 'dismiss';
-
-/**
- The boundary input shape `gesture-pointer-source.ts` sends: unrelated to the
- machine's own input vocabulary, so that layer never has to know about it.
- Each pointer input carries the payload {@link PointerInputNames} pairs it
- with, so the two can't drift apart.
- */
-export type NavigationInput =
-  | {
-      [K in keyof PointerInputNames]: {
-        readonly type: `pointer.${K}`;
-      } & MachineInputs[PointerInputNames[K]];
-    }[keyof PointerInputNames]
-  | { readonly type: 'keyboard'; readonly intent: KeyboardIntent }
-  | { readonly type: 'focus'; readonly key: string }
-  | { readonly type: 'focus-loss' }
-  | ({
-      readonly type: 'standalonePointer.move';
-    } & MachineInputs['standalonePointerMove'])
-  | ({
-      readonly type: 'standalonePointer.activate';
-    } & MachineInputs['standalonePointerActivate'])
-  | ({
-      readonly type: 'standalonePointer.cancel';
-    } & MachineInputs['standalonePointerCancel'])
-  | ({
-      readonly type: 'standalonePointer.outside';
-    } & MachineInputs['standalonePointerOutside']);
 
 /**
  Each phase's fields, factored out before `NavigationState` tags on a
@@ -308,6 +270,12 @@ const backToIdle = ({
 }: {
   readonly fromData: MachineStates[keyof MachineStates];
 }): MachineStates['idle'] => ({ model, options });
+
+const emitKeyboardMove = (
+  context: Parameters<typeof emitStandaloneMove>[0],
+): void => {
+  emitStandaloneMove(context, { source: 'keyboard' });
+};
 
 export const navigationMachine = machine({
   inputs: type<MachineInputs>(),
@@ -615,22 +583,29 @@ export const navigationMachine = machine({
 
     // The only way into standalone, so its `open` is always API-caused.
     'idle -open> standalone'({ toData, inputData, emit }) {
-      emitStandaloneOpen(emit, toData, 'api', inputData.willAutoFocus);
+      emitStandaloneOpen(
+        emit,
+        toData,
+        { source: 'api' },
+        inputData.willAutoFocus,
+      );
     },
 
-    // Every keyboard-driven way to go from one standalone level or item to
-    // another shares one action (see `emitStandaloneMove`'s own comment for
-    // why this is nine exact rows rather than one wildcard). A new level
+    // Every way to go from one standalone level or item to another shares
+    // one action (see `emitStandaloneMove`'s own comment for why this is
+    // nine exact rows rather than one wildcard). A new level
     // announces `open` first, like novice does, then the item it landed on.
-    'standalone -up> standalone': emitStandaloneMove,
-    'standalone -down> standalone': emitStandaloneMove,
-    'standalone -left> standalone': emitStandaloneMove,
-    'standalone -right> standalone': emitStandaloneMove,
-    'standalone -first> standalone': emitStandaloneMove,
-    'standalone -last> standalone': emitStandaloneMove,
-    'standalone -focus> standalone': emitStandaloneMove,
-    'standalone -activate> standalone': emitStandaloneMove,
-    'standalone -back> standalone': emitStandaloneMove,
+    'standalone -up> standalone': emitKeyboardMove,
+    'standalone -down> standalone': emitKeyboardMove,
+    'standalone -left> standalone': emitKeyboardMove,
+    'standalone -right> standalone': emitKeyboardMove,
+    'standalone -first> standalone': emitKeyboardMove,
+    'standalone -last> standalone': emitKeyboardMove,
+    'standalone -focus> standalone'({ inputData, ...context }) {
+      emitStandaloneMove(context, { source: inputData.source });
+    },
+    'standalone -activate> standalone': emitKeyboardMove,
+    'standalone -back> standalone': emitKeyboardMove,
 
     // A pointer move always announces `move`; `change` only when the item
     // it lands on differs from the one the previous commit landed on.
@@ -653,8 +628,8 @@ export const navigationMachine = machine({
       );
 
       if (toData.active !== fromData.active) {
-        emitStandalonePointerChange(emit, {
-          position: inputData.position,
+        emitStandaloneChange(emit, {
+          cause: { source: 'pointer', position: inputData.position },
           active: toData.active,
           previousActive: fromData.active,
           menu,
@@ -670,8 +645,8 @@ export const navigationMachine = machine({
       inputData,
       emit,
     }) {
-      emitStandalonePointerChange(emit, {
-        position: inputData.position,
+      emitStandaloneChange(emit, {
+        cause: { source: 'pointer', position: inputData.position },
         active: undefined,
         previousActive: fromData.active,
         menu: currentMenu(toData.menus),
@@ -690,13 +665,17 @@ export const navigationMachine = machine({
     }) {
       const menu = currentMenu(toData.menus);
       const isNewLevel = toData.menus.length !== fromData.menus.length;
+      const cause = {
+        source: 'pointer',
+        position: inputData.position,
+      } as const;
       if (isNewLevel) {
-        emitStandaloneOpen(emit, toData, 'pointer', true);
+        emitStandaloneOpen(emit, toData, cause, true);
       }
 
       if (toData.active !== fromData.active) {
-        emitStandalonePointerChange(emit, {
-          position: inputData.position,
+        emitStandaloneChange(emit, {
+          cause,
           active: toData.active,
           // Entering a level never lands on the root, so this narrows.
           previousActive: isNewLevel && !menu.isRoot ? menu : fromData.active,
@@ -713,8 +692,7 @@ export const navigationMachine = machine({
       cancelStandalone({
         fromData,
         emit,
-        source: 'pointer',
-        position: inputData.position,
+        cause: { source: 'pointer', position: inputData.position },
       });
     },
 
@@ -726,22 +704,17 @@ export const navigationMachine = machine({
         return;
       }
 
-      emit(
-        'select',
-        new MarkingMenuSelectEvent<ModelNode, 'standalone'>({
-          mode: 'standalone',
-          position: undefined,
-          source: 'keyboard',
-          selection: active,
-          menu: currentMenu(menus),
-        }),
-      );
+      emitStandaloneSelect(emit, {
+        menus,
+        selection: active,
+        cause: { source: 'keyboard' },
+      });
     },
     'standalone -back> idle'({ fromData, emit }) {
-      cancelStandalone({ fromData, emit, source: 'keyboard' });
+      cancelStandalone({ fromData, emit, cause: { source: 'keyboard' } });
     },
     'standalone -dismiss> idle'({ fromData, inputData, emit }) {
-      cancelStandalone({ fromData, emit, source: inputData.source });
+      cancelStandalone({ fromData, emit, cause: inputData });
     },
 
     // The transition already declined anything but a leaf.
@@ -755,16 +728,11 @@ export const navigationMachine = machine({
         return;
       }
 
-      emit(
-        'select',
-        new MarkingMenuSelectEvent<ModelNode, 'standalone'>({
-          mode: 'standalone',
-          position: inputData.position,
-          source: 'pointer',
-          selection: item,
-          menu: currentMenu(fromData.menus),
-        }),
-      );
+      emitStandaloneSelect(emit, {
+        menus: fromData.menus,
+        selection: item,
+        cause: { source: 'pointer', position: inputData.position },
+      });
     },
 
     // No menu is open in startup or expert, so nothing can be active: `move`

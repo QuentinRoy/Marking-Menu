@@ -10,7 +10,7 @@ import { toClientPoint, type Point } from '../utils.js';
 import { deepActiveElement } from './focus.js';
 import { createGesturePointerSource } from './gesture-pointer-source.js';
 import type { KeyboardIntent } from './machine.js';
-import type { NavigationRuntime } from './runtime.js';
+import type { NavigationRuntime, NavigationSend } from './runtime.js';
 
 export type StandaloneSession = {
   /**
@@ -105,11 +105,14 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
     }
   };
 
-  const send: typeof runtime.send = (input) => {
+  const send: NavigationSend = (...input) => {
     asOwnInput(() => {
-      runtime.send(input);
+      runtime.send(...input);
     });
   };
+
+  // `open()` focuses the first item, and that focus is its doing, not a key's.
+  let focusSource: 'keyboard' | 'api' = 'keyboard';
 
   const resolve = (event: Event): MenuEventResolution =>
     (isOpen() ? getMenu()?.resolve(event) : undefined) ?? { isInside: false };
@@ -126,13 +129,17 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
       event.preventDefault();
     }
 
-    send({ type: 'keyboard', intent });
+    if (intent === 'dismiss') {
+      send('dismiss', { source: 'keyboard' });
+    } else {
+      send(intent);
+    }
   };
 
   const onFocusIn = (event: FocusEvent): void => {
     const resolution = resolve(event);
     if (resolution.isInside && resolution.itemKey !== undefined) {
-      send({ type: 'focus', key: resolution.itemKey });
+      send('focus', { key: resolution.itemKey, source: focusSource });
     }
   };
 
@@ -143,7 +150,7 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
 
     const { relatedTarget } = event;
     if (!relatedTarget || !getMenu()?.isInside(relatedTarget)) {
-      send({ type: 'focus-loss' });
+      send('dismiss', { source: 'focus-loss' });
     }
   };
 
@@ -154,10 +161,7 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
 
     const resolution = resolve(event);
     if (!resolution.isInside) {
-      send({
-        type: 'standalonePointer.outside',
-        position: toClientPoint(event),
-      });
+      send('standalonePointerOutside', { position: toClientPoint(event) });
       return;
     }
 
@@ -174,8 +178,7 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
       target.releasePointerCapture(event.pointerId);
     }
 
-    send({
-      type: 'standalonePointer.move',
+    send('standalonePointerMove', {
       position: toClientPoint(event),
       itemKey: resolution.itemKey,
     });
@@ -192,8 +195,7 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
 
     const resolution = resolve(event);
     if (resolution.isInside) {
-      send({
-        type: 'standalonePointer.move',
+      send('standalonePointerMove', {
         position: toClientPoint(event),
         itemKey: resolution.itemKey,
       });
@@ -207,8 +209,7 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
       return;
     }
 
-    send({
-      type: 'standalonePointer.move',
+    send('standalonePointerMove', {
       position: toClientPoint(event),
       itemKey: undefined,
     });
@@ -221,10 +222,7 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
 
     activePointerId = undefined;
     if (isOpen()) {
-      send({
-        type: 'standalonePointer.cancel',
-        position: toClientPoint(event),
-      });
+      send('standalonePointerCancel', { position: toClientPoint(event) });
     }
   };
 
@@ -243,15 +241,14 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
 
     const position = toClientPoint(event);
     const resolution = resolve(event);
-    send(
-      resolution.isInside
-        ? {
-            type: 'standalonePointer.activate',
-            position,
-            itemKey: resolution.itemKey,
-          }
-        : { type: 'standalonePointer.outside', position },
-    );
+    if (resolution.isInside) {
+      send('standalonePointerActivate', {
+        position,
+        itemKey: resolution.itemKey,
+      });
+    } else {
+      send('standalonePointerOutside', { position });
+    }
   };
 
   // A press outside `parent` never reaches `onPointerDown`. `composedPath()`,
@@ -266,10 +263,7 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
       return;
     }
 
-    send({
-      type: 'standalonePointer.outside',
-      position: toClientPoint(event),
-    });
+    send('standalonePointerOutside', { position: toClientPoint(event) });
   };
 
   const forgetFocus = (): void => {
@@ -302,9 +296,16 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
     // Saved even without autofocus: a pointer release may still move focus
     // into a submenu.
     savedFocus = deepActiveElement(doc) as HTMLElement | undefined;
-    if (event.willAutoFocus) {
-      // Reported back as a `focus` input, which makes the first item active.
+    if (!event.willAutoFocus) {
+      return;
+    }
+
+    // Reported back as a `focus` input, which makes the first item active.
+    focusSource = 'api';
+    try {
       getMenu()?.focusTabStop();
+    } finally {
+      focusSource = 'keyboard';
     }
   };
 

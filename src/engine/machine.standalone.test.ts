@@ -354,7 +354,7 @@ describe('navigationMachine standalone phase', () => {
         }
 
         host.send('dismiss', { source: 'keyboard' });
-        host.send('focus', { key: rightItem.key });
+        host.send('focus', { key: rightItem.key, source: 'keyboard' });
       };
 
       send();
@@ -400,7 +400,7 @@ describe('navigationMachine standalone phase', () => {
       (from, direction, expected) => {
         const host = startStandalone();
         openStandalone(host);
-        host.send('focus', { key: itemsById[from].key });
+        host.send('focus', { key: itemsById[from].key, source: 'keyboard' });
 
         host.send(direction);
 
@@ -420,7 +420,7 @@ describe('navigationMachine standalone phase', () => {
     it('declines a press with no item further that way, announcing nothing', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: upItem.key });
+      host.send('focus', { key: upItem.key, source: 'keyboard' });
       const outputs = recordOutputs(host);
       const layouts = recordLayouts(host);
 
@@ -509,7 +509,7 @@ describe('navigationMachine standalone phase', () => {
       (from, direction) => {
         const host = startStandalone();
         openStandalone(host);
-        host.send('focus', { key: itemsById[from].key });
+        host.send('focus', { key: itemsById[from].key, source: 'keyboard' });
         const outputs = recordOutputs(host);
 
         host.send(direction);
@@ -522,7 +522,7 @@ describe('navigationMachine standalone phase', () => {
     it('crosses a four item ring in two presses, through the item in between', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: rightItem.key });
+      host.send('focus', { key: rightItem.key, source: 'keyboard' });
 
       host.send('left');
       host.send('left');
@@ -603,21 +603,35 @@ describe('navigationMachine standalone phase', () => {
       openStandalone(host);
       const outputs = recordOutputs(host);
 
-      host.send('focus', { key: leftItem.key });
+      host.send('focus', { key: leftItem.key, source: 'keyboard' });
 
       expect(activeKeyOf(host)).toBe(leftItem.key);
       expect(namesOf(outputs)).toEqual(['change']);
       expect(outputs[0]?.[1].activeItem).toBe(leftItem);
     });
 
+    it.each(['keyboard', 'api'] as const)(
+      'reports the %s source the focus came with',
+      (source) => {
+        const host = startStandalone();
+        openStandalone(host);
+        const outputs = recordOutputs(host);
+
+        host.send('focus', { key: leftItem.key, source });
+
+        expect(dataAt(outputs, 0).source).toBe(source);
+        expect(dataAt(outputs, 0).position).toBeUndefined();
+      },
+    );
+
     it('declines the focus of the item that is already active, so an echo changes nothing', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: leftItem.key });
+      host.send('focus', { key: leftItem.key, source: 'keyboard' });
       const outputs = recordOutputs(host);
       const layouts = recordLayouts(host);
 
-      host.send('focus', { key: leftItem.key });
+      host.send('focus', { key: leftItem.key, source: 'keyboard' });
 
       expect(outputs).toEqual([]);
       expect(layouts).toEqual([]);
@@ -628,8 +642,8 @@ describe('navigationMachine standalone phase', () => {
       openStandalone(host);
       const outputs = recordOutputs(host);
 
-      host.send('focus', { key: rightUpItem.key });
-      host.send('focus', { key: 'nope' });
+      host.send('focus', { key: rightUpItem.key, source: 'keyboard' });
+      host.send('focus', { key: 'nope', source: 'keyboard' });
 
       expect(activeKeyOf(host)).toBeUndefined();
       expect(outputs).toEqual([]);
@@ -640,7 +654,7 @@ describe('navigationMachine standalone phase', () => {
     it('enters the active submenu at the same center, and activates its first item', () => {
       const host = startStandalone();
       openStandalone(host, [50, 60]);
-      host.send('focus', { key: rightItem.key });
+      host.send('focus', { key: rightItem.key, source: 'keyboard' });
       const outputs = recordOutputs(host);
       const layouts = recordLayouts(host);
 
@@ -668,7 +682,7 @@ describe('navigationMachine standalone phase', () => {
     it('leaves back to the parent, with the submenu item active again', () => {
       const host = startStandalone();
       openStandalone(host, [50, 60]);
-      host.send('focus', { key: rightItem.key });
+      host.send('focus', { key: rightItem.key, source: 'keyboard' });
       host.send('activate');
       const outputs = recordOutputs(host);
       const layouts = recordLayouts(host);
@@ -716,7 +730,7 @@ describe('navigationMachine standalone phase', () => {
     it('selects the active leaf on activate', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: downItem.key });
+      host.send('focus', { key: downItem.key, source: 'keyboard' });
       const outputs = recordOutputs(host);
 
       host.send('activate');
@@ -735,7 +749,7 @@ describe('navigationMachine standalone phase', () => {
     it('selects a leaf of a submenu, reporting the submenu it was in', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: rightItem.key });
+      host.send('focus', { key: rightItem.key, source: 'keyboard' });
       host.send('activate');
       const outputs = recordOutputs(host);
 
@@ -749,7 +763,7 @@ describe('navigationMachine standalone phase', () => {
     it('lays out idle once it ended', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: downItem.key });
+      host.send('focus', { key: downItem.key, source: 'keyboard' });
       const layouts = recordLayouts(host);
 
       host.send('activate');
@@ -772,7 +786,7 @@ describe('navigationMachine standalone phase', () => {
     it('cancels on close, whatever level it is on, reporting the active item', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: rightItem.key });
+      host.send('focus', { key: rightItem.key, source: 'keyboard' });
       host.send('activate');
       const outputs = recordOutputs(host);
 
@@ -822,7 +836,7 @@ describe('navigationMachine standalone phase', () => {
     it('goes back up a level on escape below the root, instead of canceling', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: rightItem.key });
+      host.send('focus', { key: rightItem.key, source: 'keyboard' });
       host.send('activate');
       const outputs = recordOutputs(host);
 
@@ -979,7 +993,7 @@ describe('navigationMachine standalone phase', () => {
       expect(namesOf(outputs)).toEqual(['open', 'change']);
       const opened = dataAt(outputs, 0);
       expect(opened.mode).toBe('standalone');
-      expect(opened.position).toBeUndefined();
+      expect(opened.position).toEqual([5, 6]);
       expect(opened.source).toBe('pointer');
       expect(opened.menu).toBe(rightItem);
       expect(opened.menuCenter).toEqual([50, 60]);
@@ -1046,7 +1060,7 @@ describe('navigationMachine standalone phase', () => {
     it('cancels the whole session on an outside press, with its position', () => {
       const host = startStandalone();
       openStandalone(host);
-      host.send('focus', { key: rightItem.key });
+      host.send('focus', { key: rightItem.key, source: 'keyboard' });
       host.send('activate');
       const outputs = recordOutputs(host);
 
@@ -1067,7 +1081,7 @@ describe('navigationMachine standalone phase', () => {
   it('goes back to idle on dispose, from any level', () => {
     const host = startStandalone();
     openStandalone(host);
-    host.send('focus', { key: rightItem.key });
+    host.send('focus', { key: rightItem.key, source: 'keyboard' });
     host.send('activate');
 
     host.send('dispose');

@@ -58,8 +58,8 @@ describe('createRuntime', () => {
     });
     const emitted = recordEmitted(runtime);
 
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
-    runtime.send({ type: 'pointer.up', position: [100, 0] });
+    runtime.send('pointerDown', { position: [0, 0] });
+    runtime.send('pointerUp', { position: [100, 0] });
 
     expect(emitted).toEqual(['start', 'select']);
   });
@@ -74,7 +74,7 @@ describe('createRuntime', () => {
     runtime.dispose();
 
     expect(() => {
-      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      runtime.send('pointerDown', { position: [0, 0] });
     }).toThrow();
   });
 
@@ -92,14 +92,14 @@ describe('createRuntime', () => {
       // Re-entrant: a listener synthesizing another input, exactly the
       // scenario https://github.com/QuentinRoy/Marking-Menu/issues/153's
       // "Reentrancy" section describes.
-      runtime.send({ type: 'pointer.up', position: [100, 0] });
+      runtime.send('pointerUp', { position: [100, 0] });
       hasStartListenerReturned = true;
     });
     runtime.on('select', () => {
       wasStartListenerDoneWhenSelectFired = hasStartListenerReturned;
     });
 
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    runtime.send('pointerDown', { position: [0, 0] });
 
     expect(wasStartListenerDoneWhenSelectFired).toBe(true);
   });
@@ -115,7 +115,7 @@ describe('createRuntime', () => {
     runtime.on('start', started);
     runtime.off('start', started);
 
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    runtime.send('pointerDown', { position: [0, 0] });
 
     expect(started).not.toHaveBeenCalled();
   });
@@ -138,8 +138,8 @@ describe('createRuntime', () => {
     });
     const emitted = recordEmitted(runtime);
 
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
-    runtime.send({ type: 'pointer.up', position: [0, 0] });
+    runtime.send('pointerDown', { position: [0, 0] });
+    runtime.send('pointerUp', { position: [0, 0] });
 
     expect(emitted).toEqual(['start', 'cancel']);
   });
@@ -152,9 +152,9 @@ describe('createRuntime', () => {
     });
     const emitted = recordEmitted(runtime);
 
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
-    runtime.send({ type: 'pointer.move', position: [100, 0] });
-    runtime.send({ type: 'pointer.cancel', position: [100, 0] });
+    runtime.send('pointerDown', { position: [0, 0] });
+    runtime.send('pointerMove', { position: [100, 0] });
+    runtime.send('pointerCancel', { position: [100, 0] });
 
     expect(emitted).toEqual(['start', 'cancel']);
   });
@@ -168,7 +168,7 @@ describe('createRuntime', () => {
     });
     const emitted = recordEmitted(runtime);
 
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    runtime.send('pointerDown', { position: [0, 0] });
     expect(vi.getTimerCount()).toBe(1);
 
     runtime.dispose();
@@ -181,7 +181,7 @@ describe('createRuntime', () => {
     const renderer = createFakeRenderer();
     const runtime = createRuntime({ model, options, renderer });
 
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
+    runtime.send('pointerDown', { position: [0, 0] });
     const rendersBeforeDispose = renderer.render.mock.calls.length;
 
     runtime.dispose();
@@ -200,12 +200,12 @@ describe('createRuntime', () => {
     });
 
     expect(() => {
-      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      runtime.send('pointerDown', { position: [0, 0] });
     }).not.toThrow();
 
     const selected = vi.fn<() => void>();
     runtime.on('select', selected);
-    runtime.send({ type: 'pointer.up', position: [100, 0] });
+    runtime.send('pointerUp', { position: [100, 0] });
 
     expect(selected).toHaveBeenCalledTimes(1);
   });
@@ -214,14 +214,14 @@ describe('createRuntime', () => {
     const renderer = createFakeRenderer();
     const runtime = createRuntime({ model, options, renderer });
 
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
-    runtime.send({ type: 'pointer.up', position: [100, 0] });
+    runtime.send('pointerDown', { position: [0, 0] });
+    runtime.send('pointerUp', { position: [100, 0] });
     expect(renderer.showFeedback).toHaveBeenLastCalledWith(
       expect.objectContaining({ canceled: false }),
     );
 
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
-    runtime.send({ type: 'pointer.up', position: [0, 0] });
+    runtime.send('pointerDown', { position: [0, 0] });
+    runtime.send('pointerUp', { position: [0, 0] });
     expect(renderer.showFeedback).toHaveBeenLastCalledWith(
       expect.objectContaining({ canceled: true }),
     );
@@ -238,7 +238,7 @@ describe('createRuntime', () => {
       const runtime = createRuntime({ model, options, renderer, log });
 
       expect(() => {
-        runtime.send({ type: 'pointer.down', position: [0, 0] });
+        runtime.send('pointerDown', { position: [0, 0] });
       }).toThrow(failure);
 
       // Torn down through the same path as `dispose()`.
@@ -248,7 +248,7 @@ describe('createRuntime', () => {
       // Unrecoverable: further input throws the disposed-controller error,
       // not a repeat of the original failure.
       expect(() => {
-        runtime.send({ type: 'pointer.move', position: [1, 0] });
+        runtime.send('pointerMove', { position: [1, 0] });
       }).toThrow('disposed');
     });
 
@@ -261,9 +261,9 @@ describe('createRuntime', () => {
       const log = { error: vi.fn<(error: Error) => void>() };
       const runtime = createRuntime({ model, options, renderer, log });
 
-      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      runtime.send('pointerDown', { position: [0, 0] });
       expect(() => {
-        runtime.send({ type: 'pointer.up', position: [0, 0] });
+        runtime.send('pointerUp', { position: [0, 0] });
       }).toThrow(failure);
 
       expect(renderer.dispose).toHaveBeenCalledTimes(1);
@@ -284,7 +284,7 @@ describe('createRuntime', () => {
       const runtime = createRuntime({ model, options, renderer, log });
 
       expect(() => {
-        runtime.send({ type: 'pointer.down', position: [0, 0] });
+        runtime.send('pointerDown', { position: [0, 0] });
       }).toThrow(primaryFailure);
 
       expect(log.error).toHaveBeenNthCalledWith(1, teardownFailure);
@@ -302,7 +302,7 @@ describe('createRuntime', () => {
       const runtime = createRuntime({ model, options, renderer, log });
 
       expect(() => {
-        runtime.send({ type: 'pointer.down', position: [0, 0] });
+        runtime.send('pointerDown', { position: [0, 0] });
       }).toThrow(Error);
       expect(log.error).toHaveBeenCalledTimes(1);
       const loggedError = log.error.mock.calls[0]?.[0];
@@ -325,14 +325,14 @@ describe('createRuntime', () => {
         // Re-entrant, queued behind the current batch (same mechanism the
         // existing reentrancy test above exercises), but this time,
         // disposal happens before it can ever be observed.
-        runtime.send({ type: 'pointer.up', position: [100, 0] });
+        runtime.send('pointerUp', { position: [100, 0] });
         runtime.dispose();
       });
       runtime.on('select', () => {
         didSelectFire = true;
       });
 
-      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      runtime.send('pointerDown', { position: [0, 0] });
 
       expect(didSelectFire).toBe(false);
       expect(emitted).toEqual(['start']);
@@ -362,7 +362,7 @@ describe('createRuntime', () => {
       runtime.close();
       expect(runtime.phase).toBe('idle');
 
-      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      runtime.send('pointerDown', { position: [0, 0] });
       expect(runtime.phase).toBe('startup');
     });
 
@@ -395,10 +395,13 @@ describe('createRuntime', () => {
       });
 
       runtime.open([0, 0]);
-      runtime.send({ type: 'keyboard', intent: 'last' });
-      runtime.send({ type: 'focus', key: menuModel.items[0].key });
-      runtime.send({ type: 'keyboard', intent: 'activate' });
-      runtime.send({ type: 'keyboard', intent: 'activate' });
+      runtime.send('last');
+      runtime.send('focus', {
+        key: menuModel.items[0].key,
+        source: 'keyboard',
+      });
+      runtime.send('activate');
+      runtime.send('activate');
 
       expect(changes).toEqual(['second', 'first', 'leaf']);
       expect(selections).toEqual(['leaf']);
@@ -418,12 +421,12 @@ describe('createRuntime', () => {
     it('throws when opening while a gesture or a standalone menu is going on', () => {
       const { runtime } = createStandaloneRuntime();
 
-      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      runtime.send('pointerDown', { position: [0, 0] });
       expect(() => {
         runtime.open([0, 0]);
       }).toThrow('idle');
 
-      runtime.send({ type: 'pointer.cancel', position: [0, 0] });
+      runtime.send('pointerCancel', { position: [0, 0] });
       runtime.open([0, 0]);
       expect(() => {
         runtime.open([0, 0]);
@@ -437,7 +440,7 @@ describe('createRuntime', () => {
         runtime.close();
       }).toThrow('standalone');
 
-      runtime.send({ type: 'pointer.down', position: [0, 0] });
+      runtime.send('pointerDown', { position: [0, 0] });
       expect(() => {
         runtime.close();
       }).toThrow('standalone');
