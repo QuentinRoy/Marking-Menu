@@ -50,7 +50,7 @@ export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
       */
       open: (
         position: Point,
-        options?: { readonly autoFocus?: boolean },
+        options?: { readonly autoFocus?: boolean | undefined },
       ) => void;
       /**
       Close a standalone menu. Throws unless one is open.

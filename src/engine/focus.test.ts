@@ -69,22 +69,17 @@ const createFixture = ({
   return { emit, menu, focusManager, listenerCount };
 };
 
-const openStandalone = new MarkingMenuOpenEvent<typeof model, 'standalone'>({
-  mode: 'standalone',
-  position: undefined,
-  source: 'api',
-  menu: model,
-  menuCenter: [0, 0],
-});
-const openStandaloneWithoutAutoFocus = new MarkingMenuOpenEvent<
-  typeof model,
-  'standalone'
->({
-  mode: 'standalone',
-  position: undefined,
-  source: 'api',
-  menu: model,
-  menuCenter: [0, 0],
+const createOpenStandalone = (options: { willAutoFocus?: boolean } = {}) =>
+  new MarkingMenuOpenEvent<typeof model, 'standalone'>({
+    mode: 'standalone',
+    position: undefined,
+    source: 'api',
+    menu: model,
+    menuCenter: [0, 0],
+    ...options,
+  });
+const openStandalone = createOpenStandalone();
+const openStandaloneWithoutAutoFocus = createOpenStandalone({
   willAutoFocus: false,
 });
 const changeStandalone = (active: (typeof model.items)[number] | undefined) =>
@@ -212,22 +207,39 @@ describe('manageFocus', () => {
       expect(menu.focusItem).toHaveBeenCalledExactlyOnceWith(right.key);
     });
 
-    it('announces the active item before a submenu can open, however short the opening delay', () => {
-      using _timers = fakeTimers();
-      const { emit, menu } = createFixture({ submenuOpeningDelay: 20 });
+    const changeNovice = new MarkingMenuChangeEvent<typeof model, 'novice'>({
+      mode: 'novice',
+      position: [0, 0],
+      source: 'gesture',
+      activeItem: right,
+      previousActiveItem: undefined,
+      menu: model,
+    });
 
-      emit(
-        'change',
-        new MarkingMenuChangeEvent<typeof model, 'novice'>({
-          mode: 'novice',
-          position: [0, 0],
-          source: 'gesture',
-          activeItem: right,
-          previousActiveItem: undefined,
-          menu: model,
-        }),
-      );
-      vi.advanceTimersByTime(19);
+    it.each([
+      [20, 10],
+      [1000, 50],
+    ])(
+      'with a submenu opening delay of %j ms, announces the active item after %j ms',
+      (submenuOpeningDelay, announcedAfter) => {
+        using _timers = fakeTimers();
+        const { emit, menu } = createFixture({ submenuOpeningDelay });
+
+        emit('change', changeNovice);
+        vi.advanceTimersByTime(announcedAfter - 1);
+        expect(menu.focusItem).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(1);
+
+        expect(menu.focusItem).toHaveBeenCalledExactlyOnceWith(right.key);
+      },
+    );
+
+    it('announces the active item without waiting when the submenu opens at once', () => {
+      using _timers = fakeTimers();
+      const { emit, menu } = createFixture({ submenuOpeningDelay: 0 });
+
+      emit('change', changeNovice);
+      vi.advanceTimersByTime(0);
 
       expect(menu.focusItem).toHaveBeenCalledExactlyOnceWith(right.key);
     });
@@ -326,16 +338,6 @@ describe('manageFocus', () => {
       emit('change', changeStandalone(down));
 
       expect(menu.focusItem).toHaveBeenCalledExactlyOnceWith(down.key);
-    });
-
-    it('takes focus again for the next menu after one opened without autofocus', () => {
-      const { emit, menu } = createFixture();
-      emit('open', openStandaloneWithoutAutoFocus);
-      emit('cancel', cancelStandalone);
-
-      emit('open', openStandalone);
-
-      expect(menu.focusTabStop).toHaveBeenCalledTimes(1);
     });
 
     it('takes focus again for the next menu after one ended', () => {

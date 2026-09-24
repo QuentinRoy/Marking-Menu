@@ -684,7 +684,7 @@ export const navigationMachine = machine({
       const menu = currentMenu(toData.menus);
       const isNewLevel = toData.menus.length !== fromData.menus.length;
       if (isNewLevel) {
-        emitStandaloneOpen(emit, toData, 'pointer');
+        emitStandaloneOpen(emit, toData, 'pointer', true);
       }
 
       if (toData.active !== fromData.active) {

@@ -250,7 +250,9 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
   }
 
   open(options: MarkingMenuOpenOptions = {}): void {
-    this.#runtime.open(options.position ?? this.#parentCenter(), options);
+    this.#runtime.open(options.position ?? this.#parentCenter(), {
+      autoFocus: options.autoFocus,
+    });
   }
 
   close(): void {

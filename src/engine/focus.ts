@@ -47,7 +47,8 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   runtime: MarkingMenuEventEmitter<Model>;
   submenuOpeningDelay: number;
 }): FocusManager {
-  // Well within the submenu delay: opening a submenu clears the announcement.
+  // Below the submenu delay, so the item is announced before its submenu can
+  // open and clear the announcement.
   const activeItemFocusDelay = Math.min(
     MAX_ACTIVE_ITEM_FOCUS_DELAY_MS,
     submenuOpeningDelay / 2,
