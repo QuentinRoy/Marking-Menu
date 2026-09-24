@@ -58,6 +58,20 @@ export type MenuLayoutModel = {
 };
 
 /**
+ Where an event landed, relative to the menu.
+ */
+export type MenuEventResolution =
+  | { readonly isInside: false }
+  | {
+      readonly isInside: true;
+      /**
+      The key of the item the event is on, or `undefined` when it is inside the
+      menu but not on an item, such as in a gap.
+      */
+      readonly itemKey: string | undefined;
+    };
+
+/**
  The menu controls.
  */
 export type Menu = {
@@ -66,9 +80,15 @@ export type Menu = {
   */
   element: HTMLElement;
   /**
-  The menu layer within the shared root.
+  Where an event landed. It reads the composed path, so call it while the event
+  is dispatched: a listener outside the shadow root sees the host as the target.
   */
-  layer: HTMLElement;
+  resolve: (event: Event) => MenuEventResolution;
+  /**
+  Whether a node is in the menu. The host counts, since a listener outside the
+  shadow root sees it in place of any node inside.
+  */
+  isInside: (node: EventTarget) => boolean;
   /**
   Move focus to the menu layer.
   */
@@ -153,6 +173,10 @@ const isElement = (parent: HTMLElement | ShadowRoot): parent is HTMLElement =>
 // A shadow root is the only document fragment with a host.
 const isShadowRoot = (node: Node): node is ShadowRoot =>
   node.nodeType === Node.DOCUMENT_FRAGMENT_NODE && 'host' in node;
+
+// `instanceof Node` would use this module's realm's constructor (see
+// `isElement`).
+const isNode = (target: EventTarget): target is Node => 'nodeType' in target;
 
 const svgNamespace = 'http://www.w3.org/2000/svg';
 
@@ -713,6 +737,30 @@ export function createMenu({
     }
   };
 
+  const itemKeys = new Map<EventTarget, string>();
+  for (const [key, itemDom] of itemElements) {
+    itemKeys.set(itemDom, key);
+  }
+
+  const resolve = (event: Event): MenuEventResolution => {
+    const path = event.composedPath();
+    if (!path.includes(main)) {
+      return { isInside: false };
+    }
+
+    for (const node of path) {
+      const itemKey = itemKeys.get(node);
+      if (itemKey !== undefined) {
+        return { isInside: true, itemKey };
+      }
+    }
+
+    return { isInside: true, itemKey: undefined };
+  };
+
+  const isInside = (node: EventTarget): boolean =>
+    isNode(node) && (node === root.host || main.contains(node));
+
   const remove = () => {
     if (isOwnHost) {
       (root.host as HTMLElement).remove();
@@ -723,7 +771,8 @@ export function createMenu({
 
   return {
     element: root.host as HTMLElement,
-    layer: main,
+    resolve,
+    isInside,
     focusMenu,
     focusItem,
     setTabStop,

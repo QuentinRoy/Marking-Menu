@@ -1,35 +1,17 @@
-import { createParent, pointer } from './__fixtures__/pointer.js';
+import { createMenuFixture } from './__fixtures__/menu.js';
+import { pointer } from './__fixtures__/pointer.js';
 import type { NavigationInput, NavigationPhase } from './machine.js';
 import { createStandalonePointerSource } from './standalone-pointer-source.js';
 
 /**
- A parent holding a standalone menu layer of two items, plus something
- outside it: a submenu item (a plate wrapping a label) and a leaf next to
- it, the way the renderer lays a level out.
+ A parent holding a real standalone menu, plus something outside it.
  */
 const createFixture = (phase: NavigationPhase = 'standalone') => {
-  const parent = createParent();
-  const layer = document.createElement('div');
-  const submenu = document.createElement('div');
-  submenu.className = 'marking-menu-item';
-  submenu.dataset.itemId = 'submenu-key';
-  const plate = document.createElement('div');
-  plate.className = 'marking-menu-plate';
-  const label = document.createElement('div');
-  label.className = 'marking-menu-label';
-  plate.append(label);
-  submenu.append(plate);
-  const leaf = document.createElement('div');
-  leaf.className = 'marking-menu-item';
-  leaf.dataset.itemId = 'leaf-key';
-  layer.append(submenu, leaf);
-  const outside = document.createElement('button');
-  parent.append(layer, outside);
-  document.body.append(parent);
+  const menuFixture = createMenuFixture();
+  const { parent, menu, layer, leaf, submenu, outside } = menuFixture;
 
   const send = vi.fn<(input: NavigationInput) => void>();
   const runtime = { phase, send };
-  const menu = { layer };
   const source = createStandalonePointerSource({
     parent,
     getMenu: () => menu,
@@ -39,7 +21,6 @@ const createFixture = (phase: NavigationPhase = 'standalone') => {
     parent,
     layer,
     submenu,
-    label,
     leaf,
     outside,
     send,
@@ -49,7 +30,7 @@ const createFixture = (phase: NavigationPhase = 'standalone') => {
     },
     [Symbol.dispose]() {
       source.dispose();
-      parent.remove();
+      menuFixture[Symbol.dispose]();
     },
   };
 };
@@ -66,20 +47,6 @@ describe('createStandalonePointerSource', () => {
       type: 'standalonePointer.move',
       position: [3, 4],
       itemKey: 'leaf-key',
-    });
-  });
-
-  it('resolves the item key from a descendant, such as the label inside a plate', () => {
-    using fixture = createFixture();
-
-    fixture.label.dispatchEvent(
-      pointer('pointermove', { clientX: 1, clientY: 1 }),
-    );
-
-    expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
-      type: 'standalonePointer.move',
-      position: [1, 1],
-      itemKey: 'submenu-key',
     });
   });
 

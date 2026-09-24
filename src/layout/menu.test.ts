@@ -1,6 +1,8 @@
 import { createModel as createRealModel } from '../model.js';
 import {
   createMenu as createMenuWithResolvedOptions,
+  type Menu,
+  type MenuEventResolution,
   type MenuLayoutModel,
 } from './menu.js';
 
@@ -66,6 +68,45 @@ const getShadowRoot = (parent: HTMLElement): ShadowRoot => {
   }
 
   return root;
+};
+
+const getPart = (parent: HTMLElement, selector: string): HTMLElement => {
+  const part =
+    getShadowRoot(parent).querySelector<HTMLElement>(selector) ?? undefined;
+  if (part === undefined) {
+    throw new Error(`Menu has nothing matching ${selector}.`);
+  }
+
+  return part;
+};
+
+const getLayer = (parent: HTMLElement): HTMLElement =>
+  getPart(parent, '.marking-menu-layer');
+
+/**
+ What the menu resolves an event dispatched on `target` to, read the way a
+ listener on `parent` reads it: an event's path only exists while it is
+ dispatched.
+ */
+const resolveOn = (
+  menu: Menu,
+  parent: HTMLElement,
+  target: EventTarget,
+): MenuEventResolution => {
+  let resolution: MenuEventResolution | undefined;
+  parent.addEventListener(
+    'ping',
+    (event) => {
+      resolution = menu.resolve(event);
+    },
+    { once: true },
+  );
+  target.dispatchEvent(new Event('ping', { bubbles: true, composed: true }));
+  if (resolution === undefined) {
+    throw new Error('The event never reached the parent.');
+  }
+
+  return resolution;
 };
 
 const getItems = (parent: HTMLElement): HTMLElement[] => [
@@ -182,31 +223,31 @@ describe('createMenu', () => {
 
   it("labels the menu layer with the model's label, when it has one", () => {
     const div = document.createElement('div');
-    const menu = createMenu({
+    createMenu({
       parent: div,
       model: { ...createModel(1), label: 'Paste More' },
       center: [30, 50],
       doc: document,
     });
 
-    expect(menu.layer.ariaLabel).toBe('Paste More');
+    expect(getLayer(div).ariaLabel).toBe('Paste More');
   });
 
   it('leaves the menu layer unlabeled when the model has none, such as the root', () => {
     const div = document.createElement('div');
-    const menu = createMenu({
+    createMenu({
       parent: div,
       model: createModel(1),
       center: [30, 50],
       doc: document,
     });
 
-    expect(menu.layer.ariaLabel).toBeNull();
+    expect(getLayer(div).ariaLabel).toBeNull();
   });
 
   it('accepts pointer input on its items and wedges only when told to', () => {
     const div = document.createElement('div');
-    const menu = createMenu({
+    createMenu({
       parent: div,
       model: createModel(1),
       center: [30, 50],
@@ -214,23 +255,23 @@ describe('createMenu', () => {
       pointerTarget: true,
     });
 
-    expect(menu.layer.classList.contains('marking-menu--pointer-target')).toBe(
-      true,
-    );
+    expect(
+      getLayer(div).classList.contains('marking-menu--pointer-target'),
+    ).toBe(true);
   });
 
   it('does not accept pointer input by default', () => {
     const div = document.createElement('div');
-    const menu = createMenu({
+    createMenu({
       parent: div,
       model: createModel(1),
       center: [30, 50],
       doc: document,
     });
 
-    expect(menu.layer.classList.contains('marking-menu--pointer-target')).toBe(
-      false,
-    );
+    expect(
+      getLayer(div).classList.contains('marking-menu--pointer-target'),
+    ).toBe(false);
   });
 
   it('focuses its menu layer', () => {
@@ -247,7 +288,7 @@ describe('createMenu', () => {
 
       menu.focusMenu();
 
-      expect(getShadowRoot(div).activeElement).toBe(menu.layer);
+      expect(getShadowRoot(div).activeElement).toBe(getLayer(div));
     } finally {
       div.remove();
     }
@@ -321,7 +362,7 @@ describe('createMenu', () => {
       });
 
       menu.focusTabStop();
-      expect(getShadowRoot(div).activeElement).toBe(menu.layer);
+      expect(getShadowRoot(div).activeElement).toBe(getLayer(div));
 
       menu.setTabStop('item-1-key');
       menu.focusTabStop();
@@ -345,6 +386,71 @@ describe('createMenu', () => {
     }).toThrow('nope');
 
     menu.remove();
+  });
+
+  it('resolves an event on part of an item to that item', () => {
+    const parent = document.createElement('div');
+    const menu = createMenu({
+      parent,
+      model: createModel(2),
+      center: [30, 50],
+      doc: document,
+    });
+
+    const resolution = resolveOn(
+      menu,
+      parent,
+      getPart(
+        parent,
+        '.marking-menu-item[data-item-id="item-1-key"] .marking-menu-label',
+      ),
+    );
+
+    expect(resolution).toEqual({ isInside: true, itemKey: 'item-1-key' });
+  });
+
+  it('resolves an event on the layer, but not on an item, to no item', () => {
+    const parent = document.createElement('div');
+    const menu = createMenu({
+      parent,
+      model: createModel(2),
+      center: [30, 50],
+      doc: document,
+    });
+
+    const resolution = resolveOn(menu, parent, getLayer(parent));
+
+    expect(resolution).toEqual({ isInside: true, itemKey: undefined });
+  });
+
+  it('resolves an event outside the layer to outside', () => {
+    const parent = document.createElement('div');
+    const outside = document.createElement('button');
+    parent.append(outside);
+    const menu = createMenu({
+      parent,
+      model: createModel(2),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(resolveOn(menu, parent, outside)).toEqual({ isInside: false });
+  });
+
+  it('is inside its items and its host, but not what is beside it', () => {
+    const parent = document.createElement('div');
+    const outside = document.createElement('button');
+    parent.append(outside);
+    const menu = createMenu({
+      parent,
+      model: createModel(2),
+      center: [30, 50],
+      doc: document,
+    });
+
+    expect(menu.isInside(getPart(parent, '.marking-menu-item'))).toBe(true);
+    expect(menu.isInside(menu.element)).toBe(true);
+    expect(menu.isInside(outside)).toBe(false);
   });
 
   it('creates a menu host in an anchor parent', () => {
@@ -374,8 +480,7 @@ describe('createMenu', () => {
       doc: document,
     });
 
-    expect(menu.layer.parentNode).toBe(slot);
-    expect(root.querySelector('.marking-menu-layer')).toBe(menu.layer);
+    expect(root.querySelector('.marking-menu-layer')?.parentNode).toBe(slot);
     expect(menu.element).toBe(host);
     menu.remove();
     expect(slot.children).toHaveLength(0);
