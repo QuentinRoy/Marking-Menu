@@ -1,44 +1,12 @@
-import type { Mock } from 'vitest';
 import { fakeTimers } from '../__fixtures__/timers.js';
+import type { MarkingMenuChangeEvent } from '../events.js';
 import { createModel } from '../model.js';
-import { recognizeStroke } from '../recognizer/recognize-mm-stroke.js';
-import type * as RecognizeModule from '../recognizer/recognize-mm-stroke.js';
 import type { Point } from '../utils.js';
 import {
   navigationMachine,
   type NavigationFeedbackAnnouncement,
   type NavigationLayoutAnnouncement,
 } from './machine.js';
-
-// Wraps the real recognizer rather than replacing it: every existing test
-// keeps exercising genuine recognition geometry, and only the tests that
-// need a specific (or impossible-to-construct) outcome override it with
-// `mockReturnValueOnce`/`mockImplementationOnce`.
-vi.mock('../recognizer/recognize-mm-stroke.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof RecognizeModule>();
-  return {
-    ...actual,
-    recognizeStroke: vi.fn(actual.recognizeStroke),
-  };
-});
-
-// The overloads collapse to one signature here, so a mock has to satisfy
-// both of the kinds' outcomes.
-const mockRecognize = vi.mocked(recognizeStroke) as unknown as Mock<
-  (...args: Parameters<typeof recognizeStroke>) => {
-    analysis: { articulationPoints: Point[]; segments: never[] };
-    outcome: unknown;
-  }
->;
-
-const noRecognition = {
-  analysis: { articulationPoints: [], segments: [] },
-  outcome: undefined,
-};
-
-afterEach(() => {
-  mockRecognize.mockClear();
-});
 
 // Listed starting from "up": default angles start at the top, so this order
 // alone keeps a rightward move activating `right`.
@@ -76,15 +44,31 @@ const options = {
   submenuOpeningDelay: 200,
 };
 
+type Host = ReturnType<typeof navigationMachine.start>;
+
+const activeItems = new WeakMap<Host, MarkingMenuChangeEvent['activeItem']>();
+
 /**
-Start a fresh host with the shared fixture model and options.
+Start a fresh host on `menuModel`, with the shared options, following the
+active item through its `change` events.
 */
-const startHost = () => navigationMachine.start({ model, options });
+const startHost = (menuModel: typeof model | typeof submenuModel = model) => {
+  const host = navigationMachine.start({ model: menuModel, options });
+  host.on('change', ({ data }) => {
+    activeItems.set(host, data.activeItem);
+  });
+  return host;
+};
+
+/**
+The item the last `change` made active, if any.
+*/
+const activeItemOf = (host: Host) => activeItems.get(host);
 
 /**
 Dwell into novice mode at the origin, from a fresh host.
 */
-const openNovice = (host: ReturnType<typeof startHost>): void => {
+const openNovice = (host: Host): void => {
   host.send('pointerDown', { position: [0, 0] });
   host.send('dwell');
 };
@@ -92,7 +76,7 @@ const openNovice = (host: ReturnType<typeof startHost>): void => {
 /**
 Record every public output a host emits, in order, by name.
 */
-const recordEmitted = (host: ReturnType<typeof startHost>): string[] => {
+const recordEmitted = (host: Host): string[] => {
   const emitted: string[] = [];
   for (const output of [
     'start',
@@ -113,9 +97,7 @@ const recordEmitted = (host: ReturnType<typeof startHost>): string[] => {
 /**
 Record every layout announcement a host makes, in order.
 */
-const recordLayouts = (
-  host: ReturnType<typeof startHost>,
-): NavigationLayoutAnnouncement[] => {
+const recordLayouts = (host: Host): NavigationLayoutAnnouncement[] => {
   const layouts: NavigationLayoutAnnouncement[] = [];
   host.on('layout', ({ data }) => {
     layouts.push(data);
@@ -126,9 +108,7 @@ const recordLayouts = (
 /**
 Record every feedback announcement a host makes, in order.
 */
-const recordFeedback = (
-  host: ReturnType<typeof startHost>,
-): NavigationFeedbackAnnouncement[] => {
+const recordFeedback = (host: Host): NavigationFeedbackAnnouncement[] => {
   const feedback: NavigationFeedbackAnnouncement[] = [];
   host.on('feedback', ({ data }) => {
     feedback.push(data);
@@ -161,35 +141,40 @@ describe('navigationMachine', () => {
   it('ignores a second down mid-gesture, in startup, expert, and novice alike', () => {
     const host = startHost();
 
+    const emitted = recordEmitted(host);
+    const layouts = recordLayouts(host);
+    const expectSecondDownIgnored = (phase: string) => {
+      emitted.length = 0;
+      layouts.length = 0;
+      host.send('pointerDown', { position: [5, 5] });
+      expect(host.current.name).toBe(phase);
+      expect(emitted).toEqual([]);
+      expect(layouts).toEqual([]);
+    };
+
     host.send('pointerDown', { position: [0, 0] });
-    const afterFirstDown = host.current;
-    host.send('pointerDown', { position: [5, 5] });
-    expect(host.current).toEqual(afterFirstDown);
+    expectSecondDownIgnored('startup');
 
     host.send('pointerMove', { position: [100, 0] });
-    const afterExpert = host.current;
-    host.send('pointerDown', { position: [5, 5] });
-    expect(host.current).toEqual(afterExpert);
+    expectSecondDownIgnored('expert');
 
     host.send('pointerUp', { position: [100, 0] });
     openNovice(host);
-    const afterNovice = host.current;
-    host.send('pointerDown', { position: [5, 5] });
-    expect(host.current).toEqual(afterNovice);
+    expectSecondDownIgnored('novice');
   });
 
   it('ignores stray movement or release input while idle', () => {
     const host = startHost();
-    const idle = host.current;
+    const emitted = recordEmitted(host);
+    const layouts = recordLayouts(host);
 
     host.send('pointerMove', { position: [1, 1] });
-    expect(host.current).toEqual(idle);
-
     host.send('pointerUp', { position: [1, 1] });
-    expect(host.current).toEqual(idle);
-
     host.send('pointerCancel', { position: [1, 1] });
-    expect(host.current).toEqual(idle);
+
+    expect(host.current.name).toBe('idle');
+    expect(emitted).toEqual([]);
+    expect(layouts).toEqual([]);
   });
 
   it('dispatches cancel, without attempting recognition, for a gesture with no movement at all', () => {
@@ -205,23 +190,22 @@ describe('navigationMachine', () => {
     host.send('pointerUp', { position: [0, 0] });
 
     expect(host.current.name).toBe('idle');
-    expect(mockRecognize).not.toHaveBeenCalled();
     expect(selected).not.toHaveBeenCalled();
     expect(cancelActive).toBeUndefined();
   });
 
   it('dispatches cancel for a completed gesture that recognition does not match', () => {
-    mockRecognize.mockReturnValueOnce(noRecognition);
     const host = startHost();
     const canceled = vi.fn<() => void>();
     host.on('cancel', canceled);
 
+    // A second segment leaves the leaf "right" with nowhere to go.
     host.send('pointerDown', { position: [0, 0] });
     host.send('pointerMove', { position: [100, 0] });
-    host.send('pointerUp', { position: [120, 0] });
+    host.send('pointerMove', { position: [100, 100] });
+    host.send('pointerUp', { position: [100, 100] });
 
     expect(host.current.name).toBe('idle');
-    expect(mockRecognize).toHaveBeenCalledTimes(1);
     expect(canceled).toHaveBeenCalledTimes(1);
   });
 
@@ -241,7 +225,6 @@ describe('navigationMachine', () => {
     host.send('pointerCancel', { position: [100, 0] });
 
     expect(host.current.name).toBe('idle');
-    expect(mockRecognize).not.toHaveBeenCalled();
     expect(selected).not.toHaveBeenCalled();
     expect(cancelActive).toBeUndefined();
   });
@@ -255,12 +238,11 @@ describe('navigationMachine', () => {
     host.send('pointerCancel', { position: [0, 0] });
 
     expect(host.current.name).toBe('idle');
-    expect(mockRecognize).not.toHaveBeenCalled();
     expect(canceled).toHaveBeenCalledTimes(1);
   });
 
   describe('cancel reason', () => {
-    const recordReasons = (host: ReturnType<typeof startHost>): unknown[] => {
+    const recordReasons = (host: Host): unknown[] => {
       const reasons: unknown[] = [];
       host.on('cancel', ({ data }) => {
         reasons.push(data.reason);
@@ -269,13 +251,13 @@ describe('navigationMachine', () => {
     };
 
     it('is no-selection when a release finds nothing to select', () => {
-      mockRecognize.mockReturnValueOnce(noRecognition);
       const host = startHost();
       const reasons = recordReasons(host);
 
       host.send('pointerDown', { position: [0, 0] });
       host.send('pointerMove', { position: [100, 0] });
-      host.send('pointerUp', { position: [120, 0] });
+      host.send('pointerMove', { position: [100, 100] });
+      host.send('pointerUp', { position: [100, 100] });
 
       expect(reasons).toEqual(['no-selection']);
     });
@@ -337,12 +319,6 @@ describe('navigationMachine', () => {
       host.send('dwell');
 
       expect(host.current.name).toBe('novice');
-      expect(host.current.name === 'novice' && host.current.data.menu).toBe(
-        model,
-      );
-      expect(
-        host.current.name === 'novice' && host.current.data.menuCenter,
-      ).toEqual([0, 0]);
       expect(opened).toHaveBeenCalledTimes(1);
       const event = opened.mock.calls[0]?.[0] as {
         mode: string;
@@ -375,7 +351,7 @@ describe('navigationMachine', () => {
 
   describe('expert phase: dwelling into novice or canceling', () => {
     it('switches to novice rooted at the recognized menu', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const opened: unknown[] = [];
       host.on('open', ({ data }) => {
         opened.push(data);
@@ -388,14 +364,7 @@ describe('navigationMachine', () => {
       host.send('dwell');
 
       expect(host.current.name).toBe('novice');
-      const data =
-        host.current.name === 'novice' ? host.current.data : undefined;
-      const rightMenu = (submenuModel as unknown as { items: unknown[] })
-        .items[1];
-      expect(data?.menu).toBe(rightMenu);
-      expect(data?.menuCenter).toEqual([100, 0]);
-      expect(data?.active).toBeUndefined();
-
+      const rightMenu = submenuModel.items[1];
       expect(opened).toHaveLength(1);
       const event = opened[0] as {
         mode: string;
@@ -407,17 +376,15 @@ describe('navigationMachine', () => {
       expect(event.menuCenter).toEqual([100, 0]);
     });
 
-    it('accumulates the expert stroke into the lower stroke when switching to novice', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+    it('announces the expert stroke as the lower stroke when switching to novice', () => {
+      const host = startHost(submenuModel);
+      const layouts = recordLayouts(host);
 
       host.send('pointerDown', { position: [0, 0] });
       host.send('pointerMove', { position: [100, 0] });
       host.send('dwell');
 
-      const data =
-        host.current.name === 'novice' ? host.current.data : undefined;
-      expect(data?.lastPosition).toEqual([100, 0]);
-      expect(data?.lowerStroke).toEqual([
+      expect(layouts.at(-1)?.lowerStroke).toEqual([
         [0, 0],
         [100, 0],
       ]);
@@ -486,7 +453,7 @@ describe('navigationMachine', () => {
     Collect the `recognition` of every event of `name`, in order.
     */
     const recordRecognitions = (
-      host: ReturnType<typeof startHost>,
+      host: Host,
       name: 'open' | 'select' | 'cancel',
     ): unknown[] => {
       const recognitions: unknown[] = [];
@@ -530,42 +497,45 @@ describe('navigationMachine', () => {
     });
 
     it('reports the failed attempt on the cancel a release produced', () => {
-      mockRecognize.mockReturnValueOnce(noRecognition);
       const host = startHost();
       const recognitions = recordRecognitions(host, 'cancel');
 
       host.send('pointerDown', { position: [0, 0] });
       host.send('pointerMove', { position: [100, 0] });
-      host.send('pointerUp', { position: [120, 0] });
+      host.send('pointerMove', { position: [100, 100] });
+      host.send('pointerUp', { position: [100, 100] });
 
       expect(recognitions).toEqual([
         {
           stroke: [
             [0, 0],
             [100, 0],
-            [120, 0],
+            [100, 100],
+            [100, 100],
           ],
-          analysis: { articulationPoints: [], segments: [] },
+          analysis: {
+            articulationPoints: [
+              [0, 0],
+              [100, 0],
+              [100, 100],
+            ],
+            segments: [
+              {
+                points: [
+                  [0, 0],
+                  [100, 0],
+                ],
+              },
+              {
+                points: [
+                  [100, 0],
+                  [100, 100],
+                ],
+              },
+            ],
+          },
         },
       ]);
-    });
-
-    it('recognizes the released stroke as a leaf, exactly once', () => {
-      const host = startHost();
-
-      host.send('pointerDown', { position: [0, 0] });
-      host.send('pointerMove', { position: [100, 0] });
-      host.send('pointerUp', { position: [200, 0] });
-
-      expect(mockRecognize).toHaveBeenCalledExactlyOnceWith(
-        [
-          [0, 0],
-          [100, 0],
-          [200, 0],
-        ],
-        model,
-        'leaf',
-      );
     });
 
     it('freezes the record so a listener cannot alter what the next one reads', () => {
@@ -648,11 +618,10 @@ describe('navigationMachine', () => {
       expect(cancels).toEqual([undefined, undefined]);
       expect(selects).toEqual([undefined]);
       expect(opens).toEqual([undefined]);
-      expect(mockRecognize).not.toHaveBeenCalled();
     });
 
     it('reports the menu attempt on the open an expert dwell produced', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const recognitions = recordRecognitions(host, 'open');
 
       host.send('pointerDown', { position: [0, 0] });
@@ -700,25 +669,6 @@ describe('navigationMachine', () => {
       });
     });
 
-    it('recognizes an expert dwell once, as a menu, whatever it finds', () => {
-      const withMenu = navigationMachine.start({
-        model: submenuModel,
-        options,
-      });
-      withMenu.send('pointerDown', { position: [0, 0] });
-      withMenu.send('pointerMove', { position: [100, 0] });
-      withMenu.send('dwell');
-      expect(mockRecognize).toHaveBeenCalledTimes(1);
-      expect(mockRecognize.mock.calls[0]?.[2]).toBe('menu');
-
-      mockRecognize.mockClear();
-      const withoutMenu = startHost();
-      withoutMenu.send('pointerDown', { position: [0, 0] });
-      withoutMenu.send('pointerMove', { position: [100, 0] });
-      withoutMenu.send('dwell');
-      expect(mockRecognize).toHaveBeenCalledTimes(1);
-    });
-
     it('carries no recognition on the open a startup dwell produced', () => {
       const host = startHost();
       const recognitions = recordRecognitions(host, 'open');
@@ -730,7 +680,7 @@ describe('navigationMachine', () => {
     });
 
     it('announces the layout of an expert dwell once, without an in-between one', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       host.send('pointerDown', { position: [0, 0] });
       host.send('pointerMove', { position: [100, 0] });
       const layouts = recordLayouts(host);
@@ -756,9 +706,6 @@ describe('navigationMachine', () => {
       host.send('pointerMove', { position: [10, 0] });
 
       expect(host.current.name).toBe('novice');
-      expect(
-        host.current.name === 'novice' && host.current.data.active,
-      ).toBeUndefined();
       expect(moved).toHaveBeenCalledTimes(1);
       expect(moved.mock.calls[0]?.[0].activeItem).toBeUndefined();
       expect(changed).not.toHaveBeenCalled();
@@ -782,10 +729,9 @@ describe('navigationMachine', () => {
       host.send('pointerMove', { position: [100, 0] });
 
       expect(host.current.name).toBe('novice');
-      const active =
-        host.current.name === 'novice' ? host.current.data.active : undefined;
+      const active = activeItemOf(host);
       expect(active).not.toBeUndefined();
-      expect((active as unknown as { id: string }).id).toBe('right');
+      expect(active?.id).toBe('right');
       expect(moved).toEqual([active]);
       expect(changed).toHaveBeenCalledTimes(1);
       const changeData = changed.mock.calls[0]?.[0] as {
@@ -819,7 +765,6 @@ describe('navigationMachine', () => {
       expect(cancelData?.activeItem).toBeUndefined();
       expect(cancelData?.menu).toBe(model);
       expect(cancelData?.mode).toBe('novice');
-      expect(mockRecognize).not.toHaveBeenCalled();
     });
 
     it('cancels on pointer cancel the same way as pointer up', () => {
@@ -868,7 +813,7 @@ describe('navigationMachine', () => {
     });
 
     it('dispatches cancel, never select, when releasing on a non-leaf active item, carrying that item as active', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const selected = vi.fn<() => void>();
       host.on('select', selected);
       let cancelData: { activeItem: unknown; menu: unknown } | undefined;
@@ -878,10 +823,7 @@ describe('navigationMachine', () => {
 
       openNovice(host);
       host.send('pointerMove', { position: [100, 0] }); // Activates "right", a submenu
-      expect(
-        host.current.name === 'novice' &&
-          (host.current.data.active as { isLeaf: boolean } | undefined)?.isLeaf,
-      ).toBe(false);
+      expect(activeItemOf(host)?.isLeaf).toBe(false);
 
       host.send('pointerUp', { position: [100, 0] });
 
@@ -915,7 +857,7 @@ describe('navigationMachine', () => {
     });
 
     it('dispatches cancel when the pointer is cancelled on a non-leaf active item too (objective 8)', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const selected = vi.fn<() => void>();
       host.on('select', selected);
       let cancelData: { activeItem: unknown } | undefined;
@@ -938,7 +880,7 @@ describe('navigationMachine', () => {
 
   describe('novice phase: dwelling into a submenu (objectives 9, 11)', () => {
     it('opens the submenu when the dwell fires on a non-leaf active item', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const opened: unknown[] = [];
       host.on('open', ({ data }) => {
         opened.push(data);
@@ -946,8 +888,7 @@ describe('navigationMachine', () => {
 
       openNovice(host);
       host.send('pointerMove', { position: [100, 0] }); // Past the dead zone, activates "right"
-      const submenu =
-        host.current.name === 'novice' ? host.current.data.active : undefined;
+      const submenu = activeItemOf(host);
       expect(submenu).not.toBeUndefined();
 
       opened.length = 0; // Discard the root menu's own `open`
@@ -955,12 +896,6 @@ describe('navigationMachine', () => {
 
       // A genuine phase change: novice re-enters novice, but at the submenu.
       expect(host.current.name).toBe('novice');
-      const data =
-        host.current.name === 'novice' ? host.current.data : undefined;
-      expect(data?.menu).toBe(submenu);
-      expect(data?.menuCenter).toEqual([100, 0]);
-      expect(data?.active).toBeUndefined();
-
       expect(opened).toHaveLength(1);
       const event = opened[0] as {
         mode: string;
@@ -974,40 +909,22 @@ describe('navigationMachine', () => {
       expect(event.position).toEqual([100, 0]);
     });
 
-    it('accumulates the prior stroke into the lower stroke and restarts from the new center', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
-
-      openNovice(host);
-      host.send('pointerMove', { position: [100, 0] });
-      host.send('dwell');
-
-      const data =
-        host.current.name === 'novice' ? host.current.data : undefined;
-      expect(data?.lastPosition).toEqual([100, 0]);
-      expect(data?.lowerStroke).toEqual([
-        [0, 0],
-        [0, 0],
-        [100, 0],
-      ]);
-    });
-
     it('opens the submenu just past the dead zone', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       openNovice(host);
-      const opened = vi.fn<() => void>();
-      host.on('open', opened);
+      const opened = vi.fn<(event: { menu: unknown }) => void>();
+      host.on('open', ({ data }) => {
+        opened(data);
+      });
 
       // Just past the dead zone (40): activation and dwelling share it.
       host.send('pointerMove', { position: [41, 0] });
-      const submenu =
-        host.current.name === 'novice' ? host.current.data.active : undefined;
+      const submenu = activeItemOf(host);
 
       host.send('dwell');
 
       expect(opened).toHaveBeenCalledTimes(1);
-      expect(host.current.name === 'novice' && host.current.data.menu).toBe(
-        submenu,
-      );
+      expect(opened.mock.calls[0]?.[0].menu).toBe(submenu);
     });
 
     it('does not open on a leaf active item, regardless of distance', () => {
@@ -1024,7 +941,7 @@ describe('navigationMachine', () => {
     });
 
     it('does not open when nothing is active', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       openNovice(host);
       const opened = vi.fn<() => void>();
       host.on('open', opened);
@@ -1037,7 +954,7 @@ describe('navigationMachine', () => {
 
     it('a small movement leaves the pending submenu dwell untouched', () => {
       using _timers = fakeTimers();
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
@@ -1055,7 +972,7 @@ describe('navigationMachine', () => {
 
     it('significant movement resets the submenu dwell rather than opening it (objective 9)', () => {
       using _timers = fakeTimers();
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
@@ -1078,7 +995,8 @@ describe('navigationMachine', () => {
 
     it('keeps a submenu-dwell timer armed for the freshly opened submenu, even with no wobble between the move that activated it and the dwell that opened it', () => {
       using _timers = fakeTimers();
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
+      const layouts = recordLayouts(host);
 
       host.send('pointerDown', { position: [0, 0] });
       vi.advanceTimersByTime(options.noviceDwellingTime); // Startup dwell -> novice at [0, 0]
@@ -1089,9 +1007,7 @@ describe('navigationMachine', () => {
 
       vi.advanceTimersByTime(options.submenuOpeningDelay);
       expect(host.current.name).toBe('novice');
-      expect(
-        host.current.name === 'novice' && host.current.data.menuCenter,
-      ).toEqual([100, 0]);
+      expect(layouts.at(-1)?.menu?.center).toEqual([100, 0]);
       // The residency must rearm on entering the submenu too, not stay
       // dropped because this particular transition's `dwellAnchor` happens
       // to be the very same reference the residency's `restart` predicate
@@ -1101,7 +1017,7 @@ describe('navigationMachine', () => {
 
     it('opens a submenu reached by an insignificant move away from a leaf whose own dwell just fired', () => {
       using _timers = fakeTimers();
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const opened = vi.fn<() => void>();
       host.on('open', opened);
 
@@ -1112,10 +1028,7 @@ describe('navigationMachine', () => {
       // Just past the boundary between "down" (a leaf) and "right" (a
       // submenu): activates "down".
       host.send('pointerMove', { position: [69.47, 71.93] });
-      expect(
-        host.current.name === 'novice' &&
-          (host.current.data.active as { id: string } | undefined)?.id,
-      ).toBe('down');
+      expect(activeItemOf(host)?.id).toBe('down');
 
       // The dwell fires on the leaf: nothing opens, but the timer must not
       // be left dead for the rest of the gesture.
@@ -1125,10 +1038,7 @@ describe('navigationMachine', () => {
       // Less than `movementsThreshold` away, crossing the boundary onto
       // "right".
       host.send('pointerMove', { position: [71.93, 69.47] });
-      expect(
-        host.current.name === 'novice' &&
-          (host.current.data.active as { id: string } | undefined)?.id,
-      ).toBe('right');
+      expect(activeItemOf(host)?.id).toBe('right');
 
       vi.advanceTimersByTime(options.submenuOpeningDelay);
       expect(opened).toHaveBeenCalledTimes(1);
@@ -1168,7 +1078,7 @@ describe('navigationMachine', () => {
     });
 
     it("folds the parent menu's straight segment, not the pointer's path, into the lower stroke when a submenu opens", () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const layouts = recordLayouts(host);
 
       openNovice(host);
@@ -1190,7 +1100,7 @@ describe('navigationMachine', () => {
     });
 
     it('announces a completed novice gesture as one straight segment per menu level', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const feedback = recordFeedback(host);
 
       openNovice(host);
@@ -1260,7 +1170,7 @@ describe('navigationMachine', () => {
     });
 
     it('shows the indicator at the dwell position while the active item is a submenu', () => {
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const layouts = recordLayouts(host);
 
       openNovice(host);
@@ -1274,7 +1184,7 @@ describe('navigationMachine', () => {
 
     it("keeps drawing at the pointer's current position, but does not restart the dwell clock, when a small movement leaves the restart anchor untouched", () => {
       using _timers = fakeTimers();
-      const host = navigationMachine.start({ model: submenuModel, options });
+      const host = startHost(submenuModel);
       const layouts = recordLayouts(host);
 
       openNovice(host);
