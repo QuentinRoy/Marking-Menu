@@ -13,10 +13,6 @@ import type { MarkingMenuInput, ModelNode } from '../types.js';
 import type { Point } from '../utils.js';
 import { manageFocus, type FocusManager } from './focus.js';
 import {
-  createGesturePointerSource,
-  type GesturePointerSource,
-} from './gesture-pointer-source.js';
-import {
   defaultLogger,
   type MarkingMenuLogger,
   type ResolvedLogger,
@@ -24,13 +20,9 @@ import {
 import { createRenderer } from './renderer.js';
 import { createRuntime, type NavigationRuntime } from './runtime.js';
 import {
-  createStandaloneKeyboardSource,
-  type StandaloneKeyboardSource,
-} from './standalone-keyboard-source.js';
-import {
-  createStandalonePointerSource,
-  type StandalonePointerSource,
-} from './standalone-pointer-source.js';
+  createStandaloneSession,
+  type StandaloneSession,
+} from './standalone-session.js';
 
 export type EngineConfig = MarkingMenuInput & {
   /**
@@ -171,25 +163,9 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
   MarkingMenuModel<Config>
 > {
   readonly #parent: HTMLElement;
-  readonly #pointerSource: GesturePointerSource;
-  readonly #keyboardSource: StandaloneKeyboardSource;
-  readonly #standalonePointerSource: StandalonePointerSource;
+  readonly #session: StandaloneSession;
   readonly #runtime: NavigationRuntime<MarkingMenuModel<Config>>;
   readonly #focusManager: FocusManager;
-  readonly #suspendPointerForStandalone = (event: {
-    readonly mode: string;
-  }): void => {
-    if (event.mode === 'standalone') {
-      this.#pointerSource.suspend();
-    }
-  };
-
-  // Resuming is harmless when nothing suspended the pointer: a gesture ends
-  // with the same events.
-  readonly #resumePointer = (): void => {
-    this.#pointerSource.resume();
-  };
-
   #disposed = false;
 
   constructor(config: Config & ValidateInput<Config>) {
@@ -215,32 +191,19 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       log: options.log,
     });
     this.#parent = config.parent;
-    this.#pointerSource = createGesturePointerSource({
+    // Before any consumer can listen: the pointer is left to the page as soon
+    // as a standalone menu is displayed, and is back by the time a `select`
+    // or `cancel` listener reopens it.
+    this.#session = createStandaloneSession({
       parent: config.parent,
+      getMenu: renderer.getMenu,
       runtime: this.#runtime,
     });
-    // Registered before any consumer can listen: the pointer is left to the
-    // page as soon as the menu is displayed, and is back by the time a
-    // `select` or `cancel` listener reopens it. Driven by the events rather
-    // than by `open()`, so a refused `open()` never touches it.
-    this.#runtime.on('open', this.#suspendPointerForStandalone);
-    this.#runtime.on('select', this.#resumePointer);
-    this.#runtime.on('cancel', this.#resumePointer);
     this.#focusManager = manageFocus({
       doc: config.parent.ownerDocument,
       getMenu: renderer.getMenu,
       runtime: this.#runtime,
       submenuOpeningDelay: options.submenuOpeningDelay,
-    });
-    this.#keyboardSource = createStandaloneKeyboardSource({
-      parent: config.parent,
-      getMenu: renderer.getMenu,
-      runtime: this.#runtime,
-    });
-    this.#standalonePointerSource = createStandalonePointerSource({
-      parent: config.parent,
-      getMenu: renderer.getMenu,
-      runtime: this.#runtime,
     });
   }
 
@@ -250,13 +213,13 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
   }
 
   open(options: MarkingMenuOpenOptions = {}): void {
-    this.#runtime.open(options.position ?? this.#parentCenter(), {
+    this.#session.open(options.position ?? this.#parentCenter(), {
       autoFocus: options.autoFocus,
     });
   }
 
   close(): void {
-    this.#runtime.close();
+    this.#session.close();
   }
 
   get state(): MarkingMenuState<MarkingMenuModel<Config>> {
@@ -283,14 +246,11 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     }
 
     this.#disposed = true;
-    this.#keyboardSource.dispose();
-    this.#standalonePointerSource.dispose();
+    // Before the runtime, whose teardown would otherwise reach these
+    // listeners.
+    this.#session.dispose();
     this.#focusManager.dispose();
-    // Runtime first: it unsubscribes, sends `dispose`, and tears down the
-    // rendered DOM before the pointer source releases capture and the
-    // touch-action claim.
     this.#runtime.dispose();
-    this.#pointerSource.dispose();
   }
 
   [Symbol.dispose](): void {

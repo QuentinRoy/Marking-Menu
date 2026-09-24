@@ -84,12 +84,11 @@ type MachineInputs = {
   dispose: undefined;
   // Standalone: a menu displayed without a pointer gesture.
   open: { readonly position: Point; readonly willAutoFocus: boolean };
-  // The standalone pointer source's own four intents: the pointer moving
+  // A standalone menu's own four pointer intents: the pointer moving
   // over the displayed level (hover, or a held contact dragging across it),
   // a completed activation, a canceled contact, and a press or release
   // outside the menu. Named apart from the gesture's `pointer*` family
-  // above: a standalone menu's pointer source is a distinct listener, never
-  // a live gesture's.
+  // above: they come from the standalone session, never a live gesture.
   standalonePointerMove: {
     readonly position: Point;
     readonly itemKey: string | undefined;
@@ -521,7 +520,7 @@ export const navigationMachine = machine({
 
     'standalone -dismiss> idle': backToIdle,
 
-    // The standalone pointer source's own four intents. Hover and a held
+    // A standalone menu's own four pointer intents. Hover and a held
     // contact's live retargeting share one row: both just move the active
     // item, the difference is only in what caused it.
     'standalone -standalonePointerMove> standalone': pointerMove,
@@ -549,7 +548,7 @@ export const navigationMachine = machine({
 
     // Every state a gesture can be in ends the same way, back to idle's own
     // shape. Idle has no gesture to end, and a standalone menu never receives
-    // them (its pointer source is suspended).
+    // them (its session suspends the gesture).
     'startup -pointerUp> idle': backToIdle,
     'expert -pointerUp> idle': backToIdle,
     'novice -pointerUp> idle': backToIdle,

@@ -38,13 +38,6 @@ export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
       */
       readonly state: MarkingMenuState<Model>;
       /**
-       Whether a `send` from a source is currently being processed: true for
-       the whole synchronous cascade a call triggers, render included, so a
-       side effect of that render (for example, focus moving as a menu level
-       is swapped in) can be told apart from an unrelated, later one.
-       */
-      readonly isSending: boolean;
-      /**
       Display the root menu on its own, centered at `position` (client
       coordinates). Throws unless the runtime is idle.
       */
@@ -170,26 +163,12 @@ export function createRuntime<Model extends EngineModelRoot>({
   );
 
   let isDisposed = false;
-  // A depth, not a boolean: a side effect of one send (a native focusout
-  // firing as a menu level's DOM is swapped in, say) can itself trigger
-  // another before the first returns, and `isSending` must stay true until
-  // every nested call has unwound, not just the innermost one.
-  let sendDepth = 0;
 
   const send = (input: NavigationInput): void => {
     if (isDisposed) {
       throw new Error('Cannot send an input to a disposed controller.');
     }
 
-    sendDepth += 1;
-    try {
-      dispatch(input);
-    } finally {
-      sendDepth -= 1;
-    }
-  };
-
-  function dispatch(input: NavigationInput): void {
     switch (input.type) {
       case 'keyboard': {
         if (input.intent === 'dismiss') {
@@ -257,7 +236,7 @@ export function createRuntime<Model extends EngineModelRoot>({
         break;
       }
     }
-  }
+  };
 
   // The machine declines what does not apply and never throws, so misuse is
   // caught here, where the caller can be told about it. The phase is read at
@@ -341,9 +320,6 @@ export function createRuntime<Model extends EngineModelRoot>({
   };
 
   return {
-    get isSending() {
-      return sendDepth > 0;
-    },
     get phase() {
       return host.current.name;
     },

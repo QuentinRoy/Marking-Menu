@@ -104,51 +104,6 @@ describe('createRuntime', () => {
     expect(wasStartListenerDoneWhenSelectFired).toBe(true);
   });
 
-  it('reports isSending only while a send is on the stack', () => {
-    const runtime = createRuntime({
-      model,
-      options,
-      renderer: createFakeRenderer(),
-    });
-    expect(runtime.isSending).toBe(false);
-
-    let isDuringSend = false;
-    runtime.on('start', () => {
-      isDuringSend = runtime.isSending;
-    });
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
-
-    expect(isDuringSend).toBe(true);
-    expect(runtime.isSending).toBe(false);
-  });
-
-  it('keeps isSending true through a re-entrant send, until the outer one also unwinds', () => {
-    const runtime = createRuntime({
-      model,
-      options,
-      renderer: createFakeRenderer(),
-    });
-    let isDuringReentrantSend = false;
-    let isAfterReentrantSendReturns = false;
-
-    runtime.on('start', () => {
-      runtime.send({ type: 'pointer.up', position: [100, 0] });
-      // The re-entrant send above is only queued, not run yet (see the
-      // reentrancy test above): what runs it is this listener returning,
-      // so `isSending` must still read true right here, mid-listener.
-      isAfterReentrantSendReturns = runtime.isSending;
-    });
-    runtime.on('select', () => {
-      isDuringReentrantSend = runtime.isSending;
-    });
-
-    runtime.send({ type: 'pointer.down', position: [0, 0] });
-
-    expect(isAfterReentrantSendReturns).toBe(true);
-    expect(isDuringReentrantSend).toBe(true);
-    expect(runtime.isSending).toBe(false);
-  });
-
   it('stops notifying a listener removed with off()', () => {
     const runtime = createRuntime({
       model,

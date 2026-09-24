@@ -13,8 +13,8 @@ import type { EngineModelItem, EngineModelMenu } from './model-node.js';
 
 /*
  Standalone mode's rows live in `machine.ts`, inline so totorobot can type
- them; this module holds what they call. The pointer and keyboard sources and
- `focus.ts` feed it inputs. It is one state because levels and the active
+ them; this module holds what they call. `standalone-session.ts` feeds it
+ inputs. It is one state because levels and the active
  item are data. See #483.
  */
 
@@ -239,7 +239,7 @@ export function emitStandaloneOpen(
  `first`/`last`, `focus`, entering a submenu, and leaving one): announce
  `open` for a new level, then `change` once the item it lands on differs.
  Not a wildcard action keyed to every standalone→standalone edge, so that
- the standalone pointer source's own edges — a different source, and, for a
+ the standalone pointer's own edges — a different source, and, for a
  hover or drag, an extra `move` — can carry their own actions without this
  one needing to know to decline them.
  */
