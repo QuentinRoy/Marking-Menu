@@ -102,7 +102,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     // still move real focus later (into a submenu it opens), and restoring
     // on close needs somewhere to return to even then.
     saveFocus();
-    if (!event.focus) {
+    if (!event.shouldTakeFocus) {
       return;
     }
 

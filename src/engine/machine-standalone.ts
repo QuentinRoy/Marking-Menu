@@ -219,8 +219,8 @@ export function emitStandaloneOpen(
   {
     menuCenter,
     menus,
-    focus,
-  }: Pick<StandaloneData, 'menuCenter' | 'menus' | 'focus'>,
+    shouldTakeFocus,
+  }: Pick<StandaloneData, 'menuCenter' | 'menus' | 'shouldTakeFocus'>,
   source: MarkingMenuEventSource,
 ): void {
   emit(
@@ -231,7 +231,7 @@ export function emitStandaloneOpen(
       source,
       menu: currentMenu(menus),
       menuCenter,
-      focus,
+      shouldTakeFocus,
     }),
   );
 }

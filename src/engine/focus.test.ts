@@ -85,7 +85,7 @@ const openStandaloneDisplayOnly = new MarkingMenuOpenEvent<
   source: 'api',
   menu: model,
   menuCenter: [0, 0],
-  focus: false,
+  shouldTakeFocus: false,
 });
 const changeStandalone = (active: (typeof model.items)[number] | undefined) =>
   new MarkingMenuChangeEvent<typeof model, 'standalone'>({

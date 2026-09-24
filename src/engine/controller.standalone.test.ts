@@ -115,7 +115,7 @@ describe('a standalone menu', () => {
     [{ focus: false }, false],
   ] as const)(
     'reports whether the menu takes focus on the open event (%j)',
-    (options, focus) => {
+    (options, shouldTakeFocus) => {
       using fixture = setup();
       const opened: MarkingMenuOpenEvent[] = [];
       fixture.controller.on('open', (event) => {
@@ -124,7 +124,7 @@ describe('a standalone menu', () => {
 
       fixture.controller.open(options);
 
-      expect(opened[0]?.focus).toBe(focus);
+      expect(opened[0]?.shouldTakeFocus).toBe(shouldTakeFocus);
     },
   );
 

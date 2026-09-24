@@ -83,7 +83,7 @@ type MachineInputs = {
   dwell: undefined;
   dispose: undefined;
   // Standalone: a menu displayed without a pointer gesture.
-  open: { readonly position: Point; readonly focus: boolean };
+  open: { readonly position: Point; readonly shouldTakeFocus: boolean };
   // The standalone pointer source's own four intents: the pointer moving
   // over the displayed level (hover, or a held contact dragging across it),
   // a completed activation, a canceled contact, and a press or release
@@ -206,7 +206,7 @@ type NavigationPhaseFields<Menu, Active> = {
     readonly menus: readonly Menu[];
     readonly menuCenter: Point;
     // Whether the menu takes focus when it opens, as asked by `open()`.
-    readonly focus: boolean;
+    readonly shouldTakeFocus: boolean;
     readonly active: Active | undefined;
   };
   // A step the machine only passes through: the expert dwell recognizes the
@@ -468,13 +468,13 @@ export const navigationMachine = machine({
     // every level it later shows.
     'idle -open> standalone': ({
       fromData: { model, options },
-      inputData: { position, focus },
+      inputData: { position, shouldTakeFocus },
     }) => ({
       model,
       options,
       menus: [model],
       menuCenter: position,
-      focus,
+      shouldTakeFocus,
       active: undefined,
     }),
 

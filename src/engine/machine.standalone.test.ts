@@ -67,7 +67,7 @@ describe('navigationMachine standalone phase', () => {
     position: Point = [50, 60],
     shouldTakeFocus = true,
   ): void => {
-    host.send('open', { position, focus: shouldTakeFocus });
+    host.send('open', { position, shouldTakeFocus });
   };
 
   /**
@@ -80,7 +80,7 @@ describe('navigationMachine standalone phase', () => {
     readonly source: unknown;
     readonly menu: unknown;
     readonly menuCenter: unknown;
-    readonly focus: unknown;
+    readonly shouldTakeFocus: unknown;
     readonly activeItem: unknown;
     readonly previousActiveItem: unknown;
     readonly selection: unknown;
@@ -149,7 +149,7 @@ describe('navigationMachine standalone phase', () => {
     model: Parameters<typeof navigationMachine.start>[0]['model'],
   ): Host => {
     const host = navigationMachine.start({ model, options });
-    host.send('open', { position: [0, 0], focus: true });
+    host.send('open', { position: [0, 0], shouldTakeFocus: true });
     return host;
   };
 
@@ -211,7 +211,7 @@ describe('navigationMachine standalone phase', () => {
       expect(event.menu).toBe(standaloneModel);
       expect(event.menuCenter).toEqual([50, 60]);
       expect(event.recognition).toBeUndefined();
-      expect(event.focus).toBe(true);
+      expect(event.shouldTakeFocus).toBe(true);
       expect(namesOf(outputs)).toEqual(['open']);
     });
 
@@ -224,7 +224,10 @@ describe('navigationMachine standalone phase', () => {
       host.send('activate');
 
       const opens = outputs.filter(([name]) => name === 'open');
-      expect(opens.map(([, data]) => data.focus)).toEqual([false, false]);
+      expect(opens.map(([, data]) => data.shouldTakeFocus)).toEqual([
+        false,
+        false,
+      ]);
     });
 
     it('lays out the root at the center, with no stroke, indicator or hidden cursor', () => {

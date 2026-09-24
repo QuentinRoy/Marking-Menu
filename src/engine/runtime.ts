@@ -271,7 +271,7 @@ export function createRuntime<Model extends EngineModelRoot>({
       );
     }
 
-    host.send('open', { position, focus });
+    host.send('open', { position, shouldTakeFocus: focus });
   };
 
   const close = (): void => {

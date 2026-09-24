@@ -78,7 +78,7 @@ describe('MarkingMenuOpenEvent', () => {
     expect(event.menu).toBe(menu);
     expect(event.menuCenter).toEqual([50, 50]);
     expect(event.recognition).toBeUndefined();
-    expect(event.focus).toBe(true);
+    expect(event.shouldTakeFocus).toBe(true);
   });
 
   it('carries whether the menu takes focus', () => {
@@ -88,10 +88,10 @@ describe('MarkingMenuOpenEvent', () => {
       source: 'api',
       menu,
       menuCenter: [50, 50],
-      focus: false,
+      shouldTakeFocus: false,
     });
 
-    expect(event.focus).toBe(false);
+    expect(event.shouldTakeFocus).toBe(false);
   });
 
   it('allows an undefined position in standalone mode', () => {
