@@ -218,8 +218,8 @@ export function emitStandaloneOpen(
   emit: (name: 'open', data: MarkingMenuOpenEvent) => void,
   { menuCenter, menus }: Pick<StandaloneData, 'menuCenter' | 'menus'>,
   source: MarkingMenuEventSource,
-  // Only the root is ever opened without focus: every level entered after it
-  // moves focus, as the input that entered it puts it on the new level.
+  // Only the root can skip autofocus: the menu already has focus by the time
+  // a deeper level is entered.
   willAutoFocus = true,
 ): void {
   emit(

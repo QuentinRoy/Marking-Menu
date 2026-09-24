@@ -24,7 +24,7 @@ const [down, , right] = model.items;
  focus, all recorded.
  */
 const createFixture = ({
-  submenuOpeningDelay = 1000 / 3,
+  submenuOpeningDelay = 1000,
 }: { submenuOpeningDelay?: number } = {}) => {
   const listeners = new Map<string, Set<(event: never) => void>>();
   const runtime = {
@@ -76,7 +76,7 @@ const openStandalone = new MarkingMenuOpenEvent<typeof model, 'standalone'>({
   menu: model,
   menuCenter: [0, 0],
 });
-const openStandaloneDisplayOnly = new MarkingMenuOpenEvent<
+const openStandaloneWithoutAutoFocus = new MarkingMenuOpenEvent<
   typeof model,
   'standalone'
 >({
@@ -306,7 +306,7 @@ describe('manageFocus', () => {
       using fixture = createOpener();
       const { emit, menu } = createFixture();
 
-      emit('open', openStandaloneDisplayOnly);
+      emit('open', openStandaloneWithoutAutoFocus);
       expect(menu.focusTabStop).not.toHaveBeenCalled();
       expect(menu.focusMenu).not.toHaveBeenCalled();
 
@@ -321,7 +321,7 @@ describe('manageFocus', () => {
 
     it('still follows the keyboard once someone tabbed into a menu opened without autofocus', () => {
       const { emit, menu } = createFixture();
-      emit('open', openStandaloneDisplayOnly);
+      emit('open', openStandaloneWithoutAutoFocus);
 
       emit('change', changeStandalone(down));
 
@@ -330,7 +330,7 @@ describe('manageFocus', () => {
 
     it('takes focus again for the next menu after one opened without autofocus', () => {
       const { emit, menu } = createFixture();
-      emit('open', openStandaloneDisplayOnly);
+      emit('open', openStandaloneWithoutAutoFocus);
       emit('cancel', cancelStandalone);
 
       emit('open', openStandalone);

@@ -259,8 +259,8 @@ export class MarkingMenuOpenEvent<
 
   /**
    Whether focus is about to move to the menu. `false` only for the root of
-   a menu shown with `open({ autoFocus: false })`: a level entered later
-   always takes focus.
+   a menu shown with `open({ autoFocus: false })`; a submenu always leaves
+   focus in the menu, so its event is `true`.
    */
   get willAutoFocus(): boolean {
     return this.#willAutoFocus;

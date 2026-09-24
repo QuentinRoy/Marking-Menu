@@ -109,7 +109,8 @@ export type MarkingMenuOpenOptions = {
   /**
    Whether the menu moves focus to itself as it opens. Defaults to `true`.
    With `false` focus stays where it is and the first item stays reachable
-   with Tab.
+   with Tab. Only the first opening is affected: entering a submenu always leaves
+   focus in the menu.
    */
   readonly autoFocus?: boolean;
 };
@@ -248,8 +249,8 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     return [left + width / 2, top + height / 2];
   }
 
-  open({ position, autoFocus = true }: MarkingMenuOpenOptions = {}): void {
-    this.#runtime.open(position ?? this.#parentCenter(), { autoFocus });
+  open(options: MarkingMenuOpenOptions = {}): void {
+    this.#runtime.open(options.position ?? this.#parentCenter(), options);
   }
 
   close(): void {

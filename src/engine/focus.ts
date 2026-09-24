@@ -11,7 +11,7 @@ export type FocusManager = {
   dispose: () => void;
 };
 
-// A gesture only announces an item it stayed on for a moment.
+// Long enough that an item the pointer only passes over is not announced.
 const MAX_ACTIVE_ITEM_FOCUS_DELAY_MS = 50;
 
 /**
@@ -47,7 +47,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   runtime: MarkingMenuEventEmitter<Model>;
   submenuOpeningDelay: number;
 }): FocusManager {
-  // Under the submenu delay, or the submenu opens and clears the announcement.
+  // Well within the submenu delay: opening a submenu clears the announcement.
   const activeItemFocusDelay = Math.min(
     MAX_ACTIVE_ITEM_FOCUS_DELAY_MS,
     submenuOpeningDelay / 2,
