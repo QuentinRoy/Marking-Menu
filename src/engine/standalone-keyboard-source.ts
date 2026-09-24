@@ -1,3 +1,4 @@
+import type { Menu, MenuEventResolution } from '../layout/menu.js';
 import type { KeyboardIntent, NavigationPhase } from './machine.js';
 import type { NavigationInputSink } from './runtime.js';
 
@@ -31,40 +32,27 @@ export function createStandaloneKeyboardSource({
 }: {
   parent: HTMLElement;
   /**
-  The menu currently displayed. Input only counts when it comes from inside its layer.
+  The menu currently displayed. Input only counts when it comes from inside it.
   */
-  getMenu: () => { readonly layer: HTMLElement } | undefined;
+  getMenu: () => Pick<Menu, 'resolve' | 'isInside'> | undefined;
   runtime: NavigationInputSink & {
     readonly phase: NavigationPhase;
     readonly isSending: boolean;
   };
 }): StandaloneKeyboardSource {
   /**
-   The first node an event went through, when the event started inside the
-   menu that is displayed and a standalone menu is what is open. `parent` is
-   a light DOM ancestor of the menu's shadow root, so the event is
-   retargeted by the time it gets here and only its composed path still
-   tells where it came from.
+   Where `event` landed, when a standalone menu is what is open.
    */
-  const originInMenu = (event: Event): EventTarget | undefined => {
-    const layer = getMenu()?.layer;
-    if (layer === undefined || runtime.phase !== 'standalone') {
-      return undefined;
-    }
-
-    const path = event.composedPath();
-    return path.includes(layer) ? path[0] : undefined;
+  const resolve = (event: Event): MenuEventResolution => {
+    const menu = runtime.phase === 'standalone' ? getMenu() : undefined;
+    return menu?.resolve(event) ?? { isInside: false };
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
     const intent = intents.get(event.key);
     // Shortcuts of the page or the browser are none of the menu's business.
     const isShortcut = event.ctrlKey || event.altKey || event.metaKey;
-    if (
-      intent === undefined ||
-      isShortcut ||
-      originInMenu(event) === undefined
-    ) {
+    if (intent === undefined || isShortcut || !resolve(event).isInside) {
       return;
     }
 
@@ -77,46 +65,24 @@ export function createStandaloneKeyboardSource({
   };
 
   const onFocusIn = (event: FocusEvent): void => {
-    const origin = originInMenu(event);
-    if (!(origin instanceof HTMLElement)) {
-      return;
-    }
-
-    const key = origin.classList.contains('marking-menu-item')
-      ? origin.dataset.itemId
-      : undefined;
-    if (key !== undefined) {
-      runtime.send({ type: 'focus', key });
+    const resolution = resolve(event);
+    if (resolution.isInside && resolution.itemKey !== undefined) {
+      runtime.send({ type: 'focus', key: resolution.itemKey });
     }
   };
 
   const onFocusOut = (event: FocusEvent): void => {
-    const layer = getMenu()?.layer;
     // A blur fired as a side effect of our own send — a level's DOM
     // swapped out from under the item that held focus, keyboard- or
     // pointer-caused alike — is not a real focus loss.
-    if (
-      layer === undefined ||
-      runtime.isSending ||
-      originInMenu(event) === undefined
-    ) {
+    if (runtime.isSending || !resolve(event).isInside) {
       return;
     }
 
-    if (!event.relatedTarget) {
+    const { relatedTarget } = event;
+    if (!relatedTarget || !getMenu()?.isInside(relatedTarget)) {
       runtime.send({ type: 'focus-loss' });
-      return;
     }
-
-    const root = layer.getRootNode();
-    if (
-      layer.contains(event.relatedTarget as Node) ||
-      ('host' in root && event.relatedTarget === root.host)
-    ) {
-      return;
-    }
-
-    runtime.send({ type: 'focus-loss' });
   };
 
   parent.addEventListener('keydown', onKeyDown);

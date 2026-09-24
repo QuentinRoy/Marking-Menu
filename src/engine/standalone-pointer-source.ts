@@ -1,3 +1,4 @@
+import type { Menu, MenuEventResolution } from '../layout/menu.js';
 import { toClientPoint } from '../utils.js';
 import type { NavigationPhase } from './machine.js';
 import type { NavigationInputSink } from './runtime.js';
@@ -11,22 +12,6 @@ export type StandalonePointerSource = {
 // never matches; see the same pitfall worked around in `layout/menu.ts`.
 const isElement = (node: EventTarget): node is HTMLElement =>
   'nodeType' in node && node.nodeType === Node.ELEMENT_NODE;
-
-/**
- The item under an event, resolved by walking its `composedPath()` for the
- nearest `.marking-menu-item` ancestor of the actual target: unlike focus,
- a pointer event's target is rarely the item element itself, but one of its
- descendants (the plate, its label, or a wedge).
- */
-const resolveItemKey = (event: PointerEvent): string | undefined => {
-  for (const node of event.composedPath()) {
-    if (isElement(node) && node.classList.contains('marking-menu-item')) {
-      return node.dataset.itemId;
-    }
-  }
-
-  return undefined;
-};
 
 /**
  Native pointer listeners for a standalone menu: delegated hover, held
@@ -45,7 +30,7 @@ export function createStandalonePointerSource({
 }: {
   parent: HTMLElement;
   doc?: Document;
-  getMenu: () => { readonly layer: HTMLElement } | undefined;
+  getMenu: () => Pick<Menu, 'resolve'> | undefined;
   runtime: NavigationInputSink & { readonly phase: NavigationPhase };
 }): StandalonePointerSource {
   let activePointerId: number | undefined;
@@ -57,13 +42,11 @@ export function createStandalonePointerSource({
     event.isPrimary && event.button === 0;
 
   /**
-   Whether `event` originated inside the displayed level's own layer. The
-   rest of `parent`, gaps between items included, is outside the menu.
+   Where `event` landed on the displayed level. The rest of `parent` is
+   outside the menu.
    */
-  const isInLayer = (event: PointerEvent): boolean => {
-    const layer = getMenu()?.layer;
-    return layer !== undefined && event.composedPath().includes(layer);
-  };
+  const resolve = (event: PointerEvent): MenuEventResolution =>
+    getMenu()?.resolve(event) ?? { isInside: false };
 
   const onPointerDown = (event: PointerEvent): void => {
     if (activePointerId !== undefined || !isPrimaryPress(event) || !isOpen()) {
@@ -76,7 +59,8 @@ export function createStandalonePointerSource({
     // gesture pointer source's own bubble listener on `parent` has already
     // run once for this same event, and dismissing (which resumes it)
     // cannot make it run again for an event it already saw.
-    if (!isInLayer(event)) {
+    const resolution = resolve(event);
+    if (!resolution.isInside) {
       runtime.send({
         type: 'standalonePointer.outside',
         position: toClientPoint(event),
@@ -100,24 +84,28 @@ export function createStandalonePointerSource({
     runtime.send({
       type: 'standalonePointer.move',
       position: toClientPoint(event),
-      itemKey: resolveItemKey(event),
+      itemKey: resolution.itemKey,
     });
   };
 
-  const isTrackedInLayer = (event: PointerEvent): boolean =>
+  const isTracked = (event: PointerEvent): boolean =>
     isOpen() &&
-    (activePointerId === undefined || event.pointerId === activePointerId) &&
-    isInLayer(event);
+    (activePointerId === undefined || event.pointerId === activePointerId);
 
   const onPointerMove = (event: PointerEvent): void => {
-    if (!isTrackedInLayer(event)) {
+    if (!isTracked(event)) {
+      return;
+    }
+
+    const resolution = resolve(event);
+    if (!resolution.isInside) {
       return;
     }
 
     runtime.send({
       type: 'standalonePointer.move',
       position: toClientPoint(event),
-      itemKey: resolveItemKey(event),
+      itemKey: resolution.itemKey,
     });
   };
 
@@ -125,7 +113,7 @@ export function createStandalonePointerSource({
   // `relatedTarget` both retarget to the shadow host, which stops it there.
   // So one seen here left the menu.
   const onPointerOut = (event: PointerEvent): void => {
-    if (!isTrackedInLayer(event)) {
+    if (!isTracked(event) || !resolve(event).isInside) {
       return;
     }
 
@@ -151,7 +139,8 @@ export function createStandalonePointerSource({
     }
 
     const position = toClientPoint(event);
-    if (!isInLayer(event)) {
+    const resolution = resolve(event);
+    if (!resolution.isInside) {
       runtime.send({ type: 'standalonePointer.outside', position });
       return;
     }
@@ -159,7 +148,7 @@ export function createStandalonePointerSource({
     runtime.send({
       type: 'standalonePointer.activate',
       position,
-      itemKey: resolveItemKey(event),
+      itemKey: resolution.itemKey,
     });
   };
 

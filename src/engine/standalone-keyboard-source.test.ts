@@ -1,3 +1,4 @@
+import { createMenuFixture } from './__fixtures__/menu.js';
 import type {
   KeyboardIntent,
   NavigationInput,
@@ -6,40 +7,27 @@ import type {
 import { createStandaloneKeyboardSource } from './standalone-keyboard-source.js';
 
 /**
- A parent holding a menu layer of two items, the way the renderer lays them
- out, plus something else that is not part of the menu.
+ A parent holding a real menu, plus something else that is not part of it.
  */
 const createFixture = (
   phase: NavigationPhase = 'standalone',
   { hasMenu = true }: { hasMenu?: boolean } = {},
 ) => {
-  const parent = document.createElement('div');
-  const layer = document.createElement('div');
-  const item = document.createElement('div');
-  item.className = 'marking-menu-item';
-  item.dataset.itemId = 'item-key';
-  item.tabIndex = -1;
-  const nextItem = document.createElement('div');
-  nextItem.className = 'marking-menu-item';
-  nextItem.dataset.itemId = 'next-item-key';
-  nextItem.tabIndex = -1;
-  layer.append(item, nextItem);
-  const outside = document.createElement('button');
-  parent.append(layer, outside);
-  document.body.append(parent);
+  const menuFixture = createMenuFixture();
+  const { parent, menu, leaf, submenu, outside } = menuFixture;
 
   const send = vi.fn<(input: NavigationInput) => void>();
   const runtime = { phase, send, isSending: false };
   const source = createStandaloneKeyboardSource({
     parent,
-    getMenu: () => (hasMenu ? { layer } : undefined),
+    getMenu: () => (hasMenu ? menu : undefined),
     runtime,
   });
   return {
     parent,
-    layer,
-    item,
-    nextItem,
+    menu,
+    leaf,
+    submenu,
     outside,
     send,
     source,
@@ -51,7 +39,7 @@ const createFixture = (
     },
     [Symbol.dispose]() {
       source.dispose();
-      parent.remove();
+      menuFixture[Symbol.dispose]();
     },
   };
 };
@@ -87,7 +75,7 @@ describe('createStandaloneKeyboardSource', () => {
     (key, intent) => {
       using fixture = createFixture();
 
-      const event = press(fixture.item, key);
+      const event = press(fixture.leaf, key);
 
       expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
         type: 'keyboard',
@@ -100,8 +88,8 @@ describe('createStandaloneKeyboardSource', () => {
   it('turns Tab into the dismiss intent, and lets it move focus on', () => {
     using fixture = createFixture();
 
-    const event = press(fixture.item, 'Tab');
-    const shifted = press(fixture.item, 'Tab', { shiftKey: true });
+    const event = press(fixture.leaf, 'Tab');
+    const shifted = press(fixture.leaf, 'Tab', { shiftKey: true });
 
     expect(fixture.send).toHaveBeenCalledTimes(2);
     expect(fixture.send).toHaveBeenCalledWith({
@@ -115,7 +103,7 @@ describe('createStandaloneKeyboardSource', () => {
   it('ignores keys it has no intent for', () => {
     using fixture = createFixture();
 
-    const event = press(fixture.item, 'a');
+    const event = press(fixture.leaf, 'a');
 
     expect(fixture.send).not.toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(false);
@@ -125,9 +113,9 @@ describe('createStandaloneKeyboardSource', () => {
     using fixture = createFixture();
 
     const events = [
-      press(fixture.item, 'ArrowLeft', { altKey: true }),
-      press(fixture.item, 'Home', { ctrlKey: true }),
-      press(fixture.item, 'Enter', { metaKey: true }),
+      press(fixture.leaf, 'ArrowLeft', { altKey: true }),
+      press(fixture.leaf, 'Home', { ctrlKey: true }),
+      press(fixture.leaf, 'Enter', { metaKey: true }),
     ];
 
     expect(fixture.send).not.toHaveBeenCalled();
@@ -150,7 +138,7 @@ describe('createStandaloneKeyboardSource', () => {
   it('ignores every key, and does not prevent it, unless a standalone menu is open', () => {
     using fixture = createFixture('novice');
 
-    const event = press(fixture.item, 'Escape');
+    const event = press(fixture.leaf, 'Escape');
 
     expect(fixture.send).not.toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(false);
@@ -159,9 +147,9 @@ describe('createStandaloneKeyboardSource', () => {
   it('follows the phase as it changes', () => {
     using fixture = createFixture('idle');
 
-    press(fixture.item, 'ArrowDown');
+    press(fixture.leaf, 'ArrowDown');
     fixture.setPhase('standalone');
-    press(fixture.item, 'ArrowDown');
+    press(fixture.leaf, 'ArrowDown');
 
     expect(fixture.send).toHaveBeenCalledTimes(1);
   });
@@ -169,19 +157,18 @@ describe('createStandaloneKeyboardSource', () => {
   it('reports the item that took focus', () => {
     using fixture = createFixture();
 
-    fixture.item.focus();
+    fixture.leaf.focus();
 
     expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
       type: 'focus',
-      key: 'item-key',
+      key: 'leaf-key',
     });
   });
 
   it('ignores focus that lands on the menu layer rather than an item', () => {
     using fixture = createFixture();
-    fixture.layer.tabIndex = -1;
 
-    fixture.layer.focus();
+    fixture.menu.focusMenu();
 
     expect(fixture.send).not.toHaveBeenCalled();
   });
@@ -197,7 +184,7 @@ describe('createStandaloneKeyboardSource', () => {
   it('ignores focus unless a standalone menu is open', () => {
     using fixture = createFixture('novice');
 
-    fixture.item.focus();
+    fixture.leaf.focus();
 
     expect(fixture.send).not.toHaveBeenCalled();
   });
@@ -205,12 +192,12 @@ describe('createStandaloneKeyboardSource', () => {
   it('closes the standalone menu when focus moves outside it', () => {
     using fixture = createFixture();
 
-    fixture.item.focus();
+    fixture.leaf.focus();
     fixture.outside.focus();
 
     expect(fixture.send).toHaveBeenNthCalledWith(1, {
       type: 'focus',
-      key: 'item-key',
+      key: 'leaf-key',
     });
     expect(fixture.send).toHaveBeenNthCalledWith(2, {
       type: 'focus-loss',
@@ -220,8 +207,8 @@ describe('createStandaloneKeyboardSource', () => {
   it('closes the standalone menu when focus clears', () => {
     using fixture = createFixture();
 
-    fixture.item.focus();
-    fixture.item.blur();
+    fixture.leaf.focus();
+    fixture.leaf.blur();
 
     expect(fixture.send).toHaveBeenLastCalledWith({ type: 'focus-loss' });
   });
@@ -229,15 +216,15 @@ describe('createStandaloneKeyboardSource', () => {
   it('keeps a standalone menu open while focus moves between its items', () => {
     using fixture = createFixture();
 
-    fixture.item.focus();
-    fixture.nextItem.focus();
+    fixture.leaf.focus();
+    fixture.submenu.focus();
 
     expect(fixture.send).not.toHaveBeenCalledWith({ type: 'focus-loss' });
   });
 
   it('ignores a blur fired as a side effect of a source-driven send, keyboard or not', () => {
     using fixture = createFixture();
-    fixture.item.focus();
+    fixture.leaf.focus();
 
     // A pointer release entering a submenu swaps the DOM out from under the
     // focused item mid-send, the same way `isHandlingKeyboardIntent` used to
@@ -251,8 +238,8 @@ describe('createStandaloneKeyboardSource', () => {
   it('ignores everything once there is no menu to read', () => {
     using fixture = createFixture('standalone', { hasMenu: false });
 
-    press(fixture.item, 'ArrowDown');
-    fixture.item.focus();
+    press(fixture.leaf, 'ArrowDown');
+    fixture.leaf.focus();
 
     expect(fixture.send).not.toHaveBeenCalled();
   });
@@ -261,8 +248,8 @@ describe('createStandaloneKeyboardSource', () => {
     using fixture = createFixture();
     fixture.source.dispose();
 
-    press(fixture.item, 'ArrowDown');
-    fixture.item.focus();
+    press(fixture.leaf, 'ArrowDown');
+    fixture.leaf.focus();
 
     expect(fixture.send).not.toHaveBeenCalled();
   });
