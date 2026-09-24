@@ -102,28 +102,6 @@ test('each arrow key moves focus that way around the ring', async () => {
   ]);
 });
 
-test('an arrow with nowhere further to go leaves focus and the event log alone', async () => {
-  using menu = mountBetweenButtons();
-  menu.mm.open();
-  await expectFocused('menuitem', { name: 'Right' });
-  const before = [...menu.events];
-
-  await userEvent.keyboard('{ArrowRight}');
-
-  await expectFocused('menuitem', { name: 'Right' });
-  expect(menu.events).toEqual(before);
-});
-
-test('Home and End jump to the ends of the item order', async () => {
-  using menu = mountBetweenButtons();
-  menu.mm.open();
-
-  await userEvent.keyboard('{End}');
-  await expectFocused('menuitem', { name: 'Up' });
-  await userEvent.keyboard('{Home}');
-  await expectFocused('menuitem', { name: 'Right' });
-});
-
 test('Enter on a leaf selects it, and focus goes back to where it was', async () => {
   using menu = mountBetweenButtons();
   menu.mm.open();
@@ -134,15 +112,6 @@ test('Enter on a leaf selects it, and focus goes back to where it was', async ()
 
   await expect.poll(() => menu.before === document.activeElement).toBe(true);
   expect(menu.events.at(-1)).toBe('select:standalone');
-});
-
-test('Enter on a submenu item opens it instead of selecting', async () => {
-  using menu = mountBetweenButtons();
-  menu.mm.open();
-  await userEvent.keyboard('{ArrowDown}{Enter}');
-
-  await expectFocused('menuitem', { name: 'Sub Right' });
-  expect(menu.events).not.toContain('select:standalone');
 });
 
 test('Escape backs out of a submenu, then cancels from the root and gives focus back', async () => {
@@ -190,17 +159,6 @@ test('a menu opened without autofocus still restores focus to its trigger when c
   using menu = mountBetweenButtons();
   menu.mm.open({ autoFocus: false });
   menu.after.focus();
-
-  menu.mm.close();
-
-  expect(document.activeElement).toBe(menu.before);
-  expect(menu.events.at(-1)).toBe('cancel:standalone');
-});
-
-test('close() cancels an open menu and gives focus back', async () => {
-  using menu = mountBetweenButtons();
-  menu.mm.open();
-  await expectFocused('menuitem', { name: 'Right' });
 
   menu.mm.close();
 

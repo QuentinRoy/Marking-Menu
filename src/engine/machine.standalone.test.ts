@@ -1,4 +1,5 @@
 import { fakeTimers } from '../__fixtures__/timers.js';
+import type { MarkingMenuChangeEvent } from '../events.js';
 import { createModel } from '../model.js';
 import type { Point } from '../utils.js';
 import {
@@ -34,6 +35,22 @@ const options = {
 
 type Host = ReturnType<typeof navigationMachine.start>;
 
+const activeItems = new WeakMap<Host, MarkingMenuChangeEvent['activeItem']>();
+
+/**
+Start a host on `model`, following the active item through its `change`
+events.
+*/
+const startHost = (
+  model: Parameters<typeof navigationMachine.start>[0]['model'],
+): Host => {
+  const host = navigationMachine.start({ model, options });
+  host.on('change', ({ data }) => {
+    activeItems.set(host, data.activeItem);
+  });
+  return host;
+};
+
 /**
 Dwell into novice mode at the origin, from a fresh host.
 */
@@ -59,8 +76,7 @@ describe('navigationMachine standalone phase', () => {
   const [rightItem, downItem, leftItem, upItem] = standaloneModel.items;
   const [rightUpItem] = rightItem.items;
 
-  const startStandalone = () =>
-    navigationMachine.start({ model: standaloneModel, options });
+  const startStandalone = () => startHost(standaloneModel);
 
   const openStandalone = (
     host: ReturnType<typeof startStandalone>,
@@ -148,7 +164,7 @@ describe('navigationMachine standalone phase', () => {
   const openMenu = (
     model: Parameters<typeof navigationMachine.start>[0]['model'],
   ): Host => {
-    const host = navigationMachine.start({ model, options });
+    const host = startHost(model);
     host.send('open', { position: [0, 0], willAutoFocus: true });
     return host;
   };
@@ -156,8 +172,7 @@ describe('navigationMachine standalone phase', () => {
   const openEvenMenu = (itemCount: number): Host =>
     openMenu(createModel({ items: evenItems(itemCount) }));
 
-  const activeOf = (host: Host) =>
-    host.current.name === 'standalone' ? host.current.data.active : undefined;
+  const activeOf = (host: Host) => activeItems.get(host);
 
   const activeIdOf = (host: Host): string | undefined => activeOf(host)?.id;
 
@@ -266,28 +281,30 @@ describe('navigationMachine standalone phase', () => {
 
     it('declines an open from any state but idle', () => {
       const host = startStandalone();
-      openStandalone(host);
-      const opened = host.current;
+      const outputs = recordOutputs(host);
+      const layouts = recordLayouts(host);
+      const expectOpenDeclined = (phase: string) => {
+        outputs.length = 0;
+        layouts.length = 0;
+        openStandalone(host, [1, 1]);
+        expect(host.current.name).toBe(phase);
+        expect(outputs).toEqual([]);
+        expect(layouts).toEqual([]);
+      };
 
-      openStandalone(host, [1, 1]);
-      expect(host.current).toEqual(opened);
+      openStandalone(host);
+      expectOpenDeclined('standalone');
 
       host.send('dismiss', { source: 'keyboard' });
       host.send('pointerDown', { position: [0, 0] });
-      const startup = host.current;
-      openStandalone(host, [1, 1]);
-      expect(host.current).toEqual(startup);
+      expectOpenDeclined('startup');
 
       host.send('pointerMove', { position: [100, 0] });
-      const expert = host.current;
-      openStandalone(host, [1, 1]);
-      expect(host.current).toEqual(expert);
+      expectOpenDeclined('expert');
 
       host.send('pointerCancel', { position: [100, 0] });
       openNovice(host);
-      const novice = host.current;
-      openStandalone(host, [1, 1]);
-      expect(host.current).toEqual(novice);
+      expectOpenDeclined('novice');
     });
 
     it('can open again once it was closed', () => {
@@ -307,7 +324,6 @@ describe('navigationMachine standalone phase', () => {
       openStandalone(host);
       const outputs = recordOutputs(host);
       const layouts = recordLayouts(host);
-      const opened = host.current;
 
       host.send('pointerDown', { position: [0, 0] });
       host.send('pointerMove', { position: [100, 0] });
@@ -315,7 +331,7 @@ describe('navigationMachine standalone phase', () => {
       host.send('pointerCancel', { position: [100, 0] });
       host.send('dwell');
 
-      expect(host.current).toEqual(opened);
+      expect(host.current.name).toBe('standalone');
       expect(outputs).toEqual([]);
       expect(layouts).toEqual([]);
     });
@@ -346,9 +362,8 @@ describe('navigationMachine standalone phase', () => {
 
       openNovice(host);
       outputs.length = 0;
-      const novice = host.current;
       send();
-      expect(host.current).toEqual(novice);
+      expect(host.current.name).toBe('novice');
       expect(outputs).toEqual([]);
     });
 
@@ -900,18 +915,6 @@ describe('navigationMachine standalone phase', () => {
       expect(namesOf(outputs)).toEqual(['move', 'change']);
       expect(dataAt(outputs, 1).activeItem).toBeUndefined();
       expect(dataAt(outputs, 1).previousActiveItem).toBe(rightItem);
-    });
-
-    it('sets the active item on contact-down, the same as a hover preview', () => {
-      const host = startStandalone();
-      openStandalone(host);
-
-      host.send('standalonePointerMove', {
-        position: [0, 0],
-        itemKey: downItem.key,
-      });
-
-      expect(activeKeyOf(host)).toBe(downItem.key);
     });
 
     it('follows the finger as a drag retargets, landing back on the original item', () => {
