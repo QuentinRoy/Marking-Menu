@@ -56,7 +56,8 @@ export type MarkingMenuCancelReason<
  `startup`, `novice`, and `expert`: every event there stems from the same
  pointer-drawn stroke. In `standalone`, it is `pointer` (hover, press, drag,
  click, or tap), `keyboard` (arrow keys, Enter, Escape, or Tab), `api` (an
- explicit `open()` or `close()` call), or `focus-loss` (the menu lost DOM
+ `open()` or `close()` call, or the focus `open()` gives the first item), or
+ `focus-loss` (the menu lost DOM
  focus for an otherwise-unknown reason).
  */
 export type MarkingMenuEventSource =
@@ -149,6 +150,15 @@ export abstract class MarkingMenuEventBase<
       readonly source: MarkingMenuEventSource;
     },
   ) {
+    if (
+      data.mode === 'standalone' &&
+      (data.source === 'pointer') !== (data.position !== undefined)
+    ) {
+      throw new Error(
+        `A standalone event has a position exactly when its source is 'pointer' (source: '${data.source}').`,
+      );
+    }
+
     this.type = type;
     this.#mode = data.mode;
     this.#position = data.position;

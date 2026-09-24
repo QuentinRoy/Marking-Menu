@@ -320,3 +320,26 @@ describe('MarkingMenuCancelEvent', () => {
     expect(event.menu).toBeUndefined();
   });
 });
+
+describe('standalone events', () => {
+  const standaloneCancel = (
+    source: 'pointer' | 'keyboard',
+    position: [number, number] | undefined,
+  ) =>
+    new MarkingMenuCancelEvent<Model>({
+      mode: 'standalone',
+      position,
+      source,
+      activeItem: undefined,
+      menu,
+      reason: 'dismissed',
+    });
+
+  it('rejects a pointer source without a position', () => {
+    expect(() => standaloneCancel('pointer', undefined)).toThrow('position');
+  });
+
+  it('rejects a position from any other source', () => {
+    expect(() => standaloneCancel('keyboard', [1, 2])).toThrow('position');
+  });
+});

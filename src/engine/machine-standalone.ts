@@ -3,9 +3,10 @@ import {
   MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
   MarkingMenuOpenEvent,
+  MarkingMenuSelectEvent,
   type MarkingMenuEventSource,
 } from '../events.js';
-import { isModelMenuItem, type ModelNode } from '../types.js';
+import { isModelMenuItem, type ModelLeaf, type ModelNode } from '../types.js';
 import { deltaAngle, type Point } from '../utils.js';
 import { currentMenu } from './layout-view.js';
 import type { MachineStates } from './machine.js';
@@ -212,23 +213,69 @@ export const pointerRelease = ({
 };
 
 /**
+ The sources of a standalone event that have no pointer position.
+ */
+export type NonPointerSource = Exclude<
+  MarkingMenuEventSource,
+  'pointer' | 'gesture'
+>;
+
+/**
+ What caused a standalone event: the shape of its `source` and `position`.
+ A pointer has a position, the other causes have none.
+ */
+export type StandaloneCause =
+  | { readonly source: 'pointer'; readonly position: Point }
+  | { readonly source: NonPointerSource; readonly position?: undefined };
+
+/**
  Announce a standalone menu level as displayed.
  */
 export function emitStandaloneOpen(
   emit: (name: 'open', data: MarkingMenuOpenEvent) => void,
   { menuCenter, menus }: Pick<StandaloneData, 'menuCenter' | 'menus'>,
-  source: MarkingMenuEventSource,
+  cause: StandaloneCause,
   willAutoFocus: boolean,
 ): void {
   emit(
     'open',
     new MarkingMenuOpenEvent<ModelNode, 'standalone'>({
       mode: 'standalone',
-      position: undefined,
-      source,
+      position: cause.position,
+      source: cause.source,
       menu: currentMenu(menus),
       menuCenter,
       willAutoFocus,
+    }),
+  );
+}
+
+/**
+ Announce a standalone active-item change.
+ */
+export function emitStandaloneChange(
+  emit: (name: 'change', data: MarkingMenuChangeEvent) => void,
+  {
+    cause,
+    active,
+    previousActive,
+    menu,
+  }: {
+    readonly cause: StandaloneCause;
+    readonly active: EngineModelItem | undefined;
+    readonly previousActive: EngineModelItem | undefined;
+    readonly menu: EngineModelMenu;
+  },
+): void {
+  emit(
+    'change',
+    new MarkingMenuChangeEvent<ModelNode, 'standalone'>({
+      mode: 'standalone',
+      position: cause.position,
+      source: cause.source,
+      activeItem: active,
+      previousActiveItem: previousActive,
+      menu,
     }),
   );
 }
@@ -239,76 +286,68 @@ export function emitStandaloneOpen(
  `first`/`last`, `focus`, entering a submenu, and leaving one): announce
  `open` for a new level, then `change` once the item it lands on differs.
  Not a wildcard action keyed to every standalone→standalone edge, so that
- the standalone pointer's own edges — a different source, and, for a
- hover or drag, an extra `move` — can carry their own actions without this
- one needing to know to decline them.
+ the standalone pointer's own edges, which can also announce a `move`, carry
+ their own actions without this one needing to know to decline them.
  */
-export function emitStandaloneMove({
-  fromData,
-  toData,
-  emit,
-}: {
-  readonly fromData: StandaloneData;
-  readonly toData: StandaloneData;
-  readonly emit: {
-    (name: 'open', data: MarkingMenuOpenEvent): void;
-    (name: 'change', data: MarkingMenuChangeEvent): void;
-  };
-}): void {
+export function emitStandaloneMove(
+  {
+    fromData,
+    toData,
+    emit,
+  }: {
+    readonly fromData: StandaloneData;
+    readonly toData: StandaloneData;
+    readonly emit: {
+      (name: 'open', data: MarkingMenuOpenEvent): void;
+      (name: 'change', data: MarkingMenuChangeEvent): void;
+    };
+  },
+  cause: StandaloneCause,
+): void {
   const menu = currentMenu(toData.menus);
   const isNewLevel = toData.menus.length !== fromData.menus.length;
   if (isNewLevel) {
     // Only the root can skip autofocus: the menu already has focus here.
-    emitStandaloneOpen(emit, toData, 'keyboard', true);
+    emitStandaloneOpen(emit, toData, cause, true);
   }
 
   if (
     toData.active !== undefined &&
     (isNewLevel || toData.active !== fromData.active)
   ) {
-    emit(
-      'change',
-      new MarkingMenuChangeEvent<ModelNode, 'standalone'>({
-        mode: 'standalone',
-        position: undefined,
-        source: 'keyboard',
-        activeItem: toData.active,
-        // A new level starts over: `open` already reset the active item.
-        previousActiveItem: isNewLevel ? undefined : fromData.active,
-        menu,
-      }),
-    );
+    emitStandaloneChange(emit, {
+      cause,
+      active: toData.active,
+      // A new level starts over: `open` already reset the active item.
+      previousActive: isNewLevel ? undefined : fromData.active,
+      menu,
+    });
   }
 }
 
 /**
- Announce a standalone active-item change caused by the pointer: hovering,
- dragging, a canceled contact, or a release that stays in the same level.
- Shared so the three call sites don't each restate `mode`/`source`.
+ Announce that a standalone interaction selected a leaf.
  */
-export function emitStandalonePointerChange(
-  emit: (name: 'change', data: MarkingMenuChangeEvent) => void,
+export function emitStandaloneSelect(
+  emit: (name: 'select', data: MarkingMenuSelectEvent) => void,
   {
-    position,
-    active,
-    previousActive,
-    menu,
+    menus,
+    selection,
+    cause,
   }: {
-    readonly position: Point;
-    readonly active: EngineModelItem | undefined;
-    readonly previousActive: EngineModelItem | undefined;
-    readonly menu: EngineModelMenu;
+    readonly menus: StandaloneData['menus'];
+    readonly selection: ModelLeaf;
+    readonly cause: StandaloneCause;
   },
 ): void {
   emit(
-    'change',
-    new MarkingMenuChangeEvent<ModelNode, 'standalone'>({
+    'select',
+    new MarkingMenuSelectEvent<ModelNode, 'standalone'>({
       mode: 'standalone',
-      position,
-      source: 'pointer',
-      activeItem: active,
-      previousActiveItem: previousActive,
-      menu,
+      position: cause.position,
+      source: cause.source,
+      selection,
+      menu: currentMenu(menus),
     }),
   );
 }
@@ -319,22 +358,18 @@ export function emitStandalonePointerChange(
 export function cancelStandalone({
   fromData: { menus, active },
   emit,
-  source,
-  // Every cause but a pointer's own dismissal outside the menu carries no
-  // position, per the public contract.
-  position,
+  cause,
 }: {
   readonly fromData: StandaloneData;
   readonly emit: (name: 'cancel', data: MarkingMenuCancelEvent) => void;
-  readonly source: MarkingMenuEventSource;
-  readonly position?: Point | undefined;
+  readonly cause: StandaloneCause;
 }): void {
   emit(
     'cancel',
     new MarkingMenuCancelEvent<ModelNode, 'standalone'>({
       mode: 'standalone',
-      position,
-      source,
+      position: cause.position,
+      source: cause.source,
       activeItem: active,
       menu: currentMenu(menus),
       reason: 'dismissed',

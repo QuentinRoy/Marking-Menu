@@ -9,11 +9,8 @@ import {
 import { createModel } from '../model.js';
 import { createMenuFixture } from './__fixtures__/menu.js';
 import { pointer } from './__fixtures__/pointer.js';
-import type {
-  KeyboardIntent,
-  NavigationInput,
-  NavigationPhase,
-} from './machine.js';
+import type { KeyboardIntent, NavigationPhase } from './machine.js';
+import type { NavigationSend } from './runtime.js';
 import { createStandaloneSession } from './standalone-session.js';
 
 // Only the events' payload: the menu the session reads is the fixture's.
@@ -93,11 +90,11 @@ const createFixture = () => {
     }
   };
 
-  let react: ((input: NavigationInput) => void) | undefined;
+  let react: ((name: Parameters<NavigationSend>[0]) => void) | undefined;
   const runtime = {
     phase: 'idle' as NavigationPhase,
-    send: vi.fn<(input: NavigationInput) => void>((input) => {
-      react?.(input);
+    send: vi.fn<NavigationSend>((...input) => {
+      react?.(input[0]);
     }),
     open: vi.fn<(position: unknown, options?: { autoFocus?: boolean }) => void>(
       (_position, { autoFocus = true } = {}) => {
@@ -154,7 +151,7 @@ const createFixture = () => {
     /**
     What the runtime does, synchronously, with each input it is sent.
     */
-    onSend(reaction: (input: NavigationInput) => void) {
+    onSend(reaction: (name: Parameters<NavigationSend>[0]) => void) {
       react = reaction;
     },
     open(options?: { autoFocus?: boolean }) {
@@ -194,8 +191,8 @@ const press = (
   return event;
 };
 
-const inputTypes = (send: ReturnType<typeof createFixture>['send']) =>
-  send.mock.calls.map(([input]) => input.type);
+const inputNames = (send: ReturnType<typeof createFixture>['send']) =>
+  send.mock.calls.map(([name]) => name);
 
 describe('createStandaloneSession', () => {
   describe('open and close', () => {
@@ -228,7 +225,7 @@ describe('createStandaloneSession', () => {
 
       fixture.parent.dispatchEvent(down);
 
-      expect(inputTypes(fixture.send)).toEqual(['pointer.down']);
+      expect(inputNames(fixture.send)).toEqual(['pointerDown']);
       expect(down.defaultPrevented).toBe(true);
       expect(fixture.touchAction()).toBe('none');
     });
@@ -240,7 +237,7 @@ describe('createStandaloneSession', () => {
 
       fixture.leaf.dispatchEvent(down);
 
-      expect(inputTypes(fixture.send)).toEqual(['standalonePointer.move']);
+      expect(inputNames(fixture.send)).toEqual(['standalonePointerMove']);
       expect(down.defaultPrevented).toBe(false);
       expect(fixture.parent.hasPointerCapture(1)).toBe(false);
       expect(fixture.touchAction()).toBe('');
@@ -271,8 +268,8 @@ describe('createStandaloneSession', () => {
     it('does not start from the outside press that dismisses the menu', () => {
       using fixture = createFixture();
       fixture.open();
-      fixture.onSend((input) => {
-        if (input.type === 'standalonePointer.outside') {
+      fixture.onSend((name) => {
+        if (name === 'standalonePointerOutside') {
           fixture.end('cancel', standaloneCancel('pointer'));
         }
       });
@@ -280,7 +277,7 @@ describe('createStandaloneSession', () => {
 
       fixture.outside.dispatchEvent(down);
 
-      expect(inputTypes(fixture.send)).toEqual(['standalonePointer.outside']);
+      expect(inputNames(fixture.send)).toEqual(['standalonePointerOutside']);
       expect(down.defaultPrevented).toBe(false);
       expect(fixture.parent.hasPointerCapture(1)).toBe(false);
     });
@@ -288,8 +285,8 @@ describe('createStandaloneSession', () => {
     it('starts from the press that follows an outside press', () => {
       using fixture = createFixture();
       fixture.open();
-      fixture.onSend((input) => {
-        if (input.type === 'standalonePointer.outside') {
+      fixture.onSend((name) => {
+        if (name === 'standalonePointerOutside') {
           fixture.end('cancel', standaloneCancel('pointer'));
         }
       });
@@ -297,9 +294,9 @@ describe('createStandaloneSession', () => {
 
       fixture.parent.dispatchEvent(pointer('pointerdown', { pointerId: 8 }));
 
-      expect(inputTypes(fixture.send)).toEqual([
-        'standalonePointer.outside',
-        'pointer.down',
+      expect(inputNames(fixture.send)).toEqual([
+        'standalonePointerOutside',
+        'pointerDown',
       ]);
     });
   });
@@ -320,10 +317,7 @@ describe('createStandaloneSession', () => {
 
       const event = press(fixture.leaf, key);
 
-      expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
-        type: 'keyboard',
-        intent,
-      });
+      expect(fixture.send).toHaveBeenCalledExactlyOnceWith(intent);
       expect(event.defaultPrevented).toBe(true);
     });
 
@@ -335,8 +329,8 @@ describe('createStandaloneSession', () => {
       const shifted = press(fixture.leaf, 'Tab', { shiftKey: true });
 
       expect(fixture.send.mock.calls).toEqual([
-        [{ type: 'keyboard', intent: 'dismiss' }],
-        [{ type: 'keyboard', intent: 'dismiss' }],
+        ['dismiss', { source: 'keyboard' }],
+        ['dismiss', { source: 'keyboard' }],
       ]);
       expect(event.defaultPrevented).toBe(false);
       expect(shifted.defaultPrevented).toBe(false);
@@ -399,9 +393,36 @@ describe('createStandaloneSession', () => {
 
       fixture.leaf.focus();
 
-      expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
-        type: 'focus',
+      expect(fixture.send).toHaveBeenCalledExactlyOnceWith('focus', {
         key: 'leaf-key',
+        source: 'keyboard',
+      });
+    });
+
+    it('reports the focus an opening menu takes as caused by the API', () => {
+      using fixture = createFixture();
+      fixture.menu.setTabStop('leaf-key');
+
+      fixture.session.open([0, 0]);
+
+      expect(fixture.send).toHaveBeenCalledExactlyOnceWith('focus', {
+        key: 'leaf-key',
+        source: 'api',
+      });
+    });
+
+    it('reports a later focus as caused by the keyboard again', () => {
+      using fixture = createFixture();
+      fixture.menu.setTabStop('leaf-key');
+      fixture.session.open([0, 0]);
+      fixture.outside.focus();
+      fixture.send.mockClear();
+
+      fixture.leaf.focus();
+
+      expect(fixture.send).toHaveBeenCalledExactlyOnceWith('focus', {
+        key: 'leaf-key',
+        source: 'keyboard',
       });
     });
 
@@ -432,11 +453,11 @@ describe('createStandaloneSession', () => {
       fixture.leaf.focus();
       fixture.leaf.blur();
 
-      expect(inputTypes(fixture.send)).toEqual([
-        'focus',
-        'focus-loss',
-        'focus',
-        'focus-loss',
+      expect(fixture.send.mock.calls).toEqual([
+        ['focus', { key: 'leaf-key', source: 'keyboard' }],
+        ['dismiss', { source: 'focus-loss' }],
+        ['focus', { key: 'leaf-key', source: 'keyboard' }],
+        ['dismiss', { source: 'focus-loss' }],
       ]);
     });
 
@@ -447,7 +468,7 @@ describe('createStandaloneSession', () => {
       fixture.leaf.focus();
       fixture.menu.focusItem('submenu-key');
 
-      expect(inputTypes(fixture.send)).not.toContain('focus-loss');
+      expect(inputNames(fixture.send)).not.toContain('dismiss');
     });
 
     it('sends no focus loss for a blur its own input caused', () => {
@@ -455,15 +476,15 @@ describe('createStandaloneSession', () => {
       fixture.open({ autoFocus: false });
       fixture.leaf.focus();
       // Stands for a level's DOM swapped out from under the focused item.
-      fixture.onSend((input) => {
-        if (input.type === 'keyboard') {
+      fixture.onSend((name) => {
+        if (name === 'activate') {
           fixture.outside.focus();
         }
       });
 
       press(fixture.leaf, 'Enter');
 
-      expect(inputTypes(fixture.send)).toEqual(['focus', 'keyboard']);
+      expect(inputNames(fixture.send)).toEqual(['focus', 'activate']);
     });
   });
 
@@ -480,20 +501,8 @@ describe('createStandaloneSession', () => {
       );
 
       expect(fixture.send.mock.calls).toEqual([
-        [
-          {
-            type: 'standalonePointer.move',
-            position: [3, 4],
-            itemKey: 'leaf-key',
-          },
-        ],
-        [
-          {
-            type: 'standalonePointer.move',
-            position: [5, 5],
-            itemKey: undefined,
-          },
-        ],
+        ['standalonePointerMove', { position: [3, 4], itemKey: 'leaf-key' }],
+        ['standalonePointerMove', { position: [5, 5], itemKey: undefined }],
       ]);
     });
 
@@ -509,19 +518,10 @@ describe('createStandaloneSession', () => {
       );
 
       expect(fixture.send.mock.calls).toEqual([
+        ['standalonePointerMove', { position: [0, 0], itemKey: 'leaf-key' }],
         [
-          {
-            type: 'standalonePointer.move',
-            position: [0, 0],
-            itemKey: 'leaf-key',
-          },
-        ],
-        [
-          {
-            type: 'standalonePointer.activate',
-            position: [9, 9],
-            itemKey: 'submenu-key',
-          },
+          'standalonePointerActivate',
+          { position: [9, 9], itemKey: 'submenu-key' },
         ],
       ]);
     });
@@ -534,11 +534,10 @@ describe('createStandaloneSession', () => {
         pointer('pointerout', { clientX: 1, clientY: 2 }),
       );
 
-      expect(fixture.send).toHaveBeenCalledExactlyOnceWith({
-        type: 'standalonePointer.move',
-        position: [1, 2],
-        itemKey: undefined,
-      });
+      expect(fixture.send).toHaveBeenCalledExactlyOnceWith(
+        'standalonePointerMove',
+        { position: [1, 2], itemKey: undefined },
+      );
     });
 
     it('ignores a release without a press, a secondary press, and a second contact', () => {
@@ -552,7 +551,7 @@ describe('createStandaloneSession', () => {
       fixture.submenu.dispatchEvent(pointer('pointerdown', { pointerId: 2 }));
       fixture.submenu.dispatchEvent(pointer('pointerup', { pointerId: 2 }));
 
-      expect(inputTypes(fixture.send)).toEqual(['standalonePointer.move']);
+      expect(inputNames(fixture.send)).toEqual(['standalonePointerMove']);
     });
 
     it('sends a cancel for a canceled contact', () => {
@@ -564,8 +563,7 @@ describe('createStandaloneSession', () => {
         pointer('pointercancel', { clientX: 7, clientY: 8 }),
       );
 
-      expect(fixture.send).toHaveBeenLastCalledWith({
-        type: 'standalonePointer.cancel',
+      expect(fixture.send).toHaveBeenLastCalledWith('standalonePointerCancel', {
         position: [7, 8],
       });
     });
@@ -598,8 +596,8 @@ describe('createStandaloneSession', () => {
       );
 
       expect(fixture.send.mock.calls).toEqual([
-        [{ type: 'standalonePointer.outside', position: [2, 3] }],
-        [{ type: 'standalonePointer.outside', position: [4, 5] }],
+        ['standalonePointerOutside', { position: [2, 3] }],
+        ['standalonePointerOutside', { position: [4, 5] }],
       ]);
     });
 
@@ -612,10 +610,10 @@ describe('createStandaloneSession', () => {
         pointer('pointerup', { clientX: 6, clientY: 6 }),
       );
 
-      expect(fixture.send).toHaveBeenLastCalledWith({
-        type: 'standalonePointer.outside',
-        position: [6, 6],
-      });
+      expect(fixture.send).toHaveBeenLastCalledWith(
+        'standalonePointerOutside',
+        { position: [6, 6] },
+      );
     });
 
     it('tells inside from outside when the parent is in a shadow root', () => {
@@ -628,9 +626,9 @@ describe('createStandaloneSession', () => {
       fixture.leaf.dispatchEvent(pointer('pointerdown', { pointerId: 1 }));
       fixture.opener.dispatchEvent(pointer('pointerdown', { pointerId: 2 }));
 
-      expect(inputTypes(fixture.send)).toEqual([
-        'standalonePointer.move',
-        'standalonePointer.outside',
+      expect(inputNames(fixture.send)).toEqual([
+        'standalonePointerMove',
+        'standalonePointerOutside',
       ]);
       host.remove();
     });
