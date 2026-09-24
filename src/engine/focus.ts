@@ -1,5 +1,4 @@
 import type {
-  MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
   MarkingMenuEventEmitter,
   MarkingMenuOpenEvent,
@@ -20,7 +19,7 @@ const MAX_ACTIVE_ITEM_FOCUS_DELAY_MS = 50;
  (DOM's own retargeting), which would otherwise save that host, rather than
  the caller's real focus, as `savedFocus`.
  */
-const deepActiveElement = (doc: Document): Element | undefined => {
+export const deepActiveElement = (doc: Document): Element | undefined => {
   let active = doc.activeElement;
   while (active?.shadowRoot?.activeElement) {
     active = active.shadowRoot.activeElement;
@@ -30,10 +29,9 @@ const deepActiveElement = (doc: Document): Element | undefined => {
 };
 
 /**
- Speaks the active item's label by moving real focus: the one mechanism
+ Speaks a gesture's active item by moving real focus: the one mechanism
  announced on every target screen reader (no live region, no
- `aria-activedescendant`). Kept out of `machine.ts`: it reacts to the same
- public events a consumer would, and owns nothing the state machine needs.
+ `aria-activedescendant`). A standalone menu's focus is its session's.
  */
 export function manageFocus<Model extends ModelNode = ModelNode>({
   doc,
@@ -42,8 +40,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   submenuOpeningDelay,
 }: {
   doc: Document;
-  getMenu: () =>
-    Pick<Menu, 'focusMenu' | 'focusItem' | 'focusTabStop'> | undefined;
+  getMenu: () => Pick<Menu, 'focusMenu' | 'focusItem'> | undefined;
   runtime: MarkingMenuEventEmitter<Model>;
   submenuOpeningDelay: number;
 }): FocusManager {
@@ -55,115 +52,63 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   );
   let pendingFocus: ReturnType<typeof setTimeout> | undefined;
   let savedFocus: HTMLElement | undefined;
-  let isStandaloneOpen = false;
 
   const clearPendingFocus = (): void => {
     clearTimeout(pendingFocus);
     pendingFocus = undefined;
   };
 
-  const saveFocus = (): void => {
-    savedFocus ??= deepActiveElement(doc) as HTMLElement | undefined;
-  };
-
-  const endInteraction = (): void => {
-    clearPendingFocus();
-    isStandaloneOpen = false;
-    savedFocus = undefined;
-  };
-
   const restoreFocus = (): void => {
     const target = savedFocus;
-    endInteraction();
+    clearPendingFocus();
+    savedFocus = undefined;
     target?.focus({ preventScroll: true });
   };
 
   const onOpen = (event: MarkingMenuOpenEvent<Model>): void => {
-    clearPendingFocus();
-    if (event.mode !== 'standalone') {
-      saveFocus();
-      getMenu()?.focusMenu();
-      return;
-    }
-
-    if (isStandaloneOpen) {
-      // A level entered or left with the keyboard needs nothing here: the
-      // `change` that follows puts focus on the item it lands on. A pointer
-      // release opening a submenu carries no such `change` (it starts with
-      // nothing active), so it takes the container itself instead.
-      if (event.source === 'pointer') {
-        getMenu()?.focusMenu();
-      }
-
-      return;
-    }
-
-    isStandaloneOpen = true;
-    // Captured whether or not this menu takes focus: a pointer release may
-    // still move real focus later (into a submenu it opens), and restoring
-    // on close needs somewhere to return to even then.
-    saveFocus();
-    if (!event.willAutoFocus) {
-      return;
-    }
-
-    // Nothing is active yet, so this is the first item. The platform reports
-    // that focus back as a `focus` input, which is what makes it active.
-    getMenu()?.focusTabStop();
-  };
-
-  const onChange = (event: MarkingMenuChangeEvent<Model>): void => {
-    clearPendingFocus();
-    const { activeItem: active } = event;
-    if (active === undefined) {
-      return;
-    }
-
-    // Keyboard navigation moves at the pace of the keys. A gesture waits, so
-    // an item the pointer only passes over is not announced. A menu that did
-    // not take focus follows too: a `change` means the user is on it. A
-    // pointer-caused change, hover or press, never moves real focus.
     if (event.mode === 'standalone') {
-      if (event.source === 'keyboard') {
-        getMenu()?.focusItem(active.key);
-      }
-
       return;
     }
 
-    pendingFocus = setTimeout(() => {
-      getMenu()?.focusItem(active.key);
-    }, activeItemFocusDelay);
+    clearPendingFocus();
+    savedFocus ??= deepActiveElement(doc) as HTMLElement | undefined;
+    getMenu()?.focusMenu();
   };
 
-  // A press or release outside is a light dismissal: focus stays wherever
-  // the pointer put it, never back on the trigger, as with a native menu.
-  // Focus already left the menu on its own, so it is not pulled back either.
-  const onCancel = (event: MarkingMenuCancelEvent<Model>): void => {
-    if (
-      event.mode === 'standalone' &&
-      (event.source === 'pointer' || event.source === 'focus-loss')
-    ) {
-      endInteraction();
-    } else {
+  // Waits, so an item the pointer only passes over is not announced.
+  const onChange = (event: MarkingMenuChangeEvent<Model>): void => {
+    if (event.mode === 'standalone') {
+      return;
+    }
+
+    const { activeItem } = event;
+    clearPendingFocus();
+    if (activeItem !== undefined) {
+      pendingFocus = setTimeout(() => {
+        getMenu()?.focusItem(activeItem.key);
+      }, activeItemFocusDelay);
+    }
+  };
+
+  const onEnd = (event: { readonly mode: string }): void => {
+    if (event.mode !== 'standalone') {
       restoreFocus();
     }
   };
 
   runtime.on('open', onOpen);
   runtime.on('change', onChange);
-  runtime.on('select', restoreFocus);
-  runtime.on('cancel', onCancel);
+  runtime.on('select', onEnd);
+  runtime.on('cancel', onEnd);
 
   return {
     dispose() {
-      // Disposing mid-gesture: nothing else will ever give the focus this
-      // manager moved back to its owner, so this is the last chance to.
+      // Disposing mid-gesture: nothing else will ever give focus back.
       restoreFocus();
       runtime.off('open', onOpen);
       runtime.off('change', onChange);
-      runtime.off('select', restoreFocus);
-      runtime.off('cancel', onCancel);
+      runtime.off('select', onEnd);
+      runtime.off('cancel', onEnd);
     },
   };
 }

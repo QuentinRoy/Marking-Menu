@@ -2,7 +2,7 @@ import { createMenu } from '../../layout/menu.js';
 import { createParent } from './pointer.js';
 
 /*
- Shared by the standalone sources' tests: a parent holding a real menu of a
+ Shared by the standalone session's tests: a parent holding a real menu of a
  leaf and a submenu item, and a button beside it. Parts are found by their
  role, as a screen reader would, rather than by the menu's own markup.
  */
