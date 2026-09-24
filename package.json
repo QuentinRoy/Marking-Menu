@@ -34,6 +34,7 @@
     "e2e:test": "playwright test --config e2e/playwright.config.ts",
     "prepare": "yarn build",
     "changeset": "changeset",
+    "release:publish": "yarn build && yarn package:lint && yarn package:smoke-test && yarn changeset publish",
     "lint": "yarn build && yarn lint:only",
     "lint:only": "eslint .",
     "lint:fix": "yarn build && eslint . --fix",
