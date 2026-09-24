@@ -109,8 +109,8 @@ export type MarkingMenuOpenOptions = {
   /**
    Whether the menu moves focus to itself as it opens. Defaults to `true`.
    With `false` focus stays where it is, and the first item stays reachable
-   with Tab or the pointer. Only the first opening is affected: entering a submenu always leaves
-   focus in the menu.
+   with Tab or the pointer. Only the first opening is affected: entering a
+   submenu always leaves focus in the menu.
    */
   readonly autoFocus?: boolean;
 };
