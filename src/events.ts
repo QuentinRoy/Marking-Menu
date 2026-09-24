@@ -222,7 +222,7 @@ export class MarkingMenuOpenEvent<
 
   readonly #menu: ModelMenus<Model>;
   readonly #menuCenter: Point;
-  readonly #shouldTakeFocus: boolean;
+  readonly #willAutoFocus: boolean;
   readonly #recognition: MarkingMenuRecognition | undefined;
 
   declare readonly type: 'open';
@@ -233,13 +233,13 @@ export class MarkingMenuOpenEvent<
     readonly source: MarkingMenuEventSource;
     readonly menu: ModelMenus<Model>;
     readonly menuCenter: Point;
-    readonly shouldTakeFocus?: boolean | undefined;
+    readonly willAutoFocus?: boolean | undefined;
     readonly recognition?: MarkingMenuRecognition | undefined;
   }) {
     super(MarkingMenuOpenEvent.type, data);
     this.#menu = data.menu;
     this.#menuCenter = data.menuCenter;
-    this.#shouldTakeFocus = data.shouldTakeFocus ?? true;
+    this.#willAutoFocus = data.willAutoFocus ?? true;
     this.#recognition = data.recognition;
   }
 
@@ -258,11 +258,12 @@ export class MarkingMenuOpenEvent<
   }
 
   /**
-   Whether the menu takes focus. `false` only for a menu shown with
-   `open({ focus: false })`.
+   Whether focus is about to move to the menu. `false` only for the root of
+   a menu shown with `open({ autoFocus: false })`: a level entered later
+   always takes focus.
    */
-  get shouldTakeFocus(): boolean {
-    return this.#shouldTakeFocus;
+  get willAutoFocus(): boolean {
+    return this.#willAutoFocus;
   }
 
   /**

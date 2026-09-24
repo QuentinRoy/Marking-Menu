@@ -48,7 +48,10 @@ export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
       Display the root menu on its own, centered at `position` (client
       coordinates). Throws unless the runtime is idle.
       */
-      open: (position: Point, options?: { readonly focus?: boolean }) => void;
+      open: (
+        position: Point,
+        options?: { readonly autoFocus?: boolean },
+      ) => void;
       /**
       Close a standalone menu. Throws unless one is open.
       */
@@ -260,7 +263,7 @@ export function createRuntime<Model extends EngineModelRoot>({
   // caught here, where the caller can be told about it. The phase is read at
   // call time: a send made from a listener is queued, so two calls made from
   // one listener can both pass, and the second is silently declined.
-  const open = (position: Point, { focus = true } = {}): void => {
+  const open = (position: Point, { autoFocus = true } = {}): void => {
     if (isDisposed) {
       throw new Error('Cannot open a disposed controller.');
     }
@@ -271,7 +274,7 @@ export function createRuntime<Model extends EngineModelRoot>({
       );
     }
 
-    host.send('open', { position, shouldTakeFocus: focus });
+    host.send('open', { position, willAutoFocus: autoFocus });
   };
 
   const close = (): void => {

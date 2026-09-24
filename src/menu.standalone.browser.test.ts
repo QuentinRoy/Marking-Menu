@@ -174,7 +174,7 @@ test('Tab closes the menu and moves on to the next element', async () => {
 test('a menu only displayed leaves focus alone, and stays reachable with Tab', async () => {
   using menu = mountBetweenButtons();
 
-  menu.mm.open({ focus: false });
+  menu.mm.open({ autoFocus: false });
 
   expect(document.activeElement).toBe(menu.before);
   expect(menu.events).toEqual(['open:standalone']);
@@ -188,7 +188,7 @@ test('a menu only displayed leaves focus alone, and stays reachable with Tab', a
 
 test('a menu only displayed still restores focus to its trigger when closed', async () => {
   using menu = mountBetweenButtons();
-  menu.mm.open({ focus: false });
+  menu.mm.open({ autoFocus: false });
   menu.after.focus();
 
   menu.mm.close();
@@ -220,9 +220,9 @@ test('losing focus cancels a standalone menu without moving it back', async () =
   expect(menu.cancellationReasons).toEqual(['dismissed']);
 });
 
-test('a display-only menu closes on focus loss only after focus enters it', async () => {
+test('a menu opened without autofocus closes on focus loss only after focus enters it', async () => {
   using menu = mountBetweenButtons();
-  menu.mm.open({ focus: false });
+  menu.mm.open({ autoFocus: false });
 
   menu.after.focus();
   expect(menu.events).toEqual(['open:standalone']);

@@ -216,12 +216,11 @@ export const pointerRelease = ({
  */
 export function emitStandaloneOpen(
   emit: (name: 'open', data: MarkingMenuOpenEvent) => void,
-  {
-    menuCenter,
-    menus,
-    shouldTakeFocus,
-  }: Pick<StandaloneData, 'menuCenter' | 'menus' | 'shouldTakeFocus'>,
+  { menuCenter, menus }: Pick<StandaloneData, 'menuCenter' | 'menus'>,
   source: MarkingMenuEventSource,
+  // Only the root is ever opened without focus: every level entered after it
+  // moves focus, as the input that entered it puts it on the new level.
+  willAutoFocus = true,
 ): void {
   emit(
     'open',
@@ -231,7 +230,7 @@ export function emitStandaloneOpen(
       source,
       menu: currentMenu(menus),
       menuCenter,
-      shouldTakeFocus,
+      willAutoFocus,
     }),
   );
 }

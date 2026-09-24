@@ -85,7 +85,7 @@ const openStandaloneDisplayOnly = new MarkingMenuOpenEvent<
   source: 'api',
   menu: model,
   menuCenter: [0, 0],
-  shouldTakeFocus: false,
+  willAutoFocus: false,
 });
 const changeStandalone = (active: (typeof model.items)[number] | undefined) =>
   new MarkingMenuChangeEvent<typeof model, 'standalone'>({
@@ -319,7 +319,7 @@ describe('manageFocus', () => {
       elsewhere.remove();
     });
 
-    it('still follows the keyboard once someone tabbed into a display-only menu', () => {
+    it('still follows the keyboard once someone tabbed into a menu opened without autofocus', () => {
       const { emit, menu } = createFixture();
       emit('open', openStandaloneDisplayOnly);
 
@@ -328,7 +328,7 @@ describe('manageFocus', () => {
       expect(menu.focusItem).toHaveBeenCalledExactlyOnceWith(down.key);
     });
 
-    it('takes focus again for the next menu after a display-only one', () => {
+    it('takes focus again for the next menu after one opened without autofocus', () => {
       const { emit, menu } = createFixture();
       emit('open', openStandaloneDisplayOnly);
       emit('cancel', cancelStandalone);

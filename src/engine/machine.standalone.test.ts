@@ -65,9 +65,9 @@ describe('navigationMachine standalone phase', () => {
   const openStandalone = (
     host: ReturnType<typeof startStandalone>,
     position: Point = [50, 60],
-    shouldTakeFocus = true,
+    willAutoFocus = true,
   ): void => {
-    host.send('open', { position, shouldTakeFocus });
+    host.send('open', { position, willAutoFocus });
   };
 
   /**
@@ -80,7 +80,7 @@ describe('navigationMachine standalone phase', () => {
     readonly source: unknown;
     readonly menu: unknown;
     readonly menuCenter: unknown;
-    readonly shouldTakeFocus: unknown;
+    readonly willAutoFocus: unknown;
     readonly activeItem: unknown;
     readonly previousActiveItem: unknown;
     readonly selection: unknown;
@@ -149,7 +149,7 @@ describe('navigationMachine standalone phase', () => {
     model: Parameters<typeof navigationMachine.start>[0]['model'],
   ): Host => {
     const host = navigationMachine.start({ model, options });
-    host.send('open', { position: [0, 0], shouldTakeFocus: true });
+    host.send('open', { position: [0, 0], willAutoFocus: true });
     return host;
   };
 
@@ -211,11 +211,11 @@ describe('navigationMachine standalone phase', () => {
       expect(event.menu).toBe(standaloneModel);
       expect(event.menuCenter).toEqual([50, 60]);
       expect(event.recognition).toBeUndefined();
-      expect(event.shouldTakeFocus).toBe(true);
+      expect(event.willAutoFocus).toBe(true);
       expect(namesOf(outputs)).toEqual(['open']);
     });
 
-    it('carries whether the menu takes focus on every level it opens', () => {
+    it('reports no autofocus for the root only, not for the levels entered after it', () => {
       const host = startStandalone();
       const outputs = recordOutputs(host);
 
@@ -224,9 +224,9 @@ describe('navigationMachine standalone phase', () => {
       host.send('activate');
 
       const opens = outputs.filter(([name]) => name === 'open');
-      expect(opens.map(([, data]) => data.shouldTakeFocus)).toEqual([
+      expect(opens.map(([, data]) => data.willAutoFocus)).toEqual([
         false,
-        false,
+        true,
       ]);
     });
 

@@ -107,11 +107,11 @@ export type MarkingMenuOpenOptions = {
    */
   readonly position?: Point;
   /**
-   Whether the menu takes focus. Defaults to `true`. With `false` the menu is
-   only displayed: focus stays where it is, the first item stays reachable
-   with Tab, and closing the menu gives no focus back.
+   Whether the menu moves focus to itself as it opens. Defaults to `true`.
+   With `false` focus stays where it is and the first item stays reachable
+   with Tab.
    */
-  readonly focus?: boolean;
+  readonly autoFocus?: boolean;
 };
 
 /**
@@ -248,8 +248,8 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     return [left + width / 2, top + height / 2];
   }
 
-  open({ position, focus = true }: MarkingMenuOpenOptions = {}): void {
-    this.#runtime.open(position ?? this.#parentCenter(), { focus });
+  open({ position, autoFocus = true }: MarkingMenuOpenOptions = {}): void {
+    this.#runtime.open(position ?? this.#parentCenter(), { autoFocus });
   }
 
   close(): void {

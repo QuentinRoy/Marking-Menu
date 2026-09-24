@@ -83,7 +83,7 @@ type MachineInputs = {
   dwell: undefined;
   dispose: undefined;
   // Standalone: a menu displayed without a pointer gesture.
-  open: { readonly position: Point; readonly shouldTakeFocus: boolean };
+  open: { readonly position: Point; readonly willAutoFocus: boolean };
   // The standalone pointer source's own four intents: the pointer moving
   // over the displayed level (hover, or a held contact dragging across it),
   // a completed activation, a canceled contact, and a press or release
@@ -205,8 +205,6 @@ type NavigationPhaseFields<Menu, Active> = {
     // The displayed levels, from the root to the current one.
     readonly menus: readonly Menu[];
     readonly menuCenter: Point;
-    // Whether the menu takes focus when it opens, as asked by `open()`.
-    readonly shouldTakeFocus: boolean;
     readonly active: Active | undefined;
   };
   // A step the machine only passes through: the expert dwell recognizes the
@@ -468,13 +466,12 @@ export const navigationMachine = machine({
     // every level it later shows.
     'idle -open> standalone': ({
       fromData: { model, options },
-      inputData: { position, shouldTakeFocus },
+      inputData: { position },
     }) => ({
       model,
       options,
       menus: [model],
       menuCenter: position,
-      shouldTakeFocus,
       active: undefined,
     }),
 
@@ -610,8 +607,8 @@ export const navigationMachine = machine({
     },
 
     // The only way into standalone, so its `open` is always API-caused.
-    'idle -open> standalone'({ toData, emit }) {
-      emitStandaloneOpen(emit, toData, 'api');
+    'idle -open> standalone'({ toData, inputData, emit }) {
+      emitStandaloneOpen(emit, toData, 'api', inputData.willAutoFocus);
     },
 
     // Every keyboard-driven way to go from one standalone level or item to
