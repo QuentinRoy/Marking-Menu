@@ -120,7 +120,7 @@ Use `menu.on(type, listener)` to register a listener and `menu.off(type, listene
 | `select` | A gesture, or a menu shown with `open()`, ends with a selected item. |
 | `cancel` | A gesture, or a menu shown with `open()`, ends without a selection.  |
 
-`select` carries the selected item as `event.selection`, including its `id` and `label`. `move`, `change`, and `cancel` carry the item under the pointer as `event.activeItem`, and `change` also carries `event.previousActiveItem`. Both are `undefined` when no item is under the pointer. `cancel` carries `event.reason`: `no-selection` when a gesture ends with nothing to select, `interrupted` when the browser cancels the pointer, or `dismissed` when `close()`, Escape, Tab, or focus leaving the menu closes one shown with `open()`.
+`select` carries the selected item as `event.selection`, including its `id` and `label`. `move`, `change`, and `cancel` carry the item under the pointer as `event.activeItem`, and `change` also carries `event.previousActiveItem`. Both are `undefined` when no item is under the pointer. `open` also carries `event.willAutoFocus`: `false` for a menu opened with [`autoFocus: false`](#opening-without-autofocus), `true` otherwise, including for every submenu. `cancel` carries `event.reason`: `no-selection` when a gesture ends with nothing to select, `interrupted` when the browser cancels the pointer, or `dismissed` when `close()`, Escape, Tab, or focus leaving the menu closes one shown with `open()`.
 
 Every event includes `mode`: `startup` while waiting for movement or a pause, `novice` while using a visible menu, `expert` while drawing a gesture, or `standalone` for a menu shown with [`open()`](#open-and-close), operated with the keyboard or a pointer. Every event also includes `source`, what caused it: `gesture` for a drawn stroke, `pointer`, `keyboard`, `api` for an `open()` or `close()` call, or `focus-loss`. Every event also includes `position`, a viewport `[x, y]` pair; outside `standalone` mode it is always one, and inside it, only when `source` is `pointer`. Checking `mode` narrows `position` in TypeScript:
 
@@ -148,16 +148,16 @@ if (menu.state.mode === 'standalone') {
 
 `menu.open(options?)` displays the root menu without a gesture, for example from a button or a keyboard shortcut. This is a standalone menu; mouse, touch, pen, and the [keyboard](#keyboard) all operate it. `menu.close()` closes it and fires `cancel`. The menu also closes when focus leaves it. `open()` throws if a gesture or another menu is in progress, and both methods throw after `dispose()`. `close()` throws when no menu is open. Pointer input otherwise goes to the page and starts no gesture until the menu closes, by selection, cancellation, or `close()`.
 
-| Option     | Default              | Purpose                                                                                            |
-| ---------- | -------------------- | -------------------------------------------------------------------------------------------------- |
-| `position` | Center of the parent | Where the menu is centered, in viewport pixels. Read once: the menu does not follow.               |
-| `focus`    | `true`               | Whether the menu takes focus. With `false` the menu is only displayed, see [below](#display-only). |
+| Option      | Default              | Purpose                                                                              |
+| ----------- | -------------------- | ------------------------------------------------------------------------------------ |
+| `position`  | Center of the parent | Where the menu is centered, in viewport pixels. Read once: the menu does not follow. |
+| `autoFocus` | `true`               | Whether the menu takes focus as it opens. See [below](#opening-without-autofocus).   |
 
 Events from a standalone menu have `mode: 'standalone'`. The menu fires `open` for the root and again each time a submenu is entered or left, `change` as the active item changes, `move` on pointer movement, then `select` or `cancel`. It never fires `start`.
 
-### Display only
+### Opening without autofocus
 
-`menu.open({ focus: false })` only draws the menu. Focus stays where it is and the first item is reachable with Tab, but a deliberate keyboard or pointer interaction can still move focus into the menu, for example on entering a submenu. Closing the menu restores focus to whatever held it before `open()`, the same as when the menu takes focus itself — except a press or release outside the menu, which leaves focus wherever it landed instead. Close the menu with `close()`, with the keyboard once an item has focus, with the pointer, or by moving focus away after entering it.
+`menu.open({ autoFocus: false })` leaves focus where it is as the menu opens. The first item stays reachable with Tab, and the pointer still works. It only affects the first opening: entering a submenu always leaves focus in the menu. Closing the menu restores focus to whatever held it before `open()`, except after a press or release outside the menu, which leaves focus where it landed. Close the menu with `close()`, with the keyboard once an item has focus, with the pointer, or by moving focus away after entering it.
 
 ## Item layout
 
@@ -337,7 +337,7 @@ Screen reader touch passthrough (VoiceOver's hold, TalkBack's double-tap-and-hol
 
 ### Keyboard
 
-A menu shown with [`open()`](#open-and-close) works with the keyboard. When it opens, focus moves to the first item. The focused item is the active one, so a screen reader speaks each label as you move. When the menu closes, focus returns to the element that had it before, unless focus moved elsewhere to close it. Pass `focus: false` to show the menu without moving focus; see [Display only](#display-only).
+A menu shown with [`open()`](#open-and-close) works with the keyboard. When it opens, focus moves to the first item. The focused item is the active one, so a screen reader speaks each label as you move. When the menu closes, focus returns to the element that had it before, unless focus moved elsewhere to close it. Pass `autoFocus: false` to open the menu without moving focus; see [Opening without autofocus](#opening-without-autofocus).
 
 | Key                                               | Action                                                            |
 | ------------------------------------------------- | ----------------------------------------------------------------- |

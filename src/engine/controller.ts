@@ -107,11 +107,12 @@ export type MarkingMenuOpenOptions = {
    */
   readonly position?: Point;
   /**
-   Whether the menu takes focus. Defaults to `true`. With `false` the menu is
-   only displayed: focus stays where it is, the first item stays reachable
-   with Tab, and closing the menu gives no focus back.
+   Whether the menu moves focus to itself as it opens. Defaults to `true`.
+   With `false` focus stays where it is, and the first item stays reachable
+   with Tab or the pointer. Only the first opening is affected: entering a
+   submenu always leaves focus in the menu.
    */
-  readonly focus?: boolean;
+  readonly autoFocus?: boolean;
 };
 
 /**
@@ -229,12 +230,12 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
       doc: config.parent.ownerDocument,
       getMenu: renderer.getMenu,
       runtime: this.#runtime,
+      submenuOpeningDelay: options.submenuOpeningDelay,
     });
     this.#keyboardSource = createStandaloneKeyboardSource({
       parent: config.parent,
       getMenu: renderer.getMenu,
       runtime: this.#runtime,
-      onFocusLoss: this.#focusManager.willCloseStandaloneForFocusLoss,
     });
     this.#standalonePointerSource = createStandalonePointerSource({
       parent: config.parent,
@@ -248,9 +249,10 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
     return [left + width / 2, top + height / 2];
   }
 
-  open({ position, focus = true }: MarkingMenuOpenOptions = {}): void {
-    this.#focusManager.willOpenStandalone({ focus });
-    this.#runtime.open(position ?? this.#parentCenter());
+  open(options: MarkingMenuOpenOptions = {}): void {
+    this.#runtime.open(options.position ?? this.#parentCenter(), {
+      autoFocus: options.autoFocus,
+    });
   }
 
   close(): void {

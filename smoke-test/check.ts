@@ -112,7 +112,10 @@ mm.on('cancel', (event) => {
   const segment: MarkingMenuStrokeSegment | undefined = analysis?.segments[0];
   console.log(segment?.points);
 });
-const openOptions: MarkingMenuOpenOptions = { position: [0, 0], focus: false };
+const openOptions: MarkingMenuOpenOptions = {
+  position: [0, 0],
+  autoFocus: false,
+};
 mm.open(openOptions);
 mm.close();
 mm.dispose();

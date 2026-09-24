@@ -222,6 +222,7 @@ export class MarkingMenuOpenEvent<
 
   readonly #menu: ModelMenus<Model>;
   readonly #menuCenter: Point;
+  readonly #willAutoFocus: boolean;
   readonly #recognition: MarkingMenuRecognition | undefined;
 
   declare readonly type: 'open';
@@ -232,11 +233,13 @@ export class MarkingMenuOpenEvent<
     readonly source: MarkingMenuEventSource;
     readonly menu: ModelMenus<Model>;
     readonly menuCenter: Point;
+    readonly willAutoFocus?: boolean | undefined;
     readonly recognition?: MarkingMenuRecognition | undefined;
   }) {
     super(MarkingMenuOpenEvent.type, data);
     this.#menu = data.menu;
     this.#menuCenter = data.menuCenter;
+    this.#willAutoFocus = data.willAutoFocus ?? true;
     this.#recognition = data.recognition;
   }
 
@@ -252,6 +255,15 @@ export class MarkingMenuOpenEvent<
   */
   get menuCenter(): Point {
     return this.#menuCenter;
+  }
+
+  /**
+   Whether focus is about to move to the menu. `false` only for the root of
+   a menu shown with `open({ autoFocus: false })`; a submenu always leaves
+   focus in the menu, so its event is `true`.
+   */
+  get willAutoFocus(): boolean {
+    return this.#willAutoFocus;
   }
 
   /**

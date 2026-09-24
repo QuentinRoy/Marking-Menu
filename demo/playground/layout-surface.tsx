@@ -33,7 +33,7 @@ export function LayoutSurface({
     // whatever ends it.
     const reopen = () => {
       latestRef.current.onDisplayedPathChange(latestRef.current.basePath);
-      controller.open({ focus: false });
+      controller.open({ autoFocus: false });
     };
 
     controller.on('change', (event) => {

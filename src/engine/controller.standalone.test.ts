@@ -110,6 +110,24 @@ describe('a standalone menu', () => {
     expect(opened[0]?.menuCenter).toEqual([130, 220]);
   });
 
+  it.each([
+    [undefined, true],
+    [{ autoFocus: false }, false],
+  ] as const)(
+    'reports whether the menu takes focus on the open event (%j)',
+    (options, willAutoFocus) => {
+      using fixture = setup();
+      const opened: MarkingMenuOpenEvent[] = [];
+      fixture.controller.on('open', (event) => {
+        opened.push(event);
+      });
+
+      fixture.controller.open(options);
+
+      expect(opened[0]?.willAutoFocus).toBe(willAutoFocus);
+    },
+  );
+
   it('opens at the client position it is given', () => {
     using fixture = setup();
     const opened: MarkingMenuOpenEvent[] = [];
@@ -320,11 +338,11 @@ describe('a standalone menu', () => {
     expect(fixture.controller.state.mode).toBe('idle');
   });
 
-  it('only displays the menu, taking no focus, and leaving a tab stop, with focus: false', () => {
+  it('takes no focus, and leaves a tab stop, with autoFocus: false', () => {
     using fixture = setup();
     const events = record(fixture.controller);
 
-    fixture.controller.open({ focus: false });
+    fixture.controller.open({ autoFocus: false });
 
     expect(document.activeElement).toBe(fixture.opener);
     expect(events).toEqual([['open', 'standalone', undefined]]);
@@ -338,7 +356,7 @@ describe('a standalone menu', () => {
 
   it('follows an item the user focused themselves', () => {
     using fixture = setup();
-    fixture.controller.open({ focus: false });
+    fixture.controller.open({ autoFocus: false });
     const events = record(fixture.controller);
 
     fixture.items()[2]?.focus();
@@ -401,10 +419,10 @@ describe('a standalone menu', () => {
   it('can be reopened from its own cancel listener, to stay displayed', () => {
     using fixture = setup();
     fixture.controller.on('cancel', () => {
-      fixture.controller.open({ focus: false });
+      fixture.controller.open({ autoFocus: false });
     });
 
-    fixture.controller.open({ focus: false });
+    fixture.controller.open({ autoFocus: false });
     fixture.controller.close();
 
     expect(fixture.controller.state).toMatchObject({

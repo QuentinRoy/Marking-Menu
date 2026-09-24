@@ -83,7 +83,7 @@ type MachineInputs = {
   dwell: undefined;
   dispose: undefined;
   // Standalone: a menu displayed without a pointer gesture.
-  open: { readonly position: Point };
+  open: { readonly position: Point; readonly willAutoFocus: boolean };
   // The standalone pointer source's own four intents: the pointer moving
   // over the displayed level (hover, or a held contact dragging across it),
   // a completed activation, a canceled contact, and a press or release
@@ -607,8 +607,8 @@ export const navigationMachine = machine({
     },
 
     // The only way into standalone, so its `open` is always API-caused.
-    'idle -open> standalone'({ toData, emit }) {
-      emitStandaloneOpen(emit, toData, 'api');
+    'idle -open> standalone'({ toData, inputData, emit }) {
+      emitStandaloneOpen(emit, toData, 'api', inputData.willAutoFocus);
     },
 
     // Every keyboard-driven way to go from one standalone level or item to
@@ -684,7 +684,7 @@ export const navigationMachine = machine({
       const menu = currentMenu(toData.menus);
       const isNewLevel = toData.menus.length !== fromData.menus.length;
       if (isNewLevel) {
-        emitStandaloneOpen(emit, toData, 'pointer');
+        emitStandaloneOpen(emit, toData, 'pointer', true);
       }
 
       if (toData.active !== fromData.active) {

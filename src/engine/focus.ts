@@ -8,18 +8,11 @@ import type { Menu } from '../layout/menu.js';
 import type { ModelNode } from '../types.js';
 
 export type FocusManager = {
-  /**
-   Say whether the standalone menu about to open takes focus, or is only
-   displayed. Call it before the menu opens.
-   */
-  willOpenStandalone: (options: { focus: boolean }) => void;
-  willCloseStandaloneForFocusLoss: () => void;
   dispose: () => void;
 };
 
-// Below the default `submenuOpeningDelay` (1000 / 3 ms), so the active item
-// is announced before a submenu it points at can open.
-const ACTIVE_ITEM_FOCUS_DELAY_MS = 50;
+// Long enough that an item the pointer only passes over is not announced.
+const MAX_ACTIVE_ITEM_FOCUS_DELAY_MS = 50;
 
 /**
  The element actually holding focus, unlike `document.activeElement`: a
@@ -46,17 +39,23 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   doc,
   getMenu,
   runtime,
+  submenuOpeningDelay,
 }: {
   doc: Document;
   getMenu: () =>
     Pick<Menu, 'focusMenu' | 'focusItem' | 'focusTabStop'> | undefined;
   runtime: MarkingMenuEventEmitter<Model>;
+  submenuOpeningDelay: number;
 }): FocusManager {
+  // Below the submenu delay, so the item is announced before its submenu can
+  // open and clear the announcement.
+  const activeItemFocusDelay = Math.min(
+    MAX_ACTIVE_ITEM_FOCUS_DELAY_MS,
+    submenuOpeningDelay / 2,
+  );
   let pendingFocus: ReturnType<typeof setTimeout> | undefined;
   let savedFocus: HTMLElement | undefined;
   let isStandaloneOpen = false;
-  let willStandaloneTakeFocus = true;
-  let willRestoreFocus = true;
 
   const clearPendingFocus = (): void => {
     clearTimeout(pendingFocus);
@@ -67,16 +66,16 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     savedFocus ??= deepActiveElement(doc) as HTMLElement | undefined;
   };
 
-  const restoreFocus = (): void => {
+  const endInteraction = (): void => {
     clearPendingFocus();
     isStandaloneOpen = false;
-
-    if (willRestoreFocus) {
-      savedFocus?.focus({ preventScroll: true });
-    }
-
     savedFocus = undefined;
-    willRestoreFocus = true;
+  };
+
+  const restoreFocus = (): void => {
+    const target = savedFocus;
+    endInteraction();
+    target?.focus({ preventScroll: true });
   };
 
   const onOpen = (event: MarkingMenuOpenEvent<Model>): void => {
@@ -104,7 +103,7 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
     // still move real focus later (into a submenu it opens), and restoring
     // on close needs somewhere to return to even then.
     saveFocus();
-    if (!willStandaloneTakeFocus) {
+    if (!event.willAutoFocus) {
       return;
     }
 
@@ -134,17 +133,21 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
 
     pendingFocus = setTimeout(() => {
       getMenu()?.focusItem(active.key);
-    }, ACTIVE_ITEM_FOCUS_DELAY_MS);
+    }, activeItemFocusDelay);
   };
 
   // A press or release outside is a light dismissal: focus stays wherever
   // the pointer put it, never back on the trigger, as with a native menu.
+  // Focus already left the menu on its own, so it is not pulled back either.
   const onCancel = (event: MarkingMenuCancelEvent<Model>): void => {
-    if (event.mode === 'standalone' && event.source === 'pointer') {
-      willRestoreFocus = false;
+    if (
+      event.mode === 'standalone' &&
+      (event.source === 'pointer' || event.source === 'focus-loss')
+    ) {
+      endInteraction();
+    } else {
+      restoreFocus();
     }
-
-    restoreFocus();
   };
 
   runtime.on('open', onOpen);
@@ -153,12 +156,6 @@ export function manageFocus<Model extends ModelNode = ModelNode>({
   runtime.on('cancel', onCancel);
 
   return {
-    willOpenStandalone({ focus }) {
-      willStandaloneTakeFocus = focus;
-    },
-    willCloseStandaloneForFocusLoss() {
-      willRestoreFocus = false;
-    },
     dispose() {
       // Disposing mid-gesture: nothing else will ever give the focus this
       // manager moved back to its owner, so this is the last chance to.

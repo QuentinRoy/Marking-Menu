@@ -218,6 +218,7 @@ export function emitStandaloneOpen(
   emit: (name: 'open', data: MarkingMenuOpenEvent) => void,
   { menuCenter, menus }: Pick<StandaloneData, 'menuCenter' | 'menus'>,
   source: MarkingMenuEventSource,
+  willAutoFocus: boolean,
 ): void {
   emit(
     'open',
@@ -227,6 +228,7 @@ export function emitStandaloneOpen(
       source,
       menu: currentMenu(menus),
       menuCenter,
+      willAutoFocus,
     }),
   );
 }
@@ -256,7 +258,8 @@ export function emitStandaloneMove({
   const menu = currentMenu(toData.menus);
   const isNewLevel = toData.menus.length !== fromData.menus.length;
   if (isNewLevel) {
-    emitStandaloneOpen(emit, toData, 'keyboard');
+    // Only the root can skip autofocus: the menu already has focus here.
+    emitStandaloneOpen(emit, toData, 'keyboard', true);
   }
 
   if (

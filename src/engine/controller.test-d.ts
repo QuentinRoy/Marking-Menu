@@ -73,15 +73,15 @@ describe('createController open and close', () => {
     expectTypeOf(controller.open).toBeCallableWith({});
     expectTypeOf(controller.open).toBeCallableWith({
       position: [1, 2],
-      focus: false,
+      autoFocus: false,
     });
     expectTypeOf(controller.open).returns.toBeVoid();
   });
 
-  it('takes a position in client coordinates and whether to take focus, nothing else', () => {
+  it('takes a position in client coordinates and whether to autofocus, nothing else', () => {
     expectTypeOf<MarkingMenuOpenOptions>().toEqualTypeOf<{
       readonly position?: Point;
-      readonly focus?: boolean;
+      readonly autoFocus?: boolean;
     }>();
   });
 

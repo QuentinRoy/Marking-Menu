@@ -23,7 +23,9 @@ const [down, , right] = model.items;
  A listen-only stand-in for the runtime, and the two ways the menu takes
  focus, all recorded.
  */
-const createFixture = () => {
+const createFixture = ({
+  submenuOpeningDelay = 1000,
+}: { submenuOpeningDelay?: number } = {}) => {
   const listeners = new Map<string, Set<(event: never) => void>>();
   const runtime = {
     on(type: string, listener: (event: never) => void) {
@@ -53,6 +55,7 @@ const createFixture = () => {
     doc: document,
     getMenu: () => menu,
     runtime: runtime as never,
+    submenuOpeningDelay,
   });
   const listenerCount = (): number => {
     let count = 0;
@@ -66,12 +69,18 @@ const createFixture = () => {
   return { emit, menu, focusManager, listenerCount };
 };
 
-const openStandalone = new MarkingMenuOpenEvent<typeof model, 'standalone'>({
-  mode: 'standalone',
-  position: undefined,
-  source: 'api',
-  menu: model,
-  menuCenter: [0, 0],
+const createOpenStandalone = (options: { willAutoFocus?: boolean } = {}) =>
+  new MarkingMenuOpenEvent<typeof model, 'standalone'>({
+    mode: 'standalone',
+    position: undefined,
+    source: 'api',
+    menu: model,
+    menuCenter: [0, 0],
+    ...options,
+  });
+const openStandalone = createOpenStandalone();
+const openStandaloneWithoutAutoFocus = createOpenStandalone({
+  willAutoFocus: false,
 });
 const changeStandalone = (active: (typeof model.items)[number] | undefined) =>
   new MarkingMenuChangeEvent<typeof model, 'standalone'>({
@@ -99,6 +108,17 @@ const cancelStandaloneOutsidePress = new MarkingMenuCancelEvent<
   mode: 'standalone',
   position: [0, 0],
   source: 'pointer',
+  activeItem: undefined,
+  menu: model,
+  reason: 'dismissed',
+});
+const cancelStandaloneFocusLoss = new MarkingMenuCancelEvent<
+  typeof model,
+  'standalone'
+>({
+  mode: 'standalone',
+  position: undefined,
+  source: 'focus-loss',
   activeItem: undefined,
   menu: model,
   reason: 'dismissed',
@@ -186,6 +206,43 @@ describe('manageFocus', () => {
 
       expect(menu.focusItem).toHaveBeenCalledExactlyOnceWith(right.key);
     });
+
+    const changeNovice = new MarkingMenuChangeEvent<typeof model, 'novice'>({
+      mode: 'novice',
+      position: [0, 0],
+      source: 'gesture',
+      activeItem: right,
+      previousActiveItem: undefined,
+      menu: model,
+    });
+
+    it.each([
+      [20, 10],
+      [1000, 50],
+    ])(
+      'with a submenu opening delay of %j ms, announces the active item after %j ms',
+      (submenuOpeningDelay, announcedAfter) => {
+        using _timers = fakeTimers();
+        const { emit, menu } = createFixture({ submenuOpeningDelay });
+
+        emit('change', changeNovice);
+        vi.advanceTimersByTime(announcedAfter - 1);
+        expect(menu.focusItem).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(1);
+
+        expect(menu.focusItem).toHaveBeenCalledExactlyOnceWith(right.key);
+      },
+    );
+
+    it('announces the active item without waiting when the submenu opens at once', () => {
+      using _timers = fakeTimers();
+      const { emit, menu } = createFixture({ submenuOpeningDelay: 0 });
+
+      emit('change', changeNovice);
+      vi.advanceTimersByTime(0);
+
+      expect(menu.focusItem).toHaveBeenCalledExactlyOnceWith(right.key);
+    });
   });
 
   describe('in a standalone menu', () => {
@@ -244,14 +301,13 @@ describe('manageFocus', () => {
 
     it('leaves focus where it moved when focus loss closes the menu', () => {
       using fixture = createOpener();
-      const { emit, focusManager } = createFixture();
+      const { emit } = createFixture();
       emit('open', openStandalone);
 
       const elsewhere = document.createElement('button');
       document.body.append(elsewhere);
       elsewhere.focus();
-      focusManager.willCloseStandaloneForFocusLoss();
-      emit('cancel', cancelStandalone);
+      emit('cancel', cancelStandaloneFocusLoss);
 
       expect(document.activeElement).toBe(elsewhere);
       elsewhere.remove();
@@ -260,10 +316,9 @@ describe('manageFocus', () => {
 
     it('takes no focus when asked to just display, but still saves it to give back later', () => {
       using fixture = createOpener();
-      const { emit, menu, focusManager } = createFixture();
+      const { emit, menu } = createFixture();
 
-      focusManager.willOpenStandalone({ focus: false });
-      emit('open', openStandalone);
+      emit('open', openStandaloneWithoutAutoFocus);
       expect(menu.focusTabStop).not.toHaveBeenCalled();
       expect(menu.focusMenu).not.toHaveBeenCalled();
 
@@ -276,26 +331,13 @@ describe('manageFocus', () => {
       elsewhere.remove();
     });
 
-    it('still follows the keyboard once someone tabbed into a display-only menu', () => {
-      const { emit, menu, focusManager } = createFixture();
-      focusManager.willOpenStandalone({ focus: false });
-      emit('open', openStandalone);
+    it('still follows the keyboard once someone tabbed into a menu opened without autofocus', () => {
+      const { emit, menu } = createFixture();
+      emit('open', openStandaloneWithoutAutoFocus);
 
       emit('change', changeStandalone(down));
 
       expect(menu.focusItem).toHaveBeenCalledExactlyOnceWith(down.key);
-    });
-
-    it('takes focus again for the next menu after a display-only one', () => {
-      const { emit, menu, focusManager } = createFixture();
-      focusManager.willOpenStandalone({ focus: false });
-      emit('open', openStandalone);
-      emit('cancel', cancelStandalone);
-
-      focusManager.willOpenStandalone({ focus: true });
-      emit('open', openStandalone);
-
-      expect(menu.focusTabStop).toHaveBeenCalledTimes(1);
     });
 
     it('takes focus again for the next menu after one ended', () => {
