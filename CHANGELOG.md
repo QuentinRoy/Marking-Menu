@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- [#503](https://github.com/QuentinRoy/Marking-Menu/pull/503) [`7e15047`](https://github.com/QuentinRoy/Marking-Menu/commit/7e1504707c992bce27d81a4e702939f51df05e27) - Fix the published package to include the built JavaScript and TypeScript declarations.
+
 ## 1.0.0
 
 ### Major Changes
