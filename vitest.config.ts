@@ -140,12 +140,6 @@ const mouseUp: BrowserCommand<[button: MouseButton]> = async (ctx, button) => {
   await ctx.page.mouse.up({ button });
 };
 
-const jsdomSuites = [
-  // Node's `EventTarget` rethrows listener errors as uncaught exceptions,
-  // which fails the listener isolation test.
-  'src/engine/__tests__/runtime.test.ts',
-];
-
 export default defineConfig({
   // Tests acquire their fixtures with `using`. Oxc downlevels `using` to a
   // helper from `@oxc-project/runtime` (not a dependency) unless the target
@@ -164,23 +158,10 @@ export default defineConfig({
           // coverage below stays scoped to `src`, so demo code never moves the
           // thresholds.
           include: ['src/**/*.test.ts', 'demo/**/*.test.ts'],
-          exclude: [
-            '**/*.browser.test.ts',
-            '**/*.cross-browser.test.ts',
-            ...jsdomSuites,
-          ],
+          exclude: ['**/*.browser.test.ts', '**/*.cross-browser.test.ts'],
           // Run the type level tests (`*.test-d.ts`) alongside the runtime
           // ones.
           typecheck: { enabled: true },
-        },
-      },
-      {
-        test: {
-          // Temporary: suites that still need jsdom, until they are ported.
-          name: 'jsdom',
-          environment: 'jsdom',
-          setupFiles: ['./vitest.setup.ts'],
-          include: jsdomSuites,
         },
       },
       {
@@ -190,7 +171,6 @@ export default defineConfig({
             'src/**/*.browser.test.ts',
             'src/**/*.cross-browser.test.ts',
           ],
-          exclude: jsdomSuites,
           browser: {
             enabled: true,
             provider: playwright({ contextOptions: { hasTouch: true } }),

@@ -1,3 +1,4 @@
+import { catchReportedErrors } from '../../__tests__/__fixtures__/reported-errors.js';
 import { fakeTimers } from '../../__tests__/__fixtures__/timers.js';
 import { createModel } from '../../model.js';
 import { noOp, type Point } from '../../utils.js';
@@ -190,18 +191,21 @@ describe('createRuntime', () => {
   });
 
   it('absorbs a throwing consumer listener rather than letting it interrupt the controller', () => {
+    using reported = catchReportedErrors();
     const runtime = createRuntime({
       model,
       options,
       renderer: createFakeRenderer(),
     });
+    const failure = new Error('boom');
     runtime.on('start', () => {
-      throw new Error('boom');
+      throw failure;
     });
 
     expect(() => {
       runtime.send('pointerDown', { position: [0, 0] });
     }).not.toThrow();
+    expect(reported.errors).toEqual([failure]);
 
     const selected = vi.fn<() => void>();
     runtime.on('select', selected);

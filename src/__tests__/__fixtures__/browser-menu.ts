@@ -262,17 +262,6 @@ export const pressMouse = async (
 };
 
 /**
- Click the mouse `button` at `at`.
- */
-export const clickMouse = async (
-  at: Point,
-  button: MouseButton = 'left',
-): Promise<void> => {
-  const drag = await pressMouse(at, button);
-  await drag.release();
-};
-
-/**
  Wait for the menu to be open, however it got there (novice or dwell).
  Polls for `.marking-menu-label`, the first element in the menu's DOM with
  an actual rendered size (`.marking-menu` and `.marking-menu-item` are both

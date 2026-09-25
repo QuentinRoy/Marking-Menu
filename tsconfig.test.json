@@ -9,5 +9,5 @@
       "@vitest/browser/matchers"
     ]
   },
-  "include": ["src/**/__tests__/**/*", "vitest.setup.ts"]
+  "include": ["src/**/__tests__/**/*"]
 }
