@@ -160,10 +160,13 @@ export default defineConfig([
   {
     files: ['{src,demo}/**/__tests__/**'],
     rules: {
-      // `__tests__`, `__fixtures__`, and `__screenshots__` are the
-      // conventional names for test-only directories. Kebab-case doesn't
-      // allow them.
-      'unicorn/filename-case': 'off',
+      // Kebab-case rejects the conventional `__tests__` and `__fixtures__`.
+      // Treating them as roots skips checking them, but not the files and
+      // folders inside.
+      'unicorn/filename-case': [
+        'error',
+        { directoryRoots: [/(?:^|\/)__(?:tests|fixtures)__$/v] },
+      ],
     },
   },
   {
