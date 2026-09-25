@@ -37,13 +37,13 @@ jobs:
           # missing or out of tolerance; explicit because `CI=true` in
           # Actions would otherwise resolve it to `none`. The browser tests
           # mount the menu straight from `src/`, so no build step is needed.
-          yarn vitest run --project=browser --update
+          yarn vitest run --project='browser (chromium)' --update
           # The checkout and pinned container use different owners. Trust only
           # this ephemeral job workspace before asking Git to stage snapshots.
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git add -- src/__screenshots__/
+          git add -- ':(glob)src/**/__tests__/__screenshots__/**'
           if ! git diff --cached --name-only | awk '
-            $0 ~ /^src\/__screenshots__\/.+-chromium-linux\.png$/ { next }
+            $0 ~ /^(src|demo)\/(.+\/)?__tests__\/__screenshots__\/.+-chromium-linux\.png$/ { next }
             { exit 1 }
           '; then
             echo 'Only visual PNG baselines may be staged.' >&2

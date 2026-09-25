@@ -158,12 +158,11 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/**/__fixtures__/**'],
+    files: ['{src,demo}/**/__tests__/**'],
     rules: {
-      // `__fixtures__` (double underscore, both sides) is this repo's
-      // established name for a directory of test-only helpers/data (see
-      // `src/recognizer/__fixtures__`), predating this rule ever seeing a
-      // `.ts` file directly inside one. Kebab-case doesn't allow it.
+      // `__tests__`, `__fixtures__`, and `__screenshots__` are the
+      // conventional names for test-only directories. Kebab-case doesn't
+      // allow them.
       'unicorn/filename-case': 'off',
     },
   },
@@ -179,9 +178,9 @@ export default defineConfig([
       // files; the rule can't resolve the import to confirm it's a function.
       'vitest/valid-title': ['error', { allowArguments: true }],
       // `waitForMenuClosed`, `waitForFeedbackGone` and `expectFocused`
-      // (`src/__fixtures__/browser-menu.ts`) assert through `expect.poll`
-      // internally; a test built entirely on one of them carries no literal
-      // `expect` call for the rule to find otherwise.
+      // (`src/__tests__/__fixtures__/browser-menu.ts`) assert through
+      // `expect.poll` internally; a test built entirely on one of them carries
+      // no literal `expect` call for the rule to find otherwise.
       'vitest/expect-expect': [
         'error',
         {

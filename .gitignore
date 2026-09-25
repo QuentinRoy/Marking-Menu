@@ -43,11 +43,11 @@ e2e/fixture-dist/
 /blob-report/
 
 # Vitest browser mode: keep only the pinned container's baselines
-# (src/__screenshots__/*/*-chromium-linux.png). A broader `**` pattern here
+# (__screenshots__/*/*-chromium-linux.png). A broader `**` pattern here
 # would exclude the subdirectories themselves, so no negation below it
 # could re-include a file.
-src/__screenshots__/*/*
-!src/__screenshots__/*/*-chromium-linux.png
+**/__screenshots__/*/*
+!**/__screenshots__/*/*-chromium-linux.png
 .vitest/
 
 # Serverless generated files

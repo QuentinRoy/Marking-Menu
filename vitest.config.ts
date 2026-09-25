@@ -22,8 +22,8 @@ const iframeOrigin: BrowserCommand<never[], { x: number; y: number }> = async (
 // `page.touchscreen` only offers an atomic tap, so gestures are driven
 // straight through the Chromium DevTools Protocol instead, the same way
 // `e2e/helpers/touch.ts` drives the functional Playwright suite. One CDP
-// session per test session, kept across commands so several fingers
-// (several concurrent `press()` calls in `src/__fixtures__/browser-menu.ts`)
+// session per test session, kept across commands so several fingers (several
+// concurrent `press()` calls in `src/__tests__/__fixtures__/browser-menu.ts`)
 // can move and lift independently while sharing one active-touch-points
 // dispatch, mirroring `CdpMultiTouchDrag`.
 type TouchSession = {
@@ -110,6 +110,26 @@ const touchEnd: BrowserCommand<[id: number]> = async (ctx, id) => {
   session.points.delete(id);
 };
 
+const jsdomSuites = [
+  'src/__tests__/create-marking-menu.browser.test.ts',
+  'src/__tests__/create-marking-menu.integration.browser.test.ts',
+  'src/engine/__tests__/controller.browser.test.ts',
+  'src/engine/__tests__/controller.standalone.browser.test.ts',
+  'src/engine/__tests__/focus.browser.test.ts',
+  'src/engine/__tests__/gesture-pointer-source.browser.test.ts',
+  'src/engine/__tests__/renderer.browser.test.ts',
+  // Node's `EventTarget` rethrows listener errors as uncaught exceptions,
+  // which fails the listener isolation test.
+  'src/engine/__tests__/runtime.test.ts',
+  'src/engine/__tests__/standalone-session.browser.test.ts',
+  'src/layout/__tests__/gesture-feedback.browser.test.ts',
+  'src/layout/__tests__/menu.browser.test.ts',
+  'src/layout/__tests__/scene.browser.test.ts',
+  'src/layout/__tests__/stroke.browser.test.ts',
+  'src/layout/__tests__/svg-surface.browser.test.ts',
+  'src/move/__tests__/touch-action.browser.test.ts',
+];
+
 export default defineConfig({
   // Tests acquire their fixtures with `using`. Oxc downlevels `using` to a
   // helper from `@oxc-project/runtime` (not a dependency) unless the target
@@ -118,19 +138,21 @@ export default defineConfig({
   // config and its own, lower, target.
   oxc: { target: 'esnext' },
   test: {
-    setupFiles: ['./vitest.setup.ts'],
     globals: true,
     projects: [
       {
         test: {
           name: 'unit',
-          environment: 'jsdom',
-          // Test files are being migrated from .js to .ts; match both until
-          // the migration completes. The playground page (see
-          // `demo/playground`) has tests of its own; coverage below stays
-          // scoped to `src`, so demo code never moves the thresholds.
-          include: ['src/**/*.test.{js,ts}', 'demo/**/*.test.ts'],
-          exclude: ['src/**/*.browser.test.ts'],
+          environment: 'node',
+          // The playground page (see `demo/playground`) has tests of its own;
+          // coverage below stays scoped to `src`, so demo code never moves the
+          // thresholds.
+          include: ['src/**/*.test.ts', 'demo/**/*.test.ts'],
+          exclude: [
+            '**/*.browser.test.ts',
+            '**/*.cross-browser.test.ts',
+            ...jsdomSuites,
+          ],
           // Run the type level tests (`*.test-d.ts`) alongside the runtime
           // ones.
           typecheck: { enabled: true },
@@ -138,8 +160,21 @@ export default defineConfig({
       },
       {
         test: {
+          // Temporary: suites that still need jsdom, until they are ported.
+          name: 'jsdom',
+          environment: 'jsdom',
+          setupFiles: ['./vitest.setup.ts'],
+          include: jsdomSuites,
+        },
+      },
+      {
+        test: {
           name: 'browser',
-          include: ['src/**/*.browser.test.ts'],
+          include: [
+            'src/**/*.browser.test.ts',
+            'src/**/*.cross-browser.test.ts',
+          ],
+          exclude: jsdomSuites,
           browser: {
             enabled: true,
             provider: playwright({ contextOptions: { hasTouch: true } }),
@@ -149,7 +184,7 @@ export default defineConfig({
             // viewport keeps every gesture coordinate, derived from the
             // surface's own bounding box, identical across runs.
             viewport: { width: 800, height: 600 },
-            instances: [{ browser: 'chromium' }],
+            instances: [{ browser: 'chromium', name: 'browser (chromium)' }],
             commands: { touchStart, touchMove, touchEnd, emulateMedia },
           },
         },
