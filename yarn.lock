@@ -4545,12 +4545,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cn@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "cn@npm:0.3.0"
+"cn@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "cn@npm:0.4.0"
   bin:
     cn: bin/cn.mjs
-  checksum: 10c0/dbdfb8b5ff7873dd8a094352191a008dbe7adc9bda6ac2c5d9b017b62a98b5201ca7a9bfaaaf0a6e1c6c48925ca9df62028b0225426f5154d9f7f8946ed5390d
+  checksum: 10c0/e71351cdceb7dbc9b468dcb9cacc304212532fb6bb4545979426f22791f5c4738f37d13825eb68172ae355fbe8afc30386371753d093f1031f17f35a8d10f303
   languageName: node
   linkType: hard
 
@@ -6679,7 +6679,7 @@ __metadata:
     "@vitest/eslint-plugin": "npm:^1.6.27"
     axe-core: "npm:^4.13.0"
     class-variance-authority: "npm:^0.7.1"
-    cn: "npm:^0.3.0"
+    cn: "npm:^0.4.0"
     codemirror-json-schema: "npm:^0.8.1"
     csv-parse: "npm:^7.0.2"
     eslint: "npm:^10.9.1"
