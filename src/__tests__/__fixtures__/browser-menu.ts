@@ -210,11 +210,21 @@ export const press = async (at: Point): Promise<TouchDrag> => {
   };
 };
 
+// Where the mouse is. Chromium reports even a move to where the mouse
+// already is as a `pointermove`, which would count as a hover.
+let mouseAt: Point | undefined;
+
 /**
  Move the mouse to `at` with no button held, such as to hover.
  */
-export const moveMouse = async (at: Point): Promise<void> =>
-  commands.mouseMove(at.x, at.y);
+export const moveMouse = async (at: Point): Promise<void> => {
+  if (mouseAt?.x === at.x && mouseAt.y === at.y) {
+    return;
+  }
+
+  await commands.mouseMove(at.x, at.y);
+  mouseAt = at;
+};
 
 /**
  Press the mouse `button` at `at` and hold, like {@link press} does with a
@@ -224,7 +234,7 @@ export const pressMouse = async (
   at: Point,
   button: MouseButton = 'left',
 ): Promise<Drag> => {
-  await commands.mouseMove(at.x, at.y);
+  await moveMouse(at);
   await commands.mouseDown(button);
   let current = at;
   let hasReleased = false;
@@ -242,7 +252,7 @@ export const pressMouse = async (
     at,
     async moveTo(to, steps = 5) {
       await interpolate(current, to, steps, async (x, y) =>
-        commands.mouseMove(x, y),
+        moveMouse({ x, y }),
       );
       current = to;
     },

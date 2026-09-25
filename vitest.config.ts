@@ -141,12 +141,10 @@ const mouseUp: BrowserCommand<[button: MouseButton]> = async (ctx, button) => {
 };
 
 const jsdomSuites = [
-  'src/engine/__tests__/focus.browser.test.ts',
   'src/engine/__tests__/renderer.browser.test.ts',
   // Node's `EventTarget` rethrows listener errors as uncaught exceptions,
   // which fails the listener isolation test.
   'src/engine/__tests__/runtime.test.ts',
-  'src/engine/__tests__/standalone-session.browser.test.ts',
   'src/layout/__tests__/gesture-feedback.browser.test.ts',
   'src/layout/__tests__/menu.browser.test.ts',
   'src/layout/__tests__/scene.browser.test.ts',

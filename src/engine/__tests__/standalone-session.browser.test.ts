@@ -1,3 +1,10 @@
+import { userEvent } from 'vitest/browser';
+import {
+  moveMouse,
+  press,
+  pressMouse,
+  type Point,
+} from '../../__tests__/__fixtures__/browser-menu.js';
 import {
   MarkingMenuCancelEvent,
   MarkingMenuChangeEvent,
@@ -10,8 +17,7 @@ import { createModel } from '../../model.js';
 import type { KeyboardIntent, NavigationPhase } from '../machine.js';
 import type { NavigationSend } from '../runtime.js';
 import { createStandaloneSession } from '../standalone-session.js';
-import { createMenuFixture } from './__fixtures__/menu.js';
-import { pointer } from './__fixtures__/pointer.js';
+import { createMenuFixture, pointOf } from './__fixtures__/menu.js';
 
 // Only the events' payload: the menu the session reads is the fixture's.
 const model = createModel({
@@ -175,21 +181,54 @@ const createFixture = () => {
   };
 };
 
-const press = (
-  target: EventTarget,
-  key: string,
-  init: KeyboardEventInit = {},
-): KeyboardEvent => {
-  const event = new KeyboardEvent('keydown', {
-    key,
-    bubbles: true,
-    cancelable: true,
-    composed: true,
-    ...init,
-  });
-  target.dispatchEvent(event);
-  return event;
+/**
+ Keeps every `keydown` the page gets, to read what the listeners did with
+ each once dispatched.
+ */
+const recordKeys = () => {
+  const events: KeyboardEvent[] = [];
+  const listener = (event: KeyboardEvent) => {
+    events.push(event);
+  };
+
+  document.addEventListener('keydown', listener);
+  return {
+    /**
+    Whether the `keydown` of each of `keys` had its default prevented.
+    */
+    prevented: (...keys: string[]) =>
+      keys.map(
+        (key) =>
+          events.findLast((event) => event.key === key)?.defaultPrevented,
+      ),
+    [Symbol.dispose]() {
+      document.removeEventListener('keydown', listener);
+    },
+  };
 };
+
+/**
+ Keeps every `pointerdown` the page gets, like {@link recordKeys}.
+ */
+const recordPresses = () => {
+  const events: PointerEvent[] = [];
+  const listener = (event: PointerEvent) => {
+    events.push(event);
+  };
+
+  document.addEventListener('pointerdown', listener);
+  return {
+    events,
+    [Symbol.dispose]() {
+      document.removeEventListener('pointerdown', listener);
+    },
+  };
+};
+
+// On the page, but outside the parent and away from the menu.
+const elsewhere: Point = { x: 20, y: 20 };
+
+const position = ({ x, y }: Point): [number, number] => [x, y];
 
 const inputNames = (send: ReturnType<typeof createFixture>['send']) =>
   send.mock.calls.map(([name]) => name);
@@ -219,27 +258,32 @@ describe('createStandaloneSession', () => {
   });
 
   describe('the gesture', () => {
-    it('starts from a press on the parent while no menu is open', () => {
+    it('starts from a press on the parent while no menu is open', async () => {
       using fixture = createFixture();
-      const down = pointer('pointerdown', { cancelable: true });
+      using presses = recordPresses();
 
-      fixture.parent.dispatchEvent(down);
+      await using _drag = await press(fixture.at(480, 280));
 
       expect(inputNames(fixture.send)).toEqual(['pointerDown']);
-      expect(down.defaultPrevented).toBe(true);
+      expect(presses.events.map((event) => event.defaultPrevented)).toEqual([
+        true,
+      ]);
       expect(fixture.touchAction()).toBe('none');
     });
 
-    it('leaves the pointer and touch-action to the page while a menu is open', () => {
+    it('leaves the pointer and touch-action to the page while a menu is open', async () => {
       using fixture = createFixture();
+      using presses = recordPresses();
       fixture.open();
-      const down = pointer('pointerdown', { cancelable: true });
 
-      fixture.leaf.dispatchEvent(down);
+      await using _drag = await press(pointOf(fixture.leaf));
 
+      const [down] = presses.events;
       expect(inputNames(fixture.send)).toEqual(['standalonePointerMove']);
-      expect(down.defaultPrevented).toBe(false);
-      expect(fixture.parent.hasPointerCapture(1)).toBe(false);
+      expect(down?.defaultPrevented).toBe(false);
+      expect(fixture.parent.hasPointerCapture(down?.pointerId ?? NaN)).toBe(
+        false,
+      );
       expect(fixture.touchAction()).toBe('');
     });
 
@@ -265,24 +309,27 @@ describe('createStandaloneSession', () => {
       expect(fixture.touchAction()).toBe('');
     });
 
-    it('does not start from the outside press that dismisses the menu', () => {
+    it('does not start from the outside press that dismisses the menu', async () => {
       using fixture = createFixture();
+      using presses = recordPresses();
       fixture.open();
       fixture.onSend((name) => {
         if (name === 'standalonePointerOutside') {
           fixture.end('cancel', standaloneCancel('pointer'));
         }
       });
-      const down = pointer('pointerdown', { cancelable: true });
 
-      fixture.outside.dispatchEvent(down);
+      await using _drag = await press(pointOf(fixture.outside));
 
+      const [down] = presses.events;
       expect(inputNames(fixture.send)).toEqual(['standalonePointerOutside']);
-      expect(down.defaultPrevented).toBe(false);
-      expect(fixture.parent.hasPointerCapture(1)).toBe(false);
+      expect(down?.defaultPrevented).toBe(false);
+      expect(fixture.parent.hasPointerCapture(down?.pointerId ?? NaN)).toBe(
+        false,
+      );
     });
 
-    it('starts from the press that follows an outside press', () => {
+    it('starts from the press that follows an outside press', async () => {
       using fixture = createFixture();
       fixture.open();
       fixture.onSend((name) => {
@@ -290,9 +337,9 @@ describe('createStandaloneSession', () => {
           fixture.end('cancel', standaloneCancel('pointer'));
         }
       });
-      fixture.outside.dispatchEvent(pointer('pointerdown', { pointerId: 7 }));
+      await using _outside = await press(pointOf(fixture.outside));
 
-      fixture.parent.dispatchEvent(pointer('pointerdown', { pointerId: 8 }));
+      await using _next = await pressMouse(fixture.at(480, 280));
 
       expect(inputNames(fixture.send)).toEqual([
         'standalonePointerOutside',
@@ -311,78 +358,89 @@ describe('createStandaloneSession', () => {
       ['End', 'last'],
       ['Enter', 'activate'],
       ['Escape', 'back'],
-    ])('sends %s as the %s intent, and prevents it', (key, intent) => {
+    ])('sends %s as the %s intent, and prevents it', async (key, intent) => {
       using fixture = createFixture();
+      using keys = recordKeys();
       fixture.open();
 
-      const event = press(fixture.leaf, key);
+      await userEvent.keyboard(`{${key}}`);
 
       expect(fixture.send).toHaveBeenCalledExactlyOnceWith(intent);
-      expect(event.defaultPrevented).toBe(true);
+      expect(keys.prevented(key)).toEqual([true]);
     });
 
-    it('sends Tab as the dismiss intent, and lets it move focus on', () => {
+    it.each(['{Tab}', '{Shift>}{Tab}{/Shift}'])(
+      'sends %s as the dismiss intent, and lets it move focus on',
+      async (keystrokes) => {
+        using fixture = createFixture();
+        using keys = recordKeys();
+        fixture.open();
+        // What the runtime does with a dismissal.
+        fixture.onSend((name) => {
+          if (name === 'dismiss') {
+            fixture.end('cancel', standaloneCancel('keyboard'));
+          }
+        });
+
+        await userEvent.keyboard(keystrokes);
+
+        expect(fixture.send.mock.calls).toEqual([
+          ['dismiss', { source: 'keyboard' }],
+        ]);
+        expect(keys.prevented('Tab')).toEqual([false]);
+      },
+    );
+
+    it('ignores keys without an intent', async () => {
       using fixture = createFixture();
+      using keys = recordKeys();
       fixture.open();
 
-      const event = press(fixture.leaf, 'Tab');
-      const shifted = press(fixture.leaf, 'Tab', { shiftKey: true });
-
-      expect(fixture.send.mock.calls).toEqual([
-        ['dismiss', { source: 'keyboard' }],
-        ['dismiss', { source: 'keyboard' }],
-      ]);
-      expect(event.defaultPrevented).toBe(false);
-      expect(shifted.defaultPrevented).toBe(false);
-    });
-
-    it('ignores keys without an intent', () => {
-      using fixture = createFixture();
-      fixture.open();
-
-      const event = press(fixture.leaf, 'a');
+      await userEvent.keyboard('a');
 
       expect(fixture.send).not.toHaveBeenCalled();
-      expect(event.defaultPrevented).toBe(false);
+      expect(keys.prevented('a')).toEqual([false]);
     });
 
-    it('leaves shortcuts with a modifier other than Shift to the page', () => {
+    it('leaves shortcuts with a modifier other than Shift to the page', async () => {
       using fixture = createFixture();
+      using keys = recordKeys();
       fixture.open();
 
-      const events = [
-        press(fixture.leaf, 'ArrowLeft', { altKey: true }),
-        press(fixture.leaf, 'Home', { ctrlKey: true }),
-        press(fixture.leaf, 'Enter', { metaKey: true }),
-      ];
+      await userEvent.keyboard('{Alt>}{ArrowLeft}{/Alt}');
+      await userEvent.keyboard('{Control>}{Home}{/Control}');
+      await userEvent.keyboard('{Meta>}{Enter}{/Meta}');
 
       expect(fixture.send).not.toHaveBeenCalled();
-      expect(events.map((event) => event.defaultPrevented)).toEqual([
+      expect(keys.prevented('ArrowLeft', 'Home', 'Enter')).toEqual([
         false,
         false,
         false,
       ]);
     });
 
-    it('ignores keys pressed outside the menu', () => {
+    it('ignores keys pressed outside the menu', async () => {
       using fixture = createFixture();
-      fixture.open();
+      using keys = recordKeys();
+      fixture.open({ autoFocus: false });
+      fixture.outside.focus();
 
-      const event = press(fixture.outside, 'ArrowDown');
+      await userEvent.keyboard('{ArrowDown}');
 
       expect(fixture.send).not.toHaveBeenCalled();
-      expect(event.defaultPrevented).toBe(false);
+      expect(keys.prevented('ArrowDown')).toEqual([false]);
     });
 
-    it('ignores keys and focus unless a menu is open', () => {
+    it('ignores keys and focus unless a menu is open', async () => {
       using fixture = createFixture();
+      using keys = recordKeys();
       fixture.runtime.phase = 'novice';
 
-      const event = press(fixture.leaf, 'Escape');
       fixture.leaf.focus();
+      await userEvent.keyboard('{Escape}');
 
       expect(fixture.send).not.toHaveBeenCalled();
-      expect(event.defaultPrevented).toBe(false);
+      expect(keys.prevented('Escape')).toEqual([false]);
     });
   });
 
@@ -471,7 +529,7 @@ describe('createStandaloneSession', () => {
       expect(inputNames(fixture.send)).not.toContain('dismiss');
     });
 
-    it('sends no focus loss for a blur its own input caused', () => {
+    it('sends no focus loss for a blur its own input caused', async () => {
       using fixture = createFixture();
       fixture.open({ autoFocus: false });
       fixture.leaf.focus();
@@ -482,149 +540,188 @@ describe('createStandaloneSession', () => {
         }
       });
 
-      press(fixture.leaf, 'Enter');
+      await userEvent.keyboard('{Enter}');
 
       expect(inputNames(fixture.send)).toEqual(['focus', 'activate']);
     });
   });
 
   describe('the pointer on the menu', () => {
-    it('sends a move with the item under a hover', () => {
+    it('sends a move with the item under a hover, and with no item once it leaves the menu', async () => {
       using fixture = createFixture();
+      // Hovering starts from wherever the mouse is, which is off the menu
+      // only once it's been moved there.
+      await moveMouse(elsewhere);
       fixture.open();
+      const onLeaf = pointOf(fixture.leaf);
+      const offMenu = fixture.at(480, 280);
 
-      fixture.leaf.dispatchEvent(
-        pointer('pointermove', { clientX: 3, clientY: 4 }),
-      );
-      fixture.layer.dispatchEvent(
-        pointer('pointermove', { clientX: 5, clientY: 5 }),
-      );
+      await moveMouse(onLeaf);
+      await moveMouse(offMenu);
 
       expect(fixture.send.mock.calls).toEqual([
-        ['standalonePointerMove', { position: [3, 4], itemKey: 'leaf-key' }],
-        ['standalonePointerMove', { position: [5, 5], itemKey: undefined }],
-      ]);
-    });
-
-    it('sends a move for a press, and an activate with the item under its release', () => {
-      using fixture = createFixture();
-      fixture.open();
-
-      fixture.leaf.dispatchEvent(
-        pointer('pointerdown', { clientX: 0, clientY: 0 }),
-      );
-      fixture.submenu.dispatchEvent(
-        pointer('pointerup', { clientX: 9, clientY: 9 }),
-      );
-
-      expect(fixture.send.mock.calls).toEqual([
-        ['standalonePointerMove', { position: [0, 0], itemKey: 'leaf-key' }],
         [
-          'standalonePointerActivate',
-          { position: [9, 9], itemKey: 'submenu-key' },
+          'standalonePointerMove',
+          { position: position(onLeaf), itemKey: 'leaf-key' },
+        ],
+        [
+          'standalonePointerMove',
+          { position: position(offMenu), itemKey: undefined },
         ],
       ]);
     });
 
-    it('sends a move with no item when a hover leaves the menu', () => {
+    it('sends a move for a press, and an activate with the item under its release', async () => {
       using fixture = createFixture();
       fixture.open();
+      const onLeaf = pointOf(fixture.leaf);
+      const onSubmenu = pointOf(fixture.submenu);
 
-      fixture.leaf.dispatchEvent(
-        pointer('pointerout', { clientX: 1, clientY: 2 }),
-      );
+      await moveMouse(onLeaf);
+      fixture.send.mockClear();
 
-      expect(fixture.send).toHaveBeenCalledExactlyOnceWith(
-        'standalonePointerMove',
-        { position: [1, 2], itemKey: undefined },
-      );
+      // The mouse: the page owns `touch-action` while the menu is open, so a
+      // touch that moves this far becomes a pan, and is canceled.
+      const drag = await pressMouse(onLeaf);
+      await drag.moveTo(onSubmenu, 1);
+      await drag.release();
+
+      expect(fixture.send.mock.calls).toEqual([
+        [
+          'standalonePointerMove',
+          { position: position(onLeaf), itemKey: 'leaf-key' },
+        ],
+        [
+          'standalonePointerMove',
+          { position: position(onSubmenu), itemKey: 'submenu-key' },
+        ],
+        [
+          'standalonePointerActivate',
+          { position: position(onSubmenu), itemKey: 'submenu-key' },
+        ],
+      ]);
     });
 
-    it('ignores a release without a press, a secondary press, and a second contact', () => {
+    it('ignores a release without a press, a secondary press, and a second contact', async () => {
       using fixture = createFixture();
+      const onLeaf = pointOf(fixture.leaf);
+      // Down before the menu opens, so it is released without a press.
+      const early = await press(elsewhere);
       fixture.open();
 
-      fixture.leaf.dispatchEvent(pointer('pointerup'));
-      fixture.leaf.dispatchEvent(pointer('pointerdown', { isPrimary: false }));
-      fixture.leaf.dispatchEvent(pointer('pointerdown', { button: 2 }));
-      fixture.leaf.dispatchEvent(pointer('pointerdown', { pointerId: 1 }));
-      fixture.submenu.dispatchEvent(pointer('pointerdown', { pointerId: 2 }));
-      fixture.submenu.dispatchEvent(pointer('pointerup', { pointerId: 2 }));
+      {
+        await using _secondary = await pressMouse(onLeaf, 'right');
+      }
 
-      expect(inputNames(fixture.send)).toEqual(['standalonePointerMove']);
-    });
+      {
+        // Not the primary contact while the first finger is down.
+        await using _nonPrimary = await press(onLeaf);
+      }
 
-    it('sends a cancel for a canceled contact', () => {
-      using fixture = createFixture();
-      fixture.open();
-      fixture.leaf.dispatchEvent(pointer('pointerdown'));
+      await early.release();
 
-      fixture.leaf.dispatchEvent(
-        pointer('pointercancel', { clientX: 7, clientY: 8 }),
+      // Hovers still count, but none of these presses acted on the menu.
+      expect(inputNames(fixture.send)).not.toContain(
+        'standalonePointerActivate',
+      );
+      expect(inputNames(fixture.send)).not.toContain(
+        'standalonePointerOutside',
       );
 
-      expect(fixture.send).toHaveBeenLastCalledWith('standalonePointerCancel', {
-        position: [7, 8],
+      // Nor did any of them hold on to the menu: the next press is taken.
+      fixture.send.mockClear();
+      const first = await press(onLeaf);
+      {
+        // The mouse is a primary pointer too, but the finger came first.
+        await using _second = await pressMouse(pointOf(fixture.submenu));
+      }
+
+      await first.release();
+
+      expect(fixture.send.mock.calls.slice(0, 2)).toEqual([
+        [
+          'standalonePointerMove',
+          { position: position(onLeaf), itemKey: 'leaf-key' },
+        ],
+        [
+          'standalonePointerActivate',
+          { position: position(onLeaf), itemKey: 'leaf-key' },
+        ],
+      ]);
+    });
+
+    it('sends a cancel for a canceled contact', async () => {
+      using fixture = createFixture();
+      fixture.open();
+      const onLeaf = pointOf(fixture.leaf);
+      const drag = await press(onLeaf);
+
+      await drag.cancel();
+
+      expect(fixture.send).toHaveBeenCalledWith('standalonePointerCancel', {
+        position: position(onLeaf),
       });
     });
 
-    it('lets go of the capture the browser takes for a touch', () => {
+    it('lets go of the capture the browser takes for a touch', async () => {
       using fixture = createFixture();
+      using presses = recordPresses();
       fixture.open();
-      const captured = new Set([1]);
-      Object.assign(fixture.leaf, {
-        hasPointerCapture: (id: number) => captured.has(id),
-        releasePointerCapture: (id: number) => captured.delete(id),
-      });
+      const label = fixture.leaf.querySelector('.marking-menu-label');
 
-      fixture.leaf.dispatchEvent(pointer('pointerdown', { pointerId: 1 }));
+      await using _drag = await press(pointOf(fixture.leaf));
 
-      expect(captured.has(1)).toBe(false);
+      const [down] = presses.events;
+      expect(label?.hasPointerCapture(down?.pointerId ?? NaN)).toBe(false);
     });
   });
 
   describe('the pointer outside the menu', () => {
-    it('sends an outside press for a press on the parent or the page', () => {
+    it('sends an outside press for a press on the parent or the page', async () => {
       using fixture = createFixture();
-      fixture.open();
+      // Without focus in the menu, the button taking it is no focus loss.
+      fixture.open({ autoFocus: false });
+      const onOutside = pointOf(fixture.outside);
 
-      fixture.outside.dispatchEvent(
-        pointer('pointerdown', { clientX: 2, clientY: 3 }),
-      );
-      fixture.opener.dispatchEvent(
-        pointer('pointerdown', { clientX: 4, clientY: 5 }),
-      );
+      {
+        await using _drag = await press(onOutside);
+      }
+
+      {
+        await using _drag = await press(elsewhere);
+      }
 
       expect(fixture.send.mock.calls).toEqual([
-        ['standalonePointerOutside', { position: [2, 3] }],
-        ['standalonePointerOutside', { position: [4, 5] }],
+        ['standalonePointerOutside', { position: position(onOutside) }],
+        ['standalonePointerOutside', { position: position(elsewhere) }],
       ]);
     });
 
-    it('sends an outside press for a held press released off the menu', () => {
+    it('sends an outside press for a held press released off the menu', async () => {
       using fixture = createFixture();
       fixture.open();
-      fixture.leaf.dispatchEvent(pointer('pointerdown'));
+      // The mouse, for the same reason as a press moved across the menu.
+      const drag = await pressMouse(pointOf(fixture.leaf));
 
-      fixture.opener.dispatchEvent(
-        pointer('pointerup', { clientX: 6, clientY: 6 }),
-      );
+      await drag.moveTo(elsewhere, 1);
+      await drag.release();
 
       expect(fixture.send).toHaveBeenLastCalledWith(
         'standalonePointerOutside',
-        { position: [6, 6] },
+        { position: position(elsewhere) },
       );
     });
 
-    it('tells inside from outside when the parent is in a shadow root', () => {
+    it('tells inside from outside when the parent is in a shadow root', async () => {
       using fixture = createFixture();
       const host = document.createElement('div');
       document.body.append(host);
       host.attachShadow({ mode: 'open' }).append(fixture.parent);
-      fixture.open();
+      // Without focus in the menu, pressing the page is no focus loss.
+      fixture.open({ autoFocus: false });
 
-      fixture.leaf.dispatchEvent(pointer('pointerdown', { pointerId: 1 }));
-      fixture.opener.dispatchEvent(pointer('pointerdown', { pointerId: 2 }));
+      await using _inside = await press(pointOf(fixture.leaf));
+      await using _outside = await pressMouse(elsewhere);
 
       expect(inputNames(fixture.send)).toEqual([
         'standalonePointerMove',
@@ -743,19 +840,22 @@ describe('createStandaloneSession', () => {
     expect(fixture.touchAction()).toBe('none');
   });
 
-  it('gives focus and the pointer back when disposed, and stops listening', () => {
+  it('gives focus and the pointer back when disposed, and stops listening', async () => {
     using fixture = createFixture();
     fixture.open({ autoFocus: false });
     fixture.outside.focus();
 
     fixture.session.dispose();
-    press(fixture.leaf, 'ArrowDown');
-    fixture.leaf.dispatchEvent(pointer('pointermove'));
-    fixture.parent.dispatchEvent(pointer('pointerdown'));
 
     expect(document.activeElement).toBe(fixture.opener);
     expect(fixture.touchAction()).toBe('');
     expect(fixture.listenerCount()).toBe(0);
+
+    fixture.leaf.focus();
+    await userEvent.keyboard('{ArrowDown}');
+    await moveMouse(pointOf(fixture.submenu));
+    await using _drag = await press(fixture.at(480, 280));
+
     expect(fixture.send).not.toHaveBeenCalled();
   });
 });
