@@ -1,0 +1,159 @@
+import {
+  angle,
+  degreesToRadians,
+  deltaAngle,
+  dist,
+  last,
+  mod,
+  noOp,
+  normalizeAngle,
+  radiansToDegrees,
+  toPolar,
+} from '../utils.js';
+
+describe('mod', () => {
+  it('returns a positive modulo', () => {
+    expect(mod(3, 10)).toBe(3);
+    expect(mod(-3, 10)).toBe(7);
+    expect(mod(13, 10)).toBe(3);
+    expect(mod(-13, 10)).toBe(7);
+  });
+});
+
+describe('normalizeAngle', () => {
+  it('normalizes angles to one turn', () => {
+    expect(normalizeAngle(0)).toBe(0);
+    expect(normalizeAngle(360)).toBe(0);
+    expect(normalizeAngle(-10)).toBe(350);
+  });
+});
+
+describe('radianToDegrees', () => {
+  it('converts radians to degrees', () => {
+    const pi = Math.PI;
+    expect(radiansToDegrees(pi)).toEqual(180);
+    expect(radiansToDegrees(0)).toEqual(0);
+    expect(radiansToDegrees(2 * pi)).toEqual(360);
+    expect(radiansToDegrees(pi / 2)).toEqual(90);
+    expect(radiansToDegrees(pi / 4)).toEqual(45);
+    expect(radiansToDegrees(4 * pi)).toEqual(720);
+    expect(radiansToDegrees(-pi / 2)).toEqual(-90);
+  });
+});
+
+describe('degreesToRadians', () => {
+  it('converts degrees to radians', () => {
+    const pi = Math.PI;
+    expect(degreesToRadians(180)).toEqual(pi);
+    expect(degreesToRadians(0)).toEqual(0);
+    expect(degreesToRadians(360)).toEqual(2 * pi);
+    expect(degreesToRadians(90)).toEqual(pi / 2);
+    expect(degreesToRadians(45)).toEqual(pi / 4);
+    expect(degreesToRadians(720)).toEqual(4 * pi);
+    expect(degreesToRadians(-90)).toEqual(-pi / 2);
+  });
+});
+
+describe('deltaAngle', () => {
+  it('properly returns the delta between two angles', () => {
+    expect(deltaAngle(40, 50)).toBe(10);
+
+    expect(deltaAngle(40, 50 + 360)).toBe(10);
+    expect(deltaAngle(40, 50 - 360)).toBe(10);
+    expect(deltaAngle(40 + 360, 50)).toBe(10);
+    expect(deltaAngle(40 - 360, 50)).toBe(10);
+
+    expect(deltaAngle(50, 40)).toBe(-10);
+
+    expect(deltaAngle(50, 40 + 360)).toBe(-10);
+    expect(deltaAngle(50, 40 - 360)).toBe(-10);
+    expect(deltaAngle(50 + 360, 40)).toBe(-10);
+    expect(deltaAngle(50 - 360, 40)).toBe(-10);
+  });
+});
+
+describe('dist', () => {
+  it('returns the euclidean distance between two vectors', () => {
+    expect(dist([0, 0], [0, 0])).toBe(0);
+    expect(dist([42, 11], [42, 11])).toBe(0);
+
+    expect(dist([0, 0], [0, 1])).toBe(1);
+    expect(dist([1, 0], [0, 0])).toBe(1);
+
+    expect(dist([5, 10], [20, 4])).toBe(Math.hypot(5 - 20, 10 - 4));
+    expect(dist([20, 4], [5, 10])).toBe(Math.hypot(5 - 20, 10 - 4));
+
+    expect(dist([42, 11, 5, 8, 0], [42, 11, 5, 8, 0])).toBe(0);
+    expect(dist([1, 1, 0, 0, 1], [0, 0, 1, 1, 0])).toBe(Math.sqrt(5));
+    expect(dist([1, 2, 3, 7, 8], [4, 5, 6, 9, 10])).toBe(
+      Math.hypot(1 - 4, 2 - 5, 3 - 6, 7 - 9, 8 - 10),
+    );
+  });
+
+  it('throws if the two points do not have the same dimension', () => {
+    expect(() => dist([0, 0], [0, 0, 0])).toThrow(
+      'Points must have the same dimension. Got 2 and 3.',
+    );
+    expect(() => dist([1, 2, 3], [1, 2])).toThrow(
+      'Points must have the same dimension. Got 3 and 2.',
+    );
+  });
+});
+
+describe('angle', () => {
+  it('calculate an angle from three points', () => {
+    expect(angle([5, 1], [1, 1], [1, 20])).toBe(90);
+    expect(angle([5, 1], [1, 1], [1, -20])).toBe(90);
+    expect(angle([5, 1], [1, 1], [110, 1])).toBe(0);
+    expect(angle([5, 5], [1, 5], [-10, 5])).toBe(180);
+    expect(angle([5, 5], [1, 1], [5, 1])).toBe(45);
+    // Diagonal collinear points are near the edge of `acos`'s domain, where its
+    // derivative is steepest, so only an approximate match is reliable here.
+    expect(angle([5, 5], [1, 1], [-10, -10])).toBeCloseTo(180, 5);
+  });
+});
+
+describe('toPolar', () => {
+  it('calculates the coordinates of a point in a polar system', () => {
+    expect(toPolar([10, 0], [0, 0])).toEqual({ azymuth: 0, radius: 10 });
+    expect(toPolar([10, 0])).toEqual({ azymuth: 0, radius: 10 });
+    expect(toPolar([10, 5], [5, 5])).toEqual({ azymuth: 0, radius: 5 });
+    expect(toPolar([-10, -20], [-10, -20])).toEqual({ azymuth: 0, radius: 0 });
+    expect(toPolar([10, 15], [0, 5])).toEqual({
+      azymuth: 45,
+      radius: Math.hypot(10, 10),
+    });
+    expect(toPolar([-10, 0])).toEqual({ azymuth: 180, radius: 10 });
+    expect(toPolar([0, -20])).toEqual({ azymuth: -90, radius: 20 });
+  });
+});
+
+describe('noOp', () => {
+  it('does nothing', () => {
+    expect(noOp).not.toThrow();
+  });
+});
+
+describe('last', () => {
+  it('returns the last item of an array', () => {
+    expect(last([1, 2, 3])).toBe(3);
+    expect(
+      last([
+        [0, 0],
+        [10, 0],
+      ]),
+    ).toEqual([10, 0]);
+  });
+
+  it('returns the only item of an array that has just one', () => {
+    expect(last(['only'])).toBe('only');
+  });
+
+  it('returns a last item that is undefined, when that is what the array holds', () => {
+    expect(last([1, undefined])).toBeUndefined();
+  });
+
+  it('throws for an empty array', () => {
+    expect(() => last([])).toThrow('at least one item');
+  });
+});

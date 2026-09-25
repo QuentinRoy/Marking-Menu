@@ -9,10 +9,5 @@
       "@vitest/browser/matchers"
     ]
   },
-  "include": [
-    "src/**/*.test.ts",
-    "src/**/*.test-d.ts",
-    "src/**/__fixtures__/**/*",
-    "vitest.setup.ts"
-  ]
+  "include": ["src/**/__tests__/**/*", "vitest.setup.ts"]
 }

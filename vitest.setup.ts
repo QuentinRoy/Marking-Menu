@@ -47,8 +47,8 @@ if (typeof globalThis.matchMedia !== 'function') {
 
 // JSDOM doesn't implement pointer capture either. Nothing is ever captured
 // under it, so an element that is asked always has nothing to release.
-// `createParent` in `src/engine/__fixtures__/pointer.ts` stubs a stateful
-// version on the one element tests actually capture to.
+// `createParent` in `src/engine/__tests__/__fixtures__/pointer.ts` stubs a
+// stateful version on the one element tests actually capture to.
 if (!('hasPointerCapture' in Element.prototype)) {
   Object.assign(Element.prototype, {
     hasPointerCapture: () => false,
