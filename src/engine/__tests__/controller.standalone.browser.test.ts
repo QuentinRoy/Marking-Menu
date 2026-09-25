@@ -1,6 +1,12 @@
+import { userEvent } from 'vitest/browser';
+import {
+  centerOf,
+  press,
+  type Point,
+} from '../../__tests__/__fixtures__/browser-menu.js';
 import type { MarkingMenuOpenEvent } from '../../events.js';
 import { createController } from '../controller.js';
-import { createParent, pointer } from './__fixtures__/pointer.js';
+import { createParent } from './__fixtures__/parent.js';
 
 describe('a standalone menu', () => {
   const submenuItems = [
@@ -24,10 +30,8 @@ describe('a standalone menu', () => {
    of the block.
    */
   const setup = (config: { readonly noviceDwellingTime?: number } = {}) => {
-    const parent = createParent();
-    parent.getBoundingClientRect = () =>
-      ({ left: 100, top: 200, width: 60, height: 40 }) as unknown as DOMRect;
-    document.body.append(parent);
+    const fixture = createParent();
+    const { parent } = fixture;
     const opener = document.createElement('button');
     document.body.append(opener);
     opener.focus();
@@ -39,29 +43,28 @@ describe('a standalone menu', () => {
     const shadowRoot = () =>
       parent.querySelector('.marking-menu')?.shadowRoot ?? undefined;
     return {
-      parent,
+      ...fixture,
       opener,
       controller,
-      items: () => [
-        ...(shadowRoot()?.querySelectorAll<HTMLElement>('.marking-menu-item') ??
-          []),
-      ],
-      press(key: string, init: KeyboardEventInit = {}) {
-        const target = shadowRoot()?.activeElement ?? parent;
-        const event = new KeyboardEvent('keydown', {
-          key,
-          bubbles: true,
-          cancelable: true,
-          composed: true,
-          ...init,
-        });
-        target.dispatchEvent(event);
-        return event;
+      /**
+       Where to press the item at `index`: on its label, since the item
+       itself is a zero-size anchor. Rounded, so events report it exactly.
+       */
+      itemPoint(index: number): Point {
+        const item =
+          shadowRoot()?.querySelectorAll('.marking-menu-item')[index];
+        const label = item?.querySelector('.marking-menu-label') ?? undefined;
+        if (label === undefined) {
+          throw new Error(`The menu has no item ${index}.`);
+        }
+
+        const { x, y } = centerOf(label);
+        return { x: Math.round(x), y: Math.round(y) };
       },
       [Symbol.dispose]() {
         controller.dispose();
-        parent.remove();
         opener.remove();
+        fixture[Symbol.dispose]();
       },
     };
   };
@@ -92,7 +95,11 @@ describe('a standalone menu', () => {
     expect(opened).toHaveLength(1);
     expect(opened[0]?.mode).toBe('standalone');
     expect(opened[0]?.position).toBeUndefined();
-    expect(opened[0]?.menuCenter).toEqual([130, 220]);
+    const box = fixture.parent.getBoundingClientRect();
+    expect(opened[0]?.menuCenter).toEqual([
+      box.left + box.width / 2,
+      box.top + box.height / 2,
+    ]);
   });
 
   it.each([
@@ -126,9 +133,13 @@ describe('a standalone menu', () => {
     const layer = fixture.parent
       .querySelector('.marking-menu')
       ?.shadowRoot?.querySelector<HTMLElement>('.marking-menu-layer');
-    // Relative to the parent, which sits at [100, 200].
-    expect(layer?.style.getPropertyValue('--center-x')).toBe('-90px');
-    expect(layer?.style.getPropertyValue('--center-y')).toBe('-180px');
+    const box = fixture.parent.getBoundingClientRect();
+    expect(layer?.style.getPropertyValue('--center-x')).toBe(
+      `${10 - box.left}px`,
+    );
+    expect(layer?.style.getPropertyValue('--center-y')).toBe(
+      `${20 - box.top}px`,
+    );
   });
 
   it('displays the root, and removes it once closed, announcing a cancel', () => {
@@ -181,11 +192,9 @@ describe('a standalone menu', () => {
     });
   });
 
-  it('does not open in the middle of a gesture, and leaves the gesture alone', () => {
+  it('does not open in the middle of a gesture, and leaves the gesture alone', async () => {
     using fixture = setup();
-    fixture.parent.dispatchEvent(
-      pointer('pointerdown', { clientX: 0, clientY: 0 }),
-    );
+    await using _drag = await press(fixture.at(0, 0));
 
     expect(() => {
       fixture.controller.open();
@@ -223,52 +232,38 @@ describe('a standalone menu', () => {
   });
 
   describe('operated with the pointer', () => {
-    it('a press still held when the menu closes does not block the next one', () => {
+    it('a press still held when the menu closes does not block the next one', async () => {
       using fixture = setup();
       fixture.controller.open();
-      fixture
-        .items()[1]
-        ?.dispatchEvent(
-          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
-        );
-      fixture.press('Escape');
-      document.body.dispatchEvent(
-        pointer('pointerup', { pointerId: 1, clientX: 0, clientY: 0 }),
-      );
+      const held = await press(fixture.itemPoint(1));
+      await userEvent.keyboard('{Escape}');
+      await held.release();
       fixture.controller.open();
       const events = record(fixture.controller);
 
-      fixture
-        .items()[2]
-        ?.dispatchEvent(
-          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
-        );
+      const next = fixture.itemPoint(2);
+      await using _drag = await press(next);
 
-      expect(events).toEqual([['change', 'standalone', [0, 0]]]);
+      expect(events).toEqual([['change', 'standalone', [next.x, next.y]]]);
     });
 
-    it('a press held across a reopen does not act on the new menu when released', () => {
+    it('a press held across a reopen does not act on the new menu when released', async () => {
       using fixture = setup();
       fixture.controller.open();
-      fixture
-        .items()[1]
-        ?.dispatchEvent(
-          pointer('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 }),
-        );
+      await using held = await press(fixture.itemPoint(1));
       const reopen = () => {
         fixture.controller.off('cancel', reopen);
         fixture.controller.open();
       };
 
       fixture.controller.on('cancel', reopen);
-      fixture.press('Escape');
+      await userEvent.keyboard('{Escape}');
+      // Over the new menu, the held press hovers its items like any pointer
+      // would: only its release is under test.
+      await held.moveTo(fixture.itemPoint(2));
       const events = record(fixture.controller);
 
-      fixture
-        .items()[2]
-        ?.dispatchEvent(
-          pointer('pointerup', { pointerId: 1, clientX: 0, clientY: 0 }),
-        );
+      await held.release();
 
       expect(events).toEqual([]);
     });

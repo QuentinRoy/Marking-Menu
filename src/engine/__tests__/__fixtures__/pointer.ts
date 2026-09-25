@@ -1,8 +1,7 @@
 import { vi } from 'vitest';
 
 /*
- Shared by `controller.browser.test.ts` and
- `gesture-pointer-source.browser.test.ts`: a parent element with
+ Shared by the standalone session's tests: a parent element with
  statefully-stubbed pointer-capture methods (JSDOM implements none of that
  API), and a `PointerEvent` builder defaulting to the primary pointer and
  primary button.

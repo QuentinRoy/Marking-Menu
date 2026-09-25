@@ -110,13 +110,38 @@ const touchEnd: BrowserCommand<[id: number]> = async (ctx, id) => {
   session.points.delete(id);
 };
 
+// Chromium turns this into a real `pointercancel`, the way a touch taken over
+// by the platform (a scroll, a system gesture) ends. The DevTools Protocol
+// cancels every active touch point at once, so this lifts them all.
+const touchCancel: BrowserCommand = async (ctx) => {
+  const session = await getTouchSession(ctx);
+  await session.client.send('Input.dispatchTouchEvent', {
+    touchPoints: [],
+    type: 'touchCancel',
+  });
+  session.points.clear();
+};
+
+type MouseButton = 'left' | 'middle' | 'right';
+
+const mouseMove: BrowserCommand<[x: number, y: number]> = async (ctx, x, y) => {
+  const origin = await iframeOrigin(ctx);
+  await ctx.page.mouse.move(origin.x + x, origin.y + y);
+};
+
+const mouseDown: BrowserCommand<[button: MouseButton]> = async (
+  ctx,
+  button,
+) => {
+  await ctx.page.mouse.down({ button });
+};
+
+const mouseUp: BrowserCommand<[button: MouseButton]> = async (ctx, button) => {
+  await ctx.page.mouse.up({ button });
+};
+
 const jsdomSuites = [
-  'src/__tests__/create-marking-menu.browser.test.ts',
-  'src/__tests__/create-marking-menu.integration.browser.test.ts',
-  'src/engine/__tests__/controller.browser.test.ts',
-  'src/engine/__tests__/controller.standalone.browser.test.ts',
   'src/engine/__tests__/focus.browser.test.ts',
-  'src/engine/__tests__/gesture-pointer-source.browser.test.ts',
   'src/engine/__tests__/renderer.browser.test.ts',
   // Node's `EventTarget` rethrows listener errors as uncaught exceptions,
   // which fails the listener isolation test.
@@ -127,7 +152,6 @@ const jsdomSuites = [
   'src/layout/__tests__/scene.browser.test.ts',
   'src/layout/__tests__/stroke.browser.test.ts',
   'src/layout/__tests__/svg-surface.browser.test.ts',
-  'src/move/__tests__/touch-action.browser.test.ts',
 ];
 
 export default defineConfig({
@@ -185,7 +209,16 @@ export default defineConfig({
             // surface's own bounding box, identical across runs.
             viewport: { width: 800, height: 600 },
             instances: [{ browser: 'chromium', name: 'browser (chromium)' }],
-            commands: { touchStart, touchMove, touchEnd, emulateMedia },
+            commands: {
+              touchStart,
+              touchMove,
+              touchEnd,
+              touchCancel,
+              mouseMove,
+              mouseDown,
+              mouseUp,
+              emulateMedia,
+            },
           },
         },
       },
