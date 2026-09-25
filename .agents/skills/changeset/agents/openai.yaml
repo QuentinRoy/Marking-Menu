@@ -1,0 +1,3 @@
+interface:
+  display_name: "Changeset"
+  short_description: "Write changesets as one coherent changelog"
