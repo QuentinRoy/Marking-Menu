@@ -12,13 +12,17 @@ const slotNames = [
 
 const setUp = () => {
   const parent = document.createElement('div');
+  Object.assign(parent.style, {
+    position: 'fixed',
+    left: '200px',
+    top: '50px',
+    width: '100px',
+    height: '100px',
+  });
   document.body.append(parent);
   const host = document.createElement('div');
   parent.append(host);
   const root = host.attachShadow({ mode: 'open' });
-  let left = 200;
-  parent.getBoundingClientRect = () =>
-    ({ left, top: 50 }) as unknown as DOMRect;
   const scene = createScene({ root, parent });
   return {
     parent,
@@ -26,9 +30,9 @@ const setUp = () => {
     root,
     scene,
     setLeft(value: number) {
-      left = value;
+      parent.style.left = `${value}px`;
     },
-    tearDown() {
+    [Symbol.dispose]() {
       scene.dispose();
       parent.remove();
     },
@@ -37,7 +41,8 @@ const setUp = () => {
 
 describe('scene', () => {
   it('creates one slot per layer, once, in paint order', () => {
-    const { root, tearDown } = setUp();
+    using fixture = setUp();
+    const { root } = fixture;
 
     const slots = [...root.querySelectorAll<HTMLElement>('[data-slot]')];
     expect(slots.map((slot) => slot.dataset.slot)).toEqual([...slotNames]);
@@ -45,12 +50,11 @@ describe('scene', () => {
       expect(slot.localName).toBe('div');
       expect(slot.classList.contains('marking-menu-slot')).toBe(true);
     }
-
-    tearDown();
   });
 
   it('exposes each slot by name', () => {
-    const { root, scene, tearDown } = setUp();
+    using fixture = setUp();
+    const { root, scene } = fixture;
 
     expect(scene.slots.lower.dataset.slot).toBe('lower');
     expect(scene.slots.menu.dataset.slot).toBe('menu');
@@ -63,12 +67,11 @@ describe('scene', () => {
     for (const slot of Object.values(scene.slots)) {
       expect(slot.parentNode).toBe(root);
     }
-
-    tearDown();
   });
 
   it('converts client points to parent coordinates', () => {
-    const { scene, tearDown } = setUp();
+    using fixture = setUp();
+    const { scene } = fixture;
 
     const point: Point = [220, 60];
     expect(scene.toLocal(point)).toEqual([20, 10]);
@@ -81,26 +84,21 @@ describe('scene', () => {
       [20, 10],
       [60, 40],
     ]);
-    tearDown();
   });
 
   it('reads the parent rect late, on every call', () => {
-    const { scene, setLeft, tearDown } = setUp();
+    using fixture = setUp();
+    const { scene, setLeft } = fixture;
 
     expect(scene.toLocal([220, 60])).toEqual([20, 10]);
     setLeft(210);
     expect(scene.toLocal([220, 60])).toEqual([10, 10]);
-    tearDown();
   });
 
   it('reads the parent rect once per batch', () => {
-    const { parent, scene, tearDown } = setUp();
-    let reads = 0;
-    const rect = parent.getBoundingClientRect.bind(parent);
-    parent.getBoundingClientRect = () => {
-      reads += 1;
-      return rect();
-    };
+    using fixture = setUp();
+    const { parent, scene } = fixture;
+    const read = vi.spyOn(parent, 'getBoundingClientRect');
 
     const local = scene.toLocalMany([
       [220, 60],
@@ -113,16 +111,15 @@ describe('scene', () => {
       [60, 40],
       [100, 50],
     ]);
-    expect(reads).toBe(1);
-    tearDown();
+    expect(read).toHaveBeenCalledOnce();
   });
 
   it('removes its slots on dispose', () => {
-    const { root, scene, parent } = setUp();
+    using fixture = setUp();
+    const { root, scene } = fixture;
 
     scene.dispose();
 
     expect(root.querySelectorAll('[data-slot]')).toHaveLength(0);
-    parent.remove();
   });
 });

@@ -1,3 +1,4 @@
+import { fakeTimers } from '../../__tests__/__fixtures__/timers.js';
 import { createModel } from '../../model.js';
 import {
   createRenderer as createRendererWithResolvedOptions,
@@ -28,6 +29,33 @@ const model = createModel({
 
 const renderFrame = () => vi.advanceTimersToNextFrame();
 
+/**
+ A parent laid out on the page at `left`, `top`, with timers faked until the
+ end of the block.
+ */
+const setUp = ({ left = 0, top = 0 } = {}) => {
+  const timers = fakeTimers();
+  const parent = document.createElement('div');
+  Object.assign(parent.style, {
+    position: 'fixed',
+    left: `${left}px`,
+    top: `${top}px`,
+    width: '100px',
+    height: '100px',
+  });
+  document.body.append(parent);
+  return {
+    parent,
+    moveTo(newLeft: number) {
+      parent.style.left = `${newLeft}px`;
+    },
+    [Symbol.dispose]() {
+      parent.remove();
+      timers[Symbol.dispose]();
+    },
+  };
+};
+
 const rootOf = (parent: HTMLElement): ShadowRoot => {
   const root = parent.querySelector('.marking-menu')?.shadowRoot ?? undefined;
   if (root === undefined) {
@@ -50,11 +78,9 @@ const slotOf = (parent: HTMLElement, name: string): HTMLElement => {
 };
 
 describe('createRenderer', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
-
   it('owns one host for its lifetime', () => {
-    const parent = document.createElement('div');
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
     const host = parent.querySelector('.marking-menu');
 
@@ -86,7 +112,8 @@ describe('createRenderer', () => {
   });
 
   it('creates one slot per layer, in paint order', () => {
-    const parent = document.createElement('div');
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
 
     renderer.render({
@@ -113,10 +140,8 @@ describe('createRenderer', () => {
   });
 
   it('converts live and completed strokes from client to parent coordinates', () => {
-    const parent = document.createElement('div');
-    let left = 200;
-    parent.getBoundingClientRect = () =>
-      ({ left, top: 50 }) as unknown as DOMRect;
+    using fixture = setUp({ left: 200, top: 50 });
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
 
     renderer.render({
@@ -129,7 +154,7 @@ describe('createRenderer', () => {
       lowerStroke: undefined,
       indicator: undefined,
     });
-    left = 210;
+    fixture.moveTo(210);
     renderFrame();
     renderer.showFeedback({
       stroke: [
@@ -150,12 +175,9 @@ describe('createRenderer', () => {
   });
 
   it('reads the parent rect once per stroke draw', () => {
-    const parent = document.createElement('div');
-    let reads = 0;
-    parent.getBoundingClientRect = () => {
-      reads += 1;
-      return { left: 200, top: 50 } as unknown as DOMRect;
-    };
+    using fixture = setUp({ left: 200, top: 50 });
+    const { parent } = fixture;
+    const read = vi.spyOn(parent, 'getBoundingClientRect');
 
     const renderer = createRenderer({ parent });
 
@@ -175,15 +197,13 @@ describe('createRenderer', () => {
     expect(
       slotOf(parent, 'upper').querySelector('path')?.getAttribute('d'),
     ).toBe('M 20 10 L 60 40 L 100 50');
-    expect(reads).toBe(1);
+    expect(read).toHaveBeenCalledOnce();
     renderer.dispose();
   });
 
   it('converts strokes against the parent rect at draw time', () => {
-    const parent = document.createElement('div');
-    let left = 200;
-    parent.getBoundingClientRect = () =>
-      ({ left, top: 50 }) as unknown as DOMRect;
+    using fixture = setUp({ left: 200, top: 50 });
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
 
     renderer.render({
@@ -196,7 +216,7 @@ describe('createRenderer', () => {
       lowerStroke: undefined,
       indicator: undefined,
     });
-    left = 210;
+    fixture.moveTo(210);
     renderFrame();
 
     expect(
@@ -206,10 +226,8 @@ describe('createRenderer', () => {
   });
 
   it('positions the opening indicator against the parent rect on every tick', () => {
-    const parent = document.createElement('div');
-    let left = 0;
-    parent.getBoundingClientRect = () =>
-      ({ left, top: 0 }) as unknown as DOMRect;
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
 
     renderer.render({
@@ -219,7 +237,7 @@ describe('createRenderer', () => {
       lowerStroke: undefined,
       indicator: { startedAt: Date.now(), position: [20, 30], delayMs: 300 },
     });
-    left = 5;
+    fixture.moveTo(5);
     renderFrame();
 
     expect(
@@ -231,7 +249,8 @@ describe('createRenderer', () => {
   });
 
   it('paints each layer inside its own fixed slot', () => {
-    const parent = document.createElement('div');
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
 
     renderer.showFeedback({
@@ -286,7 +305,8 @@ describe('createRenderer', () => {
   });
 
   it("makes the item named by the view the menu's tab stop, and keeps it across a new menu", () => {
-    const parent = document.createElement('div');
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
     const other = createModel({
       items: [
@@ -327,9 +347,8 @@ describe('createRenderer', () => {
   });
 
   it('converts the menu center and feedback eagerly against the parent rect', () => {
-    const parent = document.createElement('div');
-    parent.getBoundingClientRect = () =>
-      ({ left: 200, top: 50 }) as unknown as DOMRect;
+    using fixture = setUp({ left: 200, top: 50 });
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
 
     renderer.render({
@@ -365,7 +384,8 @@ describe('createRenderer', () => {
   });
 
   it('holds concurrent feedback traces in arrival order', () => {
-    const parent = document.createElement('div');
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
 
     renderer.showFeedback({
@@ -391,7 +411,8 @@ describe('createRenderer', () => {
   });
 
   it('cancels pending drawing and feedback removal on dispose', () => {
-    const parent = document.createElement('div');
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
     const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame');
     const clearTimer = vi.spyOn(globalThis, 'clearTimeout');
@@ -415,7 +436,8 @@ describe('createRenderer', () => {
   });
 
   it("draws the opening indicator's background and dot at the given anchor, and removes both once the indicator clears", () => {
-    const parent = document.createElement('div');
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
 
     renderer.render({
@@ -446,7 +468,8 @@ describe('createRenderer', () => {
   });
 
   it("paints the indicator's background behind the upper stroke and its dot in front of it", () => {
-    const parent = document.createElement('div');
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
 
     renderer.render({
@@ -476,7 +499,8 @@ describe('createRenderer', () => {
   });
 
   it('reports the opening indicator progress through CSS, and cancels its animation frame on dispose', () => {
-    const parent = document.createElement('div');
+    using fixture = setUp();
+    const { parent } = fixture;
     const renderer = createRenderer({ parent });
     const cancelFrame = vi.spyOn(globalThis, 'cancelAnimationFrame');
 

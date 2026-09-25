@@ -1,8 +1,9 @@
+import { fakeTimers } from '../../__tests__/__fixtures__/timers.js';
 import { createGestureFeedback } from '../gesture-feedback.js';
 
 describe('gesture feedback', () => {
   it('keeps concurrent traces until their own timeouts expire', () => {
-    vi.useFakeTimers();
+    using _timers = fakeTimers();
     const parent = document.createElement('div');
     const feedback = createGestureFeedback({ parent, duration: 50 });
 
@@ -24,11 +25,10 @@ describe('gesture feedback', () => {
     expect(parent.children).toHaveLength(1);
     vi.advanceTimersByTime(25);
     expect(parent.children).toHaveLength(0);
-    vi.useRealTimers();
   });
 
   it('removes every trace and cancels its timeout', () => {
-    vi.useFakeTimers();
+    using _timers = fakeTimers();
     const parent = document.createElement('div');
     const feedback = createGestureFeedback({ parent, duration: 50 });
     feedback.show([[0, 0]]);
@@ -39,6 +39,5 @@ describe('gesture feedback', () => {
     expect(parent.children).toHaveLength(0);
     vi.runAllTimers();
     expect(parent.children).toHaveLength(0);
-    vi.useRealTimers();
   });
 });

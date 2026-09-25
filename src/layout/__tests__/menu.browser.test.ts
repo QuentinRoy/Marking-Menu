@@ -1,10 +1,18 @@
+import { userEvent } from 'vitest/browser';
+import { centerOf, press } from '../../__tests__/__fixtures__/browser-menu.js';
 import { createModel as createRealModel } from '../../model.js';
+import { solveLabelLayout } from '../label-layout.js';
 import {
   createMenu as createMenuWithResolvedOptions,
   type Menu,
   type MenuEventResolution,
   type MenuLayoutModel,
 } from '../menu.js';
+import { validateLabelLayout } from './__fixtures__/label-layout-validator.js';
+
+// Spied on, but still solving: the layout a menu applies is checked against
+// the solver's own input and output.
+vi.mock('../label-layout.js', { spy: true });
 
 // The suite below exercises wedge/label layout, not `deadZoneRadius` itself,
 // so every call site gets the same default unless it overrides it.
@@ -41,25 +49,6 @@ const createSpreadModel = (itemNb: number): MenuLayoutModel => ({
   })),
 });
 
-/**
- JSDOM never lays elements out, so `offsetWidth`/`offsetHeight` are always
- 0. Stub every element's to a fixed size for the duration of the block.
- */
-const stubbedLabelSize = (width: number, height: number): Disposable => {
-  const widthSpy = vi
-    .spyOn(HTMLElement.prototype, 'offsetWidth', 'get')
-    .mockReturnValue(width);
-  const heightSpy = vi
-    .spyOn(HTMLElement.prototype, 'offsetHeight', 'get')
-    .mockReturnValue(height);
-  return {
-    [Symbol.dispose]() {
-      widthSpy.mockRestore();
-      heightSpy.mockRestore();
-    },
-  };
-};
-
 const getShadowRoot = (parent: HTMLElement): ShadowRoot => {
   const root =
     parent.querySelector<HTMLElement>('.marking-menu')?.shadowRoot ?? undefined;
@@ -84,29 +73,49 @@ const getLayer = (parent: HTMLElement): HTMLElement =>
   getPart(parent, '.marking-menu-layer');
 
 /**
- What the menu resolves an event dispatched on `target` to, read the way a
- listener on `parent` reads it: an event's path only exists while it is
+ A parent laid out on the page, so its menu is measured and real input can
+ reach it.
+ */
+const mountParent = () => {
+  const parent = document.createElement('div');
+  Object.assign(parent.style, {
+    position: 'fixed',
+    left: '100px',
+    top: '100px',
+    width: '400px',
+    height: '400px',
+  });
+  document.body.append(parent);
+  return {
+    parent,
+    [Symbol.dispose]() {
+      parent.remove();
+    },
+  };
+};
+
+/**
+ What the menu resolves each `type` event reaching `parent` to, read the way
+ a listener on `parent` reads it: an event's path only exists while it is
  dispatched.
  */
-const resolveOn = (
+const recordResolutions = (
   menu: Menu,
   parent: HTMLElement,
-  target: EventTarget,
-): MenuEventResolution => {
-  let resolution: MenuEventResolution | undefined;
-  parent.addEventListener(
-    'ping',
-    (event) => {
-      resolution = menu.resolve(event);
-    },
-    { once: true },
-  );
-  target.dispatchEvent(new Event('ping', { bubbles: true, composed: true }));
-  if (resolution === undefined) {
-    throw new Error('The event never reached the parent.');
-  }
+  type: 'pointerdown' | 'keydown',
+) => {
+  const resolutions: MenuEventResolution[] = [];
+  const listener = (event: Event) => {
+    resolutions.push(menu.resolve(event));
+  };
 
-  return resolution;
+  parent.addEventListener(type, listener);
+  return {
+    resolutions,
+    [Symbol.dispose]() {
+      parent.removeEventListener(type, listener);
+    },
+  };
 };
 
 const getItems = (parent: HTMLElement): HTMLElement[] => [
@@ -123,64 +132,18 @@ const itemIdOfWedge = (wedge: SVGPathElement): string | undefined =>
   wedge.closest<HTMLElement>('.marking-menu-item')?.dataset.itemId;
 
 /**
- Vitest resolves the CSS inline import to empty text, so tests supply probe
- widths from inherited test variables.
+ Set the menu's own custom properties on `parent`, for its menus to inherit.
  */
-const withSolverConfig = (
+const setProperties = (
   parent: HTMLElement,
-  overrides: Partial<{
-    wedgeThickness: number;
-    wedgeGap: number;
-    wedgeCornerRadius: number;
-    horizontalGap: number;
-    verticalGap: number;
-    ringGap: number;
-    connectorGap: number;
-  }> = {},
+  properties: Partial<
+    Record<'wedge-thickness' | 'wedge-gap' | 'wedge-corner-radius', string>
+  >,
 ): void => {
-  const {
-    wedgeThickness = 40,
-    wedgeGap = 4,
-    wedgeCornerRadius = 4,
-    horizontalGap = 14,
-    verticalGap = 7,
-    ringGap = 12,
-    connectorGap = 3,
-  } = overrides;
-  const properties = {
-    'outer-radius': `${40 + wedgeThickness}px`,
-    'wedge-thickness': `${wedgeThickness}px`,
-    'wedge-gap': `${wedgeGap}px`,
-    'wedge-corner-radius': `${wedgeCornerRadius}px`,
-    'plate-gap-horizontal': `${horizontalGap}px`,
-    'plate-gap-vertical': `${verticalGap}px`,
-    'plate-gap-ring': `${ringGap}px`,
-    'plate-gap-connector': `${connectorGap}px`,
-  };
   for (const [name, value] of Object.entries(properties)) {
     parent.style.setProperty(`--mm-${name}`, value);
   }
-
-  const getComputedStyle = globalThis.getComputedStyle.bind(globalThis);
-  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
-    const probeClass = [...element.classList].find((className) =>
-      className.startsWith('marking-menu-layout-probe--'),
-    );
-    if (probeClass === undefined) {
-      return getComputedStyle(element);
-    }
-
-    const name = probeClass.replace('marking-menu-layout-probe--', '');
-    const style: Pick<CSSStyleDeclaration, 'width'> = {
-      width: properties[name as keyof typeof properties],
-    };
-    return style as CSSStyleDeclaration;
-  });
 };
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
 
 describe('createMenu', () => {
   it('reuses one stylesheet across open shadow roots', () => {
@@ -388,53 +351,71 @@ describe('createMenu', () => {
     menu.remove();
   });
 
-  it('resolves an event on part of an item to that item', () => {
-    const parent = document.createElement('div');
+  it('resolves an event on part of an item to that item', async () => {
+    using fixture = mountParent();
+    const { parent } = fixture;
     const menu = createMenu({
       parent,
       model: createModel(2),
-      center: [30, 50],
+      center: [200, 200],
       doc: document,
+      pointerTarget: true,
     });
+    using recorded = recordResolutions(menu, parent, 'pointerdown');
 
-    const resolution = resolveOn(
-      menu,
-      parent,
-      getPart(
-        parent,
-        '.marking-menu-item[data-item-id="item-1-key"] .marking-menu-label',
+    await using _drag = await press(
+      centerOf(
+        getPart(
+          parent,
+          '.marking-menu-item[data-item-id="item-1-key"] .marking-menu-label',
+        ),
       ),
     );
 
-    expect(resolution).toEqual({ isInside: true, itemKey: 'item-1-key' });
+    expect(recorded.resolutions).toEqual([
+      { isInside: true, itemKey: 'item-1-key' },
+    ]);
   });
 
-  it('resolves an event on the layer, but not on an item, to no item', () => {
-    const parent = document.createElement('div');
+  it('resolves an event on the layer, but not on an item, to no item', async () => {
+    using fixture = mountParent();
+    const { parent } = fixture;
     const menu = createMenu({
       parent,
       model: createModel(2),
-      center: [30, 50],
+      center: [200, 200],
       doc: document,
     });
+    using recorded = recordResolutions(menu, parent, 'keydown');
+    // Only its items take up room on the page, so the layer is reached
+    // through focus.
+    menu.focusMenu();
 
-    const resolution = resolveOn(menu, parent, getLayer(parent));
+    await userEvent.keyboard('a');
 
-    expect(resolution).toEqual({ isInside: true, itemKey: undefined });
+    expect(recorded.resolutions).toEqual([
+      { isInside: true, itemKey: undefined },
+    ]);
   });
 
-  it('resolves an event outside the layer to outside', () => {
-    const parent = document.createElement('div');
+  it('resolves an event outside the layer to outside', async () => {
+    using fixture = mountParent();
+    const { parent } = fixture;
     const outside = document.createElement('button');
+    outside.textContent = 'Outside';
     parent.append(outside);
     const menu = createMenu({
       parent,
       model: createModel(2),
-      center: [30, 50],
+      center: [200, 200],
       doc: document,
+      pointerTarget: true,
     });
+    using recorded = recordResolutions(menu, parent, 'pointerdown');
 
-    expect(resolveOn(menu, parent, outside)).toEqual({ isInside: false });
+    await using _drag = await press(centerOf(outside));
+
+    expect(recorded.resolutions).toEqual([{ isInside: false }]);
   });
 
   it('is inside its items and its host, but not what is beside it', () => {
@@ -488,8 +469,8 @@ describe('createMenu', () => {
   });
 
   it('draws a one-item menu as a full annulus without gaps or corners', () => {
-    const div = document.createElement('div');
-    withSolverConfig(div);
+    using fixture = mountParent();
+    const { parent: div } = fixture;
     createMenu({
       parent: div,
       model: createModel(1),
@@ -505,8 +486,8 @@ describe('createMenu', () => {
   });
 
   it('splits a two-item menu at both bisectors', () => {
-    const div = document.createElement('div');
-    withSolverConfig(div);
+    using fixture = mountParent();
+    const { parent: div } = fixture;
     createMenu({
       parent: div,
       model: {
@@ -534,8 +515,8 @@ describe('createMenu', () => {
   });
 
   it('aligns wedges with the menu angle convention', () => {
-    const div = document.createElement('div');
-    withSolverConfig(div);
+    using fixture = mountParent();
+    const { parent: div } = fixture;
     createMenu({
       parent: div,
       model: createSpreadModel(4),
@@ -560,8 +541,8 @@ describe('createMenu', () => {
   });
 
   it('omits only a wedge whose gap consumes its angular span', () => {
-    const div = document.createElement('div');
-    withSolverConfig(div);
+    using fixture = mountParent();
+    const { parent: div } = fixture;
     createMenu({
       parent: div,
       model: {
@@ -583,8 +564,9 @@ describe('createMenu', () => {
   });
 
   it('uses sharp wedge paths when the gap and corner radius are zero', () => {
-    const div = document.createElement('div');
-    withSolverConfig(div, { wedgeGap: 0, wedgeCornerRadius: 0 });
+    using fixture = mountParent();
+    const { parent: div } = fixture;
+    setProperties(div, { 'wedge-gap': '0px', 'wedge-corner-radius': '0px' });
     createMenu({
       parent: div,
       model: createSpreadModel(3),
@@ -644,25 +626,46 @@ describe('createMenu', () => {
   });
 
   it('solves a conflict-free layout once labels can be measured', () => {
-    using _size = stubbedLabelSize(80, 20);
-    const div = document.createElement('div');
-    withSolverConfig(div);
+    using fixture = mountParent();
+    const { parent: div } = fixture;
+    vi.mocked(solveLabelLayout).mockClear();
     createMenu({
       parent: div,
       model: createSpreadModel(8),
-      center: [30, 50],
+      center: [200, 200],
       doc: document,
+    });
+
+    const [call] = vi.mocked(solveLabelLayout).mock.calls;
+    const [solved] = vi.mocked(solveLabelLayout).mock.results;
+    if (call === undefined || solved?.type !== 'return') {
+      throw new Error('The menu never solved its layout.');
+    }
+
+    const [input] = call;
+    const result = solved.value;
+    // Measured for real, not left at the stylesheet's fallbacks.
+    expect(input.plates.every(({ width }) => width > 0)).toBe(true);
+    expect(result.oversized).toBe(false);
+    expect(validateLabelLayout(input, result)).toEqual({
+      valid: true,
+      failures: [],
     });
 
     const items = getItems(div);
     expect(items).toHaveLength(8);
-    for (const item of items) {
+    for (const [index, item] of items.entries()) {
       const plate = item.querySelector<HTMLElement>('.marking-menu-plate');
       const connector = item.querySelector<SVGElement>(
         '.marking-menu-outer-connector',
       );
-      expect(plate?.style.getPropertyValue('--layout-left')).not.toBe('');
-      expect(plate?.style.getPropertyValue('--layout-top')).not.toBe('');
+      const solvedPlate = result.plates[index];
+      expect(plate?.style.getPropertyValue('--layout-left')).toBe(
+        `${solvedPlate?.x}px`,
+      );
+      expect(plate?.style.getPropertyValue('--layout-top')).toBe(
+        `${solvedPlate?.y}px`,
+      );
       expect(plate?.style.getPropertyValue('--layout-bottom')).toBe('auto');
       expect(
         connector?.style.getPropertyValue('--layout-connector-contact-radius'),
@@ -671,9 +674,9 @@ describe('createMenu', () => {
   });
 
   it('leaves the fallback rendering unmodified when the solver reports the menu as oversized', () => {
-    using _size = stubbedLabelSize(120, 20);
-    const div = document.createElement('div');
-    withSolverConfig(div);
+    using fixture = mountParent();
+    const { parent: div } = fixture;
+    vi.mocked(solveLabelLayout).mockClear();
     createMenu({
       parent: div,
       // Two items a fraction of a degree apart: no shared radius, however
@@ -684,10 +687,12 @@ describe('createMenu', () => {
           { label: 'item-1-name', angle: 0.3, key: 'item-1-key', isLeaf: true },
         ],
       },
-      center: [30, 50],
+      center: [200, 200],
       doc: document,
     });
 
+    const [solved] = vi.mocked(solveLabelLayout).mock.results;
+    expect(solved?.type === 'return' && solved.value.oversized).toBe(true);
     const items = getItems(div);
     for (const item of items) {
       expect(
@@ -699,22 +704,23 @@ describe('createMenu', () => {
   });
 
   it('reads the wedge thickness and clearances from the CSS custom properties in scope', () => {
-    using _size = stubbedLabelSize(80, 20);
-    const narrowRing = document.createElement('div');
-    withSolverConfig(narrowRing, { wedgeThickness: 40 });
+    using narrowFixture = mountParent();
+    const { parent: narrowRing } = narrowFixture;
+    setProperties(narrowRing, { 'wedge-thickness': '40px' });
     createMenu({
       parent: narrowRing,
       model: createSpreadModel(8),
-      center: [30, 50],
+      center: [200, 200],
       doc: document,
     });
 
-    const wideRing = document.createElement('div');
-    withSolverConfig(wideRing, { wedgeThickness: 160 });
+    using wideFixture = mountParent();
+    const { parent: wideRing } = wideFixture;
+    setProperties(wideRing, { 'wedge-thickness': '160px' });
     createMenu({
       parent: wideRing,
       model: createSpreadModel(8),
-      center: [30, 50],
+      center: [200, 200],
       doc: document,
     });
 

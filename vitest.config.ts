@@ -141,15 +141,9 @@ const mouseUp: BrowserCommand<[button: MouseButton]> = async (ctx, button) => {
 };
 
 const jsdomSuites = [
-  'src/engine/__tests__/renderer.browser.test.ts',
   // Node's `EventTarget` rethrows listener errors as uncaught exceptions,
   // which fails the listener isolation test.
   'src/engine/__tests__/runtime.test.ts',
-  'src/layout/__tests__/gesture-feedback.browser.test.ts',
-  'src/layout/__tests__/menu.browser.test.ts',
-  'src/layout/__tests__/scene.browser.test.ts',
-  'src/layout/__tests__/stroke.browser.test.ts',
-  'src/layout/__tests__/svg-surface.browser.test.ts',
 ];
 
 export default defineConfig({
