@@ -156,7 +156,7 @@ describe('createController', () => {
     parent.style.cursor = 'pointer';
     const controller = createController({ items, parent });
 
-    const drag = await press(at(0, 0));
+    await using drag = await press(at(0, 0));
     expect(parent.style.cursor).toBe('none');
 
     // Back to idle: the parent's cursor is the parent's again, not blank.
@@ -169,7 +169,7 @@ describe('createController', () => {
     expect(parent.style.cursor).toBe('pointer');
   });
 
-  it('draws the stroke through the RAF throttle, converging to the latest state when frames coalesce', async () => {
+  it('draws the stroke through the animation-frame throttle, converging to the latest state when frames coalesce', async () => {
     using _timers = fakeTimers();
     using fixture = createParent();
     const { parent, at } = fixture;

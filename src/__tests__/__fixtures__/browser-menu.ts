@@ -145,6 +145,22 @@ export type TouchDrag = Drag & {
   cancel(): Promise<void>;
 };
 
+// Taken before any test fakes it, so it always waits for a real frame.
+const requestRealAnimationFrame =
+  globalThis.requestAnimationFrame.bind(globalThis);
+
+/**
+ Chromium holds a `pointermove` back until the next animation frame, which
+ the command that sent the move doesn't wait for. Waiting for that frame
+ lets the page see the move before the test goes on.
+ */
+const nextFrame = async (): Promise<void> =>
+  new Promise((resolve) => {
+    requestRealAnimationFrame(() => {
+      resolve();
+    });
+  });
+
 /**
  Moves from `from` to `to` in `steps` separate moves, each a real input at a
  point in time, so the browser sees the same gradual path a hand drawing it
@@ -196,9 +212,10 @@ export const press = async (at: Point): Promise<TouchDrag> => {
   return {
     at,
     async moveTo(to, steps = 5) {
-      await interpolate(current, to, steps, async (x, y) =>
-        commands.touchMove(id, x, y),
-      );
+      await interpolate(current, to, steps, async (x, y) => {
+        await commands.touchMove(id, x, y);
+        await nextFrame();
+      });
       current = to;
     },
     release,
@@ -223,6 +240,7 @@ export const moveMouse = async (at: Point): Promise<void> => {
   }
 
   await commands.mouseMove(at.x, at.y);
+  await nextFrame();
   mouseAt = at;
 };
 

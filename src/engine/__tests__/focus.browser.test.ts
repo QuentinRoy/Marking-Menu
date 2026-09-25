@@ -226,18 +226,32 @@ describe('manageFocus', () => {
   });
 });
 
+/**
+ A button inside the shadow root of a host on the page.
+ */
+const createShadowButton = () => {
+  const host = document.createElement('div');
+  document.body.append(host);
+  const button = document.createElement('button');
+  host.attachShadow({ mode: 'open' }).append(button);
+  return {
+    host,
+    button,
+    [Symbol.dispose]() {
+      host.remove();
+    },
+  };
+};
+
 describe('deepActiveElement', () => {
   it('finds the element focused inside a shadow root', () => {
-    const host = document.createElement('div');
-    document.body.append(host);
-    const button = document.createElement('button');
-    host.attachShadow({ mode: 'open' }).append(button);
+    using fixture = createShadowButton();
+    const { host, button } = fixture;
 
     button.focus();
 
     expect(document.activeElement).toBe(host);
     expect(deepActiveElement(document)).toBe(button);
-    host.remove();
   });
 
   it('finds nothing in a document without an element to focus', () => {
