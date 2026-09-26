@@ -33,29 +33,23 @@ The points drawn by one press-move-release of the pointer, as given to the recog
 _Avoid_: Gesture (for the points), path
 
 **Mark**:
-The directional shape a user intends to draw to select an item: one straight move per level passed through.
+The ideal shape that selects an item: one straight move per level, each in its item's direction.
 _Avoid_: Gesture (for the shape)
 
-**Target**:
-The mark a corpus stroke was prompted to draw.
-_Avoid_: Stimulus, expected path
 
 ### Recognition
 
 **Correct selection**:
-A stroke recognized as the full target path.
+A stroke recognized as the item the user aimed for.
 
 **Wrong selection**:
-A stroke recognized as a path other than its target. Worse than a no selection, because the user may not notice it.
+A stroke recognized as an item other than the one the user aimed for. Worse than a no selection, because the user may not notice it.
 _Avoid_: Misrecognition (ambiguous with no selection)
 
 **No selection**:
 A stroke the recognizer rejects, selecting nothing.
 _Avoid_: Cancel, miss
 
-**Accepted stroke**:
-A corpus stroke its drawer judged to follow its target. Recognizers are held to the reliability bar on accepted strokes only.
-_Avoid_: Valid stroke, clean stroke
 
 **Floor**:
 The narrowest gap the library accepts for a menu of a given depth, set by where the recognizer stops meeting the reliability bar. Below it, the library rejects the menu.
