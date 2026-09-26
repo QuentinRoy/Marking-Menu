@@ -114,15 +114,15 @@ export default defineConfig([
   {
     // Neither page has a project preview image yet to use as og:image;
     // og:title, og:type, and og:url are already set on the demo (see
-    // `demo/index.html`).
+    // `packages/demo/index.html`).
     files: ['packages/demo/**'],
     rules: {
       '@html-eslint/require-open-graph-protocol': 'off',
     },
   },
   {
-    // The playground page (see `demo/playground`) is the only React in the
-    // repo; the library itself is framework-free.
+    // The playground page (see `packages/demo/playground`) is the only React
+    // in the repo; the library itself is framework-free.
     files: ['packages/demo/playground/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat.recommended],
   },

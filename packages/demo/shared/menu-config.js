@@ -11,9 +11,9 @@
  construction and either can be pasted into the other.
 
  The value is only checked for shape here. The playground validates it
- against `demo/playground/menu-schema.ts`, which is stricter and reports what is
- wrong; this module only has to decide whether there is a menu at all, so
- that the demo can fall back to its own.
+ against `packages/demo/playground/menu-schema.ts`, which is stricter and
+ reports what is wrong; this module only has to decide whether there is a
+ menu at all, so that the demo can fall back to its own.
 
  Nothing here imports the library at runtime, only its types: the demo
  resolves `marking-menu` through its import map, and a second copy pulled in
