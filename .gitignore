@@ -35,13 +35,6 @@ dist/
 demo-dist/
 playground-dist/
 build/
-e2e/fixture-dist/
-
-# Playwright
-/playwright-report/
-/test-results/
-/blob-report/
-
 # Vitest browser mode: keep only the pinned container's baselines
 # (__screenshots__/*/*-chromium-linux.png). A broader `**` pattern here
 # would exclude the subdirectories themselves, so no negation below it

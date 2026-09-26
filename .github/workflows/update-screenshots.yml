@@ -35,13 +35,16 @@ jobs:
           set -euo pipefail
           # `--update` resolves to `all` and rewrites references that are
           # missing or out of tolerance; explicit because `CI=true` in
-          # Actions would otherwise resolve it to `none`. The browser tests
-          # mount the menu straight from `src/`, so no build step is needed.
+          # Actions would otherwise resolve it to `none`.
+          yarn demo:build
           yarn vitest run --project='browser (chromium)' --update
+          yarn vitest run --project='browser (dist)' --update
           # The checkout and pinned container use different owners. Trust only
           # this ephemeral job workspace before asking Git to stage snapshots.
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git add -- ':(glob)src/**/__tests__/__screenshots__/**'
+          git add -- \
+            ':(glob)src/**/__tests__/__screenshots__/**' \
+            ':(glob)demo/**/__tests__/__screenshots__/**'
           if ! git diff --cached --name-only | awk '
             $0 ~ /^(src|demo)\/(.+\/)?__tests__\/__screenshots__\/.+-chromium-linux\.png$/ { next }
             { exit 1 }

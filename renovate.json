@@ -26,11 +26,7 @@
       "groupName": "test"
     },
     {
-      "matchPackageNames": [
-        "@playwright/test",
-        "playwright",
-        "mcr.microsoft.com/playwright"
-      ],
+      "matchPackageNames": ["playwright", "mcr.microsoft.com/playwright"],
       "groupName": "playwright",
       "rangeStrategy": "update-lockfile"
     }

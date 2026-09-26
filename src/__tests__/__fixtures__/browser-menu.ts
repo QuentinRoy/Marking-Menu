@@ -14,7 +14,7 @@ declare module 'vitest/browser' {
     touchMove: (id: number, x: number, y: number) => Promise<void>;
     touchEnd: (id: number) => Promise<void>;
     touchCancel: () => Promise<void>;
-    mouseMove: (x: number, y: number) => Promise<void>;
+    mouseMove: (x: number, y: number, steps?: number) => Promise<void>;
     mouseDown: (button: MouseButton) => Promise<void>;
     mouseUp: (button: MouseButton) => Promise<void>;
     emulateMedia: (options: {
@@ -51,6 +51,30 @@ export const TOP_LEVEL_ITEMS = {
   'up-right': { angle: 315, label: 'Up-Right' },
 } satisfies Record<string, MenuItemGeometry>;
 
+const gestureItem = <Id extends keyof typeof TOP_LEVEL_ITEMS>(id: Id) => ({
+  id,
+  ...TOP_LEVEL_ITEMS[id],
+});
+
+export const GESTURE_MENU_ITEMS = [
+  gestureItem('right'),
+  gestureItem('down-right'),
+  {
+    ...gestureItem('others'),
+    items: [
+      { id: 'sub-right', label: 'Sub Right', angle: 0 },
+      { id: 'sub-down', label: 'Sub Down', angle: 90 },
+      { id: 'sub-left', label: 'Sub Left', angle: 180 },
+      { id: 'sub-up', label: 'Sub Up', angle: 270 },
+    ],
+  },
+  gestureItem('down-left'),
+  gestureItem('left'),
+  gestureItem('up-left'),
+  gestureItem('up'),
+  gestureItem('up-right'),
+] as const;
+
 export type MountedMenu = Disposable & {
   readonly mm: MarkingMenuController;
   readonly surface: HTMLElement;
@@ -58,9 +82,8 @@ export type MountedMenu = Disposable & {
 };
 
 /**
- Mounts a menu the way the old Playwright fixture's CSS did: a fixed-size
- `snapshotArea` (what gets screenshotted) containing an inset `surface`
- (what the menu attaches to and gestures target).
+ Mounts a menu in a fixed-size `snapshotArea` containing an inset `surface`
+ that the menu attaches to and gestures target.
  */
 export const mountMenu = (
   config: Omit<MarkingMenuConfig, 'parent'>,
@@ -190,9 +213,8 @@ const fingersDown = new Set<number>();
  this one is still down drives a genuinely concurrent touch point, the way
  two fingers on a real screen do (see `vitest.config.ts`'s touch commands).
  Call `release()` when the gesture should end, or let the scope's
- disposal (`await using`) do it: the Playwright page behind these tests,
- unlike Playwright Test's own pages, is shared across every test in the
- file, so a touch left active would carry into whichever test runs next.
+ disposal (`await using`) do it: the browser page is shared across every test
+ in the file, so a touch left active would carry into whichever test runs next.
  */
 export const press = async (at: Point): Promise<TouchDrag> => {
   const id = nextFingerId;
@@ -242,6 +264,35 @@ export const moveMouse = async (at: Point): Promise<void> => {
   await commands.mouseMove(at.x, at.y);
   await nextFrame();
   mouseAt = at;
+};
+
+/**
+ Move the real mouse to `at`, interpolating native pointer input over steps.
+ Points use coordinates in the test iframe.
+ */
+export const mouseMoveTo = async (at: Point, steps = 1): Promise<void> => {
+  await commands.mouseMove(at.x, at.y, steps);
+  await nextFrame();
+  mouseAt = at;
+};
+
+/**
+ Move the real mouse to `at` and press the primary button.
+ */
+export const mousePressAt = async (at: Point): Promise<void> => {
+  await mouseMoveTo(at);
+  await commands.mouseDown('left');
+};
+
+/**
+ Optionally move the real mouse, then release the primary button.
+ */
+export const mouseReleaseAt = async (at?: Point): Promise<void> => {
+  if (at) {
+    await mouseMoveTo(at);
+  }
+
+  await commands.mouseUp('left');
 };
 
 /**

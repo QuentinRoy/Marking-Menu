@@ -1,7 +1,6 @@
 import vitest from '@vitest/eslint-plugin';
 import eslintConfigXo from 'eslint-config-xo';
 import importX from 'eslint-plugin-import-x';
-import playwright from 'eslint-plugin-playwright';
 import reactHooks from 'eslint-plugin-react-hooks';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import skillsLock from './skills-lock.json' with { type: 'json' };
@@ -87,12 +86,7 @@ export default defineConfig([
     // everywhere else and is the thing that catches a lapse. It flags both,
     // its `Symbol` list predating Explicit Resource Management, and it takes
     // no allowlist option, hence disabling it wholesale for these files.
-    files: [
-      'src/**/*.test.ts',
-      'src/**/*.test-d.ts',
-      'src/**/__fixtures__/**',
-      'e2e/**',
-    ],
+    files: ['src/**/*.test.ts', 'src/**/*.test-d.ts', 'src/**/__fixtures__/**'],
     rules: {
       'unicorn/no-nonstandard-builtin-properties': 'off',
     },
@@ -100,16 +94,9 @@ export default defineConfig([
   {
     // Vite/Vitest/Prettier/Playwright config files must use a default
     // export; that's the contract those tools require.
-    files: ['*.config.{js,ts}', 'e2e/*.config.{js,ts}'],
+    files: ['*.config.{js,ts}'],
     rules: {
       'import-x/no-default-export': 'off',
-    },
-  },
-  {
-    // `baseURL` is Playwright's own option name, not ours to rename.
-    files: ['e2e/playwright.config.ts'],
-    rules: {
-      '@typescript-eslint/naming-convention': 'off',
     },
   },
   {
@@ -135,10 +122,10 @@ export default defineConfig([
     },
   },
   {
-    // The demo, the playground and the end-to-end tests all run against the
-    // build, so they import `marking-menu`, never `src/`. Linting reads
-    // `dist/`, hence `yarn lint` builds first.
-    files: ['demo/**', 'e2e/**'],
+    // The demo and playground run against the built package, so they import
+    // `marking-menu`, never `src/`. Linting reads `dist/`, hence `yarn lint`
+    // builds first.
+    files: ['demo/**'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -151,15 +138,6 @@ export default defineConfig([
           ],
         },
       ],
-    },
-  },
-  {
-    files: ['e2e/fixture/**'],
-    rules: {
-      // The fixture is a test harness, not a public page: it has no
-      // SEO/social surface to describe.
-      '@html-eslint/require-meta-description': 'off',
-      '@html-eslint/require-open-graph-protocol': 'off',
     },
   },
   {
@@ -201,13 +179,6 @@ export default defineConfig([
           ],
         },
       ],
-    },
-  },
-  {
-    files: ['e2e/**/*.ts'],
-    plugins: { playwright },
-    rules: {
-      ...playwright.configs['flat/recommended'].rules,
     },
   },
 ]);

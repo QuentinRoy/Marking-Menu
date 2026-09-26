@@ -1,6 +1,8 @@
 import {
+  openMenu,
   press,
   pressMouse,
+  waitForMenuOpen,
   type Point,
 } from '../../__tests__/__fixtures__/browser-menu.js';
 import { catchReportedErrors } from '../../__tests__/__fixtures__/reported-errors.js';
@@ -41,6 +43,58 @@ const menuLayer = (parent: HTMLElement): HTMLElement | undefined =>
     .querySelector('.marking-menu')
     ?.shadowRoot?.querySelector<HTMLElement>('.marking-menu-layer') ??
   undefined;
+
+const createFrameParent = () => {
+  const iframe = document.createElement('iframe');
+  Object.assign(iframe.style, {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    width: '800px',
+    height: '600px',
+    border: '0',
+  });
+  document.body.append(iframe);
+
+  const frameDocument = iframe.contentDocument;
+  if (!frameDocument) {
+    iframe.remove();
+    throw new Error('The iframe did not create a document.');
+  }
+
+  const themeProperty = '--mm-stroke-color';
+  const rootStyle = document.documentElement.style;
+  const previousTheme = rootStyle.getPropertyValue(themeProperty);
+  const previousPriority = rootStyle.getPropertyPriority(themeProperty);
+  rootStyle.setProperty(themeProperty, 'rgb(255, 0, 0)');
+  frameDocument.documentElement.style.setProperty(
+    themeProperty,
+    'rgb(0, 0, 255)',
+  );
+
+  const parent = frameDocument.createElement('div');
+  Object.assign(parent.style, {
+    position: 'fixed',
+    left: '150px',
+    top: '250px',
+    width: '500px',
+    height: '300px',
+  });
+  frameDocument.body.append(parent);
+
+  return {
+    parent,
+    at: (x: number, y: number): Point => ({ x: 150 + x, y: 250 + y }),
+    [Symbol.dispose]() {
+      iframe.remove();
+      if (previousTheme === '') {
+        rootStyle.removeProperty(themeProperty);
+      } else {
+        rootStyle.setProperty(themeProperty, previousTheme, previousPriority);
+      }
+    },
+  };
+};
 
 // Excludes the opening indicator's own SVGs (background and dot): they draw
 // the dwell-anticipation target, not a stroke.
@@ -125,6 +179,49 @@ describe('resolveEngineOptions', () => {
 });
 
 describe('createController', () => {
+  it('uses the parent document for a gesture drawn inside an iframe', async () => {
+    using fixture = createFrameParent();
+    const { parent, at } = fixture;
+    using controller = createController({ items, parent });
+
+    const selected: string[] = [];
+    controller.on('select', (event) => {
+      selected.push(event.selection.id);
+    });
+
+    await using drag = await press(at(0, 0));
+    await waitForMenuOpen(parent);
+    await drag.moveTo(at(100, 0), 1);
+    await drag.moveTo(at(120, 0), 1);
+
+    const path = () => {
+      const root = parent.querySelector(':scope > .marking-menu')?.shadowRoot;
+      // `:scope` isn't supported on a bare ShadowRoot.
+      // eslint-disable-next-line unicorn/prefer-scoped-selector
+      return root?.querySelector<SVGPathElement>(
+        'svg:not(.marking-menu-stroke--lower) > .marking-menu-stroke-path',
+      );
+    };
+
+    await expect.poll(path).not.toBeNull();
+    const gesturePath = path();
+    if (!gesturePath) {
+      throw new Error('The iframe gesture stroke is missing.');
+    }
+
+    const frameWindow = parent.ownerDocument.defaultView;
+    if (!frameWindow) {
+      throw new Error('The iframe has no window.');
+    }
+
+    expect(frameWindow.getComputedStyle(gesturePath).stroke).toBe(
+      'rgb(0, 0, 255)',
+    );
+
+    await drag.release();
+    expect(selected).toEqual(['right']);
+  });
+
   it('dispatches select carrying the leaf a straight drag recognizes', async () => {
     using fixture = createParent();
     const { parent, at } = fixture;
@@ -285,7 +382,7 @@ describe('createController', () => {
     using controller = createController({ items, parent });
     using reported = catchReportedErrors();
 
-    const failure = new Error('boom');
+    const failure = new Error('Expected consumer listener failure');
     controller.on('start', () => {
       throw failure;
     });
@@ -313,23 +410,63 @@ describe('createController', () => {
       startPosition = event.position;
     });
 
-    let observedDuringSelect: { traces: number; cursor: string } | undefined;
+    let observedOpen: { domItems: number; eventItems: number } | undefined;
+    controller.on('open', (event) => {
+      observedOpen = {
+        domItems:
+          parent
+            .querySelector('.marking-menu')
+            ?.shadowRoot?.querySelectorAll('.marking-menu-item').length ?? 0,
+        eventItems: event.menu.items.length,
+      };
+    });
+
+    let observedChange:
+      | { domActiveKey: string | undefined; eventActiveKey: string | undefined }
+      | undefined;
+    controller.on('change', (event) => {
+      observedChange = {
+        domActiveKey:
+          parent
+            .querySelector('.marking-menu')
+            ?.shadowRoot?.querySelector<HTMLElement>(
+              '.marking-menu-item.active',
+            )?.dataset.itemId ?? undefined,
+        eventActiveKey: event.activeItem?.key ?? undefined,
+      };
+    });
+
+    let observedDuringSelect:
+      { traces: number; cursor: string; menuLayers: number } | undefined;
     controller.on('select', (event) => {
       expect(Object.isFrozen(event.position)).toBe(true);
       observedDuringSelect = {
         traces: strokeSurfaces(parent).length,
         cursor: parent.style.cursor,
+        menuLayers:
+          parent
+            .querySelector('.marking-menu')
+            ?.shadowRoot?.querySelectorAll('.marking-menu-layer').length ?? 0,
       };
     });
 
-    const drag = await press(at(0, 0));
+    await using drag = await openMenu(parent);
     expect(Object.isFrozen(startPosition)).toBe(true);
 
     await drag.moveTo(at(100, 0), 1);
     await drag.moveTo(at(120, 0), 1);
     await drag.release();
 
-    expect(observedDuringSelect).toEqual({ traces: 1, cursor: '' });
+    expect(observedOpen).toEqual({ domItems: 4, eventItems: 4 });
+    expect(observedChange).toEqual({
+      domActiveKey: '0',
+      eventActiveKey: '0',
+    });
+    expect(observedDuringSelect).toEqual({
+      traces: 1,
+      cursor: '',
+      menuLayers: 0,
+    });
   });
 
   it('only accepts the primary pointer and primary button, and owns pointer capture', async () => {
