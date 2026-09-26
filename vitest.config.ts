@@ -1,5 +1,15 @@
+import { randomUUID } from 'node:crypto';
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { playwright } from '@vitest/browser-playwright';
-import type { CDPSession } from 'playwright';
+import { firefox, type CDPSession } from 'playwright';
 import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 import type { BrowserCommand, BrowserCommandContext } from 'vitest/node';
 
@@ -141,6 +151,54 @@ const mouseUp: BrowserCommand<[button: MouseButton]> = async (ctx, button) => {
   await ctx.page.mouse.up({ button });
 };
 
+const firefoxProvider = () => {
+  if (process.platform !== 'darwin') {
+    return playwright();
+  }
+
+  const executable = firefox.executablePath();
+  const source = join(
+    dirname(dirname(executable)),
+    'Resources/application.ini',
+  );
+  if (!existsSync(source)) {
+    return playwright();
+  }
+
+  // On Macs, the system can deny Firefox's shared application data even when Playwright's
+  // temporary profile is accessible. A separate app identity avoids it. The
+  // app file must live inside Firefox's browser resources so Gecko can find
+  // its other resources.
+  const directory = mkdtempSync(join(tmpdir(), 'marking-menu-firefox-'));
+  const appIni = join(
+    dirname(source),
+    'browser',
+    `marking-menu-${randomUUID()}.ini`,
+  );
+  const wrapper = join(directory, 'firefox');
+  const original = readFileSync(source, 'utf8');
+  writeFileSync(
+    appIni,
+    original
+      .replace(/^Vendor=.*$/mv, 'Vendor=MarkingMenuTests')
+      .replace(/^Name=.*$/mv, 'Name=MarkingMenuFirefox'),
+  );
+
+  const shellQuote = (value: string): string =>
+    `'${value.replaceAll("'", `'"'"'`)}'`;
+  writeFileSync(
+    wrapper,
+    `#!/bin/sh\nexec ${shellQuote(executable)} -app ${shellQuote(appIni)} "$@"\n`,
+    { mode: 0o755 },
+  );
+  process.once('exit', () => {
+    rmSync(directory, { recursive: true, force: true });
+    rmSync(appIni, { force: true });
+  });
+
+  return playwright({ launchOptions: { executablePath: wrapper } });
+};
+
 export default defineConfig({
   // Tests acquire their fixtures with `using`. Oxc downlevels `using` to a
   // helper from `@oxc-project/runtime` (not a dependency) unless the target
@@ -175,6 +233,8 @@ export default defineConfig({
         publicDir: 'demo-dist',
         test: {
           name: 'browser',
+          // Browser files share an orchestrator page and its mouse. Concurrent
+          // gesture tests can move that mouse out from under each other.
           fileParallelism: false,
           include: [
             'src/**/*.browser.test.ts',
@@ -205,6 +265,7 @@ export default defineConfig({
                 browser: 'firefox',
                 name: 'browser (firefox)',
                 include: ['src/**/*.cross-browser.test.ts'],
+                provider: firefoxProvider(),
               },
               {
                 browser: 'webkit',
