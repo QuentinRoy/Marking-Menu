@@ -34,8 +34,6 @@ yarn-error.log*
 
 #Build generated
 dist/
-demo-dist/
-playground-dist/
 build/
 # Vitest browser mode: keep only the pinned container's baselines
 # (__screenshots__/*/*-chromium-linux.png). A broader `**` pattern here

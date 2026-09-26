@@ -6,13 +6,7 @@
     "types": ["vite/client"],
     // Pulls in `../shared/menu-config.js`'s inferred types: that module
     // is native JS, not part of this project.
-    "allowJs": true,
-    // Typecheck the playground against published declarations.
-    "paths": {
-      "marking-menu": [
-        "../../../node_modules/marking-menu/dist/marking-menu.d.ts"
-      ]
-    }
+    "allowJs": true
   },
   "include": ["**/*.ts", "**/*.tsx"]
 }

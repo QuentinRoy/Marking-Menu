@@ -3,12 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --config vite.playground.config.ts",
-    "playground:build": "vite build --config vite.playground.config.ts",
-    "playground:preview": "vite preview --config vite.playground.config.ts",
-    "build": "yarn playground:build && rm -rf ../../demo-dist && mkdir -p ../../demo-dist/lib ../../demo-dist/playground && cp index.html demo.css demo.js ../../demo-dist/ && cp -R shared/. ../../demo-dist/shared/ && cp -L ../../node_modules/marking-menu/dist/marking-menu.js ../../node_modules/marking-menu/dist/marking-menu.js.map ../../demo-dist/lib/ && cp -R ../../playground-dist/. ../../demo-dist/playground/",
-    "serve": "vite preview --outDir .",
-    "preview": "vite preview --outDir ../../demo-dist"
+    "dev": "vite",
+    "build": "vite build && cp -RL index.html demo.js demo.css shared lib dist/",
+    "preview": "vite preview"
   },
   "dependencies": {
     "marking-menu": "workspace:*"
@@ -27,6 +24,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/browser-playwright": "catalog:",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "codemirror-json-schema": "^0.8.1",
@@ -38,7 +36,10 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3",
-    "vite": "^8.2.2",
-    "vitest": "^5.0.0"
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "installConfig": {
+    "hoistingLimits": "workspaces"
   }
 }
