@@ -1235,17 +1235,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:^1.63.0":
-  version: 1.63.0
-  resolution: "@playwright/test@npm:1.63.0"
-  dependencies:
-    playwright: "npm:1.63.0"
-  bin:
-    playwright: cli.js
-  checksum: 10c0/795cd06c2eb6cb6142e72792f4df8f97665aa8c551c16278a7f2b3f31664e0cff07ed3c066490da55daf2fe51bc18e9c1ec6cba05b2c37387a0c49ad63017db8
-  languageName: node
-  linkType: hard
-
 "@pnpm/deps.graph-sequencer@npm:^1100.0.1":
   version: 1100.0.1
   resolution: "@pnpm/deps.graph-sequencer@npm:1100.0.1"
@@ -5091,17 +5080,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-playwright@npm:^2.11.0":
-  version: 2.11.0
-  resolution: "eslint-plugin-playwright@npm:2.11.0"
-  dependencies:
-    globals: "npm:^17.3.0"
-  peerDependencies:
-    eslint: ">=8.40.0"
-  checksum: 10c0/b93698d905fbb22893501a00eb813350a88a9bf373bcbda8f7241c0c962cfa6295155f3b66c49783eb20957f3d091d55218837cb81e083940c2ccb7f7b72c0bb
-  languageName: node
-  linkType: hard
-
 "eslint-plugin-prettier@npm:^5.5.6":
   version: 5.5.6
   resolution: "eslint-plugin-prettier@npm:5.5.6"
@@ -5609,7 +5587,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:^17.11.0, globals@npm:^17.12.0, globals@npm:^17.3.0":
+"globals@npm:^17.11.0, globals@npm:^17.12.0":
   version: 17.12.0
   resolution: "globals@npm:17.12.0"
   checksum: 10c0/8325cf8818c848871d17c32974c2c74e9c5f09c1b0e04421886f64f21e77c3e95f3ba25586743895a73acd860ada151132481d87d44a1f12993ae7758a694d03
@@ -6485,7 +6463,6 @@ __metadata:
     "@lezer/common": "npm:^1.5.2"
     "@lezer/highlight": "npm:^1.2.3"
     "@microsoft/api-extractor": "npm:^7.59.0"
-    "@playwright/test": "npm:^1.63.0"
     "@tailwindcss/vite": "npm:^4.3.3"
     "@types/node": "npm:^26.4.1"
     "@types/react": "npm:^19.2.18"
@@ -6503,7 +6480,6 @@ __metadata:
     eslint: "npm:^10.9.1"
     eslint-config-xo: "npm:^4.0.0"
     eslint-plugin-import-x: "npm:^4.17.1"
-    eslint-plugin-playwright: "npm:^2.11.0"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     json-schema: "npm:^0.4.0"
     json-schema-library: "npm:^11.6.2"
@@ -7482,7 +7458,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright@npm:1.63.0, playwright@npm:^1.63.0":
+"playwright@npm:^1.63.0":
   version: 1.63.0
   resolution: "playwright@npm:1.63.0"
   dependencies:

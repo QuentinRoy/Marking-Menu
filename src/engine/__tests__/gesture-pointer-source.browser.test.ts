@@ -1,6 +1,12 @@
 import {
+  centerOf,
+  GESTURE_MENU_ITEMS,
+  mountMenu,
+  offset,
   press,
   pressMouse,
+  waitForMenuClosed,
+  waitForMenuOpen,
 } from '../../__tests__/__fixtures__/browser-menu.js';
 import { createGesturePointerSource } from '../gesture-pointer-source.js';
 import type { NavigationSend } from '../runtime.js';
@@ -216,4 +222,38 @@ describe('createGesturePointerSource', () => {
       expect(parent.style.touchAction).toBe('');
     });
   });
+});
+
+test('concurrent touch pointers leave the owning gesture in control', async () => {
+  using menu = mountMenu({ items: GESTURE_MENU_ITEMS });
+  const selections: Array<string | undefined> = [];
+  menu.mm.on('select', (event) => {
+    selections.push(event.selection.id);
+  });
+  const center = centerOf(menu.surface);
+
+  await using owner = await press(center);
+  await waitForMenuOpen(menu.surface);
+  await using decoy = await press(offset(center, 180, 100));
+  await decoy.moveTo(offset(center, 270, 100));
+  await decoy.release();
+  await owner.moveTo(offset(center, 0, 100), 3);
+  await owner.release();
+
+  await expect.poll(() => selections).toEqual(['right']);
+});
+
+test('touchCancel reaches the menu as a real pointer cancellation', async () => {
+  using menu = mountMenu({ items: GESTURE_MENU_ITEMS });
+  const events: string[] = [];
+  menu.mm.on('cancel', (event) => {
+    events.push(event.type);
+  });
+
+  await using drag = await press(centerOf(menu.surface));
+  await waitForMenuOpen(menu.surface);
+  await drag.cancel();
+
+  await expect.poll(() => events).toEqual(['cancel']);
+  await waitForMenuClosed(menu.surface);
 });

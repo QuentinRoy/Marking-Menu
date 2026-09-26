@@ -1,8 +1,12 @@
 import { commands, page, userEvent } from 'vitest/browser';
+import { createMarkingMenu } from '../create-marking-menu.js';
 import {
   centerOf,
   expectFocused,
   mountMenu,
+  mouseMoveTo,
+  mousePressAt,
+  mouseReleaseAt,
   press,
 } from './__fixtures__/browser-menu.js';
 
@@ -72,6 +76,79 @@ const mountBetweenButtons = () => {
   }
 
   return Object.assign(menu, { before, after, events, cancellationReasons });
+};
+
+const createNestedMenu = (nesting: 'shadow' | 'iframe') => {
+  const iframe =
+    nesting === 'iframe' ? document.createElement('iframe') : undefined;
+  if (iframe) {
+    Object.assign(iframe.style, {
+      position: 'fixed',
+      left: '20px',
+      top: '20px',
+      width: '400px',
+      height: '400px',
+      border: '0',
+    });
+    document.body.append(iframe);
+  }
+
+  const doc = iframe?.contentDocument ?? document;
+  const shadowHost =
+    nesting === 'shadow' ? doc.createElement('div') : undefined;
+  if (shadowHost) {
+    shadowHost.style.cssText =
+      'position:fixed;left:20px;top:20px;width:300px;height:300px;';
+    doc.body.append(shadowHost);
+  }
+
+  const root = shadowHost?.attachShadow({ mode: 'open' }) ?? doc.body;
+  const trigger = doc.createElement('button');
+  trigger.textContent = 'Open';
+  const surface = doc.createElement('div');
+  surface.style.cssText =
+    'position:fixed;left:20px;top:20px;width:300px;height:300px;';
+  root.append(trigger, surface);
+
+  const mm = createMarkingMenu({ parent: surface, items });
+  const events: string[] = [];
+  for (const type of ['select', 'cancel'] as const) {
+    mm.on(type, () => {
+      events.push(type);
+    });
+  }
+
+  const itemCenter = (label: string) => {
+    const host = surface.querySelector('.marking-menu');
+    const target = [
+      ...(host?.shadowRoot?.querySelectorAll<HTMLElement>(
+        '.marking-menu-label',
+      ) ?? []),
+    ].find((element) => element.textContent === label);
+    if (!target) {
+      throw new Error(`The ${label} label is missing.`);
+    }
+
+    const box = target.getBoundingClientRect();
+    const frameBox = iframe?.getBoundingClientRect();
+    return {
+      x: (frameBox?.left ?? 0) + box.x + box.width / 2,
+      y: (frameBox?.top ?? 0) + box.y + box.height / 2,
+    };
+  };
+
+  return {
+    events,
+    iframe,
+    itemCenter,
+    mm,
+    surface,
+    [Symbol.dispose]() {
+      mm.dispose();
+      iframe?.remove();
+      shadowHost?.remove();
+    },
+  };
 };
 
 test('taking focus puts it on the first item, and the item becomes active', async () => {
@@ -327,7 +404,11 @@ test('a standalone menu is a pointer target, with items showing a pointer cursor
   expect(layer?.classList.contains('marking-menu--pointer-target')).toBe(true);
 
   const item = root?.querySelector('.marking-menu-item');
-  expect(getComputedStyle(item as Element).cursor).toBe('pointer');
+  if (!item) {
+    throw new Error('The menu item is missing.');
+  }
+
+  expect(getComputedStyle(item).cursor).toBe('pointer');
 });
 
 test('in a standalone menu, the outer connector switches from a system color to another when active, under forced colors', async () => {
@@ -341,7 +422,11 @@ test('in a standalone menu, the outer connector switches from a system color to 
   // eslint-disable-next-line unicorn/prefer-scoped-selector
   const connector = root?.querySelector(
     '.marking-menu-item.active .marking-menu-outer-connector rect',
-  ) as Element;
+  );
+  if (!connector) {
+    throw new Error('The active menu connector is missing.');
+  }
+
   const activeColor = getComputedStyle(connector).fill;
 
   await userEvent.keyboard('{ArrowDown}');
@@ -349,4 +434,91 @@ test('in a standalone menu, the outer connector switches from a system color to 
 
   expect(activeColor).not.toBe(restingColor);
   expect(activeColor).not.toBe('none');
+});
+
+test('a hotkey opens the menu, and a key pressed inside it does not reopen it', async () => {
+  using menu = mountMenu({ items });
+  const onKeydown = ({ key, target }: KeyboardEvent): void => {
+    const isInsideMenu =
+      target instanceof Node && menu.surface.contains(target);
+    if (key === 'm' && !isInsideMenu) {
+      menu.mm.open();
+    }
+  };
+
+  document.addEventListener('keydown', onKeydown);
+
+  using _listener = {
+    [Symbol.dispose]() {
+      document.removeEventListener('keydown', onKeydown);
+    },
+  };
+
+  await userEvent.keyboard('m');
+  await expectFocused('menuitem', { name: 'Right' });
+  await userEvent.keyboard('m');
+  await expectFocused('menuitem', { name: 'Right' });
+});
+
+test('moving the mouse away from a standalone menu clears its active item', async () => {
+  using menu = mountBetweenButtons();
+  menu.mm.open();
+  await userEvent.hover(plateOf('Left'));
+  await expect
+    .element(page.getByRole('menuitem', { name: 'Left' }))
+    .toHaveClass('active');
+
+  await mouseMoveTo({ x: 780, y: 580 });
+
+  await expect
+    .poll(() =>
+      menu.surface
+        .querySelector('.marking-menu')
+        ?.shadowRoot?.querySelector('.marking-menu-item.active'),
+    )
+    .toBeNull();
+  await expect.element(page.getByRole('menu')).toBeInTheDocument();
+});
+
+test('a standalone menu inside a shadow root selects an item and dismisses on an outside press', async () => {
+  using menu = createNestedMenu('shadow');
+  menu.mm.open();
+
+  await mousePressAt(menu.itemCenter('Right'));
+  await mouseReleaseAt();
+  await expect.poll(() => menu.events).toEqual(['select']);
+
+  menu.mm.open();
+  await mousePressAt({ x: 780, y: 580 });
+  await mouseReleaseAt();
+  await expect.poll(() => menu.events).toEqual(['select', 'cancel']);
+});
+
+test('a standalone menu inside an iframe handles item clicks, outside presses, and a drag released outside the frame', async () => {
+  using menu = createNestedMenu('iframe');
+  menu.mm.open();
+
+  await mousePressAt(menu.itemCenter('Right'));
+  await mouseReleaseAt();
+  await expect.poll(() => menu.events).toEqual(['select']);
+
+  menu.mm.open();
+  const frameBounds = menu.iframe?.getBoundingClientRect();
+  if (!frameBounds) {
+    throw new Error('The iframe is missing.');
+  }
+
+  await mousePressAt({ x: frameBounds.left + 370, y: frameBounds.top + 370 });
+  await mouseReleaseAt();
+  await expect.poll(() => menu.events).toEqual(['select', 'cancel']);
+
+  menu.mm.open();
+  await mouseMoveTo(menu.itemCenter('Left'));
+  await mousePressAt(menu.itemCenter('Left'));
+  await mouseMoveTo(
+    { x: frameBounds.right + 100, y: frameBounds.top + 180 },
+    4,
+  );
+  await mouseReleaseAt();
+  await expect.poll(() => menu.events).toEqual(['select', 'cancel', 'cancel']);
 });

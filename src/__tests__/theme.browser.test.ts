@@ -1,6 +1,7 @@
 import { userEvent } from 'vitest/browser';
 import {
   centerOf,
+  GESTURE_MENU_ITEMS,
   mountMenu,
   offset,
   openMenu,
@@ -19,7 +20,7 @@ afterEach(async () => {
   await userEvent.unhover(document.body);
 });
 
-// Mirrors `e2e/fixture/main.ts`'s eight-direction topology, with stable ids:
+// An eight-direction topology with stable ids:
 // tests key off `id`, not display order or label text. Listed starting from
 // "up": default angles start at the top, so this order alone keeps each
 // label at its own direction.
@@ -44,6 +45,88 @@ const items = [
 ] as const;
 
 const ACTIVE_RADIUS = 100;
+
+const requiredElement = <ElementType extends Element>(
+  element: ElementType | undefined,
+  description: string,
+): ElementType => {
+  if (!element) {
+    throw new Error(`The ${description} is missing.`);
+  }
+
+  return element;
+};
+
+test('an existing stroke repaints when its CSS theme changes', async () => {
+  using menu = mountMenu({ items: GESTURE_MENU_ITEMS });
+  const center = centerOf(menu.surface);
+  await using drag = await openMenu(menu.surface);
+  await drag.moveTo(offset(center, 0, ACTIVE_RADIUS), 3);
+
+  const strokePath = () =>
+    menu.surface
+      .querySelector('.marking-menu')
+      ?.shadowRoot?.querySelector<SVGElement>(
+        '.marking-menu-stroke-surface:not(.marking-menu-stroke--lower)',
+      )
+      ?.querySelector<SVGPathElement>('.marking-menu-stroke-path') ?? undefined;
+  const path = requiredElement(strokePath(), 'open stroke path');
+  const before = getComputedStyle(path).stroke;
+  menu.surface.style.setProperty('--mm-stroke-color', 'rgb(1, 2, 3)');
+  const updatedPath = requiredElement(strokePath(), 'updated stroke path');
+  const after = getComputedStyle(updatedPath).stroke;
+  const wasRecreated = updatedPath !== path;
+  await drag.release();
+
+  expect(after).toBe('rgb(1, 2, 3)');
+  expect(after).not.toBe(before);
+  expect(wasRecreated).toBe(false);
+});
+
+test('completed and canceled feedback traces use their own theme colors', async () => {
+  using menu = mountMenu({ items: GESTURE_MENU_ITEMS });
+  menu.surface.style.setProperty(
+    '--mm-stroke-color-feedback',
+    'rgb(0, 255, 0)',
+  );
+  menu.surface.style.setProperty(
+    '--mm-stroke-color-canceled',
+    'rgb(255, 0, 0)',
+  );
+  const center = centerOf(menu.surface);
+
+  await using completed = await openMenu(menu.surface);
+  await completed.moveTo(offset(center, 0, ACTIVE_RADIUS), 3);
+  await completed.release();
+  const completedPath = () =>
+    menu.surface
+      .querySelector('.marking-menu')
+      ?.shadowRoot?.querySelector<SVGElement>(
+        '.marking-menu-stroke-surface.marking-menu-stroke--feedback:not(.marking-menu-stroke--canceled)',
+      )
+      ?.querySelector<SVGPathElement>('.marking-menu-stroke-path') ?? undefined;
+  await expect.poll(completedPath).not.toBeNull();
+
+  await using canceled = await openMenu(menu.surface);
+  await canceled.release();
+  const canceledPath = () =>
+    menu.surface
+      .querySelector('.marking-menu')
+      ?.shadowRoot?.querySelector<SVGElement>(
+        '.marking-menu-stroke-surface.marking-menu-stroke--feedback.marking-menu-stroke--canceled',
+      )
+      ?.querySelector<SVGPathElement>('.marking-menu-stroke-path') ?? undefined;
+  await expect.poll(canceledPath).not.toBeNull();
+
+  const completedStroke = getComputedStyle(
+    requiredElement(completedPath(), 'completed feedback path'),
+  ).stroke;
+  const canceledStroke = getComputedStyle(
+    requiredElement(canceledPath(), 'canceled feedback path'),
+  ).stroke;
+  expect(completedStroke).toBe('rgb(0, 255, 0)');
+  expect(canceledStroke).toBe('rgb(255, 0, 0)');
+});
 
 const setTheme = (surface: HTMLElement): void => {
   surface.style.setProperty('--mm-wedge-fill', '#2d6a4f');
@@ -73,8 +156,13 @@ test('opening indicator background is themeable via --mm-indicator-background', 
     .poll(() => root?.querySelector('.marking-menu-indicator-background'))
     .not.toBeNull();
 
-  const background = root?.querySelector('.marking-menu-indicator-background');
-  expect(getComputedStyle(background as Element).fill).toBe('rgb(18, 52, 86)');
+  const background =
+    root?.querySelector('.marking-menu-indicator-background') ?? undefined;
+  expect(
+    getComputedStyle(
+      requiredElement(background, 'opening indicator background'),
+    ).fill,
+  ).toBe('rgb(18, 52, 86)');
 });
 
 test('opening indicator follows a stroke theme change while visible', async () => {
@@ -84,16 +172,22 @@ test('opening indicator follows a stroke theme change while visible', async () =
   await using _drag = await press(center);
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
-  const background = root?.querySelector('.marking-menu-indicator-background');
-  const dot = root?.querySelector('.marking-menu-indicator-dot');
-  expect(getComputedStyle(background as Element).r).toBe('8px');
-  expect(getComputedStyle(dot as Element).r).toBe('2px');
+  const background =
+    root?.querySelector('.marking-menu-indicator-background') ?? undefined;
+  const dot = root?.querySelector('.marking-menu-indicator-dot') ?? undefined;
+  const indicatorBackground = requiredElement(
+    background,
+    'opening indicator background',
+  );
+  const indicatorDot = requiredElement(dot, 'opening indicator dot');
+  expect(getComputedStyle(indicatorBackground).r).toBe('8px');
+  expect(getComputedStyle(indicatorDot).r).toBe('2px');
 
   menu.surface.style.setProperty('--mm-stroke-start-point-radius', '20px');
   menu.surface.style.setProperty('--mm-stroke-width', '10px');
 
-  expect(getComputedStyle(background as Element).r).toBe('20px');
-  expect(getComputedStyle(dot as Element).r).toBe('5px');
+  expect(getComputedStyle(indicatorBackground).r).toBe('20px');
+  expect(getComputedStyle(indicatorDot).r).toBe('5px');
 });
 
 test('wedge outline reads its color and doubles its width for the inset stroke', async () => {
@@ -103,8 +197,9 @@ test('wedge outline reads its color and doubles its width for the inset stroke',
   await using _drag = await openMenu(menu.surface);
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
-  const outline = root?.querySelector('.marking-menu-wedge-outline');
-  const style = getComputedStyle(outline as Element);
+  const outline =
+    root?.querySelector('.marking-menu-wedge-outline') ?? undefined;
+  const style = getComputedStyle(requiredElement(outline, 'wedge outline'));
   expect(style.stroke).toBe('rgb(18, 52, 86)');
   expect(style.strokeWidth).toBe('6px');
 });
@@ -116,8 +211,8 @@ test('plate outline is an inset box-shadow using the plate outline properties', 
   await using _drag = await openMenu(menu.surface);
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
-  const plate = root?.querySelector('.marking-menu-plate');
-  expect(getComputedStyle(plate as Element).boxShadow).toBe(
+  const plate = root?.querySelector('.marking-menu-plate') ?? undefined;
+  expect(getComputedStyle(requiredElement(plate, 'menu plate')).boxShadow).toBe(
     'rgb(18, 52, 86) 0px 0px 0px 3px inset',
   );
 });
@@ -135,12 +230,15 @@ test('active wedge and plate outlines use their own active color', async () => {
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
   const activeItem = root?.querySelector('.marking-menu-item.active');
-  const outline = activeItem?.querySelector('.marking-menu-wedge-outline');
-  const plate = activeItem?.querySelector('.marking-menu-plate');
-  expect(getComputedStyle(outline as Element).stroke).toBe('rgb(18, 52, 86)');
-  expect(getComputedStyle(plate as Element).boxShadow).toBe(
-    'rgb(101, 67, 33) 0px 0px 0px 3px inset',
-  );
+  const outline =
+    activeItem?.querySelector('.marking-menu-wedge-outline') ?? undefined;
+  const plate = activeItem?.querySelector('.marking-menu-plate') ?? undefined;
+  expect(
+    getComputedStyle(requiredElement(outline, 'active wedge outline')).stroke,
+  ).toBe('rgb(18, 52, 86)');
+  expect(
+    getComputedStyle(requiredElement(plate, 'active menu plate')).boxShadow,
+  ).toBe('rgb(101, 67, 33) 0px 0px 0px 3px inset');
 });
 
 test('outer connector defaults to the plate background', async () => {
@@ -149,11 +247,14 @@ test('outer connector defaults to the plate background', async () => {
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
   // `:scope` doesn't resolve against a bare `ShadowRoot`, only an `Element`.
-  // eslint-disable-next-line unicorn/prefer-scoped-selector
-  const connector = root?.querySelector('.marking-menu-outer-connector rect');
-  const plate = root?.querySelector('.marking-menu-plate');
-  expect(getComputedStyle(connector as Element).fill).toBe(
-    getComputedStyle(plate as Element).backgroundColor,
+  const connector =
+    // eslint-disable-next-line unicorn/prefer-scoped-selector
+    root?.querySelector('.marking-menu-outer-connector rect') ?? undefined;
+  const plate = root?.querySelector('.marking-menu-plate') ?? undefined;
+  expect(
+    getComputedStyle(requiredElement(connector, 'outer connector')).fill,
+  ).toBe(
+    getComputedStyle(requiredElement(plate, 'menu plate')).backgroundColor,
   );
 });
 
@@ -164,9 +265,12 @@ test('outer connector follows --mm-fill', async () => {
 
   const root = menu.surface.querySelector('.marking-menu')?.shadowRoot;
   // `:scope` doesn't resolve against a bare `ShadowRoot`, only an `Element`.
-  // eslint-disable-next-line unicorn/prefer-scoped-selector
-  const connector = root?.querySelector('.marking-menu-outer-connector rect');
-  expect(getComputedStyle(connector as Element).fill).toBe('rgb(18, 52, 86)');
+  const connector =
+    // eslint-disable-next-line unicorn/prefer-scoped-selector
+    root?.querySelector('.marking-menu-outer-connector rect') ?? undefined;
+  expect(
+    getComputedStyle(requiredElement(connector, 'outer connector')).fill,
+  ).toBe('rgb(18, 52, 86)');
 });
 
 test('default menu open', async () => {

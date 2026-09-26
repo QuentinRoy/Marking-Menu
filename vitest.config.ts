@@ -20,8 +20,7 @@ const iframeOrigin: BrowserCommand<never[], { x: number; y: number }> = async (
 
 // Touch, not mouse: touchscreens are this library's main target, and
 // `page.touchscreen` only offers an atomic tap, so gestures are driven
-// straight through the Chromium DevTools Protocol instead, the same way
-// `e2e/helpers/touch.ts` drives the functional Playwright suite. One CDP
+// straight through the Chromium DevTools Protocol instead. One CDP
 // session per test session, kept across commands so several fingers (several
 // concurrent `press()` calls in `src/__tests__/__fixtures__/browser-menu.ts`)
 // can move and lift independently while sharing one active-touch-points
@@ -124,9 +123,11 @@ const touchCancel: BrowserCommand = async (ctx) => {
 
 type MouseButton = 'left' | 'middle' | 'right';
 
-const mouseMove: BrowserCommand<[x: number, y: number]> = async (ctx, x, y) => {
+const mouseMove: BrowserCommand<
+  [x: number, y: number, steps?: number]
+> = async (ctx, x, y, steps = 1) => {
   const origin = await iframeOrigin(ctx);
-  await ctx.page.mouse.move(origin.x + x, origin.y + y);
+  await ctx.page.mouse.move(origin.x + x, origin.y + y, { steps });
 };
 
 const mouseDown: BrowserCommand<[button: MouseButton]> = async (
@@ -158,29 +159,61 @@ export default defineConfig({
           // coverage below stays scoped to `src`, so demo code never moves the
           // thresholds.
           include: ['src/**/*.test.ts', 'demo/**/*.test.ts'],
-          exclude: ['**/*.browser.test.ts', '**/*.cross-browser.test.ts'],
+          exclude: [
+            '**/*.browser.test.ts',
+            '**/*.cross-browser.test.ts',
+            '**/*.dist.test.ts',
+          ],
           // Run the type level tests (`*.test-d.ts`) alongside the runtime
           // ones.
           typecheck: { enabled: true },
         },
       },
       {
+        publicDir: 'demo-dist',
         test: {
           name: 'browser',
           include: [
             'src/**/*.browser.test.ts',
             'src/**/*.cross-browser.test.ts',
+            'src/**/*.dist.test.ts',
+            'demo/**/*.dist.test.ts',
           ],
           browser: {
             enabled: true,
-            provider: playwright({ contextOptions: { hasTouch: true } }),
+            provider: playwright(),
             headless: true,
             // The default 414x896 viewport is smaller than the mounted
             // surface, and menu items extend past it too. A fixed, larger
             // viewport keeps every gesture coordinate, derived from the
             // surface's own bounding box, identical across runs.
             viewport: { width: 800, height: 600 },
-            instances: [{ browser: 'chromium', name: 'browser (chromium)' }],
+            instances: [
+              {
+                browser: 'chromium',
+                name: 'browser (chromium)',
+                include: [
+                  'src/**/*.browser.test.ts',
+                  'src/**/*.cross-browser.test.ts',
+                ],
+                provider: playwright({ contextOptions: { hasTouch: true } }),
+              },
+              {
+                browser: 'firefox',
+                name: 'browser (firefox)',
+                include: ['src/**/*.cross-browser.test.ts'],
+              },
+              {
+                browser: 'webkit',
+                name: 'browser (webkit)',
+                include: ['src/**/*.cross-browser.test.ts'],
+              },
+              {
+                browser: 'chromium',
+                name: 'browser (dist)',
+                include: ['src/**/*.dist.test.ts', 'demo/**/*.dist.test.ts'],
+              },
+            ],
             commands: {
               touchStart,
               touchMove,
