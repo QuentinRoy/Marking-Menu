@@ -6,7 +6,7 @@ import {
   type MarkingMenuEventMap,
 } from '../../events.js';
 import { createModel } from '../../model.js';
-import { manageFocus } from '../focus.js';
+import { deepActiveElement, manageFocus } from '../focus.js';
 
 // Starting from the bottom: the first item is the first one listed.
 const model = createModel({
@@ -223,5 +223,38 @@ describe('manageFocus', () => {
 
     expect(document.activeElement).toBe(fixture.opener);
     expect(listenerCount()).toBe(0);
+  });
+});
+
+/**
+ A button inside the shadow root of a host on the page.
+ */
+const createShadowButton = () => {
+  const host = document.createElement('div');
+  document.body.append(host);
+  const button = document.createElement('button');
+  host.attachShadow({ mode: 'open' }).append(button);
+  return {
+    host,
+    button,
+    [Symbol.dispose]() {
+      host.remove();
+    },
+  };
+};
+
+describe('deepActiveElement', () => {
+  it('finds the element focused inside a shadow root', () => {
+    using fixture = createShadowButton();
+    const { host, button } = fixture;
+
+    button.focus();
+
+    expect(document.activeElement).toBe(host);
+    expect(deepActiveElement(document)).toBe(button);
+  });
+
+  it('finds nothing in a document without an element to focus', () => {
+    expect(deepActiveElement(new Document())).toBeUndefined();
   });
 });

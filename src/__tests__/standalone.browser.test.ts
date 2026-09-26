@@ -235,27 +235,12 @@ test('clicking a submenu item opens it and focuses the new level, not any item',
 test('a canceled touch contact clears the active item and leaves the menu open', async () => {
   using menu = mountBetweenButtons();
   menu.mm.open();
-  const item = page.getByRole('menuitem', { name: 'Left' }).element();
-  const contactInit = { isPrimary: true, pointerId: 7 };
-
-  item.dispatchEvent(
-    new PointerEvent('pointerdown', {
-      bubbles: true,
-      composed: true,
-      ...contactInit,
-    }),
-  );
+  const drag = await press(centerOf(plateOf('Left')));
   await expect
     .element(page.getByRole('menuitem', { name: 'Left' }))
     .toHaveClass('active');
 
-  item.dispatchEvent(
-    new PointerEvent('pointercancel', {
-      bubbles: true,
-      composed: true,
-      ...contactInit,
-    }),
-  );
+  await drag.cancel();
 
   await expect
     .element(page.getByRole('menuitem', { name: 'Left' }))

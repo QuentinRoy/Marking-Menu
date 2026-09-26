@@ -13,6 +13,10 @@ declare module 'vitest/browser' {
     touchStart: (id: number, x: number, y: number) => Promise<void>;
     touchMove: (id: number, x: number, y: number) => Promise<void>;
     touchEnd: (id: number) => Promise<void>;
+    touchCancel: () => Promise<void>;
+    mouseMove: (x: number, y: number) => Promise<void>;
+    mouseDown: (button: MouseButton) => Promise<void>;
+    mouseUp: (button: MouseButton) => Promise<void>;
     emulateMedia: (options: {
       reducedMotion?: 'reduce' | 'no-preference';
       forcedColors?: 'active' | 'none';
@@ -21,6 +25,8 @@ declare module 'vitest/browser' {
 }
 
 export type Point = { x: number; y: number };
+
+export type MouseButton = 'left' | 'middle' | 'right';
 
 /**
 An item's rendered label and the angle (in degrees) it's laid out at.
@@ -121,16 +127,63 @@ export const centerOf = (element: Element): Point => {
 export type Drag = AsyncDisposable & {
   readonly at: Point;
   /**
-  Move this finger to `at`, interpolating steps.
+  Move to `at`, interpolating steps.
   */
   moveTo(at: Point, steps?: number): Promise<void>;
   /**
-  Lift this finger. Safe to call more than once.
+  Lift the finger or button. Safe to call more than once.
   */
   release(): Promise<void>;
 };
 
+export type TouchDrag = Drag & {
+  /**
+   Cancel the touch, the way the platform does when it takes a touch over:
+   the page gets `pointercancel` instead of `pointerup`. Cancels every finger
+   still down, not just this one.
+   */
+  cancel(): Promise<void>;
+};
+
+// Taken before any test fakes it, so it always waits for a real frame.
+const requestRealAnimationFrame =
+  globalThis.requestAnimationFrame.bind(globalThis);
+
+/**
+ Chromium holds a `pointermove` back until the next animation frame, which
+ the command that sent the move doesn't wait for. Waiting for that frame
+ lets the page see the move before the test goes on.
+ */
+const nextFrame = async (): Promise<void> =>
+  new Promise((resolve) => {
+    requestRealAnimationFrame(() => {
+      resolve();
+    });
+  });
+
+/**
+ Moves from `from` to `to` in `steps` separate moves, each a real input at a
+ point in time, so the browser sees the same gradual path a hand drawing it
+ would: dispatching them all at once would collapse the interpolation this
+ exists for.
+ */
+const interpolate = async (
+  from: Point,
+  to: Point,
+  steps: number,
+  move: (x: number, y: number) => Promise<void>,
+): Promise<void> => {
+  for (let step = 1; step <= steps; step += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    await move(
+      from.x + ((to.x - from.x) * step) / steps,
+      from.y + ((to.y - from.y) * step) / steps,
+    );
+  }
+};
+
 let nextFingerId = 0;
+const fingersDown = new Set<number>();
 
 /**
  Touch down at `at` and hold, as its own finger: a second `press()` while
@@ -141,10 +194,66 @@ let nextFingerId = 0;
  unlike Playwright Test's own pages, is shared across every test in the
  file, so a touch left active would carry into whichever test runs next.
  */
-export const press = async (at: Point): Promise<Drag> => {
+export const press = async (at: Point): Promise<TouchDrag> => {
   const id = nextFingerId;
   nextFingerId += 1;
   await commands.touchStart(id, at.x, at.y);
+  fingersDown.add(id);
+  let current = at;
+
+  const release = async (): Promise<void> => {
+    if (!fingersDown.delete(id)) {
+      return;
+    }
+
+    await commands.touchEnd(id);
+  };
+
+  return {
+    at,
+    async moveTo(to, steps = 5) {
+      await interpolate(current, to, steps, async (x, y) => {
+        await commands.touchMove(id, x, y);
+        await nextFrame();
+      });
+      current = to;
+    },
+    release,
+    async cancel() {
+      fingersDown.clear();
+      await commands.touchCancel();
+    },
+    [Symbol.asyncDispose]: release,
+  };
+};
+
+// Where the mouse is. Chromium reports even a move to where the mouse
+// already is as a `pointermove`, which would count as a hover.
+let mouseAt: Point | undefined;
+
+/**
+ Move the mouse to `at` with no button held, such as to hover.
+ */
+export const moveMouse = async (at: Point): Promise<void> => {
+  if (mouseAt?.x === at.x && mouseAt.y === at.y) {
+    return;
+  }
+
+  await commands.mouseMove(at.x, at.y);
+  await nextFrame();
+  mouseAt = at;
+};
+
+/**
+ Press the mouse `button` at `at` and hold, like {@link press} does with a
+ finger. Release it the same way: the mouse, too, is shared across the file.
+ */
+export const pressMouse = async (
+  at: Point,
+  button: MouseButton = 'left',
+): Promise<Drag> => {
+  await moveMouse(at);
+  await commands.mouseDown(button);
   let current = at;
   let hasReleased = false;
 
@@ -154,25 +263,15 @@ export const press = async (at: Point): Promise<Drag> => {
     }
 
     hasReleased = true;
-    await commands.touchEnd(id);
+    await commands.mouseUp(button);
   };
 
   return {
     at,
     async moveTo(to, steps = 5) {
-      const from = current;
-      // Each step is a real touch move at a point in time, so the browser
-      // sees the same gradual path a finger drawing it would: dispatching
-      // them all at once would collapse the interpolation this exists for.
-      for (let step = 1; step <= steps; step += 1) {
-        // eslint-disable-next-line no-await-in-loop
-        await commands.touchMove(
-          id,
-          from.x + ((to.x - from.x) * step) / steps,
-          from.y + ((to.y - from.y) * step) / steps,
-        );
-      }
-
+      await interpolate(current, to, steps, async (x, y) =>
+        moveMouse({ x, y }),
+      );
       current = to;
     },
     release,

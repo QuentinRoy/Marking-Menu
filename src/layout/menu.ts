@@ -419,8 +419,9 @@ function readPixels(
   fallback: number,
 ): number {
   const { width } = (doc.defaultView ?? globalThis).getComputedStyle(probe);
-  // Vitest leaves inline CSS imports empty, unlike a browser where the probe
-  // always resolves the fallback in its stylesheet.
+  // A menu outside the document has no computed style, so its probe reads
+  // empty. Once attached, the probe always resolves the fallback in its
+  // stylesheet.
   // eslint-disable-next-line unicorn/prefer-number-coercion
   const pixels = Number.parseFloat(width);
   return Number.isNaN(pixels) ? fallback : pixels;
