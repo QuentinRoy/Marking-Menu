@@ -148,6 +148,7 @@ export default defineConfig({
   // it. Only the test transform is affected; the library build has its own
   // config and its own, lower, target.
   oxc: { target: 'esnext' },
+  optimizeDeps: { include: ['totorobot'] },
   test: {
     globals: true,
     projects: [
@@ -173,6 +174,7 @@ export default defineConfig({
         publicDir: 'demo-dist',
         test: {
           name: 'browser',
+          fileParallelism: false,
           include: [
             'src/**/*.browser.test.ts',
             'src/**/*.cross-browser.test.ts',
