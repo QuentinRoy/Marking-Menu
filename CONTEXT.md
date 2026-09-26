@@ -36,7 +36,6 @@ _Avoid_: Gesture (for the points), path
 The ideal shape that selects an item: one straight move per level, each in its item's direction.
 _Avoid_: Gesture (for the shape)
 
-
 ### Recognition
 
 **Correct selection**:
@@ -49,7 +48,6 @@ _Avoid_: Misrecognition (ambiguous with no selection)
 **No selection**:
 A stroke the recognizer rejects, selecting nothing.
 _Avoid_: Cancel, miss
-
 
 **Floor**:
 The narrowest gap the library accepts for a menu of a given depth, set by where the recognizer stops meeting the reliability bar. Below it, the library rejects the menu.
