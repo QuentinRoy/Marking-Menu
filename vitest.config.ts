@@ -151,6 +151,7 @@ export default defineConfig({
   optimizeDeps: { noDiscovery: true, include: ['axe-core', 'totorobot'] },
   test: {
     globals: true,
+    silent: 'passed-only',
     projects: [
       {
         test: {
