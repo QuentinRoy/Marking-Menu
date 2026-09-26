@@ -4,5 +4,10 @@
     "lib": ["ES2024"],
     "types": ["node"]
   },
-  "include": ["*.config.ts", "scripts/**/*.ts"]
+  "include": [
+    "*.config.ts",
+    "scripts/**/*.ts",
+    "packages/marking-menu/vite.config.ts",
+    "packages/marking-menu/vitest.config.ts"
+  ]
 }

@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "ESNext.Disposable", "DOM", "DOM.Iterable"],
+    "types": ["vite/client"],
+    "allowJs": true,
+    "checkJs": true
+  },
+  "include": ["**/*.js", "**/*.ts"],
+  "exclude": [
+    // Its own project (jsx, React types), not plain checkJs.
+    "playground/**",
+    // The built library itself, symlinked in for the browser; already
+    // checked as its own source in the library workspace.
+    "lib/**",
+    "dist/**"
+  ]
+}

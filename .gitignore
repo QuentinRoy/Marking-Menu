@@ -11,6 +11,8 @@ yarn-error.log*
 
 # Dependency directories
 /node_modules
+/packages/demo/node_modules
+/packages/marking-menu/node_modules
 /jspm_packages
 /bower_components
 # Populated by scripts/smoke-test.ts, not a real install.
@@ -32,8 +34,6 @@ yarn-error.log*
 
 #Build generated
 dist/
-demo-dist/
-playground-dist/
 build/
 # Vitest browser mode: keep only the pinned container's baselines
 # (__screenshots__/*/*-chromium-linux.png). A broader `**` pattern here

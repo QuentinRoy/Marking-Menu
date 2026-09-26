@@ -9,8 +9,8 @@ const config: Config = {
     'prettier-plugin-tailwindcss',
   ],
   // Where Tailwind's own classes are defined, so the sorter also knows the
-  // ones `demo/playground/styles.css` adds with `@utility`.
-  tailwindStylesheet: './demo/playground/styles.css',
+  // ones `packages/demo/playground/styles.css` adds with `@utility`.
+  tailwindStylesheet: './packages/demo/playground/styles.css',
   importOrder: ['<BUILTIN_MODULES>', '<THIRD_PARTY_MODULES>', '^[.]'],
   importOrderCaseSensitive: false,
 };
