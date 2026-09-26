@@ -1,0 +1,45 @@
+{
+  "name": "@marking-menu/demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && cp -RL index.html demo.js demo.css shared lib dist/",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "marking-menu": "workspace:*"
+  },
+  "devDependencies": {
+    "@codemirror/autocomplete": "^6.20.3",
+    "@codemirror/commands": "^6.11.0",
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/lint": "^6.9.7",
+    "@codemirror/state": "^6.7.4",
+    "@codemirror/view": "^6.43.11",
+    "@lezer/common": "^1.5.2",
+    "@lezer/highlight": "^1.2.3",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/browser-playwright": "catalog:",
+    "class-variance-authority": "^0.7.1",
+    "cn": "^0.4.0",
+    "codemirror-json-schema": "^0.8.1",
+    "json-schema": "^0.4.0",
+    "json-schema-library": "^11.6.2",
+    "json-schema-to-ts": "^3.1.1",
+    "lucide-react": "^1.41.0",
+    "radix-ui": "^1.6.7",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "installConfig": {
+    "hoistingLimits": "workspaces"
+  }
+}

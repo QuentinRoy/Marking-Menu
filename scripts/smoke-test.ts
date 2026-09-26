@@ -51,7 +51,7 @@ function runOrExit(command: string, args: string[]): void {
 
 // Pack rather than copying the `files` field by hand: the tarball is what npm
 // would publish, implicit includes and excludes and all.
-runOrExit('yarn', ['pack', '--out', tarball]);
+runOrExit('yarn', ['workspace', 'marking-menu', 'pack', '--out', tarball]);
 
 const packageDir = path.join(modules, 'marking-menu');
 await rm(modules, { recursive: true, force: true });
