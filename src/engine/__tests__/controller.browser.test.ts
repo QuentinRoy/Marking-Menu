@@ -382,7 +382,7 @@ describe('createController', () => {
     using controller = createController({ items, parent });
     using reported = catchReportedErrors();
 
-    const failure = new Error('boom');
+    const failure = new Error('Expected consumer listener failure');
     controller.on('start', () => {
       throw failure;
     });

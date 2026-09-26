@@ -197,7 +197,7 @@ describe('createRuntime', () => {
       options,
       renderer: createFakeRenderer(),
     });
-    const failure = new Error('boom');
+    const failure = new Error('Expected consumer listener failure');
     runtime.on('start', () => {
       throw failure;
     });
