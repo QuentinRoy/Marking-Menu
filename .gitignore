@@ -13,6 +13,7 @@ yarn-error.log*
 /node_modules
 /packages/demo/node_modules
 /packages/marking-menu/node_modules
+/packages/collector/node_modules
 /jspm_packages
 /bower_components
 # Populated by scripts/smoke-test.ts, not a real install.

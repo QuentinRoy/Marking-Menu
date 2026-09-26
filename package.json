@@ -32,7 +32,8 @@
   },
   "workspaces": [
     "packages/marking-menu",
-    "packages/demo"
+    "packages/demo",
+    "packages/collector"
   ],
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
@@ -54,5 +55,13 @@
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependenciesMeta": {
+    "better-sqlite3": {
+      "built": true
+    }
+  },
+  "resolutions": {
+    "better-sqlite3": "^13.0.3"
   }
 }

@@ -8,17 +8,25 @@
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
+    "@lightmill/log-api": "4.0.1",
+    "@lightmill/log-client": "^4.0.0",
+    "@lightmill/log-server": "^4.1.0",
+    "@lightmill/react-experiment": "^3.0.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zod": "^4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "catalog:",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
     "tailwindcss": "^4.3.3",
-    "typescript": "npm:@typescript/typescript6@^6.0.2",
-    "vite": "^8.2.2"
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  },
+  "installConfig": {
+    "hoistingLimits": "workspaces"
   }
 }
