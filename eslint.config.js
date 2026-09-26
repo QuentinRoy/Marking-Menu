@@ -27,11 +27,15 @@ export default defineConfig([
     // Vendored shadcn/ui components, kept byte for byte as the registry
     // serves them so the next copy is a plain overwrite. `.prettierignore`
     // leaves them alone for the same reason.
-    'demo/playground/components/ui/**',
+    'packages/demo/playground/components/ui/**',
     // The built library itself, symlinked in for the browser (see
-    // `demo/tsconfig.json`); already linted as its own source.
-    'demo/lib/**',
+    // `packages/demo/tsconfig.json`); already linted as its own source.
+    'packages/demo/lib/**',
   ]),
+  {
+    files: ['packages/marking-menu/package.json'],
+    rules: { 'package-json/no-nested-exports': 'off' },
+  },
   {
     plugins: { 'import-x': importX },
     rules: {
@@ -86,7 +90,11 @@ export default defineConfig([
     // everywhere else and is the thing that catches a lapse. It flags both,
     // its `Symbol` list predating Explicit Resource Management, and it takes
     // no allowlist option, hence disabling it wholesale for these files.
-    files: ['src/**/*.test.ts', 'src/**/*.test-d.ts', 'src/**/__fixtures__/**'],
+    files: [
+      'packages/marking-menu/src/**/*.test.ts',
+      'packages/marking-menu/src/**/*.test-d.ts',
+      'packages/marking-menu/src/**/__fixtures__/**',
+    ],
     rules: {
       'unicorn/no-nonstandard-builtin-properties': 'off',
     },
@@ -94,7 +102,11 @@ export default defineConfig([
   {
     // Vite/Vitest/Prettier/Playwright config files must use a default
     // export; that's the contract those tools require.
-    files: ['*.config.{js,ts}'],
+    files: [
+      '*.config.{js,ts}',
+      'packages/marking-menu/*.config.{js,ts}',
+      'packages/demo/*.config.{js,ts}',
+    ],
     rules: {
       'import-x/no-default-export': 'off',
     },
@@ -103,7 +115,7 @@ export default defineConfig([
     // Neither page has a project preview image yet to use as og:image;
     // og:title, og:type, and og:url are already set on the demo (see
     // `demo/index.html`).
-    files: ['demo/**'],
+    files: ['packages/demo/**'],
     rules: {
       '@html-eslint/require-open-graph-protocol': 'off',
     },
@@ -111,12 +123,12 @@ export default defineConfig([
   {
     // The playground page (see `demo/playground`) is the only React in the
     // repo; the library itself is framework-free.
-    files: ['demo/playground/**/*.{ts,tsx}'],
+    files: ['packages/demo/playground/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat.recommended],
   },
   {
     // Tailwind's own at-rules, which the CSS plugin does not know.
-    files: ['demo/playground/styles.css'],
+    files: ['packages/demo/playground/styles.css'],
     rules: {
       'css/no-invalid-at-rules': 'off',
     },
@@ -125,7 +137,7 @@ export default defineConfig([
     // The demo and playground run against the built package, so they import
     // `marking-menu`, never `src/`. Linting reads `dist/`, hence `yarn lint`
     // builds first.
-    files: ['demo/**'],
+    files: ['packages/demo/**'],
     rules: {
       'no-restricted-imports': [
         'error',
@@ -141,7 +153,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['{src,demo}/**/__tests__/**'],
+    files: ['{packages/marking-menu/src,packages/demo}/**/__tests__/**'],
     rules: {
       // Kebab-case rejects the conventional `__tests__` and `__fixtures__`.
       // Treating them as roots skips checking them, but not the files and
@@ -153,7 +165,7 @@ export default defineConfig([
     },
   },
   {
-    files: ['src/**/*.test.{js,ts}'],
+    files: ['packages/marking-menu/src/**/*.test.{js,ts}'],
     plugins: { vitest },
     languageOptions: {
       globals: vitest.environments.env.globals,

@@ -1,22 +1,23 @@
 {
-  "extends": "../tsconfig.base.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2024", "ESNext.Disposable", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
     "allowJs": true,
     "checkJs": true,
-    // The demo (`demo/index.html`) resolves `marking-menu` through its
-    // import map (see `demo/lib/marking-menu.js`, a symlink to
-    // `../dist/marking-menu.js`). Type it from the matching declaration bundle
+    // The demo resolves `marking-menu` through its import map and a link to
+    // the installed workspace package. Type it from the same built bundle
     // so a type missing from what we publish fails here too.
-    "paths": { "marking-menu": ["../dist/marking-menu.d.ts"] }
+    "paths": {
+      "marking-menu": ["../../node_modules/marking-menu/dist/marking-menu.d.ts"]
+    }
   },
   "include": ["**/*.js", "**/*.ts"],
   "exclude": [
     // Its own project (jsx, React types), not plain checkJs.
     "playground/**",
     // The built library itself, symlinked in for the browser; already
-    // checked as its own source in `../tsconfig.app.json`.
+    // checked as its own source in the library workspace.
     "lib/**"
   ]
 }

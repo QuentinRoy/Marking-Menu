@@ -32,7 +32,7 @@ const iframeOrigin: BrowserCommand<never[], { x: number; y: number }> = async (
 // `page.touchscreen` only offers an atomic tap, so gestures are driven
 // straight through the Chromium DevTools Protocol instead. One CDP
 // session per test session, kept across commands so several fingers (several
-// concurrent `press()` calls in `src/__tests__/__fixtures__/browser-menu.ts`)
+// concurrent `press()` calls in the library's browser-menu fixture)
 // can move and lift independently while sharing one active-touch-points
 // dispatch, mirroring `CdpMultiTouchDrag`.
 type TouchSession = {
@@ -215,10 +215,13 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'node',
-          // The playground page (see `demo/playground`) has tests of its own;
+          // The playground page has tests of its own;
           // coverage below stays scoped to `src`, so demo code never moves the
           // thresholds.
-          include: ['src/**/*.test.ts', 'demo/**/*.test.ts'],
+          include: [
+            'packages/marking-menu/src/**/*.test.ts',
+            'packages/demo/**/*.test.ts',
+          ],
           exclude: [
             '**/*.browser.test.ts',
             '**/*.cross-browser.test.ts',
@@ -237,10 +240,10 @@ export default defineConfig({
           // gesture tests can move that mouse out from under each other.
           fileParallelism: false,
           include: [
-            'src/**/*.browser.test.ts',
-            'src/**/*.cross-browser.test.ts',
-            'src/**/*.dist.test.ts',
-            'demo/**/*.dist.test.ts',
+            'packages/marking-menu/src/**/*.browser.test.ts',
+            'packages/marking-menu/src/**/*.cross-browser.test.ts',
+            'packages/marking-menu/src/**/*.dist.test.ts',
+            'packages/demo/**/*.dist.test.ts',
           ],
           browser: {
             enabled: true,
@@ -256,26 +259,33 @@ export default defineConfig({
                 browser: 'chromium',
                 name: 'browser (chromium)',
                 include: [
-                  'src/**/*.browser.test.ts',
-                  'src/**/*.cross-browser.test.ts',
+                  'packages/marking-menu/src/**/*.browser.test.ts',
+                  'packages/marking-menu/src/**/*.cross-browser.test.ts',
                 ],
                 provider: playwright({ contextOptions: { hasTouch: true } }),
               },
               {
                 browser: 'firefox',
                 name: 'browser (firefox)',
-                include: ['src/**/*.cross-browser.test.ts'],
+                include: [
+                  'packages/marking-menu/src/**/*.cross-browser.test.ts',
+                ],
                 provider: firefoxProvider(),
               },
               {
                 browser: 'webkit',
                 name: 'browser (webkit)',
-                include: ['src/**/*.cross-browser.test.ts'],
+                include: [
+                  'packages/marking-menu/src/**/*.cross-browser.test.ts',
+                ],
               },
               {
                 browser: 'chromium',
                 name: 'browser (dist)',
-                include: ['src/**/*.dist.test.ts', 'demo/**/*.dist.test.ts'],
+                include: [
+                  'packages/marking-menu/src/**/*.dist.test.ts',
+                  'packages/demo/**/*.dist.test.ts',
+                ],
               },
             ],
             commands: {
@@ -294,7 +304,7 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.{js,ts}'],
+      include: ['packages/marking-menu/src/**/*.{js,ts}'],
       // Type level tests hold no runtime code to cover, and the default
       // exclusions do not cover the `.test-d.` infix.
       exclude: [...coverageConfigDefaults.exclude, '**/*.test-d.{js,ts}'],

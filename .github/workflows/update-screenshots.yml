@@ -43,10 +43,10 @@ jobs:
           # this ephemeral job workspace before asking Git to stage snapshots.
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git add -- \
-            ':(glob)src/**/__tests__/__screenshots__/**' \
-            ':(glob)demo/**/__tests__/__screenshots__/**'
+            ':(glob)packages/marking-menu/src/**/__tests__/__screenshots__/**' \
+            ':(glob)packages/demo/**/__tests__/__screenshots__/**'
           if ! git diff --cached --name-only | awk '
-            $0 ~ /^(src|demo)\/(.+\/)?__tests__\/__screenshots__\/.+-chromium-linux\.png$/ { next }
+            $0 ~ /^(packages\/marking-menu\/src|packages\/demo)\/(.+\/)?__tests__\/__screenshots__\/.+-chromium-linux\.png$/ { next }
             { exit 1 }
           '; then
             echo 'Only visual PNG baselines may be staged.' >&2

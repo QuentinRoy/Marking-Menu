@@ -11,13 +11,16 @@ export default defineConfig({
   base: './',
   build: {
     emptyOutDir: true,
-    outDir: path.resolve(import.meta.dirname, 'playground-dist'),
+    outDir: path.resolve(import.meta.dirname, '../../playground-dist'),
     rolldownOptions: {
       external: (source: string) => importMapDependencies.has(source),
     },
   },
   plugins: [react(), tailwind()],
   // Copies `dist/` next to the built playground.
-  publicDir: path.resolve(import.meta.dirname, 'dist'),
-  root: path.resolve(import.meta.dirname, 'demo/playground'),
+  publicDir: path.resolve(
+    import.meta.dirname,
+    '../../node_modules/marking-menu/dist',
+  ),
+  root: path.resolve(import.meta.dirname, 'playground'),
 });

@@ -1,0 +1,43 @@
+{
+  "name": "marking-menu",
+  "version": "1.0.1",
+  "description": "Marking Menu Implementation in JavaScript.",
+  "license": "MIT",
+  "repository": "github:QuentinRoy/Marking-Menu",
+  "author": "Quentin Roy <quentin@quentinroy.fr>",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/marking-menu.d.ts",
+      "default": "./dist/marking-menu.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build",
+    "build:watch": "vite build --watch"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "interaction",
+    "technique"
+  ],
+  "dependencies": {
+    "totorobot": "^3.0.0"
+  },
+  "devDependencies": {
+    "@microsoft/api-extractor": "^7.59.0",
+    "@types/node": "^26.4.1",
+    "axe-core": "^4.13.0",
+    "csv-parse": "^7.0.2",
+    "lightningcss": "^1.33.0",
+    "pure-rand": "^8.4.2",
+    "simplex-noise": "^4.0.3",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vite": "^8.2.2",
+    "vite-plugin-dts": "^5.1.0",
+    "vitest": "^5.0.0"
+  }
+}

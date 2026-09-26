@@ -9,5 +9,5 @@
       "@vitest/browser/matchers"
     ]
   },
-  "include": ["src/**/__tests__/**/*"]
+  "include": ["packages/marking-menu/src/**/__tests__/**/*"]
 }
