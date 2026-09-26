@@ -5,26 +5,36 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "serve": "vite build && node server/serve.ts",
+    "serve:only": "node server/serve.ts",
+    "backup": "node server/backup-cli.ts",
+    "export": "node server/export-cli.ts"
   },
   "dependencies": {
-    "@lightmill/log-api": "4.0.1",
+    "@lightmill/log-api": "^4.0.1",
     "@lightmill/log-client": "^4.0.0",
     "@lightmill/log-server": "^4.1.0",
     "@lightmill/react-experiment": "^3.0.0",
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zod": "^4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/browser-playwright": "catalog:",
+    "playwright": "catalog:",
     "tailwindcss": "^4.3.3",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   },
   "installConfig": {
     "hoistingLimits": "workspaces"

@@ -1135,7 +1135,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lightmill/log-api@npm:4.0.1":
+"@lightmill/log-api@npm:^4.0.1":
   version: 4.0.1
   resolution: "@lightmill/log-api@npm:4.0.1"
   checksum: 10c0/58c4e11d461a974914dc13bb955c987fae949bfa1eb0528c8cbe0eee2a0f484c7b510e3a9eb75ca0a729f6ed5ef2b61c02481d10d1912fc6c078530745c85ff7
@@ -1247,20 +1247,27 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@marking-menu/collector@workspace:packages/collector"
   dependencies:
-    "@lightmill/log-api": "npm:4.0.1"
+    "@lightmill/log-api": "npm:^4.0.1"
     "@lightmill/log-client": "npm:^4.0.0"
     "@lightmill/log-server": "npm:^4.1.0"
     "@lightmill/react-experiment": "npm:^3.0.0"
     "@tailwindcss/vite": "npm:^4.3.3"
+    "@types/better-sqlite3": "npm:^9.6.0"
+    "@types/express": "npm:^5.0.6"
     "@types/node": "catalog:"
     "@types/react": "npm:^19.2.18"
     "@types/react-dom": "npm:^19.2.7"
     "@vitejs/plugin-react": "npm:^6.1.1"
+    "@vitest/browser-playwright": "catalog:"
+    better-sqlite3: "npm:^13.0.3"
+    express: "npm:^5.1.0"
+    playwright: "catalog:"
     react: "npm:^19.2.8"
     react-dom: "npm:^19.2.8"
     tailwindcss: "npm:^4.3.3"
     typescript: "catalog:"
     vite: "catalog:"
+    vitest: "catalog:"
     zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
@@ -3245,6 +3252,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/better-sqlite3@npm:^9.6.0":
+  version: 9.6.0
+  resolution: "@types/better-sqlite3@npm:9.6.0"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10c0/630273028a281addb0df36d204d0edcd0ab000f55ed89fdc742536a6ead4d4404287ebfb1714f5c58ec2f08fd508baf810e1d8f093ff9d480b9f3fb6495d141a
+  languageName: node
+  linkType: hard
+
 "@types/body-parser@npm:*":
   version: 1.19.6
   resolution: "@types/body-parser@npm:1.19.6"
@@ -3323,7 +3339,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express@npm:*":
+"@types/express@npm:*, @types/express@npm:^5.0.6":
   version: 5.0.6
   resolution: "@types/express@npm:5.0.6"
   dependencies:

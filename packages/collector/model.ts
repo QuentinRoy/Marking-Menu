@@ -1,3 +1,5 @@
+export const experimentName = 'touch-v1';
+
 export type Label = 'accept' | 'reject' | 'unsure';
 export type EventKind =
   'pointerdown' | 'pointermove' | 'pointerup' | 'pointercancel';
@@ -14,9 +16,17 @@ export type RecordedEvent = {
   coalesced: boolean;
 };
 
-export type TrialPlan = {
-  id: string;
+export type Point = { x: number; y: number };
+
+export type TrialTask = {
+  type: 'trial';
+  // 1-based position in the session's timeline. Resumption skips this many
+  // tasks, so it must count every task, warm-ups included.
+  taskNumber: number;
+  trialId: string;
   blockId: string;
+  blockNumber: number;
+  blockCount: number;
   breadth: number;
   depth: number;
   targetIndices: number[];
@@ -24,44 +34,72 @@ export type TrialPlan = {
   warmup: boolean;
 };
 
-export type BlockPlan = {
-  id: string;
+export type SessionLog = {
+  type: 'session';
+  taskNumber: 0;
+  sessionNumber: number;
+  device: string;
+  userAgent: string;
+  devicePixelRatio: number;
+};
+
+export type WarmupLog = {
+  type: 'warmup';
+  taskNumber: number;
+  trialId: string;
+};
+
+export type TrialLog = {
+  type: 'trial';
+  taskNumber: number;
+  trialId: string;
+  blockId: string;
   breadth: number;
   depth: number;
-  trials: TrialPlan[];
-};
-
-export type Session = {
-  id: string;
-  number: number;
-  startedAt: string;
-  completedAt?: string | undefined;
-  userAgent: string;
-  device: string;
-  devicePixelRatio: number;
-  nextIndex: number;
-  blocks: BlockPlan[];
-};
-
-export type RecordedTrial = {
-  id: string;
-  sessionId: string;
-  blockId: string;
-  plan: TrialPlan;
+  targetIndices: number[];
+  targetAngles: number[];
   events: RecordedEvent[];
-  label?: Label | undefined;
-  overlay: Array<{ x: number; y: number }>;
+  overlay: Point[];
   discarded: boolean;
-  recordedAt: string;
+  label: Label | undefined;
 };
+
+export type CollectorLog = SessionLog | WarmupLog | TrialLog;
+
+export const resumableLogTypes: Array<CollectorLog['type']> = [
+  'session',
+  'warmup',
+  'trial',
+];
+
+export function runName(sessionNumber: number): string {
+  return `session-${sessionNumber}`;
+}
 
 const breadths = [4, 8, 12, 16];
+const depths = [1, 2, 3];
+const warmupCount = 3;
 const turns = [0, 1, -1, 'opposite', 2, -2] as const;
 
-function shuffled<T>(values: T[]): T[] {
+// Mulberry32. Seeding by session number lets a resumed run rebuild the
+// exact timeline it was interrupted in.
+/* eslint-disable no-bitwise -- The generator works on 32-bit integers. */
+function seededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d_2b_79_f5) >>> 0;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4_294_967_296;
+  };
+}
+/* eslint-enable no-bitwise */
+
+function shuffled<T>(values: T[], random: () => number): T[] {
   const copy = [...values];
   for (let index = copy.length - 1; index > 0; index--) {
-    const next = Math.floor(Math.random() * (index + 1));
+    const next = Math.floor(random() * (index + 1));
     const current = copy[index];
     const replacement = copy[next];
     if (current === undefined || replacement === undefined) {
@@ -93,52 +131,42 @@ function path(breadth: number, depth: number, ordinal: number): number[] {
   return result;
 }
 
-export function makeSession(number: number, device: string): Session {
-  const id = crypto.randomUUID();
-  const blocks = shuffled(
-    breadths.flatMap((breadth) =>
-      [1, 2, 3].map((depth): BlockPlan => {
-        const blockId = `${id}-${breadth}-${depth}`;
-        const count = depth === 1 ? breadth * (number % 2 === 0 ? 3 : 2) : 20;
-        const targets = shuffled(
-          Array.from({ length: count }, (_, index) =>
-            path(breadth, depth, index + (number - 1) * count),
-          ),
-        );
-        const warmups = Array.from({ length: 3 }, (_, index) =>
-          path(breadth, depth, index),
-        );
-        const trials = [...warmups, ...targets].map(
-          (targetIndices, index): TrialPlan => ({
-            id: crypto.randomUUID(),
-            blockId,
-            breadth,
-            depth,
-            targetIndices,
-            targetAngles: targetIndices.map((item) => (item * 360) / breadth),
-            warmup: index < warmups.length,
-          }),
-        );
-        return { id: blockId, breadth, depth, trials };
-      }),
-    ),
+export function makeTimeline(sessionNumber: number): TrialTask[] {
+  const random = seededRandom(sessionNumber);
+  const cells = shuffled(
+    breadths.flatMap((breadth) => depths.map((depth) => ({ breadth, depth }))),
+    random,
   );
-  return {
-    id,
-    number,
-    startedAt: new Date().toISOString(),
-    userAgent: navigator.userAgent,
-    device,
-    devicePixelRatio: window.devicePixelRatio,
-    nextIndex: 0,
-    blocks,
-  };
-}
+  const tasks: TrialTask[] = [];
+  for (const [blockIndex, { breadth, depth }] of cells.entries()) {
+    const blockId = `s${sessionNumber}-b${breadth}x${depth}`;
+    const count =
+      depth === 1 ? breadth * (sessionNumber % 2 === 0 ? 3 : 2) : 20;
+    const targets = shuffled(
+      Array.from({ length: count }, (_, index) =>
+        path(breadth, depth, index + (sessionNumber - 1) * count),
+      ),
+      random,
+    );
+    const warmups = Array.from({ length: warmupCount }, (_, index) =>
+      path(breadth, depth, index),
+    );
+    for (const [index, targetIndices] of [...warmups, ...targets].entries()) {
+      tasks.push({
+        type: 'trial',
+        taskNumber: tasks.length + 1,
+        trialId: `${blockId}-t${index + 1}`,
+        blockId,
+        blockNumber: blockIndex + 1,
+        blockCount: cells.length,
+        breadth,
+        depth,
+        targetIndices,
+        targetAngles: targetIndices.map((item) => (item * 360) / breadth),
+        warmup: index < warmupCount,
+      });
+    }
+  }
 
-export function flattenTrials(session: Session): TrialPlan[] {
-  return session.blocks.flatMap((block) => block.trials);
-}
-
-export function nextTrial(session: Session): TrialPlan | undefined {
-  return flattenTrials(session)[session.nextIndex];
+  return tasks;
 }

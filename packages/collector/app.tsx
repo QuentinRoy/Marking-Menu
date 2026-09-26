@@ -1,19 +1,35 @@
-import { useEffect, useRef, useState } from 'react';
-import { download, exportSession } from './export.js';
+import { Run, useLogger, useTask } from '@lightmill/react-experiment';
+import { Component, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  flattenTrials,
-  makeSession,
-  nextTrial,
+  createClient,
+  ensureHostSession,
+  findResumableSessions,
+  resumeSession,
+  startSession,
+  type Logger,
+  type ResumableSession,
+} from './lightmill.js';
+import {
+  makeTimeline,
+  type CollectorLog,
   type EventKind,
+  type Label,
+  type Point,
   type RecordedEvent,
-  type RecordedTrial,
-  type Session,
-  type TrialPlan,
+  type TrialTask,
 } from './model.js';
 import { fitOverlay, strokeLength } from './overlay.js';
-import { clearSession, openStore, put, sessions, trials } from './storage.js';
 
-type Point = { x: number; y: number };
+declare module '@lightmill/react-experiment' {
+  // Declaration merging, which registers these types, needs an interface.
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+  interface RegisterExperiment {
+    task: TrialTask;
+    log: CollectorLog;
+  }
+}
+
+const minimumStrokeLength = 12;
 
 function trace(points: Point[]): string {
   return points
@@ -24,15 +40,13 @@ function trace(points: Point[]): string {
 function targetDiagram(angles: number[]): Point[] {
   const start = { x: 68, y: 55 };
   const points = [start];
+  let last = start;
   for (const angle of angles) {
-    const last = points.at(-1);
-    if (!last) {
-      break;
-    }
-    points.push({
+    last = {
       x: last.x + Math.cos((angle * Math.PI) / 180) * 33,
       y: last.y + Math.sin((angle * Math.PI) / 180) * 33,
-    });
+    };
+    points.push(last);
   }
 
   return points;
@@ -42,7 +56,7 @@ function record(
   event: PointerEvent,
   type: EventKind,
   bounds: DOMRect,
-  coalesced = false,
+  isCoalesced = false,
 ): RecordedEvent {
   return {
     type,
@@ -53,132 +67,63 @@ function record(
     pressure: event.pressure,
     width: event.width,
     height: event.height,
-    coalesced,
+    coalesced: isCoalesced,
   };
 }
 
-export function App() {
-  const [database, setDatabase] = useState<IDBDatabase>();
-  const [allSessions, setAllSessions] = useState<Session[]>([]);
-  const [session, setSession] = useState<Session>();
-  const [pending, setPending] = useState<RecordedTrial>();
+type Stroke = { events: RecordedEvent[]; overlay: Point[] };
+
+function Trial({ task, onDone }: { task: TrialTask; onDone: () => void }) {
+  const log = useLogger();
   const [ink, setInk] = useState<RecordedEvent[]>([]);
-  const [device, setDevice] = useState('');
-  const [error, setError] = useState('');
+  const [review, setReview] = useState<Stroke>();
   const drawing = useRef<
     { pointerId: number; events: RecordedEvent[] } | undefined
   >(undefined);
-  const surface = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    let isActive = true;
-    openStore()
-      .then(async (store) => {
-        const saved = await sessions(store);
-        if (!isActive) {
-          return;
-        }
-        setDatabase(store);
-        setAllSessions(saved.sort((a, b) => a.number - b.number));
-        const unfinished = saved.find((entry) => !entry.completedAt);
-        if (unfinished) {
-          setSession(unfinished);
-          const stored = await trials(store, unfinished.id);
-          if (!isActive) {
-            return;
-          }
-          setPending(
-            stored.find(
-              (entry) => !entry.plan.warmup && !entry.label && !entry.discarded,
-            ),
-          );
-        }
-      })
-      .catch((error_: unknown) => {
-        setError(String(error_));
-      });
-    return () => {
-      isActive = false;
-    };
-  }, []);
-
-  const plan = session ? nextTrial(session) : undefined;
-  const total = session ? flattenTrials(session).length : 0;
-  const display = pending?.plan ?? plan;
-  const block = display
-    ? session?.blocks.find((entry) => entry.id === display.blockId)
-    : undefined;
-  const raw = pending?.events ?? ink;
-  const points = raw
+  const points = (review?.events ?? ink)
     .filter((event) => !event.coalesced)
     .map(({ x, y }) => ({ x, y }));
 
-  async function startSession() {
-    if (!database || !device.trim()) {
-      return;
-    }
-    const created = makeSession(allSessions.length + 1, device.trim());
-    try {
-      await put(database, 'sessions', created);
-      setAllSessions([...allSessions, created]);
-      setSession(created);
-      setPending(undefined);
-    } catch (error_) {
-      setError(String(error_));
-    }
-  }
-
-  async function advance(current: Session, completed?: RecordedTrial) {
-    if (!database) {
-      return;
-    }
-    const updated = { ...current, nextIndex: current.nextIndex + 1 };
-    if (updated.nextIndex >= total) {
-      updated.completedAt = new Date().toISOString();
-    }
-
-    if (completed) {
-      await put(database, 'trials', completed);
-    }
-    await put(database, 'sessions', updated);
-    setSession(updated);
-    setAllSessions((entries) =>
-      entries.map((entry) => (entry.id === updated.id ? updated : entry)),
-    );
-    setPending(undefined);
-    setInk([]);
-  }
-
-  async function finishStroke(events: RecordedEvent[], currentPlan: TrialPlan) {
-    if (!session || !database) {
-      return;
-    }
-    if (currentPlan.warmup) {
-      await advance(session);
-      return;
-    }
-
-    const isDiscarded = strokeLength(events) < 12;
-    const trial: RecordedTrial = {
-      id: currentPlan.id,
-      sessionId: session.id,
-      blockId: currentPlan.blockId,
-      plan: currentPlan,
-      events,
-      overlay: isDiscarded ? [] : fitOverlay(events, currentPlan.targetAngles),
+  function logTrial(stroke: Stroke, isDiscarded: boolean, label?: Label) {
+    log({
+      type: 'trial',
+      taskNumber: task.taskNumber,
+      trialId: task.trialId,
+      blockId: task.blockId,
+      breadth: task.breadth,
+      depth: task.depth,
+      targetIndices: task.targetIndices,
+      targetAngles: task.targetAngles,
+      events: stroke.events,
+      overlay: stroke.overlay,
       discarded: isDiscarded,
-      recordedAt: new Date().toISOString(),
-    };
-    await put(database, 'trials', trial);
-    if (isDiscarded) {
-      await advance(session, trial);
+      label,
+    });
+    onDone();
+  }
+
+  function finishStroke(events: RecordedEvent[]) {
+    if (task.warmup) {
+      log({
+        type: 'warmup',
+        taskNumber: task.taskNumber,
+        trialId: task.trialId,
+      });
+      onDone();
+    } else if (strokeLength(events) < minimumStrokeLength) {
+      logTrial({ events, overlay: [] }, true);
     } else {
-      setPending(trial);
+      setReview({ events, overlay: fitOverlay(events, task.targetAngles) });
     }
   }
 
   function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    if (!plan || pending || !surface.current || event.pointerType !== 'touch') {
+    if (
+      review !== undefined ||
+      drawing.current !== undefined ||
+      event.pointerType !== 'touch'
+    ) {
       return;
     }
 
@@ -194,15 +139,16 @@ export function App() {
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
     const state = drawing.current;
-    if (!state || state.pointerId !== event.pointerId) {
+    if (state?.pointerId !== event.pointerId) {
       return;
     }
+
     const bounds = event.currentTarget.getBoundingClientRect();
     const coalesced = event.nativeEvent.getCoalescedEvents?.() ?? [];
     state.events.push(
       ...coalesced.map((item) => record(item, 'pointermove', bounds, true)),
+      record(event.nativeEvent, 'pointermove', bounds),
     );
-    state.events.push(record(event.nativeEvent, 'pointermove', bounds));
     setInk([...state.events]);
   }
 
@@ -211,9 +157,10 @@ export function App() {
     type: EventKind,
   ) {
     const state = drawing.current;
-    if (!state || state.pointerId !== event.pointerId || !plan) {
+    if (state?.pointerId !== event.pointerId) {
       return;
     }
+
     state.events.push(
       record(
         event.nativeEvent,
@@ -223,50 +170,238 @@ export function App() {
     );
     drawing.current = undefined;
     setInk([...state.events]);
-    void finishStroke(state.events, plan).catch((error_: unknown) => {
-      setError(String(error_));
-    });
+    finishStroke(state.events);
   }
 
-  async function label(value: 'accept' | 'reject' | 'unsure') {
-    if (!session || !pending) {
-      return;
+  return (
+    <>
+      <section
+        className="rounded-xl border bg-teal-50 p-3"
+        aria-label="Target mark"
+      >
+        <div className="flex items-center justify-between">
+          <strong>Target mark</strong>
+          <span className="text-sm">
+            Block {task.blockNumber}/{task.blockCount} · task {task.taskNumber}
+          </span>
+        </div>
+        <svg
+          className="mx-auto h-32 w-48 overflow-visible"
+          viewBox="-30 -40 210 170"
+          aria-label={`Directions ${task.targetAngles.join(', ')} degrees`}
+        >
+          <path
+            d={trace(targetDiagram(task.targetAngles))}
+            fill="none"
+            stroke="#0f766e"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle cx="68" cy="55" r="5" fill="#0f766e" />
+        </svg>
+        <p className="text-center text-sm">
+          {task.breadth} items per level · depth {task.depth} ·{' '}
+          {task.warmup
+            ? 'Warm-up (not recorded)'
+            : review
+              ? 'Review this stroke'
+              : 'Draw one continuous stroke below'}
+        </p>
+      </section>
+      <div
+        className="relative min-h-[45vh] flex-1 overflow-hidden rounded-xl border-2 border-slate-300 bg-slate-50"
+        style={{ touchAction: 'none' }}
+        aria-label="Drawing area"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={(event) => {
+          onPointerEnd(event, 'pointerup');
+        }}
+        onPointerCancel={(event) => {
+          onPointerEnd(event, 'pointercancel');
+        }}
+      >
+        <svg className="pointer-events-none absolute inset-0 h-full w-full">
+          <path
+            d={trace(points)}
+            fill="none"
+            stroke="#1e293b"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          {review && (
+            <path
+              d={trace(review.overlay)}
+              fill="none"
+              stroke="#e11d48"
+              strokeWidth="3"
+              strokeDasharray="8 5"
+              strokeLinejoin="round"
+            />
+          )}
+        </svg>
+      </div>
+      {review && (
+        <div className="flex justify-center gap-3" aria-label="Label stroke">
+          {(['accept', 'reject', 'unsure'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              className="rounded bg-teal-700 px-5 py-3 font-semibold text-white capitalize"
+              onClick={() => {
+                logTrial(review, false, value);
+              }}
+            >
+              {value}
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="text-center text-sm text-slate-600">
+        {review
+          ? 'Dashed pink line: fitted target. Judge whether your stroke matches it.'
+          : 'The target area does not record touches. Short accidental touches are logged and discarded.'}
+      </p>
+    </>
+  );
+}
+
+function CurrentTrial() {
+  const { task, onTaskCompleted } = useTask('trial');
+  // A fresh component per task drops the previous stroke's state.
+  return <Trial key={task.taskNumber} task={task} onDone={onTaskCompleted} />;
+}
+
+class RunErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { error: unknown }
+> {
+  static getDerivedStateFromError(error: unknown) {
+    return { error };
+  }
+
+  override state: { error: unknown } = { error: undefined };
+
+  override render(): React.ReactNode {
+    if (this.state.error === undefined) {
+      return this.props.children;
     }
+
+    return (
+      <p role="alert" className="rounded bg-red-100 p-3 text-red-900">
+        {this.state.error instanceof Error
+          ? this.state.error.message
+          : 'The run stopped'}
+        . Check the laptop server, then reload to resume after the last saved
+        trial.
+      </p>
+    );
+  }
+}
+
+type Phase =
+  | { kind: 'loading' }
+  | { kind: 'choose'; resumable: ResumableSession[] }
+  | {
+      kind: 'running';
+      logger: Logger;
+      sessionNumber: number;
+      completedTasks: number;
+    }
+  | { kind: 'completed'; sessionNumber: number };
+
+function Session({
+  logger,
+  sessionNumber,
+  completedTasks,
+  onCompleted,
+}: {
+  logger: Logger;
+  sessionNumber: number;
+  completedTasks: number;
+  onCompleted: () => void;
+}) {
+  const timeline = useMemo(() => makeTimeline(sessionNumber), [sessionNumber]);
+  const onLog = useMemo(() => logger.addLog.bind(logger), [logger]);
+  return (
+    <Run
+      timeline={timeline}
+      onLog={onLog}
+      {...(completedTasks > 0 && {
+        resumeAfter: { type: 'trial', number: completedTasks },
+      })}
+      onCompleted={onCompleted}
+      elements={{
+        tasks: { trial: <CurrentTrial /> },
+        loading: <p>Loading…</p>,
+      }}
+    />
+  );
+}
+
+export function App() {
+  const client = useMemo(() => createClient(), []);
+  const [phase, setPhase] = useState<Phase>({ kind: 'loading' });
+  const [sessionNumber, setSessionNumber] = useState('');
+  const [device, setDevice] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let isActive = true;
+    ensureHostSession()
+      .then(async () => findResumableSessions(client))
+      .then((resumable) => {
+        if (isActive) {
+          setPhase({ kind: 'choose', resumable });
+        }
+      })
+      .catch((error_: unknown) => {
+        setError(String(error_));
+      });
+    return () => {
+      isActive = false;
+    };
+  }, [client]);
+
+  async function start() {
+    const number = Number(sessionNumber);
     try {
-      await advance(session, { ...pending, label: value });
+      const logger = await startSession(client, number, device.trim());
+      setPhase({
+        kind: 'running',
+        logger,
+        sessionNumber: number,
+        completedTasks: 0,
+      });
     } catch (error_) {
       setError(String(error_));
     }
   }
 
-  async function exportFiles(entry: Session) {
-    if (!database) {
-      return;
-    }
-    const saved = await trials(database, entry.id);
-    for (const file of exportSession(entry, saved)) {
-      download(`${entry.id}-${file.name}`, file.content);
+  async function resume(session: ResumableSession) {
+    try {
+      const logger = await resumeSession(client, session);
+      setPhase({
+        kind: 'running',
+        logger,
+        sessionNumber: session.sessionNumber,
+        completedTasks: session.completedTasks,
+      });
+    } catch (error_) {
+      setError(String(error_));
     }
   }
 
-  async function remove(entry: Session) {
-    if (
-      !database ||
-      !globalThis.confirm(
-        `Delete session ${entry.number} from this device? Download it first.`,
-      )
-    ) {
-      return;
+  async function complete(logger: Logger, number: number) {
+    try {
+      // Completing checks that the server holds every log of the run.
+      await logger.completeRun();
+      setPhase({ kind: 'completed', sessionNumber: number });
+    } catch (error_) {
+      setError(String(error_));
     }
-
-    await clearSession(database, entry.id);
-    setAllSessions((entries) => entries.filter((item) => item.id !== entry.id));
-    if (session?.id !== entry.id) {
-      return;
-    }
-
-    setSession(undefined);
-    setPending(undefined);
   }
 
   return (
@@ -282,197 +417,101 @@ export function App() {
           Tablet portrait · flat on table · dominant index finger
         </p>
       </header>
-      {error && (
+      {error !== '' && (
         <p role="alert" className="rounded bg-red-100 p-3 text-red-900">
           {error}
         </p>
       )}
-      {!session && (
-        <section className="rounded-xl border p-4">
-          <h2 className="font-semibold">Start a session</h2>
-          <p className="mb-3 text-sm">
-            Record on different days. Session 4 is held out. Download each
-            session when it ends.
-          </p>
-          <label className="block text-sm">
-            Device model{' '}
-            <input
-              className="ml-2 rounded border p-2"
-              value={device}
-              onChange={(event) => {
-                setDevice(event.target.value);
-              }}
-              placeholder="Tablet model"
-            />
-          </label>
-          <button
-            className="mt-3 rounded bg-teal-700 px-4 py-2 font-semibold text-white disabled:opacity-50"
-            disabled={!database || !device.trim()}
-            onClick={() => {
-              void startSession();
-            }}
-          >
-            Start session {allSessions.length + 1}
-          </button>
-        </section>
+      {phase.kind === 'loading' && error === '' && (
+        <p>Connecting to the laptop…</p>
       )}
-      {session && !session.completedAt && display && (
+      {phase.kind === 'choose' && (
         <>
-          <section
-            className="rounded-xl border bg-teal-50 p-3"
-            aria-label="Target mark"
-          >
-            <div className="flex items-center justify-between">
-              <strong>Target mark</strong>
-              <span className="text-sm">
-                Session {session.number} · block{' '}
-                {session.blocks.indexOf(block ?? session.blocks[0]!) + 1}/12 ·
-                trial {session.nextIndex + 1}/{total}
-              </span>
-            </div>
-            <svg
-              className="mx-auto h-32 w-48 overflow-visible"
-              viewBox="-30 -40 210 170"
-              aria-label={`Directions ${display.targetAngles.join(', ')} degrees`}
+          {phase.resumable.map((session) => (
+            <section
+              key={session.sessionNumber}
+              className="rounded-xl border p-4"
             >
-              <path
-                d={trace(targetDiagram(display.targetAngles))}
-                fill="none"
-                stroke="#0f766e"
-                strokeWidth="5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <circle cx="68" cy="55" r="5" fill="#0f766e" />
-            </svg>
-            <p className="text-center text-sm">
-              {display.breadth} items per level · depth {display.depth} ·{' '}
-              {display.warmup
-                ? 'Warmup (not saved)'
-                : pending
-                  ? 'Review this stroke'
-                  : 'Draw one continuous stroke below'}
-            </p>
-          </section>
-          <div
-            ref={surface}
-            className="relative min-h-[45vh] flex-1 overflow-hidden rounded-xl border-2 border-slate-300 bg-slate-50"
-            style={{ touchAction: 'none' }}
-            aria-label="Drawing area"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={(event) => {
-              onPointerEnd(event, 'pointerup');
-            }}
-            onPointerCancel={(event) => {
-              onPointerEnd(event, 'pointercancel');
-            }}
-          >
-            <svg className="pointer-events-none absolute inset-0 h-full w-full">
-              <path
-                d={trace(points)}
-                fill="none"
-                stroke="#1e293b"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {pending && (
-                <path
-                  d={trace(pending.overlay)}
-                  fill="none"
-                  stroke="#e11d48"
-                  strokeWidth="3"
-                  strokeDasharray="8 5"
-                  strokeLinejoin="round"
-                />
-              )}
-            </svg>
-          </div>
-          {pending && (
-            <div
-              className="flex justify-center gap-3"
-              aria-label="Label stroke"
-            >
-              {(['accept', 'reject', 'unsure'] as const).map((value) => (
-                <button
-                  key={value}
-                  className="rounded bg-teal-700 px-5 py-3 font-semibold text-white capitalize"
-                  onClick={() => {
-                    void label(value);
+              <h2 className="font-semibold">
+                Session {session.sessionNumber} is unfinished
+              </h2>
+              <p className="mb-3 text-sm">
+                {session.completedTasks} tasks saved.
+              </p>
+              <button
+                type="button"
+                className="rounded bg-teal-700 px-4 py-2 font-semibold text-white"
+                onClick={() => {
+                  void resume(session);
+                }}
+              >
+                Resume session {session.sessionNumber}
+              </button>
+            </section>
+          ))}
+          {phase.resumable.length === 0 && (
+            <section className="rounded-xl border p-4">
+              <h2 className="font-semibold">Start a session</h2>
+              <p className="mb-3 text-sm">
+                Record sessions on different days. Back up the laptop database
+                after each one.
+              </p>
+              <label className="block text-sm">
+                Session number{' '}
+                <input
+                  className="ml-2 w-20 rounded border p-2"
+                  inputMode="numeric"
+                  value={sessionNumber}
+                  onChange={(event) => {
+                    setSessionNumber(event.target.value);
                   }}
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
+                />
+              </label>
+              <label className="mt-2 block text-sm">
+                Device model{' '}
+                <input
+                  className="ml-2 rounded border p-2"
+                  value={device}
+                  placeholder="Tablet model"
+                  onChange={(event) => {
+                    setDevice(event.target.value);
+                  }}
+                />
+              </label>
+              <button
+                type="button"
+                className="mt-3 rounded bg-teal-700 px-4 py-2 font-semibold text-white disabled:opacity-50"
+                disabled={
+                  !/^[1-9]\d*$/v.test(sessionNumber) || device.trim() === ''
+                }
+                onClick={() => {
+                  void start();
+                }}
+              >
+                Start session {sessionNumber}
+              </button>
+            </section>
           )}
-          <p className="text-center text-sm text-slate-600">
-            {pending
-              ? 'Dashed pink line: fitted target. Judge whether your stroke matches it.'
-              : 'The target area does not record touches. Short accidental touches are logged and discarded.'}
-          </p>
         </>
       )}
-      {session?.completedAt && (
-        <section className="rounded-xl border bg-teal-50 p-4">
-          <h2 className="font-semibold">Session {session.number} complete</h2>
-          <p>
-            Download all three files now. Browser storage may be cleared after
-            inactivity.
-          </p>
-          <button
-            className="mt-3 rounded bg-teal-700 px-4 py-2 font-semibold text-white"
-            onClick={() => {
-              void exportFiles(session);
+      {phase.kind === 'running' && (
+        <RunErrorBoundary>
+          <Session
+            logger={phase.logger}
+            sessionNumber={phase.sessionNumber}
+            completedTasks={phase.completedTasks}
+            onCompleted={() => {
+              void complete(phase.logger, phase.sessionNumber);
             }}
-          >
-            Download session files
-          </button>
-          <button
-            className="ml-3 rounded border px-4 py-2"
-            onClick={() => {
-              setSession(undefined);
-            }}
-          >
-            Back to sessions
-          </button>
-        </section>
+          />
+        </RunErrorBoundary>
       )}
-      {allSessions.length > 0 && (
-        <section className="border-t pt-3">
-          <h2 className="font-semibold">Saved sessions</h2>
-          <ul className="mt-2 space-y-2">
-            {allSessions.map((entry) => (
-              <li
-                key={entry.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded border p-2"
-              >
-                <span>
-                  Session {entry.number} · {entry.startedAt.slice(0, 10)} ·{' '}
-                  {entry.completedAt ? 'complete' : 'in progress'}
-                </span>
-                <span className="flex gap-2">
-                  <button
-                    className="rounded border px-3 py-1"
-                    onClick={() => {
-                      void exportFiles(entry);
-                    }}
-                  >
-                    Download
-                  </button>
-                  <button
-                    className="rounded border px-3 py-1 text-red-700"
-                    onClick={() => {
-                      void remove(entry);
-                    }}
-                  >
-                    Clear
-                  </button>
-                </span>
-              </li>
-            ))}
-          </ul>
+      {phase.kind === 'completed' && (
+        <section className="rounded-xl border bg-teal-50 p-4">
+          <h2 className="font-semibold">
+            Session {phase.sessionNumber} complete
+          </h2>
+          <p>Every trial is saved on the laptop. Back up its database now.</p>
         </section>
       )}
     </main>

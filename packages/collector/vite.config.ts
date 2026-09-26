@@ -8,4 +8,6 @@ export default defineConfig({
   build: { outDir: path.resolve(import.meta.dirname, 'dist') },
   plugins: [react(), tailwind()],
   root: path.resolve(import.meta.dirname),
+  // `yarn serve:only` must run alongside for the page to reach Lightmill.
+  server: { proxy: { '/api': 'http://localhost:8080' } },
 });

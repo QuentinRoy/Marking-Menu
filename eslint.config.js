@@ -106,6 +106,7 @@ export default defineConfig([
       '*.config.{js,ts}',
       'packages/marking-menu/*.config.{js,ts}',
       'packages/demo/*.config.{js,ts}',
+      'packages/collector/*.config.{js,ts}',
     ],
     rules: {
       'import-x/no-default-export': 'off',
@@ -121,9 +122,19 @@ export default defineConfig([
     },
   },
   {
+    // The collector page is only ever opened on a local network.
+    files: ['packages/collector/**'],
+    rules: {
+      '@html-eslint/require-open-graph-protocol': 'off',
+    },
+  },
+  {
     // The playground page (see `packages/demo/playground`) is the only React
     // in the repo; the library itself is framework-free.
-    files: ['packages/demo/playground/**/*.{ts,tsx}'],
+    files: [
+      'packages/demo/playground/**/*.{ts,tsx}',
+      'packages/collector/**/*.{ts,tsx}',
+    ],
     extends: [reactHooks.configs.flat.recommended],
   },
   {
@@ -153,7 +164,9 @@ export default defineConfig([
     },
   },
   {
-    files: ['{packages/marking-menu/src,packages/demo}/**/__tests__/**'],
+    files: [
+      '{packages/marking-menu/src,packages/demo,packages/collector}/**/__tests__/**',
+    ],
     rules: {
       // Kebab-case rejects the conventional `__tests__` and `__fixtures__`.
       // Treating them as roots skips checking them, but not the files and
@@ -165,7 +178,10 @@ export default defineConfig([
     },
   },
   {
-    files: ['packages/marking-menu/src/**/*.test.{js,ts}'],
+    files: [
+      'packages/marking-menu/src/**/*.test.{js,ts}',
+      'packages/collector/**/*.test.{ts,tsx}',
+    ],
     plugins: { vitest },
     languageOptions: {
       globals: vitest.environments.env.globals,

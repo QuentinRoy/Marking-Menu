@@ -1,9 +1,18 @@
 {
-  "extends": "../tsconfig.base.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["ES2024", "DOM", "DOM.Iterable"],
-    "types": ["vite/client", "node"]
+    "lib": [
+      "ES2024",
+      "ESNext.Array",
+      "ESNext.Disposable",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": ["vite/client", "node", "vitest/globals"],
+    // Node runs the server scripts from source, so they import `.ts` files.
+    "allowImportingTsExtensions": true
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["dist/**", "node_modules/**"]
 }

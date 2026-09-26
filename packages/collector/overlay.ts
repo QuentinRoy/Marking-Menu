@@ -44,12 +44,14 @@ function segmentCost(
   if (!start) {
     return Infinity;
   }
+
   let cost = 0;
   for (let index = from + 1; index <= to; index++) {
     const point = points[index];
     if (!point) {
       continue;
     }
+
     const cross =
       (point.x - start.x) * vector.y - (point.y - start.y) * vector.x;
     cost += cross * cross;
@@ -63,6 +65,7 @@ function articulationIndices(points: Point[], angles: number[]): number[] {
   if (angles.length === 1 || count < angles.length + 1) {
     return [];
   }
+
   const cost = Array.from({ length: angles.length }, () =>
     Array.from({ length: count }, () => Infinity),
   );
@@ -120,6 +123,7 @@ function solve(matrix: number[][], vector: number[]): number[] {
     if (Math.abs(divisor) < 1e-9) {
       continue;
     }
+
     for (let entry = column; entry <= size; entry++) {
       setCell(
         augmented,
@@ -133,6 +137,7 @@ function solve(matrix: number[][], vector: number[]): number[] {
       if (row === column) {
         continue;
       }
+
       const factor = cell(augmented, row, column);
       for (let entry = column; entry <= size; entry++) {
         setCell(
@@ -155,6 +160,7 @@ export function fitOverlay(events: RecordedEvent[], angles: number[]): Point[] {
   if (raw.length < 2 || angles.length === 0) {
     return [];
   }
+
   const points = raw
     .filter(
       (_, index) => index % Math.max(1, Math.floor(raw.length / 80)) === 0,
@@ -169,6 +175,7 @@ export function fitOverlay(events: RecordedEvent[], angles: number[]): Point[] {
   if (!start) {
     return [];
   }
+
   const corners = articulationIndices(points, angles);
   const observations = [
     ...corners.map((index) => item(points, index)),
@@ -187,6 +194,7 @@ export function fitOverlay(events: RecordedEvent[], angles: number[]): Point[] {
       if (!a) {
         continue;
       }
+
       rhs[first] =
         item(rhs, first) +
         weight * (a.x * (point.x - start.x) + a.y * (point.y - start.y));
