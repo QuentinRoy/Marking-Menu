@@ -24,9 +24,6 @@
     "interaction",
     "technique"
   ],
-  "dependencies": {
-    "totorobot": "^3.0.0"
-  },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.59.0",
     "@types/node": "^26.4.1",
@@ -35,6 +32,7 @@
     "lightningcss": "^1.33.0",
     "pure-rand": "^8.4.2",
     "simplex-noise": "^4.0.3",
+    "totorobot": "^3.0.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vite": "^8.2.2",
     "vite-plugin-dts": "^5.1.0",
