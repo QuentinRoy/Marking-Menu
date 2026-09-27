@@ -16,6 +16,10 @@ This builds the page and starts the server on port 8080. It prints the address t
 
 On the tablet, enter the session number and the device model, then start. If a session is unfinished, the page offers to resume it instead.
 
+Record sessions 1 through 4 across at least two different days. Sessions 1 through 3 are for tuning; keep session 4 held out until the final benchmark. Each session has one shuffled block for every breadth and depth: 12 blocks, with three unrecorded warm-ups per block. The four sessions produce 1,040 recorded strokes: ten per direction at depth 1 and 80 per cell at depths 2 and 3. Keep every recorded attempt, including rejected and unsure strokes. Only accidental touches shorter than 12 CSS pixels are logged as discarded.
+
+Keep the tablet in portrait, flat on a table, and draw with your dominant index finger. The page shows the target above the drawing area. Draw one continuous mark without pausing for a menu, then use the fitted overlay to label the attempt. Nothing recognizes the mark during collection.
+
 After each session, back up the database:
 
 ```sh
@@ -26,13 +30,15 @@ The copy lands in `data/backups/`. It's safe to run while the server is running.
 
 ## Export the corpus
 
-Commit the collector first: the export refuses a dirty tree, because the manifest cites the current revision. Name the held-out sessions:
+Commit and tag the collector revision used for recording with a `touch-collector-*` tag. The export refuses a dirty collector tree or a revision without that tag. Name the held-out sessions:
 
 ```sh
 yarn export --held-out 4
 ```
 
 This writes `manifest.json`, `trials.csv`, and `events.csv` to `data/corpus/`, one row per trial and one per pointer event. It exports completed sessions only and lists any it skips.
+
+Copy the exported files to `corpus/touch-v1/` on the branch where the corpus will be published. Keep that directory unchanged after it is merged. The manifest identifies the collector revision and archival tag used to record the strokes.
 
 ## Develop
 

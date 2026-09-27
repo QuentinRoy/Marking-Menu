@@ -176,11 +176,14 @@ test('a session resumes after a server restart and exports as a corpus', async (
   const corpus = toCorpus(logs, {
     heldOutSessions: [2],
     collectorRevision: 'abc123',
+    collectorTag: 'touch-collector-v1',
   });
   expect(corpus.skippedRuns).toEqual([]);
   expect(JSON.parse(corpus.manifest)).toMatchObject({
     version: 'touch-v1',
     collectorRevision: 'abc123',
+    collectorTag: 'touch-collector-v1',
+    heldOutSessions: [2],
     sessions: [
       {
         number: 1,
@@ -223,7 +226,11 @@ test('an unfinished session is left out of the corpus', async () => {
   );
 
   await store.close();
-  const corpus = toCorpus(logs, { heldOutSessions: [], collectorRevision: '' });
+  const corpus = toCorpus(logs, {
+    heldOutSessions: [],
+    collectorRevision: '',
+    collectorTag: '',
+  });
   expect(corpus.skippedRuns).toEqual([
     { runName: 'session-3', runStatus: 'running' },
   ]);

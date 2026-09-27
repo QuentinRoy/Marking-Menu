@@ -76,7 +76,12 @@ export function toCorpus(
   {
     heldOutSessions,
     collectorRevision,
-  }: { heldOutSessions: number[]; collectorRevision: string },
+    collectorTag,
+  }: {
+    heldOutSessions: number[];
+    collectorRevision: string;
+    collectorTag: string;
+  },
 ): CorpusFiles {
   const runs = new Map<string, { runStatus: string; logs: StoredLog[] }>();
   for (const log of logs) {
@@ -192,6 +197,8 @@ export function toCorpus(
   const manifest = {
     version: experimentName,
     collectorRevision,
+    collectorTag,
+    heldOutSessions,
     posture: 'tablet portrait, flat on table, dominant index finger',
     coordinates:
       'CSS px, origin at drawing area top left, y down, degrees clockwise from right',

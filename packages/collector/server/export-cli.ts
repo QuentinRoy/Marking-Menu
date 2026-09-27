@@ -18,19 +18,33 @@ const { values } = parseArgs({
 const heldOutSessions = values['held-out'].map(Number);
 if (
   heldOutSessions.length === 0 ||
-  heldOutSessions.some((session) => Number.isNaN(session))
+  heldOutSessions.some(
+    (session) => !Number.isSafeInteger(session) || session < 1,
+  )
 ) {
   throw new TypeError('Name the held-out sessions, e.g. --held-out 4.');
 }
 
 const git = (...args: string[]) =>
   execFileSync('git', args, { encoding: 'utf8' }).trim();
-// The manifest cites the collector revision, which must be the archival tag.
 if (
   git('status', '--porcelain', '--', path.join(import.meta.dirname, '..')) !==
   ''
 ) {
   throw new Error('Commit the collector before exporting: its tree is dirty.');
+}
+
+const collectorTag = git(
+  'tag',
+  '--points-at',
+  'HEAD',
+  '--list',
+  'touch-collector-*',
+)
+  .split('\n')
+  .find((tag) => tag !== '');
+if (collectorTag === undefined) {
+  throw new Error('Tag the recording revision before exporting.');
 }
 
 const store = new SQLiteDataStore(values.database);
@@ -46,6 +60,7 @@ try {
 const corpus = toCorpus(logs, {
   heldOutSessions,
   collectorRevision: git('rev-parse', 'HEAD'),
+  collectorTag,
 });
 await mkdir(values.output, { recursive: true });
 await Promise.all([

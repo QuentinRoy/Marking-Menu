@@ -79,7 +79,6 @@ export function runName(sessionNumber: number): string {
 const breadths = [4, 8, 12, 16];
 const depths = [1, 2, 3];
 const warmupCount = 3;
-const turns = [0, 1, -1, 'opposite', 2, -2] as const;
 
 // Mulberry32. Seeding by session number lets a resumed run rebuild the
 // exact timeline it was interrupted in.
@@ -116,16 +115,19 @@ function shuffled<T>(values: T[], random: () => number): T[] {
 function path(breadth: number, depth: number, ordinal: number): number[] {
   const first = ordinal % breadth;
   const result = [first];
+  // At breadth 4, a two-item turn is opposite, not a second "other" class.
+  const turnClasses = breadth === 4 ? 4 : 5;
   for (let level = 1; level < depth; level++) {
-    const turn =
-      turns[Math.floor(ordinal / breadth + level - 1) % turns.length];
     const previous = result[level - 1];
-    if (turn === undefined || previous === undefined) {
+    if (previous === undefined) {
       throw new RangeError('Target path index out of bounds.');
     }
 
-    const offset = turn === 'opposite' ? breadth / 2 : turn;
-    result.push((previous + offset + breadth) % breadth);
+    const turnClass =
+      (Math.floor(ordinal / breadth) + first + (level - 1) * 2) % turnClasses;
+    const turn =
+      [0, 1, -1, breadth / 2][turnClass] ?? (previous % 2 === 0 ? 2 : -2);
+    result.push((previous + turn + breadth) % breadth);
   }
 
   return result;
