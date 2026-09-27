@@ -46,9 +46,6 @@ Run `yarn serve:only` for the server and `yarn dev` for the page with hot reload
 
 ## Lightmill setup notes
 
-- `@lightmill/log-server` pulls a package from the JSR registry, which `.yarnrc.yml` configures.
-- Its `better-sqlite3` 11 does not build on Node 26, so the root `package.json` resolves it to version 13.
-- Its `log-server` command does not start, so `server/serve.ts` runs `LogServer` directly.
+- `server/serve.ts` runs `LogServer` directly rather than through the `log-server` command, so one server hosts both the page and the API.
 - The page and API share one origin, with `allowCrossOrigin: false`. Lightmill's cross-origin default needs a secure cookie, which is never sent over plain HTTP.
 - The page opens a host session rather than a participant one. The server keeps sessions in memory, and only a host session can resume a run the server no longer remembers creating. Anyone on the network can reach the server, so record on a network you trust.
-- `@lightmill/react-experiment` declares React 18 as a peer, so yarn warns about React 19. The tests in `__tests__/run.test.tsx` show it works.
