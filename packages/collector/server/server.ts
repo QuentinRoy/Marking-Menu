@@ -36,10 +36,10 @@ export async function startServer({
       // Sessions live in memory and die with the server anyway. The collector
       // recreates its host session after a restart.
       sessionKeys: [randomBytes(32).toString('hex')],
-      // The page and the API share an origin, and the tablet reaches the
-      // laptop over plain HTTP, where browsers drop secure cookies.
+      // The tablet reaches the laptop over plain HTTP, where express-session
+      // won't send the secure cookie that cross-origin mode requires. Serving
+      // the page from the same origin turns that off.
       allowCrossOrigin: false,
-      secureCookies: false,
       baseUrl: '/api',
     }).middleware,
   );
