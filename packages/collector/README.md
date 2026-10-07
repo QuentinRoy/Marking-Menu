@@ -12,7 +12,15 @@ On the laptop, from this directory:
 yarn serve
 ```
 
-This builds the page and starts the server on port 8080. It prints the address to open on the tablet. The database is `data/touch-v1.sqlite`.
+This builds the page and starts the server on port 8080. It prints the address to open on the tablet. The database is `data/touch-v1.sqlite`. The first start creates a session key beside it. Keep the same database and key on the laptop so the tablet can resume after a server restart. Use the same browser on the tablet throughout collection.
+
+If a database from an older Lightmill release already exists, back it up and migrate it before starting the server:
+
+```sh
+yarn migrate
+```
+
+Migration backs up the existing database and its session key first. The server refuses an outdated database rather than changing it during startup.
 
 On the tablet, enter the session number and the device model, then start. If a session is unfinished, the page offers to resume it instead.
 
@@ -26,7 +34,7 @@ After each session, back up the database:
 yarn backup
 ```
 
-The copy lands in `data/backups/`. It's safe to run while the server is running.
+The copy lands in `data/backups/`, alongside a copy of the session key. It's safe to run while the server is running. Keep both files if you move or restore the database.
 
 ## Export the corpus
 
@@ -46,9 +54,8 @@ Run `yarn serve:only` for the server and `yarn dev` for the page with hot reload
 
 ## Lightmill setup notes
 
-- `@lightmill/log-server` pulls a package from the JSR registry, which `.yarnrc.yml` configures.
-- Its `better-sqlite3` 11 does not build on Node 26, so the root `package.json` resolves it to version 13.
-- Its `log-server` command does not start, so `server/serve.ts` runs `LogServer` directly.
-- The page and API share one origin, with `allowCrossOrigin: false`. Lightmill's cross-origin default needs a secure cookie, which is never sent over plain HTTP.
-- The page opens a host session rather than a participant one. The server keeps sessions in memory, and only a host session can resume a run the server no longer remembers creating. Anyone on the network can reach the server, so record on a network you trust.
-- `@lightmill/react-experiment` declares React 18 as a peer, so yarn warns about React 19. The tests in `__tests__/run.test.tsx` show it works.
+- The collector uses Lightmill 5 for logging and Lightmill 4 for the React timeline. These versions support Node 26 and React 19.2.
+- `server/serve.ts` mounts the Lightmill API and the page on one origin. The same-site cookie works over local HTTP.
+- The server stores participant sessions in SQLite and signs the tablet cookie with `data/touch-v1.sqlite.session-key`. A participant session can resume its own run after a server restart. A different browser cannot take over that run.
+- Lightmill requires a host password. The collector creates one only in server memory and does not offer host login; backup and export use the database directly. Record on a network you trust.
+- A stalled log keeps the run in memory while the page is open. Try saving again before reloading; download the unsaved logs if it cannot recover.

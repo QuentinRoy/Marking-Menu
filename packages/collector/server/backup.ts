@@ -1,4 +1,5 @@
-import { mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { copyFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 
@@ -23,6 +24,11 @@ export async function backupDatabase(
     await database.backup(destination);
   } finally {
     database.close();
+  }
+
+  const keyPath = `${databasePath}.session-key`;
+  if (existsSync(keyPath)) {
+    await copyFile(keyPath, `${destination}.session-key`);
   }
 
   return destination;

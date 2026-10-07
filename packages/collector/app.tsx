@@ -1,8 +1,19 @@
-import { Run, useLogger, useTask } from '@lightmill/react-experiment';
-import { Component, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  TimelinePlayer,
+  useConfirmBeforeUnload,
+  useLogger,
+  useTask,
+} from '@lightmill/react-experiment';
+import {
+  Component,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import {
   createClient,
-  ensureHostSession,
   findResumableSessions,
   resumeSession,
   startSession,
@@ -270,8 +281,7 @@ function Trial({ task, onDone }: { task: TrialTask; onDone: () => void }) {
 
 function CurrentTrial() {
   const { task, onTaskCompleted } = useTask('trial');
-  // A fresh component per task drops the previous stroke's state.
-  return <Trial key={task.taskNumber} task={task} onDone={onTaskCompleted} />;
+  return <Trial task={task} onDone={onTaskCompleted} />;
 }
 
 class RunErrorBoundary extends Component<
@@ -316,28 +326,121 @@ function Session({
   logger,
   sessionNumber,
   completedTasks,
-  onCompleted,
+  onSaved,
 }: {
   logger: Logger;
   sessionNumber: number;
   completedTasks: number;
-  onCompleted: () => void;
+  onSaved: () => void;
 }) {
   const timeline = useMemo(() => makeTimeline(sessionNumber), [sessionNumber]);
-  const onLog = useMemo(() => logger.addLog.bind(logger), [logger]);
+  const state = useSyncExternalStore(logger.subscribe, () => logger.state);
+  const [finished, setFinished] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveAttempt, setSaveAttempt] = useState(0);
+  const saving = useRef(false);
+  useConfirmBeforeUnload(state.status !== 'completed');
+
+  function downloadUnsavedLogs() {
+    const file = new Blob([JSON.stringify(logger.inFlightLogs, undefined, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(file);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `session-${sessionNumber}-unsaved-logs.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 0);
+  }
+
+  useEffect(() => {
+    if (!finished || state.status === 'paused' || saving.current) {
+      return;
+    }
+
+    saving.current = true;
+    void logger
+      .completeRun()
+      .then(onSaved)
+      .catch((error: unknown) => {
+        saving.current = false;
+        if (logger.state.status !== 'paused') {
+          setSaveError(String(error));
+        }
+      });
+  }, [finished, logger, onSaved, saveAttempt, state.status]);
+
   return (
-    <Run
-      timeline={timeline}
-      onLog={onLog}
-      {...(completedTasks > 0 && {
-        resumeAfter: { type: 'trial', number: completedTasks },
-      })}
-      onCompleted={onCompleted}
-      elements={{
-        tasks: { trial: <CurrentTrial /> },
-        loading: <p>Loading…</p>,
-      }}
-    />
+    <>
+      {saveError !== '' && (
+        <div role="alert" className="rounded bg-red-100 p-3 text-red-900">
+          <p>{saveError}</p>
+          {finished && (
+            <button
+              type="button"
+              onClick={() => {
+                setSaveError('');
+                setSaveAttempt((attempt) => attempt + 1);
+              }}
+            >
+              Try finishing the session again
+            </button>
+          )}
+        </div>
+      )}
+      <TimelinePlayer
+        timeline={timeline}
+        onLog={async (log) => {
+          try {
+            await logger.addLog(log);
+          } catch (error) {
+            if (logger.state.status !== 'paused') {
+              throw error;
+            }
+          }
+        }}
+        paused={state.status === 'paused'}
+        {...(completedTasks > 0 && {
+          resumeAfterTask: (task: TrialTask) =>
+            task.taskNumber === completedTasks,
+        })}
+        onCompleted={() => {
+          setFinished(true);
+        }}
+        elements={{
+          tasks: { trial: <CurrentTrial /> },
+          loading: <p>Loading…</p>,
+          completed: <p>Saving the session…</p>,
+          paused: (
+            <section role="alert" className="rounded bg-amber-50 p-4">
+              <p>Logs have not reached the laptop. Check the connection.</p>
+              <button
+                type="button"
+                className="mt-2 rounded bg-teal-700 px-4 py-2 text-white"
+                onClick={() => {
+                  void logger.retry().catch((error: unknown) => {
+                    setSaveError(String(error));
+                  });
+                }}
+              >
+                Try saving again
+              </button>
+              <button
+                type="button"
+                className="ml-2 rounded border px-4 py-2"
+                onClick={downloadUnsavedLogs}
+              >
+                Download unsaved logs
+              </button>
+            </section>
+          ),
+        }}
+      />
+    </>
   );
 }
 
@@ -350,8 +453,7 @@ export function App() {
 
   useEffect(() => {
     let isActive = true;
-    ensureHostSession()
-      .then(async () => findResumableSessions(client))
+    findResumableSessions(client)
       .then((resumable) => {
         if (isActive) {
           setPhase({ kind: 'choose', resumable });
@@ -389,16 +491,6 @@ export function App() {
         sessionNumber: session.sessionNumber,
         completedTasks: session.completedTasks,
       });
-    } catch (error_) {
-      setError(String(error_));
-    }
-  }
-
-  async function complete(logger: Logger, number: number) {
-    try {
-      // Completing checks that the server holds every log of the run.
-      await logger.completeRun();
-      setPhase({ kind: 'completed', sessionNumber: number });
     } catch (error_) {
       setError(String(error_));
     }
@@ -500,8 +592,11 @@ export function App() {
             logger={phase.logger}
             sessionNumber={phase.sessionNumber}
             completedTasks={phase.completedTasks}
-            onCompleted={() => {
-              void complete(phase.logger, phase.sessionNumber);
+            onSaved={() => {
+              setPhase({
+                kind: 'completed',
+                sessionNumber: phase.sessionNumber,
+              });
             }}
           />
         </RunErrorBoundary>

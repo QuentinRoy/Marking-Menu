@@ -47,7 +47,7 @@ if (collectorTag === undefined) {
   throw new Error('Tag the recording revision before exporting.');
 }
 
-const store = new SQLiteDataStore(values.database);
+const store = await SQLiteDataStore.open(values.database);
 const logs: StoredLog[] = [];
 try {
   for await (const log of store.getLogs({ experimentName })) {

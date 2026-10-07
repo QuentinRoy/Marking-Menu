@@ -1,4 +1,8 @@
-import { Run, useLogger, useTask } from '@lightmill/react-experiment';
+import {
+  TimelinePlayer,
+  useLogger,
+  useTask,
+} from '@lightmill/react-experiment';
 import { act, StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { makeTimeline, type CollectorLog, type TrialTask } from '../model.ts';
@@ -39,9 +43,13 @@ const renderRun = (
     // The collector renders under StrictMode, which runs effects twice.
     root.render(
       <StrictMode>
-        <Run
+        <TimelinePlayer
           timeline={timeline}
-          {...(resumeAfter && { resumeAfter })}
+          {...(resumeAfter && {
+            resumeAfterTask: (task: TrialTask) =>
+              task.type === resumeAfter.type &&
+              task.taskNumber === resumeAfter.number,
+          })}
           onLog={async (log) => {
             logs.push(log);
           }}
@@ -79,7 +87,7 @@ const renderRun = (
 const timeline = makeTimeline(1).slice(0, 3);
 const [first, second, third] = timeline;
 
-test('Run walks a timeline on React 19', async () => {
+test('TimelinePlayer walks a timeline on React 19', async () => {
   using run = renderRun(timeline);
   await expect.poll(() => run.container.textContent).toBe(first?.trialId);
   await run.click();
@@ -90,7 +98,7 @@ test('Run walks a timeline on React 19', async () => {
   expect(run.logs.map((log) => log.taskNumber)).toEqual([1, 2, 3]);
 });
 
-test('Run resumes after the given task on React 19', async () => {
+test('TimelinePlayer resumes after the given task on React 19', async () => {
   using run = renderRun(timeline, { type: 'trial', number: 1 });
   await expect.poll(() => run.container.textContent).toBe(second?.trialId);
   await run.click();

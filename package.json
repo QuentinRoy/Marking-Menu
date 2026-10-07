@@ -60,8 +60,5 @@
     "better-sqlite3": {
       "built": true
     }
-  },
-  "resolutions": {
-    "better-sqlite3": "^13.0.3"
   }
 }

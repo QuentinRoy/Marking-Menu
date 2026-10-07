@@ -3,7 +3,7 @@ import { experimentName } from '../model.ts';
 
 // The subset of a Lightmill log record the conversion needs.
 export type StoredLog = {
-  runName: string;
+  runName: unknown;
   runStatus: string;
   number: number;
   type: string;
@@ -85,6 +85,10 @@ export function toCorpus(
 ): CorpusFiles {
   const runs = new Map<string, { runStatus: string; logs: StoredLog[] }>();
   for (const log of logs) {
+    if (typeof log.runName !== 'string') {
+      continue;
+    }
+
     const run = runs.get(log.runName) ?? {
       runStatus: log.runStatus,
       logs: [],

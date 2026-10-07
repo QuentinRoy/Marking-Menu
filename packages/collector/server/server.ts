@@ -1,6 +1,8 @@
 import { randomBytes } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { readFile, writeFile } from 'node:fs/promises';
 import type { AddressInfo } from 'node:net';
-import { LogServer, SQLiteDataStore } from '@lightmill/log-server';
+import { createLogServer, SQLiteDataStore } from '@lightmill/log-server';
 import express from 'express';
 import { experimentName } from '../model.ts';
 
@@ -8,6 +10,24 @@ export type CollectorServer = AsyncDisposable & {
   readonly url: string;
   close(): Promise<void>;
 };
+
+async function sessionKey(databasePath: string): Promise<string> {
+  const keyPath = `${databasePath}.session-key`;
+  if (!existsSync(keyPath)) {
+    await writeFile(keyPath, randomBytes(32).toString('hex'), {
+      flag: 'wx',
+      mode: 0o600,
+    });
+  }
+
+  const keyText = await readFile(keyPath, 'utf8');
+  const key = keyText.trim();
+  if (key.length < 32) {
+    throw new Error(`Invalid session key in ${keyPath}.`);
+  }
+
+  return key;
+}
 
 export async function startServer({
   databasePath,
@@ -20,27 +40,30 @@ export async function startServer({
   host?: string;
   staticDirectory?: string;
 }): Promise<CollectorServer> {
-  const store = new SQLiteDataStore(databasePath);
-  // Migrations are idempotent, so this also creates a missing database.
-  await store.migrateDatabase();
+  if (!existsSync(databasePath)) {
+    await SQLiteDataStore.migrateDatabase(databasePath);
+  }
+
+  const store = await SQLiteDataStore.open(databasePath);
   const experiments = await store.getExperiments({ experimentName });
   if (experiments.length === 0) {
-    await store.addExperiment({ experimentName });
+    await store.withTransaction(async (transaction) => {
+      await transaction.addExperiment({ experimentName });
+    });
   }
 
   const app = express();
   app.use(
     '/api',
-    LogServer({
+    createLogServer({
       dataStore: store,
-      // Sessions live in memory and die with the server anyway. The collector
-      // recreates its host session after a restart.
-      sessionKeys: [randomBytes(32).toString('hex')],
-      // The tablet reaches the laptop over plain HTTP, where express-session
-      // won't send the secure cookie that cross-origin mode requires. Serving
-      // the page from the same origin turns that off.
-      allowCrossOrigin: false,
-      baseUrl: '/api',
+      sessionStore: store.getSessionStore(),
+      sessionKeys: [await sessionKey(databasePath)],
+      // Host access is unused by the collector, but Lightmill requires a
+      // password so another device cannot open a host session.
+      hostPassword: randomBytes(32).toString('hex'),
+      sessionMaxAge: 30 * 24 * 60 * 60 * 1000,
+      cookieSite: 'same-site',
     }).middleware,
   );
   if (staticDirectory !== undefined) {

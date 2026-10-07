@@ -4,7 +4,6 @@ import path from 'node:path';
 import { SQLiteDataStore } from '@lightmill/log-server';
 import {
   createClient,
-  ensureHostSession,
   findResumableSessions,
   resumeSession,
   startSession,
@@ -109,6 +108,7 @@ const logTask = async (logger: Logger, task: TrialTask) => {
 
 test('a session resumes after a server restart and exports as a corpus', async () => {
   using temporary = temporaryDirectory();
+  using _browser = cookieJar();
   const databasePath = path.join(temporary.directory, 'touch-v1.sqlite');
   const timeline = makeTimeline(1);
   const [warmup1, warmup2, warmup3, trial4, trial5] = timeline;
@@ -122,9 +122,7 @@ test('a session resumes after a server restart and exports as a corpus', async (
       port: 0,
       host: '127.0.0.1',
     });
-    using _browser = cookieJar();
     const apiRoot = `${server.url}/api`;
-    await ensureHostSession(apiRoot);
     const client = createClient(apiRoot);
     await expect(findResumableSessions(client)).resolves.toEqual([]);
     const logger = await startSession(client, 1, 'Test tablet');
@@ -141,9 +139,7 @@ test('a session resumes after a server restart and exports as a corpus', async (
       port: 0,
       host: '127.0.0.1',
     });
-    using _browser = cookieJar();
     const apiRoot = `${server.url}/api`;
-    await ensureHostSession(apiRoot);
     const client = createClient(apiRoot);
     const [resumable, ...others] = await findResumableSessions(client);
     expect(others).toEqual([]);
@@ -166,8 +162,9 @@ test('a session resumes after a server restart and exports as a corpus', async (
     path.join(temporary.directory, 'backups'),
   );
   expect(existsSync(backup)).toBe(true);
+  expect(existsSync(`${backup}.session-key`)).toBe(true);
 
-  const store = new SQLiteDataStore(backup);
+  const store = await SQLiteDataStore.open(backup);
   const logs: StoredLog[] = await Array.fromAsync(
     store.getLogs({ experimentName }),
   );
@@ -217,10 +214,9 @@ test('an unfinished session is left out of the corpus', async () => {
   });
   using _browser = cookieJar();
   const apiRoot = `${server.url}/api`;
-  await ensureHostSession(apiRoot);
   await startSession(createClient(apiRoot), 3, 'Test tablet');
 
-  const store = new SQLiteDataStore(databasePath);
+  const store = await SQLiteDataStore.open(databasePath);
   const logs: StoredLog[] = await Array.fromAsync(
     store.getLogs({ experimentName }),
   );

@@ -8,15 +8,15 @@
     "serve": "vite build && node server/serve.ts",
     "serve:only": "node server/serve.ts",
     "backup": "node server/backup-cli.ts",
+    "migrate": "node server/migrate-cli.ts",
     "export": "node server/export-cli.ts"
   },
   "dependencies": {
-    "@lightmill/log-api": "^4.0.1",
-    "@lightmill/log-client": "^4.0.0",
-    "@lightmill/log-server": "^4.1.0",
-    "@lightmill/react-experiment": "^3.0.0",
+    "@lightmill/log-client": "^5.0.0",
+    "@lightmill/log-server": "^5.0.0",
+    "@lightmill/react-experiment": "^4.0.0",
     "better-sqlite3": "^13.0.3",
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zod": "^4.5.4"

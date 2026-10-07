@@ -8,26 +8,6 @@ import {
 
 const defaultApiRoot = '/api';
 
-// Lightmill scopes resumable runs to the session that created them, and the
-// server keeps sessions in memory. A host session can resume any run, so a
-// server restart between recording days does not strand an unfinished one.
-export async function ensureHostSession(
-  apiRoot = defaultApiRoot,
-): Promise<void> {
-  const response = await fetch(`${apiRoot}/sessions`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'content-type': 'application/vnd.api+json' },
-    body: JSON.stringify({
-      data: { type: 'sessions', attributes: { role: 'host' } },
-    }),
-  });
-  // 409: this browser already holds a session.
-  if (!response.ok && response.status !== 409) {
-    throw new Error(`Could not open a Lightmill session (${response.status}).`);
-  }
-}
-
 export function createClient(apiRoot = defaultApiRoot) {
   return new Client<CollectorLog>({ apiRoot });
 }
