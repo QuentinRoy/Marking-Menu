@@ -1175,7 +1175,7 @@ __metadata:
     "@vitejs/plugin-react": "npm:^6.1.1"
     "@vitest/browser-playwright": "catalog:"
     class-variance-authority: "npm:^0.7.1"
-    cn: "npm:^0.4.0"
+    cn: "npm:^0.5.0"
     codemirror-json-schema: "npm:^0.8.1"
     json-schema: "npm:^0.4.0"
     json-schema-library: "npm:^11.6.2"
@@ -4480,12 +4480,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cn@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "cn@npm:0.4.0"
+"cn@npm:^0.5.0":
+  version: 0.5.0
+  resolution: "cn@npm:0.5.0"
   bin:
     cn: bin/cn.mjs
-  checksum: 10c0/e71351cdceb7dbc9b468dcb9cacc304212532fb6bb4545979426f22791f5c4738f37d13825eb68172ae355fbe8afc30386371753d093f1031f17f35a8d10f303
+  checksum: 10c0/d42da934863652c2250e8de76aeb02819009befbe5534b5d9b71b115f8b082d35db96ace32265f73d9fde7974551b23451e21dee8b49e409bcb4c542d59e2da9
   languageName: node
   linkType: hard
 
