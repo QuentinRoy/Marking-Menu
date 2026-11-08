@@ -27,10 +27,10 @@ type StandaloneRow = (context: {
 }) => StandaloneData | Skip;
 
 /**
- A row jumping the active item to one end of the menu's item order. It
- declines when there is nowhere to go, so a menu with a single item
- announces no change.
- */
+A row jumping the active item to one end of the menu's item order. It
+declines when there is nowhere to go, so a menu with a single item
+announces no change.
+*/
 export const moveToEnd =
   (end: 'first' | 'last'): StandaloneRow =>
   ({ fromData, skip }) => {
@@ -42,29 +42,29 @@ export const moveToEnd =
   };
 
 /**
- The four directions, as the clockwise-from-the-right angles the items are
- laid out on.
- */
+The four directions, as the clockwise-from-the-right angles the items are
+laid out on.
+*/
 const axes = { right: 0, down: 90, left: 180, up: 270 } as const;
 
 export type Direction = keyof typeof axes;
 
 /**
- A row moving the active item toward one of the four directions: among the
- items that are strictly closer to that axis than the active one, the one
- the smallest angular step away. Ties go to the item closer to the axis,
- then to the one clockwise of the active item, so the walk does not depend
- on where the menu's item order happens to start.
+A row moving the active item toward one of the four directions: among the
+items that are strictly closer to that axis than the active one, the one
+the smallest angular step away. Ties go to the item closer to the axis,
+then to the one clockwise of the active item, so the walk does not depend
+on where the menu's item order happens to start.
 
- Stepping rather than jumping to the item nearest the axis is what keeps
- every item reachable: a menu of more than four items has directions no
- item sits on, and jumping would only ever land on the four items nearest
- the axes. Being strictly closer is also what ends the walk, so holding a
- direction settles on its axis instead of going round.
+Stepping rather than jumping to the item nearest the axis is what keeps
+every item reachable: a menu of more than four items has directions no
+item sits on, and jumping would only ever land on the four items nearest
+the axes. Being strictly closer is also what ends the walk, so holding a
+direction settles on its axis instead of going round.
 
- With nothing active yet, there is no step to measure, and the press lands
- on the item nearest the axis instead.
- */
+With nothing active yet, there is no step to measure, and the press lands
+on the item nearest the axis instead.
+*/
 export const moveActiveToward =
   (direction: Direction): StandaloneRow =>
   ({ fromData, skip }) => {
@@ -96,15 +96,15 @@ export const moveActiveToward =
   };
 
 /**
- How far an item lies from an axis, whichever way round.
- */
+How far an item lies from an axis, whichever way round.
+*/
 function toAxis(item: EngineModelItem, axis: number): number {
   return Math.abs(deltaAngle(item.angle, axis));
 }
 
 /**
- Whether `item` beats `rival` as the next step from `angle` toward `axis`.
- */
+Whether `item` beats `rival` as the next step from `angle` toward `axis`.
+*/
 function isCloserStep(
   item: EngineModelItem,
   rival: EngineModelItem,
@@ -122,9 +122,9 @@ function isCloserStep(
 }
 
 /**
- Go down into the active submenu, keeping the center, and land on its first
- item.
- */
+Go down into the active submenu, keeping the center, and land on its first
+item.
+*/
 export const enterActive: StandaloneRow = ({ fromData, skip }) => {
   const { active } = fromData;
   if (active === undefined || !isModelMenuItem(active)) {
@@ -139,8 +139,8 @@ export const enterActive: StandaloneRow = ({ fromData, skip }) => {
 };
 
 /**
- Go back up to the parent, landing on the item the level was entered from.
- */
+Go back up to the parent, landing on the item the level was entered from.
+*/
 export const leaveLevel: StandaloneRow = ({ fromData, skip }) => {
   const left = currentMenu(fromData.menus);
   return fromData.menus.length < 2 || left.isRoot
@@ -149,10 +149,10 @@ export const leaveLevel: StandaloneRow = ({ fromData, skip }) => {
 };
 
 /**
- Resolve a pointer event's item key against the displayed level, or
- `undefined` when it names none (empty space, or a stale key from a level
- that has since changed).
- */
+Resolve a pointer event's item key against the displayed level, or
+`undefined` when it names none (empty space, or a stale key from a level
+that has since changed).
+*/
 export function findPointerItem(
   fromData: StandaloneData,
   key: string | undefined,
@@ -163,10 +163,10 @@ export function findPointerItem(
 }
 
 /**
- A pointer moving over the displayed level: hover, or a held contact
- dragging across it. Always commits, since `move` fires on every pointer
- move regardless of whether the active item it lands on changed.
- */
+A pointer moving over the displayed level: hover, or a held contact
+dragging across it. Always commits, since `move` fires on every pointer
+move regardless of whether the active item it lands on changed.
+*/
 export const pointerMove = ({
   fromData,
   inputData,
@@ -179,20 +179,20 @@ export const pointerMove = ({
 });
 
 /**
- A held contact interrupted by the platform (`pointercancel`): clears the
- item it activated, the same way leaving it under a hover would, and leaves
- the session open. Declines when nothing was active, since there is then
- nothing to clear.
- */
+A held contact interrupted by the platform (`pointercancel`): clears the
+item it activated, the same way leaving it under a hover would, and leaves
+the session open. Declines when nothing was active, since there is then
+nothing to clear.
+*/
 export const pointerCancel: StandaloneRow = ({ fromData, skip }) =>
   fromData.active === undefined ? skip() : { ...fromData, active: undefined };
 
 /**
- A pointer released while the session stays open: over a submenu item, it
- opens it, keeping the center, with nothing active in the new level yet;
- over an unresolved key, it just clears the active item. Declines a leaf,
- selected by the machine's `-> idle` row for this same input instead.
- */
+A pointer released while the session stays open: over a submenu item, it
+opens it, keeping the center, with nothing active in the new level yet;
+over an unresolved key, it just clears the active item. Declines a leaf,
+selected by the machine's `-> idle` row for this same input instead.
+*/
 export const pointerRelease = ({
   fromData,
   inputData,
@@ -213,24 +213,24 @@ export const pointerRelease = ({
 };
 
 /**
- The sources of a standalone event that have no pointer position.
- */
+The sources of a standalone event that have no pointer position.
+*/
 export type NonPointerSource = Exclude<
   MarkingMenuEventSource,
   'pointer' | 'gesture'
 >;
 
 /**
- What caused a standalone event: the shape of its `source` and `position`.
- A pointer has a position, the other causes have none.
- */
+What caused a standalone event: the shape of its `source` and `position`.
+A pointer has a position, the other causes have none.
+*/
 export type StandaloneCause =
   | { readonly source: 'pointer'; readonly position: Point }
   | { readonly source: NonPointerSource; readonly position?: undefined };
 
 /**
- Announce a standalone menu level as displayed.
- */
+Announce a standalone menu level as displayed.
+*/
 export function emitStandaloneOpen(
   emit: (name: 'open', data: MarkingMenuOpenEvent) => void,
   { menuCenter, menus }: Pick<StandaloneData, 'menuCenter' | 'menus'>,
@@ -251,8 +251,8 @@ export function emitStandaloneOpen(
 }
 
 /**
- Announce a standalone active-item change.
- */
+Announce a standalone active-item change.
+*/
 export function emitStandaloneChange(
   emit: (name: 'change', data: MarkingMenuChangeEvent) => void,
   {
@@ -281,14 +281,14 @@ export function emitStandaloneChange(
 }
 
 /**
- The action every keyboard-driven standalone→standalone row shares (see
- `machine.ts`'s transition table for the full list: the four directions,
- `first`/`last`, `focus`, entering a submenu, and leaving one): announce
- `open` for a new level, then `change` once the item it lands on differs.
- Not a wildcard action keyed to every standalone→standalone edge, so that
- the standalone pointer's own edges, which can also announce a `move`, carry
- their own actions without this one needing to know to decline them.
- */
+The action every keyboard-driven standalone→standalone row shares (see
+`machine.ts`'s transition table for the full list: the four directions,
+`first`/`last`, `focus`, entering a submenu, and leaving one): announce
+`open` for a new level, then `change` once the item it lands on differs.
+Not a wildcard action keyed to every standalone→standalone edge, so that
+the standalone pointer's own edges, which can also announce a `move`, carry
+their own actions without this one needing to know to decline them.
+*/
 export function emitStandaloneMove(
   {
     fromData,
@@ -326,8 +326,8 @@ export function emitStandaloneMove(
 }
 
 /**
- Announce that a standalone interaction selected a leaf.
- */
+Announce that a standalone interaction selected a leaf.
+*/
 export function emitStandaloneSelect(
   emit: (name: 'select', data: MarkingMenuSelectEvent) => void,
   {
@@ -353,8 +353,8 @@ export function emitStandaloneSelect(
 }
 
 /**
- Announce that a standalone interaction ended without a selection.
- */
+Announce that a standalone interaction ended without a selection.
+*/
 export function cancelStandalone({
   fromData: { menus, active },
   emit,

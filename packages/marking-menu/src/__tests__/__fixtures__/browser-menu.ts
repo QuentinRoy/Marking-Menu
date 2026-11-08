@@ -34,12 +34,12 @@ An item's rendered label and the angle (in degrees) it's laid out at.
 export type MenuItemGeometry = { label: string; angle: number };
 
 /**
- The eight-direction topology mounted menus are given below, keyed by item
- id. Angles match the library's own convention (0° = right, clockwise on
- screen, since `toPolar` in `src/utils.ts` derives angle from
- `atan2(dy, dx)` with y growing downward): 0 = right, 90 = down, 180 = left,
- 270 = up.
- */
+The eight-direction topology mounted menus are given below, keyed by item
+id. Angles match the library's own convention (0° = right, clockwise on
+screen, since `toPolar` in `src/utils.ts` derives angle from
+`atan2(dy, dx)` with y growing downward): 0 = right, 90 = down, 180 = left,
+270 = up.
+*/
 export const TOP_LEVEL_ITEMS = {
   right: { angle: 0, label: 'Right' },
   'down-right': { angle: 45, label: 'Down-Right' },
@@ -82,9 +82,9 @@ export type MountedMenu = Disposable & {
 };
 
 /**
- Mounts a menu in a fixed-size `snapshotArea` containing an inset `surface`
- that the menu attaches to and gestures target.
- */
+Mounts a menu in a fixed-size `snapshotArea` containing an inset `surface`
+that the menu attaches to and gestures target.
+*/
 export const mountMenu = (
   config: Omit<MarkingMenuConfig, 'parent'>,
 ): MountedMenu => {
@@ -161,10 +161,10 @@ export type Drag = AsyncDisposable & {
 
 export type TouchDrag = Drag & {
   /**
-   Cancel the touch, the way the platform does when it takes a touch over:
-   the page gets `pointercancel` instead of `pointerup`. Cancels every finger
-   still down, not just this one.
-   */
+  Cancel the touch, the way the platform does when it takes a touch over:
+  the page gets `pointercancel` instead of `pointerup`. Cancels every finger
+  still down, not just this one.
+  */
   cancel(): Promise<void>;
 };
 
@@ -173,10 +173,10 @@ const requestRealAnimationFrame =
   globalThis.requestAnimationFrame.bind(globalThis);
 
 /**
- Chromium holds a `pointermove` back until the next animation frame, which
- the command that sent the move doesn't wait for. Waiting for that frame
- lets the page see the move before the test goes on.
- */
+Chromium holds a `pointermove` back until the next animation frame, which
+the command that sent the move doesn't wait for. Waiting for that frame
+lets the page see the move before the test goes on.
+*/
 const nextFrame = async (): Promise<void> =>
   new Promise((resolve) => {
     requestRealAnimationFrame(() => {
@@ -185,11 +185,11 @@ const nextFrame = async (): Promise<void> =>
   });
 
 /**
- Moves from `from` to `to` in `steps` separate moves, each a real input at a
- point in time, so the browser sees the same gradual path a hand drawing it
- would: dispatching them all at once would collapse the interpolation this
- exists for.
- */
+Moves from `from` to `to` in `steps` separate moves, each a real input at a
+point in time, so the browser sees the same gradual path a hand drawing it
+would: dispatching them all at once would collapse the interpolation this
+exists for.
+*/
 const interpolate = async (
   from: Point,
   to: Point,
@@ -209,13 +209,13 @@ let nextFingerId = 0;
 const fingersDown = new Set<number>();
 
 /**
- Touch down at `at` and hold, as its own finger: a second `press()` while
- this one is still down drives a genuinely concurrent touch point, the way
- two fingers on a real screen do (see `vitest.config.ts`'s touch commands).
- Call `release()` when the gesture should end, or let the scope's
- disposal (`await using`) do it: the browser page is shared across every test
- in the file, so a touch left active would carry into whichever test runs next.
- */
+Touch down at `at` and hold, as its own finger: a second `press()` while
+this one is still down drives a genuinely concurrent touch point, the way
+two fingers on a real screen do (see `vitest.config.ts`'s touch commands).
+Call `release()` when the gesture should end, or let the scope's
+disposal (`await using`) do it: the browser page is shared across every test
+in the file, so a touch left active would carry into whichever test runs next.
+*/
 export const press = async (at: Point): Promise<TouchDrag> => {
   const id = nextFingerId;
   nextFingerId += 1;
@@ -254,8 +254,8 @@ export const press = async (at: Point): Promise<TouchDrag> => {
 let mouseAt: Point | undefined;
 
 /**
- Move the mouse to `at` with no button held, such as to hover.
- */
+Move the mouse to `at` with no button held, such as to hover.
+*/
 export const moveMouse = async (at: Point): Promise<void> => {
   if (mouseAt?.x === at.x && mouseAt.y === at.y) {
     return;
@@ -267,9 +267,9 @@ export const moveMouse = async (at: Point): Promise<void> => {
 };
 
 /**
- Move the real mouse to `at`, interpolating native pointer input over steps.
- Points use coordinates in the test iframe.
- */
+Move the real mouse to `at`, interpolating native pointer input over steps.
+Points use coordinates in the test iframe.
+*/
 export const mouseMoveTo = async (at: Point, steps = 1): Promise<void> => {
   await commands.mouseMove(at.x, at.y, steps);
   await nextFrame();
@@ -277,16 +277,16 @@ export const mouseMoveTo = async (at: Point, steps = 1): Promise<void> => {
 };
 
 /**
- Move the real mouse to `at` and press the primary button.
- */
+Move the real mouse to `at` and press the primary button.
+*/
 export const mousePressAt = async (at: Point): Promise<void> => {
   await mouseMoveTo(at);
   await commands.mouseDown('left');
 };
 
 /**
- Optionally move the real mouse, then release the primary button.
- */
+Optionally move the real mouse, then release the primary button.
+*/
 export const mouseReleaseAt = async (at?: Point): Promise<void> => {
   if (at) {
     await mouseMoveTo(at);
@@ -296,9 +296,9 @@ export const mouseReleaseAt = async (at?: Point): Promise<void> => {
 };
 
 /**
- Press the mouse `button` at `at` and hold, like {@link press} does with a
- finger. Release it the same way: the mouse, too, is shared across the file.
- */
+Press the mouse `button` at `at` and hold, like {@link press} does with a
+finger. Release it the same way: the mouse, too, is shared across the file.
+*/
 export const pressMouse = async (
   at: Point,
   button: MouseButton = 'left',
@@ -331,12 +331,12 @@ export const pressMouse = async (
 };
 
 /**
- Wait for the menu to be open, however it got there (novice or dwell).
- Polls for `.marking-menu-label`, the first element in the menu's DOM with
- an actual rendered size (`.marking-menu` and `.marking-menu-item` are both
- zero-size positioning anchors), inside `.marking-menu`'s shadow root: the
- host element renders in the light DOM, but its content doesn't.
- */
+Wait for the menu to be open, however it got there (novice or dwell).
+Polls for `.marking-menu-label`, the first element in the menu's DOM with
+an actual rendered size (`.marking-menu` and `.marking-menu-item` are both
+zero-size positioning anchors), inside `.marking-menu`'s shadow root: the
+host element renders in the light DOM, but its content doesn't.
+*/
 export const waitForMenuOpen = async (surface: Element): Promise<void> => {
   await expect
     .poll(() =>
@@ -366,12 +366,12 @@ export const waitForMenuClosed = async (surface: Element): Promise<void> => {
 const NOVICE_DWELL_MARGIN = 1000;
 
 /**
- Presses and waits for the menu to open, driving the dwell through fake
- time rather than waiting on it in real time. The freeze is scoped to this
- function alone: real timers are restored before it returns, so callers
- that move the pointer afterward still redraw normally through the real
- `requestAnimationFrame` their strokes throttle through.
- */
+Presses and waits for the menu to open, driving the dwell through fake
+time rather than waiting on it in real time. The freeze is scoped to this
+function alone: real timers are restored before it returns, so callers
+that move the pointer afterward still redraw normally through the real
+`requestAnimationFrame` their strokes throttle through.
+*/
 export const openMenu = async (surface: Element): Promise<Drag> => {
   const drag = await press(centerOf(surface));
   using _timers = fakeTimers();
@@ -381,12 +381,12 @@ export const openMenu = async (surface: Element): Promise<Drag> => {
 };
 
 /**
- The element actually holding focus, unlike `document.activeElement`: a
- shadow host reports itself as active for any descendant focused inside it
- (DOM's own retargeting), so `toHaveFocus()` alone can never see past the
- menu's shadow root. This walks into every nested `shadowRoot.activeElement`
- to find the real target.
- */
+The element actually holding focus, unlike `document.activeElement`: a
+shadow host reports itself as active for any descendant focused inside it
+(DOM's own retargeting), so `toHaveFocus()` alone can never see past the
+menu's shadow root. This walks into every nested `shadowRoot.activeElement`
+to find the real target.
+*/
 const deepActiveElement = (): Element | undefined => {
   let active = document.activeElement;
   while (active?.shadowRoot?.activeElement) {

@@ -53,10 +53,10 @@ export const createMenuFixture = () => {
 };
 
 /**
- Where to point at `element`: its center, or its label's for a menu item,
- which is itself a zero-size anchor. Rounded, so the events it causes report
- it exactly.
- */
+Where to point at `element`: its center, or its label's for a menu item,
+which is itself a zero-size anchor. Rounded, so the events it causes report
+it exactly.
+*/
 export const pointOf = (element: Element): Point => {
   const target = element.querySelector('.marking-menu-label') ?? element;
   const { x, y } = centerOf(target);

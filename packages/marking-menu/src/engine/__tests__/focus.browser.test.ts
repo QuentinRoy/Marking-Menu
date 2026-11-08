@@ -19,9 +19,9 @@ const model = createModel({
 const right = model.items[2];
 
 /**
- A listen-only stand-in for the runtime, and the two ways the menu takes
- focus, all recorded.
- */
+A listen-only stand-in for the runtime, and the two ways the menu takes
+focus, all recorded.
+*/
 const createFixture = ({
   submenuOpeningDelay = 1000,
 }: { submenuOpeningDelay?: number } = {}) => {
@@ -68,8 +68,8 @@ const createFixture = ({
 };
 
 /**
- A button holding focus, standing for whatever had it before the menu opened.
- */
+A button holding focus, standing for whatever had it before the menu opened.
+*/
 const createOpener = () => {
   const opener = document.createElement('button');
   document.body.append(opener);
@@ -227,8 +227,8 @@ describe('manageFocus', () => {
 });
 
 /**
- A button inside the shadow root of a host on the page.
- */
+A button inside the shadow root of a host on the page.
+*/
 const createShadowButton = () => {
   const host = document.createElement('div');
   document.body.append(host);

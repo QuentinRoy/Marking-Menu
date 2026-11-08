@@ -1,12 +1,12 @@
 import type { MarkingMenuInput, MarkingMenuItemInput } from 'marking-menu';
 
 /**
- Print a menu as the editor shows it: leaves on one line each, so a level
- reads as a list, and sub-menus opened up, so the tree is visible.
+Print a menu as the editor shows it: leaves on one line each, so a level
+reads as a list, and sub-menus opened up, so the tree is visible.
 
- @param menu - The menu to print.
- @returns The JSON text.
- */
+@param menu - The menu to print.
+@returns The JSON text.
+*/
 export function formatMenu(menu: MarkingMenuInput): string {
   return `{\n  "items": ${formatItems(menu.items, '  ')}\n}`;
 }

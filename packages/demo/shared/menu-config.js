@@ -26,14 +26,14 @@ The query parameter both pages read a menu from.
 export const CONFIG_PARAM = 'config';
 
 /**
- The eight-direction menu, with a sub-menu at the bottom, that either page
- opens on when the address carries no menu of its own.
+The eight-direction menu, with a sub-menu at the bottom, that either page
+opens on when the address carries no menu of its own.
 
- Listed starting from "Up": default angles now start at the top, so this
- order alone keeps each label at its own direction.
+Listed starting from "Up": default angles now start at the top, so this
+order alone keeps each label at its own direction.
 
- @type {MarkingMenuInput}
- */
+@type {MarkingMenuInput}
+*/
 export const DEFAULT_MENU = {
   items: [
     { label: 'Up' },
@@ -151,12 +151,12 @@ function asMenu(value) {
 }
 
 /**
- Read the menu a query string names.
+Read the menu a query string names.
 
- @param {string} search - A query string, e.g. `location.search`.
- @returns {MarkingMenuInput | undefined} The menu, or `undefined` if the
- parameter is absent or does not hold one.
- */
+@param {string} search - A query string, e.g. `location.search`.
+@returns {MarkingMenuInput | undefined} The menu, or `undefined` if the
+parameter is absent or does not hold one.
+*/
 export function readMenuConfig(search) {
   const encoded = new URLSearchParams(search).get(CONFIG_PARAM) ?? undefined;
   if (encoded === undefined) {
@@ -171,12 +171,12 @@ export function readMenuConfig(search) {
 }
 
 /**
- Put a menu into a query string, leaving any other parameter alone.
+Put a menu into a query string, leaving any other parameter alone.
 
- @param {string} search - The query string to update, e.g. `location.search`.
- @param {MarkingMenuInput} menu - The menu to carry.
- @returns {string} The new query string, leading `?` included.
- */
+@param {string} search - The query string to update, e.g. `location.search`.
+@param {MarkingMenuInput} menu - The menu to carry.
+@returns {string} The new query string, leading `?` included.
+*/
 export function writeMenuConfig(search, menu) {
   const parameters = new URLSearchParams(search);
   // `JSON.stringify` with no spacing: the editor pretty-prints for reading,

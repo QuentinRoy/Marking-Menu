@@ -77,21 +77,21 @@ export const menuSchema = {
 const schemaNode = compileSchema(menuSchema, { drafts: [draft2020] });
 
 /**
- What {@link validateMenuSource} made of the editor's text: either the menu
- to hand to the library, or the one message the status line shows.
- */
+What {@link validateMenuSource} made of the editor's text: either the menu
+to hand to the library, or the one message the status line shows.
+*/
 export type MenuSourceResult =
   | { readonly ok: true; readonly menu: MarkingMenuInput }
   | { readonly ok: false; readonly message: string };
 
 /**
- The labels along an error's instance path, so a message can name the item it
- is about rather than the pointer it came from.
+The labels along an error's instance path, so a message can name the item it
+is about rather than the pointer it came from.
 
- @param pointer - A JSON pointer into the parsed value, e.g. `#/items/2/items/0`.
- @param value - The parsed value the pointer walks.
- @returns One label per `items/<index>` step the pointer takes, in order.
- */
+@param pointer - A JSON pointer into the parsed value, e.g. `#/items/2/items/0`.
+@param value - The parsed value the pointer walks.
+@returns One label per `items/<index>` step the pointer takes, in order.
+*/
 function labelsAlong(pointer: string, value: unknown): string[] {
   const labels: string[] = [];
   let node: unknown = value;
@@ -125,9 +125,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- Rephrase a schema error as a sentence about an item, falling back to the
- validator's own wording (and its pointer) when the error is not inside one.
- */
+Rephrase a schema error as a sentence about an item, falling back to the
+validator's own wording (and its pointer) when the error is not inside one.
+*/
 function describe(error: JsonError, value: unknown): string {
   const labels = labelsAlong(error.data.pointer, value);
   if (labels.length === 0) {
@@ -141,11 +141,11 @@ function describe(error: JsonError, value: unknown): string {
 }
 
 /**
- Read the editor's text as a menu.
+Read the editor's text as a menu.
 
- @param source - The editor's current text.
- @returns The parsed menu, or the message explaining why there is none.
- */
+@param source - The editor's current text.
+@returns The parsed menu, or the message explaining why there is none.
+*/
 export function validateMenuSource(source: string): MenuSourceResult {
   let value: unknown;
   try {
@@ -169,9 +169,9 @@ export function validateMenuSource(source: string): MenuSourceResult {
  * -------------------------------------------------------------------------- */
 
 /**
- The schema as a plain tree, for walking. `as const` gives the type-level
- test literal types, which is the wrong shape for a recursive walk.
- */
+The schema as a plain tree, for walking. `as const` gives the type-level
+test literal types, which is the wrong shape for a recursive walk.
+*/
 type SchemaNode = {
   readonly $ref?: string;
   readonly type?: string;
@@ -188,9 +188,9 @@ const schemaTree = menuSchema as unknown as SchemaNode & {
 const DEFS_PREFIX = '#/$defs/';
 
 /**
- Follow a node's `$ref`, if it has one. Every reference in this schema is a
- local one into `$defs`, so nothing has to be fetched or cached.
- */
+Follow a node's `$ref`, if it has one. Every reference in this schema is a
+local one into `$defs`, so nothing has to be fetched or cached.
+*/
 function deref(node: SchemaNode): SchemaNode {
   return node.$ref?.startsWith(DEFS_PREFIX) === true
     ? (schemaTree.$defs[node.$ref.slice(DEFS_PREFIX.length)] ?? node)
@@ -198,8 +198,8 @@ function deref(node: SchemaNode): SchemaNode {
 }
 
 /**
- What the schema says about the value at a JSON pointer.
- */
+What the schema says about the value at a JSON pointer.
+*/
 export type SchemaAnnotation = {
   readonly title: string | undefined;
   readonly description: string | undefined;
@@ -207,22 +207,22 @@ export type SchemaAnnotation = {
 };
 
 /**
- Look up the schema for a position in the document, and report what it says
- about it.
+Look up the schema for a position in the document, and report what it says
+about it.
 
- The editor's own schema library loses `title` and `description` on its way
- into a property of an array item reached through a `$ref`, which is every
- item of every menu level here. This walks the schema directly instead, so
- the editor can show what the schema actually says.
+The editor's own schema library loses `title` and `description` on its way
+into a property of an array item reached through a `$ref`, which is every
+item of every menu level here. This walks the schema directly instead, so
+the editor can show what the schema actually says.
 
- A description written beside a `$ref` wins over the one on the definition it
- points at: 2020-12 allows those siblings so that a definition can say what
- it means at each place it is used.
+A description written beside a `$ref` wins over the one on the definition it
+points at: 2020-12 allows those siblings so that a definition can say what
+it means at each place it is used.
 
- @param pointer - A JSON pointer into the document, e.g. `#/items/0/label`.
- @returns The annotation, or `undefined` if the pointer leads nowhere in the
- schema.
- */
+@param pointer - A JSON pointer into the document, e.g. `#/items/0/label`.
+@returns The annotation, or `undefined` if the pointer leads nowhere in the
+schema.
+*/
 export function annotationAt(pointer: string): SchemaAnnotation | undefined {
   let node: SchemaNode = schemaTree;
   for (const step of pointer.replace(/^#\/?/v, '').split('/')) {

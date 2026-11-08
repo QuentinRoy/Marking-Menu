@@ -10,14 +10,14 @@ export type Throttled<Arguments extends readonly unknown[]> = {
 };
 
 /**
- Throttle `fn` so that it runs at most once per animation frame.
+Throttle `fn` so that it runs at most once per animation frame.
 
- Calls made while a frame is already scheduled are coalesced: the frame runs
- `fn` once, with the arguments of the most recent call.
+Calls made while a frame is already scheduled are coalesced: the frame runs
+`fn` once, with the arguments of the most recent call.
 
- @param fn - The function to throttle.
- @returns The throttled function, with a `cancel` method.
- */
+@param fn - The function to throttle.
+@returns The throttled function, with a `cancel` method.
+*/
 export function rafThrottle<Arguments extends readonly unknown[]>(
   fn: (...args: Arguments) => void,
 ): Throttled<Arguments> {

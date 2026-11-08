@@ -73,9 +73,9 @@ const getLayer = (parent: HTMLElement): HTMLElement =>
   getPart(parent, '.marking-menu-layer');
 
 /**
- A parent laid out on the page, so its menu is measured and real input can
- reach it.
- */
+A parent laid out on the page, so its menu is measured and real input can
+reach it.
+*/
 const mountParent = () => {
   const parent = document.createElement('div');
   Object.assign(parent.style, {
@@ -95,10 +95,10 @@ const mountParent = () => {
 };
 
 /**
- What the menu resolves each `type` event reaching `parent` to, read the way
- a listener on `parent` reads it: an event's path only exists while it is
- dispatched.
- */
+What the menu resolves each `type` event reaching `parent` to, read the way
+a listener on `parent` reads it: an event's path only exists while it is
+dispatched.
+*/
 const recordResolutions = (
   menu: Menu,
   parent: HTMLElement,
@@ -132,8 +132,8 @@ const itemIdOfWedge = (wedge: SVGPathElement): string | undefined =>
   wedge.closest<HTMLElement>('.marking-menu-item')?.dataset.itemId;
 
 /**
- Set the menu's own custom properties on `parent`, for its menus to inherit.
- */
+Set the menu's own custom properties on `parent`, for its menus to inherit.
+*/
 const setProperties = (
   parent: HTMLElement,
   properties: Partial<

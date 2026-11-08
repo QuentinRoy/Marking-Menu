@@ -20,8 +20,6 @@ const literalModel = createModel({
 declare const dynamicItems: MarkingMenuItemInput[];
 const dynamicModel = createModel({ items: dynamicItems });
 
-type Outputs = OutputsOf<typeof navigationMachine>;
-
 describe('erased engine model', () => {
   it('accepts literal and dynamic public models', () => {
     expectTypeOf(literalModel).toExtend<EngineModelRoot>();
@@ -33,6 +31,8 @@ describe('erased engine model', () => {
   });
 
   it('passes machine layout announcements directly to the renderer', () => {
+    type Outputs = OutputsOf<typeof navigationMachine>;
+
     expectTypeOf<Outputs['layout']>().toExtend<
       Parameters<LayoutRenderer['render']>[0]
     >();

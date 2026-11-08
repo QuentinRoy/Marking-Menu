@@ -87,9 +87,9 @@ describe('navigationMachine standalone phase', () => {
   };
 
   /**
-   Every field a public output can carry, unknown when it is not a given
-   output's own: the tests read the ones they care about.
-   */
+  Every field a public output can carry, unknown when it is not a given
+  output's own: the tests read the ones they care about.
+  */
   type OutputData = {
     readonly mode: string;
     readonly position: unknown;
@@ -177,10 +177,10 @@ describe('navigationMachine standalone phase', () => {
   const activeIdOf = (host: Host): string | undefined => activeOf(host)?.id;
 
   /**
-   Every item some sequence of arrow presses can reach from a freshly opened
-   menu, in the order the menu lists them. Each sequence is replayed from a
-   new machine, since the arrows are the only way in.
-   */
+  Every item some sequence of arrow presses can reach from a freshly opened
+  menu, in the order the menu lists them. Each sequence is replayed from a
+  new machine, since the arrows are the only way in.
+  */
   const reachableIds = (itemCount: number): string[] => {
     const model = createModel({ items: evenItems(itemCount) });
     const reached = new Set<string>();

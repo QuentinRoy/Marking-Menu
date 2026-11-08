@@ -21,8 +21,8 @@ function getMenuStyleSheet(doc: Document): CSSStyleSheet {
 }
 
 /**
- An item of the menu layout's model.
- */
+An item of the menu layout's model.
+*/
 export type MenuLayoutItem = {
   /**
   The item's key.
@@ -43,23 +43,23 @@ export type MenuLayoutItem = {
 };
 
 /**
- The menu layout's view of the marking menu model.
- */
+The menu layout's view of the marking menu model.
+*/
 export type MenuLayoutModel = {
   /**
   The items of the (sub-)menu to display.
   */
   readonly items: readonly MenuLayoutItem[];
   /**
-   The menu's accessible name: the label of the item it is a submenu of, or
-   `undefined` for the root.
-   */
+  The menu's accessible name: the label of the item it is a submenu of, or
+  `undefined` for the root.
+  */
   readonly label?: string | undefined;
 };
 
 /**
- Where an event landed, relative to the menu.
- */
+Where an event landed, relative to the menu.
+*/
 export type MenuEventResolution =
   | { readonly isInside: false }
   | {
@@ -72,8 +72,8 @@ export type MenuEventResolution =
     };
 
 /**
- The menu controls.
- */
+The menu controls.
+*/
 export type Menu = {
   /**
   The persistent host element.
@@ -547,11 +547,11 @@ function renderWedges(
 }
 
 /**
- Measure `main`'s rendered label boxes, solve their layout once, and apply
- the result. If the solver reports the menu is oversized, leave `main` as
- `template` built it: every label at the shared fixed radius `menu.css`
- already renders unconditionally, still valid, just not conflict-free.
- */
+Measure `main`'s rendered label boxes, solve their layout once, and apply
+the result. If the solver reports the menu is oversized, leave `main` as
+`template` built it: every label at the shared fixed radius `menu.css`
+already renders unconditionally, still valid, just not conflict-free.
+*/
 function applySolvedLayout(
   { root, probes }: MenuDom,
   items: readonly MenuLayoutItem[],
@@ -627,25 +627,25 @@ function setItemActive(item: HTMLElement, isActive: boolean): void {
 }
 
 /**
- Create the Menu display.
+Create the Menu display.
 
- @param options - Configuration options.
-  @param options.parent - The node the menu layer mounts into. An element in
-  the light DOM gets a fresh menu host; an element inside a shadow root (for
-  example a renderer slot) mounts there and shares that root; a shadow root
-  mounts directly.
-  @param options.model - The model of the menu to open.
- @param options.center - The pixel coordinates where the menu should be
- anchored.
- @param options.deadZoneRadius - The inner radius of the wedge ring.
- @param options.pointerTarget - Whether the menu's items and wedges accept
- pointer events. Off by default: a live gesture reads strokes on the surface
- behind the menu, not hovers or clicks on the menu itself. Turn it on for a
- menu meant to be operated directly, such as a static, non-gesture preview.
- @param options.doc - The root document of the menu. Defaults to `parent`'s
- own document; override only for testing.
- @returns The menu controls.
- */
+@param options - Configuration options.
+ @param options.parent - The node the menu layer mounts into. An element in
+ the light DOM gets a fresh menu host; an element inside a shadow root (for
+ example a renderer slot) mounts there and shares that root; a shadow root
+ mounts directly.
+ @param options.model - The model of the menu to open.
+@param options.center - The pixel coordinates where the menu should be
+anchored.
+@param options.deadZoneRadius - The inner radius of the wedge ring.
+@param options.pointerTarget - Whether the menu's items and wedges accept
+pointer events. Off by default: a live gesture reads strokes on the surface
+behind the menu, not hovers or clicks on the menu itself. Turn it on for a
+menu meant to be operated directly, such as a static, non-gesture preview.
+@param options.doc - The root document of the menu. Defaults to `parent`'s
+own document; override only for testing.
+@returns The menu controls.
+*/
 export function createMenu({
   parent,
   doc = parent.ownerDocument,

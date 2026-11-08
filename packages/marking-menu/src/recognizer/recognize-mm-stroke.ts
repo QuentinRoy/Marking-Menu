@@ -18,31 +18,31 @@ import { getStrokeArticulationPoints } from './articulation-points.js';
 import { strokeLength } from './stroke-length.js';
 
 /**
- The smallest gap, in degrees, that the calibrated recognizer can resolve.
- */
+The smallest gap, in degrees, that the calibrated recognizer can resolve.
+*/
 export const MINIMUM_RESOLVABLE_ANGLE = 45;
 
 /**
- A segment of a marking-menu stroke, described by its length and angle.
- */
+A segment of a marking-menu stroke, described by its length and angle.
+*/
 export type StrokeSegment = {
   length: number;
   angle: number;
 };
 
 /**
- A {@link StrokeSegment} still carrying the two points it was measured
- between, kept only where a caller needs to draw the segment rather than just
- walk the model with it.
- */
+A {@link StrokeSegment} still carrying the two points it was measured
+between, kept only where a caller needs to draw the segment rather than just
+walk the model with it.
+*/
 export type LocatedStrokeSegment = StrokeSegment & { points: Segment };
 
 /**
- Join the consecutive points of `points` into segments.
+Join the consecutive points of `points` into segments.
 
- @param points - A list of points.
- @returns The list of segments joining the points of `points`.
- */
+@param points - A list of points.
+@returns The list of segments joining the points of `points`.
+*/
 export const pointsToSegments = (points: Point[]): Segment[] => {
   const [first, ...rest] = points;
   if (first === undefined) {
@@ -60,10 +60,10 @@ export const pointsToSegments = (points: Point[]): Segment[] => {
 };
 
 /**
- The broad traversal implementation behind `walkModel`'s precise overload.
- Recursing directly through `ModelItems<Node>` would require the compiler to
- unfold a recursive conditional type across the call.
- */
+The broad traversal implementation behind `walkModel`'s precise overload.
+Recursing directly through `ModelItems<Node>` would require the compiler to
+unfold a recursive conditional type across the call.
+*/
 const walkModelLoose = (
   model: ModelNode,
   segments: Array<{ angle: number }>,
@@ -88,18 +88,18 @@ const walkModelLoose = (
 };
 
 /**
- Walk the marking menu model along a list of segments.
+Walk the marking menu model along a list of segments.
 
- @param options - Configuration options.
- @param options.model - The marking menu model.
- @param options.segments - A list of segments to walk the model.
- @param options.startIndex - The start index in the angle list.
- @returns The path walked down the model, from the item the first segment
- lands on to the one the last segment lands on, or `undefined` if the segments
- do
- not lead to an item. `model` itself is not part of the path, which is hence
- never empty.
- */
+@param options - Configuration options.
+@param options.model - The marking menu model.
+@param options.segments - A list of segments to walk the model.
+@param options.startIndex - The start index in the angle list.
+@returns The path walked down the model, from the item the first segment
+lands on to the one the last segment lands on, or `undefined` if the segments
+do
+not lead to an item. `model` itself is not part of the path, which is hence
+never empty.
+*/
 export function walkModel<Node extends ModelNode>({
   model,
   segments,
@@ -125,11 +125,11 @@ export const segmentAngle = (a: Point, b: Point): number =>
   radiansToDegrees(Math.atan2(b[1] - a[1], b[0] - a[0]));
 
 /**
- Divide the longest segment of a list of segments in two.
+Divide the longest segment of a list of segments in two.
 
- @param segments - A list of segments.
- @returns A new list of segments with the longest segments divided in two.
- */
+@param segments - A list of segments.
+@returns A new list of segments with the longest segments divided in two.
+*/
 export const divideLongestSegment = (
   segments: StrokeSegment[],
 ): StrokeSegment[] => {
@@ -158,9 +158,9 @@ export const divideLongestSegment = (
 };
 
 /**
- The implementation of {@link findItem}, loosely typed for the same reason as
- {@link walkModelLoose}.
- */
+The implementation of {@link findItem}, loosely typed for the same reason as
+{@link walkModelLoose}.
+*/
 const findItemLoose = (
   model: ModelNode,
   segments: StrokeSegment[],
@@ -187,15 +187,15 @@ const findItemLoose = (
 };
 
 /**
- Find the item selected by a list of segments, dividing the longest segment and walking the
- model until a leaf is found or `maxDepth` is reached.
+Find the item selected by a list of segments, dividing the longest segment and walking the
+model until a leaf is found or `maxDepth` is reached.
 
- @param options - Configuration options.
- @param options.model - The marking menu model.
- @param options.segments - A list of segments.
- @param options.maxDepth - The maximum depth of the item.
- @returns The path leading to the selected item (see {@link walkModel}).
- */
+@param options - Configuration options.
+@param options.model - The marking menu model.
+@param options.segments - A list of segments.
+@param options.maxDepth - The maximum depth of the item.
+@returns The path leading to the selected item (see {@link walkModel}).
+*/
 export function findItem<Node extends ModelNode>({
   model,
   segments,
@@ -218,14 +218,14 @@ export function findItem({
 }
 
 /**
- Find the smallest angular gap between neighboring items, at this level or
- any level below it. Feeds the corner threshold; private to the recognizer,
- its only caller.
+Find the smallest angular gap between neighboring items, at this level or
+any level below it. Feeds the corner threshold; private to the recognizer,
+its only caller.
 
- @param node - The model node to search.
- @returns The smallest gap, in degrees, or `Infinity` if no level has two
- or more items to have a gap between.
- */
+@param node - The model node to search.
+@returns The smallest gap, in degrees, or `Infinity` if no level has two
+or more items to have a gap between.
+*/
 const getMinAngularGap = (node: ModelNode): number => {
   const children = node.items as ReadonlyArray<ModelNode & { angle: number }>;
   let minGap = getTightestSpacing(children.map((child) => child.angle));
@@ -237,18 +237,18 @@ const getMinAngularGap = (node: ModelNode): number => {
 };
 
 /**
- Cut a stroke into the segments a marking-menu walk is attempted against:
- find its articulation points, then join them pairwise, dropping segments too
- short to be a deliberate move. Shared by {@link recognizeMarkingMenuStroke}
- and {@link analyzeMarkingMenuStroke} so the two can never disagree on the
- threshold or segments a stroke produced.
+Cut a stroke into the segments a marking-menu walk is attempted against:
+find its articulation points, then join them pairwise, dropping segments too
+short to be a deliberate move. Shared by {@link recognizeMarkingMenuStroke}
+and {@link analyzeMarkingMenuStroke} so the two can never disagree on the
+threshold or segments a stroke produced.
 
- @param stroke - A list of points.
- @param model - The model the stroke is recognized against, for the smallest
- gap between two of its neighboring items.
- @param maxDepth - The already-resolved maximum menu depth to walk.
- @returns The threshold and segmentation the stroke was cut into.
- */
+@param stroke - A list of points.
+@param model - The model the stroke is recognized against, for the smallest
+gap between two of its neighboring items.
+@param maxDepth - The already-resolved maximum menu depth to walk.
+@returns The threshold and segmentation the stroke was cut into.
+*/
 const cutStroke = (
   stroke: readonly Point[],
   model: ModelNode,
@@ -285,27 +285,27 @@ const cutStroke = (
 };
 
 /**
- The corners a stroke was cut at, and the pieces between them: what the
- engine reports about a recognition attempt.
- */
+The corners a stroke was cut at, and the pieces between them: what the
+engine reports about a recognition attempt.
+*/
 export type StrokeCut = {
   readonly articulationPoints: readonly Point[];
   readonly segments: readonly LocatedStrokeSegment[];
 };
 
 /**
- Recognize the item selected by a marking menu stroke.
+Recognize the item selected by a marking menu stroke.
 
- @param stroke - A list of points.
- @param model - The model to recognize the stroke against.
- @param options - Additional options.
- @param options.maxDepth - The maximum menu depth to walk. If negative,
- start from the maximum depth of the model.
- @param options.requireMenu - Look for a menu item. This
- works best with a negative value for maxDepth.
- @param options.requireLeaf - Look for a leaf.
- @returns The item recognized by the stroke.
- */
+@param stroke - A list of points.
+@param model - The model to recognize the stroke against.
+@param options - Additional options.
+@param options.maxDepth - The maximum menu depth to walk. If negative,
+start from the maximum depth of the model.
+@param options.requireMenu - Look for a menu item. This
+works best with a negative value for maxDepth.
+@param options.requireLeaf - Look for a leaf.
+@returns The item recognized by the stroke.
+*/
 export function recognizeMarkingMenuStroke<Node extends ModelNode>(
   stroke: readonly Point[],
   model: Node,
@@ -346,10 +346,10 @@ export function recognizeMarkingMenuStroke(
 }
 
 /**
- The recognition shared by {@link recognizeMarkingMenuStroke} and
- {@link recognizeStroke}: the cut the outcome was found from, and the outcome
- itself.
- */
+The recognition shared by {@link recognizeMarkingMenuStroke} and
+{@link recognizeStroke}: the cut the outcome was found from, and the outcome
+itself.
+*/
 function recognize(
   stroke: readonly Point[],
   model: ModelNode,
@@ -391,18 +391,18 @@ function recognize(
 }
 
 /**
- Recognize a stroke as a leaf (a completed gesture) or as a menu (an
- unfinished one worth opening), and report the corners and pieces it was cut
- into. The outcome derives from that same cut, so a caller displaying the
- analysis never shows something the outcome did not come from.
+Recognize a stroke as a leaf (a completed gesture) or as a menu (an
+unfinished one worth opening), and report the corners and pieces it was cut
+into. The outcome derives from that same cut, so a caller displaying the
+analysis never shows something the outcome did not come from.
 
- @param stroke - A list of points.
- @param model - The model to recognize the stroke against.
- @param kind - What the stroke should lead to. A menu attempt walks one level
- shallower than the model is deep, since the last level is the leaf.
- @returns The analysis of the attempt, and its outcome if the stroke led
- somewhere. A menu outcome may be the model itself.
- */
+@param stroke - A list of points.
+@param model - The model to recognize the stroke against.
+@param kind - What the stroke should lead to. A menu attempt walks one level
+shallower than the model is deep, since the last level is the leaf.
+@returns The analysis of the attempt, and its outcome if the stroke led
+somewhere. A menu outcome may be the model itself.
+*/
 export function recognizeStroke<Node extends ModelNode>(
   stroke: readonly Point[],
   model: Node,
@@ -433,11 +433,11 @@ export function recognizeStroke(
 }
 
 /**
- What a stroke recognition attempt did, on top of the item it landed on: the
- threshold applied, the corners found, and the pieces the stroke was cut into.
- Meant for a caller that displays this rather than just acting on the result
- (see {@link analyzeMarkingMenuStroke}).
- */
+What a stroke recognition attempt did, on top of the item it landed on: the
+threshold applied, the corners found, and the pieces the stroke was cut into.
+Meant for a caller that displays this rather than just acting on the result
+(see {@link analyzeMarkingMenuStroke}).
+*/
 export type MarkingMenuStrokeAnalysis<Node extends ModelNode> = {
   /**
   The angle, in degrees, past which a bend in the stroke counts as a corner.
@@ -468,15 +468,15 @@ export type MarkingMenuStrokeAnalysis<Node extends ModelNode> = {
 };
 
 /**
- Recognize a marking menu stroke like {@link recognizeMarkingMenuStroke},
- while also reporting the threshold, corners and pieces the recognition
- relied on, for a caller that wants to show that reasoning rather than just
- use its outcome.
+Recognize a marking menu stroke like {@link recognizeMarkingMenuStroke},
+while also reporting the threshold, corners and pieces the recognition
+relied on, for a caller that wants to show that reasoning rather than just
+use its outcome.
 
- @param stroke - A list of points.
- @param model - The model to recognize the stroke against.
- @returns The full analysis of the recognition attempt.
- */
+@param stroke - A list of points.
+@param model - The model to recognize the stroke against.
+@returns The full analysis of the recognition attempt.
+*/
 export function analyzeMarkingMenuStroke<Node extends ModelNode>(
   stroke: readonly Point[],
   model: Node,

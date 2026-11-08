@@ -22,9 +22,9 @@ import type { navigationMachine } from '../machine.js';
  checked, never its internal state. Checked by `tsc`, not run.
  */
 
-type Outputs = OutputsOf<typeof navigationMachine>;
-
 describe('OutputsOf<typeof navigationMachine>', () => {
+  type Outputs = OutputsOf<typeof navigationMachine>;
+
   it('is the flat eight: six public events plus the two internal announcements', () => {
     expectTypeOf<keyof Outputs>().toEqualTypeOf<
       | 'start'
@@ -76,22 +76,21 @@ function genericProbe<Model extends ModelNode>() {
   });
 }
 
-type ProbeStates<Model extends ModelNode> = StatesOf<
-  ReturnType<typeof genericProbe<Model>>
->;
-type ProbeOutputs<Model extends ModelNode> = OutputsOf<
-  ReturnType<typeof genericProbe<Model>>
->;
-
-type ExampleModel = MarkingMenuModel<{
-  readonly items: readonly [{ readonly id: 'right'; readonly label: 'Right' }];
-}>;
-type OtherModel = MarkingMenuModel<{
-  readonly items: readonly [{ readonly id: 'up'; readonly label: 'Up' }];
-}>;
-
 describe('a genuinely generic totorobot machine (the type-plumbing spike)', () => {
+  type ProbeOutputs<Model extends ModelNode> = OutputsOf<
+    ReturnType<typeof genericProbe<Model>>
+  >;
+
+  type ExampleModel = MarkingMenuModel<{
+    readonly items: readonly [
+      { readonly id: 'right'; readonly label: 'Right' },
+    ];
+  }>;
   it('resolves to a real, non-`never` type for a concrete model', () => {
+    type ProbeStates<Model extends ModelNode> = StatesOf<
+      ReturnType<typeof genericProbe<Model>>
+    >;
+
     expectTypeOf<
       ProbeStates<ExampleModel>['open']['menu']
     >().not.toEqualTypeOf<never>();
@@ -101,6 +100,9 @@ describe('a genuinely generic totorobot machine (the type-plumbing spike)', () =
   });
 
   it('tracks whichever model a caller passes in, not one baked-in model', () => {
+    type OtherModel = MarkingMenuModel<{
+      readonly items: readonly [{ readonly id: 'up'; readonly label: 'Up' }];
+    }>;
     expectTypeOf<
       ProbeOutputs<ExampleModel>['selected']['leaf']['id']
     >().toEqualTypeOf<'right'>();

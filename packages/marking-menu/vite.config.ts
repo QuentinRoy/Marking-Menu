@@ -3,7 +3,7 @@ import path from 'node:path';
 import { Features } from 'lightningcss';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
-import { version } from './package.json' with { type: 'json' };
+import packageJson from './package.json' with { type: 'json' };
 
 // `bundleTypes` runs `@microsoft/api-extractor`, and unplugin-dts points it at
 // the resolved `typescript` package so that its `lib/` supplies the
@@ -20,7 +20,7 @@ const typescriptCompilerFolder = path.dirname(
 );
 
 const banner = `/*!
- * Marking Menu Javascript Library v${version}
+ * Marking Menu Javascript Library v${packageJson.version}
  * https://github.com/QuentinRoy/Marking-Menu
  *
  * Released under the MIT license.

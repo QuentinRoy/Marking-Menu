@@ -4,10 +4,10 @@ import type { NavigationInputSink } from './runtime.js';
 
 export type GesturePointerSource = {
   /**
-   Leave pointer input to the page while a standalone menu is displayed: no
-   gesture starts, nothing is prevented or captured, and `touch-action` goes
-   back to what it was.
-   */
+  Leave pointer input to the page while a standalone menu is displayed: no
+  gesture starts, nothing is prevented or captured, and `touch-action` goes
+  back to what it was.
+  */
   suspend: () => void;
   /**
   Take pointer input back after {@link GesturePointerSource.suspend}.
@@ -17,10 +17,10 @@ export type GesturePointerSource = {
 };
 
 /**
- Native pointer listeners: accepts only the primary pointer and primary
- button, owns capture, and enforces the one-active-gesture policy before
- inputs reach the machine.
- */
+Native pointer listeners: accepts only the primary pointer and primary
+button, owns capture, and enforces the one-active-gesture policy before
+inputs reach the machine.
+*/
 export function createGesturePointerSource({
   parent,
   runtime,
@@ -33,9 +33,9 @@ export function createGesturePointerSource({
   let releaseTouchAction: (() => void) | undefined = claimTouchAction(parent);
 
   /**
-   Give back the capture the active gesture took, if it still holds one.
-   Idempotent, and safe to call with no gesture in progress.
-   */
+  Give back the capture the active gesture took, if it still holds one.
+  Idempotent, and safe to call with no gesture in progress.
+  */
   const releaseCapture = (): void => {
     if (activePointerId === undefined) {
       return;

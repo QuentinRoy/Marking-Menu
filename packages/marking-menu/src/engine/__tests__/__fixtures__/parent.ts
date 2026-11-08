@@ -5,11 +5,11 @@ import type { Point } from '../../../__tests__/__fixtures__/browser-menu.js';
 const origin = { x: 150, y: 250 };
 
 /**
- A parent attached to the page at a fixed spot, so real input lands on it.
- Gestures are written relative to its top-left corner: `at` turns such a
- point into the page point input is sent to, and `client` into the
- `[x, y]` client position events report for it.
- */
+A parent attached to the page at a fixed spot, so real input lands on it.
+Gestures are written relative to its top-left corner: `at` turns such a
+point into the page point input is sent to, and `client` into the
+`[x, y]` client position events report for it.
+*/
 export const createParent = () => {
   const parent = document.createElement('div');
   Object.assign(parent.style, {

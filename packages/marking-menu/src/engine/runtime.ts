@@ -18,9 +18,9 @@ const toError = (value: unknown): Error =>
 type SourceInputs = Omit<MachineInputs, 'open' | 'dwell' | 'dispose'>;
 
 /**
- Send the machine an input, named and shaped as it declares it. The runtime
- keeps `open`, `dwell` and `dispose` to itself.
- */
+Send the machine an input, named and shaped as it declares it. The runtime
+keeps `open`, `dwell` and `dispose` to itself.
+*/
 export type NavigationSend = (
   ...input: {
     [Name in keyof SourceInputs]: undefined extends SourceInputs[Name]
@@ -37,9 +37,9 @@ export type NavigationInputSink = {
 };
 
 /**
- The runtime owns the emitter: interpreting the machine's public outputs is
- the only thing that ever originates an event.
- */
+The runtime owns the emitter: interpreting the machine's public outputs is
+the only thing that ever originates an event.
+*/
 export type NavigationRuntime<Model extends ModelNode = ModelRoot> =
   NavigationInputSink &
     MarkingMenuEventEmitter<Model> & {
@@ -104,15 +104,15 @@ const publicOutputs = [
 ] as const;
 
 /**
- The runtime owns mutable infrastructure only: starting the host, forwarding
- its outputs, and disposal ordering. It never makes domain decisions: those
- live in `navigationMachine`.
+The runtime owns mutable infrastructure only: starting the host, forwarding
+its outputs, and disposal ordering. It never makes domain decisions: those
+live in `navigationMachine`.
 
- A consumer listener is never a totorobot `on` listener: a throwing `on`
- listener propagates out of the `emit` call and interrupts the action that
- raised it mid-setup, so every public output is re-announced through a plain
- `EventTarget`, whose `dispatchEvent` absorbs a throwing listener instead.
- */
+A consumer listener is never a totorobot `on` listener: a throwing `on`
+listener propagates out of the `emit` call and interrupts the action that
+raised it mid-setup, so every public output is re-announced through a plain
+`EventTarget`, whose `dispatchEvent` absorbs a throwing listener instead.
+*/
 export function createRuntime<Model extends EngineModelRoot>({
   model,
   options,
@@ -137,13 +137,13 @@ export function createRuntime<Model extends EngineModelRoot>({
   const host = navigationMachine.start({ model, options });
 
   /**
-   An internal failure (an invariant violation surfacing while reacting to
-   the machine's own `layout`/`feedback` outputs, never a consumer's fault)
-   tears the controller down through the same path as `dispose()`, logs it,
-   then rethrows so it still escapes the pointer listener or dwell timer
-   that triggered it. A teardown failure while unwinding is itself logged
-   and suppressed: the original error is the one that keeps propagating.
-   */
+  An internal failure (an invariant violation surfacing while reacting to
+  the machine's own `layout`/`feedback` outputs, never a consumer's fault)
+  tears the controller down through the same path as `dispose()`, logs it,
+  then rethrows so it still escapes the pointer listener or dwell timer
+  that triggered it. A teardown failure while unwinding is itself logged
+  and suppressed: the original error is the one that keeps propagating.
+  */
   const handleInternalFailure = (error: unknown): never => {
     const normalized = toError(error);
     try {

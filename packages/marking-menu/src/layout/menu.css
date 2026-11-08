@@ -33,7 +33,7 @@
   );
   --resolved-indicator-background: var(
     --mm-indicator-background,
-    light-dark(hwb(215 20% 30% / 0.2), hwb(215 60% 0% / 0.4))
+    light-dark(hwb(215 20% 30% / 20%), hwb(215 60% 0% / 40%))
   );
 
   /* Connectors */
@@ -171,7 +171,7 @@
   position: absolute;
   top: var(--center-y);
   pointer-events: none;
-  transform: translate(0px, 0px);
+  translate: 0;
 }
 
 /* Script-focused only (`tabindex="-1"`): the active item's own styling is
@@ -186,10 +186,9 @@
    clicks on the menu's own items and wedges. */
 .marking-menu-layer.marking-menu--pointer-target {
   pointer-events: auto;
-}
-
-.marking-menu-layer.marking-menu--pointer-target .marking-menu-item {
-  cursor: pointer;
+  .marking-menu-item {
+    cursor: pointer;
+  }
 }
 
 .marking-menu-item {
@@ -209,14 +208,12 @@
 
 .marking-menu-wedge {
   fill: var(--resolved-wedge-fill);
-}
-
-.marking-menu-layer.marking-menu--pointer-target .marking-menu-wedge {
-  pointer-events: auto;
-}
-
-.marking-menu-item.active .marking-menu-wedge {
-  fill: var(--resolved-wedge-fill-active);
+  .marking-menu-layer.marking-menu--pointer-target & {
+    pointer-events: auto;
+  }
+  .marking-menu-item.active & {
+    fill: var(--resolved-wedge-fill-active);
+  }
 }
 
 /* Self-clipped so only the inner half of the stroke shows, giving an inset
@@ -225,11 +222,10 @@
   fill: none;
   stroke: var(--resolved-wedge-outline-color);
   stroke-width: calc(var(--resolved-wedge-outline-width) * 2);
-}
-
-.marking-menu-item.active .marking-menu-wedge-outline {
-  stroke: var(--resolved-wedge-outline-color-active);
-  stroke-width: calc(var(--resolved-wedge-outline-width-active) * 2);
+  .marking-menu-item.active & {
+    stroke: var(--resolved-wedge-outline-color-active);
+    stroke-width: calc(var(--resolved-wedge-outline-width-active) * 2);
+  }
 }
 
 .marking-menu-plate {
@@ -265,8 +261,7 @@
 .marking-menu-label {
   display: block;
   min-width: 0;
-  overflow-x: clip;
-  overflow-y: visible;
+  overflow: clip visible;
   line-height: normal;
   text-align: center;
   text-overflow: ellipsis;
@@ -339,21 +334,18 @@
 
 .marking-menu-item.active {
   z-index: 1;
-}
-
-.marking-menu-item.active .marking-menu-plate {
-  background-color: var(--resolved-plate-fill-active);
-  box-shadow: inset 0 0 0 var(--resolved-plate-outline-width-active)
-    var(--resolved-plate-outline-color-active);
-  color: var(--resolved-plate-text-color-active);
-}
-
-.marking-menu-item.active .marking-menu-label {
-  font-weight: bolder;
-}
-
-.marking-menu-item.active .marking-menu-outer-connector rect {
-  fill: var(--resolved-outer-connector-color-active);
+  .marking-menu-plate {
+    background-color: var(--resolved-plate-fill-active);
+    box-shadow: inset 0 0 0 var(--resolved-plate-outline-width-active)
+      var(--resolved-plate-outline-color-active);
+    color: var(--resolved-plate-text-color-active);
+  }
+  .marking-menu-label {
+    font-weight: bolder;
+  }
+  .marking-menu-outer-connector rect {
+    fill: var(--resolved-outer-connector-color-active);
+  }
 }
 
 .marking-menu-layout-probe {
@@ -470,10 +462,7 @@
       ) *
       var(--mm-indicator-progress)
   );
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .marking-menu-indicator-dot {
+  @media (prefers-reduced-motion: reduce) {
     opacity: var(--mm-indicator-progress);
     r: var(--resolved-stroke-start-point-radius);
   }
@@ -507,16 +496,16 @@
   }
 
   .marking-menu-stroke-path {
-    stroke: CanvasText;
+    stroke: canvastext;
   }
 
   .marking-menu-stroke-point,
   .marking-menu-indicator-dot {
-    fill: CanvasText;
+    fill: canvastext;
   }
 
   .marking-menu-indicator-background {
-    fill: Canvas;
+    fill: canvas;
   }
 
   /* Forced colors also suppresses `box-shadow` outright, and gives any box

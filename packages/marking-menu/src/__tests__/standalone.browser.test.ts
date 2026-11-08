@@ -31,12 +31,12 @@ const items = [
 ] as const;
 
 /**
- The item's own container is a zero-size positioning anchor (see
- `browser-menu.ts`'s `waitForMenuOpen` comment), which Playwright refuses to
- hover or click as not visible. Its plate is the item's real, visibly sized
- hit target; a pointer landing on it still resolves to the item, since the
- source walks up from wherever the event actually lands.
- */
+The item's own container is a zero-size positioning anchor (see
+`browser-menu.ts`'s `waitForMenuOpen` comment), which Playwright refuses to
+hover or click as not visible. Its plate is the item's real, visibly sized
+hit target; a pointer landing on it still resolves to the item, since the
+source walks up from wherever the event actually lands.
+*/
 const plateOf = (name: string): Element => {
   const plate =
     page
@@ -51,9 +51,9 @@ const plateOf = (name: string): Element => {
 };
 
 /**
- A menu between two buttons: one holding focus before it opens, and one
- following it in the tab order.
- */
+A menu between two buttons: one holding focus before it opens, and one
+following it in the tab order.
+*/
 const mountBetweenButtons = () => {
   const menu = mountMenu({ items });
   const before = document.createElement('button');
