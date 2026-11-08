@@ -11,7 +11,10 @@
   --title-ink: rgb(236 236 236);
   --toast-background: rgb(0 0 0 / 80%);
   --toast-ink: white;
-  @media (prefers-color-scheme: dark) {
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
     --page: #0f0f11;
     --ink: rgb(226 226 230);
     --title-ink: rgb(38 38 42);
@@ -65,14 +68,15 @@ h1 {
   right: 1em;
   text-align: center;
   width: auto;
-  a {
-    color: inherit;
-    /* #main sits on top of #instructions to catch a gesture started anywhere
+}
+
+#instructions .help a {
+  color: inherit;
+  /* #main sits on top of #instructions to catch a gesture started anywhere
      on the page; without its own stacking position, this link would sit
      under it and never receive a click. */
-    position: relative;
-    z-index: 1;
-  }
+  position: relative;
+  z-index: 1;
 }
 
 /* The menu itself must draw above that same link once it opens, so it isn't
@@ -97,9 +101,10 @@ h1 {
   opacity: 0;
   padding: 10px 20px;
   transition: 400ms;
-  &.shown {
-    opacity: 1;
-  }
+}
+
+#toast.shown {
+  opacity: 1;
 }
 
 .github-corner svg {
@@ -117,7 +122,10 @@ h1 {
 
 .github-corner:hover .octo-arm {
   animation: octocat-wave 560ms ease-in-out;
-  @media (prefers-reduced-motion: reduce) {
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .github-corner:hover .octo-arm {
     animation: none;
   }
 }

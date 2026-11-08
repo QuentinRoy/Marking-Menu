@@ -129,6 +129,13 @@ export default defineConfig([
     extends: [reactHooks.configs.flat.recommended],
   },
   {
+    // This stylesheet is served without a build step to older browsers.
+    files: ['packages/demo/demo.css'],
+    rules: {
+      'cssicorn/prefer-nesting': 'off',
+    },
+  },
+  {
     // Tailwind's own at-rules, which the CSS plugin does not know.
     files: ['packages/demo/playground/styles.css'],
     rules: {
