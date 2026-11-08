@@ -5,11 +5,11 @@
 let activeScopes = 0;
 
 /**
- Fakes timers for the scope of the `using` declaration. Reentrant: nesting
- or overlapping calls only restore real timers once every scope that faked
- them has disposed, so an inner scope never pulls timers out from under an
- outer one still relying on them being faked.
- */
+Fakes timers for the scope of the `using` declaration. Reentrant: nesting
+or overlapping calls only restore real timers once every scope that faked
+them has disposed, so an inner scope never pulls timers out from under an
+outer one still relying on them being faked.
+*/
 export const fakeTimers = (): Disposable => {
   activeScopes += 1;
   vi.useFakeTimers();

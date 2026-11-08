@@ -13,9 +13,9 @@ import type { NavigationSend } from '../runtime.js';
 import { createParent } from './__fixtures__/parent.js';
 
 /**
- Keeps every `type` event `element` gets, to read what the listeners did
- with it once dispatched.
- */
+Keeps every `type` event `element` gets, to read what the listeners did
+with it once dispatched.
+*/
 const recordEvents = <Type extends keyof HTMLElementEventMap>(
   element: HTMLElement,
   type: Type,
@@ -35,8 +35,8 @@ const recordEvents = <Type extends keyof HTMLElementEventMap>(
 };
 
 /**
- A source over `parent`, disposed at the end of the block.
- */
+A source over `parent`, disposed at the end of the block.
+*/
 const createSource = (
   parent: HTMLElement,
   send: NavigationSend = vi.fn<NavigationSend>(),

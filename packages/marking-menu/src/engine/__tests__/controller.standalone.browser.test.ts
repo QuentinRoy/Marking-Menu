@@ -25,11 +25,11 @@ describe('a standalone menu', () => {
   ] as const;
 
   /**
-   A controller on a parent attached to the document, with an element
-   holding focus before the menu opens, and everything cleaned up at the end
-   of the block.
-   */
-  const setup = (config: { readonly noviceDwellingTime?: number } = {}) => {
+  A controller on a parent attached to the document, with an element
+  holding focus before the menu opens, and everything cleaned up at the end
+  of the block.
+  */
+  const setup = () => {
     const fixture = createParent();
     const { parent } = fixture;
     const opener = document.createElement('button');
@@ -38,7 +38,6 @@ describe('a standalone menu', () => {
     const controller = createController({
       items: submenuItems,
       parent,
-      ...config,
     });
     const shadowRoot = () =>
       parent.querySelector('.marking-menu')?.shadowRoot ?? undefined;
@@ -47,9 +46,9 @@ describe('a standalone menu', () => {
       opener,
       controller,
       /**
-       Where to press the item at `index`: on its label, since the item
-       itself is a zero-size anchor. Rounded, so events report it exactly.
-       */
+      Where to press the item at `index`: on its label, since the item
+      itself is a zero-size anchor. Rounded, so events report it exactly.
+      */
       itemPoint(index: number): Point {
         const item =
           shadowRoot()?.querySelectorAll('.marking-menu-item')[index];

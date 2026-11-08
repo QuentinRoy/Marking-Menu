@@ -28,7 +28,6 @@ const model = createModel({
 });
 const [item] = model.items;
 type Model = typeof model;
-type EventMap = MarkingMenuEventMap<Model>;
 
 const standaloneOpen = (
   source: MarkingMenuEventSource,
@@ -76,10 +75,11 @@ const standaloneSelect = new MarkingMenuSelectEvent<Model, 'standalone'>({
 });
 
 /**
- A session over a real menu and a stand-in runtime that records every input
- and announces what a test tells it to.
- */
+A session over a real menu and a stand-in runtime that records every input
+and announces what a test tells it to.
+*/
 const createFixture = () => {
+  type EventMap = MarkingMenuEventMap<Model>;
   const menuFixture = createMenuFixture();
   const { parent, menu } = menuFixture;
   const opener = document.createElement('button');
@@ -182,9 +182,9 @@ const createFixture = () => {
 };
 
 /**
- Keeps every `keydown` the page gets, to read what the listeners did with
- each once dispatched.
- */
+Keeps every `keydown` the page gets, to read what the listeners did with
+each once dispatched.
+*/
 const recordKeys = () => {
   const events: KeyboardEvent[] = [];
   const listener = (event: KeyboardEvent) => {
@@ -208,8 +208,8 @@ const recordKeys = () => {
 };
 
 /**
- Keeps every `pointerdown` the page gets, like {@link recordKeys}.
- */
+Keeps every `pointerdown` the page gets, like {@link recordKeys}.
+*/
 const recordPresses = () => {
   const events: PointerEvent[] = [];
   const listener = (event: PointerEvent) => {

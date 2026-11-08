@@ -112,18 +112,18 @@ function isSameCycle(
 }
 
 /**
- Independently re-check every hard constraint of a solved layout: association
- sector via cyclic order, ring clearance, plate separation, connector
- clearance, and that every coordinate is finite.
+Independently re-check every hard constraint of a solved layout: association
+sector via cyclic order, ring clearance, plate separation, connector
+clearance, and that every coordinate is finite.
 
- Two connectors can never cross each other: each lies on its own item's
- fixed ray from the origin, and `rayError` already confirms that, so no
- separate segment-intersection check is needed.
+Two connectors can never cross each other: each lies on its own item's
+fixed ray from the origin, and `rayError` already confirms that, so no
+separate segment-intersection check is needed.
 
- @param input - The same input given to `solveLabelLayout`.
- @param result - Its result.
- @returns Whether every constraint holds, and a description of each one that doesn't.
- */
+@param input - The same input given to `solveLabelLayout`.
+@param result - Its result.
+@returns Whether every constraint holds, and a description of each one that doesn't.
+*/
 export function validateLabelLayout(
   input: LayoutInput,
   result: LayoutResult,

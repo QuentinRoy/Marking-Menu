@@ -26,10 +26,10 @@ import type {
 } from './machine.js';
 
 /**
- Shared body of the three startup/expert move actions: no menu is open in
- either state, so `move` always carries an undefined `active` and `menu`
- there.
- */
+Shared body of the three startup/expert move actions: no menu is open in
+either state, so `move` always carries an undefined `active` and `menu`
+there.
+*/
 export function emitInactiveMove(
   emit: (name: 'move', data: MarkingMenuMoveEvent) => void,
   mode: 'startup' | 'expert',
@@ -48,17 +48,17 @@ export function emitInactiveMove(
 }
 
 /**
- A frozen copy of a point: the engine keeps its own, and a consumer that
- alters what an event publishes must not reach it.
- */
+A frozen copy of a point: the engine keeps its own, and a consumer that
+alters what an event publishes must not reach it.
+*/
 const copyPoint = (point: Point): Point =>
   Object.freeze([point[0], point[1]] as const);
 
 /**
- Copy a recognition attempt into the frozen shape events publish. The
- recognizer's own analysis carries fields (each piece's length and angle) the
- public contract leaves out, and events must not leak them at run time.
- */
+Copy a recognition attempt into the frozen shape events publish. The
+recognizer's own analysis carries fields (each piece's length and angle) the
+public contract leaves out, and events must not leak them at run time.
+*/
 export function toRecognition(
   stroke: readonly Point[],
   { articulationPoints, segments }: StrokeCut,
@@ -83,10 +83,10 @@ export function toRecognition(
 }
 
 /**
- Shared body of the `startup`, `expert`, and `novice` dwell residencies: arm a
- `dwell` timer for `delayMs` and clear it on exit, whatever ends the residency,
- whether that is leaving the state or disposal.
- */
+Shared body of the `startup`, `expert`, and `novice` dwell residencies: arm a
+`dwell` timer for `delayMs` and clear it on exit, whatever ends the residency,
+whether that is leaving the state or disposal.
+*/
 export function armDwellTimer(
   delayMs: number,
   send: (input: 'dwell') => void,
@@ -100,16 +100,16 @@ export function armDwellTimer(
 }
 
 /**
- The context every termination action needs: the stroke drawn so far
- (including the release/cancel position), the menu open when it ended (if
- any), and the item that was active (if any). That active item is precisely
- the thing that is not selected once a termination action decides not to
- select it. Narrows structurally on `'lowerStroke' in fromData` rather than
- taking `from` as a parameter: `from` and `fromData` are only correlated
- inside totorobot's own transition record, and splitting them across two
- parameters here decorrelates them, so novice is picked out by the field
- only it has.
- */
+The context every termination action needs: the stroke drawn so far
+(including the release/cancel position), the menu open when it ended (if
+any), and the item that was active (if any). That active item is precisely
+the thing that is not selected once a termination action decides not to
+select it. Narrows structurally on `'lowerStroke' in fromData` rather than
+taking `from` as a parameter: `from` and `fromData` are only correlated
+inside totorobot's own transition record, and splitting them across two
+parameters here decorrelates them, so novice is picked out by the field
+only it has.
+*/
 function terminationContext(
   fromData: MachineStates['startup' | 'expert' | 'novice'],
   position: Point,
@@ -135,11 +135,11 @@ function terminationContext(
 }
 
 /**
- Shared tail of every action that ends a gesture: `up`, `cancel`, and the
- expert dwell that finds nothing to switch to. Announce `feedback`, then
- `select` or `cancel` depending on `outcome`: the leaf that was selected, or
- why nothing was. The latter two callers never attempt a selection.
- */
+Shared tail of every action that ends a gesture: `up`, `cancel`, and the
+expert dwell that finds nothing to switch to. Announce `feedback`, then
+`select` or `cancel` depending on `outcome`: the leaf that was selected, or
+why nothing was. The latter two callers never attempt a selection.
+*/
 export function emitTermination(
   emit: {
     (name: 'feedback', data: NavigationFeedbackAnnouncement): void;
@@ -203,10 +203,10 @@ export function emitTermination(
 type GestureState = 'startup' | 'expert' | 'novice';
 
 /**
- What an action ending a gesture receives, whichever state it ends from.
- `from` and `fromData` are only correlated inside totorobot's own transition
- record, so `terminationContext` picks the state's own data out structurally.
- */
+What an action ending a gesture receives, whichever state it ends from.
+`from` and `fromData` are only correlated inside totorobot's own transition
+record, so `terminationContext` picks the state's own data out structurally.
+*/
 type GestureEndContext = {
   readonly from: GestureState;
   readonly fromData: MachineStates[GestureState];
@@ -215,9 +215,9 @@ type GestureEndContext = {
 };
 
 /**
- The shared termination policy of a released gesture: recognize the gesture
- drawn so far (unless skipped) and announce `select` or `cancel`.
- */
+The shared termination policy of a released gesture: recognize the gesture
+drawn so far (unless skipped) and announce `select` or `cancel`.
+*/
 export function releaseGesture({
   from,
   fromData,
@@ -259,10 +259,10 @@ export function releaseGesture({
 }
 
 /**
- A pointer canceled outright never selects, regardless of what was active or
- what the stroke looks like: recognition never runs, and a novice active item,
- leaf or not, carries through to `cancel.active` unchanged.
- */
+A pointer canceled outright never selects, regardless of what was active or
+what the stroke looks like: recognition never runs, and a novice active item,
+leaf or not, carries through to `cancel.active` unchanged.
+*/
 export function cancelGesture({
   from,
   fromData,

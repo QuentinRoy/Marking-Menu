@@ -17,20 +17,20 @@ import type { Point } from './utils.js';
  * -------------------------------------------------------------------------- */
 
 /**
- The mode the menu interaction is in when an event is dispatched. A pointer
- gesture starts in `startup`, then becomes `novice` once the menu is visible
- or `expert` while a stroke is drawn without one. `standalone` is a menu
- displayed with the controller's `open()`, with no gesture in progress: see
- {@link MarkingMenuEventSource} for what operates it.
- */
+The mode the menu interaction is in when an event is dispatched. A pointer
+gesture starts in `startup`, then becomes `novice` once the menu is visible
+or `expert` while a stroke is drawn without one. `standalone` is a menu
+displayed with the controller's `open()`, with no gesture in progress: see
+{@link MarkingMenuEventSource} for what operates it.
+*/
 export type MarkingMenuMode = 'startup' | 'novice' | 'expert' | 'standalone';
 
 /**
- What the menu interaction is doing between events, narrowed by `mode`.
- `idle` means nothing is in progress. `novice` and `standalone` display a
- menu level, so they carry the `menu` and the `activeItem` in it. `startup`
- and `expert` display none yet.
- */
+What the menu interaction is doing between events, narrowed by `mode`.
+`idle` means nothing is in progress. `novice` and `standalone` display a
+menu level, so they carry the `menu` and the `activeItem` in it. `startup`
+and `expert` display none yet.
+*/
 export type MarkingMenuState<Model extends ModelNode = ModelNode> =
   | { readonly mode: 'idle' }
   | { readonly mode: 'startup' }
@@ -42,41 +42,41 @@ export type MarkingMenuState<Model extends ModelNode = ModelNode> =
     };
 
 /**
- Why a gesture or menu ended without a selection. `interrupted`: the browser
- canceled the pointer. `no-selection`: the gesture finished with nothing to
- select. `dismissed`: a menu shown with `open()` was closed, by `close()`, the
- Escape key, or Tab.
- */
+Why a gesture or menu ended without a selection. `interrupted`: the browser
+canceled the pointer. `no-selection`: the gesture finished with nothing to
+select. `dismissed`: a menu shown with `open()` was closed, by `close()`, the
+Escape key, or Tab.
+*/
 export type MarkingMenuCancelReason<
   Mode extends MarkingMenuMode = MarkingMenuMode,
 > = Mode extends 'standalone' ? 'dismissed' : 'interrupted' | 'no-selection';
 
 /**
- What caused an event, independent of `mode`. `gesture` is constant across
- `startup`, `novice`, and `expert`: every event there stems from the same
- pointer-drawn stroke. In `standalone`, it is `pointer` (hover, press, drag,
- click, or tap), `keyboard` (arrow keys, Enter, Escape, or Tab), `api` (an
- `open()` or `close()` call, or the focus `open()` gives the first item), or
- `focus-loss` (the menu lost DOM
- focus for an otherwise-unknown reason).
- */
+What caused an event, independent of `mode`. `gesture` is constant across
+`startup`, `novice`, and `expert`: every event there stems from the same
+pointer-drawn stroke. In `standalone`, it is `pointer` (hover, press, drag,
+click, or tap), `keyboard` (arrow keys, Enter, Escape, or Tab), `api` (an
+`open()` or `close()` call, or the focus `open()` gives the first item), or
+`focus-loss` (the menu lost DOM
+focus for an otherwise-unknown reason).
+*/
 export type MarkingMenuEventSource =
   'pointer' | 'keyboard' | 'gesture' | 'api' | 'focus-loss';
 
 /**
- An event's `position` field: a point outside standalone mode, and a point or
- `undefined` inside it (a point when `source` is `'pointer'`, `undefined`
- otherwise).
- */
+An event's `position` field: a point outside standalone mode, and a point or
+`undefined` inside it (a point when `source` is `'pointer'`, `undefined`
+otherwise).
+*/
 type StandalonePosition<Mode extends MarkingMenuMode> =
   Mode extends 'standalone' ? Point | undefined : Point;
 
 /**
- One piece of a stroke, between two corners.
+One piece of a stroke, between two corners.
 
- Its shape and meaning are covered by semver: a recognizer change that moves
- the pieces cut from the same stroke and menu is a breaking change.
- */
+Its shape and meaning are covered by semver: a recognizer change that moves
+the pieces cut from the same stroke and menu is a breaking change.
+*/
 export type MarkingMenuStrokeSegment = {
   /**
   The two points the piece spans, in client coordinates (pixels).
@@ -85,30 +85,30 @@ export type MarkingMenuStrokeSegment = {
 };
 
 /**
- What the recognizer made of a stroke.
+What the recognizer made of a stroke.
 
- Its shape and meaning are covered by semver: a recognizer change that moves
- the corners or pieces for the same stroke and menu is a breaking change.
- */
+Its shape and meaning are covered by semver: a recognizer change that moves
+the corners or pieces for the same stroke and menu is a breaking change.
+*/
 export type MarkingMenuStrokeAnalysis = {
   /**
-   The points along the stroke recognized as corners, start and end included,
-   in client coordinates (pixels).
-   */
+  The points along the stroke recognized as corners, start and end included,
+  in client coordinates (pixels).
+  */
   readonly articulationPoints: readonly Point[];
   /**
-   The pieces the stroke was cut into between corners. Pieces too short to be a
-   deliberate move are dropped.
-   */
+  The pieces the stroke was cut into between corners. Pieces too short to be a
+  deliberate move are dropped.
+  */
   readonly segments: readonly MarkingMenuStrokeSegment[];
 };
 
 /**
- The stroke the recognizer was given, and how it cut it. Present on an event
- exactly when recognition ran.
+The stroke the recognizer was given, and how it cut it. Present on an event
+exactly when recognition ran.
 
- Its shape and meaning are covered by semver.
- */
+Its shape and meaning are covered by semver.
+*/
 export type MarkingMenuRecognition = {
   /**
   The stroke, in client coordinates (pixels).
@@ -125,15 +125,15 @@ export type MarkingMenuRecognition = {
  * -------------------------------------------------------------------------- */
 
 /**
- What every marking menu event has in common: the mode the interaction was in,
- what caused it, and the pointer position, all at dispatch time. Outside
- standalone mode `position` is always a point; in standalone it is a point
- when `source` is `'pointer'`, and `undefined` otherwise. Check `source`, not
- `mode`, to know which.
+What every marking menu event has in common: the mode the interaction was in,
+what caused it, and the pointer position, all at dispatch time. Outside
+standalone mode `position` is always a point; in standalone it is a point
+when `source` is `'pointer'`, and `undefined` otherwise. Check `source`, not
+`mode`, to know which.
 
- Not a DOM `Event`: this library has no DOM target, no bubbling, and no
- default action to prevent, so `Event`'s machinery would all be dead weight.
- */
+Not a DOM `Event`: this library has no DOM target, no bubbling, and no
+default action to prevent, so `Event`'s machinery would all be dead weight.
+*/
 export abstract class MarkingMenuEventBase<
   Mode extends MarkingMenuMode = MarkingMenuMode,
 > {
@@ -174,9 +174,9 @@ export abstract class MarkingMenuEventBase<
   }
 
   /**
-   The pointer position at the time this event was dispatched, in standalone
-   mode only defined when `source` is `'pointer'`.
-   */
+  The pointer position at the time this event was dispatched, in standalone
+  mode only defined when `source` is `'pointer'`.
+  */
   get position(): StandalonePosition<Mode> {
     return this.#position;
   }
@@ -190,9 +190,9 @@ export abstract class MarkingMenuEventBase<
 }
 
 /**
- Dispatched once, as the first event of a gesture, when a primary pointer goes
- down.
- */
+Dispatched once, as the first event of a gesture, when a primary pointer goes
+down.
+*/
 export class MarkingMenuStartEvent<
   Mode extends 'startup' = 'startup',
 > extends MarkingMenuEventBase<Mode> {
@@ -215,10 +215,10 @@ export class MarkingMenuStartEvent<
 }
 
 /**
- Dispatched when a menu level is displayed: the dwell that starts novice mode,
- a submenu dwell while already in novice mode, or, in standalone mode, the
- root on `open()` and every level entered or left afterward.
- */
+Dispatched when a menu level is displayed: the dwell that starts novice mode,
+a submenu dwell while already in novice mode, or, in standalone mode, the
+root on `open()` and every level entered or left afterward.
+*/
 export class MarkingMenuOpenEvent<
   Model extends ModelNode = ModelNode,
   Mode extends 'novice' | 'standalone' = 'novice' | 'standalone',
@@ -268,28 +268,28 @@ export class MarkingMenuOpenEvent<
   }
 
   /**
-   Whether focus is about to move to the menu. `false` only for the root of
-   a menu shown with `open({ autoFocus: false })`; a submenu always leaves
-   focus in the menu, so its event is `true`.
-   */
+  Whether focus is about to move to the menu. `false` only for the root of
+  a menu shown with `open({ autoFocus: false })`; a submenu always leaves
+  focus in the menu, so its event is `true`.
+  */
   get willAutoFocus(): boolean {
     return this.#willAutoFocus;
   }
 
   /**
-   The recognition that led to this menu, or `undefined` when none ran. Only a
-   menu opened from an expert stroke that paused carries one.
-   */
+  The recognition that led to this menu, or `undefined` when none ran. Only a
+  menu opened from an expert stroke that paused carries one.
+  */
   get recognition(): MarkingMenuRecognition | undefined {
     return this.#recognition;
   }
 }
 
 /**
- The shared constructor payload of {@link MarkingMenuMoveEvent} and
- {@link MarkingMenuCancelEvent}: both carry the mode, position, active item
- and open menu at a moment where none of those is fixed by the event itself.
- */
+The shared constructor payload of {@link MarkingMenuMoveEvent} and
+{@link MarkingMenuCancelEvent}: both carry the mode, position, active item
+and open menu at a moment where none of those is fixed by the event itself.
+*/
 type ActiveMenuData<
   Model extends ModelNode = ModelNode,
   Mode extends MarkingMenuMode = MarkingMenuMode,
@@ -302,10 +302,10 @@ type ActiveMenuData<
 };
 
 /**
- Dispatched on pointer movement, in every mode. `activeItem` and `menu` are
- always `undefined` in startup and expert, since no menu is open yet for
- anything to be active in.
- */
+Dispatched on pointer movement, in every mode. `activeItem` and `menu` are
+always `undefined` in startup and expert, since no menu is open yet for
+anything to be active in.
+*/
 export class MarkingMenuMoveEvent<
   Model extends ModelNode = ModelNode,
   Mode extends MarkingMenuMode = MarkingMenuMode,
@@ -344,11 +344,11 @@ export class MarkingMenuMoveEvent<
 }
 
 /**
- Dispatched in novice and standalone modes whenever the active item changes:
- the only event that carries both the new and the previous active item, so a
- consumer never has to remember the last `move`'s `activeItem` to animate a
- highlight transition.
- */
+Dispatched in novice and standalone modes whenever the active item changes:
+the only event that carries both the new and the previous active item, so a
+consumer never has to remember the last `move`'s `activeItem` to animate a
+highlight transition.
+*/
 export class MarkingMenuChangeEvent<
   Model extends ModelNode = ModelNode,
   Mode extends 'novice' | 'standalone' = 'novice' | 'standalone',
@@ -403,10 +403,10 @@ export class MarkingMenuChangeEvent<
 }
 
 /**
- Dispatched once, as the last event of a gesture, when it ends on a leaf.
- `menu` is the menu the leaf was selected from, or `undefined` in expert mode,
- since no menu is open there even though the leaf demonstrably has a parent.
- */
+Dispatched once, as the last event of a gesture, when it ends on a leaf.
+`menu` is the menu the leaf was selected from, or `undefined` in expert mode,
+since no menu is open there even though the leaf demonstrably has a parent.
+*/
 export class MarkingMenuSelectEvent<
   Model extends ModelNode = ModelNode,
   Mode extends MarkingMenuMode = MarkingMenuMode,
@@ -453,20 +453,20 @@ export class MarkingMenuSelectEvent<
   }
 
   /**
-   The recognition that found the selection, or `undefined` when none ran: a
-   novice release picks the active item without recognizing anything.
-   */
+  The recognition that found the selection, or `undefined` when none ran: a
+  novice release picks the active item without recognizing anything.
+  */
   get recognition(): MarkingMenuRecognition | undefined {
     return this.#recognition;
   }
 }
 
 /**
- Dispatched once, as the last event of a gesture, when it ends without a
- selection. `activeItem` is the item that was active at the moment the gesture
- was abandoned: `ModelItems`, not `ModelLeaves`, since it need not be one.
- `undefined` carries the genuine "nothing under the pointer" case.
- */
+Dispatched once, as the last event of a gesture, when it ends without a
+selection. `activeItem` is the item that was active at the moment the gesture
+was abandoned: `ModelItems`, not `ModelLeaves`, since it need not be one.
+`undefined` carries the genuine "nothing under the pointer" case.
+*/
 export class MarkingMenuCancelEvent<
   Model extends ModelNode = ModelNode,
   Mode extends MarkingMenuMode = MarkingMenuMode,
@@ -520,9 +520,9 @@ export class MarkingMenuCancelEvent<
   }
 
   /**
-   The recognition that found nothing, or `undefined` when none ran: an
-   `interrupted` gesture, or a novice release, recognizes nothing.
-   */
+  The recognition that found nothing, or `undefined` when none ran: an
+  `interrupted` gesture, or a novice release, recognizes nothing.
+  */
   get recognition(): MarkingMenuRecognition | undefined {
     return this.#recognition;
   }
@@ -533,9 +533,9 @@ export class MarkingMenuCancelEvent<
  * -------------------------------------------------------------------------- */
 
 /**
- The closed map from every event name to its exact event class. There is no
- `type: string` fallback: an unknown event name is not a key of this map.
- */
+The closed map from every event name to its exact event class. There is no
+`type: string` fallback: an unknown event name is not a key of this map.
+*/
 export type MarkingMenuEventMap<Model extends ModelNode = ModelNode> = {
   start: MarkingMenuStartEvent;
   open:
@@ -554,15 +554,15 @@ export type MarkingMenuEventMap<Model extends ModelNode = ModelNode> = {
 };
 
 /**
- The union of every event a marking menu dispatches, discriminated on `type`.
- */
+The union of every event a marking menu dispatches, discriminated on `type`.
+*/
 export type MarkingMenuEvent<Model extends ModelNode = ModelNode> =
   MarkingMenuEventMap<Model>[keyof MarkingMenuEventMap<Model>];
 
 /**
- The typed, listen-only facade a marking menu controller satisfies. `on`/`off`
- are narrowed to the six known event names: there is no `type: string`
- fallback, so an unknown event name is rejected at the call site.
- */
+The typed, listen-only facade a marking menu controller satisfies. `on`/`off`
+are narrowed to the six known event names: there is no `type: string`
+fallback, so an unknown event name is rejected at the call site.
+*/
 export type MarkingMenuEventEmitter<Model extends ModelNode = ModelNode> =
   TypedEventEmitter<MarkingMenuEventMap<Model>>;

@@ -107,9 +107,9 @@ const strokeSurfaces = (parent: HTMLElement): SVGSVGElement[] => [
 ];
 
 /**
- Touch down at the first point, move to each of the others in one step, and
- lift.
- */
+Touch down at the first point, move to each of the others in one step, and
+lift.
+*/
 const stroke = async (...[first, ...rest]: [Point, ...Point[]]) => {
   const drag = await press(first);
   for (const point of rest) {
@@ -121,8 +121,8 @@ const stroke = async (...[first, ...rest]: [Point, ...Point[]]) => {
 };
 
 /**
- Records the id of every pointer pressed on `element`.
- */
+Records the id of every pointer pressed on `element`.
+*/
 const recordPointers = (element: HTMLElement) => {
   const ids: number[] = [];
   const onDown = (event: PointerEvent) => {

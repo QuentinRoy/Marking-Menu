@@ -22,10 +22,10 @@ const modules = path.join(fixture, 'node_modules');
 const tarball = path.join(fixture, 'package.tgz');
 
 /**
- Runs a command in the repo root and returns its exit status. `isQuiet`
- withholds the command's own output unless it fails, which keeps the setup
- steps from burying the typecheck results they exist to produce.
- */
+Runs a command in the repo root and returns its exit status. `isQuiet`
+withholds the command's own output unless it fails, which keeps the setup
+steps from burying the typecheck results they exist to produce.
+*/
 function run(command: string, args: string[], isQuiet = false): number {
   const result = spawnSync(command, args, {
     cwd: root,

@@ -120,26 +120,26 @@ export type MachineInputs = {
 };
 
 /**
- What the keyboard asks of a standalone menu, once its keys are translated:
- `up`, `down`, `left` and `right` move the active item toward that side of
- the ring, `first` and `last` jump to the ends of the item order, `activate`
- selects a leaf or enters a submenu, `back` goes up a level or cancels from
- the root, and `dismiss` cancels from any level.
+What the keyboard asks of a standalone menu, once its keys are translated:
+`up`, `down`, `left` and `right` move the active item toward that side of
+the ring, `first` and `last` jump to the ends of the item order, `activate`
+selects a leaf or enters a submenu, `back` goes up a level or cancels from
+the root, and `dismiss` cancels from any level.
 
- The four directions are named, not resolved, here: which item lies that
- way depends on the angles the displayed level was laid out at, and only
- the machine knows them.
- */
+The four directions are named, not resolved, here: which item lies that
+way depends on the angles the displayed level was laid out at, and only
+the machine knows them.
+*/
 export type KeyboardIntent =
   Direction | 'first' | 'last' | 'activate' | 'back' | 'dismiss';
 
 /**
- Each phase's fields, factored out before `NavigationState` tags on a
- `phase` discriminant or `MachineStates` adds `model`/`options`: the one
- place either lists them, so the two can't diverge. Parameterized over the
- menu/active node types so the public projection and the machine's erased
- projection share one phase definition.
- */
+Each phase's fields, factored out before `NavigationState` tags on a
+`phase` discriminant or `MachineStates` adds `model`/`options`: the one
+place either lists them, so the two can't diverge. Parameterized over the
+menu/active node types so the public projection and the machine's erased
+projection share one phase definition.
+*/
 type NavigationPhaseFields<Menu, Active> = {
   idle: Record<never, never>;
   startup: {
@@ -202,10 +202,10 @@ type NavigationPhaseFields<Menu, Active> = {
 };
 
 /**
- The boundary view of the machine's current phase: what `layout-view.ts`
- projects from. Kept as a plain discriminated union, independent of
- totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
- */
+The boundary view of the machine's current phase: what `layout-view.ts`
+projects from. Kept as a plain discriminated union, independent of
+totorobot's own `{ name, data }` shape, so `projectLayout` needs no changes.
+*/
 export type NavigationState<Menu = ModelMenu, Active = ModelItem> = {
   [K in Exclude<keyof NavigationPhaseFields<Menu, Active>, 'recognizing'>]: {
     readonly phase: K;
@@ -213,9 +213,9 @@ export type NavigationState<Menu = ModelMenu, Active = ModelItem> = {
 }[Exclude<keyof NavigationPhaseFields<Menu, Active>, 'recognizing'>];
 
 /**
- What the machine can be observed doing. `recognizing` is listed for
- completeness only: the machine never rests there.
- */
+What the machine can be observed doing. `recognizing` is listed for
+completeness only: the machine never rests there.
+*/
 export type NavigationPhase = keyof MachineStates;
 
 export type MachineStates = {
@@ -226,9 +226,9 @@ export type MachineStates = {
 };
 
 /**
- The layout announcement's payload, carrying the menu projection the renderer
- consumes.
- */
+The layout announcement's payload, carrying the menu projection the renderer
+consumes.
+*/
 export type NavigationLayoutAnnouncement = LayoutView<EngineModelMenu>;
 
 export type NavigationFeedbackAnnouncement = {
@@ -249,9 +249,9 @@ type MachineOutputs = {
 };
 
 /**
- Reassemble the boundary `NavigationState` from a committed `{ to, toData }`
- pair, for `projectLayout`.
- */
+Reassemble the boundary `NavigationState` from a committed `{ to, toData }`
+pair, for `projectLayout`.
+*/
 function toNavigationState(
   to: keyof MachineStates,
   toData: MachineStates[keyof MachineStates],
@@ -263,8 +263,8 @@ function toNavigationState(
 }
 
 /**
- The transition every gesture ends with, back to idle's own shape.
- */
+The transition every gesture ends with, back to idle's own shape.
+*/
 const backToIdle = ({
   fromData: { model, options },
 }: {

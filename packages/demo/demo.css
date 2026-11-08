@@ -6,19 +6,16 @@
    both pages have to pass them to the library rather than leave them to a
    stylesheet. */
 :root {
-  --page: #ffffff;
-  --ink: rgb(31, 31, 31);
-  --title-ink: rgb(236, 236, 236);
-  --toast-background: rgba(0, 0, 0, 0.8);
+  --page: #fff;
+  --ink: rgb(31 31 31);
+  --title-ink: rgb(236 236 236);
+  --toast-background: rgb(0 0 0 / 80%);
   --toast-ink: white;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
+  @media (prefers-color-scheme: dark) {
     --page: #0f0f11;
-    --ink: rgb(226, 226, 230);
-    --title-ink: rgb(38, 38, 42);
-    --toast-background: rgba(236, 236, 238, 0.85);
+    --ink: rgb(226 226 230);
+    --title-ink: rgb(38 38 42);
+    --toast-background: rgb(236 236 238 / 85%);
     --toast-ink: #0f0f11;
   }
 }
@@ -29,6 +26,8 @@ html {
 }
 
 body {
+  background-color: var(--page);
+  color: var(--ink);
   font-size: calc(10px + 1vw);
   line-height: calc(1.1em + 0.5vw);
 }
@@ -66,15 +65,14 @@ h1 {
   right: 1em;
   text-align: center;
   width: auto;
-}
-
-#instructions .help a {
-  color: inherit;
-  /* #main sits on top of #instructions to catch a gesture started anywhere
+  a {
+    color: inherit;
+    /* #main sits on top of #instructions to catch a gesture started anywhere
      on the page; without its own stacking position, this link would sit
      under it and never receive a click. */
-  position: relative;
-  z-index: 1;
+    position: relative;
+    z-index: 1;
+  }
 }
 
 /* The menu itself must draw above that same link once it opens, so it isn't
@@ -99,10 +97,9 @@ h1 {
   opacity: 0;
   padding: 10px 20px;
   transition: 400ms;
-}
-
-#toast.shown {
-  opacity: 1;
+  &.shown {
+    opacity: 1;
+  }
 }
 
 .github-corner svg {
@@ -120,10 +117,7 @@ h1 {
 
 .github-corner:hover .octo-arm {
   animation: octocat-wave 560ms ease-in-out;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .github-corner:hover .octo-arm {
+  @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
 }
@@ -143,16 +137,11 @@ h1 {
   }
 }
 
-@media (max-width: 500px) {
+@media (width <= 500px) {
   .github-corner:hover .octo-arm {
     animation: none;
   }
   .github-corner .octo-arm {
     animation: octocat-wave 560ms ease-in-out;
   }
-}
-
-body {
-  background-color: var(--page);
-  color: var(--ink);
 }

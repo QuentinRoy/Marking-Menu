@@ -11,20 +11,20 @@ export type EventLike = { readonly type: string };
 
 /**
 A listener for one event name `Name` in `EventMap`.
- */
+*/
 export type TypedEventListener<
   EventMap extends Record<string, EventLike>,
   Name extends keyof EventMap,
 > = (event: EventMap[Name]) => void;
 
 /**
- No `emit`/`dispatch`: whatever exposes this stays the only thing that can
- raise an event.
+No `emit`/`dispatch`: whatever exposes this stays the only thing that can
+raise an event.
 
- Expose it with `implements`, never by extending a class that has one:
- narrowing `on`'s listener parameter on a subclass fails TypeScript's
- override-compatibility check against the wider base signature.
- */
+Expose it with `implements`, never by extending a class that has one:
+narrowing `on`'s listener parameter on a subclass fails TypeScript's
+override-compatibility check against the wider base signature.
+*/
 export type TypedEventEmitter<EventMap extends Record<string, EventLike>> = {
   on<Name extends keyof EventMap>(
     type: Name,

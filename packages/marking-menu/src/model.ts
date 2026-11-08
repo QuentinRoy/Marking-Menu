@@ -31,8 +31,8 @@ import {
  * -------------------------------------------------------------------------- */
 
 /**
-   Whether `Ids` contains the (single) id `Id`. `never` is contained by nothing.
-   */
+Whether `Ids` contains the (single) id `Id`. `never` is contained by nothing.
+*/
 type Includes<Id, Ids> = [Id] extends [never]
   ? false
   : [Id] extends [Ids]
@@ -44,18 +44,18 @@ type Includes<Id, Ids> = [Id] extends [never]
  * -------------------------------------------------------------------------- */
 
 /**
- The type a menu description is intersected with when two of its items share an
- id. The description is not assignable to it, which turns the duplicate into a
- compile error naming the offending id.
- */
+The type a menu description is intersected with when two of its items share an
+id. The description is not assignable to it, which turns the duplicate into a
+compile error naming the offending id.
+*/
 type DuplicateItemIdsError<Id extends string> = {
   readonly 'Error: menu item ids must be unique across the whole menu': Id;
 };
 
 /**
- Every statically known id of an item list, and of its sub-items, flattened in
- the order they are described. Items whose id is unknown are skipped.
- */
+Every statically known id of an item list, and of its sub-items, flattened in
+the order they are described. Items whose id is unknown are skipped.
+*/
 type AllIds<Items extends readonly MarkingMenuItemInput[]> =
   Items extends readonly [
     infer Head,
@@ -81,8 +81,8 @@ type SubIds<Item> = Item extends {
   : EmptyTuple;
 
 /**
- The first id `Ids` holds more than once, or `never` if they are all unique.
- */
+The first id `Ids` holds more than once, or `never` if they are all unique.
+*/
 type DuplicateId<Ids extends readonly string[]> = Ids extends readonly [
   infer Head extends string,
   ...infer Rest extends readonly string[],
@@ -93,9 +93,9 @@ type DuplicateId<Ids extends readonly string[]> = Ids extends readonly [
   : never;
 
 /**
- What a menu description must additionally satisfy, as a type to intersect the
- input with: `unknown` where everything is fine, an error type where it is not.
- */
+What a menu description must additionally satisfy, as a type to intersect the
+input with: `unknown` where everything is fine, an error type where it is not.
+*/
 export type ValidateInput<Input extends MarkingMenuInput> = RejectDuplicate<
   DuplicateId<AllIds<Input['items']>>
 >;
@@ -125,10 +125,10 @@ type ItemsOf<Input> = Input extends { items?: infer Items }
   : EmptyTuple;
 
 /**
- The raw description of the item at `Path` within `Items`, following
- `Path`'s indices one level at a time. `Path` must be non-empty: the root
- has no input counterpart to look up, since it *is* the whole of `Root`.
- */
+The raw description of the item at `Path` within `Items`, following
+`Path`'s indices one level at a time. `Path` must be non-empty: the root
+has no input counterpart to look up, since it *is* the whole of `Root`.
+*/
 type InputAt<
   Items extends readonly MarkingMenuItemInput[],
   Path extends readonly [number, ...number[]],
@@ -144,23 +144,23 @@ type InputAt<
   : never;
 
 /**
- The model items built for `Inputs`, the sub-items of the node at
- `ParentPath` within `Root`.
+The model items built for `Inputs`, the sub-items of the node at
+`ParentPath` within `Root`.
 
- Built by real recursion, peeling `Inputs` one element at a time while
- growing `Index` in lockstep, so each child gets its own literal path. A
- mapped type over `keyof Inputs` would substitute the generic `number` into
- every path instead, collapsing all the children into one node whose `id`
- is the union of its siblings'.
+Built by real recursion, peeling `Inputs` one element at a time while
+growing `Index` in lockstep, so each child gets its own literal path. A
+mapped type over `keyof Inputs` would substitute the generic `number` into
+every path instead, collapsing all the children into one node whose `id`
+is the union of its siblings'.
 
- Guarded on {@link IsTuple}: once a menu's `items` length isn't known
- statically, neither is any descendant's path, so this degrades to
- {@link ToItems} instead of recursing forever. The guard stays at this
- level rather than inside {@link ToItems}, because `Inputs` can itself be a
- still-unresolved generic (e.g. a menu config not yet narrowed to a literal
- type): the compiler then has to check both branches on their own, without
- a meaningless `Root` from the tuple branch poisoning the dynamic one.
- */
+Guarded on {@link IsTuple}: once a menu's `items` length isn't known
+statically, neither is any descendant's path, so this degrades to
+{@link ToItems} instead of recursing forever. The guard stays at this
+level rather than inside {@link ToItems}, because `Inputs` can itself be a
+still-unresolved generic (e.g. a menu config not yet narrowed to a literal
+type): the compiler then has to check both branches on their own, without
+a meaningless `Root` from the tuple branch poisoning the dynamic one.
+*/
 type ItemsAt<
   Root extends MarkingMenuInput,
   ParentPath extends readonly number[],
@@ -180,33 +180,33 @@ type ItemsAt<
     : ToItems<Inputs>;
 
 /**
- The model items an input item list resolves to when its length is not
- statically known: a menu, or a portion of one, built at runtime.
- */
+The model items an input item list resolves to when its length is not
+statically known: a menu, or a portion of one, built at runtime.
+*/
 type ToItems<Inputs extends readonly MarkingMenuItemInput[]> = ReadonlyArray<
   ToItem<Inputs[number]>
 >;
 
 /**
- The model item an input item resolves to, without a `Root`/`Path` to derive
- a precise `parent` from: `parent` widens to generic {@link ModelNode}.
- */
+The model item an input item resolves to, without a `Root`/`Path` to derive
+a precise `parent` from: `parent` widens to generic {@link ModelNode}.
+*/
 type ToItem<Input> = Input extends MarkingMenuItemInput
   ? ModelItem<IdOf<Input>, Input['label'], ToItems<ItemsOf<Input>>> &
       MenuNode<ToItems<ItemsOf<Input>>>
   : never;
 
 /**
- The node the model built from `Root` has at `Path`: the root itself for an
- empty path, or the item found by following `Path`'s indices otherwise.
+The node the model built from `Root` has at `Path`: the root itself for an
+empty path, or the item found by following `Path`'s indices otherwise.
 
- Parameterizing by `Root` and a `Path`, rather than by the node's own
- literal shape the way {@link ModelItem} is, lets an item carry a precise
- `parent` without the type referencing itself: the parent is the same
- lookup with the last path segment dropped. Node and parent are both
- derived, independently, from the one acyclic `Root`, instead of one being
- defined in terms of the other.
- */
+Parameterizing by `Root` and a `Path`, rather than by the node's own
+literal shape the way {@link ModelItem} is, lets an item carry a precise
+`parent` without the type referencing itself: the parent is the same
+lookup with the last path segment dropped. Node and parent are both
+derived, independently, from the one acyclic `Root`, instead of one being
+defined in terms of the other.
+*/
 type NodeAt<
   Root extends MarkingMenuInput,
   Path extends readonly number[],
@@ -224,8 +224,8 @@ type NodeAt<
   : MarkingMenuModel<Root>;
 
 /**
- The parent of the node at (non-empty) `Path`: the node one path segment up.
- */
+The parent of the node at (non-empty) `Path`: the node one path segment up.
+*/
 type ParentAt<
   Root extends MarkingMenuInput,
   Path extends readonly [number, ...number[]],
@@ -234,8 +234,8 @@ type ParentAt<
   : never;
 
 /**
- The model {@link createModel} builds from a menu description.
- */
+The model {@link createModel} builds from a menu description.
+*/
 export type MarkingMenuModel<Input extends MarkingMenuInput> = ModelRoot<
   ItemsAt<Input, EmptyTuple, Input['items']>
 > &
@@ -246,11 +246,11 @@ export type MarkingMenuModel<Input extends MarkingMenuInput> = ModelRoot<
  * -------------------------------------------------------------------------- */
 
 /**
- The behavior shared by the root of the menu and its items.
+The behavior shared by the root of the menu and its items.
 
- The implementation classes are deliberately loosely typed: the precise types
- are re-attached once, in {@link createModel}.
- */
+The implementation classes are deliberately loosely typed: the precise types
+are re-attached once, in {@link createModel}.
+*/
 abstract class MarkingMenuNode {
   readonly #items: readonly MarkingMenuItem[];
   readonly #parent: MarkingMenuNode | undefined;
@@ -261,9 +261,9 @@ abstract class MarkingMenuNode {
   }: {
     parent: MarkingMenuNode | undefined;
     /**
-     Builds the node's items, given the node itself: sub-items need their
-     parent to exist before they can be created.
-     */
+    Builds the node's items, given the node itself: sub-items need their
+    parent to exist before they can be created.
+    */
     items: (self: MarkingMenuNode) => readonly MarkingMenuItem[];
   }) {
     this.#parent = parent;
@@ -285,33 +285,33 @@ abstract class MarkingMenuNode {
   abstract get isRoot(): boolean;
 
   /**
-   Retrieve a direct sub-item by its id.
+  Retrieve a direct sub-item by its id.
 
-   @param childId - The identifier of the sub-item to look for.
-   @returns The sub-item with the id `childId`, or `undefined` if there is
-   none.
-   */
+  @param childId - The identifier of the sub-item to look for.
+  @returns The sub-item with the id `childId`, or `undefined` if there is
+  none.
+  */
   getChild(childId: string): MarkingMenuItem | undefined {
     return this.#items.find((item) => item.id === childId) ?? undefined;
   }
 
   /**
-   Retrieve every direct sub-item matching a given label.
+  Retrieve every direct sub-item matching a given label.
 
-   @param childLabel - The label of the sub-items to look for.
-   @returns The sub-items with the label `childLabel`.
-   */
+  @param childLabel - The label of the sub-items to look for.
+  @returns The sub-items with the label `childLabel`.
+  */
   getChildrenByLabel(childLabel: string): MarkingMenuItem[] {
     return this.#items.filter((item) => item.label === childLabel);
   }
 
   /**
-   Find the sub-item whose angle is the closest to a given angle.
+  Find the sub-item whose angle is the closest to a given angle.
 
-   @param angle - The angle to compare the sub-items against.
-   @returns The closest sub-item to the angle `angle`, or `undefined` if the
-   node has no sub-item.
-   */
+  @param angle - The angle to compare the sub-items against.
+  @returns The closest sub-item to the angle `angle`, or `undefined` if the
+  node has no sub-item.
+  */
   getNearestChild(angle: number): MarkingMenuItem | undefined {
     const [firstItem, ...otherItems] = this.#items;
     if (firstItem === undefined) {
@@ -334,10 +334,10 @@ abstract class MarkingMenuNode {
   }
 
   /**
-   Compute the maximum depth of the menu below this node.
+  Compute the maximum depth of the menu below this node.
 
-   @returns The maximum depth of the menu.
-   */
+  @returns The maximum depth of the menu.
+  */
   getMaxDepth(): number {
     let depth = 0;
     for (const item of this.#items) {
@@ -348,10 +348,10 @@ abstract class MarkingMenuNode {
   }
 
   /**
-   Compute the maximum breadth of the menu below this node.
+  Compute the maximum breadth of the menu below this node.
 
-   @returns The maximum breadth of the menu.
-   */
+  @returns The maximum breadth of the menu.
+  */
   getMaxBreadth(): number {
     let breadth = this.#items.length;
     for (const item of this.#items) {
@@ -363,9 +363,9 @@ abstract class MarkingMenuNode {
 }
 
 /**
- One entry of a menu level: it holds the id and label it was described with,
- and the angle it was laid out at, on top of its own sub-items.
- */
+One entry of a menu level: it holds the id and label it was described with,
+and the angle it was laid out at, on top of its own sub-items.
+*/
 class MarkingMenuItem extends MarkingMenuNode {
   readonly #id: string | undefined;
   readonly #label: string;
@@ -416,9 +416,9 @@ class MarkingMenuItem extends MarkingMenuNode {
 }
 
 /**
- The top level of the menu: it holds the first items the user can select, but
- is not selectable itself, hence has neither id, label nor angle.
- */
+The top level of the menu: it holds the first items the user can select, but
+is not selectable itself, hence has neither id, label nor angle.
+*/
 class MarkingMenuRoot extends MarkingMenuNode {
   override get isRoot(): true {
     return true;
@@ -440,7 +440,7 @@ const collectStatedAngles = (
       throw new TypeError('Menu item angles must be finite numbers.');
     }
 
-    return [{ angle: normalizeAngle(input.angle), index }];
+    return { angle: normalizeAngle(input.angle), index };
   });
 
 const spreadEvenly = (itemCount: number): number[] => {
@@ -543,19 +543,19 @@ const assertResolvableAngles = (
 };
 
 /**
- Build the (frozen) item list of one menu level.
+Build the (frozen) item list of one menu level.
 
- @param inputs - The description of the level's items.
- @param parent - The level's own node, i.e. the items' parent.
- @param seenIds - The ids already used elsewhere in the menu. Mutated as the
- items are created.
- @param baseKey - The generated key of the parent level, if any. Joined with
- each item's index to derive its own key.
- @returns The level's model items.
- @throws If an item reuses an id. Duplicates are a compile error for a menu
- described literally, but ids are only known at runtime for a menu built
- dynamically.
- */
+@param inputs - The description of the level's items.
+@param parent - The level's own node, i.e. the items' parent.
+@param seenIds - The ids already used elsewhere in the menu. Mutated as the
+items are created.
+@param baseKey - The generated key of the parent level, if any. Joined with
+each item's index to derive its own key.
+@returns The level's model items.
+@throws If an item reuses an id. Duplicates are a compile error for a menu
+described literally, but ids are only known at runtime for a menu built
+dynamically.
+*/
 const createItems = (
   inputs: readonly MarkingMenuItemInput[],
   parent: MarkingMenuNode,
@@ -601,12 +601,12 @@ const createItems = (
 };
 
 /**
- Create the marking menu model.
+Create the marking menu model.
 
- @param input - The description of the menu.
- @returns The root of the model.
- @throws If two items share an id, or a level has invalid angles.
- */
+@param input - The description of the menu.
+@returns The root of the model.
+@throws If two items share an id, or a level has invalid angles.
+*/
 export function createModel<const Input extends MarkingMenuInput>(
   input: Input & ValidateInput<Input>,
 ): MarkingMenuModel<Input> {

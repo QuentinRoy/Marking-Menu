@@ -17,11 +17,11 @@ export type IndicatorSurfaceOptions = {
 
 export type IndicatorSurface = {
   /**
-   Draw the target: a fixed-radius filled background at `center`, and a dot
-   growing from the stroke's own half-width (so it starts looking like the
-   stroke's end cap, since the cursor is hidden while this is shown) up to
-   that same radius as `progress` goes from 0 to 1.
-   */
+  Draw the target: a fixed-radius filled background at `center`, and a dot
+  growing from the stroke's own half-width (so it starts looking like the
+  stroke's end cap, since the cursor is hidden while this is shown) up to
+  that same radius as `progress` goes from 0 to 1.
+  */
   draw: (center: Point, progress: number) => void;
   remove: () => void;
 };

@@ -14,35 +14,22 @@ import { menuSchema } from '../menu-schema.js';
  links in `packages/demo/shared/menu-config.js`.
  */
 
-/**
- The item schema, minus the `items` that points back at it. `FromSchema`
- cannot follow a `$ref` into the schema it is deriving, so the recursion is
- closed by hand in {@link SchemaItem}, which is what that `$ref` says anyway.
- */
-type ItemSchema = Omit<typeof menuSchema.$defs.item, 'properties'> & {
-  properties: Omit<typeof menuSchema.$defs.item.properties, 'items'>;
-};
-
-type SchemaItem = FromSchema<ItemSchema> & {
-  items?: SchemaItem[];
-};
-
-type SchemaMenu = { items: SchemaItem[] };
-
-/**
- A menu type as a JSON value carries it: mutable, and with optional fields
- merely absent rather than possibly `undefined`. `MarkingMenuInput` is
- `readonly` throughout and spells its optionals `| undefined`, which no
- schema can say, so the second assertion compares against this instead.
- */
-type AsJson<Value> =
-  Value extends ReadonlyArray<infer Element>
-    ? Array<AsJson<Element>>
-    : Value extends Record<string, unknown>
-      ? { -readonly [K in keyof Value]: AsJson<Exclude<Value[K], undefined>> }
-      : Value;
-
 describe('menuSchema', () => {
+  /**
+The item schema, minus the `items` that points back at it. `FromSchema`
+cannot follow a `$ref` into the schema it is deriving, so the recursion is
+closed by hand in {@link SchemaItem}, which is what that `$ref` says anyway.
+*/
+  type ItemSchema = Omit<typeof menuSchema.$defs.item, 'properties'> & {
+    properties: Omit<typeof menuSchema.$defs.item.properties, 'items'>;
+  };
+
+  type SchemaItem = FromSchema<ItemSchema> & {
+    items?: SchemaItem[];
+  };
+
+  type SchemaMenu = { items: SchemaItem[] };
+
   it('is a JSON schema', () => {
     expectTypeOf(menuSchema).toExtend<JSONSchema>();
   });
@@ -52,6 +39,23 @@ describe('menuSchema', () => {
   });
 
   it('accepts every menu the library does', () => {
+    /**
+A menu type as a JSON value carries it: mutable, and with optional fields
+merely absent rather than possibly `undefined`. `MarkingMenuInput` is
+`readonly` throughout and spells its optionals `| undefined`, which no
+schema can say, so the second assertion compares against this instead.
+*/
+    type AsJson<Value> =
+      Value extends ReadonlyArray<infer Element>
+        ? Array<AsJson<Element>>
+        : Value extends Record<string, unknown>
+          ? {
+              -readonly [K in keyof Value]: AsJson<
+                Exclude<Value[K], undefined>
+              >;
+            }
+          : Value;
+
     expectTypeOf<AsJson<MarkingMenuInput>>().toExtend<SchemaMenu>();
   });
 

@@ -1,49 +1,49 @@
 /**
- Calculate the modulo of `a` over `n`.
+Calculate the modulo of `a` over `n`.
 
- @param a the dividend
- @param n the divisor
- @returns The modulo of `a` over `n` (% is not exactly modulo but remainder).
- */
+@param a the dividend
+@param n the divisor
+@returns The modulo of `a` over `n` (% is not exactly modulo but remainder).
+*/
 export const mod = (a: number, n: number): number => ((a % n) + n) % n;
 
 export const normalizeAngle = (angle: number): number => mod(angle, 360);
 
 /**
- Convert an angle from radians to degrees.
+Convert an angle from radians to degrees.
 
- @param radians an angle in radians
- @returns The angle in degrees.
- */
+@param radians an angle in radians
+@returns The angle in degrees.
+*/
 export const radiansToDegrees = (radians: number): number =>
   radians * (180 / Math.PI);
 
 /**
- Convert an angle from degrees to radians.
+Convert an angle from degrees to radians.
 
- @param degrees an angle in degrees
- @returns The angle in radians.
- */
+@param degrees an angle in degrees
+@returns The angle in radians.
+*/
 export const degreesToRadians = (degrees: number): number =>
   degrees * (Math.PI / 180);
 
 /**
- Calculate the signed delta between two angles.
+Calculate the signed delta between two angles.
 
- @param alpha a first angle (in degrees)
- @param beta a second angle (in degrees)
- @returns The (signed) delta between the two angles (in degrees).
- */
+@param alpha a first angle (in degrees)
+@param beta a second angle (in degrees)
+@returns The (signed) delta between the two angles (in degrees).
+*/
 export const deltaAngle = (alpha: number, beta: number): number =>
   mod(beta - alpha + 180, 360) - 180;
 
 /**
- Find the smallest gap between neighboring angles around the circle.
+Find the smallest gap between neighboring angles around the circle.
 
- @param angles - Angles in degrees.
- @returns The smallest gap, in degrees, or `Infinity` for fewer than two
- angles.
- */
+@param angles - Angles in degrees.
+@returns The smallest gap, in degrees, or `Infinity` for fewer than two
+angles.
+*/
 export const getTightestSpacing = (angles: readonly number[]): number => {
   if (angles.length < 2) {
     return Infinity;
@@ -58,13 +58,13 @@ export const getTightestSpacing = (angles: readonly number[]): number => {
 };
 
 /**
- Calculate the euclidean distance between two
- points.
+Calculate the euclidean distance between two
+points.
 
- @param point1 - The first point
- @param point2 - The second point
- @returns The distance between the two points.
- */
+@param point1 - The first point
+@param point2 - The second point
+@returns The distance between the two points.
+*/
 export const dist = (
   point1: readonly number[],
   point2: readonly number[],
@@ -87,13 +87,13 @@ export const dist = (
 
 const ANGLE_ROUNDING = 10e-8;
 /**
- Calculate the angle abc formed by three points.
+Calculate the angle abc formed by three points.
 
- @param a - The first point.
- @param b - The second point, center of the angle.
- @param c - The third point.
- @returns The angle abc (in degrees) rounded at the 8th decimal.
- */
+@param a - The first point.
+@param b - The second point, center of the angle.
+@param c - The third point.
+@returns The angle abc (in degrees) rounded at the 8th decimal.
+*/
 export const angle = (
   a: readonly number[],
   b: readonly number[],
@@ -112,29 +112,29 @@ export const angle = (
 };
 
 /**
- Read `array[index]`, trusting the caller that `index` is in range.
+Read `array[index]`, trusting the caller that `index` is in range.
 
- `noUncheckedIndexedAccess` types every array access as possibly
- `undefined`; use this at a call site where that index is already known
- valid by construction (a modulo-wrapped cyclic index, or one array indexed
- by another built from it) instead of a non-null assertion.
+`noUncheckedIndexedAccess` types every array access as possibly
+`undefined`; use this at a call site where that index is already known
+valid by construction (a modulo-wrapped cyclic index, or one array indexed
+by another built from it) instead of a non-null assertion.
 
- @param array - The array to read from.
- @param index - An index already known to be within `array`'s bounds.
- @returns The element at `index`.
- */
+@param array - The array to read from.
+@param index - An index already known to be within `array`'s bounds.
+@returns The element at `index`.
+*/
 export function at<Item>(array: readonly Item[], index: number): Item {
   return array[index] as Item;
 }
 
 /**
- The last item of an array that is known not to be empty, checked instead of
- asserted.
+The last item of an array that is known not to be empty, checked instead of
+asserted.
 
- @param array - The array to read from.
- @returns Its last item.
- @throws If the array is empty.
- */
+@param array - The array to read from.
+@returns Its last item.
+@throws If the array is empty.
+*/
 export function last<Item>(array: readonly Item[]): Item {
   if (array.length === 0) {
     throw new Error('An array needs at least one item to have a last one.');
@@ -144,13 +144,13 @@ export function last<Item>(array: readonly Item[]): Item {
 }
 
 /**
- Converts the coordinates of a point in polar coordinates (angle in degrees).
+Converts the coordinates of a point in polar coordinates (angle in degrees).
 
- @param point - A point.
- @param pole - The pole of a polar coordinate system.
- @returns The angle coordinate of the point in the polar coordinate system in
- degrees.
- */
+@param point - A point.
+@param pole - The pole of a polar coordinate system.
+@returns The angle coordinate of the point in the polar coordinate system in
+degrees.
+*/
 export const toPolar = (
   point: Point,
   pole: Point = [0, 0],
@@ -166,26 +166,26 @@ export const toPolar = (
 };
 
 /**
- Convert a point in client coordinates to coordinates relative to a bounding
- rectangle's top-left corner (e.g. an element's own
- `getBoundingClientRect()`).
+Convert a point in client coordinates to coordinates relative to a bounding
+rectangle's top-left corner (e.g. an element's own
+`getBoundingClientRect()`).
 
- @param point - A point in client coordinates.
- @param rect - The rectangle to make the point relative to.
- @param rect.left - The rectangle's left edge, in client coordinates.
- @param rect.top - The rectangle's top edge, in client coordinates.
- @returns The point, relative to `rect`'s top-left corner.
- */
+@param point - A point in client coordinates.
+@param rect - The rectangle to make the point relative to.
+@param rect.left - The rectangle's left edge, in client coordinates.
+@param rect.top - The rectangle's top edge, in client coordinates.
+@returns The point, relative to `rect`'s top-left corner.
+*/
 export const toLocalPoint = (
   point: Point,
   rect: { left: number; top: number },
 ): Point => [point[0] - rect.left, point[1] - rect.top];
 
 /**
- A pointer event's position, in client coordinates. Frozen: the engine
- keeps its own copy, and a consumer that alters what an event publishes
- must not reach it.
- */
+A pointer event's position, in client coordinates. Frozen: the engine
+keeps its own copy, and a consumer that alters what an event publishes
+must not reach it.
+*/
 export const toClientPoint = (event: PointerEvent): Point =>
   Object.freeze([event.clientX, event.clientY] as const);
 
@@ -197,32 +197,32 @@ export const noOp = (): void => {
 };
 
 /**
- An array with at least one element.
- */
+An array with at least one element.
+*/
 export type NonEmptyArray<Item> = [Item, ...Item[]];
 
 /**
- A list statically known to be empty.
- */
+A list statically known to be empty.
+*/
 // eslint-disable-next-line @typescript-eslint/no-restricted-types -- This is needed here.
 export type EmptyTuple = readonly [];
 
 /**
- Whether `Tuple` is a tuple, i.e. its length is statically known.
- */
+Whether `Tuple` is a tuple, i.e. its length is statically known.
+*/
 export type IsTuple<Tuple extends readonly unknown[]> =
   number extends Tuple['length'] ? false : true;
 
 /**
- A 2D point.
+A 2D point.
 
- Readonly: points are values, passed around and stored but never edited in
- place, and the ones carried by events are frozen. Making that the type lets
- `Object.freeze` results flow through without an assertion.
- */
+Readonly: points are values, passed around and stored but never edited in
+place, and the ones carried by events are frozen. Making that the type lets
+`Object.freeze` results flow through without an assertion.
+*/
 export type Point = readonly [number, number];
 
 /**
- A segment joining two points.
- */
+A segment joining two points.
+*/
 export type Segment = [Point, Point];

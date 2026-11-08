@@ -7,7 +7,7 @@
     "test": "vitest run --project='!*(dist)*'",
     "test:watch": "vitest --project='!*(dist)*'",
     "typecheck": "yarn build && yarn typecheck:only",
-    "typecheck:only": "tsc -b",
+    "typecheck:only": "tsc --build",
     "test:coverage": "vitest run --coverage --project='marking-menu (unit)' --project='marking-menu (browser) (chromium)'",
     "test:cross-browser": "vitest run --project='marking-menu (browser) (firefox)' --project='marking-menu (browser) (webkit)'",
     "test:dist": "yarn demo:build && yarn test:dist:only",

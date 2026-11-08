@@ -3,9 +3,9 @@ import { at, normalizeAngle, type EmptyTuple, type Point } from '../utils.js';
 const EPSILON = 1e-7;
 
 /**
- A label plate to place: its item's fixed clockwise angle in degrees (0 =
- right, matching `ModelItem.angle`) and its rendered box size.
- */
+A label plate to place: its item's fixed clockwise angle in degrees (0 =
+right, matching `ModelItem.angle`) and its rendered box size.
+*/
 export type LayoutPlateInput = {
   readonly angle: number;
   readonly width: number;
@@ -13,10 +13,10 @@ export type LayoutPlateInput = {
 };
 
 /**
- Minimum gaps, in pixels: between two plates (`plateHorizontal`/
- `plateVertical`), a plate and the ring (`plateToRing`), and a connector and
- a plate it doesn't belong to (`plateToConnector`).
- */
+Minimum gaps, in pixels: between two plates (`plateHorizontal`/
+`plateVertical`), a plate and the ring (`plateToRing`), and a connector and
+a plate it doesn't belong to (`plateToConnector`).
+*/
 export type LayoutClearances = {
   readonly plateHorizontal: number;
   readonly plateVertical: number;
@@ -344,10 +344,10 @@ function isBetter(next: Quality, previous: Quality): boolean {
 }
 
 /**
- Step 1: every plate at the same shared contact radius, tangent 0, scanned
- one pixel at a time outward from the ring. The fastest layout that is
- correct whenever any layout exists at all.
- */
+Step 1: every plate at the same shared contact radius, tangent 0, scanned
+one pixel at a time outward from the ring. The fastest layout that is
+correct whenever any layout exists at all.
+*/
 function solveSharedRadius(
   input: LayoutInput,
   prepared: PreparedInput,
@@ -483,11 +483,11 @@ function compact(
 }
 
 /**
- Place every label plate compact, clear of the ring and other plates, and
- inside its item's fixed direction: a shared-radius layout, then
- deterministic greedy compaction. The same input always produces the same
- output. Called once per menu creation; see `createMenu`.
- */
+Place every label plate compact, clear of the ring and other plates, and
+inside its item's fixed direction: a shared-radius layout, then
+deterministic greedy compaction. The same input always produces the same
+output. Called once per menu creation; see `createMenu`.
+*/
 export function solveLabelLayout(input: LayoutInput): LayoutResult {
   const prepared = prepareInput(input);
   const baseline = solveSharedRadius(input, prepared);

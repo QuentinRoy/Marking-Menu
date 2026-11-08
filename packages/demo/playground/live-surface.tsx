@@ -63,10 +63,10 @@ function pathData(points: readonly Point[]): string {
 }
 
 /**
- Draws a gesture's recognizer breakdown: the stroke, its pieces, and the
- corners between them. Colors and weights come from `styles.css`, so the
- legend beside the surface can't drift from what's drawn.
- */
+Draws a gesture's recognizer breakdown: the stroke, its pieces, and the
+corners between them. Colors and weights come from `styles.css`, so the
+legend beside the surface can't drift from what's drawn.
+*/
 function drawRecognition(
   overlay: HTMLElement,
   recognition: MarkingMenuRecognition,
@@ -112,10 +112,10 @@ function drawRecognition(
 }
 
 /**
- What decided a gesture the recognizer had no part in: a novice release
- hit-tests the already-highlighted item, an interrupted pointer never
- reaches the recognizer either. A missing `recognition` is the only signal.
- */
+What decided a gesture the recognizer had no part in: a novice release
+hit-tests the already-highlighted item, an interrupted pointer never
+reaches the recognizer either. A missing `recognition` is the only signal.
+*/
 function decidedBy(mode: MarkingMenuMode, wasInterrupted: boolean): string {
   if (wasInterrupted) {
     return 'interrupted, nothing recognized';
