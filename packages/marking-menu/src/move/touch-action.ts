@@ -26,16 +26,16 @@ const setTouchAction = (
 };
 
 /**
- Claim an element's inline `touch-action`, forcing `none !important` on it.
+Claim an element's inline `touch-action`, forcing `none !important` on it.
 
- Claims are reference-counted per element, so several controllers may share a
- single parent. The first claim records the inline value and priority the
- element had; the last release restores them exactly, removing the property
- when there was none.
+Claims are reference-counted per element, so several controllers may share a
+single parent. The first claim records the inline value and priority the
+element had; the last release restores them exactly, removing the property
+when there was none.
 
- The returned release function is idempotent, and restoring is skipped
- altogether when the inline value was changed from outside while claimed.
- */
+The returned release function is idempotent, and restoring is skipped
+altogether when the inline value was changed from outside while claimed.
+*/
 export const claimTouchAction = (element: HTMLElement): (() => void) => {
   const currentState = claimStates.get(element);
   if (currentState) {

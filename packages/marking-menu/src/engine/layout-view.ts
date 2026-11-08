@@ -3,8 +3,8 @@ import { last, type Point } from '../utils.js';
 import type { NavigationOptions, NavigationState } from './machine.js';
 
 /**
- The DOM-free, state-derived layout projection.
- */
+The DOM-free, state-derived layout projection.
+*/
 export type LayoutView<MenuModel = MenuLayoutModel> = {
   readonly cursor: 'default' | 'crosshair' | 'none';
   readonly menu:
@@ -33,12 +33,12 @@ export type LayoutView<MenuModel = MenuLayoutModel> = {
 };
 
 /**
- The segment novice mode draws on top of the open menu: from the menu's
- center to the pointer, never the path the pointer took to get there.
- Startup and expert keep their whole traced stroke instead, which is the
- mark being drawn. The machine stores only `lastPosition` and builds the
- segment here, so the two can never disagree.
- */
+The segment novice mode draws on top of the open menu: from the menu's
+center to the pointer, never the path the pointer took to get there.
+Startup and expert keep their whole traced stroke instead, which is the
+mark being drawn. The machine stores only `lastPosition` and builds the
+segment here, so the two can never disagree.
+*/
 export function noviceUpperStroke({
   menuCenter,
   lastPosition,
@@ -50,9 +50,9 @@ export function noviceUpperStroke({
 }
 
 /**
- The menu level a standalone interaction is displaying: the last of the
- stack, which always holds at least the root.
- */
+The menu level a standalone interaction is displaying: the last of the
+stack, which always holds at least the root.
+*/
 export function currentMenu<Menu>(menus: readonly Menu[]): Menu {
   return last(menus);
 }

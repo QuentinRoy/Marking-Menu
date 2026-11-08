@@ -6,14 +6,14 @@ import {
 } from './stroke.js';
 
 /**
- Stroke surface options of the gesture feedback (the parent is provided by the
- gesture feedback itself).
- */
+Stroke surface options of the gesture feedback (the parent is provided by the
+gesture feedback itself).
+*/
 export type GestureFeedbackStrokeOptions = Omit<StrokeSurfaceOptions, 'parent'>;
 
 /**
- The gesture feedback controls.
- */
+The gesture feedback controls.
+*/
 export type GestureFeedback = {
   /**
   Show the feedback for the given stroke.
@@ -23,11 +23,6 @@ export type GestureFeedback = {
   Immediately remove any shown feedback.
   */
   remove: () => void;
-};
-
-type StrokeTimeoutEntry = {
-  surface: StrokeSurface;
-  timeout: ReturnType<typeof setTimeout>;
 };
 
 export function createGestureFeedback({
@@ -53,6 +48,11 @@ export function createGestureFeedback({
   */
   canceledStrokeOptions?: GestureFeedbackStrokeOptions;
 }): GestureFeedback {
+  type StrokeTimeoutEntry = {
+    surface: StrokeSurface;
+    timeout: ReturnType<typeof setTimeout>;
+  };
+
   let strokeTimeoutEntries: StrokeTimeoutEntry[] = [];
 
   const show = (

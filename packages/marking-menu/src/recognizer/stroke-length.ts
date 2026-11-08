@@ -1,11 +1,11 @@
 import { dist } from '../utils.js';
 
 /**
- Calculate the length of a stroke.
+Calculate the length of a stroke.
 
- @param stroke - An ordered list of coordinates.
- @returns The sum of the euclidean distances between consecutive points.
- */
+@param stroke - An ordered list of coordinates.
+@returns The sum of the euclidean distances between consecutive points.
+*/
 export function strokeLength(stroke: ReadonlyArray<readonly number[]>): number {
   let length = 0;
   let previous = stroke[0];

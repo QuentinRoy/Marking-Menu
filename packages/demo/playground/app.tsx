@@ -62,8 +62,8 @@ function isMode(value: string): value is Mode {
 }
 
 /**
- The menu the page opens on: the one the address names, or the demo's own.
- */
+The menu the page opens on: the one the address names, or the demo's own.
+*/
 function initialMenu(): MarkingMenuInput {
   const shared = readMenuConfig(location.search);
   if (shared !== undefined && checkMenu(shared) === undefined) {
@@ -100,11 +100,11 @@ export function App() {
   }, []);
 
   /**
-   Take the editor's text as the new truth: show it, and, if it describes a
-   menu the library can build, make that the menu everything else is about.
-   Text that does not is kept on screen with the reason under it, so an edit
-   in progress is never thrown away.
-   */
+  Take the editor's text as the new truth: show it, and, if it describes a
+  menu the library can build, make that the menu everything else is about.
+  Text that does not is kept on screen with the reason under it, so an edit
+  in progress is never thrown away.
+  */
   const applySource = useCallback(
     (next: string) => {
       setSource(next);
@@ -355,10 +355,10 @@ function Footer({
 }
 
 /**
- A path through the menu, one clickable step at a time. The recognized path
- doubles as a way into the layout: you look at a level by having drawn your
- way into it.
- */
+A path through the menu, one clickable step at a time. The recognized path
+doubles as a way into the layout: you look at a level by having drawn your
+way into it.
+*/
 function Path({
   steps,
   current,
@@ -400,10 +400,10 @@ function Path({
 }
 
 /**
- What each colour on the surface means, which is only worth saying while the
- breakdown is drawn: without it the only thing on screen is the mark itself.
- The swatches are the colours the overlay draws with (see `live-surface.tsx`).
- */
+What each colour on the surface means, which is only worth saying while the
+breakdown is drawn: without it the only thing on screen is the mark itself.
+The swatches are the colours the overlay draws with (see `live-surface.tsx`).
+*/
 function Legend() {
   const entries = [
     ['stroke', 'bg-stroke-trace rounded-xs'],

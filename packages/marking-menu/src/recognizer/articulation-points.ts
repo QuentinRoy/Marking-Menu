@@ -5,16 +5,16 @@ import {
 } from './find-points.js';
 
 /**
- Find the articulation points of a stroke.
+Find the articulation points of a stroke.
 
- @param stroke - The points of a stroke.
- @param options - Configuration options.
- @param options.expectedSegmentLength - The expected length of a segment
- (usually strokeLength / maxMenuDepth).
- @param options.angleThreshold - The min angle threshold in a point required for it to be
- considered an articulation points.
- @returns The list of articulation points.
- */
+@param stroke - The points of a stroke.
+@param options - Configuration options.
+@param options.expectedSegmentLength - The expected length of a segment
+(usually strokeLength / maxMenuDepth).
+@param options.angleThreshold - The min angle threshold in a point required for it to be
+considered an articulation points.
+@returns The list of articulation points.
+*/
 export function getStrokeArticulationPoints(
   stroke: readonly Point[],
   {

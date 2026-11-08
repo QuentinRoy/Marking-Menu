@@ -29,29 +29,19 @@ export type LayoutRenderer = {
 };
 
 /**
- The menu DOM the renderer currently owns, keyed by the model reference it
- was built from: reference equality on `model` is enough to decide
- recreate-vs-patch, since the model tree is built once and frozen.
- */
-type MenuHandle = {
-  model: MenuLayoutModel;
-  menu: Menu;
-};
-
-/**
- One indicator surface, growing on its own clock rather than in response to
- renders: while the pointer dwells, nothing else changes, so the layout
- announcement carrying the indicator arrives once and the growth has to keep
- animating on its own frame loop until either it clears (`sync(undefined)`)
- or a fresh dwell (a new `startedAt`) restarts it. The machine owns that
- clock; the loop just reads elapsed time against it. `position` is tracked
- separately from `startedAt`: the machine's own movement anchor, and so
- `startedAt`, can lag the pointer by up to `movementsThreshold`, since
- sub-threshold movement doesn't restart the dwell, but the indicator itself
- must always sit exactly where the stroke's own tip currently is, so every
- `sync` call updates `position` even when `startedAt` (and so the growth's
- timing) does not restart.
- */
+One indicator surface, growing on its own clock rather than in response to
+renders: while the pointer dwells, nothing else changes, so the layout
+announcement carrying the indicator arrives once and the growth has to keep
+animating on its own frame loop until either it clears (`sync(undefined)`)
+or a fresh dwell (a new `startedAt`) restarts it. The machine owns that
+clock; the loop just reads elapsed time against it. `position` is tracked
+separately from `startedAt`: the machine's own movement anchor, and so
+`startedAt`, can lag the pointer by up to `movementsThreshold`, since
+sub-threshold movement doesn't restart the dwell, but the indicator itself
+must always sit exactly where the stroke's own tip currently is, so every
+`sync` call updates `position` even when `startedAt` (and so the growth's
+timing) does not restart.
+*/
 function createIndicatorLayer({
   backgroundSlot,
   dotSlot,
@@ -131,10 +121,10 @@ function createIndicatorLayer({
 }
 
 /**
- One stroke surface (upper or lower), owning its own reference-equality cache
- so an unchanged stroke array skips the redraw. `upperStroke` and
- `lowerStroke` are two independent instances of the exact same behavior.
- */
+One stroke surface (upper or lower), owning its own reference-equality cache
+so an unchanged stroke array skips the redraw. `upperStroke` and
+`lowerStroke` are two independent instances of the exact same behavior.
+*/
 function createStrokeLayer({
   slot,
   convertMany,
@@ -206,6 +196,16 @@ export function createRenderer({
   deadZoneRadius,
   gestureFeedbackDuration,
 }: RendererOptions): LayoutRenderer {
+  /**
+The menu DOM the renderer currently owns, keyed by the model reference it
+was built from: reference equality on `model` is enough to decide
+recreate-vs-patch, since the model tree is built once and frozen.
+*/
+  type MenuHandle = {
+    model: MenuLayoutModel;
+    menu: Menu;
+  };
+
   const { element: host, root } = createMenuHost({ parent });
   let menuHandle: MenuHandle | undefined;
   // Reference-equality caches: an unchanged active or tab stop key needs no

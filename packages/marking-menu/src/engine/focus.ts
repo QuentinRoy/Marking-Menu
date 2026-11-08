@@ -14,11 +14,11 @@ export type FocusManager = {
 const MAX_ACTIVE_ITEM_FOCUS_DELAY_MS = 50;
 
 /**
- The element actually holding focus, unlike `document.activeElement`: a
- shadow host reports itself as active for any descendant focused inside it
- (DOM's own retargeting), which would otherwise save that host, rather than
- the caller's real focus, as `savedFocus`.
- */
+The element actually holding focus, unlike `document.activeElement`: a
+shadow host reports itself as active for any descendant focused inside it
+(DOM's own retargeting), which would otherwise save that host, rather than
+the caller's real focus, as `savedFocus`.
+*/
 export const deepActiveElement = (doc: Document): Element | undefined => {
   let active = doc.activeElement;
   while (active?.shadowRoot?.activeElement) {
@@ -29,10 +29,10 @@ export const deepActiveElement = (doc: Document): Element | undefined => {
 };
 
 /**
- Speaks a gesture's active item by moving real focus: the one mechanism
- announced on every target screen reader (no live region, no
- `aria-activedescendant`). A standalone menu's focus is its session's.
- */
+Speaks a gesture's active item by moving real focus: the one mechanism
+announced on every target screen reader (no live region, no
+`aria-activedescendant`). A standalone menu's focus is its session's.
+*/
 export function manageFocus<Model extends ModelNode = ModelNode>({
   doc,
   getMenu,

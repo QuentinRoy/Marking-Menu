@@ -1,6 +1,5 @@
 import vitest from '@vitest/eslint-plugin';
 import eslintConfigXo from 'eslint-config-xo';
-import importX from 'eslint-plugin-import-x';
 import reactHooks from 'eslint-plugin-react-hooks';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import skillsLock from './skills-lock.json' with { type: 'json' };
@@ -37,7 +36,7 @@ export default defineConfig([
     rules: { 'package-json/no-nested-exports': 'off' },
   },
   {
-    plugins: { 'import-x': importX },
+    files: ['**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}'],
     rules: {
       // Disabled because it conflicts with prettier.
       // C.f. https://github.com/xojs/xo/issues/889.
@@ -59,9 +58,12 @@ export default defineConfig([
 
       // This repo uses named exports only (c.f. bcb1332).
       'import-x/no-default-export': 'error',
-
-      // This is a browser library. Node is a development tool pinned in
-      // .tool-versions, not a supported runtime of the published package.
+    },
+  },
+  {
+    files: ['**/package.json'],
+    rules: {
+      // Node is a development tool, not a supported runtime of the library.
       'package-json/require-engines': 'off',
     },
   },
@@ -125,6 +127,13 @@ export default defineConfig([
     // in the repo; the library itself is framework-free.
     files: ['packages/demo/playground/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat.recommended],
+  },
+  {
+    // This stylesheet is served without a build step to older browsers.
+    files: ['packages/demo/demo.css'],
+    rules: {
+      'cssicorn/prefer-nesting': 'off',
+    },
   },
   {
     // Tailwind's own at-rules, which the CSS plugin does not know.

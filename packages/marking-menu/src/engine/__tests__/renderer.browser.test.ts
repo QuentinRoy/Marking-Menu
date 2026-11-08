@@ -30,9 +30,9 @@ const model = createModel({
 const renderFrame = () => vi.advanceTimersToNextFrame();
 
 /**
- A parent laid out on the page at `left`, `top`, with timers faked until the
- end of the block.
- */
+A parent laid out on the page at `left`, `top`, with timers faked until the
+end of the block.
+*/
 const setUp = ({ left = 0, top = 0 } = {}) => {
   const timers = fakeTimers();
   const parent = document.createElement('div');

@@ -16,9 +16,9 @@ function childrenOf(
 }
 
 /**
- Items at `path`, or the root's if it no longer resolves (e.g. the item
- there was just edited away).
- */
+Items at `path`, or the root's if it no longer resolves (e.g. the item
+there was just edited away).
+*/
 export function itemsAt(
   menu: MarkingMenuInput,
   path: readonly number[],

@@ -19,10 +19,10 @@ import { createRandom } from './random.js';
 type CorpusItem = { angle?: number; label: string; items?: CorpusItem[] };
 
 /**
- The items of a menu whose levels have the given item counts, from the top
- level down: `[4, 8]` builds a 4-item top level whose items each open an
- 8-item submenu.
- */
+The items of a menu whose levels have the given item counts, from the top
+level down: `[4, 8]` builds a 4-item top level whose items each open an
+8-item submenu.
+*/
 const buildLevels = (
   breadths: readonly number[],
   statedAngles: ReadonlyArray<ReadonlyArray<number | undefined>>,
@@ -45,28 +45,28 @@ const buildLevels = (
 };
 
 /**
- A menu with one level per entry of `breadths`, each level holding that
- many items, laid out however `createModel` lays out a plain item list of
- that size.
- */
+A menu with one level per entry of `breadths`, each level holding that
+many items, laid out however `createModel` lays out a plain item list of
+that size.
+*/
 export const buildMenu = (
   breadths: readonly number[],
   statedAngles: ReadonlyArray<ReadonlyArray<number | undefined>> = [],
 ) => createModel({ items: buildLevels(breadths, statedAngles) });
 
 /**
- The generic shape {@link randomPath} walks: any node exposing its
- sub-items, and any non-root node also exposing the angle it was laid out
- at. `buildMenu`'s actual, precise return type is always assignable to it.
- */
+The generic shape {@link randomPath} walks: any node exposing its
+sub-items, and any non-root node also exposing the angle it was laid out
+at. `buildMenu`'s actual, precise return type is always assignable to it.
+*/
 type WalkableNode = { readonly items: readonly WalkableItem[] };
 type WalkableItem = WalkableNode & { readonly angle: number };
 
 /**
- Walk `model` down `depth` levels, picking a uniformly random child at each,
- and report the angle of every item on the way: the path a generated stroke
- will aim for, and the leaf recognition is checked against.
- */
+Walk `model` down `depth` levels, picking a uniformly random child at each,
+and report the angle of every item on the way: the path a generated stroke
+will aim for, and the leaf recognition is checked against.
+*/
 const randomPath = (
   model: WalkableNode,
   depth: number,
@@ -90,20 +90,20 @@ const randomPath = (
 };
 
 /**
- The fraction of `trials` generated strokes recognized as the exact leaf
- they were drawn for, on a menu with the given per-level item counts.
+The fraction of `trials` generated strokes recognized as the exact leaf
+they were drawn for, on a menu with the given per-level item counts.
 
- @param options - Configuration options.
- @param options.breadths - One entry per level, from the top down: how many
- items that level holds.
- @param options.statedAngles - Optional per-level item angles. Each nested
- list follows that level's item order.
- @param options.trials - How many random paths to try.
- @param options.wobble - The wobble to generate strokes with. Defaults to the
- calibrated one.
- @param options.seed - Seeds both the path choices and the stroke noise, so a
- call with the same arguments always reports the same accuracy.
- */
+@param options - Configuration options.
+@param options.breadths - One entry per level, from the top down: how many
+items that level holds.
+@param options.statedAngles - Optional per-level item angles. Each nested
+list follows that level's item order.
+@param options.trials - How many random paths to try.
+@param options.wobble - The wobble to generate strokes with. Defaults to the
+calibrated one.
+@param options.seed - Seeds both the path choices and the stroke noise, so a
+call with the same arguments always reports the same accuracy.
+*/
 export function measureAccuracy({
   breadths,
   statedAngles,

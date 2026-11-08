@@ -28,9 +28,9 @@ export type Scene = {
 };
 
 /**
-  Create the renderer's scene: fixed layer slots in paint order, plus the one
-  conversion from client coordinates that every layer shares.
-  */
+Create the renderer's scene: fixed layer slots in paint order, plus the one
+conversion from client coordinates that every layer shares.
+*/
 export function createScene({
   root,
   parent,

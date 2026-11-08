@@ -1,22 +1,22 @@
 import { angle, dist, type Point } from '../utils.js';
 
 /**
- Find the index of the first point of `pointList` that is at least `minDist` away from a
- reference point.
+Find the index of the first point of `pointList` that is at least `minDist` away from a
+reference point.
 
- @param pointList - The list of points.
- @param options - The lookup's configuration.
- @param options.minDist - A distance.
- @param options.direction - The direction of the lookup: negative values means
- descending lookup.
- @param options.startIndex - The index of the first point to investigate inside
- pointList. If not provided, the lookup will start from the start or the end of
- pointList depending on `direction`.
- @param options.refPoint - The reference point. Defaults to the point at
- `startIndex`.
- @returns The index of the first point inside pointList that it at least `minDist` from
- `refPoint`.
- */
+@param pointList - The list of points.
+@param options - The lookup's configuration.
+@param options.minDist - A distance.
+@param options.direction - The direction of the lookup: negative values means
+descending lookup.
+@param options.startIndex - The index of the first point to investigate inside
+pointList. If not provided, the lookup will start from the start or the end of
+pointList depending on `direction`.
+@param options.refPoint - The reference point. Defaults to the point at
+`startIndex`.
+@returns The index of the first point inside pointList that it at least `minDist` from
+`refPoint`.
+*/
 export const findNextPointFurtherThan = (
   pointList: readonly Point[],
   {
@@ -48,19 +48,19 @@ export const findNextPointFurtherThan = (
 };
 
 /**
- Find the point of `pointList` that, as the middle point b, minimizes the angle abc.
+Find the point of `pointList` that, as the middle point b, minimizes the angle abc.
 
- @param pointList - A list of candidate middle points.
- @param options - The angle endpoints and lookup configuration.
- @param options.from - The first endpoint of the angle.
- @param options.to - The last endpoint of the angle.
- @param options.startIndex - The index of the first candidate to investigate inside
- pointList.
- @param options.endIndex - The index of the last candidate to investigate inside
- pointList.
- @returns The index of the candidate that minimizes the angle from-b-to and the
- angle from-b-to.
- */
+@param pointList - A list of candidate middle points.
+@param options - The angle endpoints and lookup configuration.
+@param options.from - The first endpoint of the angle.
+@param options.to - The last endpoint of the angle.
+@param options.startIndex - The index of the first candidate to investigate inside
+pointList.
+@param options.endIndex - The index of the last candidate to investigate inside
+pointList.
+@returns The index of the candidate that minimizes the angle from-b-to and the
+angle from-b-to.
+*/
 export const findMiddlePointForMinAngle = (
   pointList: readonly Point[],
   {

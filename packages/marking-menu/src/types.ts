@@ -1,6 +1,6 @@
 /**
- Shared internal types.
- */
+Shared internal types.
+*/
 
 import type { IsTuple } from './utils.js';
 
@@ -9,13 +9,13 @@ import type { IsTuple } from './utils.js';
  * -------------------------------------------------------------------------- */
 
 /**
- An item of the menu, as described by the caller.
- */
+An item of the menu, as described by the caller.
+*/
 export type MarkingMenuItemInput = {
   /**
-   The item's identifier. Purely semantic: it is never generated, and only the
-   caller gives it a meaning. It must be unique across the whole menu.
-   */
+  The item's identifier. Purely semantic: it is never generated, and only the
+  caller gives it a meaning. It must be unique across the whole menu.
+  */
   readonly id?: string | undefined;
   /**
   The item's label.
@@ -32,8 +32,8 @@ export type MarkingMenuItemInput = {
 };
 
 /**
- The description of a marking menu, as provided to {@link createModel}.
- */
+The description of a marking menu, as provided to {@link createModel}.
+*/
 export type MarkingMenuInput = {
   /**
   The menu's top level items.
@@ -46,18 +46,18 @@ export type MarkingMenuInput = {
  * -------------------------------------------------------------------------- */
 
 /**
- Precise methods and properties added to nodes derived from menu inputs.
- */
+Precise methods and properties added to nodes derived from menu inputs.
+*/
 export type MenuNode<Items extends readonly unknown[]> = {
   /**
-   Retrieve a direct sub-item by its id. Only accepts the ids of the node's own
-   sub-items, and hence always returns one of them.
-   */
+  Retrieve a direct sub-item by its id. Only accepts the ids of the node's own
+  sub-items, and hence always returns one of them.
+  */
   readonly getChild: GetChild<Items>;
   /**
-   Retrieve every direct sub-item matching a given label. Labels are not
-   required to be unique, nor known in advance.
-   */
+  Retrieve every direct sub-item matching a given label. Labels are not
+  required to be unique, nor known in advance.
+  */
   getChildrenByLabel(childLabel: string): Array<Items[number]>;
   /**
   Find the sub-item whose angle is the closest to a given angle.
@@ -76,11 +76,11 @@ export type MenuNode<Items extends readonly unknown[]> = {
 };
 
 /**
- `getChild` accepts the ids of the sub-items it can actually find. When the
- sub-items are not a tuple because the menu was built at runtime, their ids are
- unknown, so it falls back to accepting any string and possibly returning
- `undefined`.
- */
+`getChild` accepts the ids of the sub-items it can actually find. When the
+sub-items are not a tuple because the menu was built at runtime, their ids are
+unknown, so it falls back to accepting any string and possibly returning
+`undefined`.
+*/
 type GetChild<Items extends readonly unknown[]> =
   IsTuple<Items> extends true
     ? <Id extends LiteralIds<Items>>(
@@ -89,9 +89,9 @@ type GetChild<Items extends readonly unknown[]> =
     : (childId: string) => Items[number] | undefined;
 
 /**
- A node of the model that the caller described: it carries back the id and the
- label it was given, plus the angle the menu laid it out at.
- */
+A node of the model that the caller described: it carries back the id and the
+label it was given, plus the angle the menu laid it out at.
+*/
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- interfaces allow self-referential tree types without circular alias errors.
 export interface ModelItem<
   Id extends string | undefined = string | undefined,
@@ -116,9 +116,9 @@ export interface ModelItem<
   */
   readonly isRoot: false;
   /**
-   The item's library-assigned positional key (e.g. `"1-0-2"`), unique across
-   the whole menu. Unlike `id`, it is never provided by the caller.
-   */
+  The item's library-assigned positional key (e.g. `"1-0-2"`), unique across
+  the whole menu. Unlike `id`, it is never provided by the caller.
+  */
   readonly key: string;
   /**
   The node one level up.
@@ -129,8 +129,8 @@ export interface ModelItem<
   */
   readonly items: Items;
   /**
-   Whether the node has no sub-item.
-   */
+  Whether the node has no sub-item.
+  */
   readonly isLeaf: IsLeaf<Items>;
   getNearestChild(
     angle: number,
@@ -152,8 +152,8 @@ export interface ModelItem<
 }
 
 /**
- The root of the model. Unlike items, it has no id, label nor angle.
- */
+The root of the model. Unlike items, it has no id, label nor angle.
+*/
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- interfaces allow self-referential tree types without circular alias errors.
 export interface ModelRoot<
   Items extends readonly unknown[] = readonly unknown[],
@@ -165,8 +165,8 @@ export interface ModelRoot<
   */
   readonly items: Items;
   /**
-   Whether the node has no sub-item.
-   */
+  Whether the node has no sub-item.
+  */
   readonly isLeaf: IsLeaf<Items>;
   getNearestChild(
     angle: number,
@@ -188,8 +188,8 @@ export interface ModelRoot<
 }
 
 /**
- A terminal item in the menu tree with no sub-items.
- */
+A terminal item in the menu tree with no sub-items.
+*/
 export type ModelLeaf = ModelItem & { readonly isLeaf: true };
 
 type ModelMenuItem = ModelItem & { readonly isLeaf: false };
@@ -205,14 +205,14 @@ export function isModelMenuItem<Item extends ModelItem>(
 }
 
 /**
- A node in the marking menu tree: either the root or an item, discriminated by
- `isRoot` and `isLeaf`.
- */
+A node in the marking menu tree: either the root or an item, discriminated by
+`isRoot` and `isLeaf`.
+*/
 export type ModelNode = ModelRoot | ModelLeaf | ModelMenuItem;
 
 /**
- A node that can hold sub-items: either the root or a submenu item.
- */
+A node that can hold sub-items: either the root or a submenu item.
+*/
 export type ModelMenu = ModelRoot | ModelMenuItem;
 
 /* -------------------------------------------------------------------------- *
@@ -220,12 +220,12 @@ export type ModelMenu = ModelRoot | ModelMenuItem;
  * -------------------------------------------------------------------------- */
 
 /**
- Every node of the (sub-)tree rooted at `Node`, including `Node` itself: `Node` and,
- recursively, every one of its descendants. Recursion is guarded on
- {@link IsTuple}: for a menu built at runtime (a non-literal `items` list),
- the item type is already the same for every item in the (sub-)tree, so it
- includes that type without recursing forever.
- */
+Every node of the (sub-)tree rooted at `Node`, including `Node` itself: `Node` and,
+recursively, every one of its descendants. Recursion is guarded on
+{@link IsTuple}: for a menu built at runtime (a non-literal `items` list),
+the item type is already the same for every item in the (sub-)tree, so it
+includes that type without recursing forever.
+*/
 export type ModelNodes<Node extends ModelNode> = Node extends {
   items: infer Items extends readonly unknown[];
 }
@@ -243,8 +243,8 @@ export type ModelItems<Node extends ModelNode> = Exclude<
 >;
 
 /**
- Every leaf of the (sub-)tree rooted at `Node`.
- */
+Every leaf of the (sub-)tree rooted at `Node`.
+*/
 export type ModelLeaves<Node extends ModelNode> =
   ModelItems<Node> extends infer Item
     ? Item extends { isLeaf: false }
@@ -255,8 +255,8 @@ export type ModelLeaves<Node extends ModelNode> =
     : never;
 
 /**
- Every non-leaf node of the (sub-)tree rooted at `Node`, root included.
- */
+Every non-leaf node of the (sub-)tree rooted at `Node`, root included.
+*/
 export type ModelMenus<Node extends ModelNode> =
   ModelNodes<Node> extends infer Member
     ? Member extends ModelNode
@@ -275,9 +275,9 @@ export type ModelMenus<Node extends ModelNode> =
  * -------------------------------------------------------------------------- */
 
 /**
- Whether an item list makes its owner a leaf. `boolean` when the list's length
- is not statically known.
- */
+Whether an item list makes its owner a leaf. `boolean` when the list's length
+is not statically known.
+*/
 export type IsLeaf<Items extends readonly unknown[]> = Items['length'] extends 0
   ? true
   : Items extends readonly [unknown, ...unknown[]]
@@ -285,18 +285,18 @@ export type IsLeaf<Items extends readonly unknown[]> = Items['length'] extends 0
     : boolean;
 
 /**
- Pick a type depending on whether the node is a leaf. Distributes over `Leaf`
- so that an undetermined `boolean` yields both alternatives.
- */
+Pick a type depending on whether the node is a leaf. Distributes over `Leaf`
+so that an undetermined `boolean` yields both alternatives.
+*/
 type IfLeaf<Leaf extends boolean, WhenLeaf, WhenBranch> = Leaf extends true
   ? WhenLeaf
   : WhenBranch;
 
 /**
-   The literal id of an item, or `never` if it has no id or its id is a widened
-   `string`. Applied item per item so that one item with an unknown id does not
-   collapse the ids of its siblings.
-   */
+The literal id of an item, or `never` if it has no id or its id is a widened
+`string`. Applied item per item so that one item with an unknown id does not
+collapse the ids of its siblings.
+*/
 export type LiteralId<Item> = Item extends { id: infer Id }
   ? string extends Id
     ? never
@@ -306,8 +306,8 @@ export type LiteralId<Item> = Item extends { id: infer Id }
   : never;
 
 /**
-   The union of the statically known ids of `Items`.
-   */
+The union of the statically known ids of `Items`.
+*/
 export type LiteralIds<Items extends readonly unknown[]> = {
   [K in keyof Items]: LiteralId<Items[K]>;
 }[number];

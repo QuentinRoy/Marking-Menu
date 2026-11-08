@@ -48,14 +48,14 @@ const isPrimaryPress = (event: PointerEvent): boolean =>
   event.isPrimary && event.button === 0;
 
 /**
- Everything a standalone menu does in the DOM: keyboard, platform focus and
- pointer input, focus save and restore, and leaving the pointer to the page
- while the menu is open. Whether it is open is read from `runtime.phase`.
+Everything a standalone menu does in the DOM: keyboard, platform focus and
+pointer input, focus save and restore, and leaving the pointer to the page
+while the menu is open. Whether it is open is read from `runtime.phase`.
 
- Platform focus is the input: an item is active because it holds focus. The
- pointer is resolved through `composedPath()` rather than capture, so a drag
- reports whichever item is under it.
- */
+Platform focus is the input: an item is active because it holds focus. The
+pointer is resolved through `composedPath()` rather than capture, so a drag
+reports whichever item is under it.
+*/
 export function createStandaloneSession<Model extends ModelNode = ModelNode>({
   parent,
   doc = parent.ownerDocument,
@@ -92,10 +92,10 @@ export function createStandaloneSession<Model extends ModelNode = ModelNode>({
   const isOpen = (): boolean => runtime.phase === 'standalone';
 
   /**
-   Runs `drive` flagged as this session's own: a focus change it causes, such
-   as a level's DOM swapped from under the focused item, is not a focus loss.
-   A depth, since a send can trigger another before it returns.
-   */
+  Runs `drive` flagged as this session's own: a focus change it causes, such
+  as a level's DOM swapped from under the focused item, is not a focus loss.
+  A depth, since a send can trigger another before it returns.
+  */
   const asOwnInput = (drive: () => void): void => {
     sendDepth += 1;
     try {

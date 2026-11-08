@@ -19,9 +19,9 @@ import { createRandom } from './random.js';
  */
 
 /**
- How much a generated stroke wobbles off the straight path its angles
- describe.
- */
+How much a generated stroke wobbles off the straight path its angles
+describe.
+*/
 export type Wobble = {
   /**
   How far, in degrees, the heading wanders off the intended direction.
@@ -45,11 +45,11 @@ export type Wobble = {
 };
 
 /**
- The wobble calibrated against the real 4- and 8-item menus the library lays
- out evenly today (see `generated-stroke-corpus.test.ts` for the calibration
- itself, and its comment for the reasoning). Frozen once calibrated: retuning
- it changes what every generated-corpus test measures.
- */
+The wobble calibrated against the real 4- and 8-item menus the library lays
+out evenly today (see `generated-stroke-corpus.test.ts` for the calibration
+itself, and its comment for the reasoning). Frozen once calibrated: retuning
+it changes what every generated-corpus test measures.
+*/
 export const CALIBRATED_WOBBLE: Wobble = {
   headingWander: 8,
   lateralWander: 4,
@@ -64,23 +64,23 @@ const shortestAngleDelta = (from: number, to: number): number => {
 };
 
 /**
- Generate the points of a stroke drawn through a known sequence of
- directions, with wobble added.
+Generate the points of a stroke drawn through a known sequence of
+directions, with wobble added.
 
- @param options - Configuration options.
- @param options.angles - The direction of each segment of the intended path,
- in degrees, in the same convention as a model item's `angle`: one entry per
- menu level, in the order the stroke should walk them.
- @param options.segmentLength - The length, in pixels, of each straight
- segment before wobble is applied.
- @param options.stepSize - The distance, in pixels, between two consecutive
- generated points.
- @param options.wobble - The wobble to apply. Defaults to the calibrated one;
- pass a different one to explore how the corpus reacts to more or less noise.
- @param options.seed - The seed for the noise. Two calls with the same
- arguments and seed produce the exact same points.
- @returns The points of the generated stroke, starting at the origin.
- */
+@param options - Configuration options.
+@param options.angles - The direction of each segment of the intended path,
+in degrees, in the same convention as a model item's `angle`: one entry per
+menu level, in the order the stroke should walk them.
+@param options.segmentLength - The length, in pixels, of each straight
+segment before wobble is applied.
+@param options.stepSize - The distance, in pixels, between two consecutive
+generated points.
+@param options.wobble - The wobble to apply. Defaults to the calibrated one;
+pass a different one to explore how the corpus reacts to more or less noise.
+@param options.seed - The seed for the noise. Two calls with the same
+arguments and seed produce the exact same points.
+@returns The points of the generated stroke, starting at the origin.
+*/
 export function generateStroke({
   angles,
   segmentLength = 200,

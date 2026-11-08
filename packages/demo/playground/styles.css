@@ -33,11 +33,11 @@
 :root {
   --radius: 0.3125rem;
 
-  --background: #ffffff;
+  --background: #fff;
   --foreground: #17171a;
-  --card: #ffffff;
+  --card: #fff;
   --card-foreground: #17171a;
-  --popover: #ffffff;
+  --popover: #fff;
   --popover-foreground: #17171a;
   --primary: #17171a;
   --primary-foreground: #fbfbfa;
@@ -98,7 +98,7 @@
   --color-mark: oklch(0.55 0.13 25);
   --color-dot: #e9e9e5;
   /* The mark, dimmed under the breakdown so the pieces read on top of it. */
-  --color-stroke-trace: rgb(23 23 26 / 0.22);
+  --color-stroke-trace: rgb(23 23 26 / 22%);
   --color-piece-alt: #4b4b52;
 
   /* The JSON editor's syntax colors. They are named here, rather than baked
@@ -202,7 +202,7 @@
     --color-edge-soft: #4c4c55;
     --color-mark: oklch(0.72 0.15 25);
     --color-dot: #232328;
-    --color-stroke-trace: rgb(236 236 238 / 0.28);
+    --color-stroke-trace: rgb(236 236 238 / 28%);
     --color-piece-alt: #b4b4bd;
 
     --color-code-property: #d5d5db;
@@ -299,25 +299,22 @@
   background: var(--color-popover);
   color: var(--color-popover-foreground);
   font-size: var(--text-xs);
-}
-
-.cm-tooltip.cm-tooltip .cm-tooltip-arrow::before {
-  border-top-color: var(--color-border);
-  border-bottom-color: var(--color-border);
-}
-
-.cm-tooltip.cm-tooltip .cm-tooltip-arrow::after {
-  border-top-color: var(--color-popover);
-  border-bottom-color: var(--color-popover);
+  .cm-tooltip-arrow::before {
+    border-top-color: var(--color-border);
+    border-bottom-color: var(--color-border);
+  }
+  .cm-tooltip-arrow::after {
+    border-top-color: var(--color-popover);
+    border-bottom-color: var(--color-popover);
+  }
 }
 
 .cm-tooltip.cm-tooltip-autocomplete > ul > li {
   color: var(--color-popover-foreground);
-}
-
-.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
-  background: var(--color-accent);
-  color: var(--color-accent-foreground);
+  &[aria-selected] {
+    background: var(--color-accent);
+    color: var(--color-accent-foreground);
+  }
 }
 
 .cm-tooltip.cm-completionInfo {
@@ -388,16 +385,14 @@
 .recognizer-overlay .pieces {
   stroke: var(--color-mark);
   stroke-width: var(--breakdown-stroke-piece-width);
-}
-
-.recognizer-overlay .pieces path:nth-child(even) {
-  stroke: var(--color-piece-alt);
+  path:nth-child(even) {
+    stroke: var(--color-piece-alt);
+  }
 }
 
 .recognizer-overlay .corners {
   fill: var(--color-ink);
-}
-
-.recognizer-overlay .corners circle {
-  r: var(--breakdown-stroke-corner-radius);
+  circle {
+    r: var(--breakdown-stroke-corner-radius);
+  }
 }

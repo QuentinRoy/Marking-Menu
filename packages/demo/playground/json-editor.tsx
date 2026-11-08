@@ -59,14 +59,14 @@ const highlightStyle = HighlightStyle.define([
 ]);
 
 /**
- What the tooltip says about whatever is under the pointer, read from the
- schema rather than from the sub-schema the hover resolved: see
- {@link annotationAt} for why the two differ.
+What the tooltip says about whatever is under the pointer, read from the
+schema rather than from the sub-schema the hover resolved: see
+{@link annotationAt} for why the two differ.
 
- @param data - What the hover resolved for the position.
- @param data.pointer - The JSON pointer to the position in the document.
- @returns The tooltip's prose and its type line.
- */
+@param data - What the hover resolved for the position.
+@param data.pointer - The JSON pointer to the position in the document.
+@returns The tooltip's prose and its type line.
+*/
 function hoverTexts({ pointer }: { pointer: string }): {
   message: string;
   typeInfo: string;
@@ -82,18 +82,18 @@ function hoverTexts({ pointer }: { pointer: string }): {
 }
 
 /**
- The schema hover, silenced where the schema has nothing to say.
+The schema hover, silenced where the schema has nothing to say.
 
- `jsonSchemaHover` always produces a tooltip, so a position the schema does
- not describe, a property it does not allow among them, rendered as an empty
- box: two section rules with nothing between them, stacked under whatever
- diagnostic was already there.
+`jsonSchemaHover` always produces a tooltip, so a position the schema does
+not describe, a property it does not allow among them, rendered as an empty
+box: two section rules with nothing between them, stacked under whatever
+diagnostic was already there.
 
- @param view - The editor.
- @param pos - The position hovered.
- @param side - Which side of `pos` the pointer is on.
- @returns The tooltip, or `null` where there is nothing to show.
- */
+@param view - The editor.
+@param pos - The position hovered.
+@param side - Which side of `pos` the pointer is on.
+@returns The tooltip, or `null` where there is nothing to show.
+*/
 function schemaHover(
   view: EditorView,
   pos: number,
@@ -140,9 +140,9 @@ const extensions = [
 ];
 
 /**
- The menu editor: a JSON document holding the very value the page passes to
- the library.
- */
+The menu editor: a JSON document holding the very value the page passes to
+the library.
+*/
 export function JsonEditor({
   value,
   invalid,

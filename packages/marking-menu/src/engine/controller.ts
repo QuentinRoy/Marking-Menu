@@ -30,19 +30,19 @@ export type EngineConfig = MarkingMenuInput & {
   */
   readonly parent: HTMLElement;
   /**
-   The minimum distance between two points to be considered a significant
-   movement, switching startup to expert mode and breaking the submenu
-   dwelling delay.
-   */
+  The minimum distance between two points to be considered a significant
+  movement, switching startup to expert mode and breaking the submenu
+  dwelling delay.
+  */
   readonly movementsThreshold?: number;
   /**
   The dwelling time required to trigger novice mode (and open the menu).
   */
   readonly noviceDwellingTime?: number;
   /**
-   The radius around the menu center within which no item is active. Past
-   it an item becomes active, and dwelling on it opens its sub-menu.
-   */
+  The radius around the menu center within which no item is active. Past
+  it an item becomes active, and dwelling on it opens its sub-menu.
+  */
   readonly deadZoneRadius?: number;
   /**
   The dwelling delay before opening a sub-menu.
@@ -71,10 +71,10 @@ type ResolvedEngineOptions = {
 };
 
 /**
- Fill in every {@link EngineConfig} default, once, so the renderer, runtime
- and machine each receive an already-resolved value instead of guessing at
- the same default independently.
- */
+Fill in every {@link EngineConfig} default, once, so the renderer, runtime
+and machine each receive an already-resolved value instead of guessing at
+the same default independently.
+*/
 export function resolveEngineOptions(
   config: EngineConfig,
 ): ResolvedEngineOptions {
@@ -89,50 +89,50 @@ export function resolveEngineOptions(
 }
 
 /**
- What {@link MarkingMenuController.open} accepts.
- */
+What {@link MarkingMenuController.open} accepts.
+*/
 export type MarkingMenuOpenOptions = {
   /**
-   Where the menu is centered, in client coordinates (pixels). Defaults to
-   the center of the parent, read when `open()` is called: the menu does not
-   follow the parent afterward.
-   */
+  Where the menu is centered, in client coordinates (pixels). Defaults to
+  the center of the parent, read when `open()` is called: the menu does not
+  follow the parent afterward.
+  */
   readonly position?: Point;
   /**
-   Whether the menu moves focus to itself as it opens. Defaults to `true`.
-   With `false` focus stays where it is, and the first item stays reachable
-   with Tab or the pointer. Only the first opening is affected: entering a
-   submenu always leaves focus in the menu.
-   */
+  Whether the menu moves focus to itself as it opens. Defaults to `true`.
+  With `false` focus stays where it is, and the first item stays reachable
+  with Tab or the pointer. Only the first opening is affected: entering a
+  submenu always leaves focus in the menu.
+  */
   readonly autoFocus?: boolean;
 };
 
 /**
- `dispose()` is the whole disposal contract, both terminal and idempotent;
- `[Symbol.dispose]()` delegates to it so `using controller = createController(
- config)` works wherever Explicit Resource Management is supported. Neither
- patches `Symbol` nor ships a polyfill: a consumer without native support
- cannot even parse a `using` call site and owns any transpilation it needs.
- */
+`dispose()` is the whole disposal contract, both terminal and idempotent;
+`[Symbol.dispose]()` delegates to it so `using controller = createController(
+config)` works wherever Explicit Resource Management is supported. Neither
+patches `Symbol` nor ships a polyfill: a consumer without native support
+cannot even parse a `using` call site and owns any transpilation it needs.
+*/
 export type MarkingMenuController<Model extends ModelNode = ModelNode> =
   MarkingMenuEventEmitter<Model> & {
     /**
-     Display the root menu on its own, without a pointer gesture, and let the
-     keyboard operate it. Throws unless the controller is idle, and after
-     `dispose()`. Pointer input is left to the page until the menu is selected
-     from, canceled, or closed.
-     */
+    Display the root menu on its own, without a pointer gesture, and let the
+    keyboard operate it. Throws unless the controller is idle, and after
+    `dispose()`. Pointer input is left to the page until the menu is selected
+    from, canceled, or closed.
+    */
     open(options?: MarkingMenuOpenOptions): void;
     /**
-     Close a menu displayed with {@link MarkingMenuController.open}. This
-     dispatches a `cancel` event. Throws unless one is open.
-     */
+    Close a menu displayed with {@link MarkingMenuController.open}. This
+    dispatches a `cancel` event. Throws unless one is open.
+    */
     close(): void;
     /**
-     What the menu is doing right now. Inside a listener, it already reflects
-     the event being dispatched: `mode` is `'idle'` in a `select` listener.
-     Values tied to a single moment stay on the events.
-     */
+    What the menu is doing right now. Inside a listener, it already reflects
+    the event being dispatched: `mode` is `'idle'` in a `select` listener.
+    Values tied to a single moment stay on the events.
+    */
     readonly state: MarkingMenuState<Model>;
     dispose(): void;
     [Symbol.dispose](): void;
@@ -151,14 +151,14 @@ The event names that map is keyed by.
 type EventName<Config extends EngineConfig> = keyof EventMap<Config> & string;
 
 /**
- The internal engine's entry point: assembles the engine and owns its
- lifetime. `on`/`off` are a facade over the runtime, which owns the emitter.
+The internal engine's entry point: assembles the engine and owns its
+lifetime. `on`/`off` are a facade over the runtime, which owns the emitter.
 
- Generic in `Config`, not merely in the model it produces, so the event types
- are derived from the literal config. A non-generic constructor would widen
- the model to `MarkingMenuModel<EngineConfig>` and leave a cast as the only
- bridge back.
- */
+Generic in `Config`, not merely in the model it produces, so the event types
+are derived from the literal config. A non-generic constructor would widen
+the model to `MarkingMenuModel<EngineConfig>` and leave a cast as the only
+bridge back.
+*/
 class Controller<Config extends EngineConfig> implements MarkingMenuController<
   MarkingMenuModel<Config>
 > {
@@ -259,9 +259,9 @@ class Controller<Config extends EngineConfig> implements MarkingMenuController<
 }
 
 /**
- Create the internal engine controller: an already-active, disposable object
- satisfying {@link MarkingMenuEventEmitter}.
- */
+Create the internal engine controller: an already-active, disposable object
+satisfying {@link MarkingMenuEventEmitter}.
+*/
 export function createController<const Config extends EngineConfig>(
   config: Config & ValidateInput<Config>,
 ): MarkingMenuController<MarkingMenuModel<Config>> {
