@@ -54,7 +54,7 @@ jobs:
       pull-requests: write
     # The Vitest browser projects need browsers and system dependencies
     # already installed.
-    container: mcr.microsoft.com/playwright:v1.63.0-noble
+    container: mcr.microsoft.com/playwright:v1.65.0-noble
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
