@@ -44,7 +44,7 @@
     "@vitest/coverage-v8": "^5.1.0",
     "@vitest/eslint-plugin": "^1.6.28",
     "eslint": "^10.14.0",
-    "eslint-config-xo": "^7.0.0",
+    "eslint-config-xo": "^8.0.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "playwright": "catalog:",
     "prettier": "^3.9.10",
